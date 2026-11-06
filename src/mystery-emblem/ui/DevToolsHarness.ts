@@ -1,12 +1,14 @@
 /**
  * Admin-Only Step 2 Dev Tools Harness (`adam.kenawell.family@gmail.com`)
  *
- * Houses all developer-facing Step 2 verification controls so the public player UI remains clean:
- * - Tab 1 (`audit`): Step 1 Registry & Faction Audit + Cloud Firestore Sync Diagnostics
+ * Houses all developer-facing verification & save management controls so the public player UI remains clean:
+ * - Tab 1 (`audit`): Step 1 Registry & Faction Audit + Cloud Firestore Sync Diagnostics +
+ *   `Delete Save Data from Linked Account` & `Seed Test Save (Prologue)`
  * - Tab 2 (`sprites`): 8-Directional Sprite Animator (`Idle`, `Walk`, `Attack`, `Special`, `Hurt`),
  *   8-Emotion Portrait Strip (`Normal`..`Sad` + Left/Right Mirror), Evolutionary Line Stage Swapper,
- *   and Live Active Party Unit Stage Promotion
+ *   and Live Active Party Unit Stage Promotion & Nickname Editor
  * - Tab 3 (`dialogue`): `DIALOGUE_OVERLAY` Multi-Emotion Cutscene & Live Stage-Swap Test Launcher
+ * - Tab 4 (`skirmish`): Playable Drenched Bluff Battle & Convergence Ruins Sandbox Launchers
  */
 
 import {
@@ -50,6 +52,7 @@ export interface DevToolsHarnessOptions {
   audioManager?: AudioManager;
   onLaunchTestDungeon?: () => void;
   onLaunchBattle?: () => void;
+  onRequestRenameUnit?: (instanceId: string) => void;
   signal: AbortSignal;
 }
 
@@ -60,6 +63,7 @@ export class DevToolsHarness {
   private readonly audioManager: AudioManager;
   private readonly onLaunchTestDungeon?: () => void;
   private readonly onLaunchBattle?: () => void;
+  private readonly onRequestRenameUnit?: (instanceId: string) => void;
   private readonly signal: AbortSignal;
 
   private activeSubTab: DevToolsSubTab = 'audit';
@@ -79,6 +83,8 @@ export class DevToolsHarness {
   private spriteMetaEl: HTMLElement | null = null;
   private rosterStageBox: HTMLElement | null = null;
   private dialogueStatusEl: HTMLElement | null = null;
+  private saveActionStatusEl: HTMLElement | null = null;
+  private deleteAccountSaveBtn: HTMLButtonElement | null = null;
 
   constructor(options: DevToolsHarnessOptions) {
     this.modalEl = options.modalEl;
@@ -87,6 +93,7 @@ export class DevToolsHarness {
     this.audioManager = options.audioManager ?? getAudioManager();
     this.onLaunchTestDungeon = options.onLaunchTestDungeon;
     this.onLaunchBattle = options.onLaunchBattle;
+    this.onRequestRenameUnit = options.onRequestRenameUnit;
     this.signal = options.signal;
 
     this.mountControls();
@@ -142,6 +149,13 @@ export class DevToolsHarness {
     await this.refreshSpriteAndPortraits();
   }
 
+  private setSaveActionStatus(message: string): void {
+    if (!this.saveActionStatusEl) return;
+    const trimmed = message.trim();
+    this.saveActionStatusEl.textContent = trimmed;
+    this.saveActionStatusEl.hidden = trimmed.length === 0;
+  }
+
   private mountControls(): void {
     // Sub-tab navigation buttons
     this.modalEl.querySelectorAll<HTMLElement>('[data-devtab-btn]').forEach((btn) => {
@@ -154,6 +168,58 @@ export class DevToolsHarness {
         { signal: this.signal }
       );
     });
+
+    // --- TAB 1: SAVE MANAGEMENT & ACCOUNT SAVE DELETION ---
+    this.saveActionStatusEl = this.modalEl.querySelector<HTMLElement>(
+      '#devtools-save-action-status'
+    );
+    this.deleteAccountSaveBtn = this.modalEl.querySelector<HTMLButtonElement>(
+      '#devtools-delete-account-save'
+    );
+    const seedSaveBtn = this.modalEl.querySelector<HTMLButtonElement>('#devtools-seed-save');
+
+    bindPointerTap(
+      seedSaveBtn,
+      () => {
+        this.audioManager.playSfx('select');
+        this.saveManager.createNewCampaignSave({
+          lordSpeciesId: 'dratini',
+          partnerSpeciesId: 'bulbasaur',
+          healerSpeciesId: 'happiny',
+        });
+        this.setSaveActionStatus('Seeded fresh Prologue save data.');
+      },
+      { signal: this.signal }
+    );
+
+    bindPointerTap(
+      this.deleteAccountSaveBtn,
+      () => {
+        if (this.deleteAccountSaveBtn) {
+          this.deleteAccountSaveBtn.disabled = true;
+        }
+        this.audioManager.playSfx('cancel');
+        void this.saveManager
+          .deleteSaveFromLinkedAccount()
+          .then(({ deletedCloud }) => {
+            this.setSaveActionStatus(
+              deletedCloud
+                ? 'Deleted save data from linked Google account and this device.'
+                : 'Deleted local save data from this device.'
+            );
+          })
+          .catch((err: unknown) => {
+            const msg = err instanceof Error ? err.message : 'Could not delete cloud save data.';
+            this.setSaveActionStatus(`Delete failed: ${msg}`);
+          })
+          .finally(() => {
+            if (this.deleteAccountSaveBtn) {
+              this.deleteAccountSaveBtn.disabled = false;
+            }
+          });
+      },
+      { signal: this.signal }
+    );
 
     // --- TAB 2: SPRITES & STAGES ---
     const presetRow = this.modalEl.querySelector<HTMLElement>('#devtools-line-presets');
@@ -355,7 +421,7 @@ export class DevToolsHarness {
         if (!lord) {
           if (this.dialogueStatusEl) {
             this.dialogueStatusEl.textContent =
-              'Start a New Game first to cycle the active Lord’s evolution stage.';
+              'Seed a Test Save in Registry & Sync first to cycle the active Lord’s evolution stage.';
           }
           return;
         }
@@ -594,7 +660,8 @@ export class DevToolsHarness {
     if (!save || save.roster.length === 0) {
       const msg = document.createElement('p');
       msg.className = 'pmd-subcard-text';
-      msg.textContent = 'No active campaign save. Start a New Game to test live Party stage swaps.';
+      msg.textContent =
+        'No active campaign save. Seed a Test Save in Registry & Sync to test live Party stage swaps.';
       this.rosterStageBox.appendChild(msg);
       return;
     }
@@ -607,10 +674,28 @@ export class DevToolsHarness {
       const row = document.createElement('div');
       row.className = 'pmd-devtools-roster-row';
 
+      const headerRow = document.createElement('div');
+      headerRow.className = 'pmd-devtools-row-between';
+
       const label = document.createElement('span');
       label.className = 'pmd-subcard-text';
+      label.dataset.testid = `devtools-roster-label-slot-${slotIdx}`;
       label.textContent = `${unit.nickname} (${sp.name} · Lv.${unit.level}):`;
-      row.appendChild(label);
+      headerRow.appendChild(label);
+
+      if (this.onRequestRenameUnit) {
+        const renameBtn = document.createElement('button');
+        renameBtn.type = 'button';
+        renameBtn.className = 'pmd-btn pmd-chip-btn';
+        renameBtn.dataset.testid = `devtools-rename-slot-${slotIdx}`;
+        renameBtn.textContent = 'Rename';
+        bindPointerTap(renameBtn, () => this.onRequestRenameUnit?.(unit.instanceId), {
+          signal: this.signal,
+        });
+        headerRow.appendChild(renameBtn);
+      }
+
+      row.appendChild(headerRow);
 
       const btns = document.createElement('div');
       btns.className = 'pmd-inline-btns';

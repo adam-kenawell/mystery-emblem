@@ -35,14 +35,40 @@ const canonicalUrl = Astro.url.href;
           Dev Tools
         </button>
 
-        <!-- Persistent Mobile / PC Menu & Back Button (Top-Right, Rule 2 & Rule 3) -->
+        <!-- Persistent Top-Right Corner Button: Google Log In / Log Out on Title Screen; Menu / Back in Scenes -->
         <button
           id="pmd-corner-menu-btn"
           class="pmd-window pmd-corner-btn pmd-corner-right"
           type="button"
-          aria-label="Open System Menu"
+          data-corner-mode="login"
+          aria-label="Log in with Google"
         >
-          Menu
+          <svg
+            class="pmd-google-g-icon"
+            data-testid="google-g-icon"
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            aria-hidden="true"
+          >
+            <path
+              fill="#4285F4"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            ></path>
+            <path
+              fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            ></path>
+            <path
+              fill="#FBBC05"
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+            ></path>
+            <path
+              fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+            ></path>
+          </svg>
+          <span>Log In</span>
         </button>
 
         <!-- Authentic PMD: Explorers of Sky Title Window -->
@@ -59,162 +85,50 @@ const canonicalUrl = Astro.url.href;
               class="pmd-btn pmd-btn-primary pmd-continue-btn"
               id="btn-continue"
               type="button"
-              disabled
             >
-              <span id="btn-continue-label">Continue</span>
+              <span id="btn-continue-label">Start</span>
               <span
-                id="btn-continue-sprite"
-                class="pmd-continue-sprite"
-                data-testid="continue-lord-sprite-slot"
+                id="btn-continue-chapter"
+                class="pmd-continue-chapter"
+                data-testid="continue-chapter-badge"
                 hidden
               ></span>
-            </button>
-            <button class="pmd-btn" id="btn-new-game" type="button">
-              New Game
-            </button>
-            <button class="pmd-btn" id="btn-cloud-sync" type="button">
-              Cloud Save
             </button>
           </div>
 
           <p id="pmd-status-msg" class="pmd-status" aria-live="polite" hidden></p>
         </section>
 
-        <!-- Player Campaign Menu (Clean RPG UI — Party, Nicknames, Loadout & Cloud Save) -->
-        <section id="pmd-campaign-menu" class="pmd-window pmd-panel" hidden>
+        <!-- Simplified Campaign Menu: Drenched Bluff Test Dungeon + Future Demo -->
+        <section id="pmd-campaign-menu" class="pmd-window pmd-campaign-card" hidden>
           <header class="pmd-panel-header">
             <h2 class="pmd-panel-title">CAMPAIGN MENU</h2>
-            <p class="pmd-panel-sub">
-              Manage your party, nicknames, equipped moves, and cloud save.
-            </p>
+            <p class="pmd-panel-sub">Choose a mode to begin.</p>
           </header>
 
-          <nav class="pmd-tabs" aria-label="Campaign Menu Tabs">
-            <button type="button" class="pmd-btn pmd-tab-btn is-active" data-tab="squad">
-              Party
+          <div class="pmd-campaign-options" role="group" aria-label="Campaign Menu Options">
+            <button
+              type="button"
+              id="btn-enter-dungeon"
+              class="pmd-btn pmd-btn-primary pmd-campaign-option-btn"
+              data-testid="btn-enter-dungeon"
+            >
+              <span class="pmd-campaign-option-title">Drenched Bluff</span>
+              <span class="pmd-campaign-option-sub">Single Test Dungeon</span>
             </button>
-            <button type="button" class="pmd-btn pmd-tab-btn" data-tab="sync">
-              Cloud &amp; Save
-            </button>
-          </nav>
 
-          <!-- TAB 1: PARTY -->
-          <div id="tab-panel-squad" class="pmd-tab-panel">
-            <div id="squad-empty-state" class="pmd-empty-box" hidden>
-              <p>No active campaign yet. Start a new adventure to assemble your squad!</p>
-              <button type="button" id="btn-empty-create-save" class="pmd-btn pmd-btn-primary">
-                New Game
-              </button>
-            </div>
-            <div id="squad-dungeon-banner" class="pmd-subcard pmd-dungeon-cta-card" hidden>
-              <div class="pmd-devtools-row-between">
-                <div>
-                  <h3 class="pmd-subcard-title">Drenched Bluff — Vanguard Skirmish</h3>
-                  <p class="pmd-subcard-text">
-                    Deploy your party into a tactical dungeon battle and rout all enemy forces!
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  id="btn-enter-dungeon"
-                  class="pmd-btn pmd-btn-primary"
-                  data-testid="btn-enter-dungeon"
-                >
-                  Enter Dungeon
-                </button>
-              </div>
-            </div>
-            <div id="squad-cards-grid" class="pmd-squad-grid"></div>
+            <button
+              type="button"
+              id="btn-campaign-demo"
+              class="pmd-btn pmd-campaign-option-btn"
+              data-testid="btn-campaign-demo"
+            >
+              <span class="pmd-campaign-option-title">Demo</span>
+              <span class="pmd-campaign-option-sub">Coming Soon</span>
+            </button>
           </div>
 
-          <!-- TAB 2: CLOUD & SAVE -->
-          <div id="tab-panel-sync" class="pmd-tab-panel" hidden>
-            <div class="pmd-sync-grid">
-              <div class="pmd-subcard">
-                <h3 class="pmd-subcard-title">Cloud Save</h3>
-                <p id="sync-cloud-details" class="pmd-subcard-text">
-                  Sign in with Google to automatically sync your adventure across PC and mobile.
-                </p>
-                <div class="pmd-inline-btns">
-                  <button type="button" id="btn-google-auth-toggle" class="pmd-btn pmd-btn-primary">
-                    Sign in with Google
-                  </button>
-                  <button type="button" id="btn-reconcile-now" class="pmd-btn" hidden>
-                    Sync Now
-                  </button>
-                </div>
-              </div>
-
-              <div class="pmd-subcard">
-                <h3 class="pmd-subcard-title">Save Data</h3>
-                <p id="sync-local-details" class="pmd-subcard-text">No save file on this device.</p>
-                <div class="pmd-inline-btns">
-                  <button type="button" id="btn-export-json" class="pmd-btn">Export Backup</button>
-                  <button type="button" id="btn-open-import" class="pmd-btn">Import Backup</button>
-                  <button type="button" id="btn-clear-save" class="pmd-btn pmd-btn-danger">
-                    Delete Save
-                  </button>
-                </div>
-              </div>
-
-              <div class="pmd-subcard">
-                <div class="pmd-devtools-row-between">
-                  <h3 class="pmd-subcard-title">Audio</h3>
-                  <button
-                    type="button"
-                    id="btn-player-mute-toggle"
-                    class="pmd-btn pmd-chip-btn"
-                    data-testid="btn-player-mute-toggle"
-                  >
-                    Mute Audio
-                  </button>
-                </div>
-                <p id="player-audio-status" class="pmd-subcard-text">Music: 65% · SFX: 70%</p>
-                <label class="pmd-slider-row" for="player-bgm-volume">
-                  <span>Music</span>
-                  <input
-                    id="player-bgm-volume"
-                    class="pmd-range"
-                    type="range"
-                    min="0"
-                    max="100"
-                    value="65"
-                  />
-                </label>
-                <label class="pmd-slider-row" for="player-sfx-volume">
-                  <span>SFX</span>
-                  <input
-                    id="player-sfx-volume"
-                    class="pmd-range"
-                    type="range"
-                    min="0"
-                    max="100"
-                    value="70"
-                  />
-                </label>
-              </div>
-            </div>
-
-            <div id="json-io-box" class="pmd-subcard pmd-json-box" hidden>
-              <h3 id="json-io-title" class="pmd-subcard-title">Save Backup</h3>
-              <textarea
-                id="json-io-textarea"
-                class="pmd-textarea"
-                rows="5"
-                spellcheck="false"
-                aria-label="Save backup data"
-              ></textarea>
-              <div class="pmd-inline-btns">
-                <button type="button" id="btn-confirm-import" class="pmd-btn pmd-btn-primary" hidden>
-                  Restore Backup
-                </button>
-                <button type="button" id="btn-download-json" class="pmd-btn" hidden>
-                  Download Backup File
-                </button>
-                <button type="button" id="btn-close-json-box" class="pmd-btn">Close</button>
-              </div>
-            </div>
-          </div>
+          <p id="pmd-campaign-status" class="pmd-status" aria-live="polite" hidden></p>
         </section>
 
         <!-- Admin-Only Dev Tools Modal (Accessible ONLY when signed in as adam.kenawell.family@gmail.com) -->
@@ -266,6 +180,25 @@ const canonicalUrl = Astro.url.href;
             <div class="pmd-subcard">
               <h3 class="pmd-subcard-title">Save &amp; Cloud Sync Diagnostics</h3>
               <p id="devtools-sync-diagnostics" class="pmd-subcard-text">—</p>
+              <div class="pmd-inline-btns">
+                <button
+                  type="button"
+                  id="devtools-seed-save"
+                  class="pmd-btn"
+                  data-testid="devtools-seed-save"
+                >
+                  Seed Test Save (Prologue)
+                </button>
+                <button
+                  type="button"
+                  id="devtools-delete-account-save"
+                  class="pmd-btn pmd-btn-danger"
+                  data-testid="devtools-delete-account-save"
+                >
+                  Delete Save Data from Linked Account
+                </button>
+              </div>
+              <p id="devtools-save-action-status" class="pmd-subcard-text" hidden></p>
             </div>
 
             <div id="registry-audit-banner" class="pmd-audit-banner"></div>
@@ -538,9 +471,6 @@ const canonicalUrl = Astro.url.href;
   } from '../mystery-emblem/assets/tilesetLoader';
   import { getAudioManager } from '../mystery-emblem/audio/AudioManager';
   import {
-    getItemById,
-    getMoveById,
-    getPersonalSkillById,
     getRegistryValidationSummary,
     getSpeciesById,
   } from '../mystery-emblem/data/index';
@@ -564,13 +494,13 @@ const canonicalUrl = Astro.url.href;
     InMemoryCloudSyncAdapter,
     type CloudSyncAdapter,
   } from '../mystery-emblem/state/firebaseSync';
-  import { SaveStateManager } from '../mystery-emblem/state/SaveStateManager';
+  import {
+    SaveStateManager,
+    formatCampaignChapterLabel,
+  } from '../mystery-emblem/state/SaveStateManager';
   import { DevToolsHarness } from '../mystery-emblem/ui/DevToolsHarness';
   import { DialogueOverlay } from '../mystery-emblem/ui/DialogueOverlay';
-  import {
-    PmdSpriteActor,
-    destroyAllPmdSpriteActors,
-  } from '../mystery-emblem/ui/PmdSpriteCanvas';
+  import { destroyAllPmdSpriteActors } from '../mystery-emblem/ui/PmdSpriteCanvas';
   import {
     BackStackController,
     bindBackGestureSurface,
@@ -579,41 +509,17 @@ const canonicalUrl = Astro.url.href;
 
   const ADMIN_EMAIL = 'adam.kenawell.family@gmail.com';
 
-  function formatFriendlyTimestamp(epochMs: number): string {
-    try {
-      return new Date(epochMs).toLocaleString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-      });
-    } catch {
-      return 'Recently';
-    }
-  }
+  const GOOGLE_G_SVG_MARKUP = `<svg class="pmd-google-g-icon" data-testid="google-g-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"></path><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"></path><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"></path><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"></path></svg>`;
 
   let currentManager: SaveStateManager | null = null;
   let currentDialogueOverlay: DialogueOverlay | null = null;
   let currentDevToolsHarness: DevToolsHarness | null = null;
   let currentBattleScene: BattleScene | null = null;
   let currentTestDungeonScene: TestDungeonScene | null = null;
-  let continueLordActor: PmdSpriteActor | null = null;
-  let continueLordSpeciesId: string | null = null;
   let uiAbortController: AbortController | null = null;
-  const squadSpriteActors: PmdSpriteActor[] = [];
-
-  function clearSquadActors(): void {
-    while (squadSpriteActors.length > 0) {
-      squadSpriteActors.pop()?.destroy();
-    }
-  }
 
   async function initMysteryEmblemApp() {
     resetSpriteWidgets();
-    clearSquadActors();
-    continueLordActor?.destroy();
-    continueLordActor = null;
-    continueLordSpeciesId = null;
     destroyAllPmdSpriteActors();
     currentBattleScene?.destroy();
     currentBattleScene = null;
@@ -648,39 +554,20 @@ const canonicalUrl = Astro.url.href;
     const devToolsModal = document.getElementById('pmd-devtools-modal');
     const devToolsBtn = document.getElementById('pmd-dev-tools-btn');
     const cornerMenuBtn = document.getElementById('pmd-corner-menu-btn') as HTMLButtonElement | null;
-    const saveSummaryEl = document.getElementById('pmd-save-summary');
     const statusMsgEl = document.getElementById('pmd-status-msg');
+    const campaignStatusEl = document.getElementById('pmd-campaign-status');
 
     const btnContinue = document.getElementById('btn-continue') as HTMLButtonElement | null;
-    const continueSpriteSlot = document.getElementById('btn-continue-sprite');
-    const btnNewGame = document.getElementById('btn-new-game');
-    const btnCloudSync = document.getElementById('btn-cloud-sync');
-    const btnEmptyCreateSave = document.getElementById('btn-empty-create-save');
+    const btnContinueLabel = document.getElementById('btn-continue-label');
+    const btnContinueChapter = document.getElementById('btn-continue-chapter');
 
-    const squadDungeonBanner = document.getElementById('squad-dungeon-banner');
     const btnEnterDungeon = document.getElementById('btn-enter-dungeon');
-    const squadEmptyState = document.getElementById('squad-empty-state');
-    const squadCardsGrid = document.getElementById('squad-cards-grid');
+    const btnCampaignDemo = document.getElementById('btn-campaign-demo');
 
     const devToolsSyncDiagnostics = document.getElementById('devtools-sync-diagnostics');
     const auditBanner = document.getElementById('registry-audit-banner');
     const metricsGrid = document.getElementById('registry-metrics-grid');
     const errorsBox = document.getElementById('registry-errors-box');
-
-    const syncLocalDetails = document.getElementById('sync-local-details');
-    const syncCloudDetails = document.getElementById('sync-cloud-details');
-    const btnExportJson = document.getElementById('btn-export-json') as HTMLButtonElement | null;
-    const btnOpenImport = document.getElementById('btn-open-import');
-    const btnClearSave = document.getElementById('btn-clear-save') as HTMLButtonElement | null;
-    const btnGoogleAuthToggle = document.getElementById('btn-google-auth-toggle');
-    const btnReconcileNow = document.getElementById('btn-reconcile-now') as HTMLButtonElement | null;
-
-    const jsonIoBox = document.getElementById('json-io-box');
-    const jsonIoTitle = document.getElementById('json-io-title');
-    const jsonIoTextarea = document.getElementById('json-io-textarea') as HTMLTextAreaElement | null;
-    const btnConfirmImport = document.getElementById('btn-confirm-import');
-    const btnDownloadJson = document.getElementById('btn-download-json');
-    const btnCloseJsonBox = document.getElementById('btn-close-json-box');
 
     const nicknameBackdrop = document.getElementById('pmd-nickname-backdrop');
     const nicknameSpeciesEl = document.getElementById('nickname-modal-species');
@@ -689,23 +576,49 @@ const canonicalUrl = Astro.url.href;
     const btnResetNickname = document.getElementById('btn-reset-nickname');
     const btnCancelNickname = document.getElementById('btn-cancel-nickname');
 
-    let activeTab: 'squad' | 'sync' = 'squad';
     let editingUnitId: string | null = null;
     let battleScene: BattleScene | null = null;
     let battleReturnTarget: 'campaign' | 'devtools' | 'title' = 'campaign';
     let testDungeonScene: TestDungeonScene | null = null;
 
-    const backStack = new BackStackController(cornerMenuBtn, () => {
-      if (battleScene?.isOpen()) {
-        battleScene.handleMenuOrBack();
-        return;
+    const backStack = new BackStackController(
+      cornerMenuBtn,
+      () => {
+        if (battleScene?.isOpen()) {
+          battleScene.handleMenuOrBack();
+          return;
+        }
+        if (testDungeonScene?.isOpen()) {
+          testDungeonScene.handleMenuOrBack();
+          return;
+        }
+      },
+      {
+        syncIdleButton: (btn) => {
+          if (battleScene?.isOpen() || testDungeonScene?.isOpen()) {
+            btn.textContent = 'Menu';
+            btn.dataset.cornerMode = 'menu';
+            btn.setAttribute('aria-label', 'Open System Menu');
+            btn.removeAttribute('title');
+            return;
+          }
+
+          const sync = manager.getSyncStatus();
+          if (sync.user) {
+            const who = sync.user.email ?? sync.user.displayName ?? 'Google Account';
+            btn.innerHTML = `${GOOGLE_G_SVG_MARKUP}<span>Log Out</span>`;
+            btn.dataset.cornerMode = 'logout';
+            btn.setAttribute('aria-label', `Signed in as ${who} — Log out`);
+            btn.setAttribute('title', `Signed in as ${who}`);
+          } else {
+            btn.innerHTML = `${GOOGLE_G_SVG_MARKUP}<span>Log In</span>`;
+            btn.dataset.cornerMode = 'login';
+            btn.setAttribute('aria-label', 'Log in with Google');
+            btn.removeAttribute('title');
+          }
+        },
       }
-      if (testDungeonScene?.isOpen()) {
-        testDungeonScene.handleMenuOrBack();
-        return;
-      }
-      openCampaignMenu(activeTab);
-    });
+    );
 
     const dialogueOverlay = viewportEl
       ? new DialogueOverlay(viewportEl, manager, {
@@ -747,8 +660,8 @@ const canonicalUrl = Astro.url.href;
             devToolsModal.hidden = false;
             currentDevToolsHarness?.onSaveChanged();
             backStack.syncButtonLabel();
-          } else if (manager.getSave()) {
-            openCampaignMenu('squad');
+          } else if (battleReturnTarget === 'campaign') {
+            openCampaignMenu();
           } else {
             showTitleScreen();
           }
@@ -776,6 +689,26 @@ const canonicalUrl = Astro.url.href;
       currentTestDungeonScene = testDungeonScene;
     }
 
+    function openNicknameModal(instanceId: string): void {
+      const save = manager.getSave();
+      const unit = save?.roster.find((u) => u.instanceId === instanceId);
+      if (!unit || !nicknameBackdrop || !nicknameInput) return;
+      const sp = getSpeciesById(unit.speciesId);
+      editingUnitId = instanceId;
+      if (nicknameSpeciesEl) {
+        nicknameSpeciesEl.textContent = `${sp?.name ?? unit.speciesId} · Lv. ${unit.level}`;
+      }
+      nicknameInput.value = unit.nickname;
+      nicknameBackdrop.hidden = false;
+      backStack.syncButtonLabel();
+    }
+
+    function closeNicknameModal(): void {
+      editingUnitId = null;
+      if (nicknameBackdrop) nicknameBackdrop.hidden = true;
+      backStack.syncButtonLabel();
+    }
+
     if (devToolsModal && dialogueOverlay) {
       currentDevToolsHarness = new DevToolsHarness({
         modalEl: devToolsModal,
@@ -788,6 +721,9 @@ const canonicalUrl = Astro.url.href;
         onLaunchTestDungeon: () => {
           void openTestDungeon();
         },
+        onRequestRenameUnit: (instanceId) => {
+          openNicknameModal(instanceId);
+        },
         signal,
       });
     }
@@ -795,6 +731,7 @@ const canonicalUrl = Astro.url.href;
     (window as unknown as Record<string, unknown>).__MYSTERY_EMBLEM_DEBUG__ = {
       saveManager: manager,
       SaveStateManager,
+      formatCampaignChapterLabel,
       InMemoryCloudSyncAdapter,
       getRegistryValidationSummary,
       audioManager,
@@ -803,6 +740,7 @@ const canonicalUrl = Astro.url.href;
       battleScene,
       openBattleScene,
       testDungeonScene,
+      openNicknameModal,
       computeCombatForecast,
       computeHealForecast,
       resolveCombatExchange,
@@ -836,6 +774,13 @@ const canonicalUrl = Astro.url.href;
       statusMsgEl.hidden = trimmed.length === 0;
     }
 
+    function setCampaignStatus(msg: string): void {
+      if (!campaignStatusEl) return;
+      const trimmed = msg.trim();
+      campaignStatusEl.textContent = trimmed;
+      campaignStatusEl.hidden = trimmed.length === 0;
+    }
+
     function showTitleScreen(): void {
       if (campaignMenu) campaignMenu.hidden = true;
       if (devToolsModal) devToolsModal.hidden = true;
@@ -843,8 +788,8 @@ const canonicalUrl = Astro.url.href;
       backStack.syncButtonLabel();
     }
 
-    function openCampaignMenu(tab?: 'squad' | 'sync'): void {
-      if (tab) switchTab(tab);
+    function openCampaignMenu(): void {
+      setCampaignStatus('');
       if (titleScreen) titleScreen.hidden = true;
       if (devToolsModal) devToolsModal.hidden = true;
       if (campaignMenu) campaignMenu.hidden = false;
@@ -856,10 +801,6 @@ const canonicalUrl = Astro.url.href;
       if (battleScene?.isOpen()) {
         battleReturnTarget = 'devtools';
         battleScene.close();
-        return;
-      }
-      if (battleScene?.isOpen()) {
-        battleScene.handleMenuOrBack();
         return;
       }
       if (testDungeonScene?.isOpen()) {
@@ -877,37 +818,6 @@ const canonicalUrl = Astro.url.href;
       backStack.syncButtonLabel();
     }
 
-    function switchTab(nextTab: 'squad' | 'sync'): void {
-      activeTab = nextTab;
-      document.querySelectorAll<HTMLElement>('#pmd-campaign-menu .pmd-tab-btn').forEach((btn) => {
-        btn.classList.toggle('is-active', btn.dataset.tab === nextTab);
-      });
-      const squadPanel = document.getElementById('tab-panel-squad');
-      const syncPanel = document.getElementById('tab-panel-sync');
-      if (squadPanel) squadPanel.hidden = nextTab !== 'squad';
-      if (syncPanel) syncPanel.hidden = nextTab !== 'sync';
-    }
-
-    function openNicknameModal(instanceId: string): void {
-      const save = manager.getSave();
-      const unit = save?.roster.find((u) => u.instanceId === instanceId);
-      if (!unit || !nicknameBackdrop || !nicknameInput) return;
-      const sp = getSpeciesById(unit.speciesId);
-      editingUnitId = instanceId;
-      if (nicknameSpeciesEl) {
-        nicknameSpeciesEl.textContent = `${sp?.name ?? unit.speciesId} · Lv. ${unit.level}`;
-      }
-      nicknameInput.value = unit.nickname;
-      nicknameBackdrop.hidden = false;
-      backStack.syncButtonLabel();
-    }
-
-    function closeNicknameModal(): void {
-      editingUnitId = null;
-      if (nicknameBackdrop) nicknameBackdrop.hidden = true;
-      backStack.syncButtonLabel();
-    }
-
     // Register navigation layers from lowest to highest LIFO priority
     backStack.registerLayer({
       id: 'campaign-menu',
@@ -918,13 +828,6 @@ const canonicalUrl = Astro.url.href;
       id: 'devtools-modal',
       isActive: () => Boolean(devToolsModal && !devToolsModal.hidden),
       onBack: () => showTitleScreen(),
-    });
-    backStack.registerLayer({
-      id: 'json-io-box',
-      isActive: () => Boolean(jsonIoBox && !jsonIoBox.hidden),
-      onBack: () => {
-        if (jsonIoBox) jsonIoBox.hidden = true;
-      },
     });
     backStack.registerLayer({
       id: 'battle-scene-sublayer',
@@ -990,133 +893,6 @@ const canonicalUrl = Astro.url.href;
       }
     }
 
-    function renderSquadCards(): void {
-      clearSquadActors();
-      const save = manager.getSave();
-      if (!squadCardsGrid || !squadEmptyState) return;
-      squadCardsGrid.innerHTML = '';
-
-      if (!save || save.roster.length === 0) {
-        squadEmptyState.hidden = false;
-        if (squadDungeonBanner) squadDungeonBanner.hidden = true;
-        return;
-      }
-      squadEmptyState.hidden = true;
-      if (squadDungeonBanner) squadDungeonBanner.hidden = false;
-
-      save.roster.forEach((unit, slotIdx) => {
-        const sp = getSpeciesById(unit.speciesId);
-        const skill = sp ? getPersonalSkillById(sp.personalSkillId) : undefined;
-        const held = unit.heldItemId ? getItemById(unit.heldItemId) : undefined;
-        const cons = unit.consumableItemId ? getItemById(unit.consumableItemId) : undefined;
-
-        const card = document.createElement('article');
-        card.className = 'pmd-unit-card';
-        card.dataset.instanceId = unit.instanceId;
-        card.dataset.speciesId = unit.speciesId;
-        card.dataset.testid = `unit-card-slot-${slotIdx}`;
-
-        const topRow = document.createElement('div');
-        topRow.className = 'pmd-unit-top';
-
-        const spriteBox = document.createElement('div');
-        spriteBox.className = 'pmd-unit-sprite';
-        topRow.appendChild(spriteBox);
-
-        const identity = document.createElement('div');
-        identity.className = 'pmd-unit-id';
-
-        const nameLine = document.createElement('div');
-        nameLine.className = 'pmd-unit-name-line';
-        const nickEl = document.createElement('strong');
-        nickEl.className = 'pmd-unit-nickname';
-        nickEl.dataset.testid = `unit-nickname-${unit.speciesId}`;
-        nickEl.dataset.slotNickname = String(slotIdx);
-        nickEl.textContent = unit.nickname;
-        nameLine.appendChild(nickEl);
-
-        if (unit.isLord) {
-          const lordTag = document.createElement('span');
-          lordTag.className = 'pmd-mini-tag is-gold';
-          lordTag.textContent = 'LORD';
-          nameLine.appendChild(lordTag);
-        }
-        identity.appendChild(nameLine);
-
-        const metaLine = document.createElement('div');
-        metaLine.className = 'pmd-unit-meta';
-        metaLine.dataset.testid = `unit-species-meta-slot-${slotIdx}`;
-        metaLine.textContent = `${sp?.name ?? unit.speciesId} · Lv. ${unit.level} · ${(sp?.types ?? []).join('/')}`;
-        identity.appendChild(metaLine);
-
-        const skillLine = document.createElement('div');
-        skillLine.className = 'pmd-unit-skill';
-        skillLine.textContent = `Ability: ${skill?.name ?? sp?.personalSkillId ?? '—'}`;
-        identity.appendChild(skillLine);
-
-        topRow.appendChild(identity);
-
-        const renameBtn = document.createElement('button');
-        renameBtn.type = 'button';
-        renameBtn.className = 'pmd-btn pmd-rename-btn';
-        renameBtn.dataset.testid = `btn-rename-${unit.speciesId}`;
-        renameBtn.textContent = 'Rename';
-        bindPointerTap(renameBtn, () => openNicknameModal(unit.instanceId), { signal });
-        topRow.appendChild(renameBtn);
-
-        card.appendChild(topRow);
-
-        const st = unit.currentStats;
-        const statsLine = document.createElement('div');
-        statsLine.className = 'pmd-stats-strip';
-        statsLine.textContent = `HP ${st.hp} · Atk ${st.atk} · Def ${st.def} · SpA ${st.spa} · SpD ${st.spd} · Spe ${st.spe} · Mov ${st.mov}`;
-        card.appendChild(statsLine);
-
-        const movesRow = document.createElement('div');
-        movesRow.className = 'pmd-moves-row';
-        for (const moveId of unit.activeMoveIds) {
-          const mv = getMoveById(moveId);
-          const isEquipped = unit.equippedMoveId === moveId;
-          const isOffensive = mv && (mv.category === 'Physical' || mv.category === 'Special');
-          const moveBtn = document.createElement('button');
-          moveBtn.type = 'button';
-          moveBtn.className = `pmd-btn pmd-move-pill${isEquipped ? ' is-equipped' : ''}`;
-          moveBtn.disabled = !isOffensive;
-          const rangeLabel = mv ? (mv.range[0] === mv.range[1] ? `R${mv.range[0]}` : `R${mv.range[0]}-${mv.range[1]}`) : '';
-          moveBtn.textContent = `${isEquipped ? '[E] ' : ''}${mv?.name ?? moveId} (${rangeLabel})`;
-          if (isOffensive) {
-            bindPointerTap(
-              moveBtn,
-              () => {
-                manager.setEquippedMove(unit.instanceId, moveId);
-              },
-              { signal }
-            );
-          }
-          movesRow.appendChild(moveBtn);
-        }
-        card.appendChild(movesRow);
-
-        const itemsLine = document.createElement('div');
-        itemsLine.className = 'pmd-unit-items';
-        itemsLine.textContent = `Held: ${held?.name ?? 'None'} · Item: ${cons?.name ?? 'None'}`;
-        card.appendChild(itemsLine);
-
-        squadCardsGrid.appendChild(card);
-
-        if (sp) {
-          const actor = new PmdSpriteActor({
-            speciesIdOrAssetId: sp.id,
-            interactiveTapAttack: true,
-            testId: `squad-sprite-slot-${slotIdx}`,
-          });
-          squadSpriteActors.push(actor);
-          spriteBox.appendChild(actor.canvas);
-          void actor.ready();
-        }
-      });
-    }
-
     function renderAll(): void {
       const save = manager.getSave();
       const sync = manager.getSyncStatus();
@@ -1134,94 +910,33 @@ const canonicalUrl = Astro.url.href;
       }
 
       if (save) {
-        const lordUnit = save.roster.find((u) => u.isLord) ?? save.roster[0];
-        const lordSp = lordUnit ? getSpeciesById(lordUnit.speciesId) : undefined;
-        const friendlyDate = formatFriendlyTimestamp(save.lastUpdated);
-
-        if (btnContinue) {
-          btnContinue.disabled = false;
+        const chapterLabel = formatCampaignChapterLabel(save.campaign.currentChapterId);
+        if (btnContinueLabel) {
+          btnContinueLabel.textContent = 'Continue';
         }
-        if (continueSpriteSlot && lordUnit) {
-          continueSpriteSlot.hidden = false;
-          if (!continueLordActor) {
-            continueLordActor = new PmdSpriteActor({
-              speciesIdOrAssetId: lordUnit.speciesId,
-              initialAction: 'Idle',
-              initialDirection: 0,
-              testId: 'continue-lord-sprite',
-            });
-            continueLordActor.canvas.style.pointerEvents = 'none';
-            continueLordSpeciesId = lordUnit.speciesId;
-            continueSpriteSlot.innerHTML = '';
-            continueSpriteSlot.appendChild(continueLordActor.canvas);
-            void continueLordActor.ready();
-          } else if (continueLordSpeciesId !== lordUnit.speciesId) {
-            continueLordSpeciesId = lordUnit.speciesId;
-            void continueLordActor.setSpecies(lordUnit.speciesId);
-          }
+        if (btnContinueChapter) {
+          btnContinueChapter.textContent = chapterLabel;
+          btnContinueChapter.hidden = false;
         }
-        if (saveSummaryEl) {
-          saveSummaryEl.textContent = `Lord ${lordUnit?.nickname ?? '—'} (${lordSp?.name ?? '—'}) · Party: ${save.roster.length} · ${save.gold.toLocaleString()}G`;
-        }
-        if (syncLocalDetails) {
-          syncLocalDetails.textContent = `Lord ${lordUnit?.nickname ?? '—'} · ${save.roster.length} Pokémon · ${save.gold.toLocaleString()}G · Saved ${friendlyDate}`;
-        }
-        if (btnExportJson) btnExportJson.disabled = false;
-        if (btnClearSave) btnClearSave.disabled = false;
       } else {
-        if (btnContinue) {
-          btnContinue.disabled = true;
+        if (btnContinueLabel) {
+          btnContinueLabel.textContent = 'Start';
         }
-        if (continueSpriteSlot) {
-          continueSpriteSlot.hidden = true;
-          continueSpriteSlot.innerHTML = '';
-        }
-        continueLordActor?.destroy();
-        continueLordActor = null;
-        continueLordSpeciesId = null;
-        if (saveSummaryEl) {
-          saveSummaryEl.textContent =
-            'Command your Pokémon squad across five kingdoms in a tactical RPG adventure.';
-        }
-        if (syncLocalDetails) {
-          syncLocalDetails.textContent = 'No save file on this device yet.';
-        }
-        if (btnExportJson) btnExportJson.disabled = true;
-        if (btnClearSave) btnClearSave.disabled = true;
-      }
-
-      if (syncCloudDetails && btnGoogleAuthToggle && btnReconcileNow && btnCloudSync) {
-        if (!sync.isFirebaseConfigured) {
-          syncCloudDetails.textContent = 'Cloud sync is currently unavailable. Your progress saves automatically to this browser.';
-          btnGoogleAuthToggle.textContent = 'Sign in with Google';
-          (btnGoogleAuthToggle as HTMLButtonElement).disabled = true;
-          btnReconcileNow.hidden = true;
-          btnCloudSync.textContent = 'Cloud Save';
-        } else if (sync.user) {
-          const who = sync.user.email ?? sync.user.displayName ?? 'Google Account';
-          syncCloudDetails.textContent = sync.errorMessage
-            ? `Signed in as ${who} · ${sync.errorMessage}`
-            : `Signed in as ${who} · Progress syncs automatically across your devices.`;
-          btnGoogleAuthToggle.textContent = 'Sign Out';
-          (btnGoogleAuthToggle as HTMLButtonElement).disabled = false;
-          btnReconcileNow.hidden = false;
-          btnCloudSync.textContent = 'Cloud Save (Synced)';
-        } else {
-          syncCloudDetails.textContent = sync.errorMessage
-            ? `Could not complete sign-in: ${sync.errorMessage}`
-            : 'Sign in with Google to automatically sync your adventure across PC and mobile.';
-          btnGoogleAuthToggle.textContent = 'Sign in with Google';
-          (btnGoogleAuthToggle as HTMLButtonElement).disabled = false;
-          btnReconcileNow.hidden = true;
-          btnCloudSync.textContent = 'Cloud Save';
+        if (btnContinueChapter) {
+          btnContinueChapter.textContent = '';
+          btnContinueChapter.hidden = true;
         }
       }
 
       if (devToolsSyncDiagnostics) {
         const iso = save ? new Date(save.lastUpdated).toISOString() : 'none';
         const uidPath = sync.user ? `saves/${sync.user.uid}` : 'unauthenticated';
+        const chapterInfo = save
+          ? `${formatCampaignChapterLabel(save.campaign.currentChapterId)} (${save.campaign.currentChapterId})`
+          : 'none';
         devToolsSyncDiagnostics.textContent = [
           `Save ID: ${save?.saveId ?? 'none'}`,
+          `Chapter: ${chapterInfo}`,
           `Schema: v${save?.schemaVersion ?? '—'}`,
           `lastUpdated: ${iso}${save ? ` (${save.lastUpdated})` : ''}`,
           `Firestore Doc: ${uidPath}`,
@@ -1229,26 +944,73 @@ const canonicalUrl = Astro.url.href;
         ].join(' · ');
       }
 
-      renderSquadCards();
       currentDevToolsHarness?.onSaveChanged();
       backStack.syncButtonLabel();
     }
 
-    function startNewGame(): void {
-      manager.createNewCampaignSave({
-        lordSpeciesId: 'dratini',
-        partnerSpeciesId: 'bulbasaur',
-        healerSpeciesId: 'happiny',
-      });
-      setStatus('');
-      openCampaignMenu('squad');
-    }
+    // Top-Right Corner Button:
+    // - In `back` / `menu` mode (Campaign Menu, Dev Tools, Dialogue, Battle/Test Dungeon): unified pointer tap
+    // - In `login` / `logout` mode (Title Screen): native `click` activation so iOS Safari & Android Chrome permit `signInWithPopup`
+    let cornerPressedInNavMode = false;
+    cornerMenuBtn?.addEventListener(
+      'pointerdown',
+      (ev: PointerEvent) => {
+        if (ev.button !== 0 && ev.pointerType === 'mouse') return;
+        ev.stopPropagation();
+        const mode = cornerMenuBtn.dataset.cornerMode;
+        cornerPressedInNavMode = mode === 'back' || mode === 'menu';
+      },
+      { signal }
+    );
 
-    // Bind unified Pointer Event handlers (Rule 2: Zero keyboard event listeners!)
-    bindPointerTap(cornerMenuBtn, () => backStack.triggerMenuOrBack(), {
-      signal,
-      stopPropagation: true,
-    });
+    bindPointerTap(
+      cornerMenuBtn,
+      () => {
+        const mode = cornerMenuBtn?.dataset.cornerMode;
+        if (mode === 'back' || mode === 'menu') {
+          backStack.triggerMenuOrBack();
+        }
+      },
+      {
+        signal,
+        stopPropagation: true,
+      }
+    );
+
+    cornerMenuBtn?.addEventListener(
+      'click',
+      (ev: MouseEvent) => {
+        ev.stopPropagation();
+        if (cornerPressedInNavMode) {
+          cornerPressedInNavMode = false;
+          return;
+        }
+        const mode = cornerMenuBtn.dataset.cornerMode;
+        if (mode !== 'login' && mode !== 'logout') {
+          return;
+        }
+        const sync = manager.getSyncStatus();
+        if (!sync.isFirebaseConfigured) {
+          setStatus('Google Sign-In is not configured in this environment.');
+          return;
+        }
+        setStatus('');
+        if (sync.user) {
+          audioManager.playSfx('cancel');
+          void manager.signOutFromGoogle();
+        } else {
+          audioManager.playSfx('select');
+          void manager.signInWithGoogleAndSync().catch((err: unknown) => {
+            const msg = err instanceof Error ? err.message : '';
+            if (msg && !msg.toLowerCase().includes('popup-closed-by-user')) {
+              setStatus(`Could not complete sign-in: ${msg}`);
+            }
+          });
+        }
+      },
+      { signal }
+    );
+
     bindPointerTap(devToolsBtn, () => toggleDevTools(), {
       signal,
       stopPropagation: true,
@@ -1257,35 +1019,33 @@ const canonicalUrl = Astro.url.href;
     // PC Right-Click parity + Mobile Long-Press parity on viewport background
     bindBackGestureSurface(viewportEl, () => backStack.triggerMenuOrBack(), { signal });
 
-    bindPointerTap(btnContinue, () => openCampaignMenu('squad'), { signal });
-    bindPointerTap(btnNewGame, () => startNewGame(), { signal });
-    bindPointerTap(btnEmptyCreateSave, () => startNewGame(), { signal });
-    bindPointerTap(btnEnterDungeon, () => void openBattleScene('campaign'), { signal });
-
-    // OAuth popup buttons use pointer `click` activation so iOS Safari & Android Chrome permit `signInWithPopup`
-    btnCloudSync?.addEventListener(
-      'click',
+    bindPointerTap(
+      btnContinue,
       () => {
-        openCampaignMenu('sync');
-        if (manager.getSyncStatus().isFirebaseConfigured && !manager.getSyncStatus().user) {
-          void manager.signInWithGoogleAndSync().catch(() => {
-            // User closed popup or cancelled; clean message handled in Cloud & Save panel
-          });
-        }
+        audioManager.playSfx('select');
+        setStatus('');
+        openCampaignMenu();
       },
       { signal }
     );
 
-    document.querySelectorAll<HTMLElement>('#pmd-campaign-menu .pmd-tab-btn').forEach((tabBtn) => {
-      bindPointerTap(
-        tabBtn,
-        () => {
-          const t = tabBtn.dataset.tab as 'squad' | 'sync' | undefined;
-          if (t) switchTab(t);
-        },
-        { signal }
-      );
-    });
+    bindPointerTap(
+      btnEnterDungeon,
+      () => {
+        audioManager.playSfx('select');
+        void openBattleScene('campaign');
+      },
+      { signal }
+    );
+
+    bindPointerTap(
+      btnCampaignDemo,
+      () => {
+        audioManager.playSfx('select');
+        setCampaignStatus('Demo mode is coming soon!');
+      },
+      { signal }
+    );
 
     // Nickname Modal Controls
     document.querySelectorAll<HTMLElement>('.pmd-chip-btn[data-preset]').forEach((chip) => {
@@ -1321,167 +1081,6 @@ const canonicalUrl = Astro.url.href;
     );
 
     bindPointerTap(btnCancelNickname, () => closeNicknameModal(), { signal });
-
-    // Cloud & Save Backup Controls
-    btnGoogleAuthToggle?.addEventListener(
-      'click',
-      () => {
-        const sync = manager.getSyncStatus();
-        if (!sync.isFirebaseConfigured) return;
-        if (sync.user) {
-          void manager.signOutFromGoogle();
-        } else {
-          void manager.signInWithGoogleAndSync().catch(() => {
-            // Handled via sync status state
-          });
-        }
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      btnReconcileNow,
-      () => {
-        void manager.reconcileWithCloud();
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      btnExportJson,
-      () => {
-        if (!jsonIoBox || !jsonIoTextarea || !jsonIoTitle || !btnConfirmImport || !btnDownloadJson) return;
-        jsonIoTitle.textContent = 'Export Save Backup';
-        jsonIoTextarea.value = manager.exportSaveJson();
-        jsonIoTextarea.readOnly = true;
-        btnConfirmImport.hidden = true;
-        btnDownloadJson.hidden = false;
-        jsonIoBox.hidden = false;
-        backStack.syncButtonLabel();
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      btnDownloadJson,
-      () => {
-        const json = manager.exportSaveJson();
-        const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `mystery-emblem-save-${Date.now()}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      btnOpenImport,
-      () => {
-        if (!jsonIoBox || !jsonIoTextarea || !jsonIoTitle || !btnConfirmImport || !btnDownloadJson) return;
-        jsonIoTitle.textContent = 'Import Save Backup';
-        jsonIoTextarea.value = '';
-        jsonIoTextarea.readOnly = false;
-        btnConfirmImport.hidden = false;
-        btnDownloadJson.hidden = true;
-        jsonIoBox.hidden = false;
-        backStack.syncButtonLabel();
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      btnConfirmImport,
-      () => {
-        if (!jsonIoTextarea || !jsonIoBox) return;
-        try {
-          manager.importSaveJson(jsonIoTextarea.value);
-          jsonIoBox.hidden = true;
-          switchTab('squad');
-          backStack.syncButtonLabel();
-        } catch (err) {
-          if (jsonIoTitle) {
-            jsonIoTitle.textContent = err instanceof Error ? `Invalid Backup: ${err.message}` : 'Invalid Backup File';
-          }
-        }
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      btnCloseJsonBox,
-      () => {
-        if (jsonIoBox) jsonIoBox.hidden = true;
-        backStack.syncButtonLabel();
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      btnClearSave,
-      () => {
-        manager.clearLocalSave();
-      },
-      { signal }
-    );
-
-    // Player Audio Settings Card (Campaign Menu -> Cloud & Save)
-    const btnPlayerMuteToggle = document.getElementById(
-      'btn-player-mute-toggle'
-    ) as HTMLButtonElement | null;
-    const playerAudioStatus = document.getElementById('player-audio-status');
-    const playerBgmVolume = document.getElementById('player-bgm-volume') as HTMLInputElement | null;
-    const playerSfxVolume = document.getElementById('player-sfx-volume') as HTMLInputElement | null;
-
-    bindPointerTap(
-      btnPlayerMuteToggle,
-      () => {
-        const nowMuted = audioManager.toggleMute();
-        if (!nowMuted) audioManager.playSfx('select');
-      },
-      { signal }
-    );
-
-    playerBgmVolume?.addEventListener(
-      'input',
-      () => {
-        audioManager.setBgmVolume(Number(playerBgmVolume.value) / 100);
-      },
-      { signal }
-    );
-
-    playerSfxVolume?.addEventListener(
-      'input',
-      () => {
-        audioManager.setSfxVolume(Number(playerSfxVolume.value) / 100);
-      },
-      { signal }
-    );
-
-    const unsubscribePlayerAudio = audioManager.subscribe((snap) => {
-      if (btnPlayerMuteToggle) {
-        btnPlayerMuteToggle.textContent = snap.settings.muted ? 'Unmute Audio' : 'Mute Audio';
-        btnPlayerMuteToggle.classList.toggle('is-active', snap.settings.muted);
-      }
-      if (playerAudioStatus) {
-        const bgmPct = Math.round(snap.settings.bgmVolume * 100);
-        const sfxPct = Math.round(snap.settings.sfxVolume * 100);
-        const trackPart = snap.currentTrack ? ` · ♪ ${snap.currentTrack.title}` : '';
-        playerAudioStatus.textContent = snap.settings.muted
-          ? 'Audio Muted'
-          : `Music: ${bgmPct}% · SFX: ${sfxPct}%${trackPart}`;
-      }
-      if (playerBgmVolume && document.activeElement !== playerBgmVolume) {
-        playerBgmVolume.value = String(Math.round(snap.settings.bgmVolume * 100));
-      }
-      if (playerSfxVolume && document.activeElement !== playerSfxVolume) {
-        playerSfxVolume.value = String(Math.round(snap.settings.sfxVolume * 100));
-      }
-    });
-
-    signal.addEventListener('abort', () => unsubscribePlayerAudio(), { once: true });
 
     renderRegistryAudit();
     manager.subscribe(() => renderAll());
@@ -1540,11 +1139,21 @@ const canonicalUrl = Astro.url.href;
     min-height: 46px;
     min-width: 108px;
     padding: 0.45rem 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.48rem;
     font-size: 0.8rem;
     color: #f8d048;
     cursor: pointer;
     z-index: 95;
     transition: transform 0.15s, background-color 0.15s;
+  }
+
+  :global(.pmd-google-g-icon) {
+    flex-shrink: 0;
+    display: block;
+    filter: drop-shadow(1px 1px 0 #081020);
   }
 
   .pmd-corner-left {
@@ -1573,32 +1182,77 @@ const canonicalUrl = Astro.url.href;
     gap: 1rem;
   }
 
+  .pmd-campaign-card {
+    max-width: 520px;
+    width: 100%;
+    padding: 1.85rem 1.6rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.1rem;
+  }
+
+  .pmd-campaign-options {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .pmd-campaign-option-btn {
+    width: 100%;
+    min-height: 62px;
+    padding: 0.7rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+  }
+
+  .pmd-campaign-option-title {
+    font-size: 0.96rem;
+    font-weight: bold;
+    letter-spacing: 0.04em;
+  }
+
+  .pmd-campaign-option-sub {
+    font-size: 0.72rem;
+    color: #90d8f8;
+  }
+
   .pmd-continue-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex-wrap: wrap;
     gap: 0.55rem;
   }
 
-  .pmd-continue-sprite {
+  .pmd-continue-chapter {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    line-height: 0;
-    pointer-events: none;
+    padding: 0.14rem 0.52rem;
+    border-radius: 3px;
+    border: 1px solid rgba(144, 216, 248, 0.72);
+    background: rgba(10, 20, 40, 0.9);
+    color: #90d8f8;
+    font-size: 0.76rem;
+    letter-spacing: 0.03em;
   }
 
   .pmd-corner-btn[hidden],
   .pmd-title-card[hidden],
+  .pmd-campaign-card[hidden],
   .pmd-panel[hidden],
   .pmd-tab-panel[hidden],
   .pmd-modal-backdrop[hidden],
-  .pmd-empty-box[hidden],
-  .pmd-json-box[hidden],
   .pmd-errors-box[hidden],
   .pmd-status[hidden],
-  .pmd-continue-sprite[hidden],
+  .pmd-continue-chapter[hidden],
   .pmd-subcard[hidden],
+  .pmd-subcard-text[hidden],
   .pmd-btn[hidden] {
     display: none !important;
   }
@@ -1643,7 +1297,7 @@ const canonicalUrl = Astro.url.href;
     width: 100%;
   }
 
-  /* Campaign Menu & Dev Tools Panel Layout */
+  /* Dev Tools Panel Layout */
   .pmd-panel {
     width: 100%;
     max-width: 920px;
@@ -1679,119 +1333,6 @@ const canonicalUrl = Astro.url.href;
     display: flex;
     flex-direction: column;
     gap: 0.9rem;
-  }
-
-  .pmd-empty-box {
-    padding: 1.5rem;
-    text-align: center;
-    border: 1px dashed rgba(72, 184, 232, 0.45);
-    border-radius: 6px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.85rem;
-  }
-
-  .pmd-squad-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
-    gap: 0.85rem;
-  }
-
-  :global(.pmd-unit-card) {
-    background: rgba(10, 18, 34, 0.88);
-    border: 2px solid rgba(72, 184, 232, 0.65);
-    border-radius: 6px;
-    padding: 0.85rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-  }
-
-  :global(.pmd-unit-top) {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-  }
-
-  :global(.pmd-unit-sprite) {
-    min-width: 56px;
-    min-height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(24, 40, 68, 0.6);
-    border-radius: 4px;
-    border: 1px solid rgba(72, 184, 232, 0.35);
-    overflow: hidden;
-  }
-
-  :global(.pmd-unit-id) {
-    flex: 1;
-    min-width: 0;
-  }
-
-  :global(.pmd-unit-name-line) {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    flex-wrap: wrap;
-  }
-
-  :global(.pmd-unit-nickname) {
-    font-size: 0.95rem;
-    color: #f8d048;
-    word-break: break-word;
-  }
-
-  :global(.pmd-mini-tag) {
-    font-size: 0.62rem;
-    padding: 0.08rem 0.38rem;
-    border-radius: 3px;
-    border: 1px solid #f8d048;
-    color: #f8d048;
-    background: rgba(248, 208, 72, 0.14);
-  }
-
-  :global(.pmd-unit-meta),
-  :global(.pmd-unit-skill),
-  :global(.pmd-unit-items) {
-    font-size: 0.72rem;
-    color: rgba(248, 248, 248, 0.85);
-    line-height: 1.4;
-  }
-
-  :global(.pmd-rename-btn) {
-    min-height: 44px;
-    padding: 0.4rem 0.75rem;
-    font-size: 0.75rem;
-  }
-
-  :global(.pmd-stats-strip) {
-    font-size: 0.7rem;
-    color: #90d8f8;
-    background: rgba(8, 14, 26, 0.75);
-    padding: 0.35rem 0.5rem;
-    border-radius: 4px;
-    border: 1px solid rgba(72, 184, 232, 0.25);
-  }
-
-  :global(.pmd-moves-row) {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-  }
-
-  :global(.pmd-move-pill) {
-    min-height: 44px;
-    padding: 0.35rem 0.65rem;
-    font-size: 0.72rem;
-  }
-
-  :global(.pmd-move-pill.is-equipped) {
-    border-color: #78e890;
-    color: #b8ffca;
-    background: rgba(24, 68, 48, 0.85);
   }
 
   /* Dev Tools Audit & Step 2 Harnesses */
@@ -1915,7 +1456,7 @@ const canonicalUrl = Astro.url.href;
     border-bottom: 1px solid rgba(72, 184, 232, 0.2);
   }
 
-  /* Sync & Backup */
+  /* Sync & Audio Grid */
   .pmd-sync-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
@@ -2044,6 +1585,7 @@ const canonicalUrl = Astro.url.href;
     }
 
     .pmd-title-card,
+    .pmd-campaign-card,
     .pmd-panel {
       padding: 1.25rem 0.9rem;
     }
@@ -2069,6 +1611,22 @@ const canonicalUrl = Astro.url.href;
       max-width: 680px;
       padding: 0.95rem 1.25rem;
       gap: 0.45rem;
+    }
+
+    .pmd-campaign-card {
+      max-width: 680px;
+      padding: 0.95rem 1.25rem;
+      gap: 0.65rem;
+    }
+
+    .pmd-campaign-options {
+      flex-direction: row;
+      gap: 0.65rem;
+    }
+
+    .pmd-campaign-option-btn {
+      min-height: 54px;
+      padding: 0.5rem 0.85rem;
     }
 
     .pmd-title {

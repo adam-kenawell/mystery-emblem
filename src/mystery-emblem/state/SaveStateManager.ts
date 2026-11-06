@@ -69,6 +69,33 @@ function generateId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+export function formatCampaignChapterLabel(chapterId: string | null | undefined): string {
+  const raw = (chapterId ?? '').trim();
+  if (!raw) return 'Prologue';
+  const lower = raw.toLowerCase();
+  if (lower === 'prologue') return 'Prologue';
+  if (lower === 'epilogue') return 'Epilogue';
+  if (lower === 'endgame') return 'Endgame';
+
+  const chMatch = /^(?:chapter|ch)[_\-\s]*(\d+)$/i.exec(raw);
+  if (chMatch) {
+    return `Chapter ${Number(chMatch[1])}`;
+  }
+  if (/^\d+$/.test(raw)) {
+    return `Chapter ${Number(raw)}`;
+  }
+  const paraMatch = /^(?:paralogue|para|par)[_\-\s]*(\d+)$/i.exec(raw);
+  if (paraMatch) {
+    return `Paralogue ${Number(paraMatch[1])}`;
+  }
+
+  return raw
+    .split(/[_\-\s]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+}
+
 export function makeSupportPairKey(instanceIdA: string, instanceIdB: string): string {
   if (instanceIdA === instanceIdB) {
     throw new Error('Cannot compute Support pair key between a unit and itself.');
@@ -196,6 +223,7 @@ export interface NewCampaignConfig {
   healerNickname?: string;
   quizSeeds?: QuizRecruitSeeds;
   startingGold?: number;
+  currentChapterId?: string;
 }
 
 export class SaveStateManager {
@@ -302,6 +330,8 @@ export class SaveStateManager {
           q1Healer: [cfg.healerSpeciesId],
         };
 
+    const initialChapterId = cfg.currentChapterId?.trim() || 'prologue';
+
     const save: SaveData = {
       schemaVersion: CURRENT_SAVE_SCHEMA_VERSION,
       saveId: generateId('campaign'),
@@ -309,7 +339,7 @@ export class SaveStateManager {
       newGamePlusUnlocked: this.isNewGamePlusUnlocked(),
       gold: cfg.startingGold ?? 1500,
       campaign: {
-        currentChapterId: 'prologue',
+        currentChapterId: initialChapterId,
         lordInstanceId: lord.instanceId,
         partnerInstanceId: partner.instanceId,
         quizSeeds: seeds,
@@ -324,10 +354,10 @@ export class SaveStateManager {
       ],
       supports: {},
       overworld: {
-        currentNodeId: 'prologue',
+        currentNodeId: initialChapterId,
         nodes: {
-          prologue: {
-            nodeId: 'prologue',
+          [initialChapterId]: {
+            nodeId: initialChapterId,
             unlocked: true,
             cleared: false,
             activeSkirmish: null,
@@ -337,6 +367,17 @@ export class SaveStateManager {
       },
     };
 
+    this.commitSave(save);
+    return this.getSave()!;
+  }
+
+  public setCurrentChapter(chapterId: string): SaveData {
+    const save = this.requireActiveSave();
+    const trimmed = chapterId.trim();
+    if (!trimmed) {
+      throw new Error('chapterId must be a non-empty string.');
+    }
+    save.campaign.currentChapterId = trimmed;
     this.commitSave(save);
     return this.getSave()!;
   }
@@ -550,6 +591,60 @@ export class SaveStateManager {
     this.storage.removeItem(LEGACY_SAVE_STORAGE_KEY);
     this.currentSave = null;
     this.emitChange();
+  }
+
+  /**
+   * Deletes all save data from localStorage AND from the currently signed-in Google account's
+   * Cloud Firestore document (`saves/{uid}`).
+   */
+  public async deleteSaveFromLinkedAccount(): Promise<{
+    deletedLocal: boolean;
+    deletedCloud: boolean;
+  }> {
+    const hadLocal = Boolean(
+      this.currentSave ||
+        this.storage.getItem(SAVE_STORAGE_KEY) ||
+        this.storage.getItem(LEGACY_SAVE_STORAGE_KEY)
+    );
+    this.storage.removeItem(SAVE_STORAGE_KEY);
+    this.storage.removeItem(LEGACY_SAVE_STORAGE_KEY);
+    this.storage.removeItem(META_STORAGE_KEY);
+    this.currentSave = null;
+
+    const user = this.cloud.getCurrentUser();
+    if (!user || typeof this.cloud.deleteCloudSave !== 'function') {
+      this.syncStatus = {
+        ...this.syncStatus,
+        lastResolution: 'unauthenticated',
+        errorMessage: null,
+      };
+      this.emitChange();
+      return { deletedLocal: hadLocal, deletedCloud: false };
+    }
+
+    try {
+      await this.cloud.deleteCloudSave(user.uid);
+      this.syncStatus = {
+        ...this.syncStatus,
+        user,
+        lastResolution: 'empty',
+        lastSyncedAt: Date.now(),
+        errorMessage: null,
+      };
+      this.emitChange();
+      return { deletedLocal: hadLocal, deletedCloud: true };
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to delete save data from Cloud Firestore.';
+      this.syncStatus = {
+        ...this.syncStatus,
+        user,
+        lastResolution: 'cloud_error',
+        errorMessage: message,
+      };
+      this.emitChange();
+      throw err;
+    }
   }
 
   public exportSaveJson(): string {

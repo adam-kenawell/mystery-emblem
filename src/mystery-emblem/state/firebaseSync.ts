@@ -8,7 +8,7 @@ import {
   type Auth,
   type User,
 } from 'firebase/auth';
-import { doc, getDoc, getFirestore, setDoc, type Firestore } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, getFirestore, setDoc, type Firestore } from 'firebase/firestore';
 import type { SaveData } from '../types/schemas';
 
 export interface CloudUser {
@@ -25,6 +25,7 @@ export interface CloudSyncAdapter {
   signOut(): Promise<void>;
   fetchCloudSave(uid: string): Promise<unknown | null>;
   pushCloudSave(uid: string, save: SaveData): Promise<void>;
+  deleteCloudSave(uid: string): Promise<void>;
 }
 
 interface FirebaseEnvConfig {
@@ -140,6 +141,12 @@ export class FirestoreSyncAdapter implements CloudSyncAdapter {
     const cleanPayload = JSON.parse(JSON.stringify(save)) as SaveData;
     await setDoc(ref, cleanPayload);
   }
+
+  public async deleteCloudSave(uid: string): Promise<void> {
+    if (!this.db) return;
+    const ref = doc(this.db, 'saves', uid);
+    await deleteDoc(ref);
+  }
 }
 
 /**
@@ -195,5 +202,9 @@ export class InMemoryCloudSyncAdapter implements CloudSyncAdapter {
 
   public async pushCloudSave(uid: string, save: SaveData): Promise<void> {
     this.cloudDocs.set(uid, JSON.parse(JSON.stringify(save)) as SaveData);
+  }
+
+  public async deleteCloudSave(uid: string): Promise<void> {
+    this.cloudDocs.delete(uid);
   }
 }

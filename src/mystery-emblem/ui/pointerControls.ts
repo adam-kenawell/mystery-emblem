@@ -143,18 +143,32 @@ export interface BackLayerEntry {
   onBack: () => void;
 }
 
+export interface BackStackOptions {
+  /**
+   * Optional custom renderer for the top-right corner button when no sub-layer is active
+   * (e.g., showing `[G] Log In` / `[G] Log Out` on the Title Screen, or `Menu` inside a dungeon).
+   */
+  syncIdleButton?: (cornerBtn: HTMLButtonElement) => void;
+}
+
 /**
  * Coordinates LIFO dismissal of modals/overlays/menus and keeps the persistent corner
- * Menu / Back button label synchronized across PC and mobile viewports.
+ * button label synchronized across PC and mobile viewports.
  */
 export class BackStackController {
   private readonly layers: BackLayerEntry[] = [];
   private readonly cornerBtn: HTMLButtonElement | null;
   private readonly onOpenRootMenu: () => void;
+  private readonly syncIdleButton?: (cornerBtn: HTMLButtonElement) => void;
 
-  constructor(cornerBtn: HTMLButtonElement | null, onOpenRootMenu: () => void) {
+  constructor(
+    cornerBtn: HTMLButtonElement | null,
+    onOpenRootMenu: () => void,
+    options?: BackStackOptions
+  ) {
     this.cornerBtn = cornerBtn;
     this.onOpenRootMenu = onOpenRootMenu;
+    this.syncIdleButton = options?.syncIdleButton;
   }
 
   public registerLayer(entry: BackLayerEntry): void {
@@ -173,11 +187,23 @@ export class BackStackController {
   public syncButtonLabel(): void {
     if (!this.cornerBtn) return;
     const isSubLayerOpen = this.hasActiveLayer();
-    this.cornerBtn.textContent = isSubLayerOpen ? 'Back' : 'Menu';
-    this.cornerBtn.setAttribute(
-      'aria-label',
-      isSubLayerOpen ? 'Back or Close' : 'Open System Menu'
-    );
+    if (isSubLayerOpen) {
+      this.cornerBtn.textContent = 'Back';
+      this.cornerBtn.dataset.cornerMode = 'back';
+      this.cornerBtn.setAttribute('aria-label', 'Back or Close');
+      this.cornerBtn.removeAttribute('title');
+      return;
+    }
+
+    if (this.syncIdleButton) {
+      this.syncIdleButton(this.cornerBtn);
+      return;
+    }
+
+    this.cornerBtn.textContent = 'Menu';
+    this.cornerBtn.dataset.cornerMode = 'menu';
+    this.cornerBtn.setAttribute('aria-label', 'Open System Menu');
+    this.cornerBtn.removeAttribute('title');
   }
 
   public triggerMenuOrBack(): void {
