@@ -703,11 +703,22 @@ export class DevToolsHarness {
     );
 
     bindPointerTap(
+      this.modalEl.querySelector<HTMLButtonElement>('#devtools-sync-cloud-maps'),
+      () => {
+        this.audioManager.playSfx('select');
+        void this.saveManager.reconcileWithCloud().then(() => {
+          void this.refreshMapInspectorPanel();
+        });
+      },
+      { signal: this.signal }
+    );
+
+    bindPointerTap(
       this.modalEl.querySelector<HTMLButtonElement>('#devtools-reset-selected-map'),
       () => {
         this.audioManager.playSfx('cancel');
         resetChapterMapOverride(this.selectedMapLevelId);
-        this.saveManager.syncCustomMapsWithActiveSave();
+        void this.saveManager.syncCustomMapsWithActiveSave();
         void this.refreshMapInspectorPanel();
       },
       { signal: this.signal }

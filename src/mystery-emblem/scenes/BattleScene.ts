@@ -41,6 +41,7 @@ import { getAudioManager, type AudioManager } from '../audio/AudioManager';
 import {
   getEffectiveChapterMap,
   hasChapterMapOverride,
+  subscribeChapterMapChanges,
 } from '../data/chapterMapRegistry';
 import { getItemById, getMoveById, getPersonalSkillById } from '../data/index';
 import {
@@ -261,6 +262,7 @@ export class BattleScene {
   private readonly defeatModalBackdropEl: HTMLElement;
 
   private readonly abortController = new AbortController();
+  private unsubscribeMapChanges: (() => void) | null = null;
   private resizeObserver: ResizeObserver | null = null;
   private rafId: number | null = null;
 
@@ -651,6 +653,23 @@ export class BattleScene {
 
     this.viewportEl.appendChild(this.rootEl);
 
+    this.unsubscribeMapChanges = subscribeChapterMapChanges((changedLevelId) => {
+      if (
+        this.openState &&
+        this.phase === 'dungeon_prep' &&
+        !this.explicitCustomMap &&
+        (changedLevelId === null || changedLevelId === this.activeLevelId)
+      ) {
+        this.map = getEffectiveChapterMap(this.activeLevelId);
+        this.enemySpawnDefs = resolveEnemySpawnsForMap(this.map, this.explicitEnemyOverrides);
+        void this.setupFreshBattleState().then(() => {
+          if (this.openState) {
+            this.renderFrame(performance.now());
+          }
+        });
+      }
+    });
+
     this.bindPointerInteractions();
   }
 
@@ -753,6 +772,8 @@ export class BattleScene {
     }
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
+    this.unsubscribeMapChanges?.();
+    this.unsubscribeMapChanges = null;
     this.guestPrepManager?.dispose();
     this.guestPrepManager = null;
     this.prepOverlay.destroy();

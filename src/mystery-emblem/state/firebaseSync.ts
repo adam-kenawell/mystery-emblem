@@ -24,8 +24,108 @@ export interface CloudSyncAdapter {
   signInWithGoogle(): Promise<CloudUser>;
   signOut(): Promise<void>;
   fetchCloudSave(uid: string): Promise<unknown | null>;
-  pushCloudSave(uid: string, save: SaveData): Promise<void>;
+  pushCloudSave(
+    uid: string,
+    save: SaveData,
+    customMapsEnvelopeJson?: string | null
+  ): Promise<void>;
+  pushCustomMapsOnly?(uid: string, customMapsEnvelopeJson: string): Promise<void>;
   deleteCloudSave(uid: string): Promise<void>;
+}
+
+/**
+ * Enforces Cloud Firestore's wire constraint: nested arrays (`Array<Array<unknown>>`,
+ * such as 2D `DungeonMapTileCell[][]` grids) are strictly forbidden inside Firestore documents.
+ */
+export function assertFirestoreNoNestedArrays(value: unknown, path = 'root'): void {
+  if (Array.isArray(value)) {
+    for (let i = 0; i < value.length; i++) {
+      const item = value[i];
+      if (Array.isArray(item)) {
+        throw new Error(
+          `Firestore nested array forbidden at ${path}[${i}]. Encode 2D grids via customMapsEnvelopeJson.`
+        );
+      }
+      assertFirestoreNoNestedArrays(item, `${path}[${i}]`);
+    }
+    return;
+  }
+  if (value && typeof value === 'object') {
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      if (v === undefined) {
+        throw new Error(`Firestore undefined field forbidden at ${path}.${k}.`);
+      }
+      assertFirestoreNoNestedArrays(v, `${path}.${k}`);
+    }
+  }
+}
+
+/**
+ * Converts a `SaveData` payload (which may contain 2D `tiles[][]` inside `customMaps`) into a
+ * 100% Cloud Firestore-compatible flat document (`customMapsEnvelopeJson` string, zero nested arrays).
+ */
+export function serializeSaveForFirestore(
+  save: SaveData,
+  customMapsEnvelopeJson?: string | null
+): Record<string, unknown> {
+  const cleanPayload = JSON.parse(JSON.stringify(save)) as Record<string, unknown>;
+  const rawCustomMaps = cleanPayload.customMaps;
+  delete cleanPayload.customMaps;
+
+  if (typeof customMapsEnvelopeJson === 'string' && customMapsEnvelopeJson.length > 0) {
+    cleanPayload.customMapsEnvelopeJson = customMapsEnvelopeJson;
+    cleanPayload.customMapsUpdatedAt = Date.now();
+  } else if (rawCustomMaps && typeof rawCustomMaps === 'object') {
+    cleanPayload.customMapsEnvelopeJson = JSON.stringify({
+      version: 2,
+      overrides: rawCustomMaps,
+      resets: {},
+    });
+    cleanPayload.customMapsUpdatedAt = Date.now();
+  }
+
+  assertFirestoreNoNestedArrays(cleanPayload);
+  return cleanPayload;
+}
+
+/**
+ * Unpacks a raw Firestore `saves/{uid}` document into:
+ * - `saveCandidate`: Campaign `SaveData` (if `schemaVersion` exists on the document), and
+ * - `customMapsEnvelope`: Decoded custom chapter maps & reset tombstones (even when no campaign save exists yet).
+ */
+export function extractCloudPayloadParts(rawDoc: unknown): {
+  saveCandidate: unknown | null;
+  customMapsEnvelope: unknown | null;
+} {
+  if (!rawDoc || typeof rawDoc !== 'object') {
+    return { saveCandidate: null, customMapsEnvelope: null };
+  }
+  const obj = rawDoc as Record<string, unknown>;
+
+  let customMapsEnvelope: unknown | null = null;
+  if (typeof obj.customMapsEnvelopeJson === 'string' && obj.customMapsEnvelopeJson.trim().length > 0) {
+    try {
+      customMapsEnvelope = JSON.parse(obj.customMapsEnvelopeJson);
+    } catch {
+      customMapsEnvelope = null;
+    }
+  } else if (obj.customMaps && typeof obj.customMaps === 'object') {
+    customMapsEnvelope = obj.customMaps;
+  }
+
+  if (obj.schemaVersion === undefined) {
+    return { saveCandidate: null, customMapsEnvelope };
+  }
+
+  const cloned = JSON.parse(JSON.stringify(obj)) as Record<string, unknown>;
+  delete cloned.customMapsEnvelopeJson;
+  delete cloned.customMapsUpdatedAt;
+  delete cloned.customMaps;
+
+  return {
+    saveCandidate: cloned,
+    customMapsEnvelope,
+  };
 }
 
 interface FirebaseEnvConfig {
@@ -134,12 +234,27 @@ export class FirestoreSyncAdapter implements CloudSyncAdapter {
     return snap.data();
   }
 
-  public async pushCloudSave(uid: string, save: SaveData): Promise<void> {
+  public async pushCloudSave(
+    uid: string,
+    save: SaveData,
+    customMapsEnvelopeJson?: string | null
+  ): Promise<void> {
     if (!this.db) return;
     const ref = doc(this.db, 'saves', uid);
-    // Write clean JSON-serializable SaveData document to saves/{uid}
-    const cleanPayload = JSON.parse(JSON.stringify(save)) as SaveData;
-    await setDoc(ref, cleanPayload);
+    // Serialize SaveData + flat customMapsEnvelopeJson (strictly zero 2D nested arrays!)
+    const firestorePayload = serializeSaveForFirestore(save, customMapsEnvelopeJson);
+    await setDoc(ref, firestorePayload);
+  }
+
+  public async pushCustomMapsOnly(uid: string, customMapsEnvelopeJson: string): Promise<void> {
+    if (!this.db) return;
+    const ref = doc(this.db, 'saves', uid);
+    const mergePayload = {
+      customMapsEnvelopeJson,
+      customMapsUpdatedAt: Date.now(),
+    };
+    assertFirestoreNoNestedArrays(mergePayload);
+    await setDoc(ref, mergePayload, { merge: true });
   }
 
   public async deleteCloudSave(uid: string): Promise<void> {
@@ -152,16 +267,17 @@ export class FirestoreSyncAdapter implements CloudSyncAdapter {
 /**
  * Deterministic in-memory CloudSyncAdapter used for automated cross-device
  * Desktop <-> Cloud <-> Mobile timestamp conflict resolution tests.
+ * Enforces Firestore's exact wire constraints (including zero nested arrays).
  */
 export class InMemoryCloudSyncAdapter implements CloudSyncAdapter {
   public readonly isConfigured = true;
   private currentUser: CloudUser | null = null;
   private readonly listeners = new Set<(user: CloudUser | null) => void>();
-  private readonly cloudDocs: Map<string, SaveData>;
+  private readonly cloudDocs: Map<string, Record<string, unknown>>;
   private readonly mockAccount: CloudUser;
 
   constructor(
-    sharedCloudStore: Map<string, SaveData> = new Map(),
+    sharedCloudStore: Map<string, Record<string, unknown>> = new Map(),
     mockAccount: CloudUser = {
       uid: 'test-google-uid-001',
       email: 'trainer@mystery-emblem.dev',
@@ -197,11 +313,27 @@ export class InMemoryCloudSyncAdapter implements CloudSyncAdapter {
 
   public async fetchCloudSave(uid: string): Promise<unknown | null> {
     const found = this.cloudDocs.get(uid);
-    return found ? (JSON.parse(JSON.stringify(found)) as SaveData) : null;
+    return found ? (JSON.parse(JSON.stringify(found)) as Record<string, unknown>) : null;
   }
 
-  public async pushCloudSave(uid: string, save: SaveData): Promise<void> {
-    this.cloudDocs.set(uid, JSON.parse(JSON.stringify(save)) as SaveData);
+  public async pushCloudSave(
+    uid: string,
+    save: SaveData,
+    customMapsEnvelopeJson?: string | null
+  ): Promise<void> {
+    const firestorePayload = serializeSaveForFirestore(save, customMapsEnvelopeJson);
+    this.cloudDocs.set(uid, firestorePayload);
+  }
+
+  public async pushCustomMapsOnly(uid: string, customMapsEnvelopeJson: string): Promise<void> {
+    const existing = this.cloudDocs.get(uid) ?? {};
+    const merged: Record<string, unknown> = {
+      ...(JSON.parse(JSON.stringify(existing)) as Record<string, unknown>),
+      customMapsEnvelopeJson,
+      customMapsUpdatedAt: Date.now(),
+    };
+    assertFirestoreNoNestedArrays(merged);
+    this.cloudDocs.set(uid, merged);
   }
 
   public async deleteCloudSave(uid: string): Promise<void> {

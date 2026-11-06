@@ -1197,12 +1197,57 @@ export function validateDungeonMapDefinition(
   };
 }
 
+export interface CustomMapsSyncEnvelope {
+  version: 2;
+  overrides: Record<string, CustomMapOverrideEntry>;
+  resets: Record<string, number>;
+}
+
 type MapStoreListener = (changedLevelId: string | null) => void;
+
+function normalizeIncomingEnvelope(
+  candidate: CustomMapsSyncEnvelope | Record<string, CustomMapOverrideEntry> | null | undefined
+): { overrides: Record<string, CustomMapOverrideEntry>; resets: Record<string, number> } {
+  if (!candidate || typeof candidate !== 'object') {
+    return { overrides: {}, resets: {} };
+  }
+  const maybeEnv = candidate as Partial<CustomMapsSyncEnvelope>;
+  if (maybeEnv.version === 2 && maybeEnv.overrides && typeof maybeEnv.overrides === 'object') {
+    const cleanResets: Record<string, number> = {};
+    if (maybeEnv.resets && typeof maybeEnv.resets === 'object') {
+      for (const [id, ts] of Object.entries(maybeEnv.resets)) {
+        if (typeof ts === 'number' && Number.isFinite(ts) && ts > 0) {
+          cleanResets[id] = ts;
+        }
+      }
+    }
+    return {
+      overrides: maybeEnv.overrides,
+      resets: cleanResets,
+    };
+  }
+  // Legacy v1 flat record `{ [levelId]: CustomMapOverrideEntry }`
+  return {
+    overrides: candidate as Record<string, CustomMapOverrideEntry>,
+    resets: {},
+  };
+}
 
 class ChapterMapOverrideStore {
   private overrides = new Map<string, CustomMapOverrideEntry>();
+  private resets = new Map<string, number>();
   private readonly listeners = new Set<MapStoreListener>();
   private loadedFromStorage = false;
+  private lastStamp = 0;
+
+  private nextMonotonicTimestamp(requested?: number): number {
+    const base =
+      typeof requested === 'number' && Number.isFinite(requested) && requested > 0
+        ? requested
+        : Date.now();
+    this.lastStamp = Math.max(base, this.lastStamp + 1);
+    return this.lastStamp;
+  }
 
   private ensureLoaded(): void {
     if (this.loadedFromStorage) return;
@@ -1211,19 +1256,30 @@ class ChapterMapOverrideStore {
     try {
       const raw = window.localStorage.getItem(MAP_OVERRIDES_STORAGE_KEY);
       if (!raw) return;
-      const parsed = JSON.parse(raw) as Record<string, CustomMapOverrideEntry>;
-      if (!parsed || typeof parsed !== 'object') return;
-      for (const [levelId, entry] of Object.entries(parsed)) {
+      const parsed = JSON.parse(raw) as unknown;
+      const { overrides, resets } = normalizeIncomingEnvelope(
+        parsed as CustomMapsSyncEnvelope | Record<string, CustomMapOverrideEntry>
+      );
+      for (const [levelId, resetTs] of Object.entries(resets)) {
+        this.resets.set(levelId, resetTs);
+        if (resetTs > this.lastStamp) this.lastStamp = resetTs;
+      }
+      for (const [levelId, entry] of Object.entries(overrides)) {
         if (!entry || typeof entry !== 'object') continue;
+        const ts =
+          typeof entry.updatedAt === 'number' && Number.isFinite(entry.updatedAt) && entry.updatedAt > 0
+            ? entry.updatedAt
+            : Date.now();
+        const resetTs = this.resets.get(levelId) ?? 0;
+        if (resetTs >= ts) continue;
         const v = validateDungeonMapDefinition(entry.map, levelId);
         if (v.valid && v.map) {
           this.overrides.set(levelId, {
             map: v.map,
-            updatedAt:
-              typeof entry.updatedAt === 'number' && Number.isFinite(entry.updatedAt)
-                ? entry.updatedAt
-                : Date.now(),
+            updatedAt: ts,
           });
+          this.resets.delete(levelId);
+          if (ts > this.lastStamp) this.lastStamp = ts;
         }
       }
     } catch {
@@ -1234,18 +1290,12 @@ class ChapterMapOverrideStore {
   private persistToLocalStorage(): void {
     if (typeof window === 'undefined' || !window.localStorage) return;
     try {
-      if (this.overrides.size === 0) {
+      if (this.overrides.size === 0 && this.resets.size === 0) {
         window.localStorage.removeItem(MAP_OVERRIDES_STORAGE_KEY);
         return;
       }
-      const serializable: Record<string, CustomMapOverrideEntry> = {};
-      for (const [id, entry] of this.overrides.entries()) {
-        serializable[id] = {
-          map: cloneDungeonMap(entry.map),
-          updatedAt: entry.updatedAt,
-        };
-      }
-      window.localStorage.setItem(MAP_OVERRIDES_STORAGE_KEY, JSON.stringify(serializable));
+      const envelope = this.getSyncEnvelope();
+      window.localStorage.setItem(MAP_OVERRIDES_STORAGE_KEY, JSON.stringify(envelope));
     } catch {
       // Quota or sandbox fallback
     }
@@ -1260,6 +1310,7 @@ class ChapterMapOverrideStore {
   public reloadFromLocalStorage(): void {
     this.loadedFromStorage = false;
     this.overrides.clear();
+    this.resets.clear();
     this.ensureLoaded();
     this.emit(null);
   }
@@ -1267,6 +1318,11 @@ class ChapterMapOverrideStore {
   public hasOverride(levelId: string): boolean {
     this.ensureLoaded();
     return this.overrides.has(levelId);
+  }
+
+  public hasAnySyncState(): boolean {
+    this.ensureLoaded();
+    return this.overrides.size > 0 || this.resets.size > 0;
   }
 
   public getOverrideEntry(levelId: string): CustomMapOverrideEntry | null {
@@ -1296,39 +1352,72 @@ class ChapterMapOverrideStore {
     return out;
   }
 
+  public getSyncEnvelope(): CustomMapsSyncEnvelope {
+    this.ensureLoaded();
+    const overrides = this.getAllOverridesRecord();
+    const resets: Record<string, number> = {};
+    for (const [id, ts] of this.resets.entries()) {
+      resets[id] = ts;
+    }
+    return {
+      version: 2,
+      overrides,
+      resets,
+    };
+  }
+
   public saveOverride(
     levelId: string,
     candidateMap: DungeonMapDefinition,
-    updatedAt = Date.now()
+    updatedAt?: number
   ): DungeonMapDefinition {
     this.ensureLoaded();
     const validation = validateDungeonMapDefinition(candidateMap, levelId);
     if (!validation.valid || !validation.map) {
       throw new Error(`Invalid map for "${levelId}": ${validation.errors.join(' ')}`);
     }
+    const stamp = this.nextMonotonicTimestamp(updatedAt);
     const storedMap = cloneDungeonMap(validation.map);
     this.overrides.set(levelId, {
       map: storedMap,
-      updatedAt,
+      updatedAt: stamp,
     });
+    this.resets.delete(levelId);
     this.persistToLocalStorage();
     this.emit(levelId);
     return cloneDungeonMap(storedMap);
   }
 
-  public resetOverride(levelId: string): DungeonMapDefinition {
+  public resetOverride(levelId: string, resetAt?: number): DungeonMapDefinition {
     this.ensureLoaded();
     const existed = this.overrides.delete(levelId);
-    if (existed) {
+    const prevReset = this.resets.get(levelId) ?? 0;
+    if (existed || resetAt !== undefined || prevReset === 0) {
+      const stamp = this.nextMonotonicTimestamp(resetAt);
+      this.resets.set(levelId, stamp);
       this.persistToLocalStorage();
-      this.emit(levelId);
+      if (existed) {
+        this.emit(levelId);
+      }
     }
     return cloneDungeonMap(getDefaultChapterMap(levelId));
   }
 
-  public resetAllOverrides(): void {
+  public resetAllOverrides(clearResetsToo = false): void {
     this.ensureLoaded();
+    if (clearResetsToo) {
+      const hadAny = this.overrides.size > 0 || this.resets.size > 0;
+      this.overrides.clear();
+      this.resets.clear();
+      this.persistToLocalStorage();
+      if (hadAny) this.emit(null);
+      return;
+    }
     if (this.overrides.size === 0) return;
+    const stamp = this.nextMonotonicTimestamp();
+    for (const id of this.overrides.keys()) {
+      this.resets.set(id, stamp);
+    }
     this.overrides.clear();
     this.persistToLocalStorage();
     this.emit(null);
@@ -1336,30 +1425,99 @@ class ChapterMapOverrideStore {
 
   public mergeFromSaveRecord(incoming: Record<string, CustomMapOverrideEntry> | undefined): boolean {
     if (!incoming || typeof incoming !== 'object') return false;
+    return this.reconcileEnvelope(incoming).localChanged;
+  }
+
+  /**
+   * Reconciles local custom maps & reset tombstones against an incoming Cloud Firestore envelope
+   * using deterministic per-level Last-Write-Wins timestamps.
+   * Returns `{ localChanged, cloudOutdated }` so callers know whether Cloud needs an upload.
+   */
+  public reconcileEnvelope(
+    incoming: CustomMapsSyncEnvelope | Record<string, CustomMapOverrideEntry> | null | undefined
+  ): { localChanged: boolean; cloudOutdated: boolean } {
     this.ensureLoaded();
-    let changed = false;
-    for (const [levelId, entry] of Object.entries(incoming)) {
-      if (!entry || typeof entry !== 'object') continue;
-      const incomingTs =
-        typeof entry.updatedAt === 'number' && Number.isFinite(entry.updatedAt)
-          ? entry.updatedAt
-          : 0;
-      const current = this.overrides.get(levelId);
-      if (current && current.updatedAt >= incomingTs) continue;
-      const v = validateDungeonMapDefinition(entry.map, levelId);
-      if (v.valid && v.map) {
-        this.overrides.set(levelId, {
-          map: v.map,
-          updatedAt: incomingTs || Date.now(),
-        });
-        changed = true;
+    const { overrides: incOverrides, resets: incResets } = normalizeIncomingEnvelope(incoming);
+    const allIds = new Set<string>([
+      ...this.overrides.keys(),
+      ...this.resets.keys(),
+      ...Object.keys(incOverrides),
+      ...Object.keys(incResets),
+    ]);
+
+    let localChanged = false;
+    let cloudOutdated = false;
+
+    for (const levelId of allIds) {
+      const localOv = this.overrides.get(levelId);
+      const localOvTs = localOv?.updatedAt ?? 0;
+      const localResetTs = this.resets.get(levelId) ?? 0;
+      const localKind: 'override' | 'reset' | 'none' =
+        localResetTs >= localOvTs && localResetTs > 0
+          ? 'reset'
+          : localOv
+            ? 'override'
+            : 'none';
+      const localStateTs = localKind === 'reset' ? localResetTs : localOvTs;
+
+      const rawIncOv = incOverrides[levelId];
+      let validIncMap: DungeonMapDefinition | null = null;
+      let incOvTs = 0;
+      if (rawIncOv && typeof rawIncOv === 'object') {
+        const v = validateDungeonMapDefinition(rawIncOv.map, levelId);
+        if (v.valid && v.map) {
+          validIncMap = v.map;
+          incOvTs =
+            typeof rawIncOv.updatedAt === 'number' &&
+            Number.isFinite(rawIncOv.updatedAt) &&
+            rawIncOv.updatedAt > 0
+              ? rawIncOv.updatedAt
+              : 1;
+        }
+      }
+      const incResetTs = incResets[levelId] ?? 0;
+      const incKind: 'override' | 'reset' | 'none' =
+        incResetTs >= incOvTs && incResetTs > 0
+          ? 'reset'
+          : validIncMap
+            ? 'override'
+            : 'none';
+      const incStateTs = incKind === 'reset' ? incResetTs : incOvTs;
+
+      if (incStateTs > localStateTs) {
+        if (incKind === 'reset') {
+          const hadOv = this.overrides.delete(levelId);
+          this.resets.set(levelId, incResetTs);
+          if (incResetTs > this.lastStamp) this.lastStamp = incResetTs;
+          if (hadOv || localResetTs !== incResetTs) localChanged = true;
+        } else if (incKind === 'override' && validIncMap) {
+          this.overrides.set(levelId, {
+            map: validIncMap,
+            updatedAt: incOvTs,
+          });
+          this.resets.delete(levelId);
+          if (incOvTs > this.lastStamp) this.lastStamp = incOvTs;
+          localChanged = true;
+        }
+      } else if (localStateTs > incStateTs) {
+        cloudOutdated = true;
+      } else if (localStateTs > 0 && localKind !== incKind) {
+        if (incKind === 'reset') {
+          this.overrides.delete(levelId);
+          this.resets.set(levelId, incResetTs);
+          localChanged = true;
+        } else if (localKind === 'reset') {
+          cloudOutdated = true;
+        }
       }
     }
-    if (changed) {
+
+    if (localChanged) {
       this.persistToLocalStorage();
       this.emit(null);
     }
-    return changed;
+
+    return { localChanged, cloudOutdated };
   }
 
   public subscribe(listener: MapStoreListener): () => void {
@@ -1376,6 +1534,10 @@ export function hasChapterMapOverride(levelId: string): boolean {
   return singletonStore.hasOverride(levelId);
 }
 
+export function hasAnyCustomMapSyncState(): boolean {
+  return singletonStore.hasAnySyncState();
+}
+
 export function getChapterMapOverrideEntry(levelId: string): CustomMapOverrideEntry | null {
   return singletonStore.getOverrideEntry(levelId);
 }
@@ -1386,6 +1548,10 @@ export function getEffectiveChapterMap(levelId: string): DungeonMapDefinition {
 
 export function getAllCustomMapOverrides(): Record<string, CustomMapOverrideEntry> {
   return singletonStore.getAllOverridesRecord();
+}
+
+export function getCustomMapsSyncEnvelope(): CustomMapsSyncEnvelope {
+  return singletonStore.getSyncEnvelope();
 }
 
 export function saveChapterMapOverride(
@@ -1400,14 +1566,20 @@ export function resetChapterMapOverride(levelId: string): DungeonMapDefinition {
   return singletonStore.resetOverride(levelId);
 }
 
-export function resetAllChapterMapOverrides(): void {
-  singletonStore.resetAllOverrides();
+export function resetAllChapterMapOverrides(clearResetsToo = false): void {
+  singletonStore.resetAllOverrides(clearResetsToo);
 }
 
 export function mergeCustomMapsRecord(
   incoming: Record<string, CustomMapOverrideEntry> | undefined
 ): boolean {
   return singletonStore.mergeFromSaveRecord(incoming);
+}
+
+export function reconcileCustomMapsEnvelope(
+  incoming: CustomMapsSyncEnvelope | Record<string, CustomMapOverrideEntry> | null | undefined
+): { localChanged: boolean; cloudOutdated: boolean } {
+  return singletonStore.reconcileEnvelope(incoming);
 }
 
 export function reloadChapterMapsFromStorage(): void {

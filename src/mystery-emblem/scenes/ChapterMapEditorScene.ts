@@ -740,10 +740,23 @@ export class ChapterMapEditorScene {
     const saved = saveChapterMapOverride(this.activeLevelId, this.map);
     this.map = cloneDungeonMap(saved);
     this.dirty = false;
-    this.saveManager.syncCustomMapsWithActiveSave();
     this.syncUiControls();
     this.updateInfoStrip();
-    this.showToast(`SAVED — ${this.map.name}`);
+    const isSignedIn = Boolean(this.saveManager.getSyncStatus().user);
+    this.showToast(
+      isSignedIn
+        ? `SAVED — ${this.map.name} (Syncing to Cloud...)`
+        : `SAVED LOCALLY — ${this.map.name}`
+    );
+    void this.saveManager.syncCustomMapsWithActiveSave().then((res) => {
+      if (!this.openState) return;
+      if (res === 'pushed_newer_local') {
+        this.showToast(`SAVED & SYNCED TO CLOUD — ${this.map.name}`);
+      } else if (res === 'cloud_error') {
+        const err = this.saveManager.getSyncStatus().errorMessage ?? 'Sync error';
+        this.showToast(`SAVED LOCALLY (Cloud Error: ${err})`);
+      }
+    });
     this.renderFrame();
     return saved;
   }
@@ -753,11 +766,17 @@ export class ChapterMapEditorScene {
     const def = resetChapterMapOverride(this.activeLevelId);
     this.map = cloneDungeonMap(def);
     this.dirty = false;
-    this.saveManager.syncCustomMapsWithActiveSave();
     this.syncUiControls();
     this.updateInfoStrip();
     void this.preloadMapAndUnitAssets().then(() => this.renderFrame());
-    this.showToast('RESET TO DEFAULT MAP');
+    const isSignedIn = Boolean(this.saveManager.getSyncStatus().user);
+    this.showToast(isSignedIn ? 'RESET TO DEFAULT (Syncing Cloud...)' : 'RESET TO DEFAULT MAP');
+    void this.saveManager.syncCustomMapsWithActiveSave().then((res) => {
+      if (!this.openState) return;
+      if (res === 'pushed_newer_local') {
+        this.showToast('RESET TO DEFAULT & SYNCED TO CLOUD');
+      }
+    });
     this.renderFrame();
     return def;
   }

@@ -1,6 +1,10 @@
 import {
   getAllCustomMapOverrides,
+  getCustomMapsSyncEnvelope,
+  hasAnyCustomMapSyncState,
   mergeCustomMapsRecord,
+  reconcileCustomMapsEnvelope,
+  type CustomMapsSyncEnvelope,
 } from '../data/chapterMapRegistry';
 import { ITEM_MAP, MOVE_MAP, SPECIES_MAP } from '../data/index';
 import {
@@ -16,6 +20,7 @@ import {
 import { validateSaveData } from '../types/validators';
 import {
   FirestoreSyncAdapter,
+  extractCloudPayloadParts,
   type CloudSyncAdapter,
   type CloudUser,
 } from './firebaseSync';
@@ -850,6 +855,16 @@ export class SaveStateManager {
 
     try {
       await this.cloud.deleteCloudSave(user.uid);
+      if (
+        this.isBrowserPrimaryStorage &&
+        Object.keys(getAllCustomMapOverrides()).length > 0 &&
+        typeof this.cloud.pushCustomMapsOnly === 'function'
+      ) {
+        await this.cloud.pushCustomMapsOnly(
+          user.uid,
+          JSON.stringify(getCustomMapsSyncEnvelope())
+        );
+      }
       this.syncStatus = {
         ...this.syncStatus,
         user,
@@ -941,6 +956,32 @@ export class SaveStateManager {
     return p;
   }
 
+  private getSerializedCustomMapsEnvelopeOrNull(): string | null {
+    if (this.isBrowserPrimaryStorage && hasAnyCustomMapSyncState()) {
+      return JSON.stringify(getCustomMapsSyncEnvelope());
+    }
+    if (this.currentSave?.customMaps && Object.keys(this.currentSave.customMaps).length > 0) {
+      return JSON.stringify({
+        version: 2,
+        overrides: this.currentSave.customMaps,
+        resets: {},
+      });
+    }
+    return null;
+  }
+
+  private withMergedCustomMaps(save: SaveData): SaveData {
+    if (!this.isBrowserPrimaryStorage) return save;
+    const cloned = JSON.parse(JSON.stringify(save)) as SaveData;
+    const allOverrides = getAllCustomMapOverrides();
+    if (Object.keys(allOverrides).length > 0) {
+      cloned.customMaps = allOverrides;
+    } else {
+      delete cloned.customMaps;
+    }
+    return cloned;
+  }
+
   private async performReconcileWithCloud(): Promise<CloudSyncResolution> {
     const user = this.cloud.getCurrentUser();
     if (!user) {
@@ -953,10 +994,23 @@ export class SaveStateManager {
       const localSave = this.readValidLocalSave();
       this.currentSave = localSave;
 
+      if (this.isBrowserPrimaryStorage && localSave?.customMaps) {
+        mergeCustomMapsRecord(localSave.customMaps);
+      }
+
       const rawCloud = await this.cloud.fetchCloudSave(user.uid);
+      const { saveCandidate, customMapsEnvelope } = extractCloudPayloadParts(rawCloud);
+
+      let mapSync = { localChanged: false, cloudOutdated: false };
+      if (this.isBrowserPrimaryStorage) {
+        mapSync = reconcileCustomMapsEnvelope(
+          customMapsEnvelope as CustomMapsSyncEnvelope | null
+        );
+      }
+
       let cloudSave: SaveData | null = null;
-      if (rawCloud) {
-        const normalizedCloud = normalizeLegacySingleItemSlots(rawCloud);
+      if (saveCandidate) {
+        const normalizedCloud = normalizeLegacySingleItemSlots(saveCandidate);
         const check = validateSaveData(normalizedCloud, SPECIES_MAP, MOVE_MAP, ITEM_MAP);
         if (check.valid && check.save) {
           cloudSave = check.save;
@@ -965,21 +1019,68 @@ export class SaveStateManager {
 
       let resolution: CloudSyncResolution;
       if (!localSave && !cloudSave) {
-        resolution = 'empty';
+        if (mapSync.cloudOutdated) {
+          const envJson = this.getSerializedCustomMapsEnvelopeOrNull();
+          if (envJson && typeof this.cloud.pushCustomMapsOnly === 'function') {
+            await this.cloud.pushCustomMapsOnly(user.uid, envJson);
+          }
+          resolution = mapSync.localChanged ? 'pulled_newer_cloud' : 'pushed_newer_local';
+        } else if (mapSync.localChanged) {
+          resolution = 'pulled_newer_cloud';
+        } else {
+          resolution = 'empty';
+        }
       } else if (!localSave && cloudSave) {
-        this.writeLocalOnly(cloudSave);
+        this.writeLocalOnly(this.withMergedCustomMaps(cloudSave));
+        if (mapSync.cloudOutdated) {
+          await this.cloud.pushCloudSave(
+            user.uid,
+            this.currentSave!,
+            this.getSerializedCustomMapsEnvelopeOrNull()
+          );
+        }
         resolution = 'pulled_newer_cloud';
       } else if (localSave && !cloudSave) {
-        await this.cloud.pushCloudSave(user.uid, localSave);
+        this.writeLocalOnly(this.withMergedCustomMaps(localSave));
+        await this.cloud.pushCloudSave(
+          user.uid,
+          this.currentSave!,
+          this.getSerializedCustomMapsEnvelopeOrNull()
+        );
         resolution = 'pushed_newer_local';
       } else if (cloudSave!.lastUpdated > localSave!.lastUpdated) {
-        this.writeLocalOnly(cloudSave!);
+        this.writeLocalOnly(this.withMergedCustomMaps(cloudSave!));
+        if (mapSync.cloudOutdated) {
+          await this.cloud.pushCloudSave(
+            user.uid,
+            this.currentSave!,
+            this.getSerializedCustomMapsEnvelopeOrNull()
+          );
+        }
         resolution = 'pulled_newer_cloud';
       } else if (localSave!.lastUpdated > cloudSave!.lastUpdated) {
-        await this.cloud.pushCloudSave(user.uid, localSave!);
+        this.writeLocalOnly(this.withMergedCustomMaps(localSave!));
+        await this.cloud.pushCloudSave(
+          user.uid,
+          this.currentSave!,
+          this.getSerializedCustomMapsEnvelopeOrNull()
+        );
         resolution = 'pushed_newer_local';
       } else {
-        resolution = 'already_in_sync';
+        if (mapSync.localChanged) {
+          this.writeLocalOnly(this.withMergedCustomMaps(localSave!));
+        }
+        if (mapSync.cloudOutdated) {
+          this.writeLocalOnly(this.withMergedCustomMaps(localSave!));
+          await this.cloud.pushCloudSave(
+            user.uid,
+            this.currentSave!,
+            this.getSerializedCustomMapsEnvelopeOrNull()
+          );
+          resolution = mapSync.localChanged ? 'pulled_newer_cloud' : 'pushed_newer_local';
+        } else {
+          resolution = mapSync.localChanged ? 'pulled_newer_cloud' : 'already_in_sync';
+        }
       }
 
       this.syncStatus = {
@@ -1025,7 +1126,7 @@ export class SaveStateManager {
       if (!raw) return null;
       const parsed = JSON.parse(raw) as unknown;
       const normalized = normalizeLegacySingleItemSlots(parsed);
-    const check = validateSaveData(normalized, SPECIES_MAP, MOVE_MAP, ITEM_MAP);
+      const check = validateSaveData(normalized, SPECIES_MAP, MOVE_MAP, ITEM_MAP);
       return check.valid && check.save ? check.save : null;
     } catch {
       return null;
@@ -1033,12 +1134,67 @@ export class SaveStateManager {
   }
 
   /**
-   * Syncs any active Dev Tools map overrides (`ChapterMapStore`) onto the active campaign save
-   * (if present) so Cloud Firestore (`saves/{uid}`) mirrors custom chapter maps across devices.
+   * Syncs Dev Tools map overrides & reset tombstones (`ChapterMapStore`) to `localStorage` AND
+   * immediately pushes them to Cloud Firestore (`saves/{uid}`) — even if no campaign save has
+   * been started yet — so PC and Mobile devices signed into the same Google account stay in sync.
    */
-  public syncCustomMapsWithActiveSave(): void {
-    if (!this.currentSave || !this.isBrowserPrimaryStorage) return;
-    this.commitSave(this.currentSave);
+  public async syncCustomMapsWithActiveSave(): Promise<CloudSyncResolution> {
+    if (!this.isBrowserPrimaryStorage) {
+      return 'unauthenticated';
+    }
+
+    const allOverrides = getAllCustomMapOverrides();
+    const customMapsField = Object.keys(allOverrides).length > 0 ? allOverrides : undefined;
+    const envelopeJson = this.getSerializedCustomMapsEnvelopeOrNull();
+
+    if (this.currentSave) {
+      const stamped: SaveData = {
+        ...this.currentSave,
+        customMaps: customMapsField,
+        lastUpdated: Math.max(Date.now(), (this.currentSave.lastUpdated ?? 0) + 1),
+      };
+      if (stamped.customMaps === undefined) {
+        delete stamped.customMaps;
+      }
+      const check = validateSaveData(stamped, SPECIES_MAP, MOVE_MAP, ITEM_MAP);
+      if (check.valid && check.save) {
+        this.writeLocalOnly(check.save);
+        this.emitChange();
+      }
+    }
+
+    const user = this.cloud.getCurrentUser();
+    if (!user) {
+      return 'unauthenticated';
+    }
+
+    try {
+      if (this.currentSave) {
+        await this.cloud.pushCloudSave(user.uid, this.currentSave, envelopeJson);
+      } else if (envelopeJson && typeof this.cloud.pushCustomMapsOnly === 'function') {
+        await this.cloud.pushCustomMapsOnly(user.uid, envelopeJson);
+      }
+      this.syncStatus = {
+        ...this.syncStatus,
+        user,
+        lastResolution: 'pushed_newer_local',
+        lastSyncedAt: Date.now(),
+        errorMessage: null,
+      };
+      this.emitChange();
+      return 'pushed_newer_local';
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Failed to sync custom maps to Cloud Firestore.';
+      this.syncStatus = {
+        ...this.syncStatus,
+        user,
+        lastResolution: 'cloud_error',
+        errorMessage: message,
+      };
+      this.emitChange();
+      return 'cloud_error';
+    }
   }
 
   private writeLocalOnly(save: SaveData): void {
@@ -1081,8 +1237,9 @@ export class SaveStateManager {
 
     const user = this.cloud.getCurrentUser();
     if (user) {
+      const envelopeJson = this.getSerializedCustomMapsEnvelopeOrNull();
       void this.cloud
-        .pushCloudSave(user.uid, this.currentSave!)
+        .pushCloudSave(user.uid, this.currentSave!, envelopeJson)
         .then(() => {
           this.syncStatus = {
             ...this.syncStatus,
