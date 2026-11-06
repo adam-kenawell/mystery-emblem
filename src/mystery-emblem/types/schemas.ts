@@ -324,6 +324,10 @@ export interface OwnedPokemonInstance {
    * Must be one of activeMoveIds with category 'Physical' or 'Special' (or null if none).
    */
   equippedMoveId: string | null;
+  /**
+   * Single item slot per unit (Held Gear / Berry, Active Healing/Status Consumable, Promotion Stone/Gem, or X-Item).
+   * At most ONE of `heldItemId` or `consumableItemId` may be non-null at any time.
+   */
   heldItemId: string | null;
   consumableItemId: string | null;
 }
@@ -438,6 +442,8 @@ export interface DungeonMapDefinition {
   id: string;
   name: string;
   bgmCue?: string;
+  /** Maximum number of player units allowed to enter the dungeon (defaults to `playerSpawns.length`) */
+  deploymentCap?: number;
   width: number;
   height: number;
   /** Row-major `[y][x]` grid of dimensions `height` x `width` */

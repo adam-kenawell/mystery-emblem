@@ -119,6 +119,54 @@ export function sanitizeNickname(rawNickname: string | undefined, fallbackSpecie
   return trimmed.length > 0 ? trimmed : fallbackSpeciesName;
 }
 
+/**
+ * Returns the single item equipped on a unit (either a Held Gear/Berry in `heldItemId`
+ * or an Active Healing/Promotion/X-Item in `consumableItemId`), or `null` if empty.
+ */
+export function getUnitEquippedItemId(
+  unit: Pick<OwnedPokemonInstance, 'heldItemId' | 'consumableItemId'>
+): string | null {
+  return unit.heldItemId ?? unit.consumableItemId ?? null;
+}
+
+function returnItemToConvoyList(convoy: Array<{ itemId: string; quantity: number }>, itemId: string): void {
+  if (!ITEM_MAP.has(itemId)) return;
+  const existing = convoy.find((c) => c.itemId === itemId);
+  if (existing) {
+    existing.quantity += 1;
+  } else {
+    convoy.push({ itemId, quantity: 1 });
+  }
+}
+
+/**
+ * Sanitizes legacy saves that had both `heldItemId` and `consumableItemId` populated by
+ * returning `consumableItemId` to the Convoy so every unit strictly obeys the 1-item-slot rule.
+ */
+function normalizeLegacySingleItemSlots(candidate: unknown): unknown {
+  if (!candidate || typeof candidate !== 'object') return candidate;
+  const obj = candidate as Partial<SaveData>;
+  if (!Array.isArray(obj.roster) || !Array.isArray(obj.convoy)) return candidate;
+
+  let mutated = false;
+  for (const unit of obj.roster) {
+    if (unit && unit.heldItemId !== null && unit.consumableItemId !== null) {
+      mutated = true;
+      break;
+    }
+  }
+  if (!mutated) return candidate;
+
+  const cloned = JSON.parse(JSON.stringify(obj)) as SaveData;
+  for (const unit of cloned.roster) {
+    if (unit.heldItemId !== null && unit.consumableItemId !== null) {
+      returnItemToConvoyList(cloned.convoy, unit.consumableItemId);
+      unit.consumableItemId = null;
+    }
+  }
+  return cloned;
+}
+
 function findForwardEvolutionPath(
   fromSp: PokemonSpeciesDefinition,
   targetSpeciesId: string,
@@ -183,6 +231,12 @@ export function createPokemonInstance(opts: CreatePokemonOptions): OwnedPokemonI
       equippedMoveId = mId;
       break;
     }
+  }
+
+  if (opts.heldItemId && opts.consumableItemId) {
+    throw new Error(
+      `Unit "${sp.name}" cannot start with both heldItemId ("${opts.heldItemId}") and consumableItemId ("${opts.consumableItemId}") — each unit has 1 item slot.`
+    );
   }
 
   return {
@@ -351,6 +405,8 @@ export class SaveStateManager {
         { itemId: 'potion', quantity: 3 },
         { itemId: 'full_heal', quantity: 1 },
         { itemId: 'oran_berry', quantity: 2 },
+        { itemId: 'muscle_band', quantity: 1 },
+        { itemId: 'x_attack', quantity: 1 },
       ],
       supports: {},
       overworld: {
@@ -526,6 +582,164 @@ export class SaveStateManager {
     this.commitSave(save);
   }
 
+  public recruitPokemon(opts: CreatePokemonOptions): OwnedPokemonInstance {
+    const save = this.requireActiveSave();
+    const created = createPokemonInstance({ ...opts, isLord: false });
+    save.roster.push(created);
+    this.commitSave(save);
+    return JSON.parse(JSON.stringify(created)) as OwnedPokemonInstance;
+  }
+
+  public unlockUnitMove(
+    instanceId: string,
+    moveId: string,
+    autoEquipIfRoom = false
+  ): OwnedPokemonInstance {
+    const save = this.requireActiveSave();
+    const unit = save.roster.find((u) => u.instanceId === instanceId);
+    if (!unit) {
+      throw new Error(`Pokémon instance "${instanceId}" not found in roster.`);
+    }
+    const mv = MOVE_MAP.get(moveId);
+    if (!mv) {
+      throw new Error(`Unknown moveId "${moveId}".`);
+    }
+    if (!unit.unlockedMoveIds.includes(moveId)) {
+      unit.unlockedMoveIds.push(moveId);
+    }
+    if (autoEquipIfRoom && unit.activeMoveIds.length < 4 && !unit.activeMoveIds.includes(moveId)) {
+      unit.activeMoveIds.push(moveId);
+      if (!unit.equippedMoveId && (mv.category === 'Physical' || mv.category === 'Special')) {
+        unit.equippedMoveId = moveId;
+      }
+    }
+    this.commitSave(save);
+    return JSON.parse(JSON.stringify(unit)) as OwnedPokemonInstance;
+  }
+
+  /**
+   * Equips or unequips a single item (`itemId | null`) on `instanceId`, enforcing the 1-item-slot
+   * rule across Held Gear, Berries, Healing Consumables, Promotion Stones/Gems, and X-Items.
+   * - Any previously equipped item on `instanceId` is automatically returned to `save.convoy`.
+   * - When `sourceUnitInstanceId` is provided, transfers the item directly from that roster unit;
+   *   otherwise consumes `1` from `save.convoy`.
+   */
+  public equipItemToUnit(
+    instanceId: string,
+    itemId: string | null,
+    sourceUnitInstanceId?: string
+  ): OwnedPokemonInstance {
+    const save = this.requireActiveSave();
+    const targetUnit = save.roster.find((u) => u.instanceId === instanceId);
+    if (!targetUnit) {
+      throw new Error(`Pokémon instance "${instanceId}" not found in roster.`);
+    }
+
+    const prevItemId = getUnitEquippedItemId(targetUnit);
+
+    if (itemId === null) {
+      if (prevItemId !== null) {
+        returnItemToConvoyList(save.convoy, prevItemId);
+        targetUnit.heldItemId = null;
+        targetUnit.consumableItemId = null;
+        this.commitSave(save);
+      }
+      return JSON.parse(JSON.stringify(targetUnit)) as OwnedPokemonInstance;
+    }
+
+    const item = ITEM_MAP.get(itemId);
+    if (!item) {
+      throw new Error(`Unknown item "${itemId}".`);
+    }
+    if (item.equipSlot !== 'held' && item.equipSlot !== 'consumable') {
+      throw new Error(`${item.name} cannot be equipped into a unit's battle item slot.`);
+    }
+
+    if (prevItemId === itemId && (!sourceUnitInstanceId || sourceUnitInstanceId === instanceId)) {
+      return JSON.parse(JSON.stringify(targetUnit)) as OwnedPokemonInstance;
+    }
+
+    if (sourceUnitInstanceId && sourceUnitInstanceId !== instanceId) {
+      const sourceUnit = save.roster.find((u) => u.instanceId === sourceUnitInstanceId);
+      if (!sourceUnit || getUnitEquippedItemId(sourceUnit) !== itemId) {
+        throw new Error(`Source unit does not currently hold ${item.name}.`);
+      }
+      sourceUnit.heldItemId = null;
+      sourceUnit.consumableItemId = null;
+      if (prevItemId !== null) {
+        returnItemToConvoyList(save.convoy, prevItemId);
+      }
+    } else {
+      const convoySlot = save.convoy.find((c) => c.itemId === itemId);
+      if (!convoySlot || convoySlot.quantity < 1) {
+        throw new Error(`${item.name} is not available in the Bag.`);
+      }
+      convoySlot.quantity -= 1;
+      if (convoySlot.quantity <= 0) {
+        save.convoy = save.convoy.filter((c) => c.itemId !== itemId);
+      }
+      if (prevItemId !== null) {
+        returnItemToConvoyList(save.convoy, prevItemId);
+      }
+    }
+
+    if (item.equipSlot === 'held') {
+      targetUnit.heldItemId = item.id;
+      targetUnit.consumableItemId = null;
+    } else {
+      targetUnit.consumableItemId = item.id;
+      targetUnit.heldItemId = null;
+    }
+
+    this.commitSave(save);
+    return JSON.parse(JSON.stringify(targetUnit)) as OwnedPokemonInstance;
+  }
+
+  public useVitaminOnUnit(
+    instanceId: string,
+    vitaminItemId: string,
+    targetMoveId?: string
+  ): OwnedPokemonInstance {
+    const save = this.requireActiveSave();
+    const unit = save.roster.find((u) => u.instanceId === instanceId);
+    if (!unit) {
+      throw new Error(`Pokémon instance "${instanceId}" not found in roster.`);
+    }
+    const item = ITEM_MAP.get(vitaminItemId);
+    if (!item || item.category !== 'vitamin') {
+      throw new Error(`"${vitaminItemId}" is not a valid Vitamin.`);
+    }
+    const convoySlot = save.convoy.find((c) => c.itemId === vitaminItemId);
+    if (!convoySlot || convoySlot.quantity < 1) {
+      throw new Error(`${item.name} is not in the Bag.`);
+    }
+
+    if (item.effect.permanentPpBoost) {
+      const moveId = targetMoveId ?? unit.activeMoveIds[0];
+      if (!moveId || !unit.unlockedMoveIds.includes(moveId)) {
+        throw new Error(`Select a known move to apply ${item.name}.`);
+      }
+      unit.bonusPpByMoveId[moveId] =
+        (unit.bonusPpByMoveId[moveId] ?? 0) + item.effect.permanentPpBoost;
+    } else if (item.effect.permanentStatBoost) {
+      const b = item.effect.permanentStatBoost;
+      if (b.hp) unit.currentStats.hp += b.hp;
+      if (b.atk) unit.currentStats.atk += b.atk;
+      if (b.def) unit.currentStats.def += b.def;
+      if (b.spa) unit.currentStats.spa += b.spa;
+      if (b.spd) unit.currentStats.spd += b.spd;
+      if (b.spe) unit.currentStats.spe += b.spe;
+    }
+
+    convoySlot.quantity -= 1;
+    if (convoySlot.quantity <= 0) {
+      save.convoy = save.convoy.filter((c) => c.itemId !== vitaminItemId);
+    }
+
+    this.commitSave(save);
+    return JSON.parse(JSON.stringify(unit)) as OwnedPokemonInstance;
+  }
+
   public teachTmMove(instanceId: string, tmItemId: string): OwnedPokemonInstance {
     const save = this.requireActiveSave();
     const unit = save.roster.find((u) => u.instanceId === instanceId);
@@ -660,7 +874,8 @@ export class SaveStateManager {
       throw new Error('Invalid JSON file: could not parse backup payload.');
     }
 
-    const check = validateSaveData(parsed, SPECIES_MAP, MOVE_MAP, ITEM_MAP);
+    const normalized = normalizeLegacySingleItemSlots(parsed);
+    const check = validateSaveData(normalized, SPECIES_MAP, MOVE_MAP, ITEM_MAP);
     if (!check.valid || !check.save) {
       throw new Error(`Invalid save backup: ${check.errors.join(' ')}`);
     }
@@ -729,7 +944,8 @@ export class SaveStateManager {
       const rawCloud = await this.cloud.fetchCloudSave(user.uid);
       let cloudSave: SaveData | null = null;
       if (rawCloud) {
-        const check = validateSaveData(rawCloud, SPECIES_MAP, MOVE_MAP, ITEM_MAP);
+        const normalizedCloud = normalizeLegacySingleItemSlots(rawCloud);
+        const check = validateSaveData(normalizedCloud, SPECIES_MAP, MOVE_MAP, ITEM_MAP);
         if (check.valid && check.save) {
           cloudSave = check.save;
         }
@@ -796,7 +1012,8 @@ export class SaveStateManager {
       }
       if (!raw) return null;
       const parsed = JSON.parse(raw) as unknown;
-      const check = validateSaveData(parsed, SPECIES_MAP, MOVE_MAP, ITEM_MAP);
+      const normalized = normalizeLegacySingleItemSlots(parsed);
+    const check = validateSaveData(normalized, SPECIES_MAP, MOVE_MAP, ITEM_MAP);
       return check.valid && check.save ? check.save : null;
     } catch {
       return null;

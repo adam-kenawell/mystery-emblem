@@ -1,6 +1,6 @@
 # Mystery Emblem — Memory
 
-- **Milestone Status:** Completed Steps 0, 1, 2 (+ EoS Audio Engine), 5, and Core Step 7 Battle Loop (`BattleScene` / `Drenched Bluff`: Turn Phases, Forecast, `[E]` Counter, Pursuit AI, Heal, Victory/Defeat). Next: Steps 3, 4, 6, remaining Step 7 (statuses/stairs spawns), 8, 9, 10.
+- **Milestone Status:** Completed Steps 0, 1, 2 (+ EoS Audio Engine), 5, 6 (`DungeonPrepOverlay`: Manage Units, Manage Items w/ strict 1-item-slot rule, View Map blue starting-tile swap, Enter Dungeon confirmation), and Core Step 7 Battle Loop (`BattleScene` / `Drenched Bluff`: Turn Phases, Forecast, `[E]` Counter, Pursuit AI, Heal, Item, Victory/Defeat). Next: Steps 3, 4, remaining Step 7 (statuses/stairs spawns), 8, 9, 10.
 - **Git & Verification:** Develop on `mystery-emblem-dev`; merge to `main` to deploy to `https://mysteryemblem.com`. Verify via `npm run build` & `npm test` (`1920x1080`, `390x844`, `844x390`; `tests/` is gitignored).
 - **Access & Cloud Sync:**
   - `src/mystery-emblem/data/accessControl.ts`: While `DEV_PREVIEW_GATE_ENABLED = true`, logged-out/unlisted users see `#pmd-under-dev-screen`; `ALLOWED_PREVIEW_EMAILS` unlocks the player build; `ADMIN_DEVTOOLS_EMAILS` (`adam.kenawell.family@gmail.com`) unlocks top-left `Dev Tools` (diagnostics, skirmish/battle launchers, `deleteSaveFromLinkedAccount()`).

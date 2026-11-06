@@ -13,7 +13,7 @@
  */
 
 import type { PmdDirection, PmdSpriteAction } from '../assets/pmdAssetLoader';
-import { getMoveById } from '../data/index';
+import { getItemById, getMoveById, getSpeciesById } from '../data/index';
 import type {
   DungeonMapDefinition,
   MoveDefinition,
@@ -185,8 +185,19 @@ export interface BattleMoveSlot extends ActiveMoveRangeEntry {
   move: MoveDefinition;
 }
 
+export interface TempBattleBoosts {
+  atk: number;
+  def: number;
+  spa: number;
+  spd: number;
+  spe: number;
+  crit: number;
+}
+
 export interface BattleUnitState extends PathfindingUnitContext {
   slotIndex: number;
+  /** Links back to `OwnedPokemonInstance.instanceId` in `SaveStateManager` when deployed from roster */
+  rosterInstanceId?: string;
   isLord: boolean;
   speciesId: string;
   speciesName: string;
@@ -201,6 +212,9 @@ export interface BattleUnitState extends PathfindingUnitContext {
   heldItemId: string | null;
   consumableItemId: string | null;
   status: StatusCondition | null;
+  statusTurns?: number;
+  /** Single-battle X-Item boosts (`+3` stat / `+20%` Crit) that reset after the map */
+  tempBattleBoosts?: TempBattleBoosts;
   activeMoves: BattleMoveSlot[];
   equippedMoveId: string | null;
   waited: boolean;
@@ -291,6 +305,55 @@ export function getOffensiveMovesAtDistance(
   return matching;
 }
 
+export function getUnitEffectiveCombatStats(
+  unit: Pick<BattleUnitState, 'speciesId' | 'stats' | 'heldItemId' | 'tempBattleBoosts'>
+): {
+  atk: number;
+  def: number;
+  spa: number;
+  spd: number;
+  spe: number;
+  hitBonus: number;
+  critBonus: number;
+} {
+  const boosts = unit.tempBattleBoosts;
+  let atk = unit.stats.atk + (boosts?.atk ?? 0);
+  let def = unit.stats.def + (boosts?.def ?? 0);
+  let spa = unit.stats.spa + (boosts?.spa ?? 0);
+  let spd = unit.stats.spd + (boosts?.spd ?? 0);
+  let spe = unit.stats.spe + (boosts?.spe ?? 0);
+  let hitBonus = 0;
+  let critBonus = boosts?.crit ?? 0;
+
+  if (unit.heldItemId) {
+    const item = getItemById(unit.heldItemId);
+    if (item) {
+      const eff = item.effect;
+      if (eff.choiceStatBoost) {
+        atk += eff.choiceStatBoost.atk ?? 0;
+        def += eff.choiceStatBoost.def ?? 0;
+        spa += eff.choiceStatBoost.spa ?? 0;
+        spd += eff.choiceStatBoost.spd ?? 0;
+        spe += eff.choiceStatBoost.spe ?? 0;
+      }
+      if (eff.assaultVestSpdBoost) {
+        spd += eff.assaultVestSpdBoost;
+      }
+      if (eff.evioliteDefSpdBoost) {
+        const sp = getSpeciesById(unit.speciesId);
+        if (sp && !sp.isFinalStage) {
+          def += eff.evioliteDefSpdBoost;
+          spd += eff.evioliteDefSpdBoost;
+        }
+      }
+      if (eff.hitBonus) hitBonus += eff.hitBonus;
+      if (eff.critBonus) critBonus += eff.critBonus;
+    }
+  }
+
+  return { atk, def, spa, spd, spe, hitBonus, critBonus };
+}
+
 function buildSideForecast(
   actor: BattleUnitState,
   target: BattleUnitState,
@@ -299,15 +362,17 @@ function buildSideForecast(
 ): CombatSideForecast {
   const move = moveSlot.move;
   const isPhysical = move.category === 'Physical';
+  const actorEff = getUnitEffectiveCombatStats(actor);
+  const targetEff = getUnitEffectiveCombatStats(target);
 
-  let effectiveOffensiveStat = isPhysical ? actor.stats.atk : actor.stats.spa;
+  let effectiveOffensiveStat = isPhysical ? actorEff.atk : actorEff.spa;
   if (isPhysical && actor.status === 'BRN') {
     effectiveOffensiveStat = Math.floor(effectiveOffensiveStat * 0.5);
   } else if (!isPhysical && actor.status === 'FRZ') {
     effectiveOffensiveStat = Math.floor(effectiveOffensiveStat * 0.5);
   }
 
-  const defensiveStat = isPhysical ? target.stats.def : target.stats.spd;
+  const defensiveStat = isPhysical ? targetEff.def : targetEff.spd;
   const terrainMitigation = isPhysical
     ? targetTerrainBonuses.defBonus
     : targetTerrainBonuses.spdBonus;
@@ -324,21 +389,49 @@ function buildSideForecast(
     target.types
   );
 
+  let itemFlatDamageBonus = 0;
+  if (actor.heldItemId && typeMultiplier > 0) {
+    const held = getItemById(actor.heldItemId);
+    if (held) {
+      const eff = held.effect;
+      if (isPhysical && eff.physicalDamageBonus) {
+        itemFlatDamageBonus += eff.physicalDamageBonus;
+      }
+      if (!isPhysical && eff.specialDamageBonus) {
+        itemFlatDamageBonus += eff.specialDamageBonus;
+      }
+      if (eff.flatDamageBonus) {
+        if (!eff.boostedType || eff.boostedType === move.type) {
+          itemFlatDamageBonus += eff.flatDamageBonus;
+        }
+      }
+      if (eff.superEffectiveDamageBonus && typeMultiplier > 1) {
+        itemFlatDamageBonus += eff.superEffectiveDamageBonus;
+      }
+    }
+  }
+
   let damage = 0;
   let critDamage = 0;
   if (typeMultiplier > 0) {
-    damage = Math.max(1, Math.floor(rawBaseDamage * stabMultiplier * typeMultiplier));
-    critDamage = Math.max(1, Math.floor(rawBaseDamage * stabMultiplier * typeMultiplier * 2.0));
+    const scaledBase = Math.max(1, Math.floor(rawBaseDamage * stabMultiplier * typeMultiplier));
+    damage = scaledBase + itemFlatDamageBonus;
+    critDamage =
+      Math.max(1, Math.floor(rawBaseDamage * stabMultiplier * typeMultiplier * 2.0)) +
+      itemFlatDamageBonus;
   }
 
   const rawHit =
-    move.hit + (actor.stats.spe - target.stats.spe) * 2 - targetTerrainBonuses.avoidBonus;
+    move.hit +
+    actorEff.hitBonus +
+    (actorEff.spe - targetEff.spe) * 2 -
+    targetTerrainBonuses.avoidBonus;
   const hitRate = clampInt(rawHit, 15, 100);
 
-  const rawCrit = move.crit + Math.floor(actor.stats.spe / 2);
+  const rawCrit = move.crit + Math.floor(actorEff.spe / 2) + actorEff.critBonus;
   const critRate = typeMultiplier === 0 ? 0 : clampInt(rawCrit, 0, 100);
 
-  const canDouble = actor.stats.spe - target.stats.spe >= 5 && moveSlot.ppRemaining >= 2;
+  const canDouble = actorEff.spe - targetEff.spe >= 5 && moveSlot.ppRemaining >= 2;
   const strikes: 1 | 2 = canDouble ? 2 : 1;
 
   return {

@@ -2,8 +2,9 @@
  * Mystery Emblem — Playable Tactical Dungeon Battle Scene (`BattleScene`)
  *
  * Implements a complete, start-to-finish tactical dungeon battle loop:
- * 1. `DUNGEON START` popup modal -> transitions to Turn 1 Player Phase (`PLAYER PHASE — TURN 1` banner).
- * 2. Player Phase tactical movement, floating Command Menu (`Attack`, `Wait`, `Cancel`),
+ * 1. `DUNGEON PREP` phase (`Manage Units`, `Manage Items`, `View Map` starting-tile swap, `Enter Dungeon`
+ *    confirmation popup) -> transitions to Turn 1 Player Phase (`PLAYER PHASE — TURN 1` banner).
+ * 2. Player Phase tactical movement, floating Command Menu (`Attack`, `Heal`, `Item`, `Wait`, `Cancel`),
  *    direct tap-enemy-to-attack routing, manual `End Phase` button, AND automatic Enemy Phase
  *    transition once all living player units complete their actions.
  * 3. Fire Emblem-style Combat Forecast modal displaying weapon/move, Range, STAB / Type Effectiveness,
@@ -40,9 +41,13 @@ import { getAudioManager, type AudioManager } from '../audio/AudioManager';
 import { getItemById, getMoveById, getPersonalSkillById } from '../data/index';
 import {
   DEFAULT_VANGUARD_ENEMY_SPAWNS,
-  buildInitialBattleUnits,
+  buildBattleUnitsFromPrepDeployment,
+  createDefaultDrenchedBluffPrepManager,
+  createInitialPrepDeploymentSlots,
   createPlayableVanguardBattleMap,
+  getMapDeploymentCap,
   type ManualEnemyBattleSpawn,
+  type PrepDeploymentSlot,
 } from '../data/playableBattleMap';
 import {
   computeCombatForecast,
@@ -78,6 +83,7 @@ import {
 } from '../engine/terrainAndPathfinding';
 import type { SaveStateManager } from '../state/SaveStateManager';
 import type { DungeonMapDefinition, PokemonType, TraversalClass } from '../types/schemas';
+import { DungeonPrepOverlay, type PrepSubMode } from '../ui/DungeonPrepOverlay';
 import { PmdPortraitView } from '../ui/PmdSpriteCanvas';
 import { bindPointerTap } from '../ui/pointerControls';
 import { BATTLE_TILE_DISPLAY_PX, BATTLE_TILE_SCALE } from './TestDungeonScene';
@@ -100,7 +106,7 @@ function lerpRgba(from: RgbaTuple, to: RgbaTuple, t: number): string {
 }
 
 export type BattlePhase =
-  | 'dungeon_start'
+  | 'dungeon_prep'
   | 'player_phase'
   | 'enemy_phase'
   | 'victory'
@@ -147,6 +153,9 @@ export interface BattleSceneOptions {
 export interface BattleSceneSnapshot {
   isOpen: boolean;
   phase: BattlePhase;
+  prepSubMode: PrepSubMode | null;
+  deploymentSlots: PrepDeploymentSlot[];
+  prepSwapSlotIndex: number | null;
   interactionState: BattleInteractionState;
   turnNumber: number;
   selectedUnitId: string | null;
@@ -175,6 +184,7 @@ export interface BattleSceneSnapshot {
   };
   units: Array<{
     id: string;
+    rosterInstanceId: string | null;
     faction: 'player' | 'enemy';
     isLord: boolean;
     speciesId: string;
@@ -191,6 +201,7 @@ export interface BattleSceneSnapshot {
     types: ReadonlyArray<PokemonType>;
     activeMoveIds: string[];
     equippedMoveId: string | null;
+    equippedItemId: string | null;
     waited: boolean;
     defeated: boolean;
   }>;
@@ -223,15 +234,16 @@ export class BattleScene {
   private readonly phaseBannerEl: HTMLElement;
   private readonly infoStripEl: HTMLElement;
 
-  // Floating Command Menu (`Attack` / `Heal` / `Wait` / `Cancel`)
+  // Floating Command Menu (`Attack` / `Heal` / `Item` / `Wait` / `Cancel`)
   private readonly actionMenuEl: HTMLElement;
   private readonly cmdAttackBtnEl: HTMLButtonElement;
   private readonly cmdHealBtnEl: HTMLButtonElement;
+  private readonly cmdItemBtnEl: HTMLButtonElement;
   private readonly cmdWaitBtnEl: HTMLButtonElement;
   private readonly cmdCancelBtnEl: HTMLButtonElement;
 
-  // Modals: Dungeon Start, Combat Forecast, System Menu, Victory, Defeat
-  private readonly startModalBackdropEl: HTMLElement;
+  // Modals: Dungeon Prep Overlay, Combat Forecast, System Menu, Victory, Defeat
+  private readonly prepOverlay: DungeonPrepOverlay;
   private readonly forecastModalBackdropEl: HTMLElement;
   private readonly attackerPortraitView: PmdPortraitView;
   private readonly defenderPortraitView: PmdPortraitView;
@@ -251,9 +263,12 @@ export class BattleScene {
   private previousBgmId: string | null = null;
   private map: DungeonMapDefinition = createPlayableVanguardBattleMap();
   private enemySpawnDefs: ReadonlyArray<ManualEnemyBattleSpawn> = DEFAULT_VANGUARD_ENEMY_SPAWNS;
+  private guestPrepManager: SaveStateManager | null = null;
+  private deploymentSlots: PrepDeploymentSlot[] = [];
+  private prepSwapSlotIndex: number | null = null;
   private units: BattleUnitState[] = [];
   private turnNumber = 1;
-  private phase: BattlePhase = 'dungeon_start';
+  private phase: BattlePhase = 'dungeon_prep';
   private interactionState: BattleInteractionState = 'idle';
 
   private selectedUnitId: string | null = null;
@@ -384,7 +399,7 @@ export class BattleScene {
     this.infoStripEl.className = 'pmd-window pmd-battle-info-strip';
     this.infoStripEl.dataset.testid = 'dungeon-info-strip';
 
-    // 5. Floating Command Menu (`Attack` / `Heal` / `Wait` / `Cancel`)
+    // 5. Floating Command Menu (`Attack` / `Heal` / `Item` / `Wait` / `Cancel`)
     this.actionMenuEl = document.createElement('div');
     this.actionMenuEl.className = 'pmd-window pmd-window--gold pmd-battle-action-menu';
     this.actionMenuEl.dataset.testid = 'dungeon-cmd-menu';
@@ -392,42 +407,17 @@ export class BattleScene {
     this.actionMenuEl.innerHTML = `
       <button type="button" class="pmd-btn pmd-btn-primary pmd-battle-cmd-btn" data-testid="dungeon-cmd-attack">Attack</button>
       <button type="button" class="pmd-btn pmd-btn-primary pmd-battle-cmd-btn" data-testid="dungeon-cmd-heal" hidden>Heal</button>
+      <button type="button" class="pmd-btn pmd-btn-primary pmd-battle-cmd-btn" data-testid="dungeon-cmd-item" hidden>Item</button>
       <button type="button" class="pmd-btn pmd-battle-cmd-btn" data-testid="dungeon-cmd-wait">Wait</button>
       <button type="button" class="pmd-btn pmd-battle-cmd-btn" data-testid="dungeon-cmd-cancel">Cancel</button>
     `;
     this.cmdAttackBtnEl = this.actionMenuEl.querySelector('[data-testid="dungeon-cmd-attack"]')!;
     this.cmdHealBtnEl = this.actionMenuEl.querySelector('[data-testid="dungeon-cmd-heal"]')!;
+    this.cmdItemBtnEl = this.actionMenuEl.querySelector('[data-testid="dungeon-cmd-item"]')!;
     this.cmdWaitBtnEl = this.actionMenuEl.querySelector('[data-testid="dungeon-cmd-wait"]')!;
     this.cmdCancelBtnEl = this.actionMenuEl.querySelector('[data-testid="dungeon-cmd-cancel"]')!;
 
-    // 6. `DUNGEON START` Modal
-    this.startModalBackdropEl = document.createElement('div');
-    this.startModalBackdropEl.className = 'pmd-battle-modal-backdrop';
-    this.startModalBackdropEl.dataset.testid = 'battle-start-popup';
-    this.startModalBackdropEl.hidden = true;
-    this.startModalBackdropEl.innerHTML = `
-      <div class="pmd-window pmd-window--gold pmd-battle-outcome-dialog" role="dialog" aria-modal="true" aria-labelledby="battle-start-title">
-        <span class="pmd-battle-kicker">TACTICAL DUNGEON</span>
-        <h2 id="battle-start-title" class="pmd-panel-title">DUNGEON START</h2>
-        <p class="pmd-panel-sub" data-start-map-name>Drenched Bluff — Vanguard Skirmish</p>
-        <div class="pmd-battle-brief-grid">
-          <div class="pmd-battle-brief-item">
-            <span class="pmd-battle-brief-label">Victory</span>
-            <strong class="pmd-battle-brief-val" data-start-victory>Defeat All Enemies (3)</strong>
-          </div>
-          <div class="pmd-battle-brief-item">
-            <span class="pmd-battle-brief-label">Defeat</span>
-            <strong class="pmd-battle-brief-val is-danger" data-start-defeat>Lord Falls in Battle</strong>
-          </div>
-        </div>
-        <p class="pmd-subcard-text" data-start-party-line></p>
-        <div class="pmd-battle-outcome-actions">
-          <button type="button" class="pmd-btn pmd-btn-primary" data-testid="battle-start-confirm-btn">Begin Battle</button>
-        </div>
-      </div>
-    `;
-
-    // 7. Fire Emblem Combat Forecast Modal
+    // 6. Fire Emblem Combat Forecast Modal
     this.attackerPortraitView = new PmdPortraitView({
       pixelScale: 1,
       testId: 'forecast-attacker-portrait',
@@ -611,12 +601,44 @@ export class BattleScene {
       this.phaseBannerEl,
       this.infoStripEl,
       this.actionMenuEl,
-      this.startModalBackdropEl,
       this.forecastModalBackdropEl,
       this.systemMenuBackdropEl,
       this.victoryModalBackdropEl,
       this.defeatModalBackdropEl
     );
+
+    // 10. Step 6 Dungeon Prep Phase Overlay (`Manage Units`, `Manage Items`, `View Map`, `Enter Dungeon`)
+    this.prepOverlay = new DungeonPrepOverlay({
+      parentEl: this.rootEl,
+      audioManager: this.audioManager,
+      getSaveManager: () => this.getActivePrepSaveManager(),
+      getMap: () => this.map,
+      getEnemyCount: () => this.getLivingEnemies().length,
+      getDeploymentSlots: () => this.deploymentSlots,
+      getDeploymentCap: () => getMapDeploymentCap(this.map),
+      getGlobalDangerEnabled: () => this.globalDangerEnabled,
+      getSelectedSwapSlotIndex: () => this.prepSwapSlotIndex,
+      onToggleDeployUnit: (instanceId) => this.togglePrepDeployUnit(instanceId),
+      onRosterOrLoadoutMutated: () => this.rebuildPrepBattleUnits(),
+      onEnterViewMap: () => {
+        this.prepSwapSlotIndex = null;
+        this.syncPrepChromeVisibility();
+        this.updateInfoStrip();
+        this.renderFrame(performance.now());
+      },
+      onExitViewMap: () => {
+        this.prepSwapSlotIndex = null;
+        this.syncPrepChromeVisibility();
+        this.renderFrame(performance.now());
+      },
+      onToggleGlobalDanger: () => this.toggleGlobalDangerArea(),
+      onConfirmEnterDungeon: () => this.confirmEnterDungeonFromPrep(),
+      onSubLayerChanged: () => {
+        this.syncPrepChromeVisibility();
+        this.onLayerStateChanged();
+      },
+    });
+
     this.viewportEl.appendChild(this.rootEl);
 
     this.bindPointerInteractions();
@@ -632,8 +654,11 @@ export class BattleScene {
 
   public hasActiveSubLayer(): boolean {
     if (!this.openState) return false;
+    if (this.systemMenuOpen) return true;
+    if (this.phase === 'dungeon_prep') {
+      return this.prepSwapSlotIndex !== null || this.prepOverlay.hasActiveSubLayer();
+    }
     return (
-      this.systemMenuOpen ||
       this.interactionState === 'combat_forecast' ||
       this.interactionState === 'action_menu' ||
       this.interactionState === 'unit_selected'
@@ -651,6 +676,11 @@ export class BattleScene {
       this.map = createPlayableVanguardBattleMap();
     }
     this.enemySpawnDefs = options?.enemyOverrides ?? DEFAULT_VANGUARD_ENEMY_SPAWNS;
+
+    if (this.saveManager.getSave() === null) {
+      this.guestPrepManager?.dispose();
+      this.guestPrepManager = createDefaultDrenchedBluffPrepManager();
+    }
 
     if (!this.openState) {
       this.previousBgmId = this.audioManager.getCurrentTrackId();
@@ -680,6 +710,7 @@ export class BattleScene {
     this.activeWalk = null;
     this.activeStrikeVfx = null;
     this.floatingTexts.length = 0;
+    this.prepSwapSlotIndex = null;
     this.hideAllModals();
     this.clearSelection();
     this.rootEl.hidden = true;
@@ -704,6 +735,9 @@ export class BattleScene {
     }
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
+    this.guestPrepManager?.dispose();
+    this.guestPrepManager = null;
+    this.prepOverlay.destroy();
     this.abortController.abort();
     this.viewportEl.classList.remove('is-battle-active');
     this.rootEl.remove();
@@ -725,7 +759,22 @@ export class BattleScene {
       return;
     }
 
-    if (this.phase === 'dungeon_start') {
+    if (this.phase === 'dungeon_prep') {
+      if (this.prepSwapSlotIndex !== null) {
+        this.prepSwapSlotIndex = null;
+        this.audioManager.playSfx('cancel');
+        this.prepOverlay.syncMapHudState();
+        this.updateInfoStrip();
+        this.onLayerStateChanged();
+        this.renderFrame(performance.now());
+        return;
+      }
+      if (this.prepOverlay.handleBack()) {
+        this.syncPrepChromeVisibility();
+        this.onLayerStateChanged();
+        this.renderFrame(performance.now());
+        return;
+      }
       this.openSystemMenu();
       return;
     }
@@ -851,11 +900,18 @@ export class BattleScene {
     return this.currentHealForecast;
   }
 
+  public getPrepSaveManager(): SaveStateManager {
+    return this.getActivePrepSaveManager();
+  }
+
   public getSnapshot(): BattleSceneSnapshot {
     const bounds = this.getMaxCameraBounds();
     return {
       isOpen: this.openState,
       phase: this.phase,
+      prepSubMode: this.phase === 'dungeon_prep' && this.prepOverlay.isOpen() ? this.prepOverlay.getSubMode() : null,
+      deploymentSlots: this.deploymentSlots.map((s) => ({ ...s })),
+      prepSwapSlotIndex: this.prepSwapSlotIndex,
       interactionState: this.interactionState,
       turnNumber: this.turnNumber,
       selectedUnitId: this.selectedUnitId,
@@ -884,6 +940,7 @@ export class BattleScene {
       },
       units: this.units.map((u) => ({
         id: u.id,
+        rosterInstanceId: u.rosterInstanceId ?? null,
         faction: u.faction,
         isLord: u.isLord,
         speciesId: u.speciesId,
@@ -900,6 +957,7 @@ export class BattleScene {
         types: u.types,
         activeMoveIds: u.activeMoves.map((m) => m.id),
         equippedMoveId: u.equippedMoveId,
+        equippedItemId: u.heldItemId ?? u.consumableItemId ?? null,
         waited: u.waited,
         defeated: u.defeated,
       })),
@@ -912,11 +970,21 @@ export class BattleScene {
   }
 
   // ==========================================================================
-  // Battle Initialization & Asset Preloading
+  // Battle Initialization, Dungeon Prep & Asset Preloading
   // ==========================================================================
 
+  private getActivePrepSaveManager(): SaveStateManager {
+    if (this.saveManager.getSave() !== null) {
+      return this.saveManager;
+    }
+    if (!this.guestPrepManager) {
+      this.guestPrepManager = createDefaultDrenchedBluffPrepManager();
+    }
+    return this.guestPrepManager;
+  }
+
   private hideAllModals(): void {
-    this.startModalBackdropEl.hidden = true;
+    this.prepOverlay.hide();
     this.forecastModalBackdropEl.hidden = true;
     this.systemMenuBackdropEl.hidden = true;
     this.victoryModalBackdropEl.hidden = true;
@@ -926,20 +994,101 @@ export class BattleScene {
     this.systemMenuOpen = false;
   }
 
+  private syncPrepChromeVisibility(): void {
+    if (this.phase === 'dungeon_prep') {
+      this.topHudBarEl.hidden = true;
+      const inViewMap = this.prepOverlay.isOpen() && this.prepOverlay.getSubMode() === 'view_map';
+      this.infoStripEl.hidden = !inViewMap;
+    } else {
+      this.topHudBarEl.hidden = false;
+      this.infoStripEl.hidden = false;
+    }
+  }
+
+  private rebuildPrepBattleUnits(): void {
+    const activeSave = this.getActivePrepSaveManager().getSave();
+    if (!activeSave) return;
+    this.units = buildBattleUnitsFromPrepDeployment(
+      this.map,
+      activeSave.roster,
+      this.deploymentSlots,
+      this.enemySpawnDefs
+    );
+    void this.preloadAllUnitSprites().then(() => {
+      if (this.openState) this.renderFrame(performance.now());
+    });
+    this.recomputeDangerArea();
+    this.updateInfoStrip();
+    this.renderFrame(performance.now());
+  }
+
+  private togglePrepDeployUnit(instanceId: string): { ok: boolean; message: string } {
+    const activeSave = this.getActivePrepSaveManager().getSave();
+    const unit = activeSave?.roster.find((u) => u.instanceId === instanceId);
+    if (!unit) {
+      return { ok: false, message: 'Unit not found in roster.' };
+    }
+    if (unit.isLord) {
+      return {
+        ok: false,
+        message: `${unit.nickname} is your Dragon Lord and must enter every dungeon.`,
+      };
+    }
+
+    const existingSlot = this.deploymentSlots.find((s) => s.unitInstanceId === instanceId);
+    if (existingSlot) {
+      existingSlot.unitInstanceId = null;
+      if (this.prepSwapSlotIndex === existingSlot.slotIndex) {
+        this.prepSwapSlotIndex = null;
+      }
+      this.rebuildPrepBattleUnits();
+      return { ok: true, message: `${unit.nickname} moved to Standby.` };
+    }
+
+    const deployedCount = this.deploymentSlots.filter((s) => s.unitInstanceId !== null).length;
+    const cap = getMapDeploymentCap(this.map);
+    if (deployedCount >= cap) {
+      return {
+        ok: false,
+        message: `Deployment cap reached (${cap}/${cap}). Bench another unit first.`,
+      };
+    }
+
+    const openSlot = this.deploymentSlots.find((s) => s.unitInstanceId === null);
+    if (!openSlot) {
+      return { ok: false, message: 'No open starting tile available.' };
+    }
+
+    openSlot.unitInstanceId = unit.instanceId;
+    this.rebuildPrepBattleUnits();
+    return {
+      ok: true,
+      message: `${unit.nickname} will enter the dungeon at (${openSlot.x}, ${openSlot.y})!`,
+    };
+  }
+
   private async setupFreshBattleState(): Promise<void> {
     this.hideAllModals();
     this.activeWalk = null;
     this.activeStrikeVfx = null;
     this.floatingTexts.length = 0;
     this.trackedEnemyIds.clear();
+    this.prepSwapSlotIndex = null;
     this.clearSelection();
 
     this.turnNumber = 1;
-    this.phase = 'dungeon_start';
+    this.phase = 'dungeon_prep';
     this.interactionState = 'idle';
+    this.selectionPulseStartMs = performance.now();
 
-    const save = this.saveManager.getSave();
-    this.units = buildInitialBattleUnits(this.map, save, this.enemySpawnDefs);
+    const activeSave = this.getActivePrepSaveManager().getSave()!;
+    this.deploymentSlots = createInitialPrepDeploymentSlots(this.map, activeSave.roster);
+    this.units = buildBattleUnitsFromPrepDeployment(
+      this.map,
+      activeSave.roster,
+      this.deploymentSlots,
+      this.enemySpawnDefs
+    );
 
     const lord = this.getLordUnit() ?? this.units[0];
     this.inspectedTile = { x: lord?.x ?? 3, y: lord?.y ?? 5 };
@@ -949,39 +1098,26 @@ export class BattleScene {
     this.recomputeDangerArea();
     this.syncHudControls();
     this.updateInfoStrip();
-    this.openDungeonStartModal();
+    this.prepOverlay.show();
+    this.syncPrepChromeVisibility();
   }
 
-  private openDungeonStartModal(): void {
-    const mapNameEl = this.startModalBackdropEl.querySelector('[data-start-map-name]');
-    const victoryEl = this.startModalBackdropEl.querySelector('[data-start-victory]');
-    const defeatEl = this.startModalBackdropEl.querySelector('[data-start-defeat]');
-    const partyEl = this.startModalBackdropEl.querySelector('[data-start-party-line]');
+  private confirmEnterDungeonFromPrep(): void {
+    if (this.phase !== 'dungeon_prep') return;
+    this.prepSwapSlotIndex = null;
+    this.prepOverlay.hide();
+    this.rebuildPrepBattleUnits();
 
-    const enemies = this.getLivingEnemies();
-    const players = this.getLivingPlayers();
-    const lord = this.getLordUnit();
-
-    if (mapNameEl) mapNameEl.textContent = this.map.name;
-    if (victoryEl) victoryEl.textContent = `Defeat All Enemies (${enemies.length})`;
-    if (defeatEl) {
-      defeatEl.textContent = lord ? `${lord.nickname} Faints` : 'Squad Wiped Out';
-    }
-    if (partyEl) {
-      const summary = players
-        .map((p) => `${p.nickname} (${p.speciesName} Lv.${p.level})`)
-        .join(' · ');
-      partyEl.textContent = `Squad: ${summary}`;
-    }
-
-    this.startModalBackdropEl.hidden = false;
-  }
-
-  private confirmDungeonStart(): void {
-    if (this.phase !== 'dungeon_start') return;
-    this.startModalBackdropEl.hidden = true;
     this.phase = 'player_phase';
     this.interactionState = 'idle';
+    this.syncPrepChromeVisibility();
+
+    const lord = this.getLordUnit() ?? this.units[0];
+    if (lord) {
+      this.inspectedTile = { x: lord.x, y: lord.y };
+      this.centerCameraOnTile(lord.x, lord.y);
+    }
+
     this.audioManager.playSfx('phase_change');
     this.showPhaseBanner(`PLAYER PHASE — TURN ${this.turnNumber}`);
     this.syncHudControls();
@@ -1129,18 +1265,10 @@ export class BattleScene {
     bindPointerTap(this.dangerBtnEl, () => this.toggleGlobalDangerArea(), { signal });
     bindPointerTap(this.endPhaseBtnEl, () => void this.requestManualEndPhase(), { signal });
 
-    // `DUNGEON START` Modal Button
-    bindPointerTap(
-      this.startModalBackdropEl.querySelector<HTMLElement>(
-        '[data-testid="battle-start-confirm-btn"]'
-      ),
-      () => this.confirmDungeonStart(),
-      { signal }
-    );
-
     // Floating Command Menu Buttons
     bindPointerTap(this.cmdAttackBtnEl, () => this.openForecastFromCommandMenu(), { signal });
     bindPointerTap(this.cmdHealBtnEl, () => this.openHealForecastFromCommandMenu(), { signal });
+    bindPointerTap(this.cmdItemBtnEl, () => void this.useEquippedBattleConsumable(), { signal });
     bindPointerTap(this.cmdWaitBtnEl, () => void this.confirmUnitWait(), { signal });
     bindPointerTap(this.cmdCancelBtnEl, () => this.cancelUncommittedMove(), { signal });
 
@@ -1428,9 +1556,17 @@ export class BattleScene {
   // ==========================================================================
 
   private handleTileTap(tx: number, ty: number): void {
-    if (!isInMapBounds(this.map, tx, ty)) return;
+    if (!isInMapBounds(this.map, tx, ty) || this.systemMenuOpen) return;
+
+    if (this.phase === 'dungeon_prep') {
+      if (!this.prepOverlay.isOpen() || this.prepOverlay.getSubMode() !== 'view_map') {
+        return;
+      }
+      this.handlePrepViewMapTileTap(tx, ty);
+      return;
+    }
+
     if (
-      this.systemMenuOpen ||
       this.phase !== 'player_phase' ||
       this.interactionState === 'walking' ||
       this.interactionState === 'combat_forecast' ||
@@ -1639,6 +1775,106 @@ export class BattleScene {
     }
   }
 
+  /**
+   * Handles tile clicks/taps during Dungeon Prep `View Map` mode:
+   * - Tapping two valid blue starting tiles swaps the deployed Pokémon (or moves a unit onto an open blue starting tile).
+   * - Tapping any non-deployment tile in the dungeon strictly refuses placement and cancels the swap selection.
+   */
+  private handlePrepViewMapTileTap(tx: number, ty: number): void {
+    this.inspectedTile = { x: tx, y: ty };
+    const clickedSlot = this.deploymentSlots.find((s) => s.x === tx && s.y === ty) ?? null;
+    const activeSave = this.getActivePrepSaveManager().getSave();
+
+    if (this.prepSwapSlotIndex === null) {
+      if (clickedSlot && clickedSlot.unitInstanceId) {
+        this.prepSwapSlotIndex = clickedSlot.slotIndex;
+        this.selectionPulseStartMs = performance.now();
+        this.audioManager.playSfx('select');
+        this.prepOverlay.syncMapHudState();
+        const selectedOwned = activeSave?.roster.find(
+          (u) => u.instanceId === clickedSlot.unitInstanceId
+        );
+        this.infoStripEl.textContent = selectedOwned
+          ? `Selected ${selectedOwned.nickname} (${tx},${ty}) — tap another blue starting tile to switch positions.`
+          : `Selected starting tile (${tx},${ty}) — tap another blue starting tile to switch.`;
+        this.onLayerStateChanged();
+        this.renderFrame(performance.now());
+        return;
+      }
+
+      if (clickedSlot) {
+        this.audioManager.playSfx('dialogue_advance');
+        this.infoStripEl.textContent = `(${tx},${ty}) Open Starting Tile — tap a deployed Pokémon on a blue tile first to move it here.`;
+        this.renderFrame(performance.now());
+        return;
+      }
+
+      const tappedEnemy = this.getLivingEnemies().find((e) => e.x === tx && e.y === ty);
+      if (tappedEnemy) {
+        this.audioManager.playSfx('select');
+        this.toggleIndividualEnemyDanger(tappedEnemy.id);
+      } else {
+        this.audioManager.playSfx('dialogue_advance');
+      }
+      this.updateInfoStrip();
+      this.renderFrame(performance.now());
+      return;
+    }
+
+    const sourceSlot = this.deploymentSlots.find((s) => s.slotIndex === this.prepSwapSlotIndex);
+    if (!sourceSlot) {
+      this.prepSwapSlotIndex = null;
+      this.prepOverlay.syncMapHudState();
+      this.onLayerStateChanged();
+      return;
+    }
+
+    if (clickedSlot && clickedSlot.slotIndex === sourceSlot.slotIndex) {
+      this.prepSwapSlotIndex = null;
+      this.audioManager.playSfx('cancel');
+      this.prepOverlay.syncMapHudState();
+      this.updateInfoStrip();
+      this.onLayerStateChanged();
+      this.renderFrame(performance.now());
+      return;
+    }
+
+    if (clickedSlot) {
+      const tempUnitId = sourceSlot.unitInstanceId;
+      sourceSlot.unitInstanceId = clickedSlot.unitInstanceId;
+      clickedSlot.unitInstanceId = tempUnitId;
+      this.prepSwapSlotIndex = null;
+      this.audioManager.playSfx('select');
+      this.rebuildPrepBattleUnits();
+      this.prepOverlay.refreshAll();
+
+      const unitAtDest = activeSave?.roster.find(
+        (u) => u.instanceId === clickedSlot.unitInstanceId
+      );
+      const unitAtSource = activeSave?.roster.find(
+        (u) => u.instanceId === sourceSlot.unitInstanceId
+      );
+      if (unitAtDest && unitAtSource) {
+        this.infoStripEl.textContent = `Swapped ${unitAtDest.nickname} (${clickedSlot.x},${clickedSlot.y}) and ${unitAtSource.nickname} (${sourceSlot.x},${sourceSlot.y})!`;
+      } else if (unitAtDest) {
+        this.infoStripEl.textContent = `Moved ${unitAtDest.nickname} to starting tile (${clickedSlot.x},${clickedSlot.y})!`;
+      } else {
+        this.updateInfoStrip();
+      }
+      this.onLayerStateChanged();
+      this.renderFrame(performance.now());
+      return;
+    }
+
+    // Clicked outside the valid blue starting tiles: strictly forbid moving units onto arbitrary dungeon tiles!
+    this.prepSwapSlotIndex = null;
+    this.audioManager.playSfx('cancel');
+    this.prepOverlay.syncMapHudState();
+    this.infoStripEl.textContent = `Cannot move unit to (${tx},${ty}) — units can only swap among blue starting tiles!`;
+    this.onLayerStateChanged();
+    this.renderFrame(performance.now());
+  }
+
   private selectPlayerUnit(unit: BattleUnitState): void {
     this.selectedUnitId = unit.id;
     this.interactionState = 'unit_selected';
@@ -1712,6 +1948,22 @@ export class BattleScene {
     return out;
   }
 
+  private canUseUnitEquippedConsumable(unit: BattleUnitState): boolean {
+    if (!unit.consumableItemId) return false;
+    const item = getItemById(unit.consumableItemId);
+    if (!item) return false;
+    if (item.category === 'x_item') {
+      return true;
+    }
+    if (item.category === 'consumable') {
+      const canHeal =
+        Boolean(item.effect.healFlat || item.effect.healFull) && unit.currentHp < unit.maxHp;
+      const canCure = Boolean(item.effect.cureStatus) && unit.status !== null;
+      return canHeal || canCure;
+    }
+    return false;
+  }
+
   private openFloatingCommandMenu(unit: BattleUnitState): void {
     this.activeWalk = null;
     unit.action = 'Idle';
@@ -1724,6 +1976,7 @@ export class BattleScene {
     const healTargets = this.getHealableTargetsFromCurrentTile(unit);
     this.cmdAttackBtnEl.hidden = targets.length === 0;
     this.cmdHealBtnEl.hidden = healTargets.length === 0;
+    this.cmdItemBtnEl.hidden = !this.canUseUnitEquippedConsumable(unit);
 
     if (targets.length > 0) {
       const target = targets[0]!.enemy;
@@ -1751,7 +2004,10 @@ export class BattleScene {
     const unitScreenY = (unit.y * PMD_TILE_NATIVE_PX - this.cameraY) * BATTLE_TILE_SCALE;
 
     const visibleBtnCount =
-      2 + (this.cmdAttackBtnEl.hidden ? 0 : 1) + (this.cmdHealBtnEl.hidden ? 0 : 1);
+      2 +
+      (this.cmdAttackBtnEl.hidden ? 0 : 1) +
+      (this.cmdHealBtnEl.hidden ? 0 : 1) +
+      (this.cmdItemBtnEl.hidden ? 0 : 1);
     const menuW = 144;
     const menuH = visibleBtnCount * 50 + 14;
 
@@ -1768,6 +2024,77 @@ export class BattleScene {
 
     this.actionMenuEl.style.left = `${Math.round(left)}px`;
     this.actionMenuEl.style.top = `${Math.round(top)}px`;
+  }
+
+  private async useEquippedBattleConsumable(): Promise<void> {
+    const unit = this.getSelectedUnit();
+    if (!unit || !unit.consumableItemId || !this.canUseUnitEquippedConsumable(unit)) return;
+    const item = getItemById(unit.consumableItemId);
+    if (!item) return;
+
+    const runGen = this.battleRunGen;
+    let calloutText = item.name;
+
+    if (item.category === 'x_item') {
+      if (!unit.tempBattleBoosts) {
+        unit.tempBattleBoosts = { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, crit: 0 };
+      }
+      if (item.effect.battleStatBoost) {
+        const appliedLabels: string[] = [];
+        for (const key of ['atk', 'def', 'spa', 'spd', 'spe'] as const) {
+          const amt = item.effect.battleStatBoost[key];
+          if (typeof amt === 'number' && amt !== 0) {
+            unit.tempBattleBoosts[key] += amt;
+            appliedLabels.push(`${key.toUpperCase()} +${amt}`);
+          }
+        }
+        if (appliedLabels.length > 0) {
+          calloutText = `${appliedLabels.join(' ')}!`;
+        }
+      }
+      if (typeof item.effect.battleCritBoost === 'number' && item.effect.battleCritBoost !== 0) {
+        unit.tempBattleBoosts.crit += item.effect.battleCritBoost;
+        calloutText = `CRIT +${item.effect.battleCritBoost}%!`;
+      }
+    } else if (item.category === 'consumable') {
+      let healed = 0;
+      if (item.effect.healFull) {
+        healed = unit.maxHp - unit.currentHp;
+        unit.currentHp = unit.maxHp;
+      } else if (item.effect.healFlat) {
+        const nextHp = Math.min(unit.maxHp, unit.currentHp + item.effect.healFlat);
+        healed = nextHp - unit.currentHp;
+        unit.currentHp = nextHp;
+      }
+      if (item.effect.cureStatus && unit.status !== null) {
+        unit.status = null;
+        unit.statusTurns = 0;
+      }
+      calloutText = healed > 0 ? `+${healed} HP` : 'CURED!';
+    }
+
+    unit.consumableItemId = null;
+    unit.waited = true;
+    unit.action = 'Idle';
+    unit.renderWorldX = unit.x * PMD_TILE_NATIVE_PX;
+    unit.renderWorldY = unit.y * PMD_TILE_NATIVE_PX;
+
+    this.audioManager.playSfx('heal');
+    this.spawnFloatingText(unit.x, unit.y, calloutText, '#68f8a8');
+    this.clearSelection();
+    this.recomputeDangerArea();
+    this.syncHudControls();
+    this.updateInfoStrip();
+    this.onLayerStateChanged();
+    this.renderFrame(performance.now());
+
+    if (this.areAllLivingPlayersWaited()) {
+      await this.waitBattleMs(200);
+      if (!this.openState || runGen !== this.battleRunGen || this.phase !== 'player_phase') {
+        return;
+      }
+      await this.runEnemyPhase();
+    }
   }
 
   private openForecastFromCommandMenu(): void {
@@ -3089,13 +3416,17 @@ export class BattleScene {
       ? 'Danger Area: ON'
       : 'Danger Area: OFF';
     this.systemDangerBtnEl.classList.toggle('is-active', this.globalDangerEnabled);
+    this.prepOverlay.syncMapHudState();
   }
 
   private openSystemMenu(): void {
     this.systemMenuOpen = true;
     const sub = this.systemMenuBackdropEl.querySelector('[data-sys-sub]');
     if (sub) {
-      sub.textContent = `Turn ${this.turnNumber} · ${this.map.name}`;
+      sub.textContent =
+        this.phase === 'dungeon_prep'
+          ? `Dungeon Prep · ${this.map.name}`
+          : `Turn ${this.turnNumber} · ${this.map.name}`;
     }
     this.syncHudControls();
     this.systemMenuBackdropEl.hidden = false;
@@ -3143,7 +3474,8 @@ export class BattleScene {
         ? getMoveById(contextUnit.equippedMoveId)
         : undefined;
       const skill = getPersonalSkillById(contextUnit.personalSkillId);
-      const item = contextUnit.heldItemId ? getItemById(contextUnit.heldItemId) : undefined;
+      const eqItemId = contextUnit.heldItemId ?? contextUnit.consumableItemId ?? null;
+      const item = eqItemId ? getItemById(eqItemId) : undefined;
       const effMov = getEffectiveMovementPoints(contextUnit);
 
       parts.push(
@@ -3154,7 +3486,7 @@ export class BattleScene {
         parts.push(`[E] ${eqMove.name} (R${eqMove.range[0]})`);
       }
       if (item) {
-        parts.push(`Held: ${item.name}`);
+        parts.push(`Item: ${item.name}`);
       } else if (skill) {
         parts.push(`Ability: ${skill.name}`);
       }
@@ -3412,6 +3744,42 @@ export class BattleScene {
           },
           visibleBounds
         );
+      }
+    }
+
+    // 2b. Render Blue Starting Deployment Tiles & Selected Swap Tile during Dungeon Prep
+    if (this.phase === 'dungeon_prep' && this.deploymentSlots.length > 0) {
+      const pulse = this.getSelectionRangePulse(now);
+      const deployTileSet = new Set<string>(
+        this.deploymentSlots.map((slot) => coordKey(slot.x, slot.y))
+      );
+      this.drawConnectedRangeZone(
+        ctx,
+        deployTileSet,
+        deployTileSet,
+        {
+          fillRgba: lerpRgba([24, 132, 240, 0.22], [116, 224, 255, 0.42], pulse),
+          outerBorderRgba: lerpRgba([72, 192, 255, 0.92], [220, 252, 255, 1.0], pulse),
+          innerGlowRgba: lerpRgba([48, 164, 248, 0.34], [164, 240, 255, 0.64], pulse),
+        },
+        visibleBounds
+      );
+
+      if (this.prepSwapSlotIndex !== null) {
+        const selectedSlot = this.deploymentSlots.find(
+          (s) => s.slotIndex === this.prepSwapSlotIndex
+        );
+        if (selectedSlot) {
+          const sx = selectedSlot.x * PMD_TILE_NATIVE_PX - this.cameraX;
+          const sy = selectedSlot.y * PMD_TILE_NATIVE_PX - this.cameraY;
+          ctx.save();
+          ctx.fillStyle = 'rgba(248, 208, 72, 0.26)';
+          ctx.fillRect(sx + 1, sy + 1, PMD_TILE_NATIVE_PX - 2, PMD_TILE_NATIVE_PX - 2);
+          ctx.strokeStyle = '#f8d048';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(sx + 1, sy + 1, PMD_TILE_NATIVE_PX - 2, PMD_TILE_NATIVE_PX - 2);
+          ctx.restore();
+        }
       }
     }
 

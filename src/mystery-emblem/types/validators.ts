@@ -600,6 +600,11 @@ export function validateSaveData(
           );
         }
       }
+      if (unit.heldItemId !== null && unit.consumableItemId !== null) {
+        errors.push(
+          `Unit "${unit.instanceId}" cannot equip both heldItemId ("${unit.heldItemId}") and consumableItemId ("${unit.consumableItemId}") — each unit has only 1 item slot.`
+        );
+      }
       if (unit.heldItemId !== null) {
         const held = itemMap.get(unit.heldItemId);
         if (!held || held.equipSlot !== 'held') {

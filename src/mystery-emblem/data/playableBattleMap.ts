@@ -13,9 +13,12 @@
 
 import { PMD_TILE_NATIVE_PX } from '../assets/tilesetLoader';
 import { isOffensiveMove, type BattleMoveSlot, type BattleUnitState } from '../engine/combatEngine';
+import { InMemoryCloudSyncAdapter } from '../state/firebaseSync';
+import { SaveStateManager, type StorageLike } from '../state/SaveStateManager';
 import type {
   DungeonMapDefinition,
   DungeonMapTileCell,
+  OwnedPokemonInstance,
   SaveData,
   StatBlockSeven,
   TerrainType,
@@ -228,6 +231,7 @@ export function createPlayableVanguardBattleMap(): DungeonMapDefinition {
     id: 'drenched_bluff_vanguard',
     name: 'Drenched Bluff — Vanguard Skirmish',
     bgmCue: 'drenched_bluff',
+    deploymentCap: 3,
     width,
     height,
     tiles,
@@ -275,12 +279,240 @@ function resolveDefaultEquippedMove(
   slots: ReadonlyArray<BattleMoveSlot>,
   preferredId: string | null | undefined
 ): string | null {
-  if (preferredId) {
+  if (preferredId !== undefined) {
+    if (preferredId === null) return null;
     const found = slots.find((s) => s.id === preferredId && isOffensiveMove(s.move));
     if (found) return found.id;
   }
   const firstOff = slots.find((s) => isOffensiveMove(s.move));
   return firstOff ? firstOff.id : null;
+}
+
+export interface PrepDeploymentSlot {
+  slotIndex: number;
+  x: number;
+  y: number;
+  unitInstanceId: string | null;
+}
+
+export function getMapDeploymentCap(map: DungeonMapDefinition): number {
+  const spawnCount = Math.max(1, map.playerSpawns.length || EXTRA_PLAYER_DEPLOYMENT_COORDS.length);
+  return Math.max(1, Math.min(map.deploymentCap ?? spawnCount, spawnCount));
+}
+
+export function createInitialPrepDeploymentSlots(
+  map: DungeonMapDefinition,
+  roster: ReadonlyArray<OwnedPokemonInstance>
+): PrepDeploymentSlot[] {
+  const seen = new Set<string>();
+  const tileCoords: Array<{ x: number; y: number }> = [];
+  const sourceSpawns =
+    map.playerSpawns.length > 0 ? map.playerSpawns : EXTRA_PLAYER_DEPLOYMENT_COORDS;
+
+  for (const s of sourceSpawns) {
+    const key = `${s.x},${s.y}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    tileCoords.push({ x: s.x, y: s.y });
+  }
+
+  const cap = Math.max(1, Math.min(map.deploymentCap ?? tileCoords.length, tileCoords.length));
+  const orderedRoster = [...roster].sort((a, b) => {
+    if (a.isLord !== b.isLord) return a.isLord ? -1 : 1;
+    return 0;
+  });
+
+  return tileCoords.map((coord, slotIndex) => ({
+    slotIndex,
+    x: coord.x,
+    y: coord.y,
+    unitInstanceId: slotIndex < cap && orderedRoster[slotIndex] ? orderedRoster[slotIndex]!.instanceId : null,
+  }));
+}
+
+/**
+ * Creates an isolated in-memory `SaveStateManager` for Dungeon Prep when the player enters
+ * `Drenched Bluff` without an active campaign save yet. Seeds 5 Stage-1 recruited units
+ * (so unit deploy/bench toggling against the 3-unit cap is immediately playable), extra
+ * unlocked moves for loadout customization, and a curated assortment of Held, Healing, X-Items, and TMs.
+ */
+export function createDefaultDrenchedBluffPrepManager(): SaveStateManager {
+  const mem = new Map<string, string>();
+  const memStorage: StorageLike = {
+    getItem: (k) => mem.get(k) ?? null,
+    setItem: (k, v) => {
+      mem.set(k, v);
+    },
+    removeItem: (k) => {
+      mem.delete(k);
+    },
+  };
+  const mgr = new SaveStateManager(memStorage, new InMemoryCloudSyncAdapter(new Map()));
+  const save = mgr.createNewCampaignSave({
+    lordSpeciesId: 'dratini',
+    partnerSpeciesId: 'bulbasaur',
+    healerSpeciesId: 'happiny',
+  });
+
+  const [lord, partner, healer] = save.roster;
+  if (lord) {
+    mgr.unlockUnitMove(lord.instanceId, 'aqua_jet', false);
+  }
+  if (partner) {
+    mgr.unlockUnitMove(partner.instanceId, 'vine_whip', false);
+  }
+  if (healer) {
+    mgr.unlockUnitMove(healer.instanceId, 'swift', false);
+  }
+
+  const caterpie = mgr.recruitPokemon({ speciesId: 'caterpie', level: 1 });
+  mgr.unlockUnitMove(caterpie.instanceId, 'bug_bite', true);
+  mgr.unlockUnitMove(caterpie.instanceId, 'gust', false);
+
+  const pidgey = mgr.recruitPokemon({ speciesId: 'pidgey', level: 1 });
+  mgr.unlockUnitMove(pidgey.instanceId, 'gust', true);
+  mgr.unlockUnitMove(pidgey.instanceId, 'quick_attack', false);
+
+  mgr.addConvoyItem('super_potion', 1);
+  mgr.addConvoyItem('wise_glasses', 1);
+  mgr.addConvoyItem('heavy_duty_boots', 1);
+  mgr.addConvoyItem('x_speed', 1);
+  mgr.addConvoyItem('dire_hit', 1);
+  mgr.addConvoyItem('tm03_return', 1);
+
+  return mgr;
+}
+
+function buildEnemyBattleUnits(
+  enemyOverrides: ReadonlyArray<ManualEnemyBattleSpawn>,
+  now: number
+): BattleUnitState[] {
+  const out: BattleUnitState[] = [];
+  enemyOverrides.forEach((eSpawn, idx) => {
+    const sp = getSpeciesById(eSpawn.speciesId);
+    if (!sp) return;
+    const rawMoveIds =
+      eSpawn.moveIds && eSpawn.moveIds.length > 0
+        ? eSpawn.moveIds
+        : sp.learnset
+            .filter((l) => l.level <= Math.max(eSpawn.level, sp.defaultJoinLevel))
+            .map((l) => l.moveId)
+            .slice(-4);
+    const moveSlots = buildMoveSlots(rawMoveIds);
+    const equippedMoveId = resolveDefaultEquippedMove(moveSlots, eSpawn.equippedMoveId);
+    const stats: StatBlockSeven = { ...eSpawn.stats };
+
+    out.push({
+      id: eSpawn.id || `enemy_${idx}`,
+      slotIndex: idx,
+      faction: 'enemy',
+      isLord: false,
+      speciesId: sp.id,
+      speciesName: sp.name,
+      nickname: eSpawn.nickname || sp.name,
+      level: eSpawn.level,
+      x: eSpawn.x,
+      y: eSpawn.y,
+      mov: stats.mov,
+      maxHp: stats.hp,
+      currentHp: stats.hp,
+      stats,
+      traversalClass: sp.traversalClass,
+      types: sp.types,
+      personalSkillId: sp.personalSkillId,
+      heldItemId: eSpawn.heldItemId ?? null,
+      consumableItemId: null,
+      status: null,
+      statusTurns: 0,
+      tempBattleBoosts: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, crit: 0 },
+      activeMoves: moveSlots,
+      equippedMoveId,
+      waited: false,
+      defeated: false,
+      direction: 6, // West
+      action: 'Idle',
+      frameIndex: 0,
+      nextFrameAt: now + 140,
+      renderWorldX: eSpawn.x * PMD_TILE_NATIVE_PX,
+      renderWorldY: eSpawn.y * PMD_TILE_NATIVE_PX,
+      hitFlashUntilMs: 0,
+      koDissolveProgress: 0,
+    });
+  });
+  return out;
+}
+
+/**
+ * Builds live player + enemy `BattleUnitState[]` directly from the Dungeon Prep deployment slots
+ * and `OwnedPokemonInstance` loadouts (`activeMoveIds`, `equippedMoveId`, 1-slot item, nickname, stats).
+ */
+export function buildBattleUnitsFromPrepDeployment(
+  _map: DungeonMapDefinition,
+  roster: ReadonlyArray<OwnedPokemonInstance>,
+  deploymentSlots: ReadonlyArray<PrepDeploymentSlot>,
+  enemyOverrides: ReadonlyArray<ManualEnemyBattleSpawn> = DEFAULT_VANGUARD_ENEMY_SPAWNS
+): BattleUnitState[] {
+  const now = typeof performance !== 'undefined' ? performance.now() : 0;
+  const units: BattleUnitState[] = [];
+  const byInstanceId = new Map<string, OwnedPokemonInstance>();
+  for (const u of roster) {
+    byInstanceId.set(u.instanceId, u);
+  }
+
+  let deployedIdx = 0;
+  for (const slot of deploymentSlots) {
+    if (!slot.unitInstanceId) continue;
+    const owned = byInstanceId.get(slot.unitInstanceId);
+    if (!owned) continue;
+    const sp = getSpeciesById(owned.speciesId);
+    if (!sp) continue;
+
+    const moveSlots = buildMoveSlots(owned.activeMoveIds, owned.bonusPpByMoveId);
+    const equippedMoveId = resolveDefaultEquippedMove(moveSlots, owned.equippedMoveId);
+    const stats: StatBlockSeven = { ...owned.currentStats };
+
+    units.push({
+      id: `player_${deployedIdx}`,
+      slotIndex: slot.slotIndex,
+      rosterInstanceId: owned.instanceId,
+      faction: 'player',
+      isLord: owned.isLord,
+      speciesId: sp.id,
+      speciesName: sp.name,
+      nickname: owned.nickname || sp.name,
+      level: owned.level,
+      x: slot.x,
+      y: slot.y,
+      mov: stats.mov,
+      maxHp: stats.hp,
+      currentHp: stats.hp,
+      stats,
+      traversalClass: sp.traversalClass,
+      types: sp.types,
+      personalSkillId: sp.personalSkillId,
+      heldItemId: owned.heldItemId,
+      consumableItemId: owned.consumableItemId,
+      status: null,
+      statusTurns: 0,
+      tempBattleBoosts: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, crit: 0 },
+      activeMoves: moveSlots,
+      equippedMoveId,
+      waited: false,
+      defeated: false,
+      direction: 2, // East
+      action: 'Idle',
+      frameIndex: 0,
+      nextFrameAt: now + 140,
+      renderWorldX: slot.x * PMD_TILE_NATIVE_PX,
+      renderWorldY: slot.y * PMD_TILE_NATIVE_PX,
+      hitFlashUntilMs: 0,
+      koDissolveProgress: 0,
+    });
+    deployedIdx += 1;
+  }
+
+  units.push(...buildEnemyBattleUnits(enemyOverrides, now));
+  return units;
 }
 
 /**

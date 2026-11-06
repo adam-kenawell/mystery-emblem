@@ -100,8 +100,8 @@ The LLM agent must implement *Mystery Emblem* in the following 10 sequential ste
     * **3. Check / Equip Loadout:** Select up to **4 active moves** from each Pokémon's Unlocked Move Pool, set its single **[E] Equipped Move** for Enemy Phase, equip **1 Held Item** and **1 Consumable**, or edit its nickname.
     * **4. Fight!:** Transition into Turn 1 of `BATTLE_SCENE`.
 * **Step 6 Verification Checklist:**
-  * [ ] Confirm deployment caps and mandatory Dragon Lord deployment are enforced.
-  * [ ] Confirm swapping two units on blue deployment tiles and changing a unit's 4 active moves, `[E]` Equipped move, and Held/Consumable items carry over into Turn 1 of battle on both PC and mobile.
+  * [x] Confirm deployment caps and mandatory Dragon Lord deployment are enforced.
+  * [x] Confirm swapping two units on blue deployment tiles and changing a unit's 4 active moves, `[E]` Equipped move, and Held/Consumable items carry over into Turn 1 of battle on both PC and mobile.
 
 ### Step 7: Turn Phase Sequencer, Combat Math, Single-Equipped Counter & Status Engine
 

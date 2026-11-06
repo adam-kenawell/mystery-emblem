@@ -389,7 +389,7 @@ const canonicalUrl = Astro.url.href;
             <div class="pmd-subcard">
               <h3 class="pmd-subcard-title">Playable Dungeon Battle — Drenched Bluff</h3>
               <p class="pmd-subcard-text">
-                Full Turn-Based Player &amp; Enemy Phase dungeon battle flow with <strong>DUNGEON START</strong>, Fire Emblem <strong>Combat Forecast</strong>, 8-directional attack/hurt animations, active pursue-and-attack Enemy AI, <strong>VICTORY!</strong>, and Dragon Lord <strong>DEFEAT / Restart Match</strong>.
+                Full Turn-Based Player &amp; Enemy Phase dungeon battle flow with <strong>DUNGEON PREP</strong> (Manage Units, Manage Items, View Map &amp; Enter Dungeon), Fire Emblem <strong>Combat Forecast</strong>, 8-directional attack/hurt animations, active pursue-and-attack Enemy AI, <strong>VICTORY!</strong>, and Dragon Lord <strong>DEFEAT / Restart Match</strong>.
               </p>
               <div class="pmd-inline-btns">
                 <button
@@ -518,6 +518,7 @@ const canonicalUrl = Astro.url.href;
   import {
     SaveStateManager,
     formatCampaignChapterLabel,
+    getUnitEquippedItemId,
   } from '../mystery-emblem/state/SaveStateManager';
   import { DevToolsHarness } from '../mystery-emblem/ui/DevToolsHarness';
   import { DialogueOverlay } from '../mystery-emblem/ui/DialogueOverlay';
@@ -775,6 +776,7 @@ const canonicalUrl = Astro.url.href;
       saveManager: manager,
       SaveStateManager,
       formatCampaignChapterLabel,
+      getUnitEquippedItemId,
       DEV_PREVIEW_GATE_ENABLED,
       ALLOWED_PREVIEW_EMAILS,
       ADMIN_DEVTOOLS_EMAILS,
