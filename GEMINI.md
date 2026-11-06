@@ -75,9 +75,9 @@ The LLM agent must implement *Mystery Emblem* in the following 10 sequential ste
   * Implement the random **Kecleon Shop Spawner** (spawning a Kecleon sprite on cleared nodes that opens 1 of the 4 shop types: TM Shop, Held Item Shop, Healing/Evolution Item Shop, or X-Item Shop).
   * Build the Overworld Right-Click / Mobile Menu modal (`Units / Roster` with anytime nickname editing, Vitamin use, and Evolution Stone/Gem promotion; `Items / Convoy`; `Supports` viewer; `Save / System`).
 * **Step 4 Verification Checklist:**
-  * [ ] Confirm panning the Overworld map, moving between nodes, and opening/closing the right-click/mobile menu work smoothly on both PC mouse and mobile touch.
-  * [ ] Confirm buying and teaching a TM consumes the TM from inventory and adds the move to the Pokémon's permanent Unlocked Move Pool.
-  * [ ] Confirm using a Vitamin permanently increases the target stat, and confirm renaming a Pokémon in the Units menu updates its name across all screens.
+  * [x] Confirm panning the Overworld map, moving between nodes, and opening/closing the right-click/mobile menu work smoothly on both PC mouse and mobile touch.
+  * [x] Confirm buying and teaching a TM consumes the TM from inventory and adds the move to the Pokémon's permanent Unlocked Move Pool.
+  * [x] Confirm using a Vitamin permanently increases the target stat, and confirm renaming a Pokémon in the Units menu updates its name across all screens.
 
 ### Step 5: PMD Dungeon Grid Renderer, Terrain Traversal & Pathfinding Engine
 

@@ -195,6 +195,14 @@ const canonicalUrl = Astro.url.href;
             >
               Map Editor
             </button>
+            <button
+              type="button"
+              class="pmd-btn pmd-tab-btn"
+              data-devtab-btn="overworld"
+              data-testid="devtools-tab-overworld"
+            >
+              Overworld
+            </button>
           </nav>
 
           <!-- DEV TAB 1: REGISTRY & CLOUD SYNC (Step 1) -->
@@ -439,6 +447,67 @@ const canonicalUrl = Astro.url.href;
             </div>
           </div>
 
+          <!-- DEV TAB 6: STEP 4 OVERWORLD MAP, KECLEON SHOPS & SKIRMISH SANDBOX -->
+          <div class="pmd-tab-panel" data-devtab-panel="overworld" hidden>
+            <div class="pmd-subcard">
+              <div class="pmd-devtools-row-between">
+                <h3 class="pmd-subcard-title">Five Kingdoms — Wonder Map Overworld (Step 4)</h3>
+                <span class="pmd-editor-status-pill is-custom">DEMO-READY</span>
+              </div>
+              <p class="pmd-subcard-text">
+                Interactive <em>Explorers of Sky</em> Wonder Map (`504×336`px) with multi-waypoint road pathfinding, animated 8-directional <strong>Dragon Lord</strong> traversal, all 4 <strong>Kecleon Shop</strong> types (`TM`, `Held`, `Heal/Stones`, `X-Items`), one-shot <strong>Feral Dungeon Skirmishes</strong>, and the full Overworld Roster / Vitamin / TM / Promotion menu.
+              </p>
+              <div class="pmd-devtools-map-preview-wrap">
+                <canvas
+                  id="devtools-overworld-preview-canvas"
+                  class="pmd-devtools-map-preview-canvas"
+                  data-testid="devtools-overworld-preview-canvas"
+                ></canvas>
+              </div>
+              <p
+                id="devtools-overworld-meta"
+                class="pmd-subcard-text"
+                data-testid="devtools-overworld-meta"
+              >
+                —
+              </p>
+              <div class="pmd-inline-btns">
+                <button
+                  type="button"
+                  id="devtools-launch-overworld"
+                  class="pmd-btn pmd-btn-primary"
+                  data-testid="devtools-launch-overworld"
+                >
+                  Launch Overworld Map
+                </button>
+                <button
+                  type="button"
+                  id="devtools-overworld-seed-sandbox"
+                  class="pmd-btn"
+                  data-testid="devtools-overworld-seed-sandbox"
+                >
+                  Reset Sandbox Tour (Shop + Skirmish)
+                </button>
+                <button
+                  type="button"
+                  id="devtools-overworld-seed-prologue"
+                  class="pmd-btn"
+                  data-testid="devtools-overworld-seed-prologue"
+                >
+                  Launch Demo Start (Prologue)
+                </button>
+                <button
+                  type="button"
+                  id="devtools-overworld-seed-all"
+                  class="pmd-btn"
+                  data-testid="devtools-overworld-seed-all"
+                >
+                  Unlock All 12 Nodes
+                </button>
+              </div>
+            </div>
+          </div>
+
           <!-- DEV TAB 5: LEVEL & CHAPTER MAP VIEWER & SANDBOX EDITOR -->
           <div class="pmd-tab-panel" data-devtab-panel="maps" hidden>
             <div class="pmd-subcard">
@@ -613,6 +682,18 @@ const canonicalUrl = Astro.url.href;
   } from '../mystery-emblem/data/chapterMapRegistry';
   import { BattleScene } from '../mystery-emblem/scenes/BattleScene';
   import { ChapterMapEditorScene } from '../mystery-emblem/scenes/ChapterMapEditorScene';
+  import { OverworldScene } from '../mystery-emblem/scenes/OverworldScene';
+  import {
+    DEFAULT_OVERWORLD_GRAPH,
+    buildKecleonShopInventory,
+    buildSkirmishBattlePayload,
+    getOverworldGraph,
+  } from '../mystery-emblem/data/overworldMapData';
+  import {
+    findOverworldRoute,
+    rollPostBattleOverworldSpawns,
+    samplePolylineAtDistance,
+  } from '../mystery-emblem/engine/overworldEngine';
   import { TestDungeonScene } from '../mystery-emblem/scenes/TestDungeonScene';
   import {
     InMemoryCloudSyncAdapter,
@@ -640,6 +721,7 @@ const canonicalUrl = Astro.url.href;
   let currentBattleScene: BattleScene | null = null;
   let currentTestDungeonScene: TestDungeonScene | null = null;
   let currentMapEditorScene: ChapterMapEditorScene | null = null;
+  let currentOverworldScene: OverworldScene | null = null;
   let uiAbortController: AbortController | null = null;
 
   async function initMysteryEmblemApp() {
@@ -651,6 +733,8 @@ const canonicalUrl = Astro.url.href;
     currentTestDungeonScene = null;
     currentMapEditorScene?.destroy();
     currentMapEditorScene = null;
+    currentOverworldScene?.destroy();
+    currentOverworldScene = null;
     currentDevToolsHarness?.destroy();
     currentDevToolsHarness = null;
     currentDialogueOverlay?.destroy();
@@ -704,7 +788,9 @@ const canonicalUrl = Astro.url.href;
 
     let editingUnitId: string | null = null;
     let battleScene: BattleScene | null = null;
-    let battleReturnTarget: 'campaign' | 'devtools' | 'title' = 'campaign';
+    let battleReturnTarget: 'campaign' | 'devtools' | 'overworld' | 'title' = 'campaign';
+    let overworldScene: OverworldScene | null = null;
+    let overworldReturnTarget: 'devtools' | 'campaign' | 'suppress' = 'devtools';
     let testDungeonScene: TestDungeonScene | null = null;
     let mapEditorScene: ChapterMapEditorScene | null = null;
 
@@ -736,7 +822,11 @@ const canonicalUrl = Astro.url.href;
           testDungeonScene.handleMenuOrBack();
           return;
         }
-        if (mapEditorScene?.isOpen()) {
+        if (overworldScene?.isOpen()) {
+          overworldScene.handleMenuOrBack();
+          return;
+        }
+      if (mapEditorScene?.isOpen()) {
           mapEditorScene.handleMenuOrBack();
           return;
         }
@@ -745,7 +835,10 @@ const canonicalUrl = Astro.url.href;
         syncIdleButton: (btn) => {
           if (
             isPreviewAuthorized() &&
-            (battleScene?.isOpen() || testDungeonScene?.isOpen() || mapEditorScene?.isOpen())
+            (battleScene?.isOpen() ||
+              testDungeonScene?.isOpen() ||
+              mapEditorScene?.isOpen() ||
+              overworldScene?.isOpen())
           ) {
             btn.textContent = 'Menu';
             btn.dataset.cornerMode = 'menu';
@@ -804,6 +897,50 @@ const canonicalUrl = Astro.url.href;
       backStack.syncButtonLabel();
     }
 
+    async function openOverworldScene(opts?: {
+      preset?: 'sandbox' | 'prologue' | 'all';
+      sandboxMode?: boolean;
+      returnTo?: 'devtools' | 'campaign';
+      preservePosition?: boolean;
+    }): Promise<void> {
+      const sandboxMode = opts?.sandboxMode ?? true;
+      if (!overworldScene || !isPreviewAuthorized()) return;
+      if (sandboxMode && !isAdminSignedIn()) return;
+
+      overworldReturnTarget = opts?.returnTo ?? (sandboxMode ? 'devtools' : 'campaign');
+
+      if (opts?.preset) {
+        if (!manager.getSave()) {
+          manager.createNewCampaignSave({
+            lordSpeciesId: 'dratini',
+            lordNickname: 'Bahamut',
+            partnerSpeciesId: 'bulbasaur',
+            partnerNickname: 'Sprout',
+            healerSpeciesId: 'happiny',
+            healerNickname: 'Clover',
+          });
+        }
+        if (opts.preset === 'sandbox') {
+          manager.applyOverworldSandboxPreset();
+        } else if (opts.preset === 'prologue') {
+          manager.resetOverworldToPrologue();
+        } else if (opts.preset === 'all') {
+          manager.unlockAllOverworldNodes();
+        }
+      }
+
+      if (underDevScreen) underDevScreen.hidden = true;
+      if (titleScreen) titleScreen.hidden = true;
+      if (campaignMenu) campaignMenu.hidden = true;
+      if (devToolsModal) devToolsModal.hidden = true;
+      await overworldScene.open({
+        sandboxMode,
+        preservePosition: opts?.preservePosition,
+        skipDefaultSandboxSeed: Boolean(opts?.preset || opts?.preservePosition),
+      });
+      backStack.syncButtonLabel();
+    }
+
     async function openMapEditor(levelId = 'drenched_bluff_vanguard'): Promise<void> {
       if (!mapEditorScene || !isPreviewAuthorized() || !isAdminSignedIn()) return;
       if (underDevScreen) underDevScreen.hidden = true;
@@ -831,6 +968,12 @@ const canonicalUrl = Astro.url.href;
             devToolsModal.hidden = false;
             currentDevToolsHarness?.onSaveChanged();
             backStack.syncButtonLabel();
+          } else if (battleReturnTarget === 'overworld') {
+            void openOverworldScene({
+              sandboxMode: isAdminSignedIn(),
+              returnTo: isAdminSignedIn() ? 'devtools' : 'campaign',
+              preservePosition: true,
+            });
           } else if (battleReturnTarget === 'campaign') {
             openCampaignMenu();
           } else {
@@ -886,6 +1029,78 @@ const canonicalUrl = Astro.url.href;
         onLayerStateChanged: () => backStack.syncButtonLabel(),
       });
       currentMapEditorScene = mapEditorScene;
+
+      overworldScene = new OverworldScene({
+        viewportEl,
+        saveManager: manager,
+        audioManager,
+        sandboxMode: true,
+        onExit: () => {
+          if (overworldReturnTarget === 'suppress') {
+            return;
+          }
+          if (
+            overworldReturnTarget === 'devtools' &&
+            isPreviewAuthorized() &&
+            isAdminSignedIn() &&
+            devToolsModal
+          ) {
+            if (underDevScreen) underDevScreen.hidden = true;
+            if (titleScreen) titleScreen.hidden = true;
+            if (campaignMenu) campaignMenu.hidden = true;
+            devToolsModal.hidden = false;
+            currentDevToolsHarness?.switchSubTab('overworld');
+            backStack.syncButtonLabel();
+          } else if (overworldReturnTarget === 'campaign' && isPreviewAuthorized()) {
+            openCampaignMenu();
+          } else {
+            showTitleScreen();
+          }
+        },
+        onLayerStateChanged: () => backStack.syncButtonLabel(),
+        onRequestRenameUnit: (instanceId) => openNicknameModal(instanceId),
+        onLaunchChapterBattle: ({ nodeId, levelId }) => {
+          if (!battleScene) return;
+          overworldReturnTarget = 'suppress';
+          overworldScene?.close();
+          battleReturnTarget = 'overworld';
+          if (underDevScreen) underDevScreen.hidden = true;
+          if (titleScreen) titleScreen.hidden = true;
+          if (campaignMenu) campaignMenu.hidden = true;
+          if (devToolsModal) devToolsModal.hidden = true;
+          void battleScene
+            .open({
+              levelId,
+              exitButtonLabel: 'Return to Overworld',
+              onVictory: () => {
+                manager.completeOverworldChapter(nodeId);
+              },
+            })
+            .then(() => backStack.syncButtonLabel());
+        },
+        onLaunchSkirmishBattle: ({ nodeId, customMap, enemyOverrides, goldBounty }) => {
+          if (!battleScene) return;
+          overworldReturnTarget = 'suppress';
+          overworldScene?.close();
+          battleReturnTarget = 'overworld';
+          if (underDevScreen) underDevScreen.hidden = true;
+          if (titleScreen) titleScreen.hidden = true;
+          if (campaignMenu) campaignMenu.hidden = true;
+          if (devToolsModal) devToolsModal.hidden = true;
+          void battleScene
+            .open({
+              customMap,
+              enemyOverrides,
+              exitButtonLabel: 'Return to Overworld',
+              hideReplayOnVictory: true,
+              onVictory: () => {
+                manager.clearOverworldSkirmish(nodeId, goldBounty);
+              },
+            })
+            .then(() => backStack.syncButtonLabel());
+        },
+      });
+      currentOverworldScene = overworldScene;
     }
 
     function openNicknameModal(instanceId: string): void {
@@ -921,6 +1136,9 @@ const canonicalUrl = Astro.url.href;
         onLaunchTestDungeon: () => {
           void openTestDungeon();
         },
+        onLaunchOverworld: (preset) => {
+          void openOverworldScene({ preset, sandboxMode: true, returnTo: 'devtools' });
+        },
         onLaunchMapEditor: (levelId) => {
           void openMapEditor(levelId);
         },
@@ -951,6 +1169,15 @@ const canonicalUrl = Astro.url.href;
       testDungeonScene,
       mapEditorScene,
       openMapEditor,
+      overworldScene,
+      openOverworldScene,
+      DEFAULT_OVERWORLD_GRAPH,
+      getOverworldGraph,
+      buildKecleonShopInventory,
+      buildSkirmishBattlePayload,
+      findOverworldRoute,
+      samplePolylineAtDistance,
+      rollPostBattleOverworldSpawns,
       CHAPTER_LEVEL_CATALOG,
       getDefaultChapterMap,
       getEffectiveChapterMap,
@@ -1036,6 +1263,11 @@ const canonicalUrl = Astro.url.href;
         testDungeonScene.close();
         return;
       }
+      if (overworldScene?.isOpen()) {
+        overworldReturnTarget = 'devtools';
+        overworldScene.close();
+        return;
+      }
       if (mapEditorScene?.isOpen()) {
         mapEditorScene.close();
         return;
@@ -1077,6 +1309,11 @@ const canonicalUrl = Astro.url.href;
       id: 'map-editor-sublayer',
       isActive: () => Boolean(mapEditorScene?.isOpen() && mapEditorScene.hasActiveSubLayer()),
       onBack: () => mapEditorScene?.handleMenuOrBack(),
+    });
+    backStack.registerLayer({
+      id: 'overworld-scene-sublayer',
+      isActive: () => Boolean(overworldScene?.isOpen() && overworldScene.hasActiveSubLayer()),
+      onBack: () => overworldScene?.handleMenuOrBack(),
     });
     backStack.registerLayer({
       id: 'dialogue-overlay',
@@ -1143,6 +1380,10 @@ const canonicalUrl = Astro.url.href;
         if (battleScene?.isOpen()) battleScene.close();
         if (testDungeonScene?.isOpen()) testDungeonScene.close();
         if (mapEditorScene?.isOpen()) mapEditorScene.close();
+        if (overworldScene?.isOpen()) {
+          overworldReturnTarget = 'suppress';
+          overworldScene.close();
+        }
         if (dialogueOverlay?.isOpen()) dialogueOverlay.close('cancelled');
         if (nicknameBackdrop && !nicknameBackdrop.hidden) {
           editingUnitId = null;
@@ -1187,7 +1428,8 @@ const canonicalUrl = Astro.url.href;
         Boolean(devToolsModal && !devToolsModal.hidden) ||
         Boolean(battleScene?.isOpen()) ||
         Boolean(testDungeonScene?.isOpen()) ||
-        Boolean(mapEditorScene?.isOpen());
+        Boolean(mapEditorScene?.isOpen()) ||
+        Boolean(overworldScene?.isOpen());
       if (!anyPanelOrSceneOpen && titleScreen) {
         titleScreen.hidden = false;
       }
@@ -1198,6 +1440,10 @@ const canonicalUrl = Astro.url.href;
       }
       if (!adminActive && testDungeonScene?.isOpen()) {
         testDungeonScene.close();
+      }
+      if (!adminActive && overworldScene?.isOpen() && overworldScene.getSnapshot().sandboxMode) {
+        overworldReturnTarget = 'suppress';
+        overworldScene.close();
       }
       if (!adminActive && mapEditorScene?.isOpen()) {
         mapEditorScene.close();

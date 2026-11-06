@@ -38,13 +38,16 @@ import {
   getSpeciesByLineId,
 } from '../data/index';
 import { renderDungeonMapPreviewCanvas } from '../scenes/ChapterMapEditorScene';
+import { DEFAULT_OVERWORLD_GRAPH, getOverworldNodeById } from '../data/overworldMapData';
+import { ensureOverworldGraphState } from '../engine/overworldEngine';
+import { renderOverworldPreviewCanvas } from '../scenes/OverworldScene';
 import type { SaveStateManager } from '../state/SaveStateManager';
 import type { DialogueOverlay } from './DialogueOverlay';
 import { PmdPortraitView, PmdSpriteActor } from './PmdSpriteCanvas';
 import { bindPointerTap } from './pointerControls';
 import { PROLOGUE_AWAKENING_TEST_SCRIPT } from './sampleDialogueScripts';
 
-export type DevToolsSubTab = 'audit' | 'sprites' | 'dialogue' | 'skirmish' | 'maps';
+export type DevToolsSubTab = 'audit' | 'sprites' | 'dialogue' | 'skirmish' | 'maps' | 'overworld';
 
 const MAP_GROUP_CHIPS: ReadonlyArray<{ id: 'all' | ChapterLevelGroup; label: string }> = [
   { id: 'all', label: 'All (34)' },
@@ -73,6 +76,7 @@ export interface DevToolsHarnessOptions {
   onLaunchTestDungeon?: () => void;
   onLaunchBattle?: (levelId?: string) => void;
   onLaunchMapEditor?: (levelId: string) => void;
+  onLaunchOverworld?: (preset?: 'sandbox' | 'prologue' | 'all') => void;
   onRequestRenameUnit?: (instanceId: string) => void;
   signal: AbortSignal;
 }
@@ -85,6 +89,7 @@ export class DevToolsHarness {
   private readonly onLaunchTestDungeon?: () => void;
   private readonly onLaunchBattle?: (levelId?: string) => void;
   private readonly onLaunchMapEditor?: (levelId: string) => void;
+  private readonly onLaunchOverworld?: (preset?: 'sandbox' | 'prologue' | 'all') => void;
   private readonly onRequestRenameUnit?: (instanceId: string) => void;
   private readonly signal: AbortSignal;
 
@@ -116,6 +121,8 @@ export class DevToolsHarness {
   private mapStatusBadgeEl: HTMLElement | null = null;
   private mapMetaEl: HTMLElement | null = null;
   private mapPreviewCanvasEl: HTMLCanvasElement | null = null;
+  private overworldPreviewCanvasEl: HTMLCanvasElement | null = null;
+  private overworldMetaEl: HTMLElement | null = null;
 
   constructor(options: DevToolsHarnessOptions) {
     this.modalEl = options.modalEl;
@@ -125,6 +132,7 @@ export class DevToolsHarness {
     this.onLaunchTestDungeon = options.onLaunchTestDungeon;
     this.onLaunchBattle = options.onLaunchBattle;
     this.onLaunchMapEditor = options.onLaunchMapEditor;
+    this.onLaunchOverworld = options.onLaunchOverworld;
     this.onRequestRenameUnit = options.onRequestRenameUnit;
     this.signal = options.signal;
 
@@ -166,10 +174,15 @@ export class DevToolsHarness {
       this.renderDialogueTabSummary();
     } else if (tab === 'maps') {
       void this.refreshMapInspectorPanel();
+    } else if (tab === 'overworld') {
+      void this.refreshOverworldInspectorPanel();
     }
   }
 
   public onSaveChanged(): void {
+    if (this.activeSubTab === 'overworld') {
+      void this.refreshOverworldInspectorPanel();
+    }
     if (this.activeSubTab === 'sprites') {
       this.renderActiveRosterStageControls();
     } else if (this.activeSubTab === 'dialogue') {
@@ -731,6 +744,48 @@ export class DevToolsHarness {
       }
     });
 
+    // --- TAB 6: STEP 4 OVERWORLD MAP, KECLEON SHOPS & SKIRMISH SANDBOX ---
+    this.overworldPreviewCanvasEl = this.modalEl.querySelector<HTMLCanvasElement>(
+      '#devtools-overworld-preview-canvas'
+    );
+    this.overworldMetaEl = this.modalEl.querySelector<HTMLElement>('#devtools-overworld-meta');
+
+    bindPointerTap(
+      this.modalEl.querySelector<HTMLButtonElement>('#devtools-launch-overworld'),
+      () => {
+        this.audioManager.playSfx('select');
+        this.onLaunchOverworld?.();
+      },
+      { signal: this.signal }
+    );
+
+    bindPointerTap(
+      this.modalEl.querySelector<HTMLButtonElement>('#devtools-overworld-seed-sandbox'),
+      () => {
+        this.audioManager.playSfx('select');
+        this.onLaunchOverworld?.('sandbox');
+      },
+      { signal: this.signal }
+    );
+
+    bindPointerTap(
+      this.modalEl.querySelector<HTMLButtonElement>('#devtools-overworld-seed-prologue'),
+      () => {
+        this.audioManager.playSfx('select');
+        this.onLaunchOverworld?.('prologue');
+      },
+      { signal: this.signal }
+    );
+
+    bindPointerTap(
+      this.modalEl.querySelector<HTMLButtonElement>('#devtools-overworld-seed-all'),
+      () => {
+        this.audioManager.playSfx('select');
+        this.onLaunchOverworld?.('all');
+      },
+      { signal: this.signal }
+    );
+
     this.renderStageButtons();
   }
 
@@ -943,6 +998,42 @@ export class DevToolsHarness {
 
     if (this.mapPreviewCanvasEl) {
       await renderDungeonMapPreviewCanvas(this.mapPreviewCanvasEl, effectiveMap);
+    }
+  }
+
+  private async refreshOverworldInspectorPanel(): Promise<void> {
+    const save = this.saveManager.getSave();
+    const graph = DEFAULT_OVERWORLD_GRAPH;
+    const reconciled = save
+      ? ensureOverworldGraphState(save, graph)
+      : { currentNodeId: graph.startNodeId, nodes: {}, mutated: false };
+    const currentDef = getOverworldNodeById(reconciled.currentNodeId, graph);
+    const unlockedCount = save
+      ? graph.nodes.filter((n) => reconciled.nodes[n.id]?.unlocked).length
+      : 1;
+    const clearedCount = save
+      ? graph.nodes.filter((n) => reconciled.nodes[n.id]?.cleared).length
+      : 0;
+    const shopCount = save
+      ? graph.nodes.filter((n) => Boolean(reconciled.nodes[n.id]?.activeKecleonShop)).length
+      : 0;
+    const skirmishCount = save
+      ? graph.nodes.filter((n) => Boolean(reconciled.nodes[n.id]?.activeSkirmish)).length
+      : 0;
+
+    if (this.overworldMetaEl) {
+      this.overworldMetaEl.textContent = [
+        `Map: ${graph.name} (${graph.imageWidth}×${graph.imageHeight}px)`,
+        `Current Node: ${currentDef ? `${currentDef.code} · ${currentDef.name}` : reconciled.currentNodeId}`,
+        `Unlocked: ${unlockedCount}/${graph.nodes.length} (${clearedCount} Cleared)`,
+        `Kecleon Shops: ${shopCount}`,
+        `Feral Skirmishes: ${skirmishCount}`,
+        `Gold: ${save?.gold ?? 1500}G`,
+      ].join(' · ');
+    }
+
+    if (this.overworldPreviewCanvasEl) {
+      await renderOverworldPreviewCanvas(this.overworldPreviewCanvasEl, save, graph);
     }
   }
 }

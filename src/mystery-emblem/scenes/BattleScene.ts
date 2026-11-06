@@ -273,6 +273,8 @@ export class BattleScene {
   private activeLevelId = 'drenched_bluff_vanguard';
   private explicitCustomMap: DungeonMapDefinition | null = null;
   private explicitEnemyOverrides: ReadonlyArray<ManualEnemyBattleSpawn> | undefined = undefined;
+  private currentOnVictory: (() => void) | undefined = undefined;
+  private victoryCallbackFired = false;
   private map: DungeonMapDefinition = createPlayableVanguardBattleMap();
   private enemySpawnDefs: ReadonlyArray<ManualEnemyBattleSpawn> = DEFAULT_VANGUARD_ENEMY_SPAWNS;
   private guestPrepManager: SaveStateManager | null = null;
@@ -698,12 +700,44 @@ export class BattleScene {
     levelId?: string;
     customMap?: DungeonMapDefinition;
     enemyOverrides?: ReadonlyArray<ManualEnemyBattleSpawn>;
+    onVictory?: () => void;
+    exitButtonLabel?: string;
+    hideReplayOnVictory?: boolean;
   }): Promise<void> {
     this.battleRunGen += 1;
     this.activeLevelId =
       options?.levelId?.trim() || options?.customMap?.id || 'drenched_bluff_vanguard';
     this.explicitCustomMap = options?.customMap ? cloneDungeonMap(options.customMap) : null;
     this.explicitEnemyOverrides = options?.enemyOverrides;
+    this.currentOnVictory = options?.onVictory;
+    this.victoryCallbackFired = false;
+
+    const exitLabel = options?.exitButtonLabel ?? 'Return to Menu';
+    const hideReplay = Boolean(options?.hideReplayOnVictory);
+    const victoryReplayBtn = this.victoryModalBackdropEl.querySelector<HTMLElement>(
+      '[data-testid="victory-replay-btn"]'
+    );
+    if (victoryReplayBtn) {
+      victoryReplayBtn.hidden = hideReplay;
+    }
+    const victoryExitBtn = this.victoryModalBackdropEl.querySelector<HTMLElement>(
+      '[data-testid="victory-exit-btn"]'
+    );
+    if (victoryExitBtn) {
+      victoryExitBtn.textContent = exitLabel;
+    }
+    const defeatExitBtn = this.defeatModalBackdropEl.querySelector<HTMLElement>(
+      '[data-testid="defeat-exit-btn"]'
+    );
+    if (defeatExitBtn) {
+      defeatExitBtn.textContent = exitLabel;
+    }
+    const sysExitBtn = this.systemMenuBackdropEl.querySelector<HTMLElement>(
+      '[data-testid="battle-sys-exit"]'
+    );
+    if (sysExitBtn) {
+      sysExitBtn.textContent = exitLabel;
+    }
 
     if (this.explicitCustomMap) {
       this.map = cloneDungeonMap(this.explicitCustomMap);
@@ -1133,6 +1167,7 @@ export class BattleScene {
     this.clearSelection();
 
     this.turnNumber = 1;
+    this.victoryCallbackFired = false;
     this.phase = 'dungeon_prep';
     this.interactionState = 'idle';
     this.selectionPulseStartMs = performance.now();
@@ -3407,6 +3442,10 @@ export class BattleScene {
     }
 
     this.victoryModalBackdropEl.hidden = false;
+    if (!this.victoryCallbackFired) {
+      this.victoryCallbackFired = true;
+      this.currentOnVictory?.();
+    }
     this.audioManager.playSfx('victory_fanfare');
     this.audioManager.playBgm('job_clear', { fadeMs: 180, loop: false, restart: true });
     this.syncHudControls();

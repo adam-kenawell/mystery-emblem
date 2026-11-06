@@ -8,8 +8,25 @@ import {
 } from '../data/chapterMapRegistry';
 import { ITEM_MAP, MOVE_MAP, SPECIES_MAP } from '../data/index';
 import {
+  DEFAULT_OVERWORLD_GRAPH,
+  getOverworldNodeById,
+  type OverworldGraphDefinition,
+} from '../data/overworldMapData';
+import {
+  buildKecleonShopState,
+  buildSkirmishSpawnState,
+  createPrologueOverworldNodes,
+  createSandboxOverworldNodes,
+  createUnlockedAllOverworldNodes,
+  ensureOverworldGraphState,
+  rollPostBattleOverworldSpawns,
+  type PostBattleSpawnResult,
+} from '../engine/overworldEngine';
+import {
   CURRENT_SAVE_SCHEMA_VERSION,
   type EvolutionBranch,
+  type ItemDefinition,
+  type KecleonShopType,
   type OwnedPokemonInstance,
   type PokemonSpeciesDefinition,
   type QuizRecruitSeeds,
@@ -815,6 +832,392 @@ export class SaveStateManager {
     save.supports[pairKey] = progress;
     this.commitSave(save);
     return { ...progress };
+  }
+
+  // ==========================================================================
+  // Step 4 Overworld Traversal, Kecleon Shops, Skirmish Spawners & Promotions
+  // ==========================================================================
+
+  public addGold(amount: number): SaveData {
+    const save = this.requireActiveSave();
+    save.gold = Math.max(0, Math.floor(save.gold + amount));
+    this.commitSave(save);
+    return this.getSave()!;
+  }
+
+  public setUnitLevelForTest(instanceId: string, level: number): OwnedPokemonInstance {
+    const save = this.requireActiveSave();
+    const unit = save.roster.find((u) => u.instanceId === instanceId);
+    if (!unit) {
+      throw new Error(`Pokémon instance "${instanceId}" not found in roster.`);
+    }
+    const clamped = Math.max(1, Math.min(40, Math.floor(level)));
+    unit.level = clamped;
+    const sp = SPECIES_MAP.get(unit.speciesId);
+    if (sp) {
+      for (const entry of sp.learnset) {
+        if (entry.level <= clamped && !unit.unlockedMoveIds.includes(entry.moveId)) {
+          unit.unlockedMoveIds.push(entry.moveId);
+          if (unit.activeMoveIds.length < 4) {
+            unit.activeMoveIds.push(entry.moveId);
+          }
+        }
+      }
+    }
+    this.commitSave(save);
+    return JSON.parse(JSON.stringify(unit)) as OwnedPokemonInstance;
+  }
+
+  public useEvolutionItemOnUnit(
+    instanceId: string,
+    itemId: 'evolution_stone' | 'evolution_gem',
+    targetSpeciesId?: string
+  ): OwnedPokemonInstance {
+    const save = this.requireActiveSave();
+    const unit = save.roster.find((u) => u.instanceId === instanceId);
+    if (!unit) {
+      throw new Error(`Pokémon instance "${instanceId}" not found in roster.`);
+    }
+    const currentSp = SPECIES_MAP.get(unit.speciesId);
+    if (!currentSp) {
+      throw new Error(`Unknown species "${unit.speciesId}".`);
+    }
+
+    const matchingBranches = currentSp.evolutions.filter((b) => b.requiredItemId === itemId);
+    if (matchingBranches.length === 0) {
+      throw new Error(`${unit.nickname} (${currentSp.name}) cannot promote with ${ITEM_MAP.get(itemId)?.name ?? itemId}.`);
+    }
+
+    const chosenBranch = targetSpeciesId
+      ? matchingBranches.find((b) => b.targetSpeciesId === targetSpeciesId)
+      : matchingBranches[0];
+    if (!chosenBranch) {
+      throw new Error(`Invalid promotion target "${targetSpeciesId ?? ''}" for ${currentSp.name}.`);
+    }
+
+    if (unit.level < chosenBranch.minLevel) {
+      throw new Error(
+        `${unit.nickname} must reach Lv. ${chosenBranch.minLevel} to use ${ITEM_MAP.get(itemId)?.name ?? itemId} (currently Lv. ${unit.level}).`
+      );
+    }
+
+    // Consume promotion item from unit's equipped slot OR Convoy
+    if (unit.consumableItemId === itemId) {
+      unit.consumableItemId = null;
+    } else {
+      const convoySlot = save.convoy.find((c) => c.itemId === itemId);
+      if (!convoySlot || convoySlot.quantity < 1) {
+        throw new Error(`${ITEM_MAP.get(itemId)?.name ?? itemId} is not in the Bag.`);
+      }
+      convoySlot.quantity -= 1;
+      if (convoySlot.quantity <= 0) {
+        save.convoy = save.convoy.filter((c) => c.itemId !== itemId);
+      }
+    }
+
+    const targetSp = SPECIES_MAP.get(chosenBranch.targetSpeciesId)!;
+    unit.currentStats.hp += chosenBranch.promotionBonuses.hp;
+    unit.currentStats.atk += chosenBranch.promotionBonuses.atk;
+    unit.currentStats.def += chosenBranch.promotionBonuses.def;
+    unit.currentStats.spa += chosenBranch.promotionBonuses.spa;
+    unit.currentStats.spd += chosenBranch.promotionBonuses.spd;
+    unit.currentStats.spe += chosenBranch.promotionBonuses.spe;
+    unit.currentStats.mov = targetSp.baseStats.mov;
+
+    if (unit.nickname === currentSp.name) {
+      unit.nickname = targetSp.name;
+    }
+    unit.speciesId = targetSp.id;
+
+    for (const entry of targetSp.learnset) {
+      if (entry.level <= unit.level && !unit.unlockedMoveIds.includes(entry.moveId)) {
+        unit.unlockedMoveIds.push(entry.moveId);
+        if (unit.activeMoveIds.length < 4) {
+          unit.activeMoveIds.push(entry.moveId);
+        }
+      }
+    }
+    if (!unit.equippedMoveId) {
+      const firstOffensive = unit.activeMoveIds.find((mId) => {
+        const mv = MOVE_MAP.get(mId);
+        return mv && (mv.category === 'Physical' || mv.category === 'Special');
+      });
+      unit.equippedMoveId = firstOffensive ?? null;
+    }
+
+    this.commitSave(save);
+    return JSON.parse(JSON.stringify(unit)) as OwnedPokemonInstance;
+  }
+
+  public ensureOverworldInitialized(
+    graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+  ): SaveData {
+    const save = this.requireActiveSave();
+    const reconciled = ensureOverworldGraphState(save, graph);
+    if (reconciled.mutated) {
+      save.overworld = {
+        currentNodeId: reconciled.currentNodeId,
+        nodes: reconciled.nodes,
+      };
+      this.commitSave(save);
+    }
+    return this.getSave()!;
+  }
+
+  public applyOverworldSandboxPreset(
+    graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH,
+    rng: () => number = Math.random
+  ): SaveData {
+    const save = this.requireActiveSave();
+    const nodes = createSandboxOverworldNodes(graph, rng);
+    const clearedIds = Object.values(nodes)
+      .filter((st) => st.cleared)
+      .map((st) => st.nodeId);
+
+    save.campaign.completedChapterIds = clearedIds;
+    save.campaign.kecleonShopsUnlocked = true;
+    save.campaign.currentChapterId = nodes['chapter_04'] ? 'chapter_04' : graph.startNodeId;
+    save.gold = Math.max(save.gold, 2500);
+    save.overworld = {
+      currentNodeId: graph.startNodeId,
+      nodes,
+    };
+
+    this.commitSave(save);
+    return this.getSave()!;
+  }
+
+  public resetOverworldToPrologue(
+    graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+  ): SaveData {
+    const save = this.requireActiveSave();
+    save.campaign.completedChapterIds = [];
+    save.campaign.kecleonShopsUnlocked = false;
+    save.campaign.currentChapterId = graph.startNodeId;
+    save.overworld = {
+      currentNodeId: graph.startNodeId,
+      nodes: createPrologueOverworldNodes(graph),
+    };
+    this.commitSave(save);
+    return this.getSave()!;
+  }
+
+  public unlockAllOverworldNodes(
+    graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+  ): SaveData {
+    const save = this.requireActiveSave();
+    const nodes = createUnlockedAllOverworldNodes(graph);
+    const current =
+      save.overworld?.currentNodeId && nodes[save.overworld.currentNodeId]
+        ? save.overworld.currentNodeId
+        : graph.startNodeId;
+    save.campaign.kecleonShopsUnlocked = true;
+    save.overworld = {
+      currentNodeId: current,
+      nodes,
+    };
+    this.commitSave(save);
+    return this.getSave()!;
+  }
+
+  public setOverworldCurrentNode(
+    nodeId: string,
+    graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+  ): SaveData {
+    const save = this.requireActiveSave();
+    const reconciled = ensureOverworldGraphState(save, graph);
+    const target = reconciled.nodes[nodeId];
+    if (!target || !target.unlocked) {
+      throw new Error(`Overworld node "${nodeId}" is locked or does not exist.`);
+    }
+    save.overworld = {
+      currentNodeId: nodeId,
+      nodes: reconciled.nodes,
+    };
+    this.commitSave(save);
+    return this.getSave()!;
+  }
+
+  public spawnOverworldKecleonShop(
+    nodeId: string,
+    shopType?: KecleonShopType,
+    rng: () => number = Math.random,
+    graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+  ): SaveData {
+    const save = this.requireActiveSave();
+    const reconciled = ensureOverworldGraphState(save, graph);
+    const nodeState = reconciled.nodes[nodeId];
+    if (!nodeState || !nodeState.unlocked) {
+      throw new Error(`Cannot spawn a Kecleon Shop on locked node "${nodeId}".`);
+    }
+    nodeState.activeKecleonShop = buildKecleonShopState(shopType, rng);
+    save.campaign.kecleonShopsUnlocked = true;
+    save.overworld = {
+      currentNodeId: reconciled.currentNodeId,
+      nodes: reconciled.nodes,
+    };
+    this.commitSave(save);
+    return this.getSave()!;
+  }
+
+  public spawnOverworldSkirmish(
+    nodeId: string,
+    recommendedLevel?: number,
+    tilesetId?: string,
+    graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+  ): SaveData {
+    const save = this.requireActiveSave();
+    const reconciled = ensureOverworldGraphState(save, graph);
+    const def = getOverworldNodeById(nodeId, graph);
+    const nodeState = reconciled.nodes[nodeId];
+    if (!def || !nodeState || !nodeState.unlocked) {
+      throw new Error(`Cannot spawn a Feral Skirmish on locked node "${nodeId}".`);
+    }
+    nodeState.activeSkirmish = buildSkirmishSpawnState(def, {
+      recommendedLevel,
+      tilesetId,
+    });
+    save.overworld = {
+      currentNodeId: reconciled.currentNodeId,
+      nodes: reconciled.nodes,
+    };
+    this.commitSave(save);
+    return this.getSave()!;
+  }
+
+  public clearOverworldSkirmish(
+    nodeId: string,
+    goldBounty = 0,
+    graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+  ): SaveData {
+    const save = this.requireActiveSave();
+    const reconciled = ensureOverworldGraphState(save, graph);
+    const nodeState = reconciled.nodes[nodeId];
+    if (nodeState) {
+      nodeState.activeSkirmish = null;
+    }
+    if (goldBounty > 0) {
+      save.gold += Math.floor(goldBounty);
+    }
+    save.overworld = {
+      currentNodeId: reconciled.currentNodeId,
+      nodes: reconciled.nodes,
+    };
+    this.commitSave(save);
+    return this.getSave()!;
+  }
+
+  public completeOverworldChapter(
+    nodeId: string,
+    opts?: {
+      rng?: () => number;
+      graph?: OverworldGraphDefinition;
+      skirmishChance?: number;
+      shopChance?: number;
+    }
+  ): { save: SaveData; firstClear: boolean; spawns: PostBattleSpawnResult } {
+    const graph = opts?.graph ?? DEFAULT_OVERWORLD_GRAPH;
+    const save = this.requireActiveSave();
+    const reconciled = ensureOverworldGraphState(save, graph);
+    const def = getOverworldNodeById(nodeId, graph);
+    const nodeState = reconciled.nodes[nodeId];
+    if (!def || !nodeState) {
+      throw new Error(`Unknown Overworld node "${nodeId}".`);
+    }
+
+    const firstClear = !nodeState.cleared && !save.campaign.completedChapterIds.includes(nodeId);
+    nodeState.unlocked = true;
+    nodeState.cleared = true;
+    if (!save.campaign.completedChapterIds.includes(nodeId)) {
+      save.campaign.completedChapterIds.push(nodeId);
+    }
+    if (def.unlocksKecleonShopsOnClear) {
+      save.campaign.kecleonShopsUnlocked = true;
+    }
+    if (firstClear && def.clearGoldReward > 0) {
+      save.gold += def.clearGoldReward;
+    }
+
+    for (const nextId of def.unlocksNodeIdsOnClear) {
+      const nextState = reconciled.nodes[nextId];
+      if (nextState) {
+        nextState.unlocked = true;
+      }
+    }
+
+    // Advance `campaign.currentChapterId` to the earliest unlocked non-cleared story node
+    const nextStory = graph.nodes.find(
+      (n) => n.kind === 'story' && reconciled.nodes[n.id]?.unlocked && !reconciled.nodes[n.id]?.cleared
+    );
+    if (nextStory) {
+      save.campaign.currentChapterId = nextStory.id;
+    }
+
+    const spawns = rollPostBattleOverworldSpawns(reconciled.nodes, graph, {
+      justClearedNodeId: nodeId,
+      kecleonShopsUnlocked: save.campaign.kecleonShopsUnlocked,
+      skirmishChance: opts?.skirmishChance,
+      shopChance: opts?.shopChance,
+      rng: opts?.rng,
+    });
+
+    save.overworld = {
+      currentNodeId: nodeId,
+      nodes: reconciled.nodes,
+    };
+
+    this.commitSave(save);
+    return {
+      save: this.getSave()!,
+      firstClear,
+      spawns,
+    };
+  }
+
+  public buyKecleonShopItem(
+    nodeId: string,
+    itemId: string,
+    graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+  ): { save: SaveData; item: ItemDefinition; remainingStock: number } {
+    const save = this.requireActiveSave();
+    const reconciled = ensureOverworldGraphState(save, graph);
+    const nodeState = reconciled.nodes[nodeId];
+    const shop = nodeState?.activeKecleonShop;
+    if (!nodeState || !shop) {
+      throw new Error('No Kecleon Shop is currently active at this location.');
+    }
+
+    const stockIndex = shop.inventoryItemIds.indexOf(itemId);
+    if (stockIndex === -1) {
+      throw new Error('That item is out of stock at this Kecleon stall.');
+    }
+
+    const item = ITEM_MAP.get(itemId);
+    if (!item || item.buyPrice === null) {
+      throw new Error(`Item "${itemId}" cannot be purchased.`);
+    }
+    if (save.gold < item.buyPrice) {
+      throw new Error(`Not enough Gold! Need ${item.buyPrice}G (have ${save.gold}G).`);
+    }
+
+    save.gold -= item.buyPrice;
+    returnItemToConvoyList(save.convoy, item.id);
+    shop.inventoryItemIds.splice(stockIndex, 1);
+    const remainingStock = shop.inventoryItemIds.length;
+    if (remainingStock === 0) {
+      nodeState.activeKecleonShop = null;
+    }
+
+    save.overworld = {
+      currentNodeId: reconciled.currentNodeId,
+      nodes: reconciled.nodes,
+    };
+    this.commitSave(save);
+    return {
+      save: this.getSave()!,
+      item,
+      remainingStock,
+    };
   }
 
   public clearLocalSave(): void {
