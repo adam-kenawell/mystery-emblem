@@ -1,0 +1,2093 @@
+---
+import '@fontsource/fusion-pixel-12px-proportional-kr';
+import '../mystery-emblem/ui/pmdWindow.css';
+
+const title = 'Mystery Emblem — Tactical RPG';
+const description =
+  'A browser-based tactical RPG combining Fire Emblem Awakening gameplay systems with Pokémon Mystery Dungeon: Explorers of Sky visuals.';
+const canonicalUrl = Astro.url.href;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <link rel="icon" type="image/svg+xml" href={`${import.meta.env.BASE_URL}favicon.svg`} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <main class="mystery-emblem-shell">
+      <div id="mystery-emblem-root" class="pmd-viewport">
+        <!-- Admin-Only Dev Tools Button (Top-Left, strictly visible ONLY for adam.kenawell.family@gmail.com) -->
+        <button
+          id="pmd-dev-tools-btn"
+          class="pmd-window pmd-corner-btn pmd-corner-left"
+          type="button"
+          hidden
+        >
+          Dev Tools
+        </button>
+
+        <!-- Persistent Mobile / PC Menu & Back Button (Top-Right, Rule 2 & Rule 3) -->
+        <button
+          id="pmd-corner-menu-btn"
+          class="pmd-window pmd-corner-btn pmd-corner-right"
+          type="button"
+          aria-label="Open System Menu"
+        >
+          Menu
+        </button>
+
+        <!-- Authentic PMD: Explorers of Sky Title Window -->
+        <section id="pmd-title-screen" class="pmd-window pmd-title-card">
+          <h1 class="pmd-title">MYSTERY EMBLEM</h1>
+          <p class="pmd-subtitle">Echoes of the Dragon Lineage</p>
+
+          <p id="pmd-save-summary" class="pmd-desc">
+            Command your Pokémon squad across five kingdoms in a tactical RPG adventure.
+          </p>
+
+          <div class="pmd-actions">
+            <button
+              class="pmd-btn pmd-btn-primary pmd-continue-btn"
+              id="btn-continue"
+              type="button"
+              disabled
+            >
+              <span id="btn-continue-label">Continue</span>
+              <span
+                id="btn-continue-sprite"
+                class="pmd-continue-sprite"
+                data-testid="continue-lord-sprite-slot"
+                hidden
+              ></span>
+            </button>
+            <button class="pmd-btn" id="btn-new-game" type="button">
+              New Game
+            </button>
+            <button class="pmd-btn" id="btn-cloud-sync" type="button">
+              Cloud Save
+            </button>
+          </div>
+
+          <p id="pmd-status-msg" class="pmd-status" aria-live="polite" hidden></p>
+        </section>
+
+        <!-- Player Campaign Menu (Clean RPG UI — Party, Nicknames, Loadout & Cloud Save) -->
+        <section id="pmd-campaign-menu" class="pmd-window pmd-panel" hidden>
+          <header class="pmd-panel-header">
+            <h2 class="pmd-panel-title">CAMPAIGN MENU</h2>
+            <p class="pmd-panel-sub">
+              Manage your party, nicknames, equipped moves, and cloud save.
+            </p>
+          </header>
+
+          <nav class="pmd-tabs" aria-label="Campaign Menu Tabs">
+            <button type="button" class="pmd-btn pmd-tab-btn is-active" data-tab="squad">
+              Party
+            </button>
+            <button type="button" class="pmd-btn pmd-tab-btn" data-tab="sync">
+              Cloud &amp; Save
+            </button>
+          </nav>
+
+          <!-- TAB 1: PARTY -->
+          <div id="tab-panel-squad" class="pmd-tab-panel">
+            <div id="squad-empty-state" class="pmd-empty-box" hidden>
+              <p>No active campaign yet. Start a new adventure to assemble your squad!</p>
+              <button type="button" id="btn-empty-create-save" class="pmd-btn pmd-btn-primary">
+                New Game
+              </button>
+            </div>
+            <div id="squad-dungeon-banner" class="pmd-subcard pmd-dungeon-cta-card" hidden>
+              <div class="pmd-devtools-row-between">
+                <div>
+                  <h3 class="pmd-subcard-title">Drenched Bluff — Vanguard Skirmish</h3>
+                  <p class="pmd-subcard-text">
+                    Deploy your party into a tactical dungeon battle and rout all enemy forces!
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  id="btn-enter-dungeon"
+                  class="pmd-btn pmd-btn-primary"
+                  data-testid="btn-enter-dungeon"
+                >
+                  Enter Dungeon
+                </button>
+              </div>
+            </div>
+            <div id="squad-cards-grid" class="pmd-squad-grid"></div>
+          </div>
+
+          <!-- TAB 2: CLOUD & SAVE -->
+          <div id="tab-panel-sync" class="pmd-tab-panel" hidden>
+            <div class="pmd-sync-grid">
+              <div class="pmd-subcard">
+                <h3 class="pmd-subcard-title">Cloud Save</h3>
+                <p id="sync-cloud-details" class="pmd-subcard-text">
+                  Sign in with Google to automatically sync your adventure across PC and mobile.
+                </p>
+                <div class="pmd-inline-btns">
+                  <button type="button" id="btn-google-auth-toggle" class="pmd-btn pmd-btn-primary">
+                    Sign in with Google
+                  </button>
+                  <button type="button" id="btn-reconcile-now" class="pmd-btn" hidden>
+                    Sync Now
+                  </button>
+                </div>
+              </div>
+
+              <div class="pmd-subcard">
+                <h3 class="pmd-subcard-title">Save Data</h3>
+                <p id="sync-local-details" class="pmd-subcard-text">No save file on this device.</p>
+                <div class="pmd-inline-btns">
+                  <button type="button" id="btn-export-json" class="pmd-btn">Export Backup</button>
+                  <button type="button" id="btn-open-import" class="pmd-btn">Import Backup</button>
+                  <button type="button" id="btn-clear-save" class="pmd-btn pmd-btn-danger">
+                    Delete Save
+                  </button>
+                </div>
+              </div>
+
+              <div class="pmd-subcard">
+                <div class="pmd-devtools-row-between">
+                  <h3 class="pmd-subcard-title">Audio</h3>
+                  <button
+                    type="button"
+                    id="btn-player-mute-toggle"
+                    class="pmd-btn pmd-chip-btn"
+                    data-testid="btn-player-mute-toggle"
+                  >
+                    Mute Audio
+                  </button>
+                </div>
+                <p id="player-audio-status" class="pmd-subcard-text">Music: 65% · SFX: 70%</p>
+                <label class="pmd-slider-row" for="player-bgm-volume">
+                  <span>Music</span>
+                  <input
+                    id="player-bgm-volume"
+                    class="pmd-range"
+                    type="range"
+                    min="0"
+                    max="100"
+                    value="65"
+                  />
+                </label>
+                <label class="pmd-slider-row" for="player-sfx-volume">
+                  <span>SFX</span>
+                  <input
+                    id="player-sfx-volume"
+                    class="pmd-range"
+                    type="range"
+                    min="0"
+                    max="100"
+                    value="70"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div id="json-io-box" class="pmd-subcard pmd-json-box" hidden>
+              <h3 id="json-io-title" class="pmd-subcard-title">Save Backup</h3>
+              <textarea
+                id="json-io-textarea"
+                class="pmd-textarea"
+                rows="5"
+                spellcheck="false"
+                aria-label="Save backup data"
+              ></textarea>
+              <div class="pmd-inline-btns">
+                <button type="button" id="btn-confirm-import" class="pmd-btn pmd-btn-primary" hidden>
+                  Restore Backup
+                </button>
+                <button type="button" id="btn-download-json" class="pmd-btn" hidden>
+                  Download Backup File
+                </button>
+                <button type="button" id="btn-close-json-box" class="pmd-btn">Close</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Admin-Only Dev Tools Modal (Accessible ONLY when signed in as adam.kenawell.family@gmail.com) -->
+        <section id="pmd-devtools-modal" class="pmd-window pmd-panel" hidden>
+          <header class="pmd-panel-header">
+            <h2 class="pmd-panel-title">DEV TOOLS</h2>
+            <p class="pmd-panel-sub">
+              Admin diagnostics: balance registries, Cloud Sync, PMD sprites &amp; evolution stages, and portrait dialogue.
+            </p>
+          </header>
+
+          <nav class="pmd-tabs" aria-label="Dev Tools Sub-Tabs">
+            <button
+              type="button"
+              class="pmd-btn pmd-tab-btn is-active"
+              data-devtab-btn="audit"
+              data-testid="devtools-tab-audit"
+            >
+              Registry &amp; Sync
+            </button>
+            <button
+              type="button"
+              class="pmd-btn pmd-tab-btn"
+              data-devtab-btn="sprites"
+              data-testid="devtools-tab-sprites"
+            >
+              Sprites &amp; Stages
+            </button>
+            <button
+              type="button"
+              class="pmd-btn pmd-tab-btn"
+              data-devtab-btn="dialogue"
+              data-testid="devtools-tab-dialogue"
+            >
+              Dialogue &amp; Audio
+            </button>
+            <button
+              type="button"
+              class="pmd-btn pmd-tab-btn"
+              data-devtab-btn="skirmish"
+              data-testid="devtools-tab-skirmish"
+            >
+              Test Dungeon
+            </button>
+          </nav>
+
+          <!-- DEV TAB 1: REGISTRY & CLOUD SYNC (Step 1) -->
+          <div class="pmd-tab-panel" data-devtab-panel="audit">
+            <div class="pmd-subcard">
+              <h3 class="pmd-subcard-title">Save &amp; Cloud Sync Diagnostics</h3>
+              <p id="devtools-sync-diagnostics" class="pmd-subcard-text">—</p>
+            </div>
+
+            <div id="registry-audit-banner" class="pmd-audit-banner"></div>
+            <div id="registry-metrics-grid" class="pmd-metrics-grid"></div>
+            <div id="registry-errors-box" class="pmd-errors-box" hidden></div>
+          </div>
+
+          <!-- DEV TAB 2: PMD SPRITES, EMOTION PORTRAITS & EVOLUTION STAGES (Step 2) -->
+          <div class="pmd-tab-panel" data-devtab-panel="sprites" hidden>
+            <div class="pmd-subcard">
+              <h3 class="pmd-subcard-title">Species &amp; Evolutionary Stage Selector</h3>
+              <div id="devtools-line-presets" class="pmd-inline-btns"></div>
+              <select
+                id="devtools-species-select"
+                class="pmd-select"
+                aria-label="Inspect Pokémon Species"
+              ></select>
+              <div id="devtools-stage-buttons" class="pmd-inline-btns"></div>
+            </div>
+
+            <div class="pmd-devtools-sprite-layout">
+              <div class="pmd-subcard pmd-devtools-sprite-card">
+                <h3 class="pmd-subcard-title">8-Directional Map Sprite</h3>
+                <div id="devtools-sprite-stage" class="pmd-devtools-sprite-stage"></div>
+                <p id="devtools-sprite-meta" class="pmd-subcard-text">—</p>
+              </div>
+
+              <div class="pmd-subcard">
+                <h3 class="pmd-subcard-title">Actions (5) &amp; Directions (8)</h3>
+                <div id="devtools-action-buttons" class="pmd-inline-btns"></div>
+                <div id="devtools-direction-buttons" class="pmd-inline-btns"></div>
+              </div>
+            </div>
+
+            <div class="pmd-subcard">
+              <div class="pmd-devtools-row-between">
+                <h3 class="pmd-subcard-title">8-Emotion Character Portraits</h3>
+                <button
+                  type="button"
+                  id="devtools-portrait-mirror-btn"
+                  class="pmd-btn pmd-chip-btn"
+                  data-testid="devtools-portrait-mirror-btn"
+                >
+                  Facing: Left Slot (Default)
+                </button>
+              </div>
+              <div id="devtools-portrait-grid" class="pmd-devtools-portrait-grid"></div>
+            </div>
+
+            <div class="pmd-subcard">
+              <h3 class="pmd-subcard-title">Active Party Live Evolution Stage Swapper</h3>
+              <div id="devtools-roster-evo-box" class="pmd-devtools-roster-list"></div>
+            </div>
+          </div>
+
+          <!-- DEV TAB 3: PORTRAIT DIALOGUE OVERLAY & AUDIO JUKEBOX HARNESS -->
+          <div class="pmd-tab-panel" data-devtab-panel="dialogue" hidden>
+            <div class="pmd-subcard">
+              <h3 class="pmd-subcard-title">Portrait Dialogue Engine (`DIALOGUE_OVERLAY`)</h3>
+              <p id="devtools-dialogue-cast" class="pmd-subcard-text">—</p>
+              <p class="pmd-subcard-text">
+                Sample cutscene cues: <em>#004 On the Beach at Dusk</em> → <em>#016 Growing Anxiety</em> → <em>#017 Oh No!</em> → <em>#019 Boss Battle!</em> → <em>#020 Time Gear Remix</em>.
+              </p>
+              <div class="pmd-inline-btns">
+                <button
+                  type="button"
+                  id="devtools-launch-dialogue"
+                  class="pmd-btn pmd-btn-primary"
+                  data-testid="devtools-launch-dialogue"
+                >
+                  Play Prologue Awakening Cutscene
+                </button>
+                <button
+                  type="button"
+                  id="devtools-cycle-lord-stage"
+                  class="pmd-btn"
+                  data-testid="devtools-cycle-lord-stage"
+                >
+                  Cycle Active Lord Stage
+                </button>
+                <button
+                  type="button"
+                  id="devtools-instant-dialogue-toggle"
+                  class="pmd-btn"
+                  data-testid="devtools-instant-dialogue-toggle"
+                >
+                  Text Reveal: Typewriter
+                </button>
+              </div>
+              <p id="devtools-dialogue-status" class="pmd-subcard-text">Ready.</p>
+            </div>
+
+            <div class="pmd-subcard">
+              <div class="pmd-devtools-row-between">
+                <h3 class="pmd-subcard-title">Explorers of Sky Audio Engine &amp; BGM Jukebox</h3>
+                <button
+                  type="button"
+                  id="devtools-audio-mute"
+                  class="pmd-btn pmd-chip-btn"
+                  data-testid="devtools-audio-mute"
+                >
+                  Mute Audio
+                </button>
+              </div>
+              <p
+                id="devtools-audio-status"
+                class="pmd-subcard-text"
+                data-testid="devtools-audio-status"
+              >
+                —
+              </p>
+              <select
+                id="devtools-bgm-select"
+                class="pmd-select"
+                data-testid="devtools-bgm-select"
+                aria-label="Select Explorers of Sky BGM Track"
+              ></select>
+              <div class="pmd-inline-btns">
+                <button
+                  type="button"
+                  id="devtools-bgm-play"
+                  class="pmd-btn pmd-btn-primary"
+                  data-testid="devtools-bgm-play"
+                >
+                  Play Selected Track
+                </button>
+                <button
+                  type="button"
+                  id="devtools-bgm-stop"
+                  class="pmd-btn"
+                  data-testid="devtools-bgm-stop"
+                >
+                  Stop BGM
+                </button>
+                <button type="button" id="devtools-sfx-select" class="pmd-btn pmd-chip-btn">
+                  SFX: Confirm
+                </button>
+                <button type="button" id="devtools-sfx-cancel" class="pmd-btn pmd-chip-btn">
+                  SFX: Cancel
+                </button>
+                <button type="button" id="devtools-sfx-advance" class="pmd-btn pmd-chip-btn">
+                  SFX: Advance
+                </button>
+              </div>
+              <div class="pmd-sync-grid">
+                <label class="pmd-slider-row" for="devtools-bgm-volume">
+                  <span>BGM Vol</span>
+                  <input
+                    id="devtools-bgm-volume"
+                    class="pmd-range"
+                    type="range"
+                    min="0"
+                    max="100"
+                    value="65"
+                  />
+                </label>
+                <label class="pmd-slider-row" for="devtools-sfx-volume">
+                  <span>SFX Vol</span>
+                  <input
+                    id="devtools-sfx-volume"
+                    class="pmd-range"
+                    type="range"
+                    min="0"
+                    max="100"
+                    value="70"
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- DEV TAB 4: TEST DUNGEON / SKIRMISH BATTLEFIELD SANDBOX (Step 5) -->
+          <div class="pmd-tab-panel" data-devtab-panel="skirmish" hidden>
+            <div class="pmd-subcard">
+              <h3 class="pmd-subcard-title">Playable Dungeon Battle — Drenched Bluff</h3>
+              <p class="pmd-subcard-text">
+                Full Turn-Based Player &amp; Enemy Phase dungeon battle flow with <strong>DUNGEON START</strong>, Fire Emblem <strong>Combat Forecast</strong>, 8-directional attack/hurt animations, active pursue-and-attack Enemy AI, <strong>VICTORY!</strong>, and Dragon Lord <strong>DEFEAT / Restart Match</strong>.
+              </p>
+              <div class="pmd-inline-btns">
+                <button
+                  type="button"
+                  id="devtools-launch-battle"
+                  class="pmd-btn pmd-btn-primary"
+                  data-testid="devtools-launch-battle"
+                >
+                  Play Dungeon Battle
+                </button>
+              </div>
+            </div>
+            <div class="pmd-subcard">
+              <h3 class="pmd-subcard-title">Test Dungeon (Skirmish) — Convergence Ruins</h3>
+              <p class="pmd-subcard-text">
+                Full-viewport tactical grid rendered from flat <em>Explorers of Sky</em> 24×24px tilesets at crisp 2× pixel scale across all 10 PMD terrain types (<em>Floor</em>, <em>Trees</em>, <em>Stairs</em>, <em>Water</em>, <em>Lava</em>, <em>Mountain</em>, <em>Void / Chasm</em>, <em>Wonder Tile</em>, <em>Low Barrier</em>, and <em>Wall</em>).
+              </p>
+              <p class="pmd-subcard-text">
+                Spawns 3 test Pokémon covering all 3 traversal classes — <strong>Bahamut</strong> (Dratini · Grounded), <strong>Zephyr</strong> (Pidgey · Flying), and <strong>Wisp</strong> (Duskull · Levitate) — plus 2 stationary dummy enemies for Danger Area testing, species/Heavy-Duty Boots sandbox controls, and a live 144-sheet 24×24 chunk brush with JSON export.
+              </p>
+              <div class="pmd-inline-btns">
+                <button
+                  type="button"
+                  id="devtools-launch-test-dungeon"
+                  class="pmd-btn pmd-btn-primary"
+                  data-testid="devtools-launch-test-dungeon"
+                >
+                  Launch Test Dungeon (Skirmish)
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Reusable PMD Nickname Modal (Pointer-driven, PC + Mobile) -->
+        <div id="pmd-nickname-backdrop" class="pmd-modal-backdrop" hidden>
+          <div
+            class="pmd-window pmd-nickname-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="nickname-modal-title"
+          >
+            <h3 id="nickname-modal-title" class="pmd-panel-title">Give a Nickname</h3>
+            <p id="nickname-modal-species" class="pmd-panel-sub"></p>
+
+            <input
+              id="nickname-input"
+              type="text"
+              maxlength="16"
+              class="pmd-text-input"
+              placeholder="Enter nickname (up to 16 characters)"
+              autocomplete="off"
+            />
+
+            <div class="pmd-preset-row">
+              <span class="pmd-preset-label">Suggestions:</span>
+              <button type="button" class="pmd-btn pmd-chip-btn" data-preset="Bahamut">Bahamut</button>
+              <button type="button" class="pmd-btn pmd-chip-btn" data-preset="Sprout">Sprout</button>
+              <button type="button" class="pmd-btn pmd-chip-btn" data-preset="Clover">Clover</button>
+            </div>
+
+            <div class="pmd-inline-btns pmd-modal-actions">
+              <button type="button" id="btn-save-nickname" class="pmd-btn pmd-btn-primary">
+                Confirm
+              </button>
+              <button type="button" id="btn-reset-nickname" class="pmd-btn">
+                Default Name
+              </button>
+              <button type="button" id="btn-cancel-nickname" class="pmd-btn">
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
+
+<script>
+  import { resetSpriteWidgets } from '../utils/sprite-utils';
+  import {
+    PMD_PORTRAIT_EMOTIONS,
+    PMD_SPRITE_ACTIONS,
+    clearPmdAssetCache,
+    loadSpeciesPortrait,
+    loadSpeciesSpriteBundle,
+  } from '../mystery-emblem/assets/pmdAssetLoader';
+  import {
+    PMD_TILESET_LIST,
+    clearTilesetCache,
+    loadTilesetSheet,
+  } from '../mystery-emblem/assets/tilesetLoader';
+  import { getAudioManager } from '../mystery-emblem/audio/AudioManager';
+  import {
+    getItemById,
+    getMoveById,
+    getPersonalSkillById,
+    getRegistryValidationSummary,
+    getSpeciesById,
+  } from '../mystery-emblem/data/index';
+  import {
+    computeEnemyDangerArea,
+    computeUnitMovementAndAttackRange,
+    findShortestPathAStar,
+    getTerrainBonuses,
+    getTerrainMoveCost,
+  } from '../mystery-emblem/engine/terrainAndPathfinding';
+  import {
+    computeCombatForecast,
+    computeHealForecast,
+    getTypeEffectiveness,
+    resolveCombatExchange,
+  } from '../mystery-emblem/engine/combatEngine';
+  import { chooseEnemyAction } from '../mystery-emblem/engine/enemyAi';
+  import { BattleScene } from '../mystery-emblem/scenes/BattleScene';
+  import { TestDungeonScene } from '../mystery-emblem/scenes/TestDungeonScene';
+  import {
+    InMemoryCloudSyncAdapter,
+    type CloudSyncAdapter,
+  } from '../mystery-emblem/state/firebaseSync';
+  import { SaveStateManager } from '../mystery-emblem/state/SaveStateManager';
+  import { DevToolsHarness } from '../mystery-emblem/ui/DevToolsHarness';
+  import { DialogueOverlay } from '../mystery-emblem/ui/DialogueOverlay';
+  import {
+    PmdSpriteActor,
+    destroyAllPmdSpriteActors,
+  } from '../mystery-emblem/ui/PmdSpriteCanvas';
+  import {
+    BackStackController,
+    bindBackGestureSurface,
+    bindPointerTap,
+  } from '../mystery-emblem/ui/pointerControls';
+
+  const ADMIN_EMAIL = 'adam.kenawell.family@gmail.com';
+
+  function formatFriendlyTimestamp(epochMs: number): string {
+    try {
+      return new Date(epochMs).toLocaleString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+      });
+    } catch {
+      return 'Recently';
+    }
+  }
+
+  let currentManager: SaveStateManager | null = null;
+  let currentDialogueOverlay: DialogueOverlay | null = null;
+  let currentDevToolsHarness: DevToolsHarness | null = null;
+  let currentBattleScene: BattleScene | null = null;
+  let currentTestDungeonScene: TestDungeonScene | null = null;
+  let continueLordActor: PmdSpriteActor | null = null;
+  let continueLordSpeciesId: string | null = null;
+  let uiAbortController: AbortController | null = null;
+  const squadSpriteActors: PmdSpriteActor[] = [];
+
+  function clearSquadActors(): void {
+    while (squadSpriteActors.length > 0) {
+      squadSpriteActors.pop()?.destroy();
+    }
+  }
+
+  async function initMysteryEmblemApp() {
+    resetSpriteWidgets();
+    clearSquadActors();
+    continueLordActor?.destroy();
+    continueLordActor = null;
+    continueLordSpeciesId = null;
+    destroyAllPmdSpriteActors();
+    currentBattleScene?.destroy();
+    currentBattleScene = null;
+    currentTestDungeonScene?.destroy();
+    currentTestDungeonScene = null;
+    currentDevToolsHarness?.destroy();
+    currentDevToolsHarness = null;
+    currentDialogueOverlay?.destroy();
+    currentDialogueOverlay = null;
+    currentManager?.dispose();
+    uiAbortController?.abort();
+    uiAbortController = new AbortController();
+    const signal = uiAbortController.signal;
+
+    const injectedAdapter = (window as unknown as Record<string, unknown>)
+      .__MYSTERY_EMBLEM_TEST_CLOUD_ADAPTER__ as CloudSyncAdapter | undefined;
+
+    const manager = new SaveStateManager(undefined, injectedAdapter);
+    currentManager = manager;
+    const audioManager = getAudioManager();
+
+    // Arm Top Menu Theme (`002`) as the default Title / Menu soundtrack
+    if (!audioManager.getCurrentTrackId()) {
+      audioManager.playBgm('top_menu', { fadeMs: 350 });
+    }
+
+    const validation = getRegistryValidationSummary();
+
+    const viewportEl = document.getElementById('mystery-emblem-root');
+    const titleScreen = document.getElementById('pmd-title-screen');
+    const campaignMenu = document.getElementById('pmd-campaign-menu');
+    const devToolsModal = document.getElementById('pmd-devtools-modal');
+    const devToolsBtn = document.getElementById('pmd-dev-tools-btn');
+    const cornerMenuBtn = document.getElementById('pmd-corner-menu-btn') as HTMLButtonElement | null;
+    const saveSummaryEl = document.getElementById('pmd-save-summary');
+    const statusMsgEl = document.getElementById('pmd-status-msg');
+
+    const btnContinue = document.getElementById('btn-continue') as HTMLButtonElement | null;
+    const continueSpriteSlot = document.getElementById('btn-continue-sprite');
+    const btnNewGame = document.getElementById('btn-new-game');
+    const btnCloudSync = document.getElementById('btn-cloud-sync');
+    const btnEmptyCreateSave = document.getElementById('btn-empty-create-save');
+
+    const squadDungeonBanner = document.getElementById('squad-dungeon-banner');
+    const btnEnterDungeon = document.getElementById('btn-enter-dungeon');
+    const squadEmptyState = document.getElementById('squad-empty-state');
+    const squadCardsGrid = document.getElementById('squad-cards-grid');
+
+    const devToolsSyncDiagnostics = document.getElementById('devtools-sync-diagnostics');
+    const auditBanner = document.getElementById('registry-audit-banner');
+    const metricsGrid = document.getElementById('registry-metrics-grid');
+    const errorsBox = document.getElementById('registry-errors-box');
+
+    const syncLocalDetails = document.getElementById('sync-local-details');
+    const syncCloudDetails = document.getElementById('sync-cloud-details');
+    const btnExportJson = document.getElementById('btn-export-json') as HTMLButtonElement | null;
+    const btnOpenImport = document.getElementById('btn-open-import');
+    const btnClearSave = document.getElementById('btn-clear-save') as HTMLButtonElement | null;
+    const btnGoogleAuthToggle = document.getElementById('btn-google-auth-toggle');
+    const btnReconcileNow = document.getElementById('btn-reconcile-now') as HTMLButtonElement | null;
+
+    const jsonIoBox = document.getElementById('json-io-box');
+    const jsonIoTitle = document.getElementById('json-io-title');
+    const jsonIoTextarea = document.getElementById('json-io-textarea') as HTMLTextAreaElement | null;
+    const btnConfirmImport = document.getElementById('btn-confirm-import');
+    const btnDownloadJson = document.getElementById('btn-download-json');
+    const btnCloseJsonBox = document.getElementById('btn-close-json-box');
+
+    const nicknameBackdrop = document.getElementById('pmd-nickname-backdrop');
+    const nicknameSpeciesEl = document.getElementById('nickname-modal-species');
+    const nicknameInput = document.getElementById('nickname-input') as HTMLInputElement | null;
+    const btnSaveNickname = document.getElementById('btn-save-nickname');
+    const btnResetNickname = document.getElementById('btn-reset-nickname');
+    const btnCancelNickname = document.getElementById('btn-cancel-nickname');
+
+    let activeTab: 'squad' | 'sync' = 'squad';
+    let editingUnitId: string | null = null;
+    let battleScene: BattleScene | null = null;
+    let battleReturnTarget: 'campaign' | 'devtools' | 'title' = 'campaign';
+    let testDungeonScene: TestDungeonScene | null = null;
+
+    const backStack = new BackStackController(cornerMenuBtn, () => {
+      if (battleScene?.isOpen()) {
+        battleScene.handleMenuOrBack();
+        return;
+      }
+      if (testDungeonScene?.isOpen()) {
+        testDungeonScene.handleMenuOrBack();
+        return;
+      }
+      openCampaignMenu(activeTab);
+    });
+
+    const dialogueOverlay = viewportEl
+      ? new DialogueOverlay(viewportEl, manager, {
+          onStateChange: () => backStack.syncButtonLabel(),
+          audioManager,
+        })
+      : null;
+    currentDialogueOverlay = dialogueOverlay;
+
+    async function openBattleScene(source: 'campaign' | 'devtools' = 'campaign'): Promise<void> {
+      if (!battleScene) return;
+      if (source === 'devtools' && !isAdminSignedIn()) return;
+      battleReturnTarget = source;
+      if (titleScreen) titleScreen.hidden = true;
+      if (campaignMenu) campaignMenu.hidden = true;
+      if (devToolsModal) devToolsModal.hidden = true;
+      await battleScene.open();
+      backStack.syncButtonLabel();
+    }
+
+    async function openTestDungeon(): Promise<void> {
+      if (!testDungeonScene || !isAdminSignedIn()) return;
+      if (titleScreen) titleScreen.hidden = true;
+      if (campaignMenu) campaignMenu.hidden = true;
+      if (devToolsModal) devToolsModal.hidden = true;
+      await testDungeonScene.open();
+      backStack.syncButtonLabel();
+    }
+
+    if (viewportEl) {
+      battleScene = new BattleScene({
+        viewportEl,
+        saveManager: manager,
+        audioManager,
+        onExit: () => {
+          if (battleReturnTarget === 'devtools' && isAdminSignedIn() && devToolsModal) {
+            if (titleScreen) titleScreen.hidden = true;
+            if (campaignMenu) campaignMenu.hidden = true;
+            devToolsModal.hidden = false;
+            currentDevToolsHarness?.onSaveChanged();
+            backStack.syncButtonLabel();
+          } else if (manager.getSave()) {
+            openCampaignMenu('squad');
+          } else {
+            showTitleScreen();
+          }
+        },
+        onLayerStateChanged: () => backStack.syncButtonLabel(),
+      });
+      currentBattleScene = battleScene;
+
+      testDungeonScene = new TestDungeonScene({
+        viewportEl,
+        audioManager,
+        onExit: () => {
+          if (isAdminSignedIn() && devToolsModal) {
+            if (titleScreen) titleScreen.hidden = true;
+            if (campaignMenu) campaignMenu.hidden = true;
+            devToolsModal.hidden = false;
+            currentDevToolsHarness?.onSaveChanged();
+            backStack.syncButtonLabel();
+          } else {
+            showTitleScreen();
+          }
+        },
+        onLayerStateChanged: () => backStack.syncButtonLabel(),
+      });
+      currentTestDungeonScene = testDungeonScene;
+    }
+
+    if (devToolsModal && dialogueOverlay) {
+      currentDevToolsHarness = new DevToolsHarness({
+        modalEl: devToolsModal,
+        saveManager: manager,
+        dialogueOverlay,
+        audioManager,
+        onLaunchBattle: () => {
+          void openBattleScene('devtools');
+        },
+        onLaunchTestDungeon: () => {
+          void openTestDungeon();
+        },
+        signal,
+      });
+    }
+
+    (window as unknown as Record<string, unknown>).__MYSTERY_EMBLEM_DEBUG__ = {
+      saveManager: manager,
+      SaveStateManager,
+      InMemoryCloudSyncAdapter,
+      getRegistryValidationSummary,
+      audioManager,
+      dialogueOverlay,
+      devToolsHarness: currentDevToolsHarness,
+      battleScene,
+      openBattleScene,
+      testDungeonScene,
+      computeCombatForecast,
+      computeHealForecast,
+      resolveCombatExchange,
+      getTypeEffectiveness,
+      chooseEnemyAction,
+      openTestDungeon,
+      loadSpeciesSpriteBundle,
+      loadSpeciesPortrait,
+      clearPmdAssetCache,
+      PMD_SPRITE_ACTIONS,
+      PMD_PORTRAIT_EMOTIONS,
+      PMD_TILESET_LIST,
+      loadTilesetSheet,
+      clearTilesetCache,
+      getTerrainMoveCost,
+      getTerrainBonuses,
+      computeUnitMovementAndAttackRange,
+      findShortestPathAStar,
+      computeEnemyDangerArea,
+    };
+
+    function isAdminSignedIn(): boolean {
+      const email = manager.getSyncStatus().user?.email?.trim().toLowerCase() ?? '';
+      return email === ADMIN_EMAIL;
+    }
+
+    function setStatus(msg: string): void {
+      if (!statusMsgEl) return;
+      const trimmed = msg.trim();
+      statusMsgEl.textContent = trimmed;
+      statusMsgEl.hidden = trimmed.length === 0;
+    }
+
+    function showTitleScreen(): void {
+      if (campaignMenu) campaignMenu.hidden = true;
+      if (devToolsModal) devToolsModal.hidden = true;
+      if (titleScreen) titleScreen.hidden = false;
+      backStack.syncButtonLabel();
+    }
+
+    function openCampaignMenu(tab?: 'squad' | 'sync'): void {
+      if (tab) switchTab(tab);
+      if (titleScreen) titleScreen.hidden = true;
+      if (devToolsModal) devToolsModal.hidden = true;
+      if (campaignMenu) campaignMenu.hidden = false;
+      backStack.syncButtonLabel();
+    }
+
+    function toggleDevTools(): void {
+      if (!isAdminSignedIn() || !devToolsModal) return;
+      if (battleScene?.isOpen()) {
+        battleReturnTarget = 'devtools';
+        battleScene.close();
+        return;
+      }
+      if (battleScene?.isOpen()) {
+        battleScene.handleMenuOrBack();
+        return;
+      }
+      if (testDungeonScene?.isOpen()) {
+        testDungeonScene.close();
+        return;
+      }
+      if (!devToolsModal.hidden) {
+        showTitleScreen();
+        return;
+      }
+      if (titleScreen) titleScreen.hidden = true;
+      if (campaignMenu) campaignMenu.hidden = true;
+      devToolsModal.hidden = false;
+      currentDevToolsHarness?.onSaveChanged();
+      backStack.syncButtonLabel();
+    }
+
+    function switchTab(nextTab: 'squad' | 'sync'): void {
+      activeTab = nextTab;
+      document.querySelectorAll<HTMLElement>('#pmd-campaign-menu .pmd-tab-btn').forEach((btn) => {
+        btn.classList.toggle('is-active', btn.dataset.tab === nextTab);
+      });
+      const squadPanel = document.getElementById('tab-panel-squad');
+      const syncPanel = document.getElementById('tab-panel-sync');
+      if (squadPanel) squadPanel.hidden = nextTab !== 'squad';
+      if (syncPanel) syncPanel.hidden = nextTab !== 'sync';
+    }
+
+    function openNicknameModal(instanceId: string): void {
+      const save = manager.getSave();
+      const unit = save?.roster.find((u) => u.instanceId === instanceId);
+      if (!unit || !nicknameBackdrop || !nicknameInput) return;
+      const sp = getSpeciesById(unit.speciesId);
+      editingUnitId = instanceId;
+      if (nicknameSpeciesEl) {
+        nicknameSpeciesEl.textContent = `${sp?.name ?? unit.speciesId} · Lv. ${unit.level}`;
+      }
+      nicknameInput.value = unit.nickname;
+      nicknameBackdrop.hidden = false;
+      backStack.syncButtonLabel();
+    }
+
+    function closeNicknameModal(): void {
+      editingUnitId = null;
+      if (nicknameBackdrop) nicknameBackdrop.hidden = true;
+      backStack.syncButtonLabel();
+    }
+
+    // Register navigation layers from lowest to highest LIFO priority
+    backStack.registerLayer({
+      id: 'campaign-menu',
+      isActive: () => Boolean(campaignMenu && !campaignMenu.hidden),
+      onBack: () => showTitleScreen(),
+    });
+    backStack.registerLayer({
+      id: 'devtools-modal',
+      isActive: () => Boolean(devToolsModal && !devToolsModal.hidden),
+      onBack: () => showTitleScreen(),
+    });
+    backStack.registerLayer({
+      id: 'json-io-box',
+      isActive: () => Boolean(jsonIoBox && !jsonIoBox.hidden),
+      onBack: () => {
+        if (jsonIoBox) jsonIoBox.hidden = true;
+      },
+    });
+    backStack.registerLayer({
+      id: 'battle-scene-sublayer',
+      isActive: () => Boolean(battleScene?.isOpen() && battleScene.hasActiveSubLayer()),
+      onBack: () => battleScene?.handleMenuOrBack(),
+    });
+    backStack.registerLayer({
+      id: 'test-dungeon-sublayer',
+      isActive: () => Boolean(testDungeonScene?.isOpen() && testDungeonScene.hasActiveSubLayer()),
+      onBack: () => testDungeonScene?.handleMenuOrBack(),
+    });
+    backStack.registerLayer({
+      id: 'dialogue-overlay',
+      isActive: () => Boolean(dialogueOverlay?.isOpen()),
+      onBack: () => dialogueOverlay?.close('cancelled'),
+    });
+    backStack.registerLayer({
+      id: 'nickname-modal',
+      isActive: () => Boolean(nicknameBackdrop && !nicknameBackdrop.hidden),
+      onBack: () => closeNicknameModal(),
+    });
+
+    function renderRegistryAudit(): void {
+      if (!auditBanner || !metricsGrid) return;
+      const c = validation.counts;
+      auditBanner.className = validation.valid
+        ? 'pmd-audit-banner is-valid'
+        : 'pmd-audit-banner is-invalid';
+      auditBanner.textContent = validation.valid
+        ? `SCHEMA & FACTION AUDIT PASSED · 0 ERRORS · Sole Shared Line: ${c.sharedLines.join(', ')}`
+        : `SCHEMA AUDIT FAILED · ${validation.errors.length} Error(s)`;
+
+      const metrics: Array<[string, string]> = [
+        ['Total Species Stages', String(c.totalSpecies)],
+        ['Evolutionary Lines', String(c.totalLines)],
+        ['Dragon Lords', `${c.dragonLordLines} lines`],
+        ['Starter Partners', `${c.starterPartnerLines} lines`],
+        ['Q1–Q9 Quiz Pool', `${c.quizRecruitLines} lines`],
+        ['Story Chapter Recruits', `${c.storyRecruitLines} lines`],
+        ['Paralogue Recruits', `${c.paralogueRecruitLines} lines`],
+        ['Enemy Roster Lines', `${c.enemyLines} lines`],
+        ['Moves (1R / 2R / Sup)', `${c.totalMoves} (${c.physicalMoves}/${c.specialMoves}/${c.supportHealMoves})`],
+        ['Pure Stat Moves', `${c.pureStatChangeMoves} (Rule 4)`],
+        ['Items & TMs', `${c.totalItems} (${c.tmCount} TMs)`],
+        ['Personal Skills', String(c.totalPersonalSkills)],
+      ];
+
+      metricsGrid.innerHTML = '';
+      for (const [label, value] of metrics) {
+        const card = document.createElement('div');
+        card.className = 'pmd-metric-card';
+        card.innerHTML = `<span class="pmd-metric-label">${label}</span><strong class="pmd-metric-val">${value}</strong>`;
+        metricsGrid.appendChild(card);
+      }
+
+      if (errorsBox) {
+        if (validation.errors.length > 0) {
+          errorsBox.hidden = false;
+          errorsBox.textContent = validation.errors.join('\n');
+        } else {
+          errorsBox.hidden = true;
+        }
+      }
+    }
+
+    function renderSquadCards(): void {
+      clearSquadActors();
+      const save = manager.getSave();
+      if (!squadCardsGrid || !squadEmptyState) return;
+      squadCardsGrid.innerHTML = '';
+
+      if (!save || save.roster.length === 0) {
+        squadEmptyState.hidden = false;
+        if (squadDungeonBanner) squadDungeonBanner.hidden = true;
+        return;
+      }
+      squadEmptyState.hidden = true;
+      if (squadDungeonBanner) squadDungeonBanner.hidden = false;
+
+      save.roster.forEach((unit, slotIdx) => {
+        const sp = getSpeciesById(unit.speciesId);
+        const skill = sp ? getPersonalSkillById(sp.personalSkillId) : undefined;
+        const held = unit.heldItemId ? getItemById(unit.heldItemId) : undefined;
+        const cons = unit.consumableItemId ? getItemById(unit.consumableItemId) : undefined;
+
+        const card = document.createElement('article');
+        card.className = 'pmd-unit-card';
+        card.dataset.instanceId = unit.instanceId;
+        card.dataset.speciesId = unit.speciesId;
+        card.dataset.testid = `unit-card-slot-${slotIdx}`;
+
+        const topRow = document.createElement('div');
+        topRow.className = 'pmd-unit-top';
+
+        const spriteBox = document.createElement('div');
+        spriteBox.className = 'pmd-unit-sprite';
+        topRow.appendChild(spriteBox);
+
+        const identity = document.createElement('div');
+        identity.className = 'pmd-unit-id';
+
+        const nameLine = document.createElement('div');
+        nameLine.className = 'pmd-unit-name-line';
+        const nickEl = document.createElement('strong');
+        nickEl.className = 'pmd-unit-nickname';
+        nickEl.dataset.testid = `unit-nickname-${unit.speciesId}`;
+        nickEl.dataset.slotNickname = String(slotIdx);
+        nickEl.textContent = unit.nickname;
+        nameLine.appendChild(nickEl);
+
+        if (unit.isLord) {
+          const lordTag = document.createElement('span');
+          lordTag.className = 'pmd-mini-tag is-gold';
+          lordTag.textContent = 'LORD';
+          nameLine.appendChild(lordTag);
+        }
+        identity.appendChild(nameLine);
+
+        const metaLine = document.createElement('div');
+        metaLine.className = 'pmd-unit-meta';
+        metaLine.dataset.testid = `unit-species-meta-slot-${slotIdx}`;
+        metaLine.textContent = `${sp?.name ?? unit.speciesId} · Lv. ${unit.level} · ${(sp?.types ?? []).join('/')}`;
+        identity.appendChild(metaLine);
+
+        const skillLine = document.createElement('div');
+        skillLine.className = 'pmd-unit-skill';
+        skillLine.textContent = `Ability: ${skill?.name ?? sp?.personalSkillId ?? '—'}`;
+        identity.appendChild(skillLine);
+
+        topRow.appendChild(identity);
+
+        const renameBtn = document.createElement('button');
+        renameBtn.type = 'button';
+        renameBtn.className = 'pmd-btn pmd-rename-btn';
+        renameBtn.dataset.testid = `btn-rename-${unit.speciesId}`;
+        renameBtn.textContent = 'Rename';
+        bindPointerTap(renameBtn, () => openNicknameModal(unit.instanceId), { signal });
+        topRow.appendChild(renameBtn);
+
+        card.appendChild(topRow);
+
+        const st = unit.currentStats;
+        const statsLine = document.createElement('div');
+        statsLine.className = 'pmd-stats-strip';
+        statsLine.textContent = `HP ${st.hp} · Atk ${st.atk} · Def ${st.def} · SpA ${st.spa} · SpD ${st.spd} · Spe ${st.spe} · Mov ${st.mov}`;
+        card.appendChild(statsLine);
+
+        const movesRow = document.createElement('div');
+        movesRow.className = 'pmd-moves-row';
+        for (const moveId of unit.activeMoveIds) {
+          const mv = getMoveById(moveId);
+          const isEquipped = unit.equippedMoveId === moveId;
+          const isOffensive = mv && (mv.category === 'Physical' || mv.category === 'Special');
+          const moveBtn = document.createElement('button');
+          moveBtn.type = 'button';
+          moveBtn.className = `pmd-btn pmd-move-pill${isEquipped ? ' is-equipped' : ''}`;
+          moveBtn.disabled = !isOffensive;
+          const rangeLabel = mv ? (mv.range[0] === mv.range[1] ? `R${mv.range[0]}` : `R${mv.range[0]}-${mv.range[1]}`) : '';
+          moveBtn.textContent = `${isEquipped ? '[E] ' : ''}${mv?.name ?? moveId} (${rangeLabel})`;
+          if (isOffensive) {
+            bindPointerTap(
+              moveBtn,
+              () => {
+                manager.setEquippedMove(unit.instanceId, moveId);
+              },
+              { signal }
+            );
+          }
+          movesRow.appendChild(moveBtn);
+        }
+        card.appendChild(movesRow);
+
+        const itemsLine = document.createElement('div');
+        itemsLine.className = 'pmd-unit-items';
+        itemsLine.textContent = `Held: ${held?.name ?? 'None'} · Item: ${cons?.name ?? 'None'}`;
+        card.appendChild(itemsLine);
+
+        squadCardsGrid.appendChild(card);
+
+        if (sp) {
+          const actor = new PmdSpriteActor({
+            speciesIdOrAssetId: sp.id,
+            interactiveTapAttack: true,
+            testId: `squad-sprite-slot-${slotIdx}`,
+          });
+          squadSpriteActors.push(actor);
+          spriteBox.appendChild(actor.canvas);
+          void actor.ready();
+        }
+      });
+    }
+
+    function renderAll(): void {
+      const save = manager.getSave();
+      const sync = manager.getSyncStatus();
+      const adminActive = isAdminSignedIn();
+
+      // Strictly gate Top-Left Dev Tools button, modal & Test Dungeon to adam.kenawell.family@gmail.com
+      if (devToolsBtn) {
+        devToolsBtn.hidden = !adminActive;
+      }
+      if (!adminActive && testDungeonScene?.isOpen()) {
+        testDungeonScene.close();
+      }
+      if (!adminActive && devToolsModal && !devToolsModal.hidden) {
+        showTitleScreen();
+      }
+
+      if (save) {
+        const lordUnit = save.roster.find((u) => u.isLord) ?? save.roster[0];
+        const lordSp = lordUnit ? getSpeciesById(lordUnit.speciesId) : undefined;
+        const friendlyDate = formatFriendlyTimestamp(save.lastUpdated);
+
+        if (btnContinue) {
+          btnContinue.disabled = false;
+        }
+        if (continueSpriteSlot && lordUnit) {
+          continueSpriteSlot.hidden = false;
+          if (!continueLordActor) {
+            continueLordActor = new PmdSpriteActor({
+              speciesIdOrAssetId: lordUnit.speciesId,
+              initialAction: 'Idle',
+              initialDirection: 0,
+              testId: 'continue-lord-sprite',
+            });
+            continueLordActor.canvas.style.pointerEvents = 'none';
+            continueLordSpeciesId = lordUnit.speciesId;
+            continueSpriteSlot.innerHTML = '';
+            continueSpriteSlot.appendChild(continueLordActor.canvas);
+            void continueLordActor.ready();
+          } else if (continueLordSpeciesId !== lordUnit.speciesId) {
+            continueLordSpeciesId = lordUnit.speciesId;
+            void continueLordActor.setSpecies(lordUnit.speciesId);
+          }
+        }
+        if (saveSummaryEl) {
+          saveSummaryEl.textContent = `Lord ${lordUnit?.nickname ?? '—'} (${lordSp?.name ?? '—'}) · Party: ${save.roster.length} · ${save.gold.toLocaleString()}G`;
+        }
+        if (syncLocalDetails) {
+          syncLocalDetails.textContent = `Lord ${lordUnit?.nickname ?? '—'} · ${save.roster.length} Pokémon · ${save.gold.toLocaleString()}G · Saved ${friendlyDate}`;
+        }
+        if (btnExportJson) btnExportJson.disabled = false;
+        if (btnClearSave) btnClearSave.disabled = false;
+      } else {
+        if (btnContinue) {
+          btnContinue.disabled = true;
+        }
+        if (continueSpriteSlot) {
+          continueSpriteSlot.hidden = true;
+          continueSpriteSlot.innerHTML = '';
+        }
+        continueLordActor?.destroy();
+        continueLordActor = null;
+        continueLordSpeciesId = null;
+        if (saveSummaryEl) {
+          saveSummaryEl.textContent =
+            'Command your Pokémon squad across five kingdoms in a tactical RPG adventure.';
+        }
+        if (syncLocalDetails) {
+          syncLocalDetails.textContent = 'No save file on this device yet.';
+        }
+        if (btnExportJson) btnExportJson.disabled = true;
+        if (btnClearSave) btnClearSave.disabled = true;
+      }
+
+      if (syncCloudDetails && btnGoogleAuthToggle && btnReconcileNow && btnCloudSync) {
+        if (!sync.isFirebaseConfigured) {
+          syncCloudDetails.textContent = 'Cloud sync is currently unavailable. Your progress saves automatically to this browser.';
+          btnGoogleAuthToggle.textContent = 'Sign in with Google';
+          (btnGoogleAuthToggle as HTMLButtonElement).disabled = true;
+          btnReconcileNow.hidden = true;
+          btnCloudSync.textContent = 'Cloud Save';
+        } else if (sync.user) {
+          const who = sync.user.email ?? sync.user.displayName ?? 'Google Account';
+          syncCloudDetails.textContent = sync.errorMessage
+            ? `Signed in as ${who} · ${sync.errorMessage}`
+            : `Signed in as ${who} · Progress syncs automatically across your devices.`;
+          btnGoogleAuthToggle.textContent = 'Sign Out';
+          (btnGoogleAuthToggle as HTMLButtonElement).disabled = false;
+          btnReconcileNow.hidden = false;
+          btnCloudSync.textContent = 'Cloud Save (Synced)';
+        } else {
+          syncCloudDetails.textContent = sync.errorMessage
+            ? `Could not complete sign-in: ${sync.errorMessage}`
+            : 'Sign in with Google to automatically sync your adventure across PC and mobile.';
+          btnGoogleAuthToggle.textContent = 'Sign in with Google';
+          (btnGoogleAuthToggle as HTMLButtonElement).disabled = false;
+          btnReconcileNow.hidden = true;
+          btnCloudSync.textContent = 'Cloud Save';
+        }
+      }
+
+      if (devToolsSyncDiagnostics) {
+        const iso = save ? new Date(save.lastUpdated).toISOString() : 'none';
+        const uidPath = sync.user ? `saves/${sync.user.uid}` : 'unauthenticated';
+        devToolsSyncDiagnostics.textContent = [
+          `Save ID: ${save?.saveId ?? 'none'}`,
+          `Schema: v${save?.schemaVersion ?? '—'}`,
+          `lastUpdated: ${iso}${save ? ` (${save.lastUpdated})` : ''}`,
+          `Firestore Doc: ${uidPath}`,
+          `Last Resolution: ${sync.lastResolution ?? 'none'}`,
+        ].join(' · ');
+      }
+
+      renderSquadCards();
+      currentDevToolsHarness?.onSaveChanged();
+      backStack.syncButtonLabel();
+    }
+
+    function startNewGame(): void {
+      manager.createNewCampaignSave({
+        lordSpeciesId: 'dratini',
+        partnerSpeciesId: 'bulbasaur',
+        healerSpeciesId: 'happiny',
+      });
+      setStatus('');
+      openCampaignMenu('squad');
+    }
+
+    // Bind unified Pointer Event handlers (Rule 2: Zero keyboard event listeners!)
+    bindPointerTap(cornerMenuBtn, () => backStack.triggerMenuOrBack(), {
+      signal,
+      stopPropagation: true,
+    });
+    bindPointerTap(devToolsBtn, () => toggleDevTools(), {
+      signal,
+      stopPropagation: true,
+    });
+
+    // PC Right-Click parity + Mobile Long-Press parity on viewport background
+    bindBackGestureSurface(viewportEl, () => backStack.triggerMenuOrBack(), { signal });
+
+    bindPointerTap(btnContinue, () => openCampaignMenu('squad'), { signal });
+    bindPointerTap(btnNewGame, () => startNewGame(), { signal });
+    bindPointerTap(btnEmptyCreateSave, () => startNewGame(), { signal });
+    bindPointerTap(btnEnterDungeon, () => void openBattleScene('campaign'), { signal });
+
+    // OAuth popup buttons use pointer `click` activation so iOS Safari & Android Chrome permit `signInWithPopup`
+    btnCloudSync?.addEventListener(
+      'click',
+      () => {
+        openCampaignMenu('sync');
+        if (manager.getSyncStatus().isFirebaseConfigured && !manager.getSyncStatus().user) {
+          void manager.signInWithGoogleAndSync().catch(() => {
+            // User closed popup or cancelled; clean message handled in Cloud & Save panel
+          });
+        }
+      },
+      { signal }
+    );
+
+    document.querySelectorAll<HTMLElement>('#pmd-campaign-menu .pmd-tab-btn').forEach((tabBtn) => {
+      bindPointerTap(
+        tabBtn,
+        () => {
+          const t = tabBtn.dataset.tab as 'squad' | 'sync' | undefined;
+          if (t) switchTab(t);
+        },
+        { signal }
+      );
+    });
+
+    // Nickname Modal Controls
+    document.querySelectorAll<HTMLElement>('.pmd-chip-btn[data-preset]').forEach((chip) => {
+      bindPointerTap(
+        chip,
+        () => {
+          if (nicknameInput && chip.dataset.preset) {
+            nicknameInput.value = chip.dataset.preset;
+          }
+        },
+        { signal }
+      );
+    });
+
+    bindPointerTap(
+      btnSaveNickname,
+      () => {
+        if (!editingUnitId || !nicknameInput) return;
+        manager.renamePokemon(editingUnitId, nicknameInput.value);
+        closeNicknameModal();
+      },
+      { signal }
+    );
+
+    bindPointerTap(
+      btnResetNickname,
+      () => {
+        if (!editingUnitId) return;
+        manager.renamePokemon(editingUnitId, '');
+        closeNicknameModal();
+      },
+      { signal }
+    );
+
+    bindPointerTap(btnCancelNickname, () => closeNicknameModal(), { signal });
+
+    // Cloud & Save Backup Controls
+    btnGoogleAuthToggle?.addEventListener(
+      'click',
+      () => {
+        const sync = manager.getSyncStatus();
+        if (!sync.isFirebaseConfigured) return;
+        if (sync.user) {
+          void manager.signOutFromGoogle();
+        } else {
+          void manager.signInWithGoogleAndSync().catch(() => {
+            // Handled via sync status state
+          });
+        }
+      },
+      { signal }
+    );
+
+    bindPointerTap(
+      btnReconcileNow,
+      () => {
+        void manager.reconcileWithCloud();
+      },
+      { signal }
+    );
+
+    bindPointerTap(
+      btnExportJson,
+      () => {
+        if (!jsonIoBox || !jsonIoTextarea || !jsonIoTitle || !btnConfirmImport || !btnDownloadJson) return;
+        jsonIoTitle.textContent = 'Export Save Backup';
+        jsonIoTextarea.value = manager.exportSaveJson();
+        jsonIoTextarea.readOnly = true;
+        btnConfirmImport.hidden = true;
+        btnDownloadJson.hidden = false;
+        jsonIoBox.hidden = false;
+        backStack.syncButtonLabel();
+      },
+      { signal }
+    );
+
+    bindPointerTap(
+      btnDownloadJson,
+      () => {
+        const json = manager.exportSaveJson();
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `mystery-emblem-save-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      },
+      { signal }
+    );
+
+    bindPointerTap(
+      btnOpenImport,
+      () => {
+        if (!jsonIoBox || !jsonIoTextarea || !jsonIoTitle || !btnConfirmImport || !btnDownloadJson) return;
+        jsonIoTitle.textContent = 'Import Save Backup';
+        jsonIoTextarea.value = '';
+        jsonIoTextarea.readOnly = false;
+        btnConfirmImport.hidden = false;
+        btnDownloadJson.hidden = true;
+        jsonIoBox.hidden = false;
+        backStack.syncButtonLabel();
+      },
+      { signal }
+    );
+
+    bindPointerTap(
+      btnConfirmImport,
+      () => {
+        if (!jsonIoTextarea || !jsonIoBox) return;
+        try {
+          manager.importSaveJson(jsonIoTextarea.value);
+          jsonIoBox.hidden = true;
+          switchTab('squad');
+          backStack.syncButtonLabel();
+        } catch (err) {
+          if (jsonIoTitle) {
+            jsonIoTitle.textContent = err instanceof Error ? `Invalid Backup: ${err.message}` : 'Invalid Backup File';
+          }
+        }
+      },
+      { signal }
+    );
+
+    bindPointerTap(
+      btnCloseJsonBox,
+      () => {
+        if (jsonIoBox) jsonIoBox.hidden = true;
+        backStack.syncButtonLabel();
+      },
+      { signal }
+    );
+
+    bindPointerTap(
+      btnClearSave,
+      () => {
+        manager.clearLocalSave();
+      },
+      { signal }
+    );
+
+    // Player Audio Settings Card (Campaign Menu -> Cloud & Save)
+    const btnPlayerMuteToggle = document.getElementById(
+      'btn-player-mute-toggle'
+    ) as HTMLButtonElement | null;
+    const playerAudioStatus = document.getElementById('player-audio-status');
+    const playerBgmVolume = document.getElementById('player-bgm-volume') as HTMLInputElement | null;
+    const playerSfxVolume = document.getElementById('player-sfx-volume') as HTMLInputElement | null;
+
+    bindPointerTap(
+      btnPlayerMuteToggle,
+      () => {
+        const nowMuted = audioManager.toggleMute();
+        if (!nowMuted) audioManager.playSfx('select');
+      },
+      { signal }
+    );
+
+    playerBgmVolume?.addEventListener(
+      'input',
+      () => {
+        audioManager.setBgmVolume(Number(playerBgmVolume.value) / 100);
+      },
+      { signal }
+    );
+
+    playerSfxVolume?.addEventListener(
+      'input',
+      () => {
+        audioManager.setSfxVolume(Number(playerSfxVolume.value) / 100);
+      },
+      { signal }
+    );
+
+    const unsubscribePlayerAudio = audioManager.subscribe((snap) => {
+      if (btnPlayerMuteToggle) {
+        btnPlayerMuteToggle.textContent = snap.settings.muted ? 'Unmute Audio' : 'Mute Audio';
+        btnPlayerMuteToggle.classList.toggle('is-active', snap.settings.muted);
+      }
+      if (playerAudioStatus) {
+        const bgmPct = Math.round(snap.settings.bgmVolume * 100);
+        const sfxPct = Math.round(snap.settings.sfxVolume * 100);
+        const trackPart = snap.currentTrack ? ` · ♪ ${snap.currentTrack.title}` : '';
+        playerAudioStatus.textContent = snap.settings.muted
+          ? 'Audio Muted'
+          : `Music: ${bgmPct}% · SFX: ${sfxPct}%${trackPart}`;
+      }
+      if (playerBgmVolume && document.activeElement !== playerBgmVolume) {
+        playerBgmVolume.value = String(Math.round(snap.settings.bgmVolume * 100));
+      }
+      if (playerSfxVolume && document.activeElement !== playerSfxVolume) {
+        playerSfxVolume.value = String(Math.round(snap.settings.sfxVolume * 100));
+      }
+    });
+
+    signal.addEventListener('abort', () => unsubscribePlayerAudio(), { once: true });
+
+    renderRegistryAudit();
+    manager.subscribe(() => renderAll());
+  }
+
+  initMysteryEmblemApp();
+  document.addEventListener('astro:after-swap', initMysteryEmblemApp);
+</script>
+
+<style>
+  :global(*, *::before, *::after) {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  :global(html, body) {
+    width: 100%;
+    min-height: 100%;
+    background-color: #080e1c;
+    color: #f8f8f8;
+    font-family: 'Fusion Pixel 12px Proportional KR', sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  :global(button, input, select, textarea) {
+    font-family: inherit;
+  }
+
+  .mystery-emblem-shell {
+    width: 100%;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background: #080e1c;
+  }
+
+  .pmd-viewport {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 4.5rem 1.25rem 2rem;
+    background: radial-gradient(circle at center, #1a2d54 0%, #0a1020 68%, #060a14 100%);
+    user-select: none;
+    touch-action: manipulation;
+  }
+
+  .pmd-corner-btn {
+    position: fixed;
+    top: max(0.85rem, env(safe-area-inset-top));
+    min-height: 46px;
+    min-width: 108px;
+    padding: 0.45rem 0.95rem;
+    font-size: 0.8rem;
+    color: #f8d048;
+    cursor: pointer;
+    z-index: 95;
+    transition: transform 0.15s, background-color 0.15s;
+  }
+
+  .pmd-corner-left {
+    left: max(0.85rem, env(safe-area-inset-left));
+    color: #90d8f8;
+  }
+
+  .pmd-corner-right {
+    right: max(0.85rem, env(safe-area-inset-right));
+  }
+
+  .pmd-corner-btn:hover,
+  .pmd-corner-btn:active {
+    background: rgba(32, 52, 88, 0.96);
+    transform: translateY(-1px);
+  }
+
+  .pmd-title-card {
+    max-width: 540px;
+    width: 100%;
+    padding: 2.35rem 1.85rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .pmd-continue-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+  }
+
+  .pmd-continue-sprite {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    pointer-events: none;
+  }
+
+  .pmd-corner-btn[hidden],
+  .pmd-title-card[hidden],
+  .pmd-panel[hidden],
+  .pmd-tab-panel[hidden],
+  .pmd-modal-backdrop[hidden],
+  .pmd-empty-box[hidden],
+  .pmd-json-box[hidden],
+  .pmd-errors-box[hidden],
+  .pmd-status[hidden],
+  .pmd-continue-sprite[hidden],
+  .pmd-subcard[hidden],
+  .pmd-btn[hidden] {
+    display: none !important;
+  }
+
+  .pmd-title {
+    font-size: 2.2rem;
+    color: #f8d048;
+    letter-spacing: 0.08em;
+    line-height: 1.2;
+    text-shadow: 2px 2px 0 #102038, 0 0 14px rgba(248, 208, 72, 0.35);
+  }
+
+  .pmd-subtitle {
+    font-size: 0.95rem;
+    color: #90d8f8;
+    margin-top: -0.35rem;
+  }
+
+  .pmd-desc {
+    font-size: 0.84rem;
+    color: rgba(248, 248, 248, 0.9);
+    line-height: 1.6;
+    max-width: 450px;
+    word-break: break-word;
+  }
+
+  .pmd-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    width: 100%;
+    max-width: 320px;
+    margin-top: 0.4rem;
+  }
+
+  .pmd-status {
+    margin-top: 0.35rem;
+    font-size: 0.76rem;
+    color: #90d8f8;
+    padding: 0.5rem 0.75rem 0;
+    border-top: 1px solid rgba(72, 184, 232, 0.3);
+    width: 100%;
+  }
+
+  /* Campaign Menu & Dev Tools Panel Layout */
+  .pmd-panel {
+    width: 100%;
+    max-width: 920px;
+    padding: 1.5rem 1.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    overflow-x: hidden;
+  }
+
+  .pmd-panel-title {
+    font-size: 1.15rem;
+    color: #f8d048;
+    letter-spacing: 0.05em;
+  }
+
+  .pmd-panel-sub {
+    font-size: 0.76rem;
+    color: #90d8f8;
+  }
+
+  .pmd-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+  }
+
+  .pmd-tab-btn {
+    flex: 1 1 150px;
+  }
+
+  .pmd-tab-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .pmd-empty-box {
+    padding: 1.5rem;
+    text-align: center;
+    border: 1px dashed rgba(72, 184, 232, 0.45);
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .pmd-squad-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
+    gap: 0.85rem;
+  }
+
+  :global(.pmd-unit-card) {
+    background: rgba(10, 18, 34, 0.88);
+    border: 2px solid rgba(72, 184, 232, 0.65);
+    border-radius: 6px;
+    padding: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  :global(.pmd-unit-top) {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  :global(.pmd-unit-sprite) {
+    min-width: 56px;
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(24, 40, 68, 0.6);
+    border-radius: 4px;
+    border: 1px solid rgba(72, 184, 232, 0.35);
+    overflow: hidden;
+  }
+
+  :global(.pmd-unit-id) {
+    flex: 1;
+    min-width: 0;
+  }
+
+  :global(.pmd-unit-name-line) {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  :global(.pmd-unit-nickname) {
+    font-size: 0.95rem;
+    color: #f8d048;
+    word-break: break-word;
+  }
+
+  :global(.pmd-mini-tag) {
+    font-size: 0.62rem;
+    padding: 0.08rem 0.38rem;
+    border-radius: 3px;
+    border: 1px solid #f8d048;
+    color: #f8d048;
+    background: rgba(248, 208, 72, 0.14);
+  }
+
+  :global(.pmd-unit-meta),
+  :global(.pmd-unit-skill),
+  :global(.pmd-unit-items) {
+    font-size: 0.72rem;
+    color: rgba(248, 248, 248, 0.85);
+    line-height: 1.4;
+  }
+
+  :global(.pmd-rename-btn) {
+    min-height: 44px;
+    padding: 0.4rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  :global(.pmd-stats-strip) {
+    font-size: 0.7rem;
+    color: #90d8f8;
+    background: rgba(8, 14, 26, 0.75);
+    padding: 0.35rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid rgba(72, 184, 232, 0.25);
+  }
+
+  :global(.pmd-moves-row) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  :global(.pmd-move-pill) {
+    min-height: 44px;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.72rem;
+  }
+
+  :global(.pmd-move-pill.is-equipped) {
+    border-color: #78e890;
+    color: #b8ffca;
+    background: rgba(24, 68, 48, 0.85);
+  }
+
+  /* Dev Tools Audit & Step 2 Harnesses */
+  .pmd-audit-banner {
+    padding: 0.65rem 0.9rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+  }
+
+  .pmd-audit-banner.is-valid {
+    background: rgba(20, 68, 44, 0.85);
+    border: 2px solid #68d888;
+    color: #c8ffd8;
+  }
+
+  .pmd-audit-banner.is-invalid {
+    background: rgba(88, 24, 24, 0.85);
+    border: 2px solid #f07878;
+    color: #ffd0d0;
+  }
+
+  .pmd-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 175px), 1fr));
+    gap: 0.65rem;
+  }
+
+  :global(.pmd-metric-card) {
+    background: rgba(10, 18, 34, 0.85);
+    border: 1px solid rgba(72, 184, 232, 0.45);
+    border-radius: 5px;
+    padding: 0.6rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  :global(.pmd-metric-label) {
+    font-size: 0.68rem;
+    color: #90d8f8;
+  }
+
+  :global(.pmd-metric-val) {
+    font-size: 0.9rem;
+    color: #f8d048;
+  }
+
+  .pmd-errors-box {
+    white-space: pre-wrap;
+    font-size: 0.72rem;
+    color: #ffd0d0;
+    background: rgba(60, 16, 16, 0.8);
+    padding: 0.75rem;
+    border-radius: 4px;
+  }
+
+  .pmd-devtools-sprite-layout {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    gap: 0.85rem;
+  }
+
+  .pmd-devtools-sprite-stage {
+    min-height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle, rgba(28, 52, 92, 0.65) 0%, rgba(8, 14, 26, 0.9) 100%);
+    border: 1px solid rgba(72, 184, 232, 0.4);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .pmd-devtools-row-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .pmd-devtools-portrait-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+    gap: 0.6rem;
+  }
+
+  :global(.pmd-devtools-portrait-cell) {
+    background: rgba(8, 14, 26, 0.88);
+    border: 1px solid rgba(72, 184, 232, 0.45);
+    border-radius: 5px;
+    padding: 0.45rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.22rem;
+  }
+
+  :global(.pmd-devtools-portrait-label) {
+    font-size: 0.7rem;
+    color: #f8d048;
+  }
+
+  :global(.pmd-devtools-portrait-sub) {
+    font-size: 0.62rem;
+    color: #90d8f8;
+  }
+
+  .pmd-devtools-roster-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  :global(.pmd-devtools-roster-row) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(72, 184, 232, 0.2);
+  }
+
+  /* Sync & Backup */
+  .pmd-sync-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+    gap: 0.85rem;
+  }
+
+  .pmd-subcard {
+    background: rgba(10, 18, 34, 0.86);
+    border: 1px solid rgba(72, 184, 232, 0.5);
+    border-radius: 6px;
+    padding: 0.95rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .pmd-subcard-title {
+    font-size: 0.86rem;
+    color: #f8d048;
+  }
+
+  .pmd-subcard-text {
+    font-size: 0.76rem;
+    color: rgba(248, 248, 248, 0.88);
+    line-height: 1.55;
+    word-break: break-word;
+  }
+
+  .pmd-inline-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .pmd-textarea,
+  .pmd-text-input,
+  .pmd-select {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    background: rgba(6, 12, 24, 0.95);
+    border: 2px solid #48b8e8;
+    border-radius: 4px;
+    color: #f8f8f8;
+    font-size: 0.84rem;
+    user-select: text;
+  }
+
+  .pmd-text-input,
+  .pmd-select {
+    min-height: 46px;
+  }
+
+  .pmd-slider-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 44px;
+    font-size: 0.76rem;
+    color: #90d8f8;
+  }
+
+  .pmd-range {
+    flex: 1;
+    min-height: 44px;
+    accent-color: #f8d048;
+    cursor: pointer;
+  }
+
+  .pmd-textarea:focus,
+  .pmd-text-input:focus,
+  .pmd-select:focus {
+    outline: 2px solid #f8d048;
+    border-color: #f8d048;
+  }
+
+  /* Nickname Modal */
+  .pmd-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 8, 16, 0.78);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    z-index: 100;
+  }
+
+  .pmd-nickname-dialog {
+    width: 100%;
+    max-width: 440px;
+    max-height: calc(100dvh - 1.5rem);
+    overflow-y: auto;
+    padding: 1.5rem 1.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .pmd-preset-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .pmd-preset-label {
+    font-size: 0.72rem;
+    color: #90d8f8;
+  }
+
+  :global(.pmd-chip-btn) {
+    min-height: 44px;
+    padding: 0.35rem 0.7rem;
+    font-size: 0.75rem;
+  }
+
+  .pmd-modal-actions {
+    justify-content: flex-end;
+  }
+
+  @media (max-width: 640px) {
+    .pmd-viewport {
+      min-height: 100dvh;
+      padding: 4.3rem 0.65rem 1.15rem;
+    }
+
+    .pmd-title-card,
+    .pmd-panel {
+      padding: 1.25rem 0.9rem;
+    }
+
+    .pmd-title {
+      font-size: 1.65rem;
+    }
+  }
+
+  /* Short Mobile Landscape (e.g., 844x390) — compact spacing so windows fit cleanly without clipping */
+  @media (max-height: 500px) {
+    .pmd-viewport {
+      min-height: 100dvh;
+      padding: 3.45rem 0.85rem 0.75rem;
+    }
+
+    .pmd-corner-btn {
+      top: max(0.55rem, env(safe-area-inset-top));
+      min-height: 44px;
+    }
+
+    .pmd-title-card {
+      max-width: 680px;
+      padding: 0.95rem 1.25rem;
+      gap: 0.45rem;
+    }
+
+    .pmd-title {
+      font-size: 1.45rem;
+    }
+
+    .pmd-actions {
+      flex-direction: row;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      max-width: 100%;
+      margin-top: 0.15rem;
+      gap: 0.5rem;
+    }
+
+    .pmd-nickname-dialog {
+      padding: 0.9rem 1.05rem;
+      gap: 0.5rem;
+    }
+  }
+</style>

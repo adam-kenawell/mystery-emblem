@@ -1,0 +1,24 @@
+{
+  "name": "mystery-emblem",
+  "type": "module",
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test": "npx playwright test",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@fontsource/fusion-pixel-12px-proportional-kr": "^5.2.5",
+    "astro": "^6.3.0",
+    "firebase": "^13.2.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "playwright": "^1.59.1"
+  }
+}

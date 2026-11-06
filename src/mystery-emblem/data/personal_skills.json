@@ -1,0 +1,331 @@
+[
+  {
+    "id": "dragon_aura",
+    "name": "Dragon Aura",
+    "description": "Royal Dragon lineage: grants +10% Hit and +10% Avoid to allies within 2 tiles.",
+    "trigger": "aura_2_tiles",
+    "params": { "hitBonus": 10, "avoidBonus": 10 }
+  },
+  {
+    "id": "hidden_potential",
+    "name": "Hidden Potential",
+    "description": "Permanently increases all six stat growth rates (HP, Atk, Def, SpA, SpD, Spe) by +20%.",
+    "trigger": "passive_growth",
+    "params": { "growthBonusAll": 20 }
+  },
+  {
+    "id": "levitate",
+    "name": "Levitate",
+    "description": "Grants Levitate omni-traversal across Void, Lava, Water, Trees, and Mountains at 1 Mov cost.",
+    "trigger": "passive_traversal",
+    "params": { "traversalClass": "Levitate" }
+  },
+  {
+    "id": "overgrow",
+    "name": "Overgrow",
+    "description": "Grants +3 Damage with Grass-type moves when current HP is at or below 50%.",
+    "trigger": "low_hp_type_boost",
+    "params": { "type": "Grass", "hpThresholdPercent": 50, "damageBonus": 3 }
+  },
+  {
+    "id": "blaze",
+    "name": "Blaze",
+    "description": "Grants +3 Damage with Fire-type moves when current HP is at or below 50%.",
+    "trigger": "low_hp_type_boost",
+    "params": { "type": "Fire", "hpThresholdPercent": 50, "damageBonus": 3 }
+  },
+  {
+    "id": "torrent",
+    "name": "Torrent",
+    "description": "Grants +3 Damage with Water-type moves when current HP is at or below 50%.",
+    "trigger": "low_hp_type_boost",
+    "params": { "type": "Water", "hpThresholdPercent": 50, "damageBonus": 3 }
+  },
+  {
+    "id": "swarm",
+    "name": "Swarm",
+    "description": "Grants +3 Damage with Bug-type moves when current HP is at or below 50%.",
+    "trigger": "low_hp_type_boost",
+    "params": { "type": "Bug", "hpThresholdPercent": 50, "damageBonus": 3 }
+  },
+  {
+    "id": "intimidate",
+    "name": "Intimidate",
+    "description": "At the start of Player Phase, inflicts -2 Attack for 1 turn on enemies within 2 tiles.",
+    "trigger": "phase_start_debuff",
+    "params": { "radius": 2, "atkDelta": -2, "durationTurns": 1 }
+  },
+  {
+    "id": "guts",
+    "name": "Guts",
+    "description": "Grants +3 Attack while afflicted with a Status Condition and ignores Burn's Attack reduction.",
+    "trigger": "status_atk_boost",
+    "params": { "atkBonus": 3, "ignoreBurnPenalty": true }
+  },
+  {
+    "id": "sturdy",
+    "name": "Sturdy",
+    "description": "Once per battle, if at 100% HP and dealt lethal damage, survives with 1 HP.",
+    "trigger": "survive_lethal_full_hp",
+    "params": { "oncePerBattle": true }
+  },
+  {
+    "id": "stance_change",
+    "name": "Stance Change",
+    "description": "Grants +4 Def / +4 SpD on Enemy Phase (Shield Forme) and +4 Atk / +4 SpA on Player Phase (Blade Forme).",
+    "trigger": "stance_change",
+    "params": { "playerPhaseOffense": 4, "enemyPhaseDefense": 4 }
+  },
+  {
+    "id": "supreme_overlord",
+    "name": "Supreme Overlord",
+    "description": "Grants +1 Atk, +1 Def, and +1 SpD for each defeated royal guard squad on the map (up to +5).",
+    "trigger": "fallen_ally_scaling",
+    "params": { "maxStacks": 5, "statBonusPerStack": 1 }
+  },
+  {
+    "id": "serene_grace",
+    "name": "Serene Grace",
+    "description": "Doubles the trigger chance of random secondary effects on moves.",
+    "trigger": "secondary_chance_double",
+    "params": { "multiplier": 2 }
+  },
+  {
+    "id": "natural_cure",
+    "name": "Natural Cure",
+    "description": "Automatically cures non-volatile Status Conditions at the end of the unit's turn.",
+    "trigger": "status_cure_phase_end",
+    "params": { "cureChancePercent": 100 }
+  },
+  {
+    "id": "flower_veil",
+    "name": "Flower Veil",
+    "description": "Grants +2 Sp. Def and +10% Avoid when standing on Trees/Foliage or Wonder Tiles.",
+    "trigger": "terrain_bonus",
+    "params": { "spdBonus": 2, "avoidBonus": 10 }
+  },
+  {
+    "id": "queenly_majesty",
+    "name": "Queenly Majesty",
+    "description": "Grants +2 Attack and +10% Hit when initiating combat on Player Phase.",
+    "trigger": "combat_stat_mod",
+    "params": { "playerPhaseAtk": 2, "hitBonus": 10 }
+  },
+  {
+    "id": "magic_bounce",
+    "name": "Magic Bounce",
+    "description": "Grants +2 Sp. Def and immunity to non-damaging enemy Status moves.",
+    "trigger": "combat_stat_mod",
+    "params": { "spdBonus": 2, "immuneStatusMoves": true }
+  },
+  {
+    "id": "tinted_lens",
+    "name": "Tinted Lens",
+    "description": "Boosts Not Very Effective (0.75x) attacks up to neutral (1.0x) damage.",
+    "trigger": "not_very_effective_boost",
+    "params": { "upgradeSingleResistanceToNeutral": true }
+  },
+  {
+    "id": "keen_eye",
+    "name": "Keen Eye",
+    "description": "Increases the unit's Hit Rate (Accuracy) by +15% in all combat.",
+    "trigger": "combat_stat_mod",
+    "params": { "hitBonus": 15 }
+  },
+  {
+    "id": "mirror_armor",
+    "name": "Mirror Armor",
+    "description": "Grants +2 Defense and prevents enemy attacks from lowering this unit's stats.",
+    "trigger": "combat_stat_mod",
+    "params": { "defBonus": 2, "immuneStatDrops": true }
+  },
+  {
+    "id": "synchronize",
+    "name": "Synchronize",
+    "description": "Grants +2 Sp. Atk and +10% Avoid against Range 2 Special attacks.",
+    "trigger": "combat_stat_mod",
+    "params": { "spaBonus": 2, "rangedAvoidBonus": 10 }
+  },
+  {
+    "id": "magic_guard",
+    "name": "Magic Guard",
+    "description": "Negates all indirect damage from Poison, Burn, Lava, and Life Orb recoil.",
+    "trigger": "combat_stat_mod",
+    "params": { "immuneIndirectDamage": true }
+  },
+  {
+    "id": "static",
+    "name": "Static",
+    "description": "Grants +10% Crit with Electric moves and a 25% chance to Paralyze Range-1 attackers.",
+    "trigger": "combat_stat_mod",
+    "params": { "contactStatus": "PAR", "contactChance": 25 }
+  },
+  {
+    "id": "defiant",
+    "name": "Defiant",
+    "description": "Grants +3 Attack whenever current HP is below 75% or a stat is lowered.",
+    "trigger": "combat_stat_mod",
+    "params": { "atkBonusDamaged": 3 }
+  },
+  {
+    "id": "purifying_salt",
+    "name": "Purifying Salt",
+    "description": "Immune to all Status Conditions and reduces incoming Ghost-type damage by 3.",
+    "trigger": "resist_types",
+    "params": { "types": ["Ghost"], "flatReduction": 3, "immuneAllStatus": true }
+  },
+  {
+    "id": "solid_rock",
+    "name": "Solid Rock",
+    "description": "Reduces incoming Super Effective and Extremely Effective damage by 2.",
+    "trigger": "combat_stat_mod",
+    "params": { "superEffectiveDamageReduction": 2 }
+  },
+  {
+    "id": "swift_swim",
+    "name": "Swift Swim",
+    "description": "Grants +2 Speed and +10% Avoid when fighting on Water or Dungeon Floor tiles.",
+    "trigger": "terrain_bonus",
+    "params": { "speBonus": 2, "avoidBonus": 10 }
+  },
+  {
+    "id": "chlorophyll",
+    "name": "Chlorophyll",
+    "description": "Grants +2 Speed and +10% Hit when standing on Trees/Foliage tiles.",
+    "trigger": "terrain_bonus",
+    "params": { "speBonus": 2, "hitBonus": 10 }
+  },
+  {
+    "id": "flame_body",
+    "name": "Flame Body",
+    "description": "Grants +2 Sp. Atk on Fire moves and a 25% chance to Burn Range-1 attackers.",
+    "trigger": "combat_stat_mod",
+    "params": { "contactStatus": "BRN", "contactChance": 25 }
+  },
+  {
+    "id": "mold_breaker",
+    "name": "Mold Breaker",
+    "description": "Grants +2 Physical damage and pierces enemy Sturdy.",
+    "trigger": "combat_stat_mod",
+    "params": { "physicalDamageBonus": 2, "ignoreSturdy": true }
+  },
+  {
+    "id": "clear_body",
+    "name": "Clear Body",
+    "description": "Grants +1 Defense, +1 Sp. Def, and complete immunity to stat reductions.",
+    "trigger": "combat_stat_mod",
+    "params": { "defBonus": 1, "spdBonus": 1, "immuneStatDrops": true }
+  },
+  {
+    "id": "huge_power",
+    "name": "Huge Power",
+    "description": "Increases Attack by +3 when using Physical (Range 1) moves.",
+    "trigger": "combat_stat_mod",
+    "params": { "atkBonus": 3 }
+  },
+  {
+    "id": "cute_charm",
+    "name": "Pixie Ward",
+    "description": "Reduces damage taken from Physical (Range 1) attacks by 2.",
+    "trigger": "combat_stat_mod",
+    "params": { "physicalDamageReduction": 2 }
+  },
+  {
+    "id": "screen_cleaner",
+    "name": "Screen Cleaner",
+    "description": "Grants +10% Hit and pierces enemy Reflect, Light Screen, and Obstruct.",
+    "trigger": "combat_stat_mod",
+    "params": { "hitBonus": 10, "pierceScreens": true }
+  },
+  {
+    "id": "ice_body",
+    "name": "Ice Body",
+    "description": "Restores 10% Max HP at the start of Player Phase and grants +1 Defense.",
+    "trigger": "phase_start_heal",
+    "params": { "healPercent": 10, "defBonus": 1 }
+  },
+  {
+    "id": "adaptability",
+    "name": "Adaptability",
+    "description": "Boosts Same-Type Attack Bonus (STAB) damage by +2.",
+    "trigger": "combat_stat_mod",
+    "params": { "stabFlatBonus": 2 }
+  },
+  {
+    "id": "thick_fat",
+    "name": "Thick Fat",
+    "description": "Reduces incoming Fire-type and Ice-type move damage by 3.",
+    "trigger": "resist_types",
+    "params": { "types": ["Fire", "Ice"], "flatReduction": 3 }
+  },
+  {
+    "id": "soundproof",
+    "name": "Resonant Voice",
+    "description": "Grants +2 Sp. Atk on Range-2 attacks and +2 Sp. Def when defending at Range 2.",
+    "trigger": "combat_stat_mod",
+    "params": { "spaBonus": 2, "spdBonus": 2 }
+  },
+  {
+    "id": "sand_stream",
+    "name": "Sand Stream",
+    "description": "Grants +2 Sp. Def and +1 Attack in rocky and subterranean terrain.",
+    "trigger": "combat_stat_mod",
+    "params": { "atkBonus": 1, "spdBonus": 2 }
+  },
+  {
+    "id": "sheer_force",
+    "name": "Sheer Force",
+    "description": "Grants +2 Damage when using any move that carries a secondary effect.",
+    "trigger": "combat_stat_mod",
+    "params": { "secondaryMoveDamageBonus": 2 }
+  },
+  {
+    "id": "water_absorb",
+    "name": "Water Absorb",
+    "description": "Immune to Water-type damage and restores 25% Max HP if targeted by a Water move.",
+    "trigger": "type_immunity_absorb",
+    "params": { "type": "Water", "healPercent": 25 }
+  },
+  {
+    "id": "volt_absorb",
+    "name": "Volt Absorb",
+    "description": "Immune to Electric-type damage and grants +2 Speed.",
+    "trigger": "type_immunity_absorb",
+    "params": { "type": "Electric", "speBonus": 2 }
+  },
+  {
+    "id": "flash_fire",
+    "name": "Flash Fire",
+    "description": "Immune to Fire-type damage and grants +2 Damage with Fire moves.",
+    "trigger": "type_immunity_absorb",
+    "params": { "type": "Fire", "fireDamageBonus": 2 }
+  },
+  {
+    "id": "pressure",
+    "name": "Pressure",
+    "description": "Grants +2 Def / +2 Sp. Def on Enemy Phase and drains +1 extra PP from attackers.",
+    "trigger": "combat_stat_mod",
+    "params": { "enemyPhaseDefense": 2, "extraPpDrain": 1 }
+  },
+  {
+    "id": "prankster",
+    "name": "Prankster",
+    "description": "Grants +15% Hit on Status/Support moves and +10% Avoid.",
+    "trigger": "combat_stat_mod",
+    "params": { "supportHitBonus": 15, "avoidBonus": 10 }
+  },
+  {
+    "id": "shadow_tag",
+    "name": "Shadow Tag",
+    "description": "Grants +2 Sp. Atk and +10% Hit against enemies within 2 tiles.",
+    "trigger": "combat_stat_mod",
+    "params": { "spaBonus": 2, "hitBonus": 10 }
+  },
+  {
+    "id": "no_guard",
+    "name": "No Guard",
+    "description": "Ensures 100% Hit accuracy for this unit's attacks and grants +1 Attack.",
+    "trigger": "combat_stat_mod",
+    "params": { "alwaysHit": true, "atkBonus": 1 }
+  }
+]
