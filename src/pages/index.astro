@@ -25,7 +25,7 @@ const canonicalUrl = Astro.url.href;
   <body>
     <main class="mystery-emblem-shell">
       <div id="mystery-emblem-root" class="pmd-viewport">
-        <!-- Admin-Only Dev Tools Button (Top-Left, strictly visible ONLY for adam.kenawell.family@gmail.com) -->
+        <!-- Admin-Only Dev Tools Button (Top-Left, strictly visible ONLY for ADMIN_DEVTOOLS_EMAILS) -->
         <button
           id="pmd-dev-tools-btn"
           class="pmd-window pmd-corner-btn pmd-corner-left"
@@ -35,7 +35,7 @@ const canonicalUrl = Astro.url.href;
           Dev Tools
         </button>
 
-        <!-- Persistent Top-Right Corner Button: Google Log In / Log Out on Title Screen; Menu / Back in Scenes -->
+        <!-- Persistent Top-Right Corner Button: Google Log In / Log Out on Gate & Title; Menu / Back in Scenes -->
         <button
           id="pmd-corner-menu-btn"
           class="pmd-window pmd-corner-btn pmd-corner-right"
@@ -71,8 +71,22 @@ const canonicalUrl = Astro.url.href;
           <span>Log In</span>
         </button>
 
-        <!-- Authentic PMD: Explorers of Sky Title Window -->
-        <section id="pmd-title-screen" class="pmd-window pmd-title-card">
+        <!-- In-Development Gate Screen (Visible by default when logged out or not on ALLOWED_PREVIEW_EMAILS) -->
+        <section
+          id="pmd-under-dev-screen"
+          class="pmd-window pmd-title-card"
+          data-testid="under-dev-screen"
+        >
+          <span class="pmd-dev-badge">IN DEVELOPMENT</span>
+          <h1 class="pmd-title">MYSTERY EMBLEM</h1>
+          <p id="pmd-under-dev-message" class="pmd-desc">
+            This website is currently in active development. Sign in with an authorized Google account at the top right for preview access.
+          </p>
+          <p id="pmd-under-dev-status" class="pmd-status" aria-live="polite" hidden></p>
+        </section>
+
+        <!-- Authentic PMD: Explorers of Sky Title Window (Shown only to authorized preview accounts) -->
+        <section id="pmd-title-screen" class="pmd-window pmd-title-card" hidden>
           <h1 class="pmd-title">MYSTERY EMBLEM</h1>
           <p class="pmd-subtitle">Echoes of the Dragon Lineage</p>
 
@@ -131,7 +145,7 @@ const canonicalUrl = Astro.url.href;
           <p id="pmd-campaign-status" class="pmd-status" aria-live="polite" hidden></p>
         </section>
 
-        <!-- Admin-Only Dev Tools Modal (Accessible ONLY when signed in as adam.kenawell.family@gmail.com) -->
+        <!-- Admin-Only Dev Tools Modal (Accessible ONLY when signed in as ADMIN_DEVTOOLS_EMAILS) -->
         <section id="pmd-devtools-modal" class="pmd-window pmd-panel" hidden>
           <header class="pmd-panel-header">
             <h2 class="pmd-panel-title">DEV TOOLS</h2>
@@ -471,6 +485,13 @@ const canonicalUrl = Astro.url.href;
   } from '../mystery-emblem/assets/tilesetLoader';
   import { getAudioManager } from '../mystery-emblem/audio/AudioManager';
   import {
+    ADMIN_DEVTOOLS_EMAILS,
+    ALLOWED_PREVIEW_EMAILS,
+    DEV_PREVIEW_GATE_ENABLED,
+    hasAdminDevToolsAccess,
+    hasPreviewSiteAccess,
+  } from '../mystery-emblem/data/accessControl';
+  import {
     getRegistryValidationSummary,
     getSpeciesById,
   } from '../mystery-emblem/data/index';
@@ -507,8 +528,6 @@ const canonicalUrl = Astro.url.href;
     bindPointerTap,
   } from '../mystery-emblem/ui/pointerControls';
 
-  const ADMIN_EMAIL = 'adam.kenawell.family@gmail.com';
-
   const GOOGLE_G_SVG_MARKUP = `<svg class="pmd-google-g-icon" data-testid="google-g-icon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"></path><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"></path><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"></path><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"></path></svg>`;
 
   let currentManager: SaveStateManager | null = null;
@@ -541,14 +560,12 @@ const canonicalUrl = Astro.url.href;
     currentManager = manager;
     const audioManager = getAudioManager();
 
-    // Arm Top Menu Theme (`002`) as the default Title / Menu soundtrack
-    if (!audioManager.getCurrentTrackId()) {
-      audioManager.playBgm('top_menu', { fadeMs: 350 });
-    }
-
     const validation = getRegistryValidationSummary();
 
     const viewportEl = document.getElementById('mystery-emblem-root');
+    const underDevScreen = document.getElementById('pmd-under-dev-screen');
+    const underDevMessageEl = document.getElementById('pmd-under-dev-message');
+    const underDevStatusEl = document.getElementById('pmd-under-dev-status');
     const titleScreen = document.getElementById('pmd-title-screen');
     const campaignMenu = document.getElementById('pmd-campaign-menu');
     const devToolsModal = document.getElementById('pmd-devtools-modal');
@@ -581,9 +598,26 @@ const canonicalUrl = Astro.url.href;
     let battleReturnTarget: 'campaign' | 'devtools' | 'title' = 'campaign';
     let testDungeonScene: TestDungeonScene | null = null;
 
+    function getExtraPreviewEmails(): ReadonlyArray<string> | undefined {
+      const injected = (window as unknown as Record<string, unknown>)
+        .__MYSTERY_EMBLEM_TEST_EXTRA_PREVIEW_EMAILS__;
+      return Array.isArray(injected) ? (injected as string[]) : undefined;
+    }
+
+    function isPreviewAuthorized(): boolean {
+      const email = manager.getSyncStatus().user?.email;
+      return hasPreviewSiteAccess(email, getExtraPreviewEmails());
+    }
+
+    function isAdminSignedIn(): boolean {
+      const email = manager.getSyncStatus().user?.email;
+      return hasAdminDevToolsAccess(email);
+    }
+
     const backStack = new BackStackController(
       cornerMenuBtn,
       () => {
+        if (!isPreviewAuthorized()) return;
         if (battleScene?.isOpen()) {
           battleScene.handleMenuOrBack();
           return;
@@ -595,7 +629,7 @@ const canonicalUrl = Astro.url.href;
       },
       {
         syncIdleButton: (btn) => {
-          if (battleScene?.isOpen() || testDungeonScene?.isOpen()) {
+          if (isPreviewAuthorized() && (battleScene?.isOpen() || testDungeonScene?.isOpen())) {
             btn.textContent = 'Menu';
             btn.dataset.cornerMode = 'menu';
             btn.setAttribute('aria-label', 'Open System Menu');
@@ -629,9 +663,10 @@ const canonicalUrl = Astro.url.href;
     currentDialogueOverlay = dialogueOverlay;
 
     async function openBattleScene(source: 'campaign' | 'devtools' = 'campaign'): Promise<void> {
-      if (!battleScene) return;
+      if (!battleScene || !isPreviewAuthorized()) return;
       if (source === 'devtools' && !isAdminSignedIn()) return;
       battleReturnTarget = source;
+      if (underDevScreen) underDevScreen.hidden = true;
       if (titleScreen) titleScreen.hidden = true;
       if (campaignMenu) campaignMenu.hidden = true;
       if (devToolsModal) devToolsModal.hidden = true;
@@ -640,7 +675,8 @@ const canonicalUrl = Astro.url.href;
     }
 
     async function openTestDungeon(): Promise<void> {
-      if (!testDungeonScene || !isAdminSignedIn()) return;
+      if (!testDungeonScene || !isPreviewAuthorized() || !isAdminSignedIn()) return;
+      if (underDevScreen) underDevScreen.hidden = true;
       if (titleScreen) titleScreen.hidden = true;
       if (campaignMenu) campaignMenu.hidden = true;
       if (devToolsModal) devToolsModal.hidden = true;
@@ -654,7 +690,12 @@ const canonicalUrl = Astro.url.href;
         saveManager: manager,
         audioManager,
         onExit: () => {
+          if (!isPreviewAuthorized()) {
+            showTitleScreen();
+            return;
+          }
           if (battleReturnTarget === 'devtools' && isAdminSignedIn() && devToolsModal) {
+            if (underDevScreen) underDevScreen.hidden = true;
             if (titleScreen) titleScreen.hidden = true;
             if (campaignMenu) campaignMenu.hidden = true;
             devToolsModal.hidden = false;
@@ -674,7 +715,8 @@ const canonicalUrl = Astro.url.href;
         viewportEl,
         audioManager,
         onExit: () => {
-          if (isAdminSignedIn() && devToolsModal) {
+          if (isPreviewAuthorized() && isAdminSignedIn() && devToolsModal) {
+            if (underDevScreen) underDevScreen.hidden = true;
             if (titleScreen) titleScreen.hidden = true;
             if (campaignMenu) campaignMenu.hidden = true;
             devToolsModal.hidden = false;
@@ -690,6 +732,7 @@ const canonicalUrl = Astro.url.href;
     }
 
     function openNicknameModal(instanceId: string): void {
+      if (!isPreviewAuthorized()) return;
       const save = manager.getSave();
       const unit = save?.roster.find((u) => u.instanceId === instanceId);
       if (!unit || !nicknameBackdrop || !nicknameInput) return;
@@ -732,6 +775,11 @@ const canonicalUrl = Astro.url.href;
       saveManager: manager,
       SaveStateManager,
       formatCampaignChapterLabel,
+      DEV_PREVIEW_GATE_ENABLED,
+      ALLOWED_PREVIEW_EMAILS,
+      ADMIN_DEVTOOLS_EMAILS,
+      hasPreviewSiteAccess,
+      hasAdminDevToolsAccess,
       InMemoryCloudSyncAdapter,
       getRegistryValidationSummary,
       audioManager,
@@ -762,16 +810,17 @@ const canonicalUrl = Astro.url.href;
       computeEnemyDangerArea,
     };
 
-    function isAdminSignedIn(): boolean {
-      const email = manager.getSyncStatus().user?.email?.trim().toLowerCase() ?? '';
-      return email === ADMIN_EMAIL;
-    }
-
     function setStatus(msg: string): void {
-      if (!statusMsgEl) return;
       const trimmed = msg.trim();
-      statusMsgEl.textContent = trimmed;
-      statusMsgEl.hidden = trimmed.length === 0;
+      const targetEl = isPreviewAuthorized() ? statusMsgEl : underDevStatusEl;
+      const otherEl = isPreviewAuthorized() ? underDevStatusEl : statusMsgEl;
+      if (otherEl) {
+        otherEl.textContent = '';
+        otherEl.hidden = true;
+      }
+      if (!targetEl) return;
+      targetEl.textContent = trimmed;
+      targetEl.hidden = trimmed.length === 0;
     }
 
     function setCampaignStatus(msg: string): void {
@@ -784,12 +833,20 @@ const canonicalUrl = Astro.url.href;
     function showTitleScreen(): void {
       if (campaignMenu) campaignMenu.hidden = true;
       if (devToolsModal) devToolsModal.hidden = true;
-      if (titleScreen) titleScreen.hidden = false;
+      if (isPreviewAuthorized()) {
+        if (underDevScreen) underDevScreen.hidden = true;
+        if (titleScreen) titleScreen.hidden = false;
+      } else {
+        if (titleScreen) titleScreen.hidden = true;
+        if (underDevScreen) underDevScreen.hidden = false;
+      }
       backStack.syncButtonLabel();
     }
 
     function openCampaignMenu(): void {
+      if (!isPreviewAuthorized()) return;
       setCampaignStatus('');
+      if (underDevScreen) underDevScreen.hidden = true;
       if (titleScreen) titleScreen.hidden = true;
       if (devToolsModal) devToolsModal.hidden = true;
       if (campaignMenu) campaignMenu.hidden = false;
@@ -797,7 +854,7 @@ const canonicalUrl = Astro.url.href;
     }
 
     function toggleDevTools(): void {
-      if (!isAdminSignedIn() || !devToolsModal) return;
+      if (!isPreviewAuthorized() || !isAdminSignedIn() || !devToolsModal) return;
       if (battleScene?.isOpen()) {
         battleReturnTarget = 'devtools';
         battleScene.close();
@@ -811,6 +868,7 @@ const canonicalUrl = Astro.url.href;
         showTitleScreen();
         return;
       }
+      if (underDevScreen) underDevScreen.hidden = true;
       if (titleScreen) titleScreen.hidden = true;
       if (campaignMenu) campaignMenu.hidden = true;
       devToolsModal.hidden = false;
@@ -896,9 +954,62 @@ const canonicalUrl = Astro.url.href;
     function renderAll(): void {
       const save = manager.getSave();
       const sync = manager.getSyncStatus();
-      const adminActive = isAdminSignedIn();
+      const previewAllowed = isPreviewAuthorized();
+      const adminActive = previewAllowed && isAdminSignedIn();
 
-      // Strictly gate Top-Left Dev Tools button, modal & Test Dungeon to adam.kenawell.family@gmail.com
+      if (!previewAllowed) {
+        if (devToolsBtn) devToolsBtn.hidden = true;
+        if (battleScene?.isOpen()) battleScene.close();
+        if (testDungeonScene?.isOpen()) testDungeonScene.close();
+        if (dialogueOverlay?.isOpen()) dialogueOverlay.close('cancelled');
+        if (nicknameBackdrop && !nicknameBackdrop.hidden) {
+          editingUnitId = null;
+          nicknameBackdrop.hidden = true;
+        }
+        if (devToolsModal) devToolsModal.hidden = true;
+        if (campaignMenu) campaignMenu.hidden = true;
+        if (titleScreen) titleScreen.hidden = true;
+        if (underDevScreen) underDevScreen.hidden = false;
+
+        if (underDevMessageEl) {
+          if (sync.user) {
+            const who = sync.user.email ?? sync.user.displayName ?? 'this Google account';
+            underDevMessageEl.textContent = `This website is currently in active development. Signed in as ${who} — this account does not have preview access yet.`;
+          } else {
+            underDevMessageEl.textContent =
+              'This website is currently in active development. Sign in with an authorized Google account at the top right for preview access.';
+          }
+        }
+
+        if (audioManager.getCurrentTrackId()) {
+          audioManager.stopBgm({ fadeMs: 200 });
+        }
+
+        backStack.syncButtonLabel();
+        return;
+      }
+
+      // Authorized preview account: hide In-Development gate and arm Top Menu BGM (`002`)
+      if (underDevScreen) underDevScreen.hidden = true;
+      if (underDevStatusEl) {
+        underDevStatusEl.textContent = '';
+        underDevStatusEl.hidden = true;
+      }
+      if (!audioManager.getCurrentTrackId()) {
+        audioManager.playBgm('top_menu', { fadeMs: 350 });
+      }
+
+      // Reveal Title Screen if no other authorized scene/panel is currently open
+      const anyPanelOrSceneOpen =
+        Boolean(campaignMenu && !campaignMenu.hidden) ||
+        Boolean(devToolsModal && !devToolsModal.hidden) ||
+        Boolean(battleScene?.isOpen()) ||
+        Boolean(testDungeonScene?.isOpen());
+      if (!anyPanelOrSceneOpen && titleScreen) {
+        titleScreen.hidden = false;
+      }
+
+      // Strictly gate Top-Left Dev Tools button, modal & Test Dungeon to ADMIN_DEVTOOLS_EMAILS
       if (devToolsBtn) {
         devToolsBtn.hidden = !adminActive;
       }
@@ -950,7 +1061,7 @@ const canonicalUrl = Astro.url.href;
 
     // Top-Right Corner Button:
     // - In `back` / `menu` mode (Campaign Menu, Dev Tools, Dialogue, Battle/Test Dungeon): unified pointer tap
-    // - In `login` / `logout` mode (Title Screen): native `click` activation so iOS Safari & Android Chrome permit `signInWithPopup`
+    // - In `login` / `logout` mode (Gate & Title Screen): native `click` activation so iOS Safari & Android Chrome permit `signInWithPopup`
     let cornerPressedInNavMode = false;
     cornerMenuBtn?.addEventListener(
       'pointerdown',
@@ -1022,6 +1133,7 @@ const canonicalUrl = Astro.url.href;
     bindPointerTap(
       btnContinue,
       () => {
+        if (!isPreviewAuthorized()) return;
         audioManager.playSfx('select');
         setStatus('');
         openCampaignMenu();
@@ -1032,6 +1144,7 @@ const canonicalUrl = Astro.url.href;
     bindPointerTap(
       btnEnterDungeon,
       () => {
+        if (!isPreviewAuthorized()) return;
         audioManager.playSfx('select');
         void openBattleScene('campaign');
       },
@@ -1041,6 +1154,7 @@ const canonicalUrl = Astro.url.href;
     bindPointerTap(
       btnCampaignDemo,
       () => {
+        if (!isPreviewAuthorized()) return;
         audioManager.playSfx('select');
         setCampaignStatus('Demo mode is coming soon!');
       },
@@ -1180,6 +1294,17 @@ const canonicalUrl = Astro.url.href;
     flex-direction: column;
     align-items: center;
     gap: 1rem;
+  }
+
+  .pmd-dev-badge {
+    display: inline-block;
+    padding: 0.18rem 0.65rem;
+    border-radius: 4px;
+    border: 1px solid rgba(248, 208, 72, 0.72);
+    background: rgba(248, 208, 72, 0.14);
+    color: #f8d048;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
   }
 
   .pmd-campaign-card {
