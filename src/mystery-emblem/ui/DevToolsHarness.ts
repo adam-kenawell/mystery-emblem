@@ -24,17 +24,37 @@ import {
   type AudioManager,
 } from '../audio/AudioManager';
 import {
+  CHAPTER_LEVEL_CATALOG,
+  getChapterCatalogEntry,
+  getEffectiveChapterMap,
+  hasChapterMapOverride,
+  resetChapterMapOverride,
+  subscribeChapterMapChanges,
+  type ChapterLevelGroup,
+} from '../data/chapterMapRegistry';
+import {
   POKEMON_SPECIES_LIST,
   getSpeciesById,
   getSpeciesByLineId,
 } from '../data/index';
+import { renderDungeonMapPreviewCanvas } from '../scenes/ChapterMapEditorScene';
 import type { SaveStateManager } from '../state/SaveStateManager';
 import type { DialogueOverlay } from './DialogueOverlay';
 import { PmdPortraitView, PmdSpriteActor } from './PmdSpriteCanvas';
 import { bindPointerTap } from './pointerControls';
 import { PROLOGUE_AWAKENING_TEST_SCRIPT } from './sampleDialogueScripts';
 
-export type DevToolsSubTab = 'audit' | 'sprites' | 'dialogue' | 'skirmish';
+export type DevToolsSubTab = 'audit' | 'sprites' | 'dialogue' | 'skirmish' | 'maps';
+
+const MAP_GROUP_CHIPS: ReadonlyArray<{ id: 'all' | ChapterLevelGroup; label: string }> = [
+  { id: 'all', label: 'All (34)' },
+  { id: 'test', label: 'Test' },
+  { id: 'act1', label: 'Act 1' },
+  { id: 'act2', label: 'Act 2' },
+  { id: 'act3', label: 'Act 3' },
+  { id: 'act4', label: 'Act 4' },
+  { id: 'paralogue', label: 'Paralogues' },
+];
 
 const QUICK_LINE_PRESETS: ReadonlyArray<{ label: string; speciesId: string }> = [
   { label: 'Dratini Line', speciesId: 'dratini' },
@@ -51,7 +71,8 @@ export interface DevToolsHarnessOptions {
   dialogueOverlay: DialogueOverlay;
   audioManager?: AudioManager;
   onLaunchTestDungeon?: () => void;
-  onLaunchBattle?: () => void;
+  onLaunchBattle?: (levelId?: string) => void;
+  onLaunchMapEditor?: (levelId: string) => void;
   onRequestRenameUnit?: (instanceId: string) => void;
   signal: AbortSignal;
 }
@@ -62,7 +83,8 @@ export class DevToolsHarness {
   private readonly dialogueOverlay: DialogueOverlay;
   private readonly audioManager: AudioManager;
   private readonly onLaunchTestDungeon?: () => void;
-  private readonly onLaunchBattle?: () => void;
+  private readonly onLaunchBattle?: (levelId?: string) => void;
+  private readonly onLaunchMapEditor?: (levelId: string) => void;
   private readonly onRequestRenameUnit?: (instanceId: string) => void;
   private readonly signal: AbortSignal;
 
@@ -72,11 +94,14 @@ export class DevToolsHarness {
   private selectedDirection: PmdDirection = 0;
   private mirrorPortraits = false;
   private instantDialogue = false;
+  private selectedMapGroup: 'all' | ChapterLevelGroup = 'all';
+  private selectedMapLevelId = 'drenched_bluff_vanguard';
 
   private previewSpriteActor: PmdSpriteActor | null = null;
   private readonly portraitViews = new Map<PmdPortraitEmotion, PmdPortraitView>();
   private readonly portraitMetaEls = new Map<PmdPortraitEmotion, HTMLElement>();
   private unsubscribeAudio: (() => void) | null = null;
+  private unsubscribeMaps: (() => void) | null = null;
 
   private speciesSelectEl: HTMLSelectElement | null = null;
   private stageButtonsRow: HTMLElement | null = null;
@@ -86,6 +111,12 @@ export class DevToolsHarness {
   private saveActionStatusEl: HTMLElement | null = null;
   private deleteAccountSaveBtn: HTMLButtonElement | null = null;
 
+  private mapGroupFiltersEl: HTMLElement | null = null;
+  private mapLevelSelectEl: HTMLSelectElement | null = null;
+  private mapStatusBadgeEl: HTMLElement | null = null;
+  private mapMetaEl: HTMLElement | null = null;
+  private mapPreviewCanvasEl: HTMLCanvasElement | null = null;
+
   constructor(options: DevToolsHarnessOptions) {
     this.modalEl = options.modalEl;
     this.saveManager = options.saveManager;
@@ -93,6 +124,7 @@ export class DevToolsHarness {
     this.audioManager = options.audioManager ?? getAudioManager();
     this.onLaunchTestDungeon = options.onLaunchTestDungeon;
     this.onLaunchBattle = options.onLaunchBattle;
+    this.onLaunchMapEditor = options.onLaunchMapEditor;
     this.onRequestRenameUnit = options.onRequestRenameUnit;
     this.signal = options.signal;
 
@@ -105,6 +137,10 @@ export class DevToolsHarness {
     if (this.unsubscribeAudio) {
       this.unsubscribeAudio();
       this.unsubscribeAudio = null;
+    }
+    if (this.unsubscribeMaps) {
+      this.unsubscribeMaps();
+      this.unsubscribeMaps = null;
     }
     this.portraitViews.clear();
     this.portraitMetaEls.clear();
@@ -128,6 +164,8 @@ export class DevToolsHarness {
       this.renderActiveRosterStageControls();
     } else if (tab === 'dialogue') {
       this.renderDialogueTabSummary();
+    } else if (tab === 'maps') {
+      void this.refreshMapInspectorPanel();
     }
   }
 
@@ -136,6 +174,8 @@ export class DevToolsHarness {
       this.renderActiveRosterStageControls();
     } else if (this.activeSubTab === 'dialogue') {
       this.renderDialogueTabSummary();
+    } else if (this.activeSubTab === 'maps') {
+      void this.refreshMapInspectorPanel();
     }
   }
 
@@ -565,7 +605,19 @@ export class DevToolsHarness {
       btnLaunchBattle,
       () => {
         this.audioManager.playSfx('select');
-        this.onLaunchBattle?.();
+        this.onLaunchBattle?.('drenched_bluff_vanguard');
+      },
+      { signal: this.signal }
+    );
+
+    const btnEditDrenchedBluff = this.modalEl.querySelector<HTMLButtonElement>(
+      '#devtools-edit-drenched-bluff'
+    );
+    bindPointerTap(
+      btnEditDrenchedBluff,
+      () => {
+        this.audioManager.playSfx('select');
+        this.onLaunchMapEditor?.('drenched_bluff_vanguard');
       },
       { signal: this.signal }
     );
@@ -581,6 +633,92 @@ export class DevToolsHarness {
       },
       { signal: this.signal }
     );
+
+    // --- TAB 5: LEVEL & CHAPTER MAP VIEWER / SANDBOX EDITOR LAUNCHER ---
+    this.mapGroupFiltersEl = this.modalEl.querySelector<HTMLElement>('#devtools-map-group-filters');
+    this.mapLevelSelectEl = this.modalEl.querySelector<HTMLSelectElement>(
+      '#devtools-map-level-select'
+    );
+    this.mapStatusBadgeEl = this.modalEl.querySelector<HTMLElement>('#devtools-map-status-badge');
+    this.mapMetaEl = this.modalEl.querySelector<HTMLElement>('#devtools-map-meta');
+    this.mapPreviewCanvasEl = this.modalEl.querySelector<HTMLCanvasElement>(
+      '#devtools-map-preview-canvas'
+    );
+
+    if (this.mapGroupFiltersEl) {
+      this.mapGroupFiltersEl.innerHTML = '';
+      for (const grp of MAP_GROUP_CHIPS) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `pmd-btn pmd-chip-btn${grp.id === this.selectedMapGroup ? ' is-active' : ''}`;
+        btn.dataset.mapGroup = grp.id;
+        btn.dataset.testid = `devtools-map-group-${grp.id}`;
+        btn.textContent = grp.label;
+        bindPointerTap(
+          btn,
+          () => {
+            this.audioManager.playSfx('select');
+            this.selectedMapGroup = grp.id;
+            this.populateMapLevelSelect();
+            void this.refreshMapInspectorPanel();
+          },
+          { signal: this.signal }
+        );
+        this.mapGroupFiltersEl.appendChild(btn);
+      }
+    }
+
+    this.populateMapLevelSelect();
+    this.mapLevelSelectEl?.addEventListener(
+      'change',
+      () => {
+        if (!this.mapLevelSelectEl) return;
+        this.audioManager.playSfx('select');
+        this.selectedMapLevelId = this.mapLevelSelectEl.value;
+        void this.refreshMapInspectorPanel();
+      },
+      { signal: this.signal }
+    );
+
+    bindPointerTap(
+      this.modalEl.querySelector<HTMLButtonElement>('#devtools-open-map-editor'),
+      () => {
+        this.audioManager.playSfx('select');
+        this.onLaunchMapEditor?.(this.selectedMapLevelId);
+      },
+      { signal: this.signal }
+    );
+
+    bindPointerTap(
+      this.modalEl.querySelector<HTMLButtonElement>('#devtools-play-selected-map'),
+      () => {
+        this.audioManager.playSfx('select');
+        if (this.selectedMapLevelId === 'skirmish_test_convergence') {
+          this.onLaunchTestDungeon?.();
+        } else {
+          this.onLaunchBattle?.(this.selectedMapLevelId);
+        }
+      },
+      { signal: this.signal }
+    );
+
+    bindPointerTap(
+      this.modalEl.querySelector<HTMLButtonElement>('#devtools-reset-selected-map'),
+      () => {
+        this.audioManager.playSfx('cancel');
+        resetChapterMapOverride(this.selectedMapLevelId);
+        this.saveManager.syncCustomMapsWithActiveSave();
+        void this.refreshMapInspectorPanel();
+      },
+      { signal: this.signal }
+    );
+
+    this.unsubscribeMaps = subscribeChapterMapChanges(() => {
+      this.populateMapLevelSelect();
+      if (this.activeSubTab === 'maps') {
+        void this.refreshMapInspectorPanel();
+      }
+    });
 
     this.renderStageButtons();
   }
@@ -728,5 +866,72 @@ export class DevToolsHarness {
     const partner = this.dialogueOverlay.resolveSpeaker({ kind: 'partner' }, save);
     const healer = this.dialogueOverlay.resolveSpeaker({ kind: 'healer' }, save);
     summaryEl.textContent = `Active Cast — Lord: ${lord.nickname} (${lord.speciesName}) · Partner: ${partner.nickname} (${partner.speciesName}) · Healer: ${healer.nickname} (${healer.speciesName})`;
+  }
+
+  private populateMapLevelSelect(): void {
+    if (!this.mapLevelSelectEl) return;
+    const filtered = CHAPTER_LEVEL_CATALOG.filter(
+      (item) => this.selectedMapGroup === 'all' || item.group === this.selectedMapGroup
+    );
+    if (
+      filtered.length > 0 &&
+      !filtered.some((item) => item.id === this.selectedMapLevelId)
+    ) {
+      this.selectedMapLevelId = filtered[0]!.id;
+    }
+
+    this.mapLevelSelectEl.innerHTML = '';
+    for (const entry of filtered) {
+      const opt = document.createElement('option');
+      opt.value = entry.id;
+      const suffix = hasChapterMapOverride(entry.id) ? ' ★ [Customized]' : '';
+      opt.textContent = `${entry.label}${suffix}`;
+      this.mapLevelSelectEl.appendChild(opt);
+    }
+    this.mapLevelSelectEl.value = this.selectedMapLevelId;
+
+    this.mapGroupFiltersEl?.querySelectorAll<HTMLElement>('[data-map-group]').forEach((btn) => {
+      btn.classList.toggle('is-active', btn.dataset.mapGroup === this.selectedMapGroup);
+    });
+  }
+
+  private async refreshMapInspectorPanel(): Promise<void> {
+    this.populateMapLevelSelect();
+    const levelId = this.selectedMapLevelId;
+    const entry = getChapterCatalogEntry(levelId) ?? CHAPTER_LEVEL_CATALOG[0]!;
+    const effectiveMap = getEffectiveChapterMap(levelId);
+    const isCustom = hasChapterMapOverride(levelId);
+
+    if (this.mapStatusBadgeEl) {
+      this.mapStatusBadgeEl.textContent = isCustom ? 'CUSTOMIZED ★' : 'DEFAULT';
+      this.mapStatusBadgeEl.className = `pmd-editor-status-pill${isCustom ? ' is-custom' : ''}`;
+    }
+
+    if (this.mapMetaEl) {
+      const cap = Math.max(
+        1,
+        Math.min(
+          effectiveMap.deploymentCap ?? effectiveMap.playerSpawns.length,
+          effectiveMap.playerSpawns.length
+        )
+      );
+      this.mapMetaEl.textContent = [
+        `ID: ${effectiveMap.id}`,
+        `Biome: ${entry.biomeName} (#${entry.primaryTilesetId})`,
+        `Grid: ${effectiveMap.width}×${effectiveMap.height} tiles`,
+        `Deploy Cap: ${cap}`,
+        `Blue Spawns: ${effectiveMap.playerSpawns.length}`,
+        `Enemy Spawns: ${effectiveMap.enemySpawns.length}`,
+      ].join(' · ');
+    }
+
+    const resetBtn = this.modalEl.querySelector<HTMLButtonElement>('#devtools-reset-selected-map');
+    if (resetBtn) {
+      resetBtn.disabled = !isCustom;
+    }
+
+    if (this.mapPreviewCanvasEl) {
+      await renderDungeonMapPreviewCanvas(this.mapPreviewCanvasEl, effectiveMap);
+    }
   }
 }

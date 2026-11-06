@@ -38,6 +38,10 @@ import {
   type LoadedTilesetSheet,
 } from '../assets/tilesetLoader';
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
+import {
+  getEffectiveChapterMap,
+  hasChapterMapOverride,
+} from '../data/chapterMapRegistry';
 import { getItemById, getMoveById, getPersonalSkillById } from '../data/index';
 import {
   DEFAULT_VANGUARD_ENEMY_SPAWNS,
@@ -46,9 +50,11 @@ import {
   createInitialPrepDeploymentSlots,
   createPlayableVanguardBattleMap,
   getMapDeploymentCap,
+  resolveEnemySpawnsForMap,
   type ManualEnemyBattleSpawn,
   type PrepDeploymentSlot,
 } from '../data/playableBattleMap';
+import { cloneDungeonMap } from '../data/testDungeonMap';
 import {
   computeCombatForecast,
   computeHealForecast,
@@ -181,6 +187,7 @@ export interface BattleSceneSnapshot {
     name: string;
     width: number;
     height: number;
+    isCustomized: boolean;
   };
   units: Array<{
     id: string;
@@ -261,6 +268,9 @@ export class BattleScene {
   private openState = false;
   private battleRunGen = 0;
   private previousBgmId: string | null = null;
+  private activeLevelId = 'drenched_bluff_vanguard';
+  private explicitCustomMap: DungeonMapDefinition | null = null;
+  private explicitEnemyOverrides: ReadonlyArray<ManualEnemyBattleSpawn> | undefined = undefined;
   private map: DungeonMapDefinition = createPlayableVanguardBattleMap();
   private enemySpawnDefs: ReadonlyArray<ManualEnemyBattleSpawn> = DEFAULT_VANGUARD_ENEMY_SPAWNS;
   private guestPrepManager: SaveStateManager | null = null;
@@ -666,20 +676,28 @@ export class BattleScene {
   }
 
   public async open(options?: {
+    levelId?: string;
     customMap?: DungeonMapDefinition;
     enemyOverrides?: ReadonlyArray<ManualEnemyBattleSpawn>;
   }): Promise<void> {
     this.battleRunGen += 1;
-    if (options?.customMap) {
-      this.map = options.customMap;
+    this.activeLevelId =
+      options?.levelId?.trim() || options?.customMap?.id || 'drenched_bluff_vanguard';
+    this.explicitCustomMap = options?.customMap ? cloneDungeonMap(options.customMap) : null;
+    this.explicitEnemyOverrides = options?.enemyOverrides;
+
+    if (this.explicitCustomMap) {
+      this.map = cloneDungeonMap(this.explicitCustomMap);
     } else {
-      this.map = createPlayableVanguardBattleMap();
+      this.map = getEffectiveChapterMap(this.activeLevelId);
     }
-    this.enemySpawnDefs = options?.enemyOverrides ?? DEFAULT_VANGUARD_ENEMY_SPAWNS;
+    this.enemySpawnDefs = resolveEnemySpawnsForMap(this.map, this.explicitEnemyOverrides);
 
     if (this.saveManager.getSave() === null) {
       this.guestPrepManager?.dispose();
-      this.guestPrepManager = createDefaultDrenchedBluffPrepManager();
+      this.guestPrepManager = createDefaultDrenchedBluffPrepManager(
+        Math.max(5, getMapDeploymentCap(this.map) + 2)
+      );
     }
 
     if (!this.openState) {
@@ -814,6 +832,12 @@ export class BattleScene {
     if (!this.openState) return;
     this.battleRunGen += 1;
     this.audioManager.playSfx('select');
+    if (this.explicitCustomMap) {
+      this.map = cloneDungeonMap(this.explicitCustomMap);
+    } else {
+      this.map = getEffectiveChapterMap(this.activeLevelId);
+    }
+    this.enemySpawnDefs = resolveEnemySpawnsForMap(this.map, this.explicitEnemyOverrides);
     await this.setupFreshBattleState();
     const lord = this.getLordUnit() ?? this.units[0];
     this.centerCameraOnTile(lord?.x ?? 3, lord?.y ?? 5);
@@ -892,6 +916,16 @@ export class BattleScene {
     return this.units;
   }
 
+  public getMap(): DungeonMapDefinition {
+    return cloneDungeonMap(this.map);
+  }
+
+  public getTileAt(x: number, y: number) {
+    if (!isInMapBounds(this.map, x, y)) return null;
+    const cell = this.map.tiles[y]?.[x];
+    return cell ? { ...cell } : null;
+  }
+
   public getCurrentForecast(): CombatForecast | null {
     return this.currentForecast;
   }
@@ -937,6 +971,7 @@ export class BattleScene {
         name: this.map.name,
         width: this.map.width,
         height: this.map.height,
+        isCustomized: hasChapterMapOverride(this.map.id),
       },
       units: this.units.map((u) => ({
         id: u.id,

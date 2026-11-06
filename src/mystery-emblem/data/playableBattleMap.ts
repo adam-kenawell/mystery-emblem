@@ -211,7 +211,61 @@ export const EXTRA_PLAYER_DEPLOYMENT_COORDS: ReadonlyArray<{ x: number; y: numbe
   { x: 2, y: 4 },
   { x: 2, y: 6 },
   { x: 2, y: 8 },
+  { x: 4, y: 4 },
+  { x: 4, y: 6 },
+  { x: 2, y: 2 },
+  { x: 4, y: 2 },
+  { x: 4, y: 8 },
+  { x: 2, y: 9 },
 ];
+
+/**
+ * Resolves `ManualEnemyBattleSpawn[]` from `map.enemySpawns` (unless explicit overrides are supplied).
+ * Preserves Drenched Bluff's manually tuned Vanguard enemy stat blocks when matching species are present,
+ * while reading 100% manual `PokemonSpeciesDefinition.baseStats` (Rule 1) for customized or campaign spawns.
+ */
+export function resolveEnemySpawnsForMap(
+  map: DungeonMapDefinition,
+  explicitOverrides?: ReadonlyArray<ManualEnemyBattleSpawn>
+): ReadonlyArray<ManualEnemyBattleSpawn> {
+  if (explicitOverrides) {
+    return explicitOverrides;
+  }
+  if (!map.enemySpawns || map.enemySpawns.length === 0) {
+    return DEFAULT_VANGUARD_ENEMY_SPAWNS;
+  }
+
+  return map.enemySpawns.map((spawn, idx) => {
+    const vanguardPreset =
+      map.id === 'drenched_bluff_vanguard' ? DEFAULT_VANGUARD_ENEMY_SPAWNS[idx] : undefined;
+    if (vanguardPreset && vanguardPreset.speciesId === spawn.speciesId) {
+      return {
+        id: `enemy_${idx}`,
+        x: spawn.x,
+        y: spawn.y,
+        speciesId: spawn.speciesId,
+        nickname: spawn.nickname || vanguardPreset.nickname,
+        level: spawn.level,
+        stats: { ...vanguardPreset.stats },
+        moveIds: vanguardPreset.moveIds ? [...vanguardPreset.moveIds] : undefined,
+        equippedMoveId: vanguardPreset.equippedMoveId,
+        heldItemId: spawn.heldItemId ?? vanguardPreset.heldItemId ?? null,
+      };
+    }
+
+    const sp = getSpeciesById(spawn.speciesId) ?? getSpeciesById('zigzagoon_galar')!;
+    return {
+      id: `enemy_${idx}`,
+      x: spawn.x,
+      y: spawn.y,
+      speciesId: sp.id,
+      nickname: spawn.nickname || sp.name,
+      level: spawn.level,
+      stats: { ...sp.baseStats },
+      heldItemId: spawn.heldItemId ?? null,
+    };
+  });
+}
 
 export function createPlayableVanguardBattleMap(): DungeonMapDefinition {
   const height = PLAYABLE_ASCII_LAYOUT.length;
@@ -336,7 +390,7 @@ export function createInitialPrepDeploymentSlots(
  * (so unit deploy/bench toggling against the 3-unit cap is immediately playable), extra
  * unlocked moves for loadout customization, and a curated assortment of Held, Healing, X-Items, and TMs.
  */
-export function createDefaultDrenchedBluffPrepManager(): SaveStateManager {
+export function createDefaultDrenchedBluffPrepManager(minSquadSize = 5): SaveStateManager {
   const mem = new Map<string, string>();
   const memStorage: StorageLike = {
     getItem: (k) => mem.get(k) ?? null,
@@ -372,6 +426,13 @@ export function createDefaultDrenchedBluffPrepManager(): SaveStateManager {
   const pidgey = mgr.recruitPokemon({ speciesId: 'pidgey', level: 1 });
   mgr.unlockUnitMove(pidgey.instanceId, 'gust', true);
   mgr.unlockUnitMove(pidgey.instanceId, 'quick_attack', false);
+
+  const extraPool = ['duskull', 'abra', 'shinx', 'machop', 'geodude', 'poliwag', 'magby', 'starly'];
+  let idx = 0;
+  while ((mgr.getSave()?.roster.length ?? 0) < Math.min(13, minSquadSize) && idx < extraPool.length) {
+    mgr.recruitPokemon({ speciesId: extraPool[idx]!, level: 1 });
+    idx += 1;
+  }
 
   mgr.addConvoyItem('super_potion', 1);
   mgr.addConvoyItem('wise_glasses', 1);

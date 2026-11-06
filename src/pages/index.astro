@@ -187,6 +187,14 @@ const canonicalUrl = Astro.url.href;
             >
               Test Dungeon
             </button>
+            <button
+              type="button"
+              class="pmd-btn pmd-tab-btn"
+              data-devtab-btn="maps"
+              data-testid="devtools-tab-maps"
+            >
+              Map Editor
+            </button>
           </nav>
 
           <!-- DEV TAB 1: REGISTRY & CLOUD SYNC (Step 1) -->
@@ -400,6 +408,14 @@ const canonicalUrl = Astro.url.href;
                 >
                   Play Dungeon Battle
                 </button>
+                <button
+                  type="button"
+                  id="devtools-edit-drenched-bluff"
+                  class="pmd-btn"
+                  data-testid="devtools-edit-drenched-bluff"
+                >
+                  Edit Drenched Bluff Map
+                </button>
               </div>
             </div>
             <div class="pmd-subcard">
@@ -418,6 +434,72 @@ const canonicalUrl = Astro.url.href;
                   data-testid="devtools-launch-test-dungeon"
                 >
                   Launch Test Dungeon (Skirmish)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- DEV TAB 5: LEVEL & CHAPTER MAP VIEWER & SANDBOX EDITOR -->
+          <div class="pmd-tab-panel" data-devtab-panel="maps" hidden>
+            <div class="pmd-subcard">
+              <div class="pmd-devtools-row-between">
+                <h3 class="pmd-subcard-title">Level &amp; Chapter Map Customizer</h3>
+                <span
+                  id="devtools-map-status-badge"
+                  class="pmd-editor-status-pill"
+                  data-testid="devtools-map-status-badge"
+                >
+                  DEFAULT
+                </span>
+              </div>
+              <p class="pmd-subcard-text">
+                Select <strong>Drenched Bluff (Test Dungeon)</strong> or any campaign chapter (Prologue, Chapters 1–25, Paralogues 1–6) to preview its layout, paint custom <em>Explorers of Sky</em> 24×24 tiles in the Sandbox Editor, and immediately update the live in-game map.
+              </p>
+              <div id="devtools-map-group-filters" class="pmd-inline-btns"></div>
+              <select
+                id="devtools-map-level-select"
+                class="pmd-select"
+                data-testid="devtools-map-level-select"
+                aria-label="Select Level or Chapter Map"
+              ></select>
+              <div class="pmd-devtools-map-preview-wrap">
+                <canvas
+                  id="devtools-map-preview-canvas"
+                  class="pmd-devtools-map-preview-canvas"
+                  data-testid="devtools-map-preview-canvas"
+                ></canvas>
+              </div>
+              <p
+                id="devtools-map-meta"
+                class="pmd-subcard-text"
+                data-testid="devtools-map-meta"
+              >
+                —
+              </p>
+              <div class="pmd-inline-btns">
+                <button
+                  type="button"
+                  id="devtools-open-map-editor"
+                  class="pmd-btn pmd-btn-primary"
+                  data-testid="devtools-open-map-editor"
+                >
+                  Customize Map in Sandbox Editor
+                </button>
+                <button
+                  type="button"
+                  id="devtools-play-selected-map"
+                  class="pmd-btn"
+                  data-testid="devtools-play-selected-map"
+                >
+                  Play Selected Level
+                </button>
+                <button
+                  type="button"
+                  id="devtools-reset-selected-map"
+                  class="pmd-btn pmd-btn-danger"
+                  data-testid="devtools-reset-selected-map"
+                >
+                  Reset Level to Default
                 </button>
               </div>
             </div>
@@ -509,7 +591,20 @@ const canonicalUrl = Astro.url.href;
     resolveCombatExchange,
   } from '../mystery-emblem/engine/combatEngine';
   import { chooseEnemyAction } from '../mystery-emblem/engine/enemyAi';
+  import {
+    CHAPTER_LEVEL_CATALOG,
+    exportChapterMapJson,
+    getDefaultChapterMap,
+    getEffectiveChapterMap,
+    hasChapterMapOverride,
+    importChapterMapJson,
+    reloadChapterMapsFromStorage,
+    resetAllChapterMapOverrides,
+    resetChapterMapOverride,
+    saveChapterMapOverride,
+  } from '../mystery-emblem/data/chapterMapRegistry';
   import { BattleScene } from '../mystery-emblem/scenes/BattleScene';
+  import { ChapterMapEditorScene } from '../mystery-emblem/scenes/ChapterMapEditorScene';
   import { TestDungeonScene } from '../mystery-emblem/scenes/TestDungeonScene';
   import {
     InMemoryCloudSyncAdapter,
@@ -536,6 +631,7 @@ const canonicalUrl = Astro.url.href;
   let currentDevToolsHarness: DevToolsHarness | null = null;
   let currentBattleScene: BattleScene | null = null;
   let currentTestDungeonScene: TestDungeonScene | null = null;
+  let currentMapEditorScene: ChapterMapEditorScene | null = null;
   let uiAbortController: AbortController | null = null;
 
   async function initMysteryEmblemApp() {
@@ -545,6 +641,8 @@ const canonicalUrl = Astro.url.href;
     currentBattleScene = null;
     currentTestDungeonScene?.destroy();
     currentTestDungeonScene = null;
+    currentMapEditorScene?.destroy();
+    currentMapEditorScene = null;
     currentDevToolsHarness?.destroy();
     currentDevToolsHarness = null;
     currentDialogueOverlay?.destroy();
@@ -553,6 +651,8 @@ const canonicalUrl = Astro.url.href;
     uiAbortController?.abort();
     uiAbortController = new AbortController();
     const signal = uiAbortController.signal;
+
+    reloadChapterMapsFromStorage();
 
     const injectedAdapter = (window as unknown as Record<string, unknown>)
       .__MYSTERY_EMBLEM_TEST_CLOUD_ADAPTER__ as CloudSyncAdapter | undefined;
@@ -598,6 +698,7 @@ const canonicalUrl = Astro.url.href;
     let battleScene: BattleScene | null = null;
     let battleReturnTarget: 'campaign' | 'devtools' | 'title' = 'campaign';
     let testDungeonScene: TestDungeonScene | null = null;
+    let mapEditorScene: ChapterMapEditorScene | null = null;
 
     function getExtraPreviewEmails(): ReadonlyArray<string> | undefined {
       const injected = (window as unknown as Record<string, unknown>)
@@ -627,10 +728,17 @@ const canonicalUrl = Astro.url.href;
           testDungeonScene.handleMenuOrBack();
           return;
         }
+        if (mapEditorScene?.isOpen()) {
+          mapEditorScene.handleMenuOrBack();
+          return;
+        }
       },
       {
         syncIdleButton: (btn) => {
-          if (isPreviewAuthorized() && (battleScene?.isOpen() || testDungeonScene?.isOpen())) {
+          if (
+            isPreviewAuthorized() &&
+            (battleScene?.isOpen() || testDungeonScene?.isOpen() || mapEditorScene?.isOpen())
+          ) {
             btn.textContent = 'Menu';
             btn.dataset.cornerMode = 'menu';
             btn.setAttribute('aria-label', 'Open System Menu');
@@ -663,7 +771,10 @@ const canonicalUrl = Astro.url.href;
       : null;
     currentDialogueOverlay = dialogueOverlay;
 
-    async function openBattleScene(source: 'campaign' | 'devtools' = 'campaign'): Promise<void> {
+    async function openBattleScene(
+      source: 'campaign' | 'devtools' = 'campaign',
+      levelId = 'drenched_bluff_vanguard'
+    ): Promise<void> {
       if (!battleScene || !isPreviewAuthorized()) return;
       if (source === 'devtools' && !isAdminSignedIn()) return;
       battleReturnTarget = source;
@@ -671,7 +782,7 @@ const canonicalUrl = Astro.url.href;
       if (titleScreen) titleScreen.hidden = true;
       if (campaignMenu) campaignMenu.hidden = true;
       if (devToolsModal) devToolsModal.hidden = true;
-      await battleScene.open();
+      await battleScene.open({ levelId });
       backStack.syncButtonLabel();
     }
 
@@ -682,6 +793,16 @@ const canonicalUrl = Astro.url.href;
       if (campaignMenu) campaignMenu.hidden = true;
       if (devToolsModal) devToolsModal.hidden = true;
       await testDungeonScene.open();
+      backStack.syncButtonLabel();
+    }
+
+    async function openMapEditor(levelId = 'drenched_bluff_vanguard'): Promise<void> {
+      if (!mapEditorScene || !isPreviewAuthorized() || !isAdminSignedIn()) return;
+      if (underDevScreen) underDevScreen.hidden = true;
+      if (titleScreen) titleScreen.hidden = true;
+      if (campaignMenu) campaignMenu.hidden = true;
+      if (devToolsModal) devToolsModal.hidden = true;
+      await mapEditorScene.open(levelId);
       backStack.syncButtonLabel();
     }
 
@@ -730,6 +851,33 @@ const canonicalUrl = Astro.url.href;
         onLayerStateChanged: () => backStack.syncButtonLabel(),
       });
       currentTestDungeonScene = testDungeonScene;
+
+      mapEditorScene = new ChapterMapEditorScene({
+        viewportEl,
+        saveManager: manager,
+        audioManager,
+        onExit: () => {
+          if (isPreviewAuthorized() && isAdminSignedIn() && devToolsModal) {
+            if (underDevScreen) underDevScreen.hidden = true;
+            if (titleScreen) titleScreen.hidden = true;
+            if (campaignMenu) campaignMenu.hidden = true;
+            devToolsModal.hidden = false;
+            currentDevToolsHarness?.switchSubTab('maps');
+            backStack.syncButtonLabel();
+          } else {
+            showTitleScreen();
+          }
+        },
+        onPlayLevel: (targetLevelId) => {
+          if (targetLevelId === 'skirmish_test_convergence') {
+            void openTestDungeon();
+          } else {
+            void openBattleScene('devtools', targetLevelId);
+          }
+        },
+        onLayerStateChanged: () => backStack.syncButtonLabel(),
+      });
+      currentMapEditorScene = mapEditorScene;
     }
 
     function openNicknameModal(instanceId: string): void {
@@ -759,11 +907,14 @@ const canonicalUrl = Astro.url.href;
         saveManager: manager,
         dialogueOverlay,
         audioManager,
-        onLaunchBattle: () => {
-          void openBattleScene('devtools');
+        onLaunchBattle: (levelId) => {
+          void openBattleScene('devtools', levelId);
         },
         onLaunchTestDungeon: () => {
           void openTestDungeon();
+        },
+        onLaunchMapEditor: (levelId) => {
+          void openMapEditor(levelId);
         },
         onRequestRenameUnit: (instanceId) => {
           openNicknameModal(instanceId);
@@ -790,6 +941,17 @@ const canonicalUrl = Astro.url.href;
       battleScene,
       openBattleScene,
       testDungeonScene,
+      mapEditorScene,
+      openMapEditor,
+      CHAPTER_LEVEL_CATALOG,
+      getDefaultChapterMap,
+      getEffectiveChapterMap,
+      hasChapterMapOverride,
+      saveChapterMapOverride,
+      resetChapterMapOverride,
+      resetAllChapterMapOverrides,
+      exportChapterMapJson,
+      importChapterMapJson,
       openNicknameModal,
       computeCombatForecast,
       computeHealForecast,
@@ -866,6 +1028,10 @@ const canonicalUrl = Astro.url.href;
         testDungeonScene.close();
         return;
       }
+      if (mapEditorScene?.isOpen()) {
+        mapEditorScene.close();
+        return;
+      }
       if (!devToolsModal.hidden) {
         showTitleScreen();
         return;
@@ -898,6 +1064,11 @@ const canonicalUrl = Astro.url.href;
       id: 'test-dungeon-sublayer',
       isActive: () => Boolean(testDungeonScene?.isOpen() && testDungeonScene.hasActiveSubLayer()),
       onBack: () => testDungeonScene?.handleMenuOrBack(),
+    });
+    backStack.registerLayer({
+      id: 'map-editor-sublayer',
+      isActive: () => Boolean(mapEditorScene?.isOpen() && mapEditorScene.hasActiveSubLayer()),
+      onBack: () => mapEditorScene?.handleMenuOrBack(),
     });
     backStack.registerLayer({
       id: 'dialogue-overlay',
@@ -963,6 +1134,7 @@ const canonicalUrl = Astro.url.href;
         if (devToolsBtn) devToolsBtn.hidden = true;
         if (battleScene?.isOpen()) battleScene.close();
         if (testDungeonScene?.isOpen()) testDungeonScene.close();
+        if (mapEditorScene?.isOpen()) mapEditorScene.close();
         if (dialogueOverlay?.isOpen()) dialogueOverlay.close('cancelled');
         if (nicknameBackdrop && !nicknameBackdrop.hidden) {
           editingUnitId = null;
@@ -1006,17 +1178,21 @@ const canonicalUrl = Astro.url.href;
         Boolean(campaignMenu && !campaignMenu.hidden) ||
         Boolean(devToolsModal && !devToolsModal.hidden) ||
         Boolean(battleScene?.isOpen()) ||
-        Boolean(testDungeonScene?.isOpen());
+        Boolean(testDungeonScene?.isOpen()) ||
+        Boolean(mapEditorScene?.isOpen());
       if (!anyPanelOrSceneOpen && titleScreen) {
         titleScreen.hidden = false;
       }
 
-      // Strictly gate Top-Left Dev Tools button, modal & Test Dungeon to ADMIN_DEVTOOLS_EMAILS
+      // Strictly gate Top-Left Dev Tools button, modal & Test Dungeon / Map Editor to ADMIN_DEVTOOLS_EMAILS
       if (devToolsBtn) {
         devToolsBtn.hidden = !adminActive;
       }
       if (!adminActive && testDungeonScene?.isOpen()) {
         testDungeonScene.close();
+      }
+      if (!adminActive && mapEditorScene?.isOpen()) {
+        mapEditorScene.close();
       }
       if (!adminActive && devToolsModal && !devToolsModal.hidden) {
         showTitleScreen();

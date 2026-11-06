@@ -33,6 +33,7 @@ import {
   type LoadedTilesetSheet,
 } from '../assets/tilesetLoader';
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
+import { getEffectiveChapterMap } from '../data/chapterMapRegistry';
 import {
   POKEMON_SPECIES_LIST,
   getItemById,
@@ -730,7 +731,7 @@ export class TestDungeonScene {
 
   private async resetSkirmishState(resetMap = true): Promise<void> {
     if (resetMap) {
-      this.map = cloneDungeonMap(createDefaultTestDungeonMap());
+      this.map = getEffectiveChapterMap('skirmish_test_convergence');
     }
     this.turnNumber = 1;
     this.turnBadgeEl.textContent = 'Turn 1 · Player';

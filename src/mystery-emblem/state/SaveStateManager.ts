@@ -1,3 +1,7 @@
+import {
+  getAllCustomMapOverrides,
+  mergeCustomMapsRecord,
+} from '../data/chapterMapRegistry';
 import { ITEM_MAP, MOVE_MAP, SPECIES_MAP } from '../data/index';
 import {
   CURRENT_SAVE_SCHEMA_VERSION,
@@ -282,6 +286,7 @@ export interface NewCampaignConfig {
 
 export class SaveStateManager {
   private readonly storage: StorageLike;
+  private readonly isBrowserPrimaryStorage: boolean;
   private readonly cloud: CloudSyncAdapter;
   private currentSave: SaveData | null = null;
   private syncStatus: SyncStatusSnapshot;
@@ -291,8 +296,15 @@ export class SaveStateManager {
 
   constructor(storage?: StorageLike, cloudAdapter?: CloudSyncAdapter) {
     this.storage = storage ?? getDefaultStorage();
+    this.isBrowserPrimaryStorage =
+      typeof window !== 'undefined' &&
+      Boolean(window.localStorage) &&
+      this.storage === window.localStorage;
     this.cloud = cloudAdapter ?? new FirestoreSyncAdapter();
     this.currentSave = this.readValidLocalSave();
+    if (this.isBrowserPrimaryStorage && this.currentSave?.customMaps) {
+      mergeCustomMapsRecord(this.currentSave.customMaps);
+    }
     this.syncStatus = {
       isFirebaseConfigured: this.cloud.isConfigured,
       user: this.cloud.getCurrentUser(),
@@ -1020,8 +1032,20 @@ export class SaveStateManager {
     }
   }
 
+  /**
+   * Syncs any active Dev Tools map overrides (`ChapterMapStore`) onto the active campaign save
+   * (if present) so Cloud Firestore (`saves/{uid}`) mirrors custom chapter maps across devices.
+   */
+  public syncCustomMapsWithActiveSave(): void {
+    if (!this.currentSave || !this.isBrowserPrimaryStorage) return;
+    this.commitSave(this.currentSave);
+  }
+
   private writeLocalOnly(save: SaveData): void {
     this.currentSave = JSON.parse(JSON.stringify(save)) as SaveData;
+    if (this.isBrowserPrimaryStorage && this.currentSave.customMaps) {
+      mergeCustomMapsRecord(this.currentSave.customMaps);
+    }
     this.storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(this.currentSave));
     if (this.currentSave.newGamePlusUnlocked) {
       this.storage.setItem(META_STORAGE_KEY, JSON.stringify({ newGamePlusUnlocked: true }));
@@ -1029,10 +1053,23 @@ export class SaveStateManager {
   }
 
   private commitSave(save: SaveData, keepExistingTimestamp = false): void {
+    let customMapsField = save.customMaps;
+    if (this.isBrowserPrimaryStorage) {
+      if (save.customMaps) {
+        mergeCustomMapsRecord(save.customMaps);
+      }
+      const allOverrides = getAllCustomMapOverrides();
+      customMapsField = Object.keys(allOverrides).length > 0 ? allOverrides : undefined;
+    }
+
     const stamped: SaveData = {
       ...save,
+      customMaps: customMapsField,
       lastUpdated: keepExistingTimestamp ? save.lastUpdated : Math.max(Date.now(), (this.currentSave?.lastUpdated ?? 0) + 1),
     };
+    if (stamped.customMaps === undefined) {
+      delete stamped.customMaps;
+    }
 
     const check = validateSaveData(stamped, SPECIES_MAP, MOVE_MAP, ITEM_MAP);
     if (!check.valid || !check.save) {

@@ -390,6 +390,8 @@ export interface SaveData {
     currentNodeId: string;
     nodes: Record<string, OverworldNodeState>;
   };
+  /** Optional Dev Tools custom chapter/level map overrides synced with Cloud Firestore */
+  customMaps?: Record<string, CustomMapOverrideEntry>;
 }
 
 
@@ -450,4 +452,9 @@ export interface DungeonMapDefinition {
   tiles: DungeonMapTileCell[][];
   playerSpawns: DungeonUnitSpawn[];
   enemySpawns: DungeonUnitSpawn[];
+}
+
+export interface CustomMapOverrideEntry {
+  map: DungeonMapDefinition;
+  updatedAt: number;
 }
