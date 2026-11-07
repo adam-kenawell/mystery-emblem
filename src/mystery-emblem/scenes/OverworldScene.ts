@@ -416,8 +416,8 @@ export class OverworldScene {
     this.topHudBarEl = document.createElement('div');
     this.topHudBarEl.className = 'pmd-battle-hud-top';
     this.topHudBarEl.innerHTML = `
-      <div class="pmd-window pmd-window--compact pmd-battle-pill" data-testid="overworld-lord-pill">Lord: —</div>
-      <div class="pmd-window pmd-window--gold pmd-window--compact pmd-battle-pill" data-testid="overworld-gold-pill">0G</div>
+      <div class="pmd-window pmd-window--compact pmd-window--translucent pmd-battle-pill" data-testid="overworld-lord-pill">Lord: —</div>
+      <div class="pmd-window pmd-window--compact pmd-window--translucent pmd-battle-pill" data-testid="overworld-gold-pill">0G</div>
       <button type="button" class="pmd-btn pmd-battle-hud-btn" data-testid="overworld-sandbox-toggle">Sandbox</button>
     `;
     this.lordHudPillEl = this.topHudBarEl.querySelector('[data-testid="overworld-lord-pill"]')!;
@@ -429,13 +429,13 @@ export class OverworldScene {
 
     // 3. Toast Notification Banner
     this.toastEl = document.createElement('div');
-    this.toastEl.className = 'pmd-window pmd-window--gold pmd-overworld-toast';
+    this.toastEl.className = 'pmd-window pmd-window--translucent pmd-overworld-toast';
     this.toastEl.dataset.testid = 'overworld-toast';
     this.toastEl.hidden = true;
 
     // 4. Bottom Location Dock
     this.dockEl = document.createElement('div');
-    this.dockEl.className = 'pmd-window pmd-overworld-dock';
+    this.dockEl.className = 'pmd-window pmd-window--translucent pmd-overworld-dock';
     this.dockEl.dataset.testid = 'overworld-location-dock';
     this.dockEl.innerHTML = `
       <div class="pmd-overworld-dock-info">
@@ -551,7 +551,10 @@ export class OverworldScene {
     this.kecleonStatusEl = this.kecleonBackdropEl.querySelector(
       '[data-testid="kecleon-shop-status"]'
     )!;
-    this.kecleonPortraitView = new PmdPortraitView({ testId: 'kecleon-shop-portrait' });
+    this.kecleonPortraitView = new PmdPortraitView({
+      pixelScale: 1.5,
+      testId: 'kecleon-shop-portrait',
+    });
     this.kecleonBackdropEl
       .querySelector('[data-kecleon-portrait-slot]')!
       .appendChild(this.kecleonPortraitView.canvas);
@@ -633,6 +636,11 @@ export class OverworldScene {
       this.sandboxDrawerEl.hidden = true;
     }
 
+    if (!this.openState) {
+      this.previousBgmId = this.audioManager.getCurrentTrackId();
+    }
+    this.openState = true;
+
     // Ensure an active save exists and has valid Overworld state
     let save = this.saveManager.getSave();
     if (!save) {
@@ -663,11 +671,6 @@ export class OverworldScene {
       }
     }
 
-    if (!this.openState) {
-      this.previousBgmId = this.audioManager.getCurrentTrackId();
-    }
-
-    this.openState = true;
     this.kecleonShopOpen = false;
     this.systemMenuOpen = false;
     this.kecleonBackdropEl.hidden = true;
@@ -1783,17 +1786,17 @@ export class OverworldScene {
     grid.className = 'pmd-overworld-roster-grid';
 
     const listCol = document.createElement('div');
-    listCol.className = 'pmd-overworld-unit-list';
+    listCol.className = 'pmd-overworld-unit-list pmd-menu-list';
 
     for (const u of save.roster) {
       const sp = getSpeciesById(u.speciesId);
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = `pmd-btn pmd-overworld-unit-btn${u.instanceId === this.selectedUnitInstanceId ? ' is-active' : ''}`;
+      btn.className = `pmd-btn pmd-menu-row pmd-overworld-unit-btn${u.instanceId === this.selectedUnitInstanceId ? ' is-active' : ''}`;
       btn.dataset.testid = `overworld-roster-unit-${u.instanceId}`;
       btn.innerHTML = `
-        <span><strong>${u.nickname}</strong>${u.isLord ? ' ★' : ''}<br/><small style="color:#90d8f8;">${sp?.name ?? u.speciesId} · Lv.${u.level}</small></span>
-        <span style="font-size:0.68rem;color:#ffe888;">S${sp?.stage ?? 1}</span>
+        <span><strong>${u.nickname}</strong>${u.isLord ? ' ★' : ''}<br/><small style="color:#a8e0f8;">${sp?.name ?? u.speciesId} · Lv.${u.level}</small></span>
+        <span style="font-size:11px;color:#58f858;">S${sp?.stage ?? 1}</span>
       `;
       bindPointerTap(btn, () => {
         this.audioManager.playSfx('select');

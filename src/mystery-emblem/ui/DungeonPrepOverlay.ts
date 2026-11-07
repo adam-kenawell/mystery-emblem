@@ -138,7 +138,7 @@ export class DungeonPrepOverlay {
     this.rootEl.hidden = true;
 
     this.unitPortraitView = new PmdPortraitView({
-      pixelScale: 1.25,
+      pixelScale: 1.5,
       testId: 'prep-unit-portrait',
     });
 
@@ -156,20 +156,20 @@ export class DungeonPrepOverlay {
 
         <div class="pmd-prep-squad-strip" data-testid="prep-hub-squad-strip"></div>
 
-        <div class="pmd-prep-menu-grid" role="group" aria-label="Dungeon Prep Options">
-          <button type="button" class="pmd-btn pmd-prep-option-btn" data-testid="prep-btn-manage-units">
+        <div class="pmd-prep-menu-grid pmd-menu-list" role="group" aria-label="Dungeon Prep Options">
+          <button type="button" class="pmd-btn pmd-menu-row pmd-prep-option-btn" data-testid="prep-btn-manage-units">
             <span class="pmd-prep-opt-title">Manage Units</span>
             <span class="pmd-prep-opt-sub" data-prep-units-sub>Squad, Moves, Stats &amp; Ability</span>
           </button>
-          <button type="button" class="pmd-btn pmd-prep-option-btn" data-testid="prep-btn-manage-items">
+          <button type="button" class="pmd-btn pmd-menu-row pmd-prep-option-btn" data-testid="prep-btn-manage-items">
             <span class="pmd-prep-opt-title">Manage Items</span>
             <span class="pmd-prep-opt-sub" data-prep-items-sub>1 Item Slot per Unit</span>
           </button>
-          <button type="button" class="pmd-btn pmd-prep-option-btn" data-testid="prep-btn-view-map">
+          <button type="button" class="pmd-btn pmd-menu-row pmd-prep-option-btn" data-testid="prep-btn-view-map">
             <span class="pmd-prep-opt-title">View Map</span>
             <span class="pmd-prep-opt-sub">Inspect Foes &amp; Swap Start Tiles</span>
           </button>
-          <button type="button" class="pmd-btn pmd-btn-primary pmd-prep-option-btn is-enter-cta" data-testid="prep-btn-enter-dungeon">
+          <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row pmd-prep-option-btn is-enter-cta" data-testid="prep-btn-enter-dungeon">
             <span class="pmd-prep-opt-title">Enter Dungeon</span>
             <span class="pmd-prep-opt-sub">Begin Battle Phase</span>
           </button>
@@ -195,7 +195,7 @@ export class DungeonPrepOverlay {
         <div class="pmd-prep-units-body">
           <div class="pmd-prep-roster-pane">
             <span class="pmd-preset-label">Recruited Pokémon</span>
-            <div class="pmd-prep-roster-list" data-testid="prep-roster-list"></div>
+            <div class="pmd-prep-roster-list pmd-menu-list" data-testid="prep-roster-list"></div>
           </div>
 
           <div class="pmd-prep-inspector-pane" data-testid="prep-unit-detail">
@@ -303,7 +303,8 @@ export class DungeonPrepOverlay {
     this.mapReturnBtnEl.textContent = 'Return to Prep';
 
     this.mapHintPillEl = document.createElement('span');
-    this.mapHintPillEl.className = 'pmd-window pmd-battle-pill pmd-prep-map-pill';
+    this.mapHintPillEl.className =
+      'pmd-window pmd-window--compact pmd-window--translucent pmd-battle-pill pmd-prep-map-pill';
     this.mapHintPillEl.dataset.testid = 'prep-map-status-pill';
     this.mapHintPillEl.textContent = 'Tap 2 blue tiles to swap units';
 
@@ -800,7 +801,7 @@ export class DungeonPrepOverlay {
 
         const selectBtn = document.createElement('button');
         selectBtn.type = 'button';
-        selectBtn.className = 'pmd-btn pmd-prep-roster-select-btn';
+        selectBtn.className = `pmd-btn pmd-menu-row pmd-prep-roster-select-btn${isSelected ? ' is-selected' : ''}`;
         selectBtn.dataset.testid = `prep-unit-row-${unit.instanceId}`;
         selectBtn.innerHTML = `
           <span class="pmd-prep-r-top">

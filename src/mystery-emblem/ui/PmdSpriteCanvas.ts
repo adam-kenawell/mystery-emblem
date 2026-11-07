@@ -154,7 +154,7 @@ export class PmdSpriteActor {
     this.ctx.imageSmoothingEnabled = false;
 
     if (options.interactiveTapAttack) {
-      this.canvas.style.cursor = 'pointer';
+      this.canvas.style.cursor = 'inherit';
       bindPointerTap(
         this.canvas,
         () => {

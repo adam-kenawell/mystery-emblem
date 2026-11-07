@@ -341,7 +341,8 @@ export class TestDungeonScene {
     this.topHudBarEl.className = 'pmd-battle-hud-top';
 
     this.turnBadgeEl = document.createElement('span');
-    this.turnBadgeEl.className = 'pmd-window pmd-battle-pill';
+    this.turnBadgeEl.className =
+      'pmd-window pmd-window--compact pmd-window--translucent pmd-battle-pill';
     this.turnBadgeEl.dataset.testid = 'battle-turn-badge';
     this.turnBadgeEl.textContent = 'Turn 1 · Player';
 
@@ -361,23 +362,24 @@ export class TestDungeonScene {
 
     // Phase Banner Toast
     this.phaseBannerEl = document.createElement('div');
-    this.phaseBannerEl.className = 'pmd-window pmd-window--gold pmd-battle-phase-banner';
+    this.phaseBannerEl.className = 'pmd-window pmd-window--translucent pmd-battle-phase-banner';
     this.phaseBannerEl.dataset.testid = 'battle-phase-banner';
     this.phaseBannerEl.hidden = true;
 
     // Bottom Terrain & Unit Info Strip
     this.infoStripEl = document.createElement('div');
-    this.infoStripEl.className = 'pmd-window pmd-battle-info-strip';
+    this.infoStripEl.className = 'pmd-window pmd-window--translucent pmd-battle-info-strip';
     this.infoStripEl.dataset.testid = 'battle-info-strip';
 
     // Floating Uncommitted Action Menu (`Wait` / `Cancel`)
     this.actionMenuEl = document.createElement('div');
-    this.actionMenuEl.className = 'pmd-window pmd-window--gold pmd-battle-action-menu';
+    this.actionMenuEl.className =
+      'pmd-window pmd-window--translucent pmd-battle-action-menu pmd-menu-list';
     this.actionMenuEl.dataset.testid = 'battle-action-menu';
     this.actionMenuEl.hidden = true;
     this.actionMenuEl.innerHTML = `
-      <button type="button" class="pmd-btn pmd-btn-primary pmd-battle-cmd-btn" data-testid="battle-cmd-wait">Wait</button>
-      <button type="button" class="pmd-btn pmd-battle-cmd-btn" data-testid="battle-cmd-cancel">Cancel</button>
+      <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row pmd-battle-cmd-btn" data-testid="battle-cmd-wait">Wait</button>
+      <button type="button" class="pmd-btn pmd-menu-row pmd-battle-cmd-btn" data-testid="battle-cmd-cancel">Cancel</button>
     `;
 
     // Battlefield Right-Click / Corner Menu System Modal
@@ -389,12 +391,12 @@ export class TestDungeonScene {
       <div class="pmd-window pmd-battle-system-dialog" role="dialog" aria-label="Battlefield Menu">
         <h3 class="pmd-panel-title">SKIRMISH MENU</h3>
         <p class="pmd-panel-sub" data-sys-sub>Turn 1 · Test Skirmish — Convergence Ruins</p>
-        <div class="pmd-battle-system-actions">
-          <button type="button" class="pmd-btn" data-testid="sys-btn-danger">Danger Area: OFF</button>
-          <button type="button" class="pmd-btn pmd-btn-primary" data-testid="sys-btn-end-turn">End Turn</button>
-          <button type="button" class="pmd-btn" data-testid="sys-btn-reset">Reset Skirmish</button>
-          <button type="button" class="pmd-btn pmd-btn-danger" data-testid="sys-btn-exit">Return to Dev Tools</button>
-          <button type="button" class="pmd-btn" data-testid="sys-btn-close">Resume</button>
+        <div class="pmd-battle-system-actions pmd-menu-list">
+          <button type="button" class="pmd-btn pmd-menu-row" data-testid="sys-btn-danger">Danger Area: OFF</button>
+          <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row" data-testid="sys-btn-end-turn">End Turn</button>
+          <button type="button" class="pmd-btn pmd-menu-row" data-testid="sys-btn-reset">Reset Skirmish</button>
+          <button type="button" class="pmd-btn pmd-btn-danger pmd-menu-row" data-testid="sys-btn-exit">Return to Dev Tools</button>
+          <button type="button" class="pmd-btn pmd-menu-row" data-testid="sys-btn-close">Resume</button>
         </div>
       </div>
     `;

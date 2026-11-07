@@ -1021,6 +1021,10 @@ export class DevToolsHarness {
       ? graph.nodes.filter((n) => Boolean(reconciled.nodes[n.id]?.activeSkirmish)).length
       : 0;
 
+    if (this.overworldPreviewCanvasEl) {
+      await renderOverworldPreviewCanvas(this.overworldPreviewCanvasEl, save, graph);
+    }
+
     if (this.overworldMetaEl) {
       this.overworldMetaEl.textContent = [
         `Map: ${graph.name} (${graph.imageWidth}×${graph.imageHeight}px)`,
@@ -1030,10 +1034,6 @@ export class DevToolsHarness {
         `Feral Skirmishes: ${skirmishCount}`,
         `Gold: ${save?.gold ?? 1500}G`,
       ].join(' · ');
-    }
-
-    if (this.overworldPreviewCanvasEl) {
-      await renderOverworldPreviewCanvas(this.overworldPreviewCanvasEl, save, graph);
     }
   }
 }

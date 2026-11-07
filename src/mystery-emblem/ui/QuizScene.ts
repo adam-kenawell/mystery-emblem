@@ -87,16 +87,16 @@ export class RecruitNicknameOverlay {
     this.rootEl.innerHTML = `
       <div class="pmd-window pmd-modal-card" role="dialog" aria-modal="true" aria-label="Name Recruited Pokémon" style="width:min(460px, 95vw); max-height:min(90dvh, 540px); overflow-y:auto;">
         <div class="pmd-devtools-row-between">
-          <h2 class="pmd-modal-title" style="margin:0;">NEW ALLY JOINED!</h2>
+          <h2 class="pmd-modal-title" style="margin:0; color:#f8f800;">NEW ALLY JOINED!</h2>
           <span class="pmd-chapter-badge" data-recruit-step-badge>1 / 1</span>
         </div>
-        <p class="pmd-modal-sub" data-recruit-banner style="margin:0.35rem 0 0.55rem; color:#bfe8ff;"></p>
-        <div class="pmd-forecast-unit-head" style="background:rgba(6, 14, 32, 0.72); border:1px solid #3c78b4; border-radius:4px; padding:0.5rem; margin-bottom:0.55rem;">
+        <p class="pmd-modal-sub" data-recruit-banner style="margin:0.35rem 0 0.55rem; color:#a8e0f8;"></p>
+        <div class="pmd-forecast-unit-head" style="background:#16344c; border:2px solid #a8c0e0; padding:8px; margin-bottom:8px;">
           <div class="pmd-forecast-portrait-slot" data-recruit-portrait></div>
           <div class="pmd-forecast-unit-id">
             <strong class="pmd-forecast-unit-name" data-testid="recruit-species-title">Dratini</strong>
             <span class="pmd-forecast-unit-meta" data-recruit-species-meta>Dragon · Lv. 9</span>
-            <span class="pmd-forecast-unit-meta" data-recruit-skill-desc style="color:#98f8b8; margin-top:0.15rem;"></span>
+            <span class="pmd-forecast-unit-meta" data-recruit-skill-desc style="color:#58f858; margin-top:2px;"></span>
           </div>
         </div>
         <label class="pmd-field-label" for="pmd-recruit-nickname-input">Custom Nickname (1–16 chars)</label>
@@ -369,9 +369,9 @@ export class QuizScene {
     const header = document.createElement('div');
     header.className = 'pmd-devtools-row-between';
     header.style.cssText =
-      'padding-bottom:0.45rem; margin-bottom:0.5rem; border-bottom:1px solid rgba(112, 200, 248, 0.35); flex-shrink:0;';
+      'padding-bottom:6px; margin-bottom:8px; border-bottom:2px solid rgba(248, 248, 248, 0.85); flex-shrink:0;';
     header.innerHTML = `
-      <strong data-quiz-header-title style="font-size:clamp(0.88rem, 2.2vw, 1.08rem); color:#f8d860; letter-spacing:0.04em;">
+      <strong data-quiz-header-title style="font-size:clamp(14px, 2.2vw, 18px); color:#f8f800; letter-spacing:0.04em;">
         AURA PERSONALITY QUIZ
       </strong>
       <span class="pmd-chapter-badge" data-quiz-step-badge>Q1 / 9</span>
@@ -394,31 +394,27 @@ export class QuizScene {
       .pmd-quiz-scene[hidden] { display: none !important; }
       .pmd-quiz-opt-btn {
         width: 100%;
-        min-height: 45px;
+        min-height: 46px;
         text-align: left;
         justify-content: flex-start;
-        padding: 0.5rem 0.7rem;
-        line-height: 1.3;
-        font-size: 0.82rem;
+        padding: 8px 10px 8px 26px;
+        line-height: 1.35;
+        font-size: 14px;
       }
       .pmd-quiz-partner-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
-        gap: 0.38rem;
-        margin-top: 0.45rem;
+        grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
+        gap: 6px;
+        margin-top: 8px;
       }
       .pmd-quiz-partner-chip {
-        min-height: 45px;
-        padding: 0.35rem 0.45rem;
-        font-size: 0.75rem;
+        min-height: 46px;
+        padding: 6px 8px;
+        font-size: 12px;
         display: flex;
         flex-direction: column;
         align-items: flex-start;
         justify-content: center;
-      }
-      .pmd-quiz-partner-chip.is-active {
-        border-color: #f8d048 !important;
-        background: rgba(58, 96, 168, 0.88) !important;
       }
     `;
     this.rootEl.appendChild(styleEl);
@@ -539,18 +535,20 @@ export class QuizScene {
     this.headerStepBadgeEl.textContent = 'NG+ UNLOCKED';
 
     const wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex; flex-direction:column; gap:0.65rem;';
+    wrap.style.cssText = 'display:flex; flex-direction:column; gap:8px;';
     wrap.innerHTML = `
-      <p style="margin:0; color:#d8eeff; font-size:0.86rem; line-height:1.45;">
+      <p style="margin:0; color:#f8f8f8; font-size:14px; line-height:1.45; background:#16344c; border:2px solid rgba(168, 192, 224, 0.45); padding:8px 10px;">
         A mysterious voice echoes from across the Five Kingdoms... Because New Game+ is unlocked,
         you may either answer the 9-question Aura Quiz or hand-pick your Dragon Lord, Partner, and chapter recruits!
       </p>
-      <button type="button" class="pmd-btn pmd-btn-primary pmd-quiz-opt-btn" data-testid="quiz-mode-standard-btn">
-        <span><strong>Standard Personality Quiz</strong><br/><small style="color:#cfe8ff;">Answer 9 questions to discover your Dragon Lord &amp; chapter allies</small></span>
-      </button>
-      <button type="button" class="pmd-btn pmd-quiz-opt-btn" data-testid="quiz-mode-ngplus-btn">
-        <span><strong>New Game+ Custom Roster Selector</strong><br/><small style="color:#ffe888;">Directly choose your Dragon Lord, Partner, Healer &amp; Q2–Q9 recruits</small></span>
-      </button>
+      <div class="pmd-menu-list" style="display:flex; flex-direction:column; gap:0;">
+        <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row pmd-quiz-opt-btn" data-testid="quiz-mode-standard-btn">
+          <span><strong>Standard Personality Quiz</strong><br/><small style="color:#a8e0f8;">Answer 9 questions to discover your Dragon Lord &amp; chapter allies</small></span>
+        </button>
+        <button type="button" class="pmd-btn pmd-menu-row pmd-quiz-opt-btn" data-testid="quiz-mode-ngplus-btn">
+          <span><strong>New Game+ Custom Roster Selector</strong><br/><small style="color:#58f858;">Directly choose your Dragon Lord, Partner, Healer &amp; Q2–Q9 recruits</small></span>
+        </button>
+      </div>
     `;
 
     bindPointerTap(wrap.querySelector('[data-testid="quiz-mode-standard-btn"]'), () => {
@@ -575,24 +573,25 @@ export class QuizScene {
     this.headerStepBadgeEl.textContent = `Q${this.questionIndex + 1} / ${PERSONALITY_QUIZ_QUESTIONS.length}`;
 
     const wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex; flex-direction:column; gap:0.5rem;';
+    wrap.style.cssText = 'display:flex; flex-direction:column; gap:8px;';
 
     const promptP = document.createElement('p');
     promptP.dataset.testid = 'quiz-question-prompt';
     promptP.style.cssText =
-      'margin:0 0 0.25rem; color:#ffffff; font-size:clamp(0.86rem, 2.1vw, 0.98rem); line-height:1.45; background:rgba(8, 20, 46, 0.65); border:1px solid rgba(100, 184, 240, 0.35); border-radius:4px; padding:0.55rem 0.7rem;';
+      'margin:0; color:#f8f8f8; font-size:clamp(14px, 2.1vw, 16px); line-height:1.45; background:#16344c; border:2px solid #a8c0e0; padding:8px 10px;';
     promptP.textContent = q.prompt;
     wrap.appendChild(promptP);
 
     const optStack = document.createElement('div');
-    optStack.style.cssText = 'display:flex; flex-direction:column; gap:0.4rem;';
+    optStack.className = 'pmd-menu-list';
+    optStack.style.cssText = 'display:flex; flex-direction:column; gap:0;';
 
-    for (const opt of q.options) {
+    for (const [idx, opt] of q.options.entries()) {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'pmd-btn pmd-quiz-opt-btn';
+      btn.className = `pmd-btn pmd-menu-row pmd-quiz-opt-btn${idx === 0 ? ' pmd-btn-primary' : ''}`;
       btn.dataset.testid = `quiz-option-${opt.id}`;
-      btn.innerHTML = `<span style="color:#ffd860; font-weight:700; margin-right:0.45rem;">${opt.id}.</span><span>${opt.text}</span>`;
+      btn.innerHTML = `<span style="color:#f8f800; font-weight:700; margin-right:8px;">${opt.id}.</span><span>${opt.text}</span>`;
       bindPointerTap(btn, () => {
         this.audioManager.playSfx('select');
         this.answers[this.questionIndex] = opt.id;
@@ -633,20 +632,20 @@ export class QuizScene {
 
     const heroCard = document.createElement('div');
     heroCard.style.cssText =
-      'display:flex; gap:0.75rem; align-items:center; flex-wrap:wrap; background:rgba(8, 20, 48, 0.78); border:1px solid #f8d048; border-radius:4px; padding:0.65rem;';
+      'display:flex; gap:10px; align-items:center; flex-wrap:wrap; background:#16344c; border:2px solid #f8d838; padding:10px;';
     heroCard.innerHTML = `
       <div class="pmd-forecast-portrait-slot" data-quiz-lord-portrait></div>
       <div style="flex:1; min-width:190px;">
-        <div style="font-size:1rem; font-weight:700; color:#ffe878;" data-testid="quiz-revealed-lord-name">
+        <div style="font-size:16px; font-weight:700; color:#f8f800;" data-testid="quiz-revealed-lord-name">
           ${sp?.name ?? lordMeta.speciesId} — ${lordMeta.traitLabel}
         </div>
-        <div style="font-size:0.78rem; color:#98dcff; margin-top:0.15rem;">
-          Type: ${sp?.types.join(' / ') ?? 'Dragon'} · Prologue Healer Friend: <strong>${healerSp?.name ?? healerId}</strong>
+        <div style="font-size:12px; color:#a8e0f8; margin-top:2px;">
+          Type: ${sp?.types.join(' / ') ?? 'Dragon'} · Prologue Healer Friend: <strong style="color:#f8f800;">${healerSp?.name ?? healerId}</strong>
         </div>
-        <p style="margin:0.3rem 0 0; font-size:0.8rem; color:#e6f4ff; line-height:1.38;">
+        <p style="margin:6px 0 0; font-size:13px; color:#f8f8f8; line-height:1.4;">
           ${lordMeta.auraSummary}
         </p>
-        <p style="margin:0.25rem 0 0; font-size:0.76rem; color:#98f8b8;">
+        <p style="margin:4px 0 0; font-size:12px; color:#58f858;">
           Personal Skill: <strong>${skill?.name ?? 'Dragon Aura'}</strong> — ${skill?.description ?? 'Grants +2 Atk/SpA/+10 Hit to allies within 2 tiles.'}
         </p>
       </div>
@@ -734,14 +733,14 @@ export class QuizScene {
 
     const previewCard = document.createElement('div');
     previewCard.style.cssText =
-      'display:flex; gap:0.65rem; align-items:center; justify-content:space-between; flex-wrap:wrap; background:rgba(8, 20, 48, 0.78); border:1px solid #56b4f8; border-radius:4px; padding:0.55rem;';
+      'display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; background:#16344c; border:2px solid #a8c0e0; padding:8px 10px;';
     previewCard.innerHTML = `
-      <div style="display:flex; gap:0.6rem; align-items:center; flex:1; min-width:200px;">
+      <div style="display:flex; gap:10px; align-items:center; flex:1; min-width:200px;">
         <div class="pmd-forecast-portrait-slot" data-quiz-partner-portrait></div>
         <div>
-          <strong style="color:#ffe878; font-size:0.95rem;" data-testid="quiz-selected-partner-name">${activeSp.name}</strong>
-          <div style="font-size:0.75rem; color:#98dcff;">${activeSp.types.join(' / ')} · Mov ${activeSp.baseStats.mov} · Skill: ${activeSkill?.name ?? activeSp.personalSkillId}</div>
-          <div style="font-size:0.73rem; color:#cfe8ff; margin-top:0.12rem;">${activeSkill?.description ?? ''}</div>
+          <strong style="color:#f8f800; font-size:16px;" data-testid="quiz-selected-partner-name">${activeSp.name}</strong>
+          <div style="font-size:12px; color:#a8e0f8;">${activeSp.types.join(' / ')} · Mov ${activeSp.baseStats.mov} · Skill: <span style="color:#58f858;">${activeSkill?.name ?? activeSp.personalSkillId}</span></div>
+          <div style="font-size:12px; color:#f8f8f8; margin-top:2px;">${activeSkill?.description ?? ''}</div>
         </div>
       </div>
       <button type="button" class="pmd-btn pmd-btn-primary" data-testid="quiz-confirm-partner-btn" style="min-height:44px;">
@@ -826,9 +825,9 @@ export class QuizScene {
     ): HTMLElement => {
       const sec = document.createElement('div');
       sec.style.cssText =
-        'background:rgba(8, 20, 48, 0.65); border:1px solid rgba(90, 168, 232, 0.35); border-radius:4px; padding:0.45rem 0.55rem;';
+        'background:#16344c; border:2px solid rgba(168, 192, 224, 0.45); padding:8px 10px;';
       const h = document.createElement('div');
-      h.style.cssText = 'font-size:0.78rem; font-weight:700; color:#ffd860; margin-bottom:0.35rem;';
+      h.style.cssText = 'font-size:13px; font-weight:700; color:#f8f800; margin-bottom:6px;';
       h.textContent = title;
       sec.appendChild(h);
 

@@ -4,7 +4,12 @@
 
 import { bindPointerTap, type BindPointerTapOptions } from './pointerControls';
 
-export type PmdWindowVariant = 'default' | 'gold' | 'compact';
+export type PmdWindowVariant =
+  | 'default'
+  | 'translucent'
+  | 'gold'
+  | 'compact'
+  | 'compact-translucent';
 
 export interface CreatePmdWindowOptions {
   tag?: 'div' | 'section' | 'article' | 'aside';
@@ -19,8 +24,12 @@ export interface CreatePmdWindowOptions {
 export function createPmdWindow(options: CreatePmdWindowOptions = {}): HTMLElement {
   const el = document.createElement(options.tag ?? 'div');
   const classes = ['pmd-window'];
+  if (options.variant === 'translucent') classes.push('pmd-window--translucent');
   if (options.variant === 'gold') classes.push('pmd-window--gold');
   if (options.variant === 'compact') classes.push('pmd-window--compact');
+  if (options.variant === 'compact-translucent') {
+    classes.push('pmd-window--compact', 'pmd-window--translucent');
+  }
   if (options.className) classes.push(options.className);
   el.className = classes.join(' ');
   if (options.id) el.id = options.id;
@@ -33,6 +42,7 @@ export function createPmdWindow(options: CreatePmdWindowOptions = {}): HTMLEleme
 export interface CreatePmdButtonOptions {
   label: string;
   variant?: 'default' | 'primary' | 'danger';
+  menuRow?: boolean;
   className?: string;
   id?: string;
   testId?: string;
@@ -47,6 +57,7 @@ export function createPmdButton(options: CreatePmdButtonOptions): HTMLButtonElem
   const classes = ['pmd-btn'];
   if (options.variant === 'primary') classes.push('pmd-btn-primary');
   if (options.variant === 'danger') classes.push('pmd-btn-danger');
+  if (options.menuRow) classes.push('pmd-menu-row');
   if (options.className) classes.push(options.className);
   btn.className = classes.join(' ');
   btn.textContent = options.label;

@@ -140,7 +140,7 @@ export class DialogueOverlay {
 
     // Left Portrait Frame
     this.leftSlotEl = createPmdWindow({
-      variant: 'compact',
+      variant: 'compact-translucent',
       className: 'pmd-dialogue-portrait-slot pmd-dialogue-portrait-slot--left',
       testId: 'dialogue-portrait-left',
     });
@@ -153,7 +153,7 @@ export class DialogueOverlay {
 
     // Right Portrait Frame (horizontally mirrored inward toward center)
     this.rightSlotEl = createPmdWindow({
-      variant: 'compact',
+      variant: 'compact-translucent',
       className: 'pmd-dialogue-portrait-slot pmd-dialogue-portrait-slot--right',
       testId: 'dialogue-portrait-right',
     });
@@ -166,6 +166,7 @@ export class DialogueOverlay {
 
     // Main PMD Dialogue Window
     this.boxEl = createPmdWindow({
+      variant: 'translucent',
       className: 'pmd-dialogue-box',
       testId: 'dialogue-box',
     });

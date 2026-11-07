@@ -427,7 +427,8 @@ export class BattleScene {
     this.topHudBarEl.className = 'pmd-battle-hud-top';
 
     this.turnBadgeEl = document.createElement('span');
-    this.turnBadgeEl.className = 'pmd-window pmd-battle-pill';
+    this.turnBadgeEl.className =
+      'pmd-window pmd-window--compact pmd-window--translucent pmd-battle-pill';
     this.turnBadgeEl.dataset.testid = 'battle-hud-turn';
     this.turnBadgeEl.textContent = 'Turn 1 · Player';
 
@@ -447,26 +448,27 @@ export class BattleScene {
 
     // 3. Phase Transition Toast Banner
     this.phaseBannerEl = document.createElement('div');
-    this.phaseBannerEl.className = 'pmd-window pmd-window--gold pmd-battle-phase-banner';
+    this.phaseBannerEl.className = 'pmd-window pmd-window--translucent pmd-battle-phase-banner';
     this.phaseBannerEl.dataset.testid = 'dungeon-phase-banner';
     this.phaseBannerEl.hidden = true;
 
     // 4. Bottom Terrain & Unit Info Strip
     this.infoStripEl = document.createElement('div');
-    this.infoStripEl.className = 'pmd-window pmd-battle-info-strip';
+    this.infoStripEl.className = 'pmd-window pmd-window--translucent pmd-battle-info-strip';
     this.infoStripEl.dataset.testid = 'dungeon-info-strip';
 
     // 5. Floating Command Menu (`Attack` / `Heal` / `Item` / `Wait` / `Cancel`)
     this.actionMenuEl = document.createElement('div');
-    this.actionMenuEl.className = 'pmd-window pmd-window--gold pmd-battle-action-menu';
+    this.actionMenuEl.className =
+      'pmd-window pmd-window--translucent pmd-battle-action-menu pmd-menu-list';
     this.actionMenuEl.dataset.testid = 'dungeon-cmd-menu';
     this.actionMenuEl.hidden = true;
     this.actionMenuEl.innerHTML = `
-      <button type="button" class="pmd-btn pmd-btn-primary pmd-battle-cmd-btn" data-testid="dungeon-cmd-attack">Attack</button>
-      <button type="button" class="pmd-btn pmd-btn-primary pmd-battle-cmd-btn" data-testid="dungeon-cmd-heal" hidden>Heal</button>
-      <button type="button" class="pmd-btn pmd-btn-primary pmd-battle-cmd-btn" data-testid="dungeon-cmd-item" hidden>Item</button>
-      <button type="button" class="pmd-btn pmd-battle-cmd-btn" data-testid="dungeon-cmd-wait">Wait</button>
-      <button type="button" class="pmd-btn pmd-battle-cmd-btn" data-testid="dungeon-cmd-cancel">Cancel</button>
+      <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row pmd-battle-cmd-btn" data-testid="dungeon-cmd-attack">Attack</button>
+      <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row pmd-battle-cmd-btn" data-testid="dungeon-cmd-heal" hidden>Heal</button>
+      <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row pmd-battle-cmd-btn" data-testid="dungeon-cmd-item" hidden>Item</button>
+      <button type="button" class="pmd-btn pmd-menu-row pmd-battle-cmd-btn" data-testid="dungeon-cmd-wait">Wait</button>
+      <button type="button" class="pmd-btn pmd-menu-row pmd-battle-cmd-btn" data-testid="dungeon-cmd-cancel">Cancel</button>
     `;
     this.cmdAttackBtnEl = this.actionMenuEl.querySelector('[data-testid="dungeon-cmd-attack"]')!;
     this.cmdHealBtnEl = this.actionMenuEl.querySelector('[data-testid="dungeon-cmd-heal"]')!;
@@ -600,12 +602,12 @@ export class BattleScene {
       <div class="pmd-window pmd-battle-system-dialog" role="dialog" aria-modal="true" aria-label="Battlefield Menu">
         <h3 class="pmd-panel-title">BATTLE MENU</h3>
         <p class="pmd-panel-sub" data-sys-sub>Turn 1 · Drenched Bluff</p>
-        <div class="pmd-battle-system-actions">
-          <button type="button" class="pmd-btn" data-testid="battle-sys-danger">Danger Area: OFF</button>
-          <button type="button" class="pmd-btn pmd-btn-primary" data-testid="battle-sys-end-phase">End Phase</button>
-          <button type="button" class="pmd-btn" data-testid="battle-sys-restart">Restart Match</button>
-          <button type="button" class="pmd-btn pmd-btn-danger" data-testid="battle-sys-exit">Return to Menu</button>
-          <button type="button" class="pmd-btn" data-testid="battle-sys-resume">Resume</button>
+        <div class="pmd-battle-system-actions pmd-menu-list">
+          <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-sys-danger">Danger Area: OFF</button>
+          <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row" data-testid="battle-sys-end-phase">End Phase</button>
+          <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-sys-restart">Restart Match</button>
+          <button type="button" class="pmd-btn pmd-btn-danger pmd-menu-row" data-testid="battle-sys-exit">Return to Menu</button>
+          <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-sys-resume">Resume</button>
         </div>
       </div>
     `;

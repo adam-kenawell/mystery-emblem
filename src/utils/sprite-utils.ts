@@ -323,7 +323,7 @@ export async function createSpriteWidget(
   canvas.height = maxH * scale;
   canvas.className = 'poke-sprite-canvas';
   canvas.style.imageRendering = 'pixelated';
-  canvas.style.cursor = 'pointer';
+  canvas.style.cursor = 'inherit';
 
   const ctx = canvas.getContext('2d')!;
   const widget: SpriteWidgetInstance = {

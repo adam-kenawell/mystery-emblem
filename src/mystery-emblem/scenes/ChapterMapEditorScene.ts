@@ -315,13 +315,13 @@ export class ChapterMapEditorScene {
 
     // Toast Banner
     this.toastBannerEl = document.createElement('div');
-    this.toastBannerEl.className = 'pmd-window pmd-battle-phase-banner';
+    this.toastBannerEl.className = 'pmd-window pmd-window--translucent pmd-battle-phase-banner';
     this.toastBannerEl.dataset.testid = 'map-editor-toast';
     this.toastBannerEl.hidden = true;
 
     // Bottom Info Strip
     this.infoStripEl = document.createElement('div');
-    this.infoStripEl.className = 'pmd-window pmd-battle-info-strip';
+    this.infoStripEl.className = 'pmd-window pmd-window--translucent pmd-battle-info-strip';
     this.infoStripEl.dataset.testid = 'map-editor-info-strip';
 
     // Collapsible Sandbox Map Editor Drawer
@@ -463,13 +463,13 @@ export class ChapterMapEditorScene {
       <div class="pmd-window pmd-battle-system-dialog" role="dialog" aria-modal="true" aria-labelledby="editor-sys-title">
         <h3 id="editor-sys-title" class="pmd-panel-title">MAP EDITOR MENU</h3>
         <p class="pmd-panel-sub">Save your custom dungeon tiles to the live game or jump straight into battle.</p>
-        <div class="pmd-battle-system-actions">
-          <button type="button" class="pmd-btn pmd-btn-primary" data-testid="editor-sys-save-btn">Save Map to Game</button>
-          <button type="button" class="pmd-btn" data-testid="editor-sys-play-btn">Save &amp; Play Level</button>
-          <button type="button" class="pmd-btn" data-testid="editor-sys-drawer-btn">Open Palette Drawer</button>
-          <button type="button" class="pmd-btn pmd-btn-danger" data-testid="editor-sys-reset-btn">Reset Level to Default</button>
-          <button type="button" class="pmd-btn pmd-btn-danger" data-testid="editor-sys-exit-btn">Exit to Dev Tools</button>
-          <button type="button" class="pmd-btn" data-testid="editor-sys-resume-btn">Resume Editing</button>
+        <div class="pmd-battle-system-actions pmd-menu-list">
+          <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row" data-testid="editor-sys-save-btn">Save Map to Game</button>
+          <button type="button" class="pmd-btn pmd-menu-row" data-testid="editor-sys-play-btn">Save &amp; Play Level</button>
+          <button type="button" class="pmd-btn pmd-menu-row" data-testid="editor-sys-drawer-btn">Open Palette Drawer</button>
+          <button type="button" class="pmd-btn pmd-btn-danger pmd-menu-row" data-testid="editor-sys-reset-btn">Reset Level to Default</button>
+          <button type="button" class="pmd-btn pmd-btn-danger pmd-menu-row" data-testid="editor-sys-exit-btn">Exit to Dev Tools</button>
+          <button type="button" class="pmd-btn pmd-menu-row" data-testid="editor-sys-resume-btn">Resume Editing</button>
         </div>
       </div>
     `;
