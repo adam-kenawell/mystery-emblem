@@ -106,9 +106,18 @@ import type {
 } from '../types/schemas';
 import { DungeonPrepOverlay, type PrepSubMode } from '../ui/DungeonPrepOverlay';
 import { PmdPortraitView } from '../ui/PmdSpriteCanvas';
+import {
+  MAP_DEFAULT_SCALE,
+  MAP_OVERSCROLL_NATIVE_PX,
+  MultiTouchPinchTracker,
+  clampMapScale,
+  computeCenteredMapCameraBounds,
+  computeWheelZoomScale,
+  type MapCameraBounds,
+} from '../ui/mapZoomController';
 import { bindPointerTap } from '../ui/pointerControls';
 
-export const BATTLE_TILE_SCALE = 2;
+export const BATTLE_TILE_SCALE = MAP_DEFAULT_SCALE;
 export const BATTLE_TILE_DISPLAY_PX = PMD_TILE_NATIVE_PX * BATTLE_TILE_SCALE;
 
 const DRAG_THRESHOLD_PX = 8;
@@ -200,6 +209,8 @@ export interface BattleSceneSnapshot {
   camera: {
     x: number;
     y: number;
+    minX: number;
+    minY: number;
     maxX: number;
     maxY: number;
     bufferWidth: number;
@@ -385,6 +396,8 @@ export class BattleScene {
   private cameraY = 0;
   private bufferWidth = 320;
   private bufferHeight = 240;
+  private displayScale = MAP_DEFAULT_SCALE;
+  private readonly pinchTracker = new MultiTouchPinchTracker();
 
   private systemMenuOpen = false;
   private fastMode = false;
@@ -424,6 +437,7 @@ export class BattleScene {
     this.canvas.className = 'pmd-battle-canvas pmd-pixelated';
     this.canvas.dataset.testid = 'battle-canvas';
     this.canvas.style.imageRendering = 'pixelated';
+    this.canvas.style.flexShrink = '0';
     this.ctx = this.canvas.getContext('2d')!;
     this.ctx.imageSmoothingEnabled = false;
     this.canvasStageEl.appendChild(this.canvas);
@@ -863,6 +877,8 @@ export class BattleScene {
     }
 
     this.openState = true;
+    this.displayScale = MAP_DEFAULT_SCALE;
+    this.pinchTracker.reset();
     this.rootEl.hidden = false;
     this.viewportEl.classList.add('is-battle-active');
 
@@ -883,6 +899,7 @@ export class BattleScene {
     this.battleRunGen += 1;
     this.openState = false;
     this.stopLoop();
+    this.pinchTracker.reset();
     this.activeWalk = null;
     this.activeStrikeVfx = null;
     this.floatingTexts.length = 0;
@@ -1139,12 +1156,25 @@ export class BattleScene {
     this.renderFrame(performance.now());
   }
 
+  public setZoomScale(
+    nextScale: number,
+    anchorClientX?: number,
+    anchorClientY?: number
+  ): void {
+    const rect = this.canvasStageEl.getBoundingClientRect();
+    const cx = anchorClientX ?? rect.left + rect.width / 2;
+    const cy = anchorClientY ?? rect.top + rect.height / 2;
+    const anchor = this.clientPointToWorld(cx, cy);
+    this.applyZoomWithWorldAnchor(clampMapScale(nextScale), cx, cy, anchor.worldX, anchor.worldY);
+    this.renderFrame(performance.now());
+  }
+
   public getTileClientCenter(tx: number, ty: number): { clientX: number; clientY: number } {
     const rect = this.canvas.getBoundingClientRect();
     const worldCenterX = tx * PMD_TILE_NATIVE_PX + PMD_TILE_NATIVE_PX / 2;
     const worldCenterY = ty * PMD_TILE_NATIVE_PX + PMD_TILE_NATIVE_PX / 2;
-    const localCssX = (worldCenterX - this.cameraX) * BATTLE_TILE_SCALE;
-    const localCssY = (worldCenterY - this.cameraY) * BATTLE_TILE_SCALE;
+    const localCssX = (worldCenterX - this.cameraX) * this.displayScale;
+    const localCssY = (worldCenterY - this.cameraY) * this.displayScale;
     return {
       clientX: rect.left + localCssX,
       clientY: rect.top + localCssY,
@@ -1211,11 +1241,13 @@ export class BattleScene {
       camera: {
         x: this.cameraX,
         y: this.cameraY,
+        minX: bounds.minX,
+        minY: bounds.minY,
         maxX: bounds.maxX,
         maxY: bounds.maxY,
         bufferWidth: this.bufferWidth,
         bufferHeight: this.bufferHeight,
-        displayScale: BATTLE_TILE_SCALE,
+        displayScale: this.displayScale,
         imageSmoothingEnabled: this.ctx.imageSmoothingEnabled,
       },
       map: {
@@ -1713,10 +1745,52 @@ export class BattleScene {
     );
 
     this.canvasStageEl.addEventListener(
+      'wheel',
+      (e: WheelEvent) => {
+        if (!this.canInteractWithMapViewport()) return;
+        e.preventDefault();
+        const nextScale = computeWheelZoomScale(this.displayScale, e);
+        if (nextScale === this.displayScale) return;
+        const anchor = this.clientPointToWorld(e.clientX, e.clientY);
+        this.applyZoomWithWorldAnchor(
+          nextScale,
+          e.clientX,
+          e.clientY,
+          anchor.worldX,
+          anchor.worldY
+        );
+        this.renderFrame(performance.now());
+      },
+      { passive: false, signal }
+    );
+
+    this.canvasStageEl.addEventListener(
       'pointerdown',
       (e: PointerEvent) => {
         if (!this.openState) return;
         if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+        try {
+          this.canvasStageEl.setPointerCapture(e.pointerId);
+        } catch {
+          // Synthetic Playwright events may omit pointer capture
+        }
+
+        if (this.canInteractWithMapViewport()) {
+          const pinchDown = this.pinchTracker.onPointerDown(
+            e,
+            this.displayScale,
+            (cx, cy) => this.clientPointToWorld(cx, cy)
+          );
+          if (pinchDown.isMultiTouch) {
+            clearLongPress();
+            activePointerId = null;
+            isDraggingCamera = false;
+            longPressTriggered = false;
+            return;
+          }
+        }
+
         if (activePointerId !== null) return;
 
         activePointerId = e.pointerId;
@@ -1730,17 +1804,15 @@ export class BattleScene {
 
         if (e.pointerType !== 'mouse') {
           longPressTimer = window.setTimeout(() => {
-            if (!isDraggingCamera && activePointerId === e.pointerId) {
+            if (
+              !isDraggingCamera &&
+              activePointerId === e.pointerId &&
+              !this.pinchTracker.isMultiTouchSession()
+            ) {
               longPressTriggered = true;
               this.handleMenuOrBack();
             }
           }, LONG_PRESS_MS);
-        }
-
-        try {
-          this.canvasStageEl.setPointerCapture(e.pointerId);
-        } catch {
-          // Synthetic Playwright events may omit pointer capture
         }
       },
       { signal }
@@ -1750,6 +1822,31 @@ export class BattleScene {
       'pointermove',
       (e: PointerEvent) => {
         if (!this.openState) return;
+
+        if (this.canInteractWithMapViewport()) {
+          const handledPinch = this.pinchTracker.onPointerMove(
+            e,
+            () => this.displayScale,
+            (cx, cy) => this.clientPointToWorld(cx, cy),
+            ({ nextScale, midClientX, midClientY, anchorWorldX, anchorWorldY }) => {
+              this.applyZoomWithWorldAnchor(
+                nextScale,
+                midClientX,
+                midClientY,
+                anchorWorldX,
+                anchorWorldY
+              );
+            }
+          );
+          if (handledPinch) {
+            clearLongPress();
+            this.renderFrame(performance.now());
+            return;
+          }
+        }
+        if (this.pinchTracker.isMultiTouchSession() && activePointerId !== e.pointerId) {
+          return;
+        }
 
         if (activePointerId === null && e.pointerType === 'mouse') {
           const tile = this.clientPointToTile(e.clientX, e.clientY);
@@ -1768,8 +1865,8 @@ export class BattleScene {
         }
 
         if (isDraggingCamera) {
-          const worldDeltaX = dx / BATTLE_TILE_SCALE;
-          const worldDeltaY = dy / BATTLE_TILE_SCALE;
+          const worldDeltaX = dx / this.displayScale;
+          const worldDeltaY = dy / this.displayScale;
           this.setCameraPosition(startCameraX - worldDeltaX, startCameraY - worldDeltaY);
           if (this.interactionState === 'action_menu') {
             this.positionFloatingActionMenu();
@@ -1781,14 +1878,6 @@ export class BattleScene {
     );
 
     const finishPointer = (e: PointerEvent, commitTap: boolean) => {
-      if (e.pointerId !== activePointerId) return;
-      const wasDrag = isDraggingCamera;
-      const wasLongPress = longPressTriggered;
-      activePointerId = null;
-      isDraggingCamera = false;
-      longPressTriggered = false;
-      clearLongPress();
-
       try {
         if (this.canvasStageEl.hasPointerCapture(e.pointerId)) {
           this.canvasStageEl.releasePointerCapture(e.pointerId);
@@ -1796,6 +1885,32 @@ export class BattleScene {
       } catch {
         // Ignore
       }
+
+      const pinchUp = this.pinchTracker.onPointerUp(e);
+      if (pinchUp.hadMultiTouch) {
+        clearLongPress();
+        longPressTriggered = false;
+        if (pinchUp.remainingPointer) {
+          activePointerId = pinchUp.remainingPointer.pointerId;
+          downClientX = pinchUp.remainingPointer.clientX;
+          downClientY = pinchUp.remainingPointer.clientY;
+          startCameraX = this.cameraX;
+          startCameraY = this.cameraY;
+          isDraggingCamera = true;
+        } else {
+          activePointerId = null;
+          isDraggingCamera = false;
+        }
+        return;
+      }
+
+      if (e.pointerId !== activePointerId) return;
+      const wasDrag = isDraggingCamera;
+      const wasLongPress = longPressTriggered;
+      activePointerId = null;
+      isDraggingCamera = false;
+      longPressTriggered = false;
+      clearLongPress();
 
       if (commitTap && !wasDrag && !wasLongPress) {
         const tile = this.clientPointToTile(e.clientX, e.clientY);
@@ -2335,8 +2450,13 @@ export class BattleScene {
 
     const stageW = this.canvasStageEl.clientWidth || 640;
     const stageH = this.canvasStageEl.clientHeight || 480;
-    const unitScreenX = (unit.x * PMD_TILE_NATIVE_PX - this.cameraX) * BATTLE_TILE_SCALE;
-    const unitScreenY = (unit.y * PMD_TILE_NATIVE_PX - this.cameraY) * BATTLE_TILE_SCALE;
+    const canvasOffsetX = (stageW - this.bufferWidth * this.displayScale) / 2;
+    const canvasOffsetY = (stageH - this.bufferHeight * this.displayScale) / 2;
+    const tileDisplayPx = PMD_TILE_NATIVE_PX * this.displayScale;
+    const unitScreenX =
+      canvasOffsetX + (unit.x * PMD_TILE_NATIVE_PX - this.cameraX) * this.displayScale;
+    const unitScreenY =
+      canvasOffsetY + (unit.y * PMD_TILE_NATIVE_PX - this.cameraY) * this.displayScale;
 
     const visibleBtnCount =
       2 +
@@ -2346,7 +2466,7 @@ export class BattleScene {
     const menuW = 144;
     const menuH = visibleBtnCount * 50 + 14;
 
-    let left = unitScreenX + BATTLE_TILE_DISPLAY_PX + 8;
+    let left = unitScreenX + tileDisplayPx + 8;
     if (left + menuW > stageW - 8) {
       left = unitScreenX - menuW - 8;
     }
@@ -4205,52 +4325,95 @@ export class BattleScene {
   // Camera & 1:1 Native Pixel Buffer Rendering (`2x` Pixelated CSS Scale)
   // ==========================================================================
 
-  private syncViewportDimensions(): void {
+  private canInteractWithMapViewport(): boolean {
+    if (!this.openState || this.systemMenuOpen || !this.levelUpModalBackdropEl.hidden) {
+      return false;
+    }
+    if (this.phase === 'dungeon_prep') {
+      return this.prepOverlay.isOpen() && this.prepOverlay.getSubMode() === 'view_map';
+    }
+    return (
+      (this.phase === 'player_phase' || this.phase === 'enemy_phase') &&
+      this.interactionState !== 'combat_forecast'
+    );
+  }
+
+  private syncBufferForCurrentScale(): { stageW: number; stageH: number } {
     const stageW = Math.max(240, this.canvasStageEl.clientWidth || 640);
     const stageH = Math.max(180, this.canvasStageEl.clientHeight || 480);
+    this.displayScale = clampMapScale(this.displayScale);
 
-    this.bufferWidth = Math.max(120, Math.floor(stageW / BATTLE_TILE_SCALE));
-    this.bufferHeight = Math.max(90, Math.floor(stageH / BATTLE_TILE_SCALE));
+    this.bufferWidth = Math.max(96, Math.ceil(stageW / this.displayScale));
+    this.bufferHeight = Math.max(72, Math.ceil(stageH / this.displayScale));
 
     if (this.canvas.width !== this.bufferWidth || this.canvas.height !== this.bufferHeight) {
       this.canvas.width = this.bufferWidth;
       this.canvas.height = this.bufferHeight;
-      this.canvas.style.width = `${this.bufferWidth * BATTLE_TILE_SCALE}px`;
-      this.canvas.style.height = `${this.bufferHeight * BATTLE_TILE_SCALE}px`;
       this.ctx.imageSmoothingEnabled = false;
     }
+    this.canvas.style.width = `${Math.round(this.bufferWidth * this.displayScale * 100) / 100}px`;
+    this.canvas.style.height = `${Math.round(this.bufferHeight * this.displayScale * 100) / 100}px`;
 
+    return { stageW, stageH };
+  }
+
+  private syncViewportDimensions(): void {
+    this.syncBufferForCurrentScale();
     this.setCameraPosition(this.cameraX, this.cameraY);
   }
 
-  private getMaxCameraBounds(): { minX: number; maxX: number; minY: number; maxY: number } {
+  private clientPointToWorld(clientX: number, clientY: number): { worldX: number; worldY: number } {
+    const rect = this.canvas.getBoundingClientRect();
+    const localCssX = clientX - rect.left;
+    const localCssY = clientY - rect.top;
+    return {
+      worldX: this.cameraX + localCssX / this.displayScale,
+      worldY: this.cameraY + localCssY / this.displayScale,
+    };
+  }
+
+  private applyZoomWithWorldAnchor(
+    nextScale: number,
+    clientX: number,
+    clientY: number,
+    anchorWorldX: number,
+    anchorWorldY: number
+  ): void {
+    this.displayScale = clampMapScale(nextScale);
+    const { stageW, stageH } = this.syncBufferForCurrentScale();
+    const stageRect = this.canvasStageEl.getBoundingClientRect();
+    const canvasCssW = this.bufferWidth * this.displayScale;
+    const canvasCssH = this.bufferHeight * this.displayScale;
+    const canvasLeft = stageRect.left + (stageW - canvasCssW) / 2;
+    const canvasTop = stageRect.top + (stageH - canvasCssH) / 2;
+    const localCssX = clientX - canvasLeft;
+    const localCssY = clientY - canvasTop;
+
+    this.setCameraPosition(
+      anchorWorldX - localCssX / this.displayScale,
+      anchorWorldY - localCssY / this.displayScale
+    );
+    if (this.interactionState === 'action_menu') {
+      this.positionFloatingActionMenu();
+    }
+  }
+
+  private getMaxCameraBounds(): MapCameraBounds {
     const worldW = this.map.width * PMD_TILE_NATIVE_PX;
     const worldH = this.map.height * PMD_TILE_NATIVE_PX;
-    const overscroll = 6 * PMD_TILE_NATIVE_PX;
-
-    let minX: number;
-    let maxX: number;
-    if (worldW <= this.bufferWidth) {
-      const centerCamX = Math.round((worldW - this.bufferWidth) / 2);
-      minX = centerCamX - overscroll;
-      maxX = centerCamX + overscroll;
-    } else {
-      minX = -Math.round(overscroll / 2);
-      maxX = worldW - this.bufferWidth + Math.round(overscroll / 2);
-    }
-
-    let minY: number;
-    let maxY: number;
-    if (worldH <= this.bufferHeight) {
-      const centerCamY = Math.round((worldH - this.bufferHeight) / 2);
-      minY = centerCamY - overscroll;
-      maxY = centerCamY + overscroll;
-    } else {
-      minY = -Math.round(overscroll / 2);
-      maxY = worldH - this.bufferHeight + Math.round(overscroll / 2);
-    }
-
-    return { minX, maxX, minY, maxY };
+    const raw = computeCenteredMapCameraBounds(
+      worldW,
+      worldH,
+      this.bufferWidth,
+      this.bufferHeight,
+      MAP_OVERSCROLL_NATIVE_PX
+    );
+    return {
+      minX: Math.round(raw.minX),
+      maxX: Math.round(raw.maxX),
+      minY: Math.round(raw.minY),
+      maxY: Math.round(raw.maxY),
+    };
   }
 
   private setCameraPosition(nextWorldX: number, nextWorldY: number): void {
@@ -4264,8 +4427,8 @@ export class BattleScene {
     if (rect.width <= 0 || rect.height <= 0) return null;
     const localCssX = clientX - rect.left;
     const localCssY = clientY - rect.top;
-    const worldX = localCssX / BATTLE_TILE_SCALE + this.cameraX;
-    const worldY = localCssY / BATTLE_TILE_SCALE + this.cameraY;
+    const worldX = localCssX / this.displayScale + this.cameraX;
+    const worldY = localCssY / this.displayScale + this.cameraY;
     const tx = Math.floor(worldX / PMD_TILE_NATIVE_PX);
     const ty = Math.floor(worldY / PMD_TILE_NATIVE_PX);
     if (!isInMapBounds(this.map, tx, ty)) return null;

@@ -56,12 +56,22 @@ import type {
   SaveData,
 } from '../types/schemas';
 import { PmdPortraitView } from '../ui/PmdSpriteCanvas';
+import {
+  MAP_OVERSCROLL_NATIVE_PX,
+  MultiTouchPinchTracker,
+  OVERWORLD_SCALE_BOUNDS,
+  clampMapScale,
+  computeCenteredMapCameraBounds,
+  computeWheelZoomScale,
+  type MapCameraBounds,
+} from '../ui/mapZoomController';
 import { bindPointerTap } from '../ui/pointerControls';
 
 const DRAG_THRESHOLD_PX = 8;
 const LONG_PRESS_MS = 520;
 const LORD_WALK_SPEED_NORMAL_PX_PER_SEC = 105;
 const LORD_WALK_SPEED_FAST_PX_PER_SEC = 560;
+const OVERWORLD_SPRITE_SCALE_FACTOR = 0.5;
 
 export type OverworldMenuTab = 'units' | 'convoy' | 'system';
 
@@ -99,6 +109,8 @@ export interface OverworldSceneSnapshot {
   camera: {
     x: number;
     y: number;
+    minX: number;
+    minY: number;
     maxX: number;
     maxY: number;
     viewWidthPx: number;
@@ -311,9 +323,10 @@ export class OverworldScene {
   private readonly loadingSpriteIds = new Set<string>();
   private viewWidthPx = 960;
   private viewHeightPx = 540;
-  private displayScale = 3;
+  private displayScale = OVERWORLD_SCALE_BOUNDS.defaultScale;
   private cameraX = 0;
   private cameraY = 0;
+  private hasInitializedCamera = false;
   private hoveredNodeId: string | null = null;
   private hoverRoutePreview: OverworldRouteResult | null = null;
 
@@ -336,7 +349,8 @@ export class OverworldScene {
   private lastRoutePoints: OverworldPoint[] = [];
   private lastTravelDirections: PmdDirection[] = [];
 
-  // Pointer Panning & Long-Press State
+  // Pointer Panning, Pinch-to-Zoom & Long-Press State
+  private readonly pinchTracker = new MultiTouchPinchTracker(OVERWORLD_SCALE_BOUNDS);
   private activePointerId: number | null = null;
   private pointerStartX = 0;
   private pointerStartY = 0;
@@ -561,6 +575,11 @@ export class OverworldScene {
     this.kecleonBackdropEl.hidden = true;
     this.systemMenuBackdropEl.hidden = true;
     this.activeTravel = null;
+    const shouldResetCamera = !options?.preservePosition || !this.hasInitializedCamera;
+    this.pinchTracker.reset();
+    if (shouldResetCamera) {
+      this.displayScale = OVERWORLD_SCALE_BOUNDS.defaultScale;
+    }
 
     this.rootEl.hidden = false;
     this.viewportEl.classList.add('is-battle-active');
@@ -585,8 +604,9 @@ export class OverworldScene {
 
     this.syncViewportDimensions();
     this.snapLordToCurrentNode();
-    if (!options?.preservePosition) {
-      this.centerCameraOnMapPoint(this.lordWorldX, this.lordWorldY);
+    if (shouldResetCamera) {
+      this.centerCameraInitiallyOnLord();
+      this.hasInitializedCamera = true;
     } else {
       this.clampCamera();
     }
@@ -607,6 +627,10 @@ export class OverworldScene {
     this.openState = false;
     this.stopLoop();
     this.clearLongPressTimer();
+    this.pinchTracker.reset();
+    this.activePointerId = null;
+    this.isDraggingCamera = false;
+    this.longPressFired = false;
     this.activeTravel = null;
     this.kecleonShopOpen = false;
     this.systemMenuOpen = false;
@@ -688,10 +712,29 @@ export class OverworldScene {
     this.renderFrame();
   }
 
+  public setZoomScale(
+    nextScale: number,
+    anchorClientX?: number,
+    anchorClientY?: number
+  ): void {
+    const rect = this.canvas.getBoundingClientRect();
+    const cx = anchorClientX ?? rect.left + rect.width / 2;
+    const cy = anchorClientY ?? rect.top + rect.height / 2;
+    const anchor = this.clientPointToWorld(cx, cy);
+    this.applyZoomWithWorldAnchor(
+      clampMapScale(nextScale, OVERWORLD_SCALE_BOUNDS),
+      cx,
+      cy,
+      anchor.worldX,
+      anchor.worldY
+    );
+    this.renderFrame();
+  }
+
   public snapToCurrentSaveNode(): void {
     if (!this.openState) return;
     this.snapLordToCurrentNode();
-    this.centerCameraOnMapPoint(this.lordWorldX, this.lordWorldY);
+    this.centerCameraInitiallyOnLord();
     this.syncHudAndDock();
     this.renderFrame();
   }
@@ -790,6 +833,8 @@ export class OverworldScene {
       camera: {
         x: Math.round(this.cameraX * 100) / 100,
         y: Math.round(this.cameraY * 100) / 100,
+        minX: Math.round(maxBounds.minX * 100) / 100,
+        minY: Math.round(maxBounds.minY * 100) / 100,
         maxX: Math.round(maxBounds.maxX * 100) / 100,
         maxY: Math.round(maxBounds.maxY * 100) / 100,
         viewWidthPx: this.viewWidthPx,
@@ -961,7 +1006,7 @@ export class OverworldScene {
     const h = Math.max(240, Math.round(rect.height || window.innerHeight || 540));
     this.viewWidthPx = w;
     this.viewHeightPx = h;
-    this.displayScale = w >= 1024 ? 4 : 3;
+    this.displayScale = clampMapScale(this.displayScale, OVERWORLD_SCALE_BOUNDS);
 
     if (this.canvas.width !== w || this.canvas.height !== h) {
       this.canvas.width = w;
@@ -980,19 +1025,36 @@ export class OverworldScene {
     }
   }
 
-  private getMaxCameraBounds(): { maxX: number; maxY: number } {
+  private getMaxCameraBounds(): MapCameraBounds {
     const visibleNativeW = this.viewWidthPx / this.displayScale;
     const visibleNativeH = this.viewHeightPx / this.displayScale;
-    return {
-      maxX: Math.max(0, this.graph.imageWidth - visibleNativeW),
-      maxY: Math.max(0, this.graph.imageHeight - visibleNativeH),
-    };
+    return computeCenteredMapCameraBounds(
+      this.graph.imageWidth,
+      this.graph.imageHeight,
+      visibleNativeW,
+      visibleNativeH,
+      MAP_OVERSCROLL_NATIVE_PX
+    );
   }
 
   private clampCamera(): void {
-    const { maxX, maxY } = this.getMaxCameraBounds();
-    this.cameraX = Math.max(0, Math.min(maxX, this.cameraX));
-    this.cameraY = Math.max(0, Math.min(maxY, this.cameraY));
+    const { minX, maxX, minY, maxY } = this.getMaxCameraBounds();
+    this.cameraX = Math.max(minX, Math.min(maxX, this.cameraX));
+    this.cameraY = Math.max(minY, Math.min(maxY, this.cameraY));
+  }
+
+  private centerCameraInitiallyOnLord(): void {
+    const visibleNativeW = this.viewWidthPx / this.displayScale;
+    const visibleNativeH = this.viewHeightPx / this.displayScale;
+    this.cameraX =
+      this.graph.imageWidth <= visibleNativeW
+        ? (this.graph.imageWidth - visibleNativeW) / 2
+        : this.lordWorldX - visibleNativeW / 2;
+    this.cameraY =
+      this.graph.imageHeight <= visibleNativeH
+        ? (this.graph.imageHeight - visibleNativeH) / 2
+        : this.lordWorldY - visibleNativeH / 2;
+    this.clampCamera();
   }
 
   private centerCameraOnMapPoint(mapX: number, mapY: number): void {
@@ -1001,6 +1063,37 @@ export class OverworldScene {
     this.cameraX = mapX - visibleNativeW / 2;
     this.cameraY = mapY - visibleNativeH / 2;
     this.clampCamera();
+  }
+
+  private clientPointToWorld(clientX: number, clientY: number): { worldX: number; worldY: number } {
+    const rect = this.canvas.getBoundingClientRect();
+    const localX = clientX - rect.left;
+    const localY = clientY - rect.top;
+    return {
+      worldX: this.cameraX + localX / this.displayScale,
+      worldY: this.cameraY + localY / this.displayScale,
+    };
+  }
+
+  private applyZoomWithWorldAnchor(
+    nextScale: number,
+    clientX: number,
+    clientY: number,
+    anchorWorldX: number,
+    anchorWorldY: number
+  ): void {
+    const clamped = clampMapScale(nextScale, OVERWORLD_SCALE_BOUNDS);
+    const rect = this.canvas.getBoundingClientRect();
+    const localX = clientX - rect.left;
+    const localY = clientY - rect.top;
+    this.displayScale = clamped;
+    this.cameraX = anchorWorldX - localX / this.displayScale;
+    this.cameraY = anchorWorldY - localY / this.displayScale;
+    this.clampCamera();
+  }
+
+  private canInteractWithMapCanvas(): boolean {
+    return this.openState && !this.kecleonShopOpen && !this.systemMenuOpen;
   }
 
   private ensurePointComfortableInCamera(mapX: number, mapY: number): void {
@@ -1066,10 +1159,49 @@ export class OverworldScene {
     );
 
     this.canvas.addEventListener(
+      'wheel',
+      (e: WheelEvent) => {
+        if (!this.canInteractWithMapCanvas()) return;
+        e.preventDefault();
+        const nextScale = computeWheelZoomScale(this.displayScale, e, OVERWORLD_SCALE_BOUNDS);
+        if (nextScale === this.displayScale) return;
+        const anchor = this.clientPointToWorld(e.clientX, e.clientY);
+        this.applyZoomWithWorldAnchor(
+          nextScale,
+          e.clientX,
+          e.clientY,
+          anchor.worldX,
+          anchor.worldY
+        );
+        this.renderFrame();
+      },
+      { passive: false, signal }
+    );
+
+    this.canvas.addEventListener(
       'pointerdown',
       (e: PointerEvent) => {
-        if (!this.openState || this.kecleonShopOpen || this.systemMenuOpen) return;
+        if (!this.canInteractWithMapCanvas()) return;
         if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+        try {
+          this.canvas.setPointerCapture(e.pointerId);
+        } catch {
+          // Ignore synthetic events without capture support
+        }
+
+        const pinchDown = this.pinchTracker.onPointerDown(
+          e,
+          this.displayScale,
+          (cx, cy) => this.clientPointToWorld(cx, cy)
+        );
+        if (pinchDown.isMultiTouch) {
+          this.clearLongPressTimer();
+          this.activePointerId = null;
+          this.isDraggingCamera = false;
+          this.longPressFired = false;
+          return;
+        }
 
         this.activePointerId = e.pointerId;
         this.pointerStartX = e.clientX;
@@ -1079,17 +1211,15 @@ export class OverworldScene {
         this.isDraggingCamera = false;
         this.longPressFired = false;
 
-        try {
-          this.canvas.setPointerCapture(e.pointerId);
-        } catch {
-          // Ignore synthetic events without capture support
-        }
-
         this.clearLongPressTimer();
         if (e.pointerType !== 'mouse') {
           this.longPressTimer = window.setTimeout(() => {
             this.longPressTimer = null;
-            if (this.activePointerId === e.pointerId && !this.isDraggingCamera) {
+            if (
+              this.activePointerId === e.pointerId &&
+              !this.isDraggingCamera &&
+              !this.pinchTracker.isMultiTouchSession()
+            ) {
               this.longPressFired = true;
               this.handleMenuOrBack();
             }
@@ -1102,7 +1232,31 @@ export class OverworldScene {
     this.canvas.addEventListener(
       'pointermove',
       (e: PointerEvent) => {
-        if (!this.openState) return;
+        if (!this.canInteractWithMapCanvas()) return;
+
+        const handledPinch = this.pinchTracker.onPointerMove(
+          e,
+          () => this.displayScale,
+          (cx, cy) => this.clientPointToWorld(cx, cy),
+          ({ nextScale, midClientX, midClientY, anchorWorldX, anchorWorldY }) => {
+            this.applyZoomWithWorldAnchor(
+              nextScale,
+              midClientX,
+              midClientY,
+              anchorWorldX,
+              anchorWorldY
+            );
+          }
+        );
+        if (handledPinch) {
+          this.clearLongPressTimer();
+          this.renderFrame();
+          return;
+        }
+        if (this.pinchTracker.isMultiTouchSession() && this.activePointerId !== e.pointerId) {
+          return;
+        }
+
         const rect = this.canvas.getBoundingClientRect();
         const localX = e.clientX - rect.left;
         const localY = e.clientY - rect.top;
@@ -1152,8 +1306,6 @@ export class OverworldScene {
     );
 
     const finishPointer = (e: PointerEvent, cancelled: boolean) => {
-      if (this.activePointerId !== e.pointerId) return;
-      this.clearLongPressTimer();
       try {
         if (this.canvas.hasPointerCapture(e.pointerId)) {
           this.canvas.releasePointerCapture(e.pointerId);
@@ -1161,6 +1313,27 @@ export class OverworldScene {
       } catch {
         // Ignore
       }
+
+      const pinchUp = this.pinchTracker.onPointerUp(e);
+      if (pinchUp.hadMultiTouch) {
+        this.clearLongPressTimer();
+        this.longPressFired = false;
+        if (pinchUp.remainingPointer) {
+          this.activePointerId = pinchUp.remainingPointer.pointerId;
+          this.pointerStartX = pinchUp.remainingPointer.clientX;
+          this.pointerStartY = pinchUp.remainingPointer.clientY;
+          this.pointerStartCamX = this.cameraX;
+          this.pointerStartCamY = this.cameraY;
+          this.isDraggingCamera = true;
+        } else {
+          this.activePointerId = null;
+          this.isDraggingCamera = false;
+        }
+        return;
+      }
+
+      if (this.activePointerId !== e.pointerId) return;
+      this.clearLongPressTimer();
 
       const wasDrag = this.isDraggingCamera;
       const wasLongPress = this.longPressFired;
@@ -2194,6 +2367,7 @@ export class OverworldScene {
     if (!bundle) return;
     const anim = bundle.actions[action] ?? bundle.actions.Idle;
     const scale = this.displayScale;
+    const spriteScale = scale * OVERWORLD_SPRITE_SCALE_FACTOR;
     const screenX = Math.round((mapX - this.cameraX) * scale);
     const screenY = Math.round((mapY - this.cameraY) * scale);
 
@@ -2223,17 +2397,25 @@ export class OverworldScene {
       anim.frameHeight,
       24
     );
-    const drawX = screenX + placement.drawX * scale;
-    const drawY = screenY + placement.drawY * scale;
-    const drawW = anim.frameWidth * scale;
-    const drawH = anim.frameHeight * scale;
+    const drawX = Math.round(screenX + placement.drawX * spriteScale);
+    const drawY = Math.round(screenY + placement.drawY * spriteScale);
+    const drawW = Math.round(anim.frameWidth * spriteScale);
+    const drawH = Math.round(anim.frameHeight * spriteScale);
 
     this.ctx.save();
     this.ctx.imageSmoothingEnabled = false;
 
     this.ctx.fillStyle = tintGlowColor ?? 'rgba(8, 12, 24, 0.55)';
     this.ctx.beginPath();
-    this.ctx.ellipse(screenX, screenY + 2 * scale, 6 * scale, 2.6 * scale, 0, 0, Math.PI * 2);
+    this.ctx.ellipse(
+      screenX,
+      screenY + 2 * spriteScale,
+      6 * spriteScale,
+      2.6 * spriteScale,
+      0,
+      0,
+      Math.PI * 2
+    );
     this.ctx.fill();
 
     this.ctx.drawImage(
@@ -2256,20 +2438,24 @@ export class OverworldScene {
     const scale = this.displayScale;
     ctx.imageSmoothingEnabled = false;
 
-    ctx.fillStyle = '#141c2c';
+    ctx.fillStyle = '#080e1c';
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
-    // 1. Wonder Map Pixel Art Layer
+    // 1. Wonder Map Pixel Art Layer + Crisp Stepped PMD Outer Frame
     if (this.mapSource) {
       const mapDrawX = Math.round(-this.cameraX * scale);
       const mapDrawY = Math.round(-this.cameraY * scale);
-      ctx.drawImage(
-        this.mapSource,
-        mapDrawX,
-        mapDrawY,
-        this.graph.imageWidth * scale,
-        this.graph.imageHeight * scale
-      );
+      const mapDrawW = Math.round(this.graph.imageWidth * scale);
+      const mapDrawH = Math.round(this.graph.imageHeight * scale);
+
+      ctx.fillStyle = 'rgba(2, 6, 14, 0.65)';
+      ctx.fillRect(mapDrawX - 4, mapDrawY - 2, mapDrawW + 10, mapDrawH + 10);
+      ctx.fillStyle = '#a8c0e0';
+      ctx.fillRect(mapDrawX - 4, mapDrawY - 4, mapDrawW + 8, mapDrawH + 8);
+      ctx.fillStyle = '#385078';
+      ctx.fillRect(mapDrawX - 2, mapDrawY - 2, mapDrawW + 4, mapDrawH + 4);
+
+      ctx.drawImage(this.mapSource, mapDrawX, mapDrawY, mapDrawW, mapDrawH);
     }
 
     const save = this.saveManager.getSave();

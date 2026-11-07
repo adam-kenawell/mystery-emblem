@@ -51,9 +51,17 @@ import {
   type DungeonMapTileCell,
   type TerrainType,
 } from '../types/schemas';
+import {
+  MAP_DEFAULT_SCALE,
+  MAP_OVERSCROLL_NATIVE_PX,
+  MultiTouchPinchTracker,
+  clampMapScale,
+  computeCenteredMapCameraBounds,
+  computeWheelZoomScale,
+  type MapCameraBounds,
+} from '../ui/mapZoomController';
 import { bindPointerTap } from '../ui/pointerControls';
 
-const EDITOR_TILE_SCALE = 2;
 const DRAG_THRESHOLD_PX = 8;
 const MAX_UNDO_STEPS = 40;
 
@@ -116,6 +124,10 @@ export interface ChapterMapEditorSnapshot {
   camera: {
     x: number;
     y: number;
+    minX: number;
+    minY: number;
+    maxX: number;
+    maxY: number;
     displayScale: number;
     imageSmoothingEnabled: boolean;
   };
@@ -212,6 +224,8 @@ export class ChapterMapEditorScene {
   private bufferHeight = 320;
   private cameraX = 0;
   private cameraY = 0;
+  private displayScale = MAP_DEFAULT_SCALE;
+  private readonly pinchTracker = new MultiTouchPinchTracker();
 
   // Pointer Gesture State
   private activePointerId: number | null = null;
@@ -246,8 +260,10 @@ export class ChapterMapEditorScene {
     this.canvasStageEl.dataset.testid = 'map-editor-canvas-stage';
 
     this.canvas = document.createElement('canvas');
-    this.canvas.className = 'pmd-battle-canvas';
+    this.canvas.className = 'pmd-battle-canvas pmd-pixelated';
     this.canvas.dataset.testid = 'map-editor-canvas';
+    this.canvas.style.imageRendering = 'pixelated';
+    this.canvas.style.flexShrink = '0';
     const ctx = this.canvas.getContext('2d');
     if (!ctx) {
       throw new Error('Could not initialize 2D context for ChapterMapEditorScene.');
@@ -517,6 +533,8 @@ export class ChapterMapEditorScene {
       this.previousBgmId = this.audioManager.getCurrentTrackId();
     }
     this.openState = true;
+    this.displayScale = MAP_DEFAULT_SCALE;
+    this.pinchTracker.reset();
     this.drawerOpen = options?.startDrawerOpen ?? true;
     this.systemMenuOpen = false;
     this.jsonModalOpen = false;
@@ -539,6 +557,7 @@ export class ChapterMapEditorScene {
     if (!this.openState) return;
     this.openState = false;
     this.stopLoop();
+    this.pinchTracker.reset();
     this.systemMenuOpen = false;
     this.jsonModalOpen = false;
     this.systemMenuBackdropEl.hidden = true;
@@ -772,13 +791,26 @@ export class ChapterMapEditorScene {
     this.renderFrame();
   }
 
+  public setZoomScale(
+    nextScale: number,
+    anchorClientX?: number,
+    anchorClientY?: number
+  ): void {
+    const rect = this.canvasStageEl.getBoundingClientRect();
+    const cx = anchorClientX ?? rect.left + rect.width / 2;
+    const cy = anchorClientY ?? rect.top + rect.height / 2;
+    const anchor = this.clientPointToWorld(cx, cy);
+    this.applyZoomWithWorldAnchor(clampMapScale(nextScale), cx, cy, anchor.worldX, anchor.worldY);
+    this.renderFrame();
+  }
+
   public getTileClientCenter(tx: number, ty: number): { clientX: number; clientY: number } {
     const rect = this.canvas.getBoundingClientRect();
     const worldCenterX = tx * PMD_TILE_NATIVE_PX + PMD_TILE_NATIVE_PX / 2;
     const worldCenterY = ty * PMD_TILE_NATIVE_PX + PMD_TILE_NATIVE_PX / 2;
     return {
-      clientX: rect.left + (worldCenterX - this.cameraX) * EDITOR_TILE_SCALE,
-      clientY: rect.top + (worldCenterY - this.cameraY) * EDITOR_TILE_SCALE,
+      clientX: rect.left + (worldCenterX - this.cameraX) * this.displayScale,
+      clientY: rect.top + (worldCenterY - this.cameraY) * this.displayScale,
     };
   }
 
@@ -787,6 +819,7 @@ export class ChapterMapEditorScene {
   }
 
   public getSnapshot(): ChapterMapEditorSnapshot {
+    const bounds = this.getMaxCameraBounds();
     return {
       isOpen: this.openState,
       levelId: this.activeLevelId,
@@ -814,7 +847,11 @@ export class ChapterMapEditorScene {
       camera: {
         x: this.cameraX,
         y: this.cameraY,
-        displayScale: EDITOR_TILE_SCALE,
+        minX: bounds.minX,
+        minY: bounds.minY,
+        maxX: bounds.maxX,
+        maxY: bounds.maxY,
+        displayScale: this.displayScale,
         imageSmoothingEnabled: this.ctx.imageSmoothingEnabled,
       },
     };
@@ -1302,12 +1339,56 @@ export class ChapterMapEditorScene {
       { signal }
     );
 
-    // Unified Pointer Events on Dungeon Canvas Stage (Pan + Tap Paint + Continuous Stroke)
+    // Prevent wheel inside palette drawer or modals from zooming the canvas underneath
+    for (const el of [this.drawerEl, this.systemMenuBackdropEl, this.jsonModalBackdropEl]) {
+      el.addEventListener('wheel', (ev: WheelEvent) => ev.stopPropagation(), { signal });
+    }
+
+    this.canvasStageEl.addEventListener(
+      'wheel',
+      (ev: WheelEvent) => {
+        if (!this.canInteractWithCanvasStage()) return;
+        ev.preventDefault();
+        const nextScale = computeWheelZoomScale(this.displayScale, ev);
+        if (nextScale === this.displayScale) return;
+        const anchor = this.clientPointToWorld(ev.clientX, ev.clientY);
+        this.applyZoomWithWorldAnchor(
+          nextScale,
+          ev.clientX,
+          ev.clientY,
+          anchor.worldX,
+          anchor.worldY
+        );
+        this.renderFrame();
+      },
+      { passive: false, signal }
+    );
+
+    // Unified Pointer Events on Dungeon Canvas Stage (Pan + Tap Paint + Continuous Stroke + Pinch Zoom)
     this.canvasStageEl.addEventListener(
       'pointerdown',
       (ev: PointerEvent) => {
-        if (!this.openState) return;
+        if (!this.canInteractWithCanvasStage()) return;
         if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+
+        try {
+          this.canvasStageEl.setPointerCapture(ev.pointerId);
+        } catch {
+          // Synthetic pointer events in tests may omit capture support
+        }
+
+        const pinchDown = this.pinchTracker.onPointerDown(
+          ev,
+          this.displayScale,
+          (cx, cy) => this.clientPointToWorld(cx, cy)
+        );
+        if (pinchDown.isMultiTouch) {
+          this.activePointerId = null;
+          this.pointerMoved = false;
+          this.strokeUndoPushed = false;
+          this.lastStrokedCoordKey = null;
+          return;
+        }
 
         this.activePointerId = ev.pointerId;
         this.pointerStartX = ev.clientX;
@@ -1317,12 +1398,6 @@ export class ChapterMapEditorScene {
         this.pointerMoved = false;
         this.strokeUndoPushed = false;
         this.lastStrokedCoordKey = null;
-
-        try {
-          this.canvasStageEl.setPointerCapture(ev.pointerId);
-        } catch {
-          // Synthetic pointer events in tests may omit capture support
-        }
 
         if (this.toolMode === 'stroke') {
           const tile = this.clientPointToTile(ev.clientX, ev.clientY);
@@ -1337,7 +1412,29 @@ export class ChapterMapEditorScene {
     this.canvasStageEl.addEventListener(
       'pointermove',
       (ev: PointerEvent) => {
-        if (!this.openState) return;
+        if (!this.canInteractWithCanvasStage()) return;
+
+        const handledPinch = this.pinchTracker.onPointerMove(
+          ev,
+          () => this.displayScale,
+          (cx, cy) => this.clientPointToWorld(cx, cy),
+          ({ nextScale, midClientX, midClientY, anchorWorldX, anchorWorldY }) => {
+            this.applyZoomWithWorldAnchor(
+              nextScale,
+              midClientX,
+              midClientY,
+              anchorWorldX,
+              anchorWorldY
+            );
+          }
+        );
+        if (handledPinch) {
+          this.renderFrame();
+          return;
+        }
+        if (this.pinchTracker.isMultiTouchSession() && this.activePointerId !== ev.pointerId) {
+          return;
+        }
 
         if (this.activePointerId === null && ev.pointerType === 'mouse') {
           const hover = this.clientPointToTile(ev.clientX, ev.clientY);
@@ -1369,8 +1466,8 @@ export class ChapterMapEditorScene {
         }
         if (this.pointerMoved) {
           this.setCameraPosition(
-            this.pointerStartCamX - dx / EDITOR_TILE_SCALE,
-            this.pointerStartCamY - dy / EDITOR_TILE_SCALE
+            this.pointerStartCamX - dx / this.displayScale,
+            this.pointerStartCamY - dy / this.displayScale
           );
           this.renderFrame();
         }
@@ -1379,14 +1476,6 @@ export class ChapterMapEditorScene {
     );
 
     const finishPointer = (ev: PointerEvent, cancelled: boolean) => {
-      if (ev.pointerId !== this.activePointerId) return;
-      const wasDrag = this.pointerMoved;
-      const usedStroke = this.toolMode === 'stroke';
-      this.activePointerId = null;
-      this.pointerMoved = false;
-      this.strokeUndoPushed = false;
-      this.lastStrokedCoordKey = null;
-
       try {
         if (this.canvasStageEl.hasPointerCapture(ev.pointerId)) {
           this.canvasStageEl.releasePointerCapture(ev.pointerId);
@@ -1394,6 +1483,32 @@ export class ChapterMapEditorScene {
       } catch {
         // Ignore
       }
+
+      const pinchUp = this.pinchTracker.onPointerUp(ev);
+      if (pinchUp.hadMultiTouch) {
+        this.strokeUndoPushed = false;
+        this.lastStrokedCoordKey = null;
+        if (pinchUp.remainingPointer && this.toolMode !== 'stroke') {
+          this.activePointerId = pinchUp.remainingPointer.pointerId;
+          this.pointerStartX = pinchUp.remainingPointer.clientX;
+          this.pointerStartY = pinchUp.remainingPointer.clientY;
+          this.pointerStartCamX = this.cameraX;
+          this.pointerStartCamY = this.cameraY;
+          this.pointerMoved = true;
+        } else {
+          this.activePointerId = null;
+          this.pointerMoved = false;
+        }
+        return;
+      }
+
+      if (ev.pointerId !== this.activePointerId) return;
+      const wasDrag = this.pointerMoved;
+      const usedStroke = this.toolMode === 'stroke';
+      this.activePointerId = null;
+      this.pointerMoved = false;
+      this.strokeUndoPushed = false;
+      this.lastStrokedCoordKey = null;
 
       if (cancelled || wasDrag || usedStroke) return;
       const tile = this.clientPointToTile(ev.clientX, ev.clientY);
@@ -1916,34 +2031,88 @@ export class ChapterMapEditorScene {
   // Camera, Coordinate Math & 2x Pixelated Canvas Rendering
   // ==========================================================================
 
-  private syncViewportDimensions(): void {
+  private canInteractWithCanvasStage(): boolean {
+    return this.openState && !this.systemMenuOpen && !this.jsonModalOpen;
+  }
+
+  private syncBufferForCurrentScale(): { stageW: number; stageH: number } {
     const stageRect = this.canvasStageEl.getBoundingClientRect();
     const stageW = Math.max(240, Math.floor(stageRect.width || window.innerWidth || 960));
     const stageH = Math.max(200, Math.floor(stageRect.height || window.innerHeight || 640));
+    this.displayScale = clampMapScale(this.displayScale);
 
-    const mapWorldW = this.map.width * PMD_TILE_NATIVE_PX;
-    const mapWorldH = this.map.height * PMD_TILE_NATIVE_PX;
+    this.bufferWidth = Math.max(96, Math.ceil(stageW / this.displayScale));
+    this.bufferHeight = Math.max(72, Math.ceil(stageH / this.displayScale));
 
-    const desiredBufW = Math.max(120, Math.floor(stageW / EDITOR_TILE_SCALE));
-    const desiredBufH = Math.max(100, Math.floor(stageH / EDITOR_TILE_SCALE));
+    if (this.canvas.width !== this.bufferWidth || this.canvas.height !== this.bufferHeight) {
+      this.canvas.width = this.bufferWidth;
+      this.canvas.height = this.bufferHeight;
+      this.ctx.imageSmoothingEnabled = false;
+    }
+    this.canvas.style.width = `${Math.round(this.bufferWidth * this.displayScale * 100) / 100}px`;
+    this.canvas.style.height = `${Math.round(this.bufferHeight * this.displayScale * 100) / 100}px`;
 
-    this.bufferWidth = Math.min(mapWorldW, desiredBufW);
-    this.bufferHeight = Math.min(mapWorldH, desiredBufH);
+    return { stageW, stageH };
+  }
 
-    this.canvas.width = this.bufferWidth;
-    this.canvas.height = this.bufferHeight;
-    this.canvas.style.width = `${this.bufferWidth * EDITOR_TILE_SCALE}px`;
-    this.canvas.style.height = `${this.bufferHeight * EDITOR_TILE_SCALE}px`;
-    this.ctx.imageSmoothingEnabled = false;
-
+  private syncViewportDimensions(): void {
+    this.syncBufferForCurrentScale();
     this.setCameraPosition(this.cameraX, this.cameraY);
   }
 
+  private clientPointToWorld(clientX: number, clientY: number): { worldX: number; worldY: number } {
+    const rect = this.canvas.getBoundingClientRect();
+    return {
+      worldX: this.cameraX + (clientX - rect.left) / this.displayScale,
+      worldY: this.cameraY + (clientY - rect.top) / this.displayScale,
+    };
+  }
+
+  private applyZoomWithWorldAnchor(
+    nextScale: number,
+    clientX: number,
+    clientY: number,
+    anchorWorldX: number,
+    anchorWorldY: number
+  ): void {
+    this.displayScale = clampMapScale(nextScale);
+    const { stageW, stageH } = this.syncBufferForCurrentScale();
+    const stageRect = this.canvasStageEl.getBoundingClientRect();
+    const canvasCssW = this.bufferWidth * this.displayScale;
+    const canvasCssH = this.bufferHeight * this.displayScale;
+    const canvasLeft = stageRect.left + (stageW - canvasCssW) / 2;
+    const canvasTop = stageRect.top + (stageH - canvasCssH) / 2;
+    const localCssX = clientX - canvasLeft;
+    const localCssY = clientY - canvasTop;
+
+    this.setCameraPosition(
+      anchorWorldX - localCssX / this.displayScale,
+      anchorWorldY - localCssY / this.displayScale
+    );
+  }
+
+  private getMaxCameraBounds(): MapCameraBounds {
+    const worldW = this.map.width * PMD_TILE_NATIVE_PX;
+    const worldH = this.map.height * PMD_TILE_NATIVE_PX;
+    const raw = computeCenteredMapCameraBounds(
+      worldW,
+      worldH,
+      this.bufferWidth,
+      this.bufferHeight,
+      MAP_OVERSCROLL_NATIVE_PX
+    );
+    return {
+      minX: Math.round(raw.minX),
+      minY: Math.round(raw.minY),
+      maxX: Math.round(raw.maxX),
+      maxY: Math.round(raw.maxY),
+    };
+  }
+
   private setCameraPosition(worldX: number, worldY: number): void {
-    const maxX = Math.max(0, this.map.width * PMD_TILE_NATIVE_PX - this.bufferWidth);
-    const maxY = Math.max(0, this.map.height * PMD_TILE_NATIVE_PX - this.bufferHeight);
-    this.cameraX = Math.round(Math.max(0, Math.min(maxX, worldX)));
-    this.cameraY = Math.round(Math.max(0, Math.min(maxY, worldY)));
+    const { minX, minY, maxX, maxY } = this.getMaxCameraBounds();
+    this.cameraX = Math.round(Math.max(minX, Math.min(maxX, worldX)));
+    this.cameraY = Math.round(Math.max(minY, Math.min(maxY, worldY)));
   }
 
   private clientPointToTile(clientX: number, clientY: number): { x: number; y: number } | null {
@@ -1956,8 +2125,8 @@ export class ChapterMapEditorScene {
     ) {
       return null;
     }
-    const worldX = this.cameraX + (clientX - rect.left) / EDITOR_TILE_SCALE;
-    const worldY = this.cameraY + (clientY - rect.top) / EDITOR_TILE_SCALE;
+    const worldX = this.cameraX + (clientX - rect.left) / this.displayScale;
+    const worldY = this.cameraY + (clientY - rect.top) / this.displayScale;
     const tx = Math.floor(worldX / PMD_TILE_NATIVE_PX);
     const ty = Math.floor(worldY / PMD_TILE_NATIVE_PX);
     if (tx < 0 || ty < 0 || tx >= this.map.width || ty >= this.map.height) {
@@ -1987,12 +2156,6 @@ export class ChapterMapEditorScene {
   }
 
   private renderFrame(): void {
-    const mapWorldW = this.map.width * PMD_TILE_NATIVE_PX;
-    const mapWorldH = this.map.height * PMD_TILE_NATIVE_PX;
-    if (this.bufferWidth > mapWorldW || this.bufferHeight > mapWorldH) {
-      this.syncViewportDimensions();
-    }
-
     const ctx = this.ctx;
     ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = '#080e1c';
