@@ -12,7 +12,11 @@
  */
 
 import { ITEM_MAP, SPECIES_MAP } from '../data/index';
-import type { ItemDefinition, PokemonSpeciesDefinition } from '../types/schemas';
+import type {
+  FlabebeFlowerColor,
+  ItemDefinition,
+  PokemonSpeciesDefinition,
+} from '../types/schemas';
 import {
   calcFrameInfo,
   fetchDetailedAnimData,
@@ -176,6 +180,55 @@ export function directionFromDelta(dx: number, dy: number): PmdDirection {
   if (dx === 0 && dy === 0) return 0;
   const deg = ((Math.atan2(dy, dx) * 180) / Math.PI + 360) % 360;
   return ANGLE_TO_PMD_ROW[Math.round(deg / 45) % 8] ?? 0;
+}
+
+export const FLABEBE_SUBFORM_BY_COLOR: Readonly<Record<FlabebeFlowerColor, string>> = {
+  red: '',
+  yellow: '0001',
+  orange: '0002',
+  blue: '0003',
+  white: '0004',
+};
+
+/**
+ * Maps each of the 5 playable Dragon Lords in the Lore Bible to Flabébé's canonical flower color:
+ * - Axew    -> Red (`0669`)
+ * - Bagon   -> Orange (`0669/0002`)
+ * - Gible   -> Yellow (`0669/0001`)
+ * - Dratini -> Blue (`0669/0003`)
+ * - Goomy   -> White (`0669/0004`)
+ */
+export function getFlabebeFlowerColorForLord(
+  lordSpeciesIdOrLineId: string | null | undefined
+): FlabebeFlowerColor {
+  const raw = (lordSpeciesIdOrLineId ?? '').trim().toLowerCase();
+  const sp = SPECIES_MAP.get(raw);
+  const lineKey = sp ? sp.lineId : raw;
+  if (lineKey.startsWith('axew')) return 'red';
+  if (lineKey.startsWith('bagon')) return 'orange';
+  if (lineKey.startsWith('gible')) return 'yellow';
+  if (lineKey.startsWith('dratini')) return 'blue';
+  if (lineKey.startsWith('goomy')) return 'white';
+  return 'blue';
+}
+
+/**
+ * Resolves the PMD visual asset identifier for a unit (`speciesId` or `XXXX/YYYY` subform path),
+ * preserving Flabébé -> Floette -> Florges flower color across all 3 evolutionary stages.
+ */
+export function resolveUnitVisualAssetId(
+  speciesId: string,
+  cosmeticForm?: FlabebeFlowerColor | null
+): string {
+  const sp = SPECIES_MAP.get(speciesId.trim());
+  if (!sp) return speciesId;
+  if (sp.lineId === 'flabebe_line' && cosmeticForm) {
+    const subform = FLABEBE_SUBFORM_BY_COLOR[cosmeticForm];
+    if (subform) {
+      return `${sp.pmdAssetId}/${subform}`;
+    }
+  }
+  return sp.id;
 }
 
 export function resolveSpeciesAssetTarget(speciesIdOrAssetId: string): {
@@ -505,12 +558,34 @@ async function loadPortraitUncached(
   }
 
   if (emotion !== 'Normal') {
-    const normalAsset = await loadSpeciesPortrait(speciesId ?? pmdAssetId, 'Normal');
+    const normalAsset = await loadSpeciesPortrait(pmdAssetId, 'Normal');
+    if (pmdAssetId.includes('/') && normalAsset.pmdAssetId !== pmdAssetId) {
+      const baseAssetId = pmdAssetId.split('/')[0]!;
+      const baseEmotionAsset = await loadSpeciesPortrait(baseAssetId, emotion);
+      return {
+        ...baseEmotionAsset,
+        speciesId: speciesId ?? baseEmotionAsset.speciesId,
+        requestedEmotion: emotion,
+      };
+    }
     return {
       ...normalAsset,
+      speciesId: speciesId ?? normalAsset.speciesId,
       requestedEmotion: emotion,
       resolvedEmotion: normalAsset.resolvedEmotion,
     };
+  }
+
+  if (pmdAssetId.includes('/')) {
+    const baseAssetId = pmdAssetId.split('/')[0]!;
+    const baseNormalAsset = await loadSpeciesPortrait(baseAssetId, 'Normal');
+    if (!baseNormalAsset.synthesizedFallback) {
+      return {
+        ...baseNormalAsset,
+        speciesId: speciesId ?? baseNormalAsset.speciesId,
+        requestedEmotion: emotion,
+      };
+    }
   }
 
   const crest = createOfflineCrestCanvas(speciesId ?? pmdAssetId, 40);

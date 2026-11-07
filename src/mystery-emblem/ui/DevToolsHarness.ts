@@ -5,7 +5,7 @@
  * Opens as a modal overlay on top of any active screen (`Title`, `OverworldScene`, `BattleScene`)
  * without closing the underlying scene, exposing 2 focused tabs:
  * 1. `Cheats` — Unit Level (`1–40`) & Stage swapper, Gold & Bag item spawner,
- *    World Map node/shop/skirmish/NG+ controls, Playable Pokémon recruiter, and
+ *    World Map node/shop/skirmish controls, Playable Pokémon recruiter, and
  *    Mid-Battle `Full Heal Squad` / `Instant Win`.
  * 2. `Map Editor` — 5-Dungeon Demo map preview (`D1`–`D5`), `Open Map Editor`,
  *    `Test Battle`, `Sync Cloud`, and `Reset Default`.
@@ -77,7 +77,6 @@ export class DevToolsHarness {
   private goldLabelEl: HTMLElement | null = null;
   private itemSelectEl: HTMLSelectElement | null = null;
   private recruitSelectEl: HTMLSelectElement | null = null;
-  private ngPlusBtnEl: HTMLButtonElement | null = null;
   private battleHealBtnEl: HTMLButtonElement | null = null;
   private battleWinBtnEl: HTMLButtonElement | null = null;
   private cheatStatusEl: HTMLElement | null = null;
@@ -235,7 +234,6 @@ export class DevToolsHarness {
             <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-reset-d1">Reset to D1</button>
             <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-clear-current-node">Clear Node</button>
             <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-spawn-skirmish">Spawn Skirmish</button>
-            <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-toggle-ngplus">NG+: OFF</button>
           </div>
           <div class="pmd-inline-btns">
             <button type="button" class="pmd-btn pmd-chip-btn" data-shop-type="healing_shop" data-testid="devtools-shop-healing_shop">Shop: Heal/Stone</button>
@@ -323,7 +321,6 @@ export class DevToolsHarness {
     this.goldLabelEl = this.modalEl.querySelector<HTMLElement>('[data-testid="devtools-gold-label"]');
     this.itemSelectEl = this.modalEl.querySelector<HTMLSelectElement>('[data-testid="devtools-item-select"]');
     this.recruitSelectEl = this.modalEl.querySelector<HTMLSelectElement>('[data-testid="devtools-recruit-select"]');
-    this.ngPlusBtnEl = this.modalEl.querySelector<HTMLButtonElement>('[data-testid="devtools-toggle-ngplus"]');
     this.battleHealBtnEl = this.modalEl.querySelector<HTMLButtonElement>('[data-testid="devtools-battle-heal"]');
     this.battleWinBtnEl = this.modalEl.querySelector<HTMLButtonElement>('[data-testid="devtools-battle-win"]');
     this.cheatStatusEl = this.modalEl.querySelector<HTMLElement>('[data-testid="devtools-cheat-status"]');
@@ -370,12 +367,9 @@ export class DevToolsHarness {
     if (this.saveManager.getSave() !== null) return;
     this.saveManager.createNewCampaignSave({
       campaignMode: 'demo',
-      lordSpeciesId: 'dratini',
-      lordNickname: 'Bahamut',
-      partnerSpeciesId: 'bulbasaur',
-      partnerNickname: 'Sprout',
-      healerSpeciesId: 'happiny',
-      healerNickname: 'Clover',
+      lordSpeciesId: 'axew',
+      partnerSpeciesId: 'piplup',
+      healerSpeciesId: 'flabebe',
       startingLevel: DEMO_STARTING_LEVEL,
       scaleStatsToLevel: true,
       initialConvoy: DEMO_INITIAL_CONVOY,
@@ -541,7 +535,7 @@ export class DevToolsHarness {
         this.ensureActiveSaveForCheat();
         this.saveManager.resetOverworldToPrologue(DEMO_OVERWORLD_GRAPH);
         this.audioManager.playSfx('select');
-        this.setCheatStatus('Reset World Map to D1: Beach Cave.');
+        this.setCheatStatus('Reset World Map to D1: Western Beach.');
         this.onLiveStateMutated({ snapOverworld: true });
       },
       { signal }
@@ -611,29 +605,13 @@ export class DevToolsHarness {
     });
 
     bindPointerTap(
-      this.ngPlusBtnEl,
-      () => {
-        const next = !this.saveManager.isNewGamePlusUnlocked();
-        this.saveManager.setNewGamePlusUnlocked(next);
-        this.audioManager.playSfx('select');
-        this.setCheatStatus(`New Game+ ${next ? 'Unlocked' : 'Locked'}.`);
-        this.refreshCheatsTab();
-        this.onLiveStateMutated();
-      },
-      { signal }
-    );
-
-    bindPointerTap(
       this.modalEl.querySelector<HTMLElement>('[data-testid="devtools-seed-save"]'),
       () => {
         this.saveManager.createNewCampaignSave({
           campaignMode: 'demo',
-          lordSpeciesId: 'dratini',
-          lordNickname: 'Bahamut',
-          partnerSpeciesId: 'bulbasaur',
-          partnerNickname: 'Sprout',
-          healerSpeciesId: 'happiny',
-          healerNickname: 'Clover',
+          lordSpeciesId: 'axew',
+          partnerSpeciesId: 'piplup',
+          healerSpeciesId: 'flabebe',
           startingLevel: DEMO_STARTING_LEVEL,
           scaleStatsToLevel: true,
           initialConvoy: DEMO_INITIAL_CONVOY,
@@ -750,11 +728,6 @@ export class DevToolsHarness {
     const save = this.saveManager.getSave();
     if (this.goldLabelEl) {
       this.goldLabelEl.textContent = `${(save?.gold ?? 0).toLocaleString()}G`;
-    }
-    if (this.ngPlusBtnEl) {
-      const ng = this.saveManager.isNewGamePlusUnlocked();
-      this.ngPlusBtnEl.textContent = ng ? 'NG+: ON' : 'NG+: OFF';
-      this.ngPlusBtnEl.classList.toggle('is-active', ng);
     }
     const battleOpen = this.isBattleOpen();
     if (this.battleHealBtnEl) this.battleHealBtnEl.disabled = !battleOpen;

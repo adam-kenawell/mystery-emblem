@@ -15,6 +15,7 @@ import { loadImage } from '../../utils/sprite-utils';
 import {
   computePmdTileSpritePlacement,
   loadSpeciesSpriteBundle,
+  resolveUnitVisualAssetId,
   type LoadedSpriteBundle,
   type PmdDirection,
   type PmdSpriteAction,
@@ -1656,7 +1657,7 @@ export class OverworldScene {
       if (compatibleUnits.length > 0) {
         for (const u of compatibleUnits) {
           fitsRow.appendChild(
-            createMiniSpeciesPortrait(u.speciesId, {
+            createMiniSpeciesPortrait(resolveUnitVisualAssetId(u.speciesId, u.cosmeticForm), {
               title: u.nickname,
               testId: `kecleon-tm-fit-${selectedItem.id}-${u.instanceId}`,
               sizePx: 24,
@@ -1770,7 +1771,7 @@ export class OverworldScene {
     for (const u of save.roster) {
       const uItemId = getUnitEquippedItemId(u);
       const btn = createUnitPortraitCell({
-        speciesIdOrAssetId: u.speciesId,
+        speciesIdOrAssetId: resolveUnitVisualAssetId(u.speciesId, u.cosmeticForm),
         ariaLabel: u.nickname,
         testId: `overworld-roster-unit-${u.instanceId}`,
         portraitTestId: `overworld-roster-portrait-${u.instanceId}`,
@@ -1822,7 +1823,7 @@ export class OverworldScene {
         .querySelector('[data-ow-unit-portrait]')!
         .appendChild(this.unitDetailPortraitView.canvas);
       void this.unitDetailPortraitView.setPortrait({
-        speciesIdOrAssetId: selected.speciesId,
+        speciesIdOrAssetId: resolveUnitVisualAssetId(selected.speciesId, selected.cosmeticForm),
         emotion: 'Normal',
       });
 
@@ -2224,7 +2225,7 @@ export class OverworldScene {
     for (const u of save.roster) {
       const uItemId = getUnitEquippedItemId(u);
       const cell = createUnitPortraitCell({
-        speciesIdOrAssetId: u.speciesId,
+        speciesIdOrAssetId: resolveUnitVisualAssetId(u.speciesId, u.cosmeticForm),
         ariaLabel: u.nickname,
         testId: `overworld-items-unit-${u.instanceId}`,
         portraitTestId: `overworld-items-portrait-${u.instanceId}`,
@@ -2362,10 +2363,13 @@ export class OverworldScene {
         giveBtn.dataset.equipConvoy = selItem.id;
         giveBtn.dataset.testid = `overworld-convoy-equip-btn-${selItem.id}`;
         giveBtn.appendChild(
-          createMiniSpeciesPortrait(targetUnit.speciesId, {
-            title: targetUnit.nickname,
-            sizePx: 20,
-          })
+          createMiniSpeciesPortrait(
+            resolveUnitVisualAssetId(targetUnit.speciesId, targetUnit.cosmeticForm),
+            {
+              title: targetUnit.nickname,
+              sizePx: 20,
+            }
+          )
         );
         const lbl = document.createElement('span');
         lbl.textContent = targetItemId ? 'Replace' : 'Equip';

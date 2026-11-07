@@ -1,3 +1,4 @@
+import { getFlabebeFlowerColorForLord } from '../assets/pmdAssetLoader';
 import {
   getAllCustomMapOverrides,
   getCustomMapsSyncEnvelope,
@@ -27,6 +28,7 @@ import {
   type CampaignMode,
   type ConvoyEntry,
   type EvolutionBranch,
+  type FlabebeFlowerColor,
   type ItemDefinition,
   type KecleonShopType,
   type OwnedPokemonInstance,
@@ -221,6 +223,7 @@ function findForwardEvolutionPath(
 export interface CreatePokemonOptions {
   speciesId: string;
   nickname?: string;
+  cosmeticForm?: FlabebeFlowerColor;
   level?: number;
   /** When true and `level > defaultJoinLevel`, scales manual `baseStats` via manual `growthRates` */
   scaleStatsToLevel?: boolean;
@@ -278,6 +281,7 @@ export function createPokemonInstance(opts: CreatePokemonOptions): OwnedPokemonI
     instanceId: generateId('unit'),
     speciesId: sp.id,
     nickname: sanitizeNickname(opts.nickname, sp.name),
+    ...(opts.cosmeticForm ? { cosmeticForm: opts.cosmeticForm } : {}),
     isLord: Boolean(opts.isLord),
     level,
     exp: 0,
@@ -292,10 +296,13 @@ export function createPokemonInstance(opts: CreatePokemonOptions): OwnedPokemonI
 }
 
 export const DEFAULT_QUIZ_SEEDS: QuizRecruitSeeds = {
-  q1Healer: ['happiny'],
-  q2BugFlying: ['caterpie', 'pidgey'],
-  q3GhostPsychic: ['duskull', 'ralts'],
-  q4Electric: ['shinx'],
+  slot1Flying: ['pidgey'],
+  slot2Psychic: ['ralts'],
+  slot3Electric: ['elekid'],
+  q1Healer: ['flabebe'],
+  q2BugFlying: ['pidgey', 'sewaddle'],
+  q3GhostPsychic: ['ralts'],
+  q4Electric: ['elekid'],
   q5FrontlineTrio: ['machop', 'geodude', 'trapinch'],
   q6WaterGrass: ['poliwag', 'bellsprout'],
   q7Fire: ['litwick'],
@@ -306,9 +313,9 @@ export const DEFAULT_QUIZ_SEEDS: QuizRecruitSeeds = {
 export interface NewCampaignConfig {
   lordSpeciesId: string;
   lordNickname?: string;
-  partnerSpeciesId: string;
+  partnerSpeciesId?: string;
   partnerNickname?: string;
-  healerSpeciesId: string;
+  healerSpeciesId?: string;
   healerNickname?: string;
   quizSeeds?: QuizRecruitSeeds;
   newGamePlusUnlocked?: boolean;
@@ -318,12 +325,14 @@ export interface NewCampaignConfig {
   initialConvoy?: ReadonlyArray<ConvoyEntry>;
   startingGold?: number;
   currentChapterId?: string;
+  overworldGraph?: OverworldGraphDefinition;
 }
 
 export interface BattleUnitSaveSyncEntry {
   instanceId: string;
   speciesId: string;
   nickname: string;
+  cosmeticForm?: FlabebeFlowerColor;
   level: number;
   exp: number;
   currentStats: StatBlockSeven;
@@ -433,6 +442,9 @@ export class SaveStateManager {
   public createNewCampaignSave(cfg: NewCampaignConfig): SaveData {
     const startLv = Math.max(1, Math.min(40, Math.floor(cfg.startingLevel ?? 1)));
     const scaleStats = Boolean(cfg.scaleStatsToLevel ?? startLv > 1);
+    const partnerSpeciesId = cfg.partnerSpeciesId ?? 'piplup';
+    const healerSpeciesId = cfg.healerSpeciesId ?? 'flabebe';
+    const flabebeFlower = getFlabebeFlowerColorForLord(cfg.lordSpeciesId);
 
     const lord = createPokemonInstance({
       speciesId: cfg.lordSpeciesId,
@@ -443,15 +455,19 @@ export class SaveStateManager {
       consumableItemId: 'potion',
     });
     const partner = createPokemonInstance({
-      speciesId: cfg.partnerSpeciesId,
+      speciesId: partnerSpeciesId,
       nickname: cfg.partnerNickname,
+      cosmeticForm:
+        SPECIES_MAP.get(partnerSpeciesId)?.lineId === 'flabebe_line' ? flabebeFlower : undefined,
       level: startLv,
       scaleStatsToLevel: scaleStats,
       heldItemId: 'oran_berry',
     });
     const healer = createPokemonInstance({
-      speciesId: cfg.healerSpeciesId,
+      speciesId: healerSpeciesId,
       nickname: cfg.healerNickname,
+      cosmeticForm:
+        SPECIES_MAP.get(healerSpeciesId)?.lineId === 'flabebe_line' ? flabebeFlower : undefined,
       level: startLv,
       scaleStatsToLevel: scaleStats,
     });
@@ -460,7 +476,7 @@ export class SaveStateManager {
       ? JSON.parse(JSON.stringify(cfg.quizSeeds))
       : {
           ...DEFAULT_QUIZ_SEEDS,
-          q1Healer: [cfg.healerSpeciesId],
+          q1Healer: [healerSpeciesId],
         };
 
     const initialChapterId = cfg.currentChapterId?.trim() || 'prologue';
@@ -670,7 +686,18 @@ export class SaveStateManager {
 
   public recruitPokemon(opts: CreatePokemonOptions): OwnedPokemonInstance {
     const save = this.requireActiveSave();
-    const created = createPokemonInstance({ ...opts, isLord: false });
+    const lordUnit = save.roster.find((u) => u.instanceId === save.campaign.lordInstanceId);
+    const sp = SPECIES_MAP.get(opts.speciesId);
+    const resolvedCosmeticForm =
+      opts.cosmeticForm ??
+      (sp?.lineId === 'flabebe_line'
+        ? getFlabebeFlowerColorForLord(lordUnit?.speciesId)
+        : undefined);
+    const created = createPokemonInstance({
+      ...opts,
+      cosmeticForm: resolvedCosmeticForm,
+      isLord: false,
+    });
     save.roster.push(created);
     this.commitSave(save);
     return JSON.parse(JSON.stringify(created)) as OwnedPokemonInstance;
@@ -913,6 +940,9 @@ export class SaveStateManager {
 
       owned.speciesId = sp.id;
       owned.nickname = sanitizeNickname(syncUnit.nickname, sp.name);
+      if (syncUnit.cosmeticForm !== undefined) {
+        owned.cosmeticForm = syncUnit.cosmeticForm;
+      }
       owned.level = Math.max(1, Math.min(40, Math.floor(syncUnit.level)));
       owned.exp = owned.level >= 40 ? 0 : Math.max(0, Math.min(99, Math.floor(syncUnit.exp)));
       owned.currentStats = { ...syncUnit.currentStats };

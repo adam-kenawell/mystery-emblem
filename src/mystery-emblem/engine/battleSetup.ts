@@ -233,6 +233,7 @@ export function buildBattleUnitsFromPrepDeployment(
       speciesId: sp.id,
       speciesName: sp.name,
       nickname: owned.nickname || sp.name,
+      ...(owned.cosmeticForm ? { cosmeticForm: owned.cosmeticForm } : {}),
       level: owned.level,
       exp: owned.exp,
       unlockedMoveIds: [...owned.unlockedMoveIds],
@@ -292,14 +293,14 @@ export function createFallbackBattlePrepManager(minSquadSize = 5): SaveStateMana
   const mgr = new SaveStateManager(memStorage, new InMemoryCloudSyncAdapter(new Map()));
   mgr.createNewCampaignSave({
     lordSpeciesId: 'dratini',
-    partnerSpeciesId: 'bulbasaur',
-    healerSpeciesId: 'happiny',
+    partnerSpeciesId: 'piplup',
+    healerSpeciesId: 'flabebe',
     startingLevel: 9,
     scaleStatsToLevel: true,
     campaignMode: 'demo',
   });
 
-  const extraPool = ['caterpie', 'pidgey', 'duskull', 'abra', 'shinx'];
+  const extraPool = ['pidgey', 'sewaddle', 'ralts', 'elekid', 'starly'];
   let idx = 0;
   while ((mgr.getSave()?.roster.length ?? 0) < Math.min(8, minSquadSize) && idx < extraPool.length) {
     mgr.recruitPokemon({ speciesId: extraPool[idx]!, level: 9, scaleStatsToLevel: true });

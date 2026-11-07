@@ -294,7 +294,13 @@ export interface PokemonSpeciesDefinition {
 // 5. Save State Schema (`SaveStateManager`)
 // ============================================================================
 
+export const FLABEBE_FLOWER_COLORS = ['red', 'orange', 'yellow', 'blue', 'white'] as const;
+export type FlabebeFlowerColor = (typeof FLABEBE_FLOWER_COLORS)[number];
+
 export interface QuizRecruitSeeds {
+  slot1Flying?: string[];
+  slot2Psychic?: string[];
+  slot3Electric?: string[];
   q1Healer: string[];
   q2BugFlying: string[];
   q3GhostPsychic: string[];
@@ -309,6 +315,8 @@ export interface QuizRecruitSeeds {
 export interface OwnedPokemonInstance {
   instanceId: string;
   speciesId: string;
+  /** Optional purely cosmetic sprite/portrait form (e.g. Flabébé -> Floette -> Florges flower color) */
+  cosmeticForm?: FlabebeFlowerColor;
   /** Persistent custom nickname (defaults to species name; editable anytime) */
   nickname: string;
   isLord: boolean;

@@ -9,7 +9,11 @@
  * - 100% Unified Pointer Event driven (click/tap to reveal/advance, Skip & Back controls; zero keyboard listeners)
  */
 
-import { type PmdPortraitEmotion } from '../assets/pmdAssetLoader';
+import {
+  resolveSpeciesAssetTarget,
+  resolveUnitVisualAssetId,
+  type PmdPortraitEmotion,
+} from '../assets/pmdAssetLoader';
 import {
   getAudioManager,
   type AudioManager,
@@ -60,6 +64,7 @@ export interface ResolvedSpeakerIdentity {
   nickname: string;
   speciesName: string;
   speciesId?: string;
+  visualAssetId?: string;
   pmdAssetId: string;
   instanceId?: string;
 }
@@ -355,30 +360,31 @@ export class DialogueOverlay {
           save?.roster.find((u) => u.instanceId === save.campaign.lordInstanceId) ??
           save?.roster.find((u) => u.isLord) ??
           save?.roster[0];
-        return { unit, fallbackSpeciesId: speaker.fallbackSpeciesId ?? 'dratini' };
+        return { unit, fallbackSpeciesId: speaker.fallbackSpeciesId ?? 'axew' };
       }
       if (speaker.kind === 'partner') {
         const unit =
           save?.roster.find((u) => u.instanceId === save.campaign.partnerInstanceId) ??
           save?.roster.find((_, idx) => idx === 1);
-        return { unit, fallbackSpeciesId: speaker.fallbackSpeciesId ?? 'bulbasaur' };
+        return { unit, fallbackSpeciesId: speaker.fallbackSpeciesId ?? 'piplup' };
       }
       if (speaker.kind === 'healer') {
         const seededHealer = save?.campaign.quizSeeds.q1Healer[0];
         const unit = save?.roster[2];
-        return { unit, fallbackSpeciesId: speaker.fallbackSpeciesId ?? seededHealer ?? 'happiny' };
+        return { unit, fallbackSpeciesId: speaker.fallbackSpeciesId ?? seededHealer ?? 'flabebe' };
       }
       if (speaker.kind === 'unit') {
         const unit = save?.roster.find((u) => u.instanceId === speaker.instanceId);
-        return { unit, fallbackSpeciesId: speaker.fallbackSpeciesId ?? 'dratini' };
+        return { unit, fallbackSpeciesId: speaker.fallbackSpeciesId ?? 'axew' };
       }
-      return { fallbackSpeciesId: 'dratini' };
+      return { fallbackSpeciesId: 'axew' };
     };
 
     if (speaker.kind === 'npc') {
       return {
         nickname: speaker.nickname,
         speciesName: speaker.speciesName,
+        visualAssetId: speaker.pmdAssetId,
         pmdAssetId: speaker.pmdAssetId,
       };
     }
@@ -390,7 +396,8 @@ export class DialogueOverlay {
         nickname: speaker.nickname?.trim() || speciesName,
         speciesName,
         speciesId: sp?.id ?? speaker.speciesId,
-        pmdAssetId: sp?.pmdAssetId ?? '0147',
+        visualAssetId: sp?.id ?? speaker.speciesId,
+        pmdAssetId: sp?.pmdAssetId ?? '0610',
       };
     }
 
@@ -398,11 +405,14 @@ export class DialogueOverlay {
     if (unit) {
       const sp = getSpeciesById(unit.speciesId);
       const speciesName = sp?.name ?? unit.speciesId;
+      const visualAssetId = resolveUnitVisualAssetId(unit.speciesId, unit.cosmeticForm);
+      const resolvedTarget = resolveSpeciesAssetTarget(visualAssetId);
       return {
         nickname: unit.nickname,
         speciesName,
         speciesId: unit.speciesId,
-        pmdAssetId: sp?.pmdAssetId ?? '0147',
+        visualAssetId,
+        pmdAssetId: resolvedTarget.pmdAssetId,
         instanceId: unit.instanceId,
       };
     }
@@ -545,7 +555,7 @@ export class DialogueOverlay {
       this.leftSlotEl.classList.toggle('is-listening', line.side !== 'left');
       portraitTasks.push(
         this.leftPortrait.setPortrait({
-          speciesIdOrAssetId: leftId.speciesId ?? leftId.pmdAssetId,
+          speciesIdOrAssetId: leftId.visualAssetId ?? leftId.speciesId ?? leftId.pmdAssetId,
           emotion: leftState.emotion,
           mirrorHorizontal: false,
         })
@@ -562,7 +572,7 @@ export class DialogueOverlay {
       this.rightSlotEl.classList.toggle('is-listening', line.side !== 'right');
       portraitTasks.push(
         this.rightPortrait.setPortrait({
-          speciesIdOrAssetId: rightId.speciesId ?? rightId.pmdAssetId,
+          speciesIdOrAssetId: rightId.visualAssetId ?? rightId.speciesId ?? rightId.pmdAssetId,
           emotion: rightState.emotion,
           mirrorHorizontal: true,
         })

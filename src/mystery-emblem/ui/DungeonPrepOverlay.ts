@@ -13,6 +13,7 @@
  * and Rule 3 (Authentic PMD: Explorers of Sky window skin & pixelated portraits).
  */
 
+import { resolveUnitVisualAssetId } from '../assets/pmdAssetLoader';
 import type { AudioManager } from '../audio/AudioManager';
 import {
   ITEMS_LIST,
@@ -634,7 +635,7 @@ export class DungeonPrepOverlay {
         const itemId = getUnitEquippedItemId(unit);
 
         const buttonEl = createUnitPortraitCell({
-          speciesIdOrAssetId: unit.speciesId,
+          speciesIdOrAssetId: resolveUnitVisualAssetId(unit.speciesId, unit.cosmeticForm),
           ariaLabel: unit.nickname,
           isSelected,
           isLord: unit.isLord,
@@ -664,7 +665,7 @@ export class DungeonPrepOverlay {
     if (!sp) return;
 
     void this.unitPortraitView.setPortrait({
-      speciesIdOrAssetId: sp.id,
+      speciesIdOrAssetId: resolveUnitVisualAssetId(selected.speciesId, selected.cosmeticForm),
       emotion: selected.isLord ? 'Determined' : 'Normal',
       mirrorHorizontal: false,
     });
@@ -1131,7 +1132,7 @@ export class DungeonPrepOverlay {
         const isSel = u.instanceId === selectedUnit.instanceId;
         const isDep = this.isUnitDeployed(u.instanceId);
         const buttonEl = createUnitPortraitCell({
-          speciesIdOrAssetId: u.speciesId,
+          speciesIdOrAssetId: resolveUnitVisualAssetId(u.speciesId, u.cosmeticForm),
           ariaLabel: u.nickname,
           isSelected: isSel,
           isLord: u.isLord,
@@ -1334,11 +1335,14 @@ export class DungeonPrepOverlay {
           } else {
             for (const h of holders) {
               holdersContainer.appendChild(
-                createMiniSpeciesPortrait(h.speciesId, {
-                  title: h.nickname,
-                  sizePx: 22,
-                  testId: `prep-item-holder-${item.id}-${h.instanceId}`,
-                })
+                createMiniSpeciesPortrait(
+                  resolveUnitVisualAssetId(h.speciesId, h.cosmeticForm),
+                  {
+                    title: h.nickname,
+                    sizePx: 22,
+                    testId: `prep-item-holder-${item.id}-${h.instanceId}`,
+                  }
+                )
               );
             }
           }
@@ -1376,10 +1380,13 @@ export class DungeonPrepOverlay {
             actionBtn.disabled = !otherHolder;
             if (otherHolder) {
               actionBtn.appendChild(
-                createMiniSpeciesPortrait(otherHolder.speciesId, {
-                  title: otherHolder.nickname,
-                  sizePx: 20,
-                })
+                createMiniSpeciesPortrait(
+                  resolveUnitVisualAssetId(otherHolder.speciesId, otherHolder.cosmeticForm),
+                  {
+                    title: otherHolder.nickname,
+                    sizePx: 20,
+                  }
+                )
               );
               const takeLbl = document.createElement('span');
               takeLbl.textContent = 'Take';

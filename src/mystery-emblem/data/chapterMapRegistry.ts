@@ -2,11 +2,11 @@
  * Chapter & Level Map Catalog + Persistent Dev Tools Map Override Store
  *
  * Covers the 5 playable Demo Dungeons:
- * - `prologue`   — Dungeon 1: Beach Cave
- * - `chapter_01` — Dungeon 2: Drenched Bluff
- * - `chapter_02` — Dungeon 3: Mt. Bristle
- * - `chapter_03` — Dungeon 4: Waterfall Cave
- * - `chapter_04` — Dungeon 5: Apple Woods
+ * - `prologue`   — Dungeon 1: Western Beach
+ * - `chapter_01` — Dungeon 2: Verdant Bluff
+ * - `chapter_02` — Dungeon 3: Cleft Mountain
+ * - `chapter_03` — Dungeon 4: River Shrine
+ * - `chapter_04` — Dungeon 5: Berry Orchards
  *
  * Persists customized maps immediately to `localStorage` (`mystery_emblem_map_overrides_v1`)
  * and syncs via `SaveData.customMaps` / `customMapsEnvelopeJson` to Cloud Firestore (`saves/{uid}`).
@@ -129,14 +129,14 @@ const DEFAULT_PLAYER_SPAWN_POOL: ReadonlyArray<{
   speciesId: string;
   nickname: string;
 }> = [
-  { x: 3, y: 5, speciesId: 'dratini', nickname: 'Dratini' },
-  { x: 3, y: 3, speciesId: 'bulbasaur', nickname: 'Bulbasaur' },
-  { x: 3, y: 7, speciesId: 'happiny', nickname: 'Happiny' },
-  { x: 2, y: 4, speciesId: 'caterpie', nickname: 'Caterpie' },
-  { x: 2, y: 6, speciesId: 'pidgey', nickname: 'Pidgey' },
-  { x: 2, y: 8, speciesId: 'duskull', nickname: 'Duskull' },
-  { x: 4, y: 4, speciesId: 'abra', nickname: 'Abra' },
-  { x: 4, y: 6, speciesId: 'shinx', nickname: 'Shinx' },
+  { x: 3, y: 5, speciesId: 'axew', nickname: 'Axew' },
+  { x: 3, y: 3, speciesId: 'piplup', nickname: 'Piplup' },
+  { x: 3, y: 7, speciesId: 'flabebe', nickname: 'Flabébé' },
+  { x: 2, y: 4, speciesId: 'pidgey', nickname: 'Pidgey' },
+  { x: 2, y: 6, speciesId: 'sewaddle', nickname: 'Sewaddle' },
+  { x: 2, y: 8, speciesId: 'ralts', nickname: 'Ralts' },
+  { x: 4, y: 4, speciesId: 'elekid', nickname: 'Elekid' },
+  { x: 4, y: 6, speciesId: 'starly', nickname: 'Starly' },
 ];
 
 function makeCell(
@@ -253,8 +253,8 @@ const DEMO_CHAPTER_SPECS: ReadonlyArray<GeneratedChapterSpec> = [
     entry: {
       id: 'prologue',
       shortCode: 'D1',
-      label: 'Dungeon 1 — Beach Cave',
-      biomeName: 'Beach Cave',
+      label: 'Dungeon 1 — Western Beach',
+      biomeName: 'Western Beach',
       primaryTilesetId: '001',
       bgmCue: 'beach_cave',
       defaultDeploymentCap: 3,
@@ -270,7 +270,7 @@ const DEMO_CHAPTER_SPECS: ReadonlyArray<GeneratedChapterSpec> = [
         y: 5,
         speciesId: 'zigzagoon_galar',
         level: 9,
-        nickname: 'Coastal Scout',
+        nickname: 'Feral Outrider',
         aiMode: 'wait_until_in_range',
       },
       {
@@ -278,7 +278,7 @@ const DEMO_CHAPTER_SPECS: ReadonlyArray<GeneratedChapterSpec> = [
         y: 3,
         speciesId: 'impidimp',
         level: 10,
-        nickname: 'Treasure Raider',
+        nickname: 'Shadow Raider',
         droppableItemId: 'evolution_stone',
         aiMode: 'wait_until_in_range',
       },
@@ -287,7 +287,7 @@ const DEMO_CHAPTER_SPECS: ReadonlyArray<GeneratedChapterSpec> = [
         y: 7,
         speciesId: 'pawniard',
         level: 10,
-        nickname: 'Ironscale Vanguard',
+        nickname: 'Ironscale Scout',
         aiMode: 'wait_until_in_range',
       },
     ],
@@ -296,8 +296,8 @@ const DEMO_CHAPTER_SPECS: ReadonlyArray<GeneratedChapterSpec> = [
     entry: {
       id: 'chapter_01',
       shortCode: 'D2',
-      label: 'Dungeon 2 — Drenched Bluff',
-      biomeName: 'Drenched Bluff',
+      label: 'Dungeon 2 — Verdant Bluff',
+      biomeName: 'Verdant Bluff',
       primaryTilesetId: '003',
       bgmCue: 'drenched_bluff',
       defaultDeploymentCap: 5,
@@ -319,9 +319,9 @@ const DEMO_CHAPTER_SPECS: ReadonlyArray<GeneratedChapterSpec> = [
       {
         x: 11,
         y: 7,
-        speciesId: 'seedot',
+        speciesId: 'impidimp',
         level: 9,
-        nickname: 'Cliff Guerilla',
+        nickname: 'Cliff Hexer',
         aiMode: 'wait_until_in_range',
       },
       {
@@ -349,8 +349,8 @@ const DEMO_CHAPTER_SPECS: ReadonlyArray<GeneratedChapterSpec> = [
     entry: {
       id: 'chapter_02',
       shortCode: 'D3',
-      label: 'Dungeon 3 — Mt. Bristle',
-      biomeName: 'Mt. Bristle',
+      label: 'Dungeon 3 — Cleft Mountain',
+      biomeName: 'Cleft Mountain',
       primaryTilesetId: '014',
       bgmCue: 'mt_bristle',
       defaultDeploymentCap: 6,
@@ -393,8 +393,8 @@ const DEMO_CHAPTER_SPECS: ReadonlyArray<GeneratedChapterSpec> = [
     entry: {
       id: 'chapter_03',
       shortCode: 'D4',
-      label: 'Dungeon 4 — Waterfall Cave',
-      biomeName: 'Waterfall Cave',
+      label: 'Dungeon 4 — River Shrine',
+      biomeName: 'River Shrine',
       primaryTilesetId: '016',
       bgmCue: 'waterfall_cave',
       defaultDeploymentCap: 6,
@@ -411,7 +411,7 @@ const DEMO_CHAPTER_SPECS: ReadonlyArray<GeneratedChapterSpec> = [
         y: 5,
         speciesId: 'spheal',
         level: 10,
-        nickname: 'Falls Guard',
+        nickname: 'Shrine Guard',
         aiMode: 'wait_until_in_range',
       },
       {
@@ -427,7 +427,7 @@ const DEMO_CHAPTER_SPECS: ReadonlyArray<GeneratedChapterSpec> = [
         y: 7,
         speciesId: 'croagunk',
         level: 11,
-        nickname: 'Cavern Striker',
+        nickname: 'Shrine Striker',
         droppableItemId: 'protein',
         aiMode: 'wait_until_in_range',
       },
@@ -436,7 +436,7 @@ const DEMO_CHAPTER_SPECS: ReadonlyArray<GeneratedChapterSpec> = [
         y: 5,
         speciesId: 'lairon',
         level: 11,
-        nickname: 'Ironclad Warden',
+        nickname: 'Ironclad Lairon',
         droppableItemId: 'evolution_stone',
         aiMode: 'wait_until_in_range',
       },
@@ -446,8 +446,8 @@ const DEMO_CHAPTER_SPECS: ReadonlyArray<GeneratedChapterSpec> = [
     entry: {
       id: 'chapter_04',
       shortCode: 'D5',
-      label: 'Dungeon 5 — Apple Woods',
-      biomeName: 'Apple Woods',
+      label: 'Dungeon 5 — Berry Orchards',
+      biomeName: 'Berry Orchards',
       primaryTilesetId: '042',
       bgmCue: 'apple_woods',
       defaultDeploymentCap: 7,
@@ -462,9 +462,9 @@ const DEMO_CHAPTER_SPECS: ReadonlyArray<GeneratedChapterSpec> = [
       {
         x: 12,
         y: 3,
-        speciesId: 'seedot',
+        speciesId: 'linoone_galar',
         level: 11,
-        nickname: 'Orchard Ranger',
+        nickname: 'Captain Linoone',
         aiMode: 'wait_until_in_range',
       },
       {
@@ -481,7 +481,7 @@ const DEMO_CHAPTER_SPECS: ReadonlyArray<GeneratedChapterSpec> = [
         y: 4,
         speciesId: 'corvisquire',
         level: 11,
-        nickname: 'Canopy Captain',
+        nickname: 'Canopy Harrier',
         aiMode: 'wait_until_in_range',
       },
       {
@@ -489,15 +489,15 @@ const DEMO_CHAPTER_SPECS: ReadonlyArray<GeneratedChapterSpec> = [
         y: 7,
         speciesId: 'morgrem',
         level: 11,
-        nickname: 'Shadow Envoy',
+        nickname: 'Captain Morgrem',
         aiMode: 'wait_until_in_range',
       },
       {
         x: 17,
         y: 5,
-        speciesId: 'nuzleaf',
+        speciesId: 'deino',
         level: 12,
-        nickname: 'Commander Nuzleaf',
+        nickname: 'Commander Deino',
         heldItemId: 'oran_berry',
         isBoss: true,
         stationary: false,

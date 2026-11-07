@@ -1,86 +1,115 @@
 /**
- * Mystery Emblem — Personality Quiz, Dragon Lord Trait Scorer & NG+ Seed Registry (`quizData.ts`)
+ * Mystery Emblem — Demo Personality Quiz & Dragon Lord Aura Scorer (`quizData.ts`)
  *
- * Implements GDD Section 1.1:
- * - 8 Stage-1 Dragon Lords (`dratini`, `bagon`, `gible`, `deino`, `goomy`, `jangmo_o`, `dreepy`, `frigibax`)
- * - 9 Personality Questions (`Q1` = 6 choices seeding Prologue Healer; `Q2`–`Q9` = 3 choices each,
- *   where each of the 8 Dragon Lords appears 3× as primary `+2` and 3× as secondary `+1`)
- * - Deterministic earliest-point tie-breaker when 2+ Dragon Lords tie for top score
+ * Implements the 4-question Demo Personality Quiz aligned with the Lore Bible:
+ * - 5 Starting Stage-1 Dragon Lords (`axew`, `bagon`, `gible`, `dratini`, `goomy`),
+ *   each bound 1-to-1 to Flabébé's flower color (`red`, `orange`, `yellow`, `blue`, `white`)
+ *   and aura reveal background gradient.
+ * - `Q1` (5 options): Pure Dragon Aura resonance question.
+ * - `Q2` (3 options): Seeds `slot1Flying` (`pidgey` / `starly` / `pikipek`) for Dungeon 2 (`Verdant Bluff`).
+ * - `Q3` (3 options): Seeds `slot2Psychic` (`abra` / `ralts` / `solosis`) for Dungeon 3 (`Cleft Mountain`).
+ * - `Q4` (2 options): Seeds `slot3Electric` (`elekid` / `pawmi`) for Dungeon 5 (`Berry Orchards`).
+ * - Balanced across all `5 × 3 × 3 × 2 = 90` answer combinations (`18 / 18 / 17 / 19 / 18`)
+ *   with deterministic earliest-point tie-breaking.
  */
 
-import type { QuizRecruitSeeds } from '../types/schemas';
+import type { FlabebeFlowerColor, QuizRecruitSeeds } from '../types/schemas';
 import { getSpeciesById, getStage1SpeciesByCategory } from './index';
 
-export type DragonLordSpeciesId =
-  | 'dratini'
-  | 'bagon'
-  | 'gible'
-  | 'deino'
-  | 'goomy'
-  | 'jangmo_o'
-  | 'dreepy'
-  | 'frigibax';
+export type DragonLordSpeciesId = 'axew' | 'bagon' | 'gible' | 'dratini' | 'goomy';
 
 export interface DragonLordTraitInfo {
   speciesId: DragonLordSpeciesId;
   name: string;
+  /** Used in `"You seem to be the ${personalityTitle} type!"` */
+  personalityTitle: string;
   traitLabel: string;
+  personalityDescription: string;
   auraSummary: string;
+  flabebeFlowerColor: FlabebeFlowerColor;
+  flabebeFlowerLabel: string;
+  revealBackdropCss: string;
+  accentBorderColor: string;
 }
+
+export const DEFAULT_QUIZ_BACKDROP_CSS =
+  'radial-gradient(circle at 50% 25%, rgba(28, 68, 128, 0.92), rgba(4, 10, 24, 0.97))';
 
 export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
   {
-    speciesId: 'dratini',
-    name: 'Dratini',
-    traitLabel: 'Mystic & Gentle',
-    auraSummary: 'Serene leader whose Dragon Aura steadies allies.',
+    speciesId: 'axew',
+    name: 'Axew',
+    personalityTitle: 'Brave',
+    traitLabel: 'Brave & Steadfast',
+    personalityDescription:
+      'When trouble strikes, you step forward first so no friend faces danger alone. Your earnest courage rallies everyone beside you to stand tall.',
+    auraSummary: 'Steadfast vanguard whose crimson aura resonates with Red-Flower Flabébé.',
+    flabebeFlowerColor: 'red',
+    flabebeFlowerLabel: 'Red Aura',
+    revealBackdropCss:
+      'radial-gradient(circle at 50% 26%, rgba(196, 38, 52, 0.94), rgba(44, 8, 16, 0.98))',
+    accentBorderColor: '#ff6878',
   },
   {
     speciesId: 'bagon',
     name: 'Bagon',
-    traitLabel: 'Bold & Determined',
-    auraSummary: 'Fearless vanguard who rallies every ally forward.',
+    personalityTitle: 'Hardy',
+    traitLabel: 'Hardy & Determined',
+    personalityDescription:
+      'Once you set your sights on a distant horizon, no setback can shake your resolve. You turn every hard trial into momentum to soar higher.',
+    auraSummary: 'Relentless trailblazer whose amber aura resonates with Orange-Flower Flabébé.',
+    flabebeFlowerColor: 'orange',
+    flabebeFlowerLabel: 'Orange Aura',
+    revealBackdropCss:
+      'radial-gradient(circle at 50% 26%, rgba(216, 102, 24, 0.94), rgba(48, 18, 6, 0.98))',
+    accentBorderColor: '#ffa048',
   },
   {
     speciesId: 'gible',
     name: 'Gible',
-    traitLabel: 'Fierce & Impulsive',
-    auraSummary: 'Hard-hitting frontliner who shatters enemy lines.',
+    personalityTitle: 'Bold',
+    traitLabel: 'Bold & Spirited',
+    personalityDescription:
+      'Full of spark and fearless energy, you charge straight at obstacles with a grin. Your fiery spirit shatters tension when the odds look grim.',
+    auraSummary: 'Hard-hitting frontliner whose golden aura resonates with Yellow-Flower Flabébé.',
+    flabebeFlowerColor: 'yellow',
+    flabebeFlowerLabel: 'Yellow Aura',
+    revealBackdropCss:
+      'radial-gradient(circle at 50% 26%, rgba(198, 164, 24, 0.94), rgba(46, 34, 6, 0.98))',
+    accentBorderColor: '#f8dc48',
   },
   {
-    speciesId: 'deino',
-    name: 'Deino',
-    traitLabel: 'Tenacious & Relentless',
-    auraSummary: 'Unbreakable resolve that presses until victory.',
+    speciesId: 'dratini',
+    name: 'Dratini',
+    personalityTitle: 'Calm',
+    traitLabel: 'Calm & Perceptive',
+    personalityDescription:
+      'Quietly observant and deeply empathetic, you notice what others overlook. Even in a raging storm, your composed presence steadies the whole team.',
+    auraSummary: 'Serene tactician whose azure aura resonates with Blue-Flower Flabébé.',
+    flabebeFlowerColor: 'blue',
+    flabebeFlowerLabel: 'Blue Aura',
+    revealBackdropCss:
+      'radial-gradient(circle at 50% 26%, rgba(36, 112, 214, 0.94), rgba(8, 20, 52, 0.98))',
+    accentBorderColor: '#58c8ff',
   },
   {
     speciesId: 'goomy',
     name: 'Goomy',
-    traitLabel: 'Kind & Resilient',
-    auraSummary: 'Warm-hearted guardian built to endure tough trials.',
-  },
-  {
-    speciesId: 'jangmo_o',
-    name: 'Jangmo-o',
-    traitLabel: 'Honorable & Disciplined',
-    auraSummary: 'Disciplined commander who holds tight formations.',
-  },
-  {
-    speciesId: 'dreepy',
-    name: 'Dreepy',
-    traitLabel: 'Clever & Swift',
-    auraSummary: 'Swift strategist who outsmarts traps at speed.',
-  },
-  {
-    speciesId: 'frigibax',
-    name: 'Frigibax',
-    traitLabel: 'Stoic & Composed',
-    auraSummary: 'Cool-headed tactician who reads every turn ahead.',
+    personalityTitle: 'Gentle',
+    traitLabel: 'Gentle & Resilient',
+    personalityDescription:
+      'Kind-hearted yet quietly unbreakable, you treasure the bonds between allies above all else. Beneath your gentle warmth lies astonishing endurance.',
+    auraSummary: 'Warm-hearted guardian whose luminous aura resonates with White-Flower Flabébé.',
+    flabebeFlowerColor: 'white',
+    flabebeFlowerLabel: 'White Aura',
+    revealBackdropCss:
+      'radial-gradient(circle at 50% 26%, rgba(182, 196, 220, 0.92), rgba(28, 36, 54, 0.98))',
+    accentBorderColor: '#f0f4ff',
   },
 ];
 
-export type QuizSeedKey = keyof QuizRecruitSeeds;
-export type QuizOptionKey = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
+export type QuizSeedKey = 'slot1Flying' | 'slot2Psychic' | 'slot3Electric';
+export type QuizOptionKey = 'A' | 'B' | 'C' | 'D' | 'E';
 
 export interface QuizAnswerOption {
   id: QuizOptionKey;
@@ -92,9 +121,9 @@ export interface QuizAnswerOption {
 }
 
 export interface QuizQuestionDefinition {
-  id: 'q1' | 'q2' | 'q3' | 'q4' | 'q5' | 'q6' | 'q7' | 'q8' | 'q9';
+  id: 'q1' | 'q2' | 'q3' | 'q4';
   number: number;
-  seedKey: QuizSeedKey;
+  seedKey: QuizSeedKey | null;
   chapterSlotTitle: string;
   prompt: string;
   options: ReadonlyArray<QuizAnswerOption>;
@@ -104,321 +133,140 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
   {
     id: 'q1',
     number: 1,
-    seedKey: 'q1Healer',
-    chapterSlotTitle: 'Beach Cave Healer',
-    prompt: 'An exhausted traveler stumbles into town after a storm. How do you help?',
+    seedKey: null,
+    chapterSlotTitle: 'Dragon Aura',
+    prompt: 'Dark waves crash onto an unfamiliar shore as you wake with no memory. What do you do first?',
     options: [
       {
         id: 'A',
-        text: 'Bring a warm meal and a soft blanket right away.',
-        primaryLord: 'goomy',
-        secondaryLord: 'dratini',
-        recruitSpeciesIds: ['happiny'],
-        recruitLabel: 'Happiny',
+        text: 'Rise to your feet and scan the beach for anyone in danger.',
+        primaryLord: 'axew',
+        secondaryLord: 'goomy',
+        recruitSpeciesIds: [],
+        recruitLabel: 'Dragon Aura',
       },
       {
         id: 'B',
-        text: 'Gather soothing herbs and flowers to calm them.',
-        primaryLord: 'dratini',
-        secondaryLord: 'dreepy',
-        recruitSpeciesIds: ['flabebe'],
-        recruitLabel: 'Flabébé',
+        text: 'Climb the nearest dune to chart where the coastline leads.',
+        primaryLord: 'bagon',
+        secondaryLord: 'dratini',
+        recruitSpeciesIds: [],
+        recruitLabel: 'Dragon Aura',
       },
       {
         id: 'C',
-        text: 'Cheer them up with a bright, lively smile!',
-        primaryLord: 'bagon',
+        text: 'Take a slow breath and check that the friends beside you are safe.',
+        primaryLord: 'goomy',
         secondaryLord: 'gible',
-        recruitSpeciesIds: ['bounsweet'],
-        recruitLabel: 'Bounsweet',
+        recruitSpeciesIds: [],
+        recruitLabel: 'Dragon Aura',
       },
       {
         id: 'D',
-        text: 'Lead them somewhere quiet to rest in peace.',
-        primaryLord: 'frigibax',
-        secondaryLord: 'deino',
-        recruitSpeciesIds: ['hatenna'],
-        recruitLabel: 'Hatenna',
+        text: 'Listen quietly to the wind and tide to piece together what happened.',
+        primaryLord: 'dratini',
+        secondaryLord: 'axew',
+        recruitSpeciesIds: [],
+        recruitLabel: 'Dragon Aura',
       },
       {
         id: 'E',
-        text: 'Check their supplies and share your own rations.',
-        primaryLord: 'jangmo_o',
-        secondaryLord: 'goomy',
-        recruitSpeciesIds: ['smoliv'],
-        recruitLabel: 'Smoliv',
-      },
-      {
-        id: 'F',
-        text: 'Share an uplifting story to restore their hope.',
-        primaryLord: 'dreepy',
-        secondaryLord: 'bagon',
-        recruitSpeciesIds: ['togepi'],
-        recruitLabel: 'Togepi',
+        text: 'Shake off the sea spray and test your footing—no storm keeps you down!',
+        primaryLord: 'gible',
+        secondaryLord: 'axew',
+        recruitSpeciesIds: [],
+        recruitLabel: 'Dragon Aura',
       },
     ],
   },
   {
     id: 'q2',
     number: 2,
-    seedKey: 'q2BugFlying',
-    chapterSlotTitle: 'Drenched Bluff Duo',
-    prompt: 'The coastal trail splits into three routes. Which path do you take?',
+    seedKey: 'slot1Flying',
+    chapterSlotTitle: 'Verdant Bluff Wing Scout',
+    prompt: 'An armored patrol blocks the cliffside road up Verdant Bluff. How do you scout ahead?',
     options: [
       {
         id: 'A',
-        text: 'The sunlit road with a clear view of the horizon.',
+        text: 'Follow the high sea breeze for a wide view of the whole ridge.',
         primaryLord: 'bagon',
-        secondaryLord: 'jangmo_o',
-        recruitSpeciesIds: ['caterpie', 'pidgey'],
-        recruitLabel: 'Caterpie & Pidgey',
+        secondaryLord: 'goomy',
+        recruitSpeciesIds: ['pidgey'],
+        recruitLabel: 'Pidgey',
       },
       {
         id: 'B',
-        text: 'The shaded forest path beneath tall canopy trees.',
+        text: 'Dart boldly between the canopy gusts to test their perimeter.',
         primaryLord: 'goomy',
         secondaryLord: 'dratini',
-        recruitSpeciesIds: ['sewaddle', 'pidove'],
-        recruitLabel: 'Sewaddle & Pidove',
+        recruitSpeciesIds: ['starly'],
+        recruitLabel: 'Starly',
       },
       {
         id: 'C',
-        text: 'The steep rocky shortcut straight up the cliffs.',
+        text: 'Perch along the crags and listen closely for gaps in their march.',
         primaryLord: 'gible',
-        secondaryLord: 'deino',
-        recruitSpeciesIds: ['grubbin', 'pikipek'],
-        recruitLabel: 'Grubbin & Pikipek',
+        secondaryLord: 'axew',
+        recruitSpeciesIds: ['pikipek'],
+        recruitLabel: 'Pikipek',
       },
     ],
   },
   {
     id: 'q3',
     number: 3,
-    seedKey: 'q3GhostPsychic',
-    chapterSlotTitle: 'Mt. Bristle Duo',
-    prompt: 'Eerie footsteps echo behind a sealed ruin door at dusk. Your instinct?',
+    seedKey: 'slot2Psychic',
+    chapterSlotTitle: 'Cleft Mountain Mystic',
+    prompt: 'Inside a ruined watchtower on Cleft Mountain, ancient runes begin to hum. Your instinct?',
     options: [
       {
         id: 'A',
-        text: 'Inspect the runes to outsmart whatever is inside.',
-        primaryLord: 'dreepy',
-        secondaryLord: 'frigibax',
-        recruitSpeciesIds: ['duskull', 'abra'],
-        recruitLabel: 'Duskull & Abra',
+        text: 'Trace the geometric sigils to deduce how the mechanism works.',
+        primaryLord: 'gible',
+        secondaryLord: 'goomy',
+        recruitSpeciesIds: ['abra'],
+        recruitLabel: 'Abra',
       },
       {
         id: 'B',
-        text: 'Call out kindly—someone inside may need help.',
+        text: 'Reach out with a calm heart to sense the emotion left behind.',
         primaryLord: 'dratini',
-        secondaryLord: 'goomy',
-        recruitSpeciesIds: ['duskull', 'ralts'],
-        recruitLabel: 'Duskull & Ralts',
+        secondaryLord: 'gible',
+        recruitSpeciesIds: ['ralts'],
+        recruitLabel: 'Ralts',
       },
       {
         id: 'C',
-        text: 'Hold your ground calmly until it reveals itself.',
-        primaryLord: 'frigibax',
-        secondaryLord: 'jangmo_o',
-        recruitSpeciesIds: ['duskull', 'solosis'],
-        recruitLabel: 'Duskull & Solosis',
+        text: 'Focus your mind and study the resonance until its pattern clears.',
+        primaryLord: 'goomy',
+        secondaryLord: 'axew',
+        recruitSpeciesIds: ['solosis'],
+        recruitLabel: 'Solosis',
       },
     ],
   },
   {
     id: 'q4',
     number: 4,
-    seedKey: 'q4Electric',
-    chapterSlotTitle: 'Apple Woods Tracker',
-    prompt: 'Enemy scouts spot your camp from the treetops! How do you react?',
+    seedKey: 'slot3Electric',
+    chapterSlotTitle: 'Berry Orchards Vanguard',
+    prompt: 'Ironscale raiders corner townsfolk among the Berry Orchards! How do you break their line?',
     options: [
       {
         id: 'A',
-        text: 'Dash in fast before they can sound the alarm!',
-        primaryLord: 'dreepy',
-        secondaryLord: 'bagon',
-        recruitSpeciesIds: ['pichu'],
-        recruitLabel: 'Pichu',
-      },
-      {
-        id: 'B',
-        text: 'Charge straight at their leader to break their nerve!',
-        primaryLord: 'gible',
-        secondaryLord: 'deino',
-        recruitSpeciesIds: ['shinx'],
-        recruitLabel: 'Shinx',
-      },
-      {
-        id: 'C',
-        text: 'Coordinate your squad to cut off their escape.',
-        primaryLord: 'jangmo_o',
-        secondaryLord: 'frigibax',
-        recruitSpeciesIds: ['mareep'],
-        recruitLabel: 'Mareep',
-      },
-    ],
-  },
-  {
-    id: 'q5',
-    number: 5,
-    seedKey: 'q5FrontlineTrio',
-    chapterSlotTitle: 'Frontline Trio',
-    prompt: 'An armored column marches down a narrow pass. Your frontline plan?',
-    options: [
-      {
-        id: 'A',
-        text: 'Adapt to terrain and strike from shifting angles.',
-        primaryLord: 'jangmo_o',
-        secondaryLord: 'dreepy',
-        recruitSpeciesIds: ['machop', 'geodude', 'trapinch'],
-        recruitLabel: 'Machop, Geodude & Trapinch',
-      },
-      {
-        id: 'B',
-        text: 'Hold an unbreakable wall of stone and grit.',
-        primaryLord: 'deino',
-        secondaryLord: 'frigibax',
-        recruitSpeciesIds: ['machop', 'roggenrola', 'rhyhorn'],
-        recruitLabel: 'Machop, Roggenrola & Rhyhorn',
-      },
-      {
-        id: 'C',
-        text: 'Launch an all-out charge before they brace.',
-        primaryLord: 'gible',
-        secondaryLord: 'bagon',
-        recruitSpeciesIds: ['mankey', 'nacli', 'rhyhorn'],
-        recruitLabel: 'Mankey, Nacli & Rhyhorn',
-      },
-    ],
-  },
-  {
-    id: 'q6',
-    number: 6,
-    seedKey: 'q6WaterGrass',
-    chapterSlotTitle: 'Water & Grass Duo',
-    prompt: 'Making camp beside a quiet forest pond at night, how do you unwind?',
-    options: [
-      {
-        id: 'A',
-        text: 'Run light combat drills to stay sharp for dawn.',
+        text: 'Strike hard at their vanguard to force them back on their heels!',
         primaryLord: 'bagon',
-        secondaryLord: 'jangmo_o',
-        recruitSpeciesIds: ['poliwag', 'bellsprout'],
-        recruitLabel: 'Poliwag & Bellsprout',
-      },
-      {
-        id: 'B',
-        text: 'Listen to the rain and keep everyone smiling.',
-        primaryLord: 'goomy',
-        secondaryLord: 'dreepy',
-        recruitSpeciesIds: ['lotad', 'oddish'],
-        recruitLabel: 'Lotad & Oddish',
-      },
-      {
-        id: 'C',
-        text: 'Stand quiet perimeter watch while allies sleep.',
-        primaryLord: 'deino',
         secondaryLord: 'dratini',
-        recruitSpeciesIds: ['tympole', 'budew'],
-        recruitLabel: 'Tympole & Budew',
-      },
-    ],
-  },
-  {
-    id: 'q7',
-    number: 7,
-    seedKey: 'q7Fire',
-    chapterSlotTitle: 'Fire Attacker',
-    prompt: 'A river of magma blocks the cavern bridge ahead. What drives you onward?',
-    options: [
-      {
-        id: 'A',
-        text: 'Pure fiery grit—no obstacle stops me!',
-        primaryLord: 'gible',
-        secondaryLord: 'deino',
-        recruitSpeciesIds: ['magby'],
-        recruitLabel: 'Magby',
+        recruitSpeciesIds: ['elekid'],
+        recruitLabel: 'Elekid',
       },
       {
         id: 'B',
-        text: 'The thrill of soaring across danger.',
-        primaryLord: 'bagon',
-        secondaryLord: 'dreepy',
-        recruitSpeciesIds: ['fletchling'],
-        recruitLabel: 'Fletchling',
-      },
-      {
-        id: 'C',
-        text: 'Quiet resolve to uncover the hidden truth.',
-        primaryLord: 'dratini',
-        secondaryLord: 'frigibax',
-        recruitSpeciesIds: ['litwick'],
-        recruitLabel: 'Litwick',
-      },
-    ],
-  },
-  {
-    id: 'q8',
-    number: 8,
-    seedKey: 'q8SteelFairy',
-    chapterSlotTitle: 'Steel & Fairy Duo',
-    prompt: 'You uncover a half-buried chest in the desert sands. What do you hope is inside?',
-    options: [
-      {
-        id: 'A',
-        text: 'A heavy weapon built to smash enemy armor!',
-        primaryLord: 'deino',
-        secondaryLord: 'gible',
-        recruitSpeciesIds: ['tinkatink', 'cleffa'],
-        recruitLabel: 'Tinkatink & Cleffa',
-      },
-      {
-        id: 'B',
-        text: 'Dependable gear that keeps the team in sync.',
-        primaryLord: 'jangmo_o',
-        secondaryLord: 'goomy',
-        recruitSpeciesIds: ['klink', 'azurill'],
-        recruitLabel: 'Klink & Azurill',
-      },
-      {
-        id: 'C',
-        text: 'An ancient relic humming with strange power.',
-        primaryLord: 'dreepy',
+        text: 'Rush to the townsfolk’s side and rally everyone together!',
+        primaryLord: 'axew',
         secondaryLord: 'dratini',
-        recruitSpeciesIds: ['magnemite', 'igglybuff'],
-        recruitLabel: 'Magnemite & Igglybuff',
-      },
-    ],
-  },
-  {
-    id: 'q9',
-    number: 9,
-    seedKey: 'q9IceArmored',
-    chapterSlotTitle: 'Ice & Armored Duo',
-    prompt: 'Before the fortress gates in a howling blizzard, what is your final thought?',
-    options: [
-      {
-        id: 'A',
-        text: 'Stay cool—every turn on the grid is a puzzle.',
-        primaryLord: 'frigibax',
-        secondaryLord: 'dratini',
-        recruitSpeciesIds: ['mime_jr_galar', 'beldum'],
-        recruitLabel: 'Galarian Mime Jr. & Beldum',
-      },
-      {
-        id: 'B',
-        text: 'Trust our bonds—we can weather any storm.',
-        primaryLord: 'goomy',
-        secondaryLord: 'bagon',
-        recruitSpeciesIds: ['vanillite', 'porygon'],
-        recruitLabel: 'Vanillite & Porygon',
-      },
-      {
-        id: 'C',
-        text: 'No hesitation—press forward to the end!',
-        primaryLord: 'deino',
-        secondaryLord: 'gible',
-        recruitSpeciesIds: ['swinub', 'blipbug'],
-        recruitLabel: 'Swinub & Blipbug',
+        recruitSpeciesIds: ['pawmi'],
+        recruitLabel: 'Pawmi',
       },
     ],
   },
@@ -449,32 +297,29 @@ export function evaluatePersonalityQuiz(
     | ReadonlyArray<string>
 ): QuizEvaluationResult {
   const scores: Record<DragonLordSpeciesId, number> = {
-    dratini: 0,
+    axew: 0,
     bagon: 0,
     gible: 0,
-    deino: 0,
+    dratini: 0,
     goomy: 0,
-    jangmo_o: 0,
-    dreepy: 0,
-    frigibax: 0,
   };
 
   const firstOrder: Record<DragonLordSpeciesId, number> = {
-    dratini: Number.POSITIVE_INFINITY,
+    axew: Number.POSITIVE_INFINITY,
     bagon: Number.POSITIVE_INFINITY,
     gible: Number.POSITIVE_INFINITY,
-    deino: Number.POSITIVE_INFINITY,
+    dratini: Number.POSITIVE_INFINITY,
     goomy: Number.POSITIVE_INFINITY,
-    jangmo_o: Number.POSITIVE_INFINITY,
-    dreepy: Number.POSITIVE_INFINITY,
-    frigibax: Number.POSITIVE_INFINITY,
   };
 
   const seeds: QuizRecruitSeeds = {
-    q1Healer: ['happiny'],
-    q2BugFlying: ['caterpie', 'pidgey'],
-    q3GhostPsychic: ['duskull', 'ralts'],
-    q4Electric: ['shinx'],
+    slot1Flying: ['pidgey'],
+    slot2Psychic: ['ralts'],
+    slot3Electric: ['elekid'],
+    q1Healer: ['flabebe'],
+    q2BugFlying: ['pidgey', 'sewaddle'],
+    q3GhostPsychic: ['ralts'],
+    q4Electric: ['elekid'],
     q5FrontlineTrio: ['machop', 'geodude', 'trapinch'],
     q6WaterGrass: ['poliwag', 'bellsprout'],
     q7Fire: ['litwick'],
@@ -502,13 +347,20 @@ export function evaluatePersonalityQuiz(
       firstOrder[chosen.secondaryLord] = awardStep;
     }
 
-    const validIds = chosen.recruitSpeciesIds.filter((id) => Boolean(getSpeciesById(id)));
-    if (validIds.length > 0) {
-      seeds[q.seedKey] = [...validIds];
+    if (q.seedKey) {
+      const validIds = chosen.recruitSpeciesIds.filter((id) => Boolean(getSpeciesById(id)));
+      if (validIds.length > 0) {
+        seeds[q.seedKey] = [...validIds];
+      }
     }
   }
 
-  let bestLord: DragonLordSpeciesId = 'dratini';
+  // Mirror Demo slot picks into legacy seed arrays for compatibility
+  seeds.q2BugFlying = [...(seeds.slot1Flying ?? ['pidgey']), 'sewaddle'];
+  seeds.q3GhostPsychic = [...(seeds.slot2Psychic ?? ['ralts'])];
+  seeds.q4Electric = [...(seeds.slot3Electric ?? ['elekid'])];
+
+  let bestLord: DragonLordSpeciesId = 'axew';
   let bestScore = -1;
   let bestFirstStep = Number.POSITIVE_INFINITY;
 
@@ -527,6 +379,6 @@ export function evaluatePersonalityQuiz(
     scoresByDragonId: scores,
     firstPointOrderByDragonId: firstOrder,
     quizSeeds: seeds,
-    q1HealerSpeciesId: seeds.q1Healer[0] ?? 'happiny',
+    q1HealerSpeciesId: 'flabebe',
   };
 }

@@ -1,5 +1,273 @@
 [
   {
+    "id": "axew",
+    "name": "Axew",
+    "dexNumber": 610,
+    "pmdAssetId": "0610",
+    "lineId": "axew_line",
+    "faction": "playable",
+    "recruitCategory": "dragon_lord",
+    "stage": 1,
+    "isFinalStage": false,
+    "types": [
+      "Dragon"
+    ],
+    "baseStats": {
+      "hp": 21,
+      "atk": 9,
+      "def": 6,
+      "spa": 4,
+      "spd": 5,
+      "spe": 6,
+      "mov": 5
+    },
+    "defaultJoinLevel": 1,
+    "growthRates": {
+      "hp": 75,
+      "atk": 70,
+      "def": 55,
+      "spa": 30,
+      "spd": 45,
+      "spe": 60
+    },
+    "traversalClass": "Grounded",
+    "personalSkillId": "dragon_aura",
+    "learnset": [
+      {
+        "level": 1,
+        "moveId": "scratch"
+      },
+      {
+        "level": 4,
+        "moveId": "bite"
+      },
+      {
+        "level": 8,
+        "moveId": "dragon_tail"
+      },
+      {
+        "level": 10,
+        "moveId": "slash"
+      },
+      {
+        "level": 13,
+        "moveId": "dragon_claw"
+      },
+      {
+        "level": 18,
+        "moveId": "x_scissor"
+      },
+      {
+        "level": 22,
+        "moveId": "rock_slide"
+      },
+      {
+        "level": 26,
+        "moveId": "sovereign_dragon_fang"
+      }
+    ],
+    "compatibleTmIds": [
+      "tm01_protect",
+      "tm03_return",
+      "tm04_dig",
+      "tm05_aerial_ace",
+      "tm06_brick_break",
+      "tm14_rock_slide",
+      "tm15_earthquake",
+      "tm20_x_scissor",
+      "tm24_rest"
+    ],
+    "evolutions": [
+      {
+        "targetSpeciesId": "fraxure",
+        "minLevel": 10,
+        "requiredItemId": "evolution_stone",
+        "promotionBonuses": {
+          "hp": 4,
+          "atk": 3,
+          "def": 2,
+          "spa": 1,
+          "spd": 1,
+          "spe": 2
+        }
+      }
+    ]
+  },
+  {
+    "id": "fraxure",
+    "name": "Fraxure",
+    "dexNumber": 611,
+    "pmdAssetId": "0611",
+    "lineId": "axew_line",
+    "faction": "playable",
+    "recruitCategory": "dragon_lord",
+    "stage": 2,
+    "isFinalStage": false,
+    "types": [
+      "Dragon"
+    ],
+    "baseStats": {
+      "hp": 29,
+      "atk": 13,
+      "def": 10,
+      "spa": 5,
+      "spd": 8,
+      "spe": 10,
+      "mov": 5
+    },
+    "defaultJoinLevel": 10,
+    "growthRates": {
+      "hp": 80,
+      "atk": 75,
+      "def": 55,
+      "spa": 30,
+      "spd": 45,
+      "spe": 60
+    },
+    "traversalClass": "Grounded",
+    "personalSkillId": "dragon_aura",
+    "learnset": [
+      {
+        "level": 1,
+        "moveId": "scratch"
+      },
+      {
+        "level": 4,
+        "moveId": "bite"
+      },
+      {
+        "level": 8,
+        "moveId": "dragon_tail"
+      },
+      {
+        "level": 10,
+        "moveId": "slash"
+      },
+      {
+        "level": 13,
+        "moveId": "dragon_claw"
+      },
+      {
+        "level": 18,
+        "moveId": "x_scissor"
+      },
+      {
+        "level": 22,
+        "moveId": "rock_slide"
+      },
+      {
+        "level": 26,
+        "moveId": "sovereign_dragon_fang"
+      }
+    ],
+    "compatibleTmIds": [
+      "tm01_protect",
+      "tm03_return",
+      "tm04_dig",
+      "tm05_aerial_ace",
+      "tm06_brick_break",
+      "tm14_rock_slide",
+      "tm15_earthquake",
+      "tm20_x_scissor",
+      "tm24_rest"
+    ],
+    "evolutions": [
+      {
+        "targetSpeciesId": "haxorus",
+        "minLevel": 20,
+        "requiredItemId": "evolution_gem",
+        "promotionBonuses": {
+          "hp": 4,
+          "atk": 4,
+          "def": 3,
+          "spa": 1,
+          "spd": 2,
+          "spe": 3
+        }
+      }
+    ]
+  },
+  {
+    "id": "haxorus",
+    "name": "Haxorus",
+    "dexNumber": 612,
+    "pmdAssetId": "0612",
+    "lineId": "axew_line",
+    "faction": "playable",
+    "recruitCategory": "dragon_lord",
+    "stage": 3,
+    "isFinalStage": true,
+    "types": [
+      "Dragon"
+    ],
+    "baseStats": {
+      "hp": 37,
+      "atk": 19,
+      "def": 14,
+      "spa": 7,
+      "spd": 11,
+      "spe": 14,
+      "mov": 6
+    },
+    "defaultJoinLevel": 20,
+    "growthRates": {
+      "hp": 80,
+      "atk": 80,
+      "def": 60,
+      "spa": 35,
+      "spd": 50,
+      "spe": 65
+    },
+    "traversalClass": "Grounded",
+    "personalSkillId": "dragon_aura",
+    "learnset": [
+      {
+        "level": 1,
+        "moveId": "scratch"
+      },
+      {
+        "level": 4,
+        "moveId": "bite"
+      },
+      {
+        "level": 8,
+        "moveId": "dragon_tail"
+      },
+      {
+        "level": 10,
+        "moveId": "slash"
+      },
+      {
+        "level": 13,
+        "moveId": "dragon_claw"
+      },
+      {
+        "level": 18,
+        "moveId": "x_scissor"
+      },
+      {
+        "level": 22,
+        "moveId": "rock_slide"
+      },
+      {
+        "level": 26,
+        "moveId": "sovereign_dragon_fang"
+      }
+    ],
+    "compatibleTmIds": [
+      "tm01_protect",
+      "tm03_return",
+      "tm04_dig",
+      "tm05_aerial_ace",
+      "tm06_brick_break",
+      "tm14_rock_slide",
+      "tm15_earthquake",
+      "tm20_x_scissor",
+      "tm24_rest"
+    ],
+    "evolutions": []
+  },
+  {
     "id": "dratini",
     "name": "Dratini",
     "dexNumber": 147,
@@ -779,8 +1047,8 @@
     "dexNumber": 633,
     "pmdAssetId": "0633",
     "lineId": "deino_line",
-    "faction": "playable",
-    "recruitCategory": "dragon_lord",
+    "faction": "enemy",
+    "recruitCategory": "enemy_only",
     "stage": 1,
     "isFinalStage": false,
     "types": [
@@ -873,8 +1141,8 @@
     "dexNumber": 634,
     "pmdAssetId": "0634",
     "lineId": "deino_line",
-    "faction": "playable",
-    "recruitCategory": "dragon_lord",
+    "faction": "enemy",
+    "recruitCategory": "enemy_only",
     "stage": 2,
     "isFinalStage": false,
     "types": [
@@ -967,8 +1235,8 @@
     "dexNumber": 635,
     "pmdAssetId": "0635",
     "lineId": "deino_line",
-    "faction": "playable",
-    "recruitCategory": "dragon_lord",
+    "faction": "enemy",
+    "recruitCategory": "enemy_only",
     "stage": 3,
     "isFinalStage": true,
     "types": [
@@ -21353,7 +21621,7 @@
         "moveId": "mach_punch"
       },
       {
-        "level": 10,
+        "level": 8,
         "moveId": "spark"
       },
       {
@@ -21441,7 +21709,7 @@
         "moveId": "mach_punch"
       },
       {
-        "level": 10,
+        "level": 8,
         "moveId": "spark"
       },
       {
@@ -21534,7 +21802,7 @@
         "moveId": "mach_punch"
       },
       {
-        "level": 10,
+        "level": 8,
         "moveId": "spark"
       },
       {
@@ -26329,8 +26597,8 @@
     "dexNumber": 239,
     "pmdAssetId": "0239",
     "lineId": "elekid_line",
-    "faction": "enemy",
-    "recruitCategory": "enemy_only",
+    "faction": "playable",
+    "recruitCategory": "quiz_q4",
     "stage": 1,
     "isFinalStage": false,
     "types": [
@@ -26366,7 +26634,7 @@
         "moveId": "quick_attack"
       },
       {
-        "level": 11,
+        "level": 9,
         "moveId": "thunder_fang"
       },
       {
@@ -26412,8 +26680,8 @@
     "dexNumber": 125,
     "pmdAssetId": "0125",
     "lineId": "elekid_line",
-    "faction": "enemy",
-    "recruitCategory": "enemy_only",
+    "faction": "playable",
+    "recruitCategory": "quiz_q4",
     "stage": 2,
     "isFinalStage": false,
     "types": [
@@ -26449,7 +26717,7 @@
         "moveId": "quick_attack"
       },
       {
-        "level": 11,
+        "level": 9,
         "moveId": "thunder_fang"
       },
       {
@@ -26495,8 +26763,8 @@
     "dexNumber": 466,
     "pmdAssetId": "0466",
     "lineId": "elekid_line",
-    "faction": "enemy",
-    "recruitCategory": "enemy_only",
+    "faction": "playable",
+    "recruitCategory": "quiz_q4",
     "stage": 3,
     "isFinalStage": true,
     "types": [
@@ -26532,7 +26800,7 @@
         "moveId": "quick_attack"
       },
       {
-        "level": 11,
+        "level": 9,
         "moveId": "thunder_fang"
       },
       {
@@ -27775,8 +28043,8 @@
     "dexNumber": 273,
     "pmdAssetId": "0273",
     "lineId": "seedot_line",
-    "faction": "enemy",
-    "recruitCategory": "enemy_only",
+    "faction": "playable",
+    "recruitCategory": "story_chapter",
     "stage": 1,
     "isFinalStage": false,
     "types": [
@@ -27858,8 +28126,8 @@
     "dexNumber": 274,
     "pmdAssetId": "0274",
     "lineId": "seedot_line",
-    "faction": "enemy",
-    "recruitCategory": "enemy_only",
+    "faction": "playable",
+    "recruitCategory": "story_chapter",
     "stage": 2,
     "isFinalStage": false,
     "types": [
@@ -27946,8 +28214,8 @@
     "dexNumber": 275,
     "pmdAssetId": "0275",
     "lineId": "seedot_line",
-    "faction": "enemy",
-    "recruitCategory": "enemy_only",
+    "faction": "playable",
+    "recruitCategory": "story_chapter",
     "stage": 3,
     "isFinalStage": true,
     "types": [

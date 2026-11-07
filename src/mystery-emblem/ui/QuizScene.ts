@@ -1,16 +1,21 @@
 /**
- * Mystery Emblem — Personality Quiz, Partner Select, Unified Nickname Modal & NG+ Picker
+ * Mystery Emblem — Demo Personality Quiz, Flower-Aura Lord Reveal & Rename Modal (`QuizScene.ts`)
  *
  * Implements:
- * 1. `RecruitNicknameOverlay`: Single unified PMD modal for naming newly recruited Pokémon
- *    AND renaming existing squad members from Overworld or Dungeon Prep.
+ * 1. `RecruitNicknameOverlay`: Reusable PMD modal for manually renaming existing squad members
+ *    from Overworld (`Units`), Dungeon Prep (`Manage Units`), or Admin `Dev Tools`
+ *    (zero automatic `"NEW ALLY"` popups on recruitment).
  * 2. `QuizScene`:
- *    - 9-question PMD Personality Quiz tallying Dragon Lord trait points + seeding recruits
- *    - Dragon Lord Aura Reveal (with optional manual Dragon Lord override)
- *    - Stage-1 Starter Partner Selection screen
- *    - `NG_PLUS_SELECT_SCENE` manual roster selector (trimmed cleanly to the 6 Demo slots)
+ *    - 4-question PMD Personality Quiz tallying trait points for the 5 Lore Bible Dragon Lords
+ *      (`Axew`, `Bagon`, `Gible`, `Dratini`, `Goomy`) and seeding the 3 Demo recruit slots.
+ *    - Flower-Color Aura Reveal (`"You seem to be the [Personality] type!"` + personality
+ *      description + background shift matching Flabébé's Red / Orange / Yellow / Blue / White flower).
+ *    - Fixed starting trio (`Revealed Dragon Lord` + `Piplup` + color-matched `Flabébé`), with zero
+ *      manual Lord override, Partner picker, NG+ picker, or nickname popups, launching straight
+ *      into Dungeon 1 (`Western Beach`).
  */
 
+import { resolveUnitVisualAssetId } from '../assets/pmdAssetLoader';
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
 import { DEMO_INITIAL_CONVOY, DEMO_STARTING_LEVEL } from '../data/campaignRegistry';
 import { getPersonalSkillById, getSpeciesById } from '../data/index';
@@ -19,16 +24,19 @@ import {
   type OverworldGraphDefinition,
 } from '../data/overworldMapData';
 import {
+  DEFAULT_QUIZ_BACKDROP_CSS,
   DRAGON_LORD_OPTIONS,
   PERSONALITY_QUIZ_QUESTIONS,
   evaluatePersonalityQuiz,
-  getStarterPartnerOptions,
+  getDragonLordTraitInfo,
+  type DragonLordSpeciesId,
   type QuizOptionKey,
 } from '../data/quizData';
 import type { SaveStateManager } from '../state/SaveStateManager';
 import type {
   CampaignMode,
   ConvoyEntry,
+  FlabebeFlowerColor,
   OwnedPokemonInstance,
   QuizRecruitSeeds,
   SaveData,
@@ -37,7 +45,7 @@ import { PmdPortraitView } from './PmdSpriteCanvas';
 import { bindBackGestureSurface, bindPointerTap } from './pointerControls';
 
 // ============================================================================
-// Unified Nickname / Rename Modal (`RecruitNicknameOverlay`)
+// Manual Rename Modal (`RecruitNicknameOverlay`)
 // ============================================================================
 
 export interface PromptRecruitsOptions {
@@ -63,7 +71,7 @@ export class RecruitNicknameOverlay {
   private readonly onStateChange?: () => void;
   private readonly abortController = new AbortController();
 
-  private mode: 'recruit' | 'rename' = 'recruit';
+  private mode: 'recruit' | 'rename' = 'rename';
   private activeSaveManagerOverride: SaveStateManager | null = null;
   private queue: OwnedPokemonInstance[] = [];
   private queueIndex = 0;
@@ -87,14 +95,14 @@ export class RecruitNicknameOverlay {
     this.rootEl.innerHTML = `
       <div class="pmd-window pmd-modal-card" role="dialog" aria-modal="true" aria-label="Pokémon Nickname" style="width:min(420px, 94vw); max-height:min(90dvh, 480px); overflow-y:auto;">
         <div class="pmd-devtools-row-between" style="margin-bottom:6px;">
-          <h2 class="pmd-modal-title" data-nickname-modal-title style="margin:0; color:#f8f800;">NEW ALLY</h2>
-          <span class="pmd-chapter-badge" data-recruit-step-badge>1 / 1</span>
+          <h2 class="pmd-modal-title" data-nickname-modal-title style="margin:0; color:#f8f800;">RENAME</h2>
+          <span class="pmd-chapter-badge" data-recruit-step-badge hidden>1 / 1</span>
         </div>
         <p class="pmd-modal-sub" data-recruit-banner style="margin:0 0 8px; color:#a8e0f8; font-size:13px;" hidden></p>
         <div class="pmd-forecast-unit-head" style="background:#16344c; border:2px solid #a8c0e0; padding:8px; margin-bottom:8px;">
           <div class="pmd-forecast-portrait-slot" data-recruit-portrait></div>
           <div class="pmd-forecast-unit-id">
-            <strong class="pmd-forecast-unit-name" data-testid="recruit-species-title">Dratini</strong>
+            <strong class="pmd-forecast-unit-name" data-testid="recruit-species-title">Axew</strong>
             <span class="pmd-forecast-unit-meta" data-recruit-species-meta>Dragon · Lv. 9</span>
             <span class="pmd-forecast-unit-meta" data-recruit-skill-desc style="color:#58f858; margin-top:2px;"></span>
           </div>
@@ -113,10 +121,10 @@ export class RecruitNicknameOverlay {
             Cancel
           </button>
           <button type="button" class="pmd-btn" data-testid="recruit-nickname-skip-all-btn" style="min-height:44px;">
-            Skip
+            Default
           </button>
           <button type="button" class="pmd-btn pmd-btn-primary" data-testid="recruit-nickname-confirm-btn" style="min-height:44px;">
-            Confirm
+            Save
           </button>
         </div>
       </div>
@@ -201,43 +209,6 @@ export class RecruitNicknameOverlay {
     return !this.rootEl.hidden;
   }
 
-  public async promptRecruits(
-    units: ReadonlyArray<OwnedPokemonInstance>,
-    options?: PromptRecruitsOptions
-  ): Promise<void> {
-    if (units.length === 0) return;
-
-    if (this.resolver) {
-      const prev = this.resolver;
-      this.resolver = null;
-      prev();
-    }
-
-    this.mode = 'recruit';
-    this.activeSaveManagerOverride = null;
-    this.queue = [...units];
-    this.queueIndex = 0;
-
-    const banner = options?.bannerText?.trim() ?? '';
-    this.bannerEl.textContent = banner;
-    this.bannerEl.hidden = banner.length === 0;
-
-    this.modalTitleEl.textContent = 'NEW ALLY';
-    this.cancelBtn.hidden = true;
-    this.secondaryBtn.textContent = 'Skip';
-    this.secondaryBtn.hidden = units.length <= 1;
-    this.stepBadgeEl.hidden = units.length <= 1;
-
-    this.rootEl.hidden = false;
-    this.audioManager.playSfx('heal');
-    this.renderCurrentUnit();
-    this.onStateChange?.();
-
-    return new Promise<void>((resolve) => {
-      this.resolver = resolve;
-    });
-  }
-
   public async promptRenameUnit(
     instanceId: string,
     overrideManager?: SaveStateManager
@@ -310,7 +281,7 @@ export class RecruitNicknameOverlay {
     }
 
     void this.portraitView.setPortrait({
-      speciesIdOrAssetId: current.speciesId,
+      speciesIdOrAssetId: resolveUnitVisualAssetId(current.speciesId, current.cosmeticForm),
       emotion: 'Happy',
     });
   }
@@ -358,15 +329,10 @@ export class RecruitNicknameOverlay {
 }
 
 // ============================================================================
-// Personality Quiz, Partner Select & NG+ Custom Roster Scene (`QuizScene`)
+// 4-Question Demo Personality Quiz & Flower-Aura Reveal (`QuizScene`)
 // ============================================================================
 
-export type QuizSceneStep =
-  | 'mode_select'
-  | 'questions'
-  | 'lord_reveal'
-  | 'partner_select'
-  | 'ng_plus';
+export type QuizSceneStep = 'questions' | 'lord_reveal';
 
 export interface OpenQuizSceneOptions {
   campaignMode?: CampaignMode;
@@ -374,8 +340,6 @@ export interface OpenQuizSceneOptions {
   scaleStatsToLevel?: boolean;
   initialConvoy?: ReadonlyArray<ConvoyEntry>;
   overworldGraph?: OverworldGraphDefinition;
-  forceNgPlus?: boolean;
-  skipNicknamePrompts?: boolean;
   onComplete?: (save: SaveData) => void;
 }
 
@@ -384,10 +348,10 @@ export interface QuizSceneSnapshot {
   step: QuizSceneStep;
   questionIndex: number;
   answers: QuizOptionKey[];
-  selectedLordSpeciesId: string;
-  selectedPartnerSpeciesId: string;
-  overrideLordDrawerOpen: boolean;
-  newGamePlusAvailable: boolean;
+  selectedLordSpeciesId: DragonLordSpeciesId;
+  selectedPartnerSpeciesId: 'piplup';
+  selectedHealerSpeciesId: 'flabebe';
+  flabebeFlowerColor: FlabebeFlowerColor;
 }
 
 export class QuizScene {
@@ -397,7 +361,6 @@ export class QuizScene {
   private readonly headerTitleEl: HTMLElement;
 
   private readonly saveManager: SaveStateManager;
-  private readonly nicknameOverlay: RecruitNicknameOverlay;
   private readonly audioManager: AudioManager;
   private readonly onCancelCallback: () => void;
   private readonly onStateChange?: () => void;
@@ -407,27 +370,16 @@ export class QuizScene {
   private step: QuizSceneStep = 'questions';
   private questionIndex = 0;
   private answers: QuizOptionKey[] = [];
-  private selectedLordSpeciesId = 'dratini';
-  private overrideLordDrawerOpen = false;
-  private selectedPartnerSpeciesId = 'bulbasaur';
-  private partnerTypeFilter: 'All' | 'Grass' | 'Fire' | 'Water' = 'All';
+  private selectedLordSpeciesId: DragonLordSpeciesId = 'axew';
   private computedQuizSeeds: QuizRecruitSeeds | null = null;
-
-  private ngPlusSeedChoices: Record<string, QuizOptionKey> = {
-    q1: 'A',
-    q2: 'A',
-    q3: 'A',
-    q4: 'A',
-  };
 
   private activeOptions: OpenQuizSceneOptions = {};
   private lordPortraitView: PmdPortraitView | null = null;
-  private partnerPortraitView: PmdPortraitView | null = null;
 
   constructor(
     mountParent: HTMLElement,
     saveManager: SaveStateManager,
-    nicknameOverlay: RecruitNicknameOverlay,
+    _nicknameOverlay: RecruitNicknameOverlay,
     options: {
       audioManager?: AudioManager;
       onCancel: () => void;
@@ -435,7 +387,6 @@ export class QuizScene {
     }
   ) {
     this.saveManager = saveManager;
-    this.nicknameOverlay = nicknameOverlay;
     this.audioManager = options.audioManager ?? getAudioManager();
     this.onCancelCallback = options.onCancel;
     this.onStateChange = options.onStateChange;
@@ -444,7 +395,7 @@ export class QuizScene {
     this.rootEl.className = 'pmd-quiz-scene';
     this.rootEl.dataset.testid = 'quiz-scene';
     this.rootEl.hidden = true;
-    this.rootEl.setAttribute('aria-label', 'Personality Quiz and Squad Creation');
+    this.rootEl.setAttribute('aria-label', 'Personality Quiz and Dragon Aura Reveal');
     this.rootEl.style.cssText = [
       'position:absolute',
       'inset:0',
@@ -454,15 +405,15 @@ export class QuizScene {
       'justify-content:center',
       'padding:clamp(0.45rem, 2vw, 1rem)',
       'padding-top:clamp(2.9rem, 7vh, 3.6rem)',
-      'background:radial-gradient(circle at 50% 25%, rgba(28, 68, 128, 0.92), rgba(4, 10, 24, 0.97))',
+      `background:${DEFAULT_QUIZ_BACKDROP_CSS}`,
+      'transition:background 360ms ease',
       'box-sizing:border-box',
     ].join(';');
-    this.rootEl.hidden = true;
 
     const card = document.createElement('div');
     card.className = 'pmd-window';
     card.style.cssText = [
-      'width:min(720px, 96vw)',
+      'width:min(700px, 96vw)',
       'max-height:calc(100dvh - 3.6rem)',
       'display:flex',
       'flex-direction:column',
@@ -479,7 +430,7 @@ export class QuizScene {
       <strong data-quiz-header-title style="font-size:clamp(14px, 2.2vw, 18px); color:#f8f800; letter-spacing:0.04em;">
         AURA QUIZ
       </strong>
-      <span class="pmd-chapter-badge" data-quiz-step-badge>Q1 / 9</span>
+      <span class="pmd-chapter-badge" data-quiz-step-badge>1 / 4</span>
     `;
 
     this.headerTitleEl = header.querySelector('[data-quiz-header-title]')!;
@@ -505,21 +456,6 @@ export class QuizScene {
         line-height: 1.35;
         font-size: 14px;
       }
-      .pmd-quiz-partner-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(114px, 1fr));
-        gap: 6px;
-        margin-top: 8px;
-      }
-      .pmd-quiz-partner-chip {
-        min-height: 46px;
-        padding: 6px 8px;
-        font-size: 12px;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        justify-content: center;
-      }
     `;
     this.rootEl.appendChild(styleEl);
 
@@ -535,24 +471,13 @@ export class QuizScene {
   public open(options?: OpenQuizSceneOptions): void {
     this.activeOptions = options ?? {};
     this.openState = true;
+    this.step = 'questions';
     this.questionIndex = 0;
     this.answers = [];
-    this.overrideLordDrawerOpen = false;
-    this.partnerTypeFilter = 'All';
+    this.selectedLordSpeciesId = DRAGON_LORD_OPTIONS[0]?.speciesId ?? 'axew';
+    this.computedQuizSeeds = null;
 
-    const starters = getStarterPartnerOptions();
-    this.selectedPartnerSpeciesId = starters[0]?.id ?? 'bulbasaur';
-    this.selectedLordSpeciesId = DRAGON_LORD_OPTIONS[0]?.speciesId ?? 'dratini';
-
-    const ngPlusUnlocked = this.saveManager.isNewGamePlusUnlocked();
-    if (options?.forceNgPlus) {
-      this.step = 'ng_plus';
-    } else if (ngPlusUnlocked) {
-      this.step = 'mode_select';
-    } else {
-      this.step = 'questions';
-    }
-
+    this.applySceneBackdropForStep();
     this.rootEl.hidden = false;
     this.audioManager.playBgm('personality_quiz', { fadeMs: 260 });
     this.render();
@@ -563,6 +488,8 @@ export class QuizScene {
     if (!this.openState) return;
     this.openState = false;
     this.rootEl.hidden = true;
+    this.rootEl.style.background = DEFAULT_QUIZ_BACKDROP_CSS;
+    delete this.rootEl.dataset.auraFlowerColor;
     this.onStateChange?.();
   }
 
@@ -570,11 +497,6 @@ export class QuizScene {
     if (!this.isOpen()) return;
     this.audioManager.playSfx('cancel');
 
-    if (this.step === 'partner_select') {
-      this.step = 'lord_reveal';
-      this.render();
-      return;
-    }
     if (this.step === 'lord_reveal') {
       this.step = 'questions';
       this.questionIndex = PERSONALITY_QUIZ_QUESTIONS.length - 1;
@@ -582,21 +504,10 @@ export class QuizScene {
       this.render();
       return;
     }
-    if (this.step === 'questions') {
-      if (this.questionIndex > 0) {
-        this.questionIndex -= 1;
-        this.answers = this.answers.slice(0, this.questionIndex);
-        this.render();
-        return;
-      }
-      if (this.saveManager.isNewGamePlusUnlocked()) {
-        this.step = 'mode_select';
-        this.render();
-        return;
-      }
-    }
-    if (this.step === 'ng_plus' && this.saveManager.isNewGamePlusUnlocked() && !this.activeOptions.forceNgPlus) {
-      this.step = 'mode_select';
+
+    if (this.step === 'questions' && this.questionIndex > 0) {
+      this.questionIndex -= 1;
+      this.answers = this.answers.slice(0, this.questionIndex);
       this.render();
       return;
     }
@@ -606,64 +517,39 @@ export class QuizScene {
   }
 
   public getSnapshot(): QuizSceneSnapshot {
+    const lordMeta = getDragonLordTraitInfo(this.selectedLordSpeciesId);
     return {
       isOpen: this.isOpen(),
       step: this.step,
       questionIndex: this.questionIndex,
       answers: [...this.answers],
       selectedLordSpeciesId: this.selectedLordSpeciesId,
-      selectedPartnerSpeciesId: this.selectedPartnerSpeciesId,
-      overrideLordDrawerOpen: this.overrideLordDrawerOpen,
-      newGamePlusAvailable: this.saveManager.isNewGamePlusUnlocked(),
+      selectedPartnerSpeciesId: 'piplup',
+      selectedHealerSpeciesId: 'flabebe',
+      flabebeFlowerColor: lordMeta.flabebeFlowerColor,
     };
+  }
+
+  private applySceneBackdropForStep(): void {
+    if (this.step === 'lord_reveal') {
+      const lordMeta = getDragonLordTraitInfo(this.selectedLordSpeciesId);
+      this.rootEl.style.background = lordMeta.revealBackdropCss;
+      this.rootEl.dataset.auraFlowerColor = lordMeta.flabebeFlowerColor;
+    } else {
+      this.rootEl.style.background = DEFAULT_QUIZ_BACKDROP_CSS;
+      delete this.rootEl.dataset.auraFlowerColor;
+    }
   }
 
   private render(): void {
     this.panelBodyEl.innerHTML = '';
+    this.applySceneBackdropForStep();
 
-    if (this.step === 'mode_select') {
-      this.renderModeSelect();
-    } else if (this.step === 'questions') {
+    if (this.step === 'questions') {
       this.renderQuestionStep();
-    } else if (this.step === 'lord_reveal') {
-      this.renderLordRevealStep();
-    } else if (this.step === 'partner_select') {
-      this.renderPartnerSelectStep();
     } else {
-      this.renderNgPlusPicker();
+      this.renderLordRevealStep();
     }
-  }
-
-  private renderModeSelect(): void {
-    this.headerTitleEl.textContent = 'NEW GAME';
-    this.headerStepBadgeEl.textContent = 'NG+';
-
-    const wrap = document.createElement('div');
-    wrap.className = 'pmd-menu-list';
-    wrap.style.cssText = 'display:flex; flex-direction:column; gap:0;';
-    wrap.innerHTML = `
-      <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row pmd-quiz-opt-btn" data-testid="quiz-mode-standard-btn">
-        <span><strong>Personality Quiz</strong> — <small style="color:#a8e0f8;">9 questions</small></span>
-      </button>
-      <button type="button" class="pmd-btn pmd-menu-row pmd-quiz-opt-btn" data-testid="quiz-mode-ngplus-btn">
-        <span><strong>Custom Roster (NG+)</strong> — <small style="color:#58f858;">Pick every unit</small></span>
-      </button>
-    `;
-
-    bindPointerTap(wrap.querySelector('[data-testid="quiz-mode-standard-btn"]'), () => {
-      this.audioManager.playSfx('select');
-      this.step = 'questions';
-      this.questionIndex = 0;
-      this.answers = [];
-      this.render();
-    });
-    bindPointerTap(wrap.querySelector('[data-testid="quiz-mode-ngplus-btn"]'), () => {
-      this.audioManager.playSfx('select');
-      this.step = 'ng_plus';
-      this.render();
-    });
-
-    this.panelBodyEl.appendChild(wrap);
   }
 
   private renderQuestionStep(): void {
@@ -701,7 +587,6 @@ export class QuizScene {
           const result = evaluatePersonalityQuiz(this.answers);
           this.selectedLordSpeciesId = result.assignedLordSpeciesId;
           this.computedQuizSeeds = result.quizSeeds;
-          this.overrideLordDrawerOpen = false;
           this.step = 'lord_reveal';
           this.audioManager.playSfx('heal');
           this.render();
@@ -715,19 +600,27 @@ export class QuizScene {
   }
 
   private renderLordRevealStep(): void {
-    this.headerTitleEl.textContent = 'YOUR DRAGON AURA';
-    this.headerStepBadgeEl.textContent = 'LORD';
-
-    const lordMeta =
-      DRAGON_LORD_OPTIONS.find((d) => d.speciesId === this.selectedLordSpeciesId) ??
-      DRAGON_LORD_OPTIONS[0]!;
+    const lordMeta = getDragonLordTraitInfo(this.selectedLordSpeciesId);
     const sp = getSpeciesById(lordMeta.speciesId);
     const skill = sp ? getPersonalSkillById(sp.personalSkillId) : undefined;
-    const healerId = this.computedQuizSeeds?.q1Healer[0] ?? 'happiny';
-    const healerSp = getSpeciesById(healerId);
+
+    this.headerTitleEl.textContent = 'YOUR AURA';
+    this.headerStepBadgeEl.textContent = lordMeta.flabebeFlowerLabel.toUpperCase();
 
     const wrap = document.createElement('div');
     wrap.style.cssText = 'display:flex; flex-direction:column; gap:0.55rem;';
+
+    const personalityBanner = document.createElement('div');
+    personalityBanner.style.cssText = `background:#16344c; border:2px solid ${lordMeta.accentBorderColor}; padding:10px 12px;`;
+    personalityBanner.innerHTML = `
+      <div style="font-size:clamp(15px, 2.3vw, 18px); font-weight:700; color:#f8f800;" data-testid="quiz-personality-headline">
+        You seem to be the ${lordMeta.personalityTitle} type!
+      </div>
+      <p style="margin:6px 0 0; font-size:13px; line-height:1.42; color:#f8f8f8;" data-testid="quiz-personality-description">
+        ${lordMeta.personalityDescription}
+      </p>
+    `;
+    wrap.appendChild(personalityBanner);
 
     const heroCard = document.createElement('div');
     heroCard.style.cssText =
@@ -736,15 +629,12 @@ export class QuizScene {
       <div class="pmd-forecast-portrait-slot" data-quiz-lord-portrait></div>
       <div style="flex:1; min-width:190px;">
         <div style="font-size:16px; font-weight:700; color:#f8f800;" data-testid="quiz-revealed-lord-name">
-          ${sp?.name ?? lordMeta.speciesId} · ${lordMeta.traitLabel}
+          Will you be ${sp?.name ?? lordMeta.name}?
         </div>
         <div style="font-size:12px; color:#a8e0f8; margin-top:2px;">
-          ${sp?.types.join(' / ') ?? 'Dragon'} · Healer: <strong style="color:#f8f800;">${healerSp?.name ?? healerId}</strong>
+          ${sp?.types.join(' / ') ?? 'Dragon'} · ${lordMeta.traitLabel}
         </div>
-        <div style="margin-top:4px; font-size:13px; color:#f8f8f8;">
-          ${lordMeta.auraSummary}
-        </div>
-        <div style="margin-top:3px; font-size:12px; color:#58f858;">
+        <div style="margin-top:4px; font-size:12px; color:#58f858;">
           <strong>${skill?.name ?? 'Dragon Aura'}</strong>: ${skill?.description ?? '+2 Atk/SpA, +10 Hit within 2 tiles.'}
         </div>
       </div>
@@ -758,289 +648,31 @@ export class QuizScene {
       speciesIdOrAssetId: lordMeta.speciesId,
       emotion: 'Determined',
     });
-
     wrap.appendChild(heroCard);
 
     const actionRow = document.createElement('div');
-    actionRow.style.cssText = 'display:flex; flex-wrap:wrap; gap:0.45rem; justify-content:space-between;';
+    actionRow.style.cssText = 'display:flex; justify-content:flex-end;';
     actionRow.innerHTML = `
-      <button type="button" class="pmd-btn" data-testid="quiz-toggle-override-lord-btn" style="min-height:44px;">
-        ${this.overrideLordDrawerOpen ? 'Hide List' : 'Change Lord'}
-      </button>
-      <button type="button" class="pmd-btn pmd-btn-primary" data-testid="quiz-accept-lord-btn" style="min-height:44px;">
-        Continue as ${sp?.name ?? lordMeta.speciesId} ▶
+      <button type="button" class="pmd-btn pmd-btn-primary" data-testid="quiz-accept-lord-btn" style="min-height:46px; padding:8px 16px;">
+        Begin Adventure ▶
       </button>
     `;
 
-    bindPointerTap(actionRow.querySelector('[data-testid="quiz-toggle-override-lord-btn"]'), () => {
-      this.audioManager.playSfx('select');
-      this.overrideLordDrawerOpen = !this.overrideLordDrawerOpen;
-      this.render();
-    });
     bindPointerTap(actionRow.querySelector('[data-testid="quiz-accept-lord-btn"]'), () => {
-      this.audioManager.playSfx('select');
-      this.step = 'partner_select';
-      this.render();
-    });
-    wrap.appendChild(actionRow);
-
-    if (this.overrideLordDrawerOpen) {
-      const grid = document.createElement('div');
-      grid.className = 'pmd-quiz-partner-grid';
-      for (const opt of DRAGON_LORD_OPTIONS) {
-        const optSp = getSpeciesById(opt.speciesId);
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `pmd-btn pmd-quiz-partner-chip${opt.speciesId === this.selectedLordSpeciesId ? ' is-active' : ''}`;
-        btn.dataset.testid = `quiz-override-lord-${opt.speciesId}`;
-        btn.innerHTML = `
-          <strong>${optSp?.name ?? opt.speciesId}</strong>
-          <small style="color:#98dcff;">${optSp?.types.join('/') ?? 'Dragon'}</small>
-        `;
-        bindPointerTap(btn, () => {
-          this.audioManager.playSfx('select');
-          this.selectedLordSpeciesId = opt.speciesId;
-          this.render();
-        });
-        grid.appendChild(btn);
-      }
-      wrap.appendChild(grid);
-    }
-
-    this.panelBodyEl.appendChild(wrap);
-  }
-
-  private renderPartnerSelectStep(): void {
-    this.headerTitleEl.textContent = 'CHOOSE PARTNER';
-    this.headerStepBadgeEl.textContent = 'PARTNER';
-
-    const allStarters = getStarterPartnerOptions();
-    const filtered =
-      this.partnerTypeFilter === 'All'
-        ? allStarters
-        : allStarters.filter((sp) => sp.types.includes(this.partnerTypeFilter as 'Grass' | 'Fire' | 'Water'));
-
-    if (!allStarters.some((s) => s.id === this.selectedPartnerSpeciesId) && allStarters[0]) {
-      this.selectedPartnerSpeciesId = allStarters[0].id;
-    }
-
-    const activeSp = getSpeciesById(this.selectedPartnerSpeciesId) ?? allStarters[0]!;
-    const activeSkill = getPersonalSkillById(activeSp.personalSkillId);
-
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex; flex-direction:column; gap:0.5rem;';
-
-    const previewCard = document.createElement('div');
-    previewCard.style.cssText =
-      'display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; background:#16344c; border:2px solid #a8c0e0; padding:8px 10px;';
-    previewCard.innerHTML = `
-      <div style="display:flex; gap:10px; align-items:center; flex:1; min-width:200px;">
-        <div class="pmd-forecast-portrait-slot" data-quiz-partner-portrait></div>
-        <div>
-          <strong style="color:#f8f800; font-size:16px;" data-testid="quiz-selected-partner-name">${activeSp.name}</strong>
-          <div style="font-size:12px; color:#a8e0f8;">${activeSp.types.join(' / ')} · Mov ${activeSp.baseStats.mov}</div>
-          <div style="font-size:12px; color:#58f858; margin-top:2px;"><strong>${activeSkill?.name ?? activeSp.personalSkillId}</strong>: ${activeSkill?.description ?? ''}</div>
-        </div>
-      </div>
-      <button type="button" class="pmd-btn pmd-btn-primary" data-testid="quiz-confirm-partner-btn" style="min-height:44px;">
-        Start with ${activeSp.name} ▶
-      </button>
-    `;
-
-    if (!this.partnerPortraitView) {
-      this.partnerPortraitView = new PmdPortraitView({ testId: 'quiz-partner-portrait-canvas' });
-    }
-    previewCard
-      .querySelector('[data-quiz-partner-portrait]')!
-      .appendChild(this.partnerPortraitView.canvas);
-    void this.partnerPortraitView.setPortrait({
-      speciesIdOrAssetId: activeSp.id,
-      emotion: 'Happy',
-    });
-
-    bindPointerTap(previewCard.querySelector('[data-testid="quiz-confirm-partner-btn"]'), () => {
-      void this.finalizeCampaignCreation(
+      this.finalizeCampaignCreation(
         this.selectedLordSpeciesId,
-        this.selectedPartnerSpeciesId,
         this.computedQuizSeeds ?? evaluatePersonalityQuiz(this.answers).quizSeeds
       );
     });
-    wrap.appendChild(previewCard);
-
-    const filterRow = document.createElement('div');
-    filterRow.style.cssText = 'display:flex; flex-wrap:wrap; gap:0.35rem;';
-    for (const f of ['All', 'Grass', 'Fire', 'Water'] as const) {
-      const fBtn = document.createElement('button');
-      fBtn.type = 'button';
-      fBtn.className = `pmd-btn pmd-chip-btn${this.partnerTypeFilter === f ? ' is-active' : ''}`;
-      fBtn.dataset.testid = `quiz-partner-filter-${f.toLowerCase()}`;
-      fBtn.style.minHeight = '44px';
-      fBtn.textContent = f;
-      bindPointerTap(fBtn, () => {
-        this.audioManager.playSfx('select');
-        this.partnerTypeFilter = f;
-        this.render();
-      });
-      filterRow.appendChild(fBtn);
-    }
-    wrap.appendChild(filterRow);
-
-    const grid = document.createElement('div');
-    grid.className = 'pmd-quiz-partner-grid';
-    for (const sp of filtered) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = `pmd-btn pmd-quiz-partner-chip${sp.id === this.selectedPartnerSpeciesId ? ' is-active' : ''}`;
-      btn.dataset.testid = `quiz-partner-${sp.id}`;
-      btn.innerHTML = `
-        <strong>${sp.name}</strong>
-        <small style="color:#98dcff;">${sp.types.join('/')}</small>
-      `;
-      bindPointerTap(btn, () => {
-        this.audioManager.playSfx('select');
-        this.selectedPartnerSpeciesId = sp.id;
-        this.render();
-      });
-      grid.appendChild(btn);
-    }
-    wrap.appendChild(grid);
+    wrap.appendChild(actionRow);
 
     this.panelBodyEl.appendChild(wrap);
   }
 
-  private renderNgPlusPicker(): void {
-    this.headerTitleEl.textContent = 'CUSTOM ROSTER';
-    this.headerStepBadgeEl.textContent = 'NG+';
-
-    const starters = getStarterPartnerOptions();
-    const wrap = document.createElement('div');
-    wrap.dataset.testid = 'ngplus-selector-panel';
-    wrap.style.cssText = 'display:flex; flex-direction:column; gap:0.5rem;';
-
-    const buildChoiceGroup = (
-      title: string,
-      choices: Array<{ id: string; label: string; active: boolean; testId: string; onPick: () => void }>
-    ): HTMLElement => {
-      const sec = document.createElement('div');
-      sec.style.cssText =
-        'background:#16344c; border:2px solid rgba(168, 192, 224, 0.45); padding:8px 10px;';
-      const h = document.createElement('div');
-      h.style.cssText = 'font-size:13px; font-weight:700; color:#f8f800; margin-bottom:6px;';
-      h.textContent = title;
-      sec.appendChild(h);
-
-      const row = document.createElement('div');
-      row.style.cssText = 'display:flex; flex-wrap:wrap; gap:0.35rem;';
-      for (const ch of choices) {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = `pmd-btn pmd-chip-btn${ch.active ? ' is-active' : ''}`;
-        b.dataset.testid = ch.testId;
-        b.style.minHeight = '44px';
-        b.textContent = ch.label;
-        bindPointerTap(b, () => {
-          this.audioManager.playSfx('select');
-          ch.onPick();
-          this.render();
-        });
-        row.appendChild(b);
-      }
-      sec.appendChild(row);
-      return sec;
-    };
-
-    wrap.appendChild(
-      buildChoiceGroup(
-        '1. Dragon Lord',
-        DRAGON_LORD_OPTIONS.map((d) => ({
-          id: d.speciesId,
-          label: getSpeciesById(d.speciesId)?.name ?? d.speciesId,
-          active: this.selectedLordSpeciesId === d.speciesId,
-          testId: `ngplus-lord-${d.speciesId}`,
-          onPick: () => {
-            this.selectedLordSpeciesId = d.speciesId;
-          },
-        }))
-      )
-    );
-
-    wrap.appendChild(
-      buildChoiceGroup(
-        '2. Partner',
-        starters.map((s) => ({
-          id: s.id,
-          label: s.name,
-          active: this.selectedPartnerSpeciesId === s.id,
-          testId: `ngplus-partner-${s.id}`,
-          onPick: () => {
-            this.selectedPartnerSpeciesId = s.id;
-          },
-        }))
-      )
-    );
-
-    const demoSlots: ReadonlyArray<{ qIndex: number; key: string; title: string }> = [
-      { qIndex: 0, key: 'q1', title: '3. Beach Cave Healer' },
-      { qIndex: 1, key: 'q2', title: '4. Drenched Bluff Duo' },
-      { qIndex: 2, key: 'q3', title: '5. Mt. Bristle Duo' },
-      { qIndex: 3, key: 'q4', title: '6. Apple Woods Tracker' },
-    ];
-
-    for (const slot of demoSlots) {
-      const qDef = PERSONALITY_QUIZ_QUESTIONS[slot.qIndex]!;
-      wrap.appendChild(
-        buildChoiceGroup(
-          slot.title,
-          qDef.options.map((opt) => ({
-            id: opt.id,
-            label: opt.recruitSpeciesIds
-              .map((sid) => getSpeciesById(sid)?.name ?? sid)
-              .join(' + '),
-            active: (this.ngPlusSeedChoices[slot.key] ?? 'A') === opt.id,
-            testId: `ngplus-${slot.key}-${opt.id}`,
-            onPick: () => {
-              this.ngPlusSeedChoices[slot.key] = opt.id;
-            },
-          }))
-        )
-      );
-    }
-
-    const confirmBtn = document.createElement('button');
-    confirmBtn.type = 'button';
-    confirmBtn.className = 'pmd-btn pmd-btn-primary';
-    confirmBtn.dataset.testid = 'ngplus-confirm-roster-btn';
-    confirmBtn.style.minHeight = '46px';
-    confirmBtn.textContent = 'Start Campaign ▶';
-    bindPointerTap(confirmBtn, () => {
-      const answerArray: QuizOptionKey[] = [
-        this.ngPlusSeedChoices.q1 ?? 'A',
-        this.ngPlusSeedChoices.q2 ?? 'A',
-        this.ngPlusSeedChoices.q3 ?? 'A',
-        this.ngPlusSeedChoices.q4 ?? 'A',
-        'A',
-        'A',
-        'A',
-        'A',
-        'A',
-      ];
-      const evaluated = evaluatePersonalityQuiz(answerArray);
-      void this.finalizeCampaignCreation(
-        this.selectedLordSpeciesId,
-        this.selectedPartnerSpeciesId,
-        evaluated.quizSeeds
-      );
-    });
-    wrap.appendChild(confirmBtn);
-
-    this.panelBodyEl.appendChild(wrap);
-  }
-
-  private async finalizeCampaignCreation(
-    lordSpeciesId: string,
-    partnerSpeciesId: string,
+  private finalizeCampaignCreation(
+    lordSpeciesId: DragonLordSpeciesId,
     quizSeeds: QuizRecruitSeeds
-  ): Promise<void> {
+  ): void {
     this.audioManager.playSfx('heal');
     const campaignMode: CampaignMode = this.activeOptions.campaignMode ?? 'demo';
     const startingLevel = this.activeOptions.startingLevel ?? DEMO_STARTING_LEVEL;
@@ -1048,15 +680,12 @@ export class QuizScene {
     const initialConvoy = this.activeOptions.initialConvoy ?? DEMO_INITIAL_CONVOY;
     const graph = this.activeOptions.overworldGraph ?? DEMO_OVERWORLD_GRAPH;
 
-    const healerSpeciesId = quizSeeds.q1Healer[0] ?? 'happiny';
-    const preserveNgPlus = this.saveManager.isNewGamePlusUnlocked();
-
     let created = this.saveManager.createNewCampaignSave({
       lordSpeciesId,
-      partnerSpeciesId,
-      healerSpeciesId,
+      partnerSpeciesId: 'piplup',
+      healerSpeciesId: 'flabebe',
       quizSeeds,
-      newGamePlusUnlocked: preserveNgPlus,
+      newGamePlusUnlocked: false,
       startingLevel,
       scaleStatsToLevel,
       campaignMode,
@@ -1064,15 +693,9 @@ export class QuizScene {
     });
 
     created = this.saveManager.ensureOverworldInitialized(graph);
-    const skipPrompts = Boolean(this.activeOptions.skipNicknamePrompts);
     const onComplete = this.activeOptions.onComplete;
 
     this.close();
-
-    if (!skipPrompts && created.roster.length > 0) {
-      await this.nicknameOverlay.promptRecruits(created.roster);
-    }
-
     const latest = this.saveManager.getSave() ?? created;
     onComplete?.(latest);
   }

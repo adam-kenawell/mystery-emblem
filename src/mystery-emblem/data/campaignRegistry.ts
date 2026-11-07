@@ -1,12 +1,12 @@
 /**
- * Mystery Emblem — 5-Dungeon Demo Campaign Registry
+ * Mystery Emblem — 5-Dungeon Lore Demo Campaign Registry (`campaignRegistry.ts`)
  *
- * Data-driven configuration for the 5-Dungeon Demo:
- * - Per-chapter Battle Objectives (`'rout'` vs `'defeat_boss'`)
- * - Manual enemy & Boss spawns (`isBoss`, `stationary`, `droppableItemId`, `aiMode`)
- * - Scheduled Dungeon Stairs reinforcement waves (blocked when a unit stands on the Stairs tile)
- * - Quiz-seeded pre-battle unit recruitments
- * - Concise PMD portrait Intro & Outro dialogue cutscenes
+ * Data-driven Act 1 Verdant Commonwealth Demo configuration aligned with the Lore Bible:
+ * - `prologue`   (`D1`): Western Beach (Cap 3, `rout`; starting trio `Lord + Piplup + Flabébé`)
+ * - `chapter_01` (`D2`): Verdant Bluff (Cap 5, `defeat_boss` vs stationary `Captain Aron`; joins `slot1Flying` + `Sewaddle`)
+ * - `chapter_02` (`D3`): Cleft Mountain (Cap 6, `rout` w/ Dungeon Stairs waves; joins `slot2Psychic`)
+ * - `chapter_03` (`D4`): River Shrine (Cap 6, `rout`; rescues `Kecleon` & unlocks World Map Kecleon Shops)
+ * - `chapter_04` (`D5`): Berry Orchards (Cap 7, `defeat_boss` vs `Commander Deino` w/ `Captain Linoone` & `Captain Morgrem`; joins `slot3Electric`)
  */
 
 import type { DialogueLine, DialogueScript, DialogueSpeakerRef } from '../ui/DialogueOverlay';
@@ -29,6 +29,10 @@ import { KECLEON_PMD_ASSET_ID } from './overworldMapData';
 
 /** Chancellor Serperior PMDCollab / SpriteCollab National Dex asset ID */
 export const CHANCELLOR_SERPERIOR_PMD_ASSET_ID = '0497';
+/** High Seeress Milotic PMDCollab / SpriteCollab National Dex asset ID */
+export const HIGH_SEERESS_MILOTIC_PMD_ASSET_ID = '0350';
+/** Ironscale Commander Deino PMDCollab / SpriteCollab National Dex asset ID */
+export const COMMANDER_DEINO_PMD_ASSET_ID = '0633';
 
 export const DEMO_STARTING_LEVEL = 9;
 
@@ -50,11 +54,42 @@ export interface ReinforcementWaveDefinition {
 }
 
 export interface ChapterRecruitmentSpec {
-  seedKey: keyof QuizRecruitSeeds;
+  seedKey?: keyof QuizRecruitSeeds;
+  fixedSpeciesIds?: ReadonlyArray<string>;
   joinLevel: number;
   scaleStatsToLevel: boolean;
   fallbackSpeciesIds: ReadonlyArray<string>;
-  introBanner: string;
+}
+
+export function resolveChapterRecruitmentSpeciesIds(
+  spec: ChapterRecruitmentSpec,
+  save: SaveData | null
+): string[] {
+  const result: string[] = [];
+  if (spec.seedKey) {
+    const rawSeed = save?.campaign.quizSeeds?.[spec.seedKey];
+    const seeded =
+      Array.isArray(rawSeed) && rawSeed.length > 0 ? rawSeed : spec.fallbackSpeciesIds;
+    for (const id of seeded) {
+      if (getSpeciesById(id) && !result.includes(id)) {
+        result.push(id);
+      }
+    }
+  } else {
+    for (const id of spec.fallbackSpeciesIds) {
+      if (getSpeciesById(id) && !result.includes(id)) {
+        result.push(id);
+      }
+    }
+  }
+  if (spec.fixedSpeciesIds) {
+    for (const id of spec.fixedSpeciesIds) {
+      if (getSpeciesById(id) && !result.includes(id)) {
+        result.push(id);
+      }
+    }
+  }
+  return result;
 }
 
 export interface CampaignChapterConfig {
@@ -88,11 +123,32 @@ const SERPERIOR_SPEAKER: DialogueSpeakerRef = {
   nickname: 'Chancellor Serperior',
 };
 
+const MILOTIC_SPEAKER: DialogueSpeakerRef = {
+  kind: 'npc',
+  pmdAssetId: HIGH_SEERESS_MILOTIC_PMD_ASSET_ID,
+  speciesName: 'Milotic',
+  nickname: 'High Seeress Milotic',
+};
+
 const KECLEON_SPEAKER: DialogueSpeakerRef = {
   kind: 'npc',
   pmdAssetId: KECLEON_PMD_ASSET_ID,
   speciesName: 'Kecleon',
   nickname: 'Kecleon',
+};
+
+const ARON_SPEAKER: DialogueSpeakerRef = {
+  kind: 'npc',
+  pmdAssetId: '0304',
+  speciesName: 'Aron',
+  nickname: 'Captain Aron',
+};
+
+const DEINO_SPEAKER: DialogueSpeakerRef = {
+  kind: 'npc',
+  pmdAssetId: COMMANDER_DEINO_PMD_ASSET_ID,
+  speciesName: 'Deino',
+  nickname: 'Commander Deino',
 };
 
 function findRecruitSpeaker(
@@ -157,7 +213,7 @@ const DUNGEON_1_ENEMIES: ReadonlyArray<ManualEnemyBattleSpawn> = [
     x: 12,
     y: 5,
     speciesId: 'zigzagoon_galar',
-    nickname: 'Coastal Scout',
+    nickname: 'Feral Outrider',
     level: 9,
     heldItemId: null,
     aiMode: 'wait_until_in_range',
@@ -167,7 +223,7 @@ const DUNGEON_1_ENEMIES: ReadonlyArray<ManualEnemyBattleSpawn> = [
     x: 12,
     y: 3,
     speciesId: 'impidimp',
-    nickname: 'Treasure Raider',
+    nickname: 'Shadow Raider',
     level: 10,
     heldItemId: null,
     droppableItemId: 'evolution_stone',
@@ -178,7 +234,7 @@ const DUNGEON_1_ENEMIES: ReadonlyArray<ManualEnemyBattleSpawn> = [
     x: 13,
     y: 7,
     speciesId: 'pawniard',
-    nickname: 'Ironscale Vanguard',
+    nickname: 'Ironscale Scout',
     level: 10,
     heldItemId: null,
     aiMode: 'wait_until_in_range',
@@ -200,8 +256,8 @@ const DUNGEON_2_ENEMIES: ReadonlyArray<ManualEnemyBattleSpawn> = [
     id: 'd2_enemy_1',
     x: 11,
     y: 7,
-    speciesId: 'seedot',
-    nickname: 'Cliff Guerilla',
+    speciesId: 'impidimp',
+    nickname: 'Cliff Hexer',
     level: 9,
     heldItemId: null,
     aiMode: 'wait_until_in_range',
@@ -322,7 +378,7 @@ const DUNGEON_4_ENEMIES: ReadonlyArray<ManualEnemyBattleSpawn> = [
     x: 10,
     y: 5,
     speciesId: 'spheal',
-    nickname: 'Falls Guard',
+    nickname: 'Shrine Guard',
     level: 10,
     heldItemId: null,
     aiMode: 'wait_until_in_range',
@@ -342,7 +398,7 @@ const DUNGEON_4_ENEMIES: ReadonlyArray<ManualEnemyBattleSpawn> = [
     x: 13,
     y: 7,
     speciesId: 'croagunk',
-    nickname: 'Cavern Striker',
+    nickname: 'Shrine Striker',
     level: 11,
     heldItemId: null,
     droppableItemId: 'protein',
@@ -353,7 +409,7 @@ const DUNGEON_4_ENEMIES: ReadonlyArray<ManualEnemyBattleSpawn> = [
     x: 15,
     y: 5,
     speciesId: 'lairon',
-    nickname: 'Ironclad Warden',
+    nickname: 'Ironclad Lairon',
     level: 11,
     heldItemId: null,
     droppableItemId: 'evolution_stone',
@@ -372,7 +428,7 @@ const DUNGEON_4_REINFORCEMENTS: ReadonlyArray<ReinforcementWaveDefinition> = [
       x: 15,
       y: 2,
       speciesId: 'zubat',
-      nickname: 'Cavern Diver',
+      nickname: 'Shrine Diver',
       level: 10,
       heldItemId: null,
       aiMode: 'wait_until_in_range',
@@ -385,8 +441,8 @@ const DUNGEON_5_ENEMIES: ReadonlyArray<ManualEnemyBattleSpawn> = [
     id: 'd5_enemy_0',
     x: 12,
     y: 3,
-    speciesId: 'seedot',
-    nickname: 'Orchard Ranger',
+    speciesId: 'linoone_galar',
+    nickname: 'Captain Linoone',
     level: 11,
     heldItemId: null,
     aiMode: 'wait_until_in_range',
@@ -407,7 +463,7 @@ const DUNGEON_5_ENEMIES: ReadonlyArray<ManualEnemyBattleSpawn> = [
     x: 15,
     y: 4,
     speciesId: 'corvisquire',
-    nickname: 'Canopy Captain',
+    nickname: 'Canopy Harrier',
     level: 11,
     heldItemId: null,
     aiMode: 'wait_until_in_range',
@@ -417,18 +473,19 @@ const DUNGEON_5_ENEMIES: ReadonlyArray<ManualEnemyBattleSpawn> = [
     x: 15,
     y: 7,
     speciesId: 'morgrem',
-    nickname: 'Shadow Envoy',
+    nickname: 'Captain Morgrem',
     level: 11,
     heldItemId: null,
     aiMode: 'wait_until_in_range',
   },
   {
-    id: 'd5_boss_nuzleaf',
+    id: 'd5_boss_deino',
     x: 17,
     y: 5,
-    speciesId: 'nuzleaf',
-    nickname: 'Commander Nuzleaf',
+    speciesId: 'deino',
+    nickname: 'Commander Deino',
     level: 12,
+    stats: { hp: 31, atk: 12, def: 10, spa: 12, spd: 10, spe: 11, mov: 5 },
     heldItemId: 'oran_berry',
     isBoss: true,
     stationary: false,
@@ -461,7 +518,7 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     nodeId: 'prologue',
     levelId: 'prologue',
     dungeonNumber: 1,
-    title: 'Beach Cave',
+    title: 'Western Beach',
     subtitle: 'Dungeon 1',
     objectiveType: 'rout',
     objectiveLabel: 'Rout All Enemies',
@@ -471,7 +528,7 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     reinforcements: [],
     buildMap: () =>
       attachMapMetadata(getEffectiveChapterMap('prologue'), {
-        name: 'Beach Cave',
+        name: 'Western Beach',
         deploymentCap: 3,
         objectiveType: 'rout',
         enemies: DUNGEON_1_ENEMIES,
@@ -479,45 +536,51 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
       }),
     buildIntroScript: () => ({
       id: 'demo_d1_intro',
-      title: 'Beach Cave',
+      title: 'Western Beach',
       bgm: 'calm_cutscene',
       lines: [
         {
           speaker: { kind: 'partner' },
           side: 'right',
           emotion: 'Worried',
-          text: 'Wake up, {lord}! The tide carried you into Beach Cave—{healer} and I just found you.',
+          text: 'Wake up, {lord}! The tide washed you onto Western Beach—{healer} and I found you with no memory of the storm.',
         },
         {
           speaker: { kind: 'healer' },
           side: 'right',
-          emotion: 'Determined',
-          text: 'Ironscale scouts ahead! One raider stole an Evolution Stone from the shrine!',
+          emotion: 'Worried',
+          text: 'Shadow-crazed Feral Pokémon and Ironscale scouts are sweeping the shore! One raider stole an Evolution Stone from the shrine!',
         },
         {
           speaker: { kind: 'lord' },
           side: 'left',
           emotion: 'Determined',
-          text: 'Stay near my Dragon Aura, {partner} and {healer}. Rout the scouts and reclaim that Stone!',
+          text: 'My memory is gone, {partner}, {healer}—but my Dragon Aura resonates with you both. Let’s rout them and reclaim that Stone!',
         },
       ],
     }),
     buildOutroScript: () => ({
       id: 'demo_d1_outro',
-      title: 'Beach Cave',
+      title: 'Western Beach',
       bgm: 'calm_cutscene',
       lines: [
         {
-          speaker: { kind: 'partner' },
+          speaker: SERPERIOR_SPEAKER,
           side: 'right',
-          emotion: 'Happy',
-          text: 'We drove them off! Anyone at Level 10 can promote with an Evolution Stone!',
+          emotion: 'Surprised',
+          text: 'That golden Dragon Aura... High Seeress Milotic—a scion of the vanished Dragon Kingdom lives!',
+        },
+        {
+          speaker: MILOTIC_SPEAKER,
+          side: 'right',
+          emotion: 'Worried',
+          text: 'Generations ago, Royal Tactician Gengar betrayed the Dragon Court and sundered the southeastern Abyss, whose miasma drives wild Pokémon Feral.',
         },
         {
           speaker: SERPERIOR_SPEAKER,
           side: 'right',
           emotion: 'Determined',
-          text: 'Well fought, {lord}. I am Chancellor Serperior—march north to Drenched Bluff and break Captain Aron’s blockade!',
+          text: 'Now the Ironscale Empire invades our Verdant Commonwealth claiming "martial law" is the only cure. March north to Verdant Bluff and break Captain Aron’s blockade, {lord}!',
         },
       ],
     }),
@@ -526,7 +589,7 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     nodeId: 'chapter_01',
     levelId: 'chapter_01',
     dungeonNumber: 2,
-    title: 'Drenched Bluff',
+    title: 'Verdant Bluff',
     subtitle: 'Dungeon 2',
     objectiveType: 'defeat_boss',
     objectiveLabel: 'Defeat Boss: Captain Aron',
@@ -535,60 +598,74 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     enemySpawns: DUNGEON_2_ENEMIES,
     reinforcements: [],
     recruitment: {
-      seedKey: 'q2BugFlying',
+      seedKey: 'slot1Flying',
+      fixedSpeciesIds: ['sewaddle'],
       joinLevel: DEMO_STARTING_LEVEL,
       scaleStatsToLevel: true,
-      fallbackSpeciesIds: ['caterpie', 'pidgey'],
-      introBanner: 'New allies joined your squad!',
+      fallbackSpeciesIds: ['pidgey'],
     },
     buildMap: () =>
       attachMapMetadata(getEffectiveChapterMap('chapter_01'), {
-        name: 'Drenched Bluff',
+        name: 'Verdant Bluff',
         deploymentCap: 5,
         objectiveType: 'defeat_boss',
         enemies: DUNGEON_2_ENEMIES,
         preserveCustomEnemies: hasChapterMapOverride('chapter_01'),
       }),
     buildIntroScript: (save) => {
-      const bugId = save?.campaign.quizSeeds.q2BugFlying[0] ?? 'caterpie';
-      const flyId = save?.campaign.quizSeeds.q2BugFlying[1] ?? 'pidgey';
+      const flyId =
+        save?.campaign.quizSeeds.slot1Flying?.[0] ??
+        save?.campaign.quizSeeds.q2BugFlying?.find((id) => id !== 'caterpie' && id !== 'sewaddle' && id !== 'grubbin') ??
+        'pidgey';
       const lines: DialogueLine[] = [
         {
           speaker: findRecruitSpeaker(save, flyId),
           side: 'right',
           emotion: 'Determined',
-          text: '{lord}! Captain Aron has anchored himself atop the eastern bluff and won’t budge.',
+          text: '{lord}! From above the cliffs I spotted Captain Aron—he’s anchored in heavy Ironscale plate and won’t budge an inch.',
         },
         {
-          speaker: findRecruitSpeaker(save, bugId),
+          speaker: findRecruitSpeaker(save, 'sewaddle'),
           side: 'right',
-          emotion: 'Normal',
-          text: 'Topple Aron and his entire garrison scatters!',
+          emotion: 'Determined',
+          text: 'Our forest scouts are with you too! Topple Captain Aron on his post and his whole garrison will scatter!',
+        },
+        {
+          speaker: ARON_SPEAKER,
+          side: 'right',
+          emotion: 'Angry',
+          text: 'By Imperial decree, this coast stands under Ironscale martial law! None pass Verdant Bluff!',
         },
         {
           speaker: { kind: 'lord' },
           side: 'left',
           emotion: 'Determined',
-          text: 'Check their attack ranges and strike Captain Aron down!',
+          text: 'The Commonwealth isn’t yours to cage. Watch their attack ranges and bring Captain Aron down!',
         },
       ];
       return {
         id: 'demo_d2_intro',
-        title: 'Drenched Bluff',
+        title: 'Verdant Bluff',
         bgm: 'drenched_bluff',
         lines,
       };
     },
     buildOutroScript: () => ({
       id: 'demo_d2_outro',
-      title: 'Drenched Bluff',
+      title: 'Verdant Bluff',
       bgm: 'calm_cutscene',
       lines: [
         {
           speaker: { kind: 'partner' },
           side: 'right',
           emotion: 'Happy',
-          text: 'Aron’s line collapsed! Smoke signals on Mt. Bristle—let’s move out!',
+          text: 'Captain Aron’s blockade broke! Anyone who reaches Level 10 can promote with an Evolution Stone too!',
+        },
+        {
+          speaker: { kind: 'healer' },
+          side: 'right',
+          emotion: 'Worried',
+          text: 'Look east toward Cleft Mountain—purple miasma is rising from the ancient Dragon Kingdom watchtower!',
         },
       ],
     }),
@@ -597,7 +674,7 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     nodeId: 'chapter_02',
     levelId: 'chapter_02',
     dungeonNumber: 3,
-    title: 'Mt. Bristle',
+    title: 'Cleft Mountain',
     subtitle: 'Dungeon 3',
     objectiveType: 'rout',
     objectiveLabel: 'Rout All Enemies',
@@ -606,16 +683,15 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     enemySpawns: DUNGEON_3_ENEMIES,
     reinforcements: DUNGEON_3_REINFORCEMENTS,
     recruitment: {
-      seedKey: 'q3GhostPsychic',
+      seedKey: 'slot2Psychic',
       joinLevel: DEMO_STARTING_LEVEL,
       scaleStatsToLevel: true,
-      fallbackSpeciesIds: ['duskull', 'abra'],
-      introBanner: 'New allies joined your squad!',
+      fallbackSpeciesIds: ['ralts'],
     },
     buildMap: () => {
       const base = getEffectiveChapterMap('chapter_02');
       const map = attachMapMetadata(base, {
-        name: 'Mt. Bristle',
+        name: 'Cleft Mountain',
         deploymentCap: 6,
         objectiveType: 'rout',
         enemies: DUNGEON_3_ENEMIES,
@@ -631,47 +707,67 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
       return map;
     },
     buildIntroScript: (save) => {
-      const ghostId = save?.campaign.quizSeeds.q3GhostPsychic[0] ?? 'duskull';
-      const psyId = save?.campaign.quizSeeds.q3GhostPsychic[1] ?? 'abra';
+      const psyId =
+        save?.campaign.quizSeeds.slot2Psychic?.[0] ??
+        save?.campaign.quizSeeds.q3GhostPsychic?.find((id) => id !== 'duskull') ??
+        'ralts';
       return {
         id: 'demo_d3_intro',
-        title: 'Mt. Bristle',
+        title: 'Cleft Mountain',
         bgm: 'mt_bristle',
         lines: [
           {
-            speaker: findRecruitSpeaker(save, ghostId),
+            speaker: findRecruitSpeaker(save, psyId),
             side: 'right',
             emotion: 'Worried',
-            text: 'Careful, {lord}—Ironscale reserves are climbing the Dungeon Stairs!',
+            text: 'Careful, {lord}! Your Dragon Aura woke the runes of this ancient watchtower—and Ironscale reserves are climbing the Dungeon Stairs!',
           },
           {
             speaker: findRecruitSpeaker(save, psyId),
             side: 'right',
             emotion: 'Determined',
-            text: 'Stand directly on a Stairs tile to block reinforcements from emerging!',
+            text: 'Stand directly on a Stairs tile to seal enemy reinforcements below! Let me lend my mystic sight to your squad.',
+          },
+          {
+            speaker: { kind: 'lord' },
+            side: 'left',
+            emotion: 'Determined',
+            text: 'A watchtower of the old Dragon Kingdom... Secure those Stairs and clear Cleft Mountain!',
           },
         ],
       };
     },
-    buildOutroScript: () => ({
-      id: 'demo_d3_outro',
-      title: 'Mt. Bristle',
-      bgm: 'calm_cutscene',
-      lines: [
-        {
-          speaker: { kind: 'partner' },
-          side: 'right',
-          emotion: 'Surprised',
-          text: 'Mt. Bristle is clear! Wait—Kecleon’s caravan is trapped in Waterfall Cave!',
-        },
-      ],
-    }),
+    buildOutroScript: (save) => {
+      const psyId =
+        save?.campaign.quizSeeds.slot2Psychic?.[0] ??
+        save?.campaign.quizSeeds.q3GhostPsychic?.find((id) => id !== 'duskull') ??
+        'ralts';
+      return {
+        id: 'demo_d3_outro',
+        title: 'Cleft Mountain',
+        bgm: 'calm_cutscene',
+        lines: [
+          {
+            speaker: findRecruitSpeaker(save, psyId),
+            side: 'right',
+            emotion: 'Surprised',
+            text: 'These carvings show the Dragon bloodlines standing together before Gengar tore open the southeastern sky...',
+          },
+          {
+            speaker: { kind: 'partner' },
+            side: 'right',
+            emotion: 'Surprised',
+            text: '{lord}, distress bells from River Shrine below! Master Merchant Kecleon’s caravan is surrounded!',
+          },
+        ],
+      };
+    },
   },
   {
     nodeId: 'chapter_03',
     levelId: 'chapter_03',
     dungeonNumber: 4,
-    title: 'Waterfall Cave',
+    title: 'River Shrine',
     subtitle: 'Dungeon 4',
     objectiveType: 'rout',
     objectiveLabel: 'Rout All Enemies',
@@ -685,7 +781,7 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     },
     buildMap: () =>
       attachMapMetadata(getEffectiveChapterMap('chapter_03'), {
-        name: 'Waterfall Cave',
+        name: 'River Shrine',
         deploymentCap: 6,
         objectiveType: 'rout',
         enemies: DUNGEON_4_ENEMIES,
@@ -693,39 +789,39 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
       }),
     buildIntroScript: () => ({
       id: 'demo_d4_intro',
-      title: 'Waterfall Cave',
+      title: 'River Shrine',
       bgm: 'waterfall_cave',
       lines: [
         {
           speaker: KECLEON_SPEAKER,
           side: 'right',
           emotion: 'Worried',
-          text: 'Help! An armored Lairon has our wagons pinned behind the falls!',
+          text: 'Help! An Ironclad Lairon seized River Shrine to confiscate our Potions and Evolution Stones for Commander Deino’s war chest!',
         },
         {
           speaker: { kind: 'lord' },
           side: 'left',
           emotion: 'Determined',
-          text: 'Hold fast, Kecleon! Fliers and Water-types can cross the river—rout them!',
+          text: 'Hold fast, Kecleon! Fliers and Water-types can cross the shrine’s river channels—rout them and free the caravan!',
         },
       ],
     }),
     buildOutroScript: () => ({
       id: 'demo_d4_outro',
-      title: 'Waterfall Cave',
+      title: 'River Shrine',
       bgm: 'kecleon_shop',
       lines: [
         {
           speaker: KECLEON_SPEAKER,
           side: 'right',
           emotion: 'Happy',
-          text: 'Saved! My shop is open on the World Map—stock up before Apple Woods!',
+          text: 'Saved! My Kecleon Shops are now open along cleared World Map roads whenever you need TMs, gear, or Stones!',
         },
         {
-          speaker: SERPERIOR_SPEAKER,
+          speaker: MILOTIC_SPEAKER,
           side: 'right',
-          emotion: 'Determined',
-          text: 'Commander Nuzleaf holds Apple Woods ahead. One last victory frees the Commonwealth!',
+          emotion: 'Worried',
+          text: 'Urgent word from Berry Orchards, {lord}—Commander Deino himself leads Captains Linoone and Morgrem against our heartland!',
         },
       ],
     }),
@@ -734,49 +830,57 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     nodeId: 'chapter_04',
     levelId: 'chapter_04',
     dungeonNumber: 5,
-    title: 'Apple Woods',
+    title: 'Berry Orchards',
     subtitle: 'Dungeon 5 · Finale',
     objectiveType: 'defeat_boss',
-    objectiveLabel: 'Defeat Boss: Commander Nuzleaf',
+    objectiveLabel: 'Defeat Boss: Commander Deino',
     recommendedLevel: 12,
     deploymentCap: 7,
     enemySpawns: DUNGEON_5_ENEMIES,
     reinforcements: DUNGEON_5_REINFORCEMENTS,
     recruitment: {
-      seedKey: 'q4Electric',
+      seedKey: 'slot3Electric',
       joinLevel: DEMO_STARTING_LEVEL,
       scaleStatsToLevel: true,
-      fallbackSpeciesIds: ['shinx'],
-      introBanner: 'A new ally joined your squad!',
+      fallbackSpeciesIds: ['elekid'],
     },
     clearRewardItems: [{ itemId: 'evolution_stone', quantity: 1 }],
     isDemoFinale: true,
     buildMap: () =>
       attachMapMetadata(getEffectiveChapterMap('chapter_04'), {
-        name: 'Apple Woods',
+        name: 'Berry Orchards',
         deploymentCap: 7,
         objectiveType: 'defeat_boss',
         enemies: DUNGEON_5_ENEMIES,
         preserveCustomEnemies: hasChapterMapOverride('chapter_04'),
       }),
     buildIntroScript: (save) => {
-      const elecId = save?.campaign.quizSeeds.q4Electric[0] ?? 'shinx';
+      const elecId =
+        save?.campaign.quizSeeds.slot3Electric?.[0] ??
+        save?.campaign.quizSeeds.q4Electric?.[0] ??
+        'elekid';
       return {
         id: 'demo_d5_intro',
-        title: 'Apple Woods',
+        title: 'Berry Orchards',
         bgm: 'apple_woods',
         lines: [
           {
             speaker: findRecruitSpeaker(save, elecId),
             side: 'right',
             emotion: 'Determined',
-            text: '{lord}! Commander Nuzleaf’s captains hold the orchard ahead.',
+            text: '{lord}! Commander Deino’s vanguard—and his lieutenants Linoone and Morgrem—have fortified Berry Orchards ahead!',
           },
           {
-            speaker: { kind: 'partner' },
+            speaker: DEINO_SPEAKER,
             side: 'right',
+            emotion: 'Angry',
+            text: 'Another lost Dragon playing hero? Soft ideals let the Abyss fester—only Ironscale steel can subjugate a broken world!',
+          },
+          {
+            speaker: { kind: 'lord' },
+            side: 'left',
             emotion: 'Determined',
-            text: 'Use the glowing Wonder Tiles to heal each turn—let’s defeat Nuzleaf!',
+            text: 'Ruling through fear isn’t order, Deino! Stand together, everyone—defeat Commander Deino and free Berry Orchards!',
           },
         ],
       };
@@ -787,16 +891,22 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
       bgm: 'victory_fanfare',
       lines: [
         {
+          speaker: DEINO_SPEAKER,
+          side: 'right',
+          emotion: 'Pain',
+          text: 'Tch... Fall back, Linoone, Morgrem! Remember this, {lord}—Emperor Aggron’s legions and the Abyss beyond will test that soft heart of yours.',
+        },
+        {
           speaker: SERPERIOR_SPEAKER,
           side: 'right',
           emotion: 'Happy',
-          text: 'Magnificent, {lord}! Nuzleaf is retreating—the Verdant Commonwealth is safe!',
+          text: 'Berry Orchards stands free! Thanks to your squad, the Verdant Commonwealth can unite against both the Empire and the Abyss.',
         },
         {
-          speaker: { kind: 'lord' },
-          side: 'left',
+          speaker: MILOTIC_SPEAKER,
+          side: 'right',
           emotion: 'Happy',
-          text: 'Thanks for playing the Mystery Emblem Demo! New Game+ Custom Roster is now unlocked!',
+          text: 'Your journey across the five kingdoms has only just begun, {lord}. Thank you for playing the Mystery Emblem Demo!',
         },
       ],
     }),

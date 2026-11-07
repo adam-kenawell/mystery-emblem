@@ -16,6 +16,7 @@ import type { PmdDirection, PmdSpriteAction } from '../assets/pmdAssetLoader';
 import { getItemById, getMoveById, getSpeciesById } from '../data/index';
 import type {
   DungeonMapDefinition,
+  FlabebeFlowerColor,
   MoveDefinition,
   PokemonType,
   StatBlockSeven,
@@ -204,6 +205,7 @@ export interface BattleUnitState extends PathfindingUnitContext {
   speciesId: string;
   speciesName: string;
   nickname: string;
+  cosmeticForm?: FlabebeFlowerColor;
   level: number;
   exp?: number;
   unlockedMoveIds?: string[];

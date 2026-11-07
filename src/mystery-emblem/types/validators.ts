@@ -1,5 +1,6 @@
 import {
   CURRENT_SAVE_SCHEMA_VERSION,
+  FLABEBE_FLOWER_COLORS,
   ITEM_CATEGORIES,
   MOVE_CATEGORIES,
   POKEMON_TYPES,
@@ -43,12 +44,13 @@ const VALID_TRAVERSAL_SET = new Set<string>(TRAVERSAL_CLASSES);
 const VALID_MOVE_CATEGORY_SET = new Set<string>(MOVE_CATEGORIES);
 const VALID_ITEM_CATEGORY_SET = new Set<string>(ITEM_CATEGORIES);
 const VALID_STATUS_SET = new Set<string>(STATUS_CONDITIONS);
+const VALID_FLABEBE_FLOWER_COLOR_SET = new Set<string>(FLABEBE_FLOWER_COLORS);
 
 const REQUIRED_DRAGON_LORDS = [
+  'axew',
   'dratini',
   'bagon',
   'gible',
-  'deino',
   'goomy',
   'jangmo_o',
   'dreepy',
@@ -105,7 +107,8 @@ const REQUIRED_QUIZ_STAGE1 = [
   'abra',
   'ralts',
   'solosis',
-  // Q4 Electric (3)
+  // Q4 Electric (4)
+  'elekid',
   'pichu',
   'shinx',
   'mareep',
@@ -144,7 +147,14 @@ const REQUIRED_QUIZ_STAGE1 = [
   'blipbug',
 ] as const;
 
-const REQUIRED_STORY_STAGE1 = ['starly', 'lillipup', 'whismur', 'pawmi', 'larvitar'] as const;
+const REQUIRED_STORY_STAGE1 = [
+  'starly',
+  'lillipup',
+  'whismur',
+  'pawmi',
+  'larvitar',
+  'seedot',
+] as const;
 
 const REQUIRED_PARALOGUE_STAGE1 = [
   'slakoth',
@@ -168,6 +178,7 @@ const REQUIRED_EEVEELUTIONS = [
 ] as const;
 
 const REQUIRED_ENEMY_STAGE1 = [
+  'deino',
   'pawniard',
   'aron',
   'rookidee',
@@ -178,13 +189,11 @@ const REQUIRED_ENEMY_STAGE1 = [
   'gothita',
   'honedge',
   'gastly',
-  'elekid',
   'zubat',
   'tynamo',
   'spheal',
   'venipede',
   'timburr',
-  'seedot',
   'croagunk',
   'stufful',
   'skarmory',
@@ -581,6 +590,11 @@ export function validateSaveData(
       }
       if (typeof unit.nickname !== 'string' || unit.nickname.trim().length === 0) {
         errors.push(`Unit "${unit.instanceId}" must have a non-empty nickname.`);
+      }
+      if (unit.cosmeticForm !== undefined && !VALID_FLABEBE_FLOWER_COLOR_SET.has(unit.cosmeticForm)) {
+        errors.push(
+          `Unit "${unit.instanceId}" has invalid cosmeticForm "${String(unit.cosmeticForm)}".`
+        );
       }
       if (unit.level < 1 || unit.level > 40) {
         errors.push(`Unit "${unit.instanceId}" has level ${unit.level} outside 1..40.`);

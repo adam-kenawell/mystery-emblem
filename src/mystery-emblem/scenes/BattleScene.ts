@@ -26,6 +26,7 @@ import {
   computePmdTileSpritePlacement,
   directionFromDelta,
   loadSpeciesSpriteBundle,
+  resolveUnitVisualAssetId,
   type LoadedSpriteBundle,
   type PmdDirection,
 } from '../assets/pmdAssetLoader';
@@ -101,6 +102,7 @@ import type {
   BattleObjectiveType,
   ConvoyEntry,
   DungeonMapDefinition,
+  FlabebeFlowerColor,
   ManualEnemyBattleSpawn,
   PokemonType,
   PrepDeploymentSlot,
@@ -190,6 +192,7 @@ export interface BattleSceneOptions {
 export interface BattleSceneSnapshot {
   isOpen: boolean;
   phase: BattlePhase;
+  cutsceneInProgress: boolean;
   objectiveType: BattleObjectiveType;
   objectiveLabel: string;
   prepSubMode: PrepSubMode | null;
@@ -240,6 +243,8 @@ export interface BattleSceneSnapshot {
     aiMode: string;
     speciesId: string;
     speciesName: string;
+    cosmeticForm?: FlabebeFlowerColor;
+    spriteAssetKey: string;
     nickname: string;
     level: number;
     exp: number;
@@ -336,6 +341,9 @@ export class BattleScene {
   private pauseOnLevelUpInFastMode = false;
   private levelUpHistory: LevelUpResult[] = [];
   private levelUpResolver: (() => void) | null = null;
+  private cutsceneInProgress = false;
+  private currentOnDungeonEnteredBeforePrep: (() => Promise<void>) | undefined = undefined;
+  private currentOnBeforeVictoryModal: (() => Promise<void>) | undefined = undefined;
   private currentOnVictory: (() => void) | undefined = undefined;
   private victoryCallbackFired = false;
   private map: DungeonMapDefinition = getEffectiveChapterMap('prologue');
@@ -657,7 +665,7 @@ export class BattleScene {
     this.systemMenuBackdropEl.innerHTML = `
       <div class="pmd-window pmd-battle-system-dialog" role="dialog" aria-modal="true" aria-label="Battlefield Menu">
         <h3 class="pmd-panel-title">BATTLE MENU</h3>
-        <p class="pmd-panel-sub" data-sys-sub>Turn 1 · Beach Cave</p>
+        <p class="pmd-panel-sub" data-sys-sub>Turn 1 · Western Beach</p>
         <div class="pmd-battle-system-actions pmd-menu-list">
           <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-sys-danger">Danger Area: OFF</button>
           <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-sys-audio">Audio: ON</button>
@@ -853,11 +861,13 @@ export class BattleScene {
     commitToSaveOnVictory?: boolean;
     clearRewardItems?: ReadonlyArray<ConvoyEntry>;
     pauseOnLevelUpInFastMode?: boolean;
+    onDungeonEnteredBeforePrep?: () => Promise<void>;
     onVictory?: () => void;
+    onBeforeVictoryModal?: () => Promise<void>;
     exitButtonLabel?: string;
     hideReplayOnVictory?: boolean;
   }): Promise<void> {
-    this.battleRunGen += 1;
+    const runGen = ++this.battleRunGen;
     this.activeLevelId = options?.levelId?.trim() || options?.customMap?.id || 'prologue';
     this.explicitCustomMap = options?.customMap ? cloneDungeonMap(options.customMap) : null;
     this.explicitEnemyOverrides = options?.enemyOverrides;
@@ -867,7 +877,10 @@ export class BattleScene {
     this.commitToSaveOnVictory = Boolean(options?.commitToSaveOnVictory);
     this.clearRewardItems = options?.clearRewardItems ?? [];
     this.pauseOnLevelUpInFastMode = Boolean(options?.pauseOnLevelUpInFastMode);
+    this.currentOnDungeonEnteredBeforePrep = options?.onDungeonEnteredBeforePrep;
     this.currentOnVictory = options?.onVictory;
+    this.currentOnBeforeVictoryModal = options?.onBeforeVictoryModal;
+    this.cutsceneInProgress = Boolean(this.currentOnDungeonEnteredBeforePrep);
     this.victoryCallbackFired = false;
 
     const exitLabel = options?.exitButtonLabel ?? 'Return to Menu';
@@ -925,7 +938,8 @@ export class BattleScene {
     this.rootEl.hidden = false;
     this.viewportEl.classList.add('is-battle-active');
 
-    await this.setupFreshBattleState();
+    await this.setupFreshBattleState({ showPrepOverlay: !this.cutsceneInProgress });
+    if (!this.openState || runGen !== this.battleRunGen) return;
 
     this.syncViewportDimensions();
     const lord = this.getLordUnit() ?? this.units[0];
@@ -935,12 +949,31 @@ export class BattleScene {
     this.startLoop();
     this.onLayerStateChanged();
     this.renderFrame(performance.now());
+
+    if (this.currentOnDungeonEnteredBeforePrep) {
+      const introHook = this.currentOnDungeonEnteredBeforePrep;
+      this.currentOnDungeonEnteredBeforePrep = undefined;
+      try {
+        await introHook();
+      } finally {
+        if (this.openState && runGen === this.battleRunGen) {
+          this.cutsceneInProgress = false;
+        }
+      }
+      if (!this.openState || runGen !== this.battleRunGen) return;
+      this.audioManager.playBgm(this.map.bgmCue || 'drenched_bluff', { fadeMs: 300 });
+      this.prepOverlay.show();
+      this.syncPrepChromeVisibility();
+      this.onLayerStateChanged();
+      this.renderFrame(performance.now());
+    }
   }
 
   public close(): void {
     if (!this.openState) return;
     this.battleRunGen += 1;
     this.openState = false;
+    this.cutsceneInProgress = false;
     this.stopLoop();
     this.pinchTracker.reset();
     this.activeWalk = null;
@@ -985,7 +1018,7 @@ export class BattleScene {
    * Unified Back / Right-Click / Long-Press / Corner Menu handler (Rule 2).
    */
   public handleMenuOrBack(): void {
-    if (!this.openState) return;
+    if (!this.openState || this.cutsceneInProgress) return;
 
     if (!this.levelUpModalBackdropEl.hidden) {
       this.dismissLevelUpModal();
@@ -1256,6 +1289,7 @@ export class BattleScene {
     return {
       isOpen: this.openState,
       phase: this.phase,
+      cutsceneInProgress: this.cutsceneInProgress,
       objectiveType: this.objectiveType,
       objectiveLabel: this.objectiveLabel,
       prepSubMode: this.phase === 'dungeon_prep' && this.prepOverlay.isOpen() ? this.prepOverlay.getSubMode() : null,
@@ -1312,6 +1346,8 @@ export class BattleScene {
         aiMode: u.aiMode ?? (u.stationary ? 'stationary' : 'wait_until_in_range'),
         speciesId: u.speciesId,
         speciesName: u.speciesName,
+        cosmeticForm: u.cosmeticForm,
+        spriteAssetKey: this.getUnitVisualKey(u),
         nickname: u.nickname,
         level: u.level,
         exp: u.exp ?? 0,
@@ -1449,7 +1485,7 @@ export class BattleScene {
     };
   }
 
-  private async setupFreshBattleState(): Promise<void> {
+  private async setupFreshBattleState(opts?: { showPrepOverlay?: boolean }): Promise<void> {
     this.hideAllModals();
     this.activeWalk = null;
     this.activeStrikeVfx = null;
@@ -1486,7 +1522,9 @@ export class BattleScene {
     this.recomputeDangerArea();
     this.syncHudControls();
     this.updateInfoStrip();
-    this.prepOverlay.show();
+    if (opts?.showPrepOverlay !== false) {
+      this.prepOverlay.show();
+    }
     this.syncPrepChromeVisibility();
   }
 
@@ -1531,13 +1569,17 @@ export class BattleScene {
     );
   }
 
+  private getUnitVisualKey(unit: Pick<BattleUnitState, 'speciesId' | 'cosmeticForm'>): string {
+    return resolveUnitVisualAssetId(unit.speciesId, unit.cosmeticForm);
+  }
+
   private async preloadAllUnitSprites(): Promise<void> {
-    const speciesIds = new Set<string>(this.units.map((u) => u.speciesId));
+    const visualKeys = new Set<string>(this.units.map((u) => this.getUnitVisualKey(u)));
     await Promise.all(
-      [...speciesIds].map(async (spId) => {
-        if (!this.spriteBundles.has(spId)) {
-          const bundle = await loadSpeciesSpriteBundle(spId);
-          this.spriteBundles.set(spId, bundle);
+      [...visualKeys].map(async (visKey) => {
+        if (!this.spriteBundles.has(visKey)) {
+          const bundle = await loadSpeciesSpriteBundle(visKey);
+          this.spriteBundles.set(visKey, bundle);
         }
       })
     );
@@ -2635,8 +2677,9 @@ export class BattleScene {
       (item.id === 'evolution_stone' || item.id === 'evolution_gem')
     ) {
       const promo = promoteBattleUnitMidBattle(unit, item.id);
-      if (!this.spriteBundles.has(unit.speciesId)) {
-        needsSpriteReloadSpeciesId = unit.speciesId;
+      const evolvedVisKey = this.getUnitVisualKey(unit);
+      if (!this.spriteBundles.has(evolvedVisKey)) {
+        needsSpriteReloadSpeciesId = evolvedVisKey;
       }
       calloutText = `EVOLVED → ${promo.newSpeciesName}!`;
       this.showPhaseBanner(`${unit.nickname} evolved into ${promo.newSpeciesName}!`);
@@ -3012,12 +3055,12 @@ export class BattleScene {
 
     // Portraits: swap to hurt ('Pain') ONLY when standard non-crit projected HP <= 0
     void this.attackerPortraitView.setPortrait({
-      speciesIdOrAssetId: attacker.speciesId,
+      speciesIdOrAssetId: this.getUnitVisualKey(attacker),
       emotion: forecast.projectedAttackerHp <= 0 ? 'Pain' : 'Normal',
       mirrorHorizontal: false,
     });
     void this.defenderPortraitView.setPortrait({
-      speciesIdOrAssetId: defender.speciesId,
+      speciesIdOrAssetId: this.getUnitVisualKey(defender),
       emotion: forecast.projectedDefenderHp <= 0 ? 'Pain' : 'Normal',
       mirrorHorizontal: true,
     });
@@ -3060,7 +3103,9 @@ export class BattleScene {
           btn.type = 'button';
           btn.className = `pmd-btn pmd-chip-btn pmd-portrait-action-btn${entry.enemy.id === defender.id ? ' is-active' : ''}`;
           btn.dataset.testid = `forecast-target-${entry.enemy.id}`;
-          btn.appendChild(createMiniSpeciesPortrait(entry.enemy.speciesId, { sizePx: 20 }));
+          btn.appendChild(
+            createMiniSpeciesPortrait(this.getUnitVisualKey(entry.enemy), { sizePx: 20 })
+          );
           const hpSpan = document.createElement('span');
           hpSpan.textContent = `HP ${entry.enemy.currentHp}`;
           btn.appendChild(hpSpan);
@@ -3273,12 +3318,12 @@ export class BattleScene {
     setStatLabel('[data-def-stat4-label]', 'STAT');
 
     void this.attackerPortraitView.setPortrait({
-      speciesIdOrAssetId: healer.speciesId,
+      speciesIdOrAssetId: this.getUnitVisualKey(healer),
       emotion: 'Happy',
       mirrorHorizontal: false,
     });
     void this.defenderPortraitView.setPortrait({
-      speciesIdOrAssetId: target.speciesId,
+      speciesIdOrAssetId: this.getUnitVisualKey(target),
       emotion: 'Happy',
       mirrorHorizontal: true,
     });
@@ -3308,7 +3353,9 @@ export class BattleScene {
           btn.type = 'button';
           btn.className = `pmd-btn pmd-chip-btn pmd-portrait-action-btn${entry.ally.id === target.id ? ' is-active' : ''}`;
           btn.dataset.testid = `forecast-target-${entry.ally.id}`;
-          btn.appendChild(createMiniSpeciesPortrait(entry.ally.speciesId, { sizePx: 20 }));
+          btn.appendChild(
+            createMiniSpeciesPortrait(this.getUnitVisualKey(entry.ally), { sizePx: 20 })
+          );
           const hpSpan = document.createElement('span');
           hpSpan.textContent = `${entry.ally.currentHp}/${entry.ally.maxHp}`;
           btn.appendChild(hpSpan);
@@ -3688,7 +3735,7 @@ export class BattleScene {
     }
 
     void this.levelUpPortraitView.setPortrait({
-      speciesIdOrAssetId: unit.speciesId,
+      speciesIdOrAssetId: this.getUnitVisualKey(unit),
       emotion: 'Happy',
       mirrorHorizontal: false,
     });
@@ -4213,9 +4260,10 @@ export class BattleScene {
         this.units.length,
         performance.now()
       );
-      if (!this.spriteBundles.has(newEnemy.speciesId)) {
-        const bundle = await loadSpeciesSpriteBundle(newEnemy.speciesId);
-        this.spriteBundles.set(newEnemy.speciesId, bundle);
+      const enemyVisKey = this.getUnitVisualKey(newEnemy);
+      if (!this.spriteBundles.has(enemyVisKey)) {
+        const bundle = await loadSpeciesSpriteBundle(enemyVisKey);
+        this.spriteBundles.set(enemyVisKey, bundle);
       }
       this.units.push(newEnemy);
       this.spawnedReinforcementIds.add(wave.id);
@@ -4260,6 +4308,7 @@ export class BattleScene {
     this.phase = 'victory';
     this.interactionState = 'idle';
     this.phaseBannerEl.hidden = true;
+    this.syncPrepChromeVisibility();
 
     if (!this.victoryCallbackFired) {
       this.victoryCallbackFired = true;
@@ -4269,6 +4318,7 @@ export class BattleScene {
           .map((u) => ({
             instanceId: u.rosterInstanceId!,
             speciesId: u.speciesId,
+            cosmeticForm: u.cosmeticForm,
             nickname: u.nickname,
             level: u.level,
             exp: u.exp ?? 0,
@@ -4327,6 +4377,34 @@ export class BattleScene {
       }
     }
 
+    const runGen = this.battleRunGen;
+    if (this.currentOnBeforeVictoryModal) {
+      const beforeModalHook = this.currentOnBeforeVictoryModal;
+      this.currentOnBeforeVictoryModal = undefined;
+      this.cutsceneInProgress = true;
+      this.syncHudControls();
+      this.onLayerStateChanged();
+      this.renderFrame(performance.now());
+      void (async () => {
+        try {
+          await beforeModalHook();
+        } finally {
+          if (this.openState && runGen === this.battleRunGen) {
+            this.cutsceneInProgress = false;
+          }
+        }
+        if (!this.openState || runGen !== this.battleRunGen || this.phase !== 'victory') {
+          return;
+        }
+        this.showVictoryModalCard();
+      })();
+      return;
+    }
+
+    this.showVictoryModalCard();
+  }
+
+  private showVictoryModalCard(): void {
     this.victoryModalBackdropEl.hidden = false;
     this.audioManager.playSfx('victory_fanfare');
     this.audioManager.playBgm('job_clear', { fadeMs: 180, loop: false, restart: true });
@@ -4541,11 +4619,12 @@ export class BattleScene {
     this.unitPopupEl.dataset.unitId = unit.id;
     this.unitPopupEl.dataset.faction = unit.faction;
 
-    const speciesKey = `${unit.speciesId}:${isEnemy ? 'e' : 'p'}`;
+    const visKey = this.getUnitVisualKey(unit);
+    const speciesKey = `${visKey}:${isEnemy ? 'e' : 'p'}`;
     if (this.renderedPopupSpeciesKey !== speciesKey) {
       this.renderedPopupSpeciesKey = speciesKey;
       void this.unitPopupPortraitView.setPortrait({
-        speciesIdOrAssetId: unit.speciesId,
+        speciesIdOrAssetId: visKey,
         emotion: 'Normal',
         mirrorHorizontal: isEnemy,
       });
@@ -4882,7 +4961,7 @@ export class BattleScene {
 
     // 2. Advance 8-directional PMD sprite frames
     for (const unit of this.getRenderableUnits()) {
-      const bundle = this.spriteBundles.get(unit.speciesId);
+      const bundle = this.spriteBundles.get(this.getUnitVisualKey(unit));
       if (!bundle) continue;
       const anim = bundle.actions[unit.action] ?? bundle.actions.Idle;
       if (now >= unit.nextFrameAt) {
@@ -4986,7 +5065,7 @@ export class BattleScene {
     }
 
     // 2b. Render Blue Starting Deployment Tiles & Selected Swap Tile during Dungeon Prep
-    if (this.phase === 'dungeon_prep' && this.deploymentSlots.length > 0) {
+    if (this.phase === 'dungeon_prep' && !this.cutsceneInProgress && this.deploymentSlots.length > 0) {
       const pulse = this.getSelectionRangePulse(now);
       const deployTileSet = new Set<string>(
         this.deploymentSlots.map((slot) => coordKey(slot.x, slot.y))
@@ -5123,7 +5202,7 @@ export class BattleScene {
     for (const unit of sortedUnits) {
       const tileScreenX = unit.renderWorldX - this.cameraX;
       const tileScreenY = unit.renderWorldY - this.cameraY;
-      const bundle = this.spriteBundles.get(unit.speciesId);
+      const bundle = this.spriteBundles.get(this.getUnitVisualKey(unit));
       const anim = bundle ? (bundle.actions[unit.action] ?? bundle.actions.Idle) : undefined;
       const placement = computePmdTileSpritePlacement(
         tileScreenX,

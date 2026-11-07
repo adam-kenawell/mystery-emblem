@@ -81,7 +81,7 @@ export const DEMO_OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
   {
     id: 'prologue',
     code: 'D1',
-    name: 'Beach Cave',
+    name: 'Western Beach',
     kingdom: 'Verdant Commonwealth',
     kind: 'story',
     act: 1,
@@ -98,7 +98,7 @@ export const DEMO_OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
   {
     id: 'chapter_01',
     code: 'D2',
-    name: 'Drenched Bluff',
+    name: 'Verdant Bluff',
     kingdom: 'Verdant Commonwealth',
     kind: 'story',
     act: 1,
@@ -114,7 +114,7 @@ export const DEMO_OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
   {
     id: 'chapter_02',
     code: 'D3',
-    name: 'Mt. Bristle',
+    name: 'Cleft Mountain',
     kingdom: 'Verdant Commonwealth',
     kind: 'story',
     act: 1,
@@ -130,7 +130,7 @@ export const DEMO_OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
   {
     id: 'chapter_03',
     code: 'D4',
-    name: 'Waterfall Cave',
+    name: 'River Shrine',
     kingdom: 'Verdant Commonwealth',
     kind: 'story',
     act: 1,
@@ -147,7 +147,7 @@ export const DEMO_OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
   {
     id: 'chapter_04',
     code: 'D5',
-    name: 'Apple Woods',
+    name: 'Berry Orchards',
     kingdom: 'Verdant Commonwealth',
     kind: 'story',
     act: 1,
@@ -156,7 +156,7 @@ export const DEMO_OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
     levelId: 'chapter_04',
     tilesetId: '042',
     recommendedLevel: 12,
-    skirmishScoutSpeciesId: 'seedot',
+    skirmishScoutSpeciesId: 'morgrem',
     clearGoldReward: 1200,
     unlocksNodeIdsOnClear: [],
   },
@@ -347,12 +347,12 @@ export const FERAL_SKIRMISH_SQUADS_BY_TIER: ReadonlyArray<{
         equippedMoveId: 'tackle',
       },
       {
-        speciesId: 'seedot',
-        nickname: 'Feral Forager',
+        speciesId: 'venipede',
+        nickname: 'Feral Stalker',
         level: 9,
-        stats: { hp: 20, atk: 8, def: 7, spa: 6, spd: 7, spe: 6, mov: 5 },
-        moveIds: ['tackle'],
-        equippedMoveId: 'tackle',
+        stats: { hp: 20, atk: 8, def: 7, spa: 5, spd: 6, spe: 7, mov: 5 },
+        moveIds: ['poison_sting', 'bug_bite'],
+        equippedMoveId: 'bug_bite',
       },
       {
         speciesId: 'impidimp',

@@ -136,8 +136,10 @@ const canonicalUrl = Astro.url.href;
     PMD_SPRITE_ACTIONS,
     clearPmdAssetCache,
     computePmdTileSpritePlacement,
+    getFlabebeFlowerColorForLord,
     loadSpeciesPortrait,
     loadSpeciesSpriteBundle,
+    resolveUnitVisualAssetId,
   } from '../mystery-emblem/assets/pmdAssetLoader';
   import {
     PMD_TILESET_LIST,
@@ -180,6 +182,7 @@ const canonicalUrl = Astro.url.href;
     DEMO_INITIAL_CONVOY,
     DEMO_STARTING_LEVEL,
     getDemoChapterByNodeId,
+    resolveChapterRecruitmentSpeciesIds,
     type CampaignChapterConfig,
   } from '../mystery-emblem/data/campaignRegistry';
   import {
@@ -296,7 +299,6 @@ const canonicalUrl = Astro.url.href;
     let battleReturnTarget: 'devtools' | 'overworld' | 'title' = 'overworld';
     let overworldScene: OverworldScene | null = null;
     let overworldReturnTarget: 'title' | 'suppress' = 'title';
-    let pendingDemoOutroChapter: CampaignChapterConfig | null = null;
     let demoLaunchInProgress = false;
     let mapEditorScene: ChapterMapEditorScene | null = null;
 
@@ -471,12 +473,7 @@ const canonicalUrl = Astro.url.href;
       if (!manager.getSave()) {
         manager.createNewCampaignSave({
           campaignMode: 'demo',
-          lordSpeciesId: 'dratini',
-          lordNickname: 'Bahamut',
-          partnerSpeciesId: 'bulbasaur',
-          partnerNickname: 'Sprout',
-          healerSpeciesId: 'happiny',
-          healerNickname: 'Clover',
+          lordSpeciesId: 'axew',
           startingLevel: DEMO_STARTING_LEVEL,
           scaleStatsToLevel: true,
           initialConvoy: DEMO_INITIAL_CONVOY,
@@ -491,22 +488,9 @@ const canonicalUrl = Astro.url.href;
         preservePosition: opts?.preservePosition ?? true,
       });
       backStack.syncButtonLabel();
-
-      if (pendingDemoOutroChapter) {
-        const outroChapter = pendingDemoOutroChapter;
-        pendingDemoOutroChapter = null;
-        if (dialogueOverlay && !manager.hasSeenChapterCutscene('outro', outroChapter.nodeId)) {
-          await dialogueOverlay.playScript(outroChapter.buildOutroScript(manager.getSave()));
-          manager.markChapterCutsceneSeen('outro', outroChapter.nodeId);
-          if (overworldScene.isOpen()) {
-            audioManager.playBgm('exploration_theme', { fadeMs: 260 });
-          }
-          backStack.syncButtonLabel();
-        }
-      }
     }
 
-    function openDemoQuizFlow(opts?: { skipNicknamePrompts?: boolean; forceNgPlus?: boolean }): void {
+    function openDemoQuizFlow(opts?: { skipNicknamePrompts?: boolean }): void {
       if (!quizScene) return;
       if (overworldScene?.isOpen()) {
         overworldReturnTarget = 'suppress';
@@ -525,9 +509,13 @@ const canonicalUrl = Astro.url.href;
         initialConvoy: DEMO_INITIAL_CONVOY,
         overworldGraph: DEMO_OVERWORLD_GRAPH,
         skipNicknamePrompts: opts?.skipNicknamePrompts,
-        forceNgPlus: opts?.forceNgPlus,
         onComplete: () => {
-          void openOverworldScene({ preservePosition: false });
+          const prologueChapter = getDemoChapterByNodeId('prologue');
+          if (prologueChapter) {
+            void launchDemoChapterBattle(prologueChapter);
+          } else {
+            void openOverworldScene({ preservePosition: false });
+          }
         },
       });
       backStack.syncButtonLabel();
@@ -537,16 +525,12 @@ const canonicalUrl = Astro.url.href;
       if (!battleScene || demoLaunchInProgress) return;
       demoLaunchInProgress = true;
       try {
-        // 1. Pre-battle quiz-seeded unit recruitment (with Nickname prompt)
+        // 1. Silent chapter recruitment (quiz-seeded + fixed story units; zero NEW ALLY popups)
         if (demoChapter.recruitment && !manager.hasRecruitedChapter(demoChapter.nodeId)) {
-          const saveSnap = manager.getSave();
-          const seededSpecies =
-            saveSnap?.campaign.quizSeeds?.[demoChapter.recruitment.seedKey] ?? [];
-          const targetSpeciesIds =
-            seededSpecies.length > 0
-              ? seededSpecies
-              : demoChapter.recruitment.fallbackSpeciesIds;
-          const newlyRecruited = [];
+          const targetSpeciesIds = resolveChapterRecruitmentSpeciesIds(
+            demoChapter.recruitment,
+            manager.getSave()
+          );
           for (const spId of targetSpeciesIds) {
             const sp = getSpeciesById(spId);
             if (!sp) continue;
@@ -555,34 +539,31 @@ const canonicalUrl = Astro.url.href;
               return uSp?.lineId === sp.lineId;
             });
             if (alreadyOwned) continue;
-            const joined = manager.recruitPokemon({
+            manager.recruitPokemon({
               speciesId: spId,
               level: demoChapter.recruitment.joinLevel,
               scaleStatsToLevel: demoChapter.recruitment.scaleStatsToLevel,
             });
-            newlyRecruited.push(joined);
           }
           manager.markChapterRecruited(demoChapter.nodeId);
-          if (newlyRecruited.length > 0 && recruitNicknameOverlay) {
-            await recruitNicknameOverlay.promptRecruits(newlyRecruited, {
-              bannerText: demoChapter.recruitment.introBanner,
-            });
-          }
         }
 
-        // 2. Pre-battle Intro Portrait Cutscene
-        if (dialogueOverlay && !manager.hasSeenChapterCutscene('intro', demoChapter.nodeId)) {
-          const introScript = demoChapter.buildIntroScript(manager.getSave());
-          await dialogueOverlay.playScript(introScript);
-          manager.markChapterCutsceneSeen('intro', demoChapter.nodeId);
+        // 2. Transition into the Dungeon Map FIRST so Intro & Outro cutscenes play over the dungeon
+        if (overworldScene?.isOpen()) {
+          overworldReturnTarget = 'suppress';
+          overworldScene.close();
         }
-
-        // 3. Transition from Overworld into Dungeon Prep + Battle
-        overworldReturnTarget = 'suppress';
-        overworldScene?.close();
+        if (quizScene?.isOpen()) {
+          quizScene.close();
+        }
         battleReturnTarget = 'overworld';
         if (titleScreen) titleScreen.hidden = true;
         if (devToolsBackdrop) devToolsBackdrop.hidden = true;
+
+        const shouldPlayIntro =
+          Boolean(dialogueOverlay) && !manager.hasSeenChapterCutscene('intro', demoChapter.nodeId);
+        const shouldPlayOutro =
+          Boolean(dialogueOverlay) && !manager.hasSeenChapterCutscene('outro', demoChapter.nodeId);
 
         await battleScene.open({
           levelId: demoChapter.levelId,
@@ -595,6 +576,15 @@ const canonicalUrl = Astro.url.href;
           clearRewardItems: demoChapter.clearRewardItems,
           exitButtonLabel: 'Return to World Map',
           hideReplayOnVictory: true,
+          onDungeonEnteredBeforePrep: shouldPlayIntro
+            ? async () => {
+                if (!dialogueOverlay || manager.hasSeenChapterCutscene('intro', demoChapter.nodeId)) {
+                  return;
+                }
+                await dialogueOverlay.playScript(demoChapter.buildIntroScript(manager.getSave()));
+                manager.markChapterCutsceneSeen('intro', demoChapter.nodeId);
+              }
+            : undefined,
           onVictory: () => {
             manager.completeOverworldChapter(demoChapter.nodeId, {
               graph: DEMO_OVERWORLD_GRAPH,
@@ -609,12 +599,17 @@ const canonicalUrl = Astro.url.href;
             }
             if (demoChapter.isDemoFinale) {
               manager.markDemoCompleted();
-              manager.setNewGamePlusUnlocked(true);
-            }
-            if (!manager.hasSeenChapterCutscene('outro', demoChapter.nodeId)) {
-              pendingDemoOutroChapter = demoChapter;
             }
           },
+          onBeforeVictoryModal: shouldPlayOutro
+            ? async () => {
+                if (!dialogueOverlay || manager.hasSeenChapterCutscene('outro', demoChapter.nodeId)) {
+                  return;
+                }
+                await dialogueOverlay.playScript(demoChapter.buildOutroScript(manager.getSave()));
+                manager.markChapterCutsceneSeen('outro', demoChapter.nodeId);
+              }
+            : undefined,
         });
         backStack.syncButtonLabel();
       } finally {
@@ -877,6 +872,8 @@ const canonicalUrl = Astro.url.href;
       chooseEnemyAction,
       loadSpeciesSpriteBundle,
       loadSpeciesPortrait,
+      getFlabebeFlowerColorForLord,
+      resolveUnitVisualAssetId,
       clearPmdAssetCache,
       computePmdTileSpritePlacement,
       PmdSpriteActor,
