@@ -1,12 +1,11 @@
 /**
- * Mystery Emblem — Step 3 Personality Quiz, Dragon Lord Trait Scorer & NG+ Seed Registry (`quizData.ts`)
+ * Mystery Emblem — Personality Quiz, Dragon Lord Trait Scorer & NG+ Seed Registry (`quizData.ts`)
  *
- * Implements GDD Section 1.1 word-for-word:
+ * Implements GDD Section 1.1:
  * - 8 Stage-1 Dragon Lords (`dratini`, `bagon`, `gible`, `deino`, `goomy`, `jangmo_o`, `dreepy`, `frigibax`)
  * - 9 Personality Questions (`Q1` = 6 choices seeding Prologue Healer; `Q2`–`Q9` = 3 choices each,
  *   where each of the 8 Dragon Lords appears 3× as primary `+2` and 3× as secondary `+1`)
  * - Deterministic earliest-point tie-breaker when 2+ Dragon Lords tie for top score
- * - Full `QuizRecruitSeeds` mapping for Prologue through Chapter 12 (and NG+ Custom Roster Picker)
  */
 
 import type { QuizRecruitSeeds } from '../types/schemas';
@@ -34,49 +33,49 @@ export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
     speciesId: 'dratini',
     name: 'Dratini',
     traitLabel: 'Mystic & Gentle',
-    auraSummary: 'Calm, empathetic leader whose serene Dragon Aura steadies allies in any storm.',
+    auraSummary: 'Serene leader whose Dragon Aura steadies allies.',
   },
   {
     speciesId: 'bagon',
     name: 'Bagon',
     traitLabel: 'Bold & Determined',
-    auraSummary: 'Fearless vanguard who leaps toward impossible horizons and rallies every heart.',
+    auraSummary: 'Fearless vanguard who rallies every ally forward.',
   },
   {
     speciesId: 'gible',
     name: 'Gible',
     traitLabel: 'Fierce & Impulsive',
-    auraSummary: 'Hard-hitting frontliner whose fiery grit shatters enemy lines head-on.',
+    auraSummary: 'Hard-hitting frontliner who shatters enemy lines.',
   },
   {
     speciesId: 'deino',
     name: 'Deino',
     traitLabel: 'Tenacious & Relentless',
-    auraSummary: 'Unbreakable iron resolve that presses forward until the very last foe falls.',
+    auraSummary: 'Unbreakable resolve that presses until victory.',
   },
   {
     speciesId: 'goomy',
     name: 'Goomy',
     traitLabel: 'Kind & Resilient',
-    auraSummary: 'Warm-hearted guardian who treasures squad bonds and endures the harshest trials.',
+    auraSummary: 'Warm-hearted guardian built to endure tough trials.',
   },
   {
     speciesId: 'jangmo_o',
     name: 'Jangmo-o',
     traitLabel: 'Honorable & Disciplined',
-    auraSummary: 'Tactical martial commander who coordinates formations with unyielding honor.',
+    auraSummary: 'Disciplined commander who holds tight formations.',
   },
   {
     speciesId: 'dreepy',
     name: 'Dreepy',
     traitLabel: 'Clever & Swift',
-    auraSummary: 'Quick-witted strategist who outsmarts traps and strikes like a phantom gale.',
+    auraSummary: 'Swift strategist who outsmarts traps at speed.',
   },
   {
     speciesId: 'frigibax',
     name: 'Frigibax',
     traitLabel: 'Stoic & Composed',
-    auraSummary: 'Cool-headed tactician who reads every grid turn like a crystalline puzzle.',
+    auraSummary: 'Cool-headed tactician who reads every turn ahead.',
   },
 ];
 
@@ -106,13 +105,12 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
     id: 'q1',
     number: 1,
     seedKey: 'q1Healer',
-    chapterSlotTitle: 'Prologue — Partner’s Healer Friend',
-    prompt:
-      'A fierce storm has just passed over your coastal village, and a weary traveler stumbles into the town square looking exhausted. How do you help them recover?',
+    chapterSlotTitle: 'Beach Cave Healer',
+    prompt: 'An exhausted traveler stumbles into town after a storm. How do you help?',
     options: [
       {
         id: 'A',
-        text: 'Bring them a warm meal and a soft blanket right away.',
+        text: 'Bring a warm meal and a soft blanket right away.',
         primaryLord: 'goomy',
         secondaryLord: 'dratini',
         recruitSpeciesIds: ['happiny'],
@@ -120,7 +118,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'B',
-        text: 'Gather soothing herbs and flowers to calm their spirits.',
+        text: 'Gather soothing herbs and flowers to calm them.',
         primaryLord: 'dratini',
         secondaryLord: 'dreepy',
         recruitSpeciesIds: ['flabebe'],
@@ -128,7 +126,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'C',
-        text: 'Rally the neighbors and cheer them up with a lively smile!',
+        text: 'Cheer them up with a bright, lively smile!',
         primaryLord: 'bagon',
         secondaryLord: 'gible',
         recruitSpeciesIds: ['bounsweet'],
@@ -136,7 +134,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'D',
-        text: 'Lead them somewhere quiet so they can rest in peace and silence.',
+        text: 'Lead them somewhere quiet to rest in peace.',
         primaryLord: 'frigibax',
         secondaryLord: 'deino',
         recruitSpeciesIds: ['hatenna'],
@@ -144,7 +142,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'E',
-        text: 'Check their supplies and share your own rations for the road ahead.',
+        text: 'Check their supplies and share your own rations.',
         primaryLord: 'jangmo_o',
         secondaryLord: 'goomy',
         recruitSpeciesIds: ['smoliv'],
@@ -152,7 +150,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'F',
-        text: 'Tell them an encouraging story to bring back their luck and hope.',
+        text: 'Share an uplifting story to restore their hope.',
         primaryLord: 'dreepy',
         secondaryLord: 'bagon',
         recruitSpeciesIds: ['togepi'],
@@ -164,13 +162,12 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
     id: 'q2',
     number: 2,
     seedKey: 'q2BugFlying',
-    chapterSlotTitle: 'Dungeon 2 (Ch. 1) — Bug & Flying Duo',
-    prompt:
-      'You are setting out on your very first expedition up a misty coastal bluff when the main trail splits into three paths. Which route do you take?',
+    chapterSlotTitle: 'Drenched Bluff Duo',
+    prompt: 'The coastal trail splits into three routes. Which path do you take?',
     options: [
       {
         id: 'A',
-        text: 'The familiar, sunlit dirt road where I can see the horizon clearly.',
+        text: 'The sunlit road with a clear view of the horizon.',
         primaryLord: 'bagon',
         secondaryLord: 'jangmo_o',
         recruitSpeciesIds: ['caterpie', 'pidgey'],
@@ -178,7 +175,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'B',
-        text: 'The winding forest footpath shaded by tall, rustling canopy trees.',
+        text: 'The shaded forest path beneath tall canopy trees.',
         primaryLord: 'goomy',
         secondaryLord: 'dratini',
         recruitSpeciesIds: ['sewaddle', 'pidove'],
@@ -186,7 +183,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'C',
-        text: 'The steep rocky shortcut climbing straight up the seaside cliffs.',
+        text: 'The steep rocky shortcut straight up the cliffs.',
         primaryLord: 'gible',
         secondaryLord: 'deino',
         recruitSpeciesIds: ['grubbin', 'pikipek'],
@@ -198,13 +195,12 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
     id: 'q3',
     number: 3,
     seedKey: 'q3GhostPsychic',
-    chapterSlotTitle: 'Dungeon 3 (Ch. 2) — Ghost & Psychic Duo',
-    prompt:
-      'While exploring an ancient mountain ruin at dusk, you hear eerie footsteps echoing from behind a locked stone door. What is your first instinct?',
+    chapterSlotTitle: 'Mt. Bristle Duo',
+    prompt: 'Eerie footsteps echo behind a sealed ruin door at dusk. Your instinct?',
     options: [
       {
         id: 'A',
-        text: 'Study the runes on the doorframe to outsmart whatever is inside.',
+        text: 'Inspect the runes to outsmart whatever is inside.',
         primaryLord: 'dreepy',
         secondaryLord: 'frigibax',
         recruitSpeciesIds: ['duskull', 'abra'],
@@ -212,7 +208,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'B',
-        text: 'Reach out with empathy—someone inside might be trapped and scared.',
+        text: 'Call out kindly—someone inside may need help.',
         primaryLord: 'dratini',
         secondaryLord: 'goomy',
         recruitSpeciesIds: ['duskull', 'ralts'],
@@ -220,7 +216,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'C',
-        text: 'Brace yourself and hold your ground until the mystery reveals itself.',
+        text: 'Hold your ground calmly until it reveals itself.',
         primaryLord: 'frigibax',
         secondaryLord: 'jangmo_o',
         recruitSpeciesIds: ['duskull', 'solosis'],
@@ -232,13 +228,12 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
     id: 'q4',
     number: 4,
     seedKey: 'q4Electric',
-    chapterSlotTitle: 'Dungeon 5 (Ch. 4) — Solo Electric Attacker',
-    prompt:
-      'Enemy scouts have spotted your camp from the treetops and are about to signal their main force! How do you react?',
+    chapterSlotTitle: 'Apple Woods Tracker',
+    prompt: 'Enemy scouts spot your camp from the treetops! How do you react?',
     options: [
       {
         id: 'A',
-        text: 'Dash in with a burst of speed to surprise them before they can move!',
+        text: 'Dash in fast before they can sound the alarm!',
         primaryLord: 'dreepy',
         secondaryLord: 'bagon',
         recruitSpeciesIds: ['pichu'],
@@ -246,7 +241,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'B',
-        text: 'Lock eyes with their leader and charge straight at them to break their nerve!',
+        text: 'Charge straight at their leader to break their nerve!',
         primaryLord: 'gible',
         secondaryLord: 'deino',
         recruitSpeciesIds: ['shinx'],
@@ -254,7 +249,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'C',
-        text: 'Coordinate with your squad to cut off their escape route from range.',
+        text: 'Coordinate your squad to cut off their escape.',
         primaryLord: 'jangmo_o',
         secondaryLord: 'frigibax',
         recruitSpeciesIds: ['mareep'],
@@ -266,13 +261,12 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
     id: 'q5',
     number: 5,
     seedKey: 'q5FrontlineTrio',
-    chapterSlotTitle: 'Chapter 5 — Fighting, Rock & Ground Trio',
-    prompt:
-      'A heavily armed vanguard is marching down a narrow coastal pass toward your allies. What kind of frontline strategy do you trust most?',
+    chapterSlotTitle: 'Frontline Trio',
+    prompt: 'An armored column marches down a narrow pass. Your frontline plan?',
     options: [
       {
         id: 'A',
-        text: 'A balanced formation that adapts to terrain and strikes from every angle.',
+        text: 'Adapt to terrain and strike from shifting angles.',
         primaryLord: 'jangmo_o',
         secondaryLord: 'dreepy',
         recruitSpeciesIds: ['machop', 'geodude', 'trapinch'],
@@ -280,7 +274,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'B',
-        text: 'An unbreakable wall of muscle and stone that refuses to yield an inch.',
+        text: 'Hold an unbreakable wall of stone and grit.',
         primaryLord: 'deino',
         secondaryLord: 'frigibax',
         recruitSpeciesIds: ['machop', 'roggenrola', 'rhyhorn'],
@@ -288,7 +282,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'C',
-        text: 'A relentless, hard-hitting charge that overwhelms their line before they dig in.',
+        text: 'Launch an all-out charge before they brace.',
         primaryLord: 'gible',
         secondaryLord: 'bagon',
         recruitSpeciesIds: ['mankey', 'nacli', 'rhyhorn'],
@@ -300,13 +294,12 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
     id: 'q6',
     number: 6,
     seedKey: 'q6WaterGrass',
-    chapterSlotTitle: 'Chapter 7 — Water & Grass Duo',
-    prompt:
-      'After a grueling battle, your team makes camp beside a quiet pond in a foggy forest. How do you spend the evening watch?',
+    chapterSlotTitle: 'Water & Grass Duo',
+    prompt: 'Making camp beside a quiet forest pond at night, how do you unwind?',
     options: [
       {
         id: 'A',
-        text: "Practicing combat drills by the water's edge to stay sharp for tomorrow.",
+        text: 'Run light combat drills to stay sharp for dawn.',
         primaryLord: 'bagon',
         secondaryLord: 'jangmo_o',
         recruitSpeciesIds: ['poliwag', 'bellsprout'],
@@ -314,7 +307,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'B',
-        text: "Listening to the rain on the lily pads and keeping everyone's spirits light.",
+        text: 'Listen to the rain and keep everyone smiling.',
         primaryLord: 'goomy',
         secondaryLord: 'dreepy',
         recruitSpeciesIds: ['lotad', 'oddish'],
@@ -322,7 +315,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'C',
-        text: 'Standing silent guard on the perimeter so the rest of the squad can sleep.',
+        text: 'Stand quiet perimeter watch while allies sleep.',
         primaryLord: 'deino',
         secondaryLord: 'dratini',
         recruitSpeciesIds: ['tympole', 'budew'],
@@ -334,13 +327,12 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
     id: 'q7',
     number: 7,
     seedKey: 'q7Fire',
-    chapterSlotTitle: 'Chapter 8 — Solo Fire Attacker',
-    prompt:
-      'Deep inside a volcanic cavern, a river of magma blocks the bridge to the enemy commander. What drives you to push forward through the heat?',
+    chapterSlotTitle: 'Fire Attacker',
+    prompt: 'A river of magma blocks the cavern bridge ahead. What drives you onward?',
     options: [
       {
         id: 'A',
-        text: 'Pure fiery grit—no obstacle is going to stand in my way!',
+        text: 'Pure fiery grit—no obstacle stops me!',
         primaryLord: 'gible',
         secondaryLord: 'deino',
         recruitSpeciesIds: ['magby'],
@@ -348,7 +340,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'B',
-        text: 'The thrill of soaring over danger and striking where they least expect it.',
+        text: 'The thrill of soaring across danger.',
         primaryLord: 'bagon',
         secondaryLord: 'dreepy',
         recruitSpeciesIds: ['fletchling'],
@@ -356,7 +348,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'C',
-        text: 'A quiet, burning resolve to uncover the truth hidden in the shadows.',
+        text: 'Quiet resolve to uncover the hidden truth.',
         primaryLord: 'dratini',
         secondaryLord: 'frigibax',
         recruitSpeciesIds: ['litwick'],
@@ -368,13 +360,12 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
     id: 'q8',
     number: 8,
     seedKey: 'q8SteelFairy',
-    chapterSlotTitle: 'Chapter 10 — Steel & Fairy Duo',
-    prompt:
-      'While crossing a vast desert, you discover a buried treasure chest half-covered in sand. What do you hope to find inside?',
+    chapterSlotTitle: 'Steel & Fairy Duo',
+    prompt: 'You uncover a half-buried chest in the desert sands. What do you hope is inside?',
     options: [
       {
         id: 'A',
-        text: 'A giant, custom-forged weapon that can smash through enemy armor!',
+        text: 'A heavy weapon built to smash enemy armor!',
         primaryLord: 'deino',
         secondaryLord: 'gible',
         recruitSpeciesIds: ['tinkatink', 'cleffa'],
@@ -382,7 +373,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'B',
-        text: 'A dependable piece of gear that keeps my whole team working in sync.',
+        text: 'Dependable gear that keeps the team in sync.',
         primaryLord: 'jangmo_o',
         secondaryLord: 'goomy',
         recruitSpeciesIds: ['klink', 'azurill'],
@@ -390,7 +381,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'C',
-        text: 'An ancient, mysterious gadget pulsing with strange energy.',
+        text: 'An ancient relic humming with strange power.',
         primaryLord: 'dreepy',
         secondaryLord: 'dratini',
         recruitSpeciesIds: ['magnemite', 'igglybuff'],
@@ -402,13 +393,12 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
     id: 'q9',
     number: 9,
     seedKey: 'q9IceArmored',
-    chapterSlotTitle: 'Chapter 12 — Ice & Armored Duo',
-    prompt:
-      'You finally stand before the crystal gates of the enemy stronghold as a bitter blizzard howls around you. What final thought crosses your mind before battle?',
+    chapterSlotTitle: 'Ice & Armored Duo',
+    prompt: 'Before the fortress gates in a howling blizzard, what is your final thought?',
     options: [
       {
         id: 'A',
-        text: 'Keep a cool head—every move on the grid is a puzzle waiting to be solved.',
+        text: 'Stay cool—every turn on the grid is a puzzle.',
         primaryLord: 'frigibax',
         secondaryLord: 'dratini',
         recruitSpeciesIds: ['mime_jr_galar', 'beldum'],
@@ -416,7 +406,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'B',
-        text: "Trust in the bonds we've built—we'll weather any storm together.",
+        text: 'Trust our bonds—we can weather any storm.',
         primaryLord: 'goomy',
         secondaryLord: 'bagon',
         recruitSpeciesIds: ['vanillite', 'porygon'],
@@ -424,7 +414,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'C',
-        text: 'No hesitation—press forward until the very last enemy falls!',
+        text: 'No hesitation—press forward to the end!',
         primaryLord: 'deino',
         secondaryLord: 'gible',
         recruitSpeciesIds: ['swinub', 'blipbug'],
@@ -453,12 +443,6 @@ export interface QuizEvaluationResult {
   q1HealerSpeciesId: string;
 }
 
-/**
- * Evaluates either a map of chosen answer option IDs (`{ q1: 'A', q2: 'B', ... }`)
- * or an ordered 9-answer array (`['A', 'B', ...]`), tallying Dragon Lord trait points
- * (`+2` primary, `+1` secondary) with the exact GDD earliest-point tie-breaker
- * and constructing `QuizRecruitSeeds`.
- */
 export function evaluatePersonalityQuiz(
   answersInput:
     | Partial<Record<QuizQuestionDefinition['id'], string>>
@@ -483,7 +467,7 @@ export function evaluatePersonalityQuiz(
     goomy: Number.POSITIVE_INFINITY,
     jangmo_o: Number.POSITIVE_INFINITY,
     dreepy: Number.POSITIVE_INFINITY,
-    frigibax: 0 + Number.POSITIVE_INFINITY,
+    frigibax: Number.POSITIVE_INFINITY,
   };
 
   const seeds: QuizRecruitSeeds = {
@@ -506,21 +490,18 @@ export function evaluatePersonalityQuiz(
       : (answersInput as Partial<Record<QuizQuestionDefinition['id'], string>>)[q.id];
     const chosen = q.options.find((o) => o.id === chosenId) ?? q.options[0]!;
 
-    // Primary +2
     awardStep += 1;
     scores[chosen.primaryLord] += 2;
     if (!Number.isFinite(firstOrder[chosen.primaryLord])) {
       firstOrder[chosen.primaryLord] = awardStep;
     }
 
-    // Secondary +1
     awardStep += 1;
     scores[chosen.secondaryLord] += 1;
     if (!Number.isFinite(firstOrder[chosen.secondaryLord])) {
       firstOrder[chosen.secondaryLord] = awardStep;
     }
 
-    // Validate species exist in registry before seeding
     const validIds = chosen.recruitSpeciesIds.filter((id) => Boolean(getSpeciesById(id)));
     if (validIds.length > 0) {
       seeds[q.seedKey] = [...validIds];

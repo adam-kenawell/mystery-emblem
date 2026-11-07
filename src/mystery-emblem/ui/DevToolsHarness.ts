@@ -1,28 +1,20 @@
 /**
- * Admin-Only Step 2 Dev Tools Harness (`adam.kenawell.family@gmail.com`)
+ * Mystery Emblem — Lean Admin Dev Tools Overlay (`DevToolsHarness`)
  *
- * Houses all developer-facing verification & save management controls so the public player UI remains clean:
- * - Tab 1 (`audit`): Step 1 Registry & Faction Audit + Cloud Firestore Sync Diagnostics +
- *   `Delete Save Data from Linked Account` & `Seed Test Save (Prologue)`
- * - Tab 2 (`sprites`): 8-Directional Sprite Animator (`Idle`, `Walk`, `Attack`, `Special`, `Hurt`),
- *   8-Emotion Portrait Strip (`Normal`..`Sad` + Left/Right Mirror), Evolutionary Line Stage Swapper,
- *   and Live Active Party Unit Stage Promotion & Nickname Editor
- * - Tab 3 (`dialogue`): `DIALOGUE_OVERLAY` Multi-Emotion Cutscene & Live Stage-Swap Test Launcher
- * - Tab 4 (`skirmish`): Playable Drenched Bluff Battle & Convergence Ruins Sandbox Launchers
+ * Strictly restricted to `ADMIN_DEVTOOLS_EMAILS` (`adam.kenawell.family@gmail.com`).
+ * Opens as a modal overlay on top of any active screen (`Title`, `OverworldScene`, `BattleScene`)
+ * without closing the underlying scene, exposing 2 focused tabs:
+ * 1. `Cheats` — Unit Level (`1–40`) & Stage swapper, Gold & Bag item spawner,
+ *    World Map node/shop/skirmish/NG+ controls, Playable Pokémon recruiter, and
+ *    Mid-Battle `Full Heal Squad` / `Instant Win`.
+ * 2. `Map Editor` — 5-Dungeon Demo map preview (`D1`–`D5`), `Open Map Editor`,
+ *    `Test Battle`, `Sync Cloud`, and `Reset Default`.
+ *
+ * Obeys Rule 2 (Unified Pointer Events ONLY — zero keyboard listeners).
  */
 
-import {
-  PMD_DIRECTION_INFO,
-  PMD_PORTRAIT_EMOTIONS,
-  PMD_SPRITE_ACTIONS,
-  type PmdDirection,
-  type PmdPortraitEmotion,
-  type PmdSpriteAction,
-} from '../assets/pmdAssetLoader';
-import {
-  getAudioManager,
-  type AudioManager,
-} from '../audio/AudioManager';
+import { getAudioManager, type AudioManager } from '../audio/AudioManager';
+import { DEMO_INITIAL_CONVOY, DEMO_STARTING_LEVEL } from '../data/campaignRegistry';
 import {
   CHAPTER_LEVEL_CATALOG,
   getChapterCatalogEntry,
@@ -30,1010 +22,844 @@ import {
   hasChapterMapOverride,
   resetChapterMapOverride,
   subscribeChapterMapChanges,
-  type ChapterLevelGroup,
 } from '../data/chapterMapRegistry';
 import {
+  ITEMS_LIST,
   POKEMON_SPECIES_LIST,
+  getItemById,
   getSpeciesById,
-  getSpeciesByLineId,
 } from '../data/index';
+import { DEMO_OVERWORLD_GRAPH } from '../data/overworldMapData';
 import { renderDungeonMapPreviewCanvas } from '../scenes/ChapterMapEditorScene';
-import { DEFAULT_OVERWORLD_GRAPH, getOverworldNodeById } from '../data/overworldMapData';
-import { ensureOverworldGraphState } from '../engine/overworldEngine';
-import { renderOverworldPreviewCanvas } from '../scenes/OverworldScene';
 import type { SaveStateManager } from '../state/SaveStateManager';
-import type { DialogueOverlay } from './DialogueOverlay';
-import { PmdPortraitView, PmdSpriteActor } from './PmdSpriteCanvas';
+import type { KecleonShopType } from '../types/schemas';
 import { bindPointerTap } from './pointerControls';
-import { PROLOGUE_AWAKENING_TEST_SCRIPT } from './sampleDialogueScripts';
 
-export type DevToolsSubTab = 'audit' | 'sprites' | 'dialogue' | 'skirmish' | 'maps' | 'overworld';
-
-const MAP_GROUP_CHIPS: ReadonlyArray<{ id: 'all' | ChapterLevelGroup; label: string }> = [
-  { id: 'all', label: 'All (34)' },
-  { id: 'test', label: 'Test' },
-  { id: 'act1', label: 'Act 1' },
-  { id: 'act2', label: 'Act 2' },
-  { id: 'act3', label: 'Act 3' },
-  { id: 'act4', label: 'Act 4' },
-  { id: 'paralogue', label: 'Paralogues' },
-];
-
-const QUICK_LINE_PRESETS: ReadonlyArray<{ label: string; speciesId: string }> = [
-  { label: 'Dratini Line', speciesId: 'dratini' },
-  { label: 'Bulbasaur Line', speciesId: 'bulbasaur' },
-  { label: 'Eevee (8-Way)', speciesId: 'eevee' },
-  { label: 'Pidove (WIP Test)', speciesId: 'pidove' },
-  { label: 'G-Mime (Nested)', speciesId: 'mime_jr_galar' },
-  { label: 'Kingambit Boss', speciesId: 'pawniard' },
-];
+export type DevToolsSubTab = 'cheats' | 'maps';
 
 export interface DevToolsHarnessOptions {
   modalEl: HTMLElement;
   saveManager: SaveStateManager;
-  dialogueOverlay: DialogueOverlay;
   audioManager?: AudioManager;
-  onLaunchTestDungeon?: () => void;
-  onLaunchBattle?: (levelId?: string) => void;
-  onLaunchMapEditor?: (levelId: string) => void;
-  onLaunchOverworld?: (preset?: 'sandbox' | 'prologue' | 'all') => void;
-  onRequestRenameUnit?: (instanceId: string) => void;
-  signal: AbortSignal;
+  isBattleOpen: () => boolean;
+  onCheatFullHealSquad: () => void;
+  onCheatInstantWin: () => void;
+  onLiveStateMutated: (opts?: { snapOverworld?: boolean }) => void;
+  onLaunchMapEditor: (levelId: string) => void;
+  onPlayMapBattle: (levelId: string) => void;
+  onRequestRenameUnit: (instanceId: string) => void;
+  onClose: () => void;
+  signal?: AbortSignal;
 }
 
 export class DevToolsHarness {
   private readonly modalEl: HTMLElement;
   private readonly saveManager: SaveStateManager;
-  private readonly dialogueOverlay: DialogueOverlay;
   private readonly audioManager: AudioManager;
-  private readonly onLaunchTestDungeon?: () => void;
-  private readonly onLaunchBattle?: (levelId?: string) => void;
-  private readonly onLaunchMapEditor?: (levelId: string) => void;
-  private readonly onLaunchOverworld?: (preset?: 'sandbox' | 'prologue' | 'all') => void;
-  private readonly onRequestRenameUnit?: (instanceId: string) => void;
-  private readonly signal: AbortSignal;
+  private readonly isBattleOpen: () => boolean;
+  private readonly onCheatFullHealSquad: () => void;
+  private readonly onCheatInstantWin: () => void;
+  private readonly onLiveStateMutated: (opts?: { snapOverworld?: boolean }) => void;
+  private readonly onLaunchMapEditor: (levelId: string) => void;
+  private readonly onPlayMapBattle: (levelId: string) => void;
+  private readonly onRequestRenameUnit: (instanceId: string) => void;
+  private readonly onClose: () => void;
+  private readonly abortController = new AbortController();
 
-  private activeSubTab: DevToolsSubTab = 'audit';
-  private selectedSpeciesId = 'dratini';
-  private selectedAction: PmdSpriteAction = 'Idle';
-  private selectedDirection: PmdDirection = 0;
-  private mirrorPortraits = false;
-  private instantDialogue = false;
-  private selectedMapGroup: 'all' | ChapterLevelGroup = 'all';
-  private selectedMapLevelId = 'drenched_bluff_vanguard';
+  private activeSubTab: DevToolsSubTab = 'cheats';
+  private selectedUnitInstanceId: string | null = null;
+  private selectedMapLevelId = 'prologue';
+  private mapPreviewGen = 0;
+  private unsubscribeMapStore: (() => void) | null = null;
 
-  private previewSpriteActor: PmdSpriteActor | null = null;
-  private readonly portraitViews = new Map<PmdPortraitEmotion, PmdPortraitView>();
-  private readonly portraitMetaEls = new Map<PmdPortraitEmotion, HTMLElement>();
-  private unsubscribeAudio: (() => void) | null = null;
-  private unsubscribeMaps: (() => void) | null = null;
+  private unitSelectEl: HTMLSelectElement | null = null;
+  private unitStageBtnsEl: HTMLElement | null = null;
+  private goldLabelEl: HTMLElement | null = null;
+  private itemSelectEl: HTMLSelectElement | null = null;
+  private recruitSelectEl: HTMLSelectElement | null = null;
+  private ngPlusBtnEl: HTMLButtonElement | null = null;
+  private battleHealBtnEl: HTMLButtonElement | null = null;
+  private battleWinBtnEl: HTMLButtonElement | null = null;
+  private cheatStatusEl: HTMLElement | null = null;
 
-  private speciesSelectEl: HTMLSelectElement | null = null;
-  private stageButtonsRow: HTMLElement | null = null;
-  private spriteMetaEl: HTMLElement | null = null;
-  private rosterStageBox: HTMLElement | null = null;
-  private dialogueStatusEl: HTMLElement | null = null;
-  private saveActionStatusEl: HTMLElement | null = null;
-  private deleteAccountSaveBtn: HTMLButtonElement | null = null;
-
-  private mapGroupFiltersEl: HTMLElement | null = null;
   private mapLevelSelectEl: HTMLSelectElement | null = null;
   private mapStatusBadgeEl: HTMLElement | null = null;
-  private mapMetaEl: HTMLElement | null = null;
   private mapPreviewCanvasEl: HTMLCanvasElement | null = null;
-  private overworldPreviewCanvasEl: HTMLCanvasElement | null = null;
-  private overworldMetaEl: HTMLElement | null = null;
+  private mapMetaEl: HTMLElement | null = null;
 
   constructor(options: DevToolsHarnessOptions) {
     this.modalEl = options.modalEl;
     this.saveManager = options.saveManager;
-    this.dialogueOverlay = options.dialogueOverlay;
     this.audioManager = options.audioManager ?? getAudioManager();
-    this.onLaunchTestDungeon = options.onLaunchTestDungeon;
-    this.onLaunchBattle = options.onLaunchBattle;
+    this.isBattleOpen = options.isBattleOpen;
+    this.onCheatFullHealSquad = options.onCheatFullHealSquad;
+    this.onCheatInstantWin = options.onCheatInstantWin;
+    this.onLiveStateMutated = options.onLiveStateMutated;
     this.onLaunchMapEditor = options.onLaunchMapEditor;
-    this.onLaunchOverworld = options.onLaunchOverworld;
+    this.onPlayMapBattle = options.onPlayMapBattle;
     this.onRequestRenameUnit = options.onRequestRenameUnit;
-    this.signal = options.signal;
+    this.onClose = options.onClose;
 
-    this.mountControls();
+    if (options.signal) {
+      options.signal.addEventListener('abort', () => this.destroy(), { once: true });
+    }
+
+    this.buildModalDom();
+    this.populateStaticSelects();
+    this.bindControls();
+
+    this.unsubscribeMapStore = subscribeChapterMapChanges(() => {
+      this.refreshMapPreviewTab();
+    });
+
+    this.refreshCheatsTab();
+    this.refreshMapPreviewTab();
   }
 
-  public destroy(): void {
-    this.previewSpriteActor?.destroy();
-    this.previewSpriteActor = null;
-    if (this.unsubscribeAudio) {
-      this.unsubscribeAudio();
-      this.unsubscribeAudio = null;
-    }
-    if (this.unsubscribeMaps) {
-      this.unsubscribeMaps();
-      this.unsubscribeMaps = null;
-    }
-    this.portraitViews.clear();
-    this.portraitMetaEls.clear();
-  }
-
-  public getPreviewActor(): PmdSpriteActor | null {
-    return this.previewSpriteActor;
+  public getActiveSubTab(): DevToolsSubTab {
+    return this.activeSubTab;
   }
 
   public switchSubTab(tab: DevToolsSubTab): void {
     this.activeSubTab = tab;
-    this.modalEl.querySelectorAll<HTMLElement>('[data-devtab-btn]').forEach((btn) => {
+    const tabBtns = this.modalEl.querySelectorAll<HTMLButtonElement>('[data-devtab-btn]');
+    const panels = this.modalEl.querySelectorAll<HTMLElement>('[data-devtab-panel]');
+
+    tabBtns.forEach((btn) => {
       btn.classList.toggle('is-active', btn.dataset.devtabBtn === tab);
     });
-    this.modalEl.querySelectorAll<HTMLElement>('[data-devtab-panel]').forEach((panel) => {
+    panels.forEach((panel) => {
       panel.hidden = panel.dataset.devtabPanel !== tab;
     });
 
-    if (tab === 'sprites') {
-      void this.refreshSpriteAndPortraits();
-      this.renderActiveRosterStageControls();
-    } else if (tab === 'dialogue') {
-      this.renderDialogueTabSummary();
+    if (tab === 'cheats') {
+      this.refreshCheatsTab();
     } else if (tab === 'maps') {
-      void this.refreshMapInspectorPanel();
-    } else if (tab === 'overworld') {
-      void this.refreshOverworldInspectorPanel();
+      this.refreshMapPreviewTab();
     }
   }
 
   public onSaveChanged(): void {
-    if (this.activeSubTab === 'overworld') {
-      void this.refreshOverworldInspectorPanel();
-    }
-    if (this.activeSubTab === 'sprites') {
-      this.renderActiveRosterStageControls();
-    } else if (this.activeSubTab === 'dialogue') {
-      this.renderDialogueTabSummary();
-    } else if (this.activeSubTab === 'maps') {
-      void this.refreshMapInspectorPanel();
+    this.refreshCheatsTab();
+    if (this.activeSubTab === 'maps') {
+      this.refreshMapPreviewTab();
     }
   }
 
-  public async selectSpecies(speciesId: string): Promise<void> {
-    if (!getSpeciesById(speciesId)) return;
-    this.selectedSpeciesId = speciesId;
-    if (this.speciesSelectEl) {
-      this.speciesSelectEl.value = speciesId;
+  public destroy(): void {
+    this.unsubscribeMapStore?.();
+    this.unsubscribeMapStore = null;
+    this.abortController.abort();
+  }
+
+  private buildModalDom(): void {
+    this.modalEl.innerHTML = `
+      <header class="pmd-devtools-row-between">
+        <div>
+          <h2 class="pmd-panel-title">DEV TOOLS</h2>
+          <p class="pmd-panel-sub">Admin Cheats &amp; 5-Dungeon Map Editor</p>
+        </div>
+        <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-close-btn">Close</button>
+      </header>
+
+      <nav class="pmd-tabs" aria-label="Dev Tools Tabs">
+        <button
+          type="button"
+          class="pmd-btn pmd-tab-btn is-active"
+          data-devtab-btn="cheats"
+          data-testid="devtools-tab-cheats"
+        >
+          Cheats
+        </button>
+        <button
+          type="button"
+          class="pmd-btn pmd-tab-btn"
+          data-devtab-btn="maps"
+          data-testid="devtools-tab-maps"
+        >
+          Map Editor
+        </button>
+      </nav>
+
+      <!-- TAB 1: CHEATS -->
+      <div class="pmd-tab-panel" data-devtab-panel="cheats">
+        <p class="pmd-subcard-text" data-testid="devtools-cheat-status" style="color:#58f858;" hidden></p>
+
+        <!-- 1. Unit Level & Evolution Stage -->
+        <div class="pmd-subcard">
+          <div class="pmd-devtools-row-between">
+            <h3 class="pmd-subcard-title">Unit Level &amp; Stage</h3>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-rename-unit">Rename</button>
+          </div>
+          <select class="pmd-select" data-testid="devtools-unit-select" aria-label="Select Active Unit"></select>
+          <div class="pmd-inline-btns">
+            <button type="button" class="pmd-btn pmd-chip-btn" data-unit-lv-delta="-1" data-testid="devtools-lv-dec">Lv -1</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-unit-lv-delta="1" data-testid="devtools-lv-inc">Lv +1</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-unit-lv-delta="5" data-testid="devtools-lv-plus5">Lv +5</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-unit-lv-set="10" data-testid="devtools-lv-10">Lv 10</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-unit-lv-set="20" data-testid="devtools-lv-20">Lv 20</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-unit-lv-set="40" data-testid="devtools-lv-40">Lv 40</button>
+          </div>
+          <div class="pmd-inline-btns" data-testid="devtools-unit-stage-buttons"></div>
+        </div>
+
+        <!-- 2. Gold & Bag Item Spawner -->
+        <div class="pmd-subcard">
+          <div class="pmd-devtools-row-between">
+            <h3 class="pmd-subcard-title">Gold &amp; Bag Spawner</h3>
+            <span class="pmd-subcard-text" data-testid="devtools-gold-label">0G</span>
+          </div>
+          <div class="pmd-inline-btns">
+            <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="devtools-add-gold">+1,000G</button>
+          </div>
+          <div class="pmd-devtools-row-between" style="flex-wrap:nowrap;">
+            <select class="pmd-select" data-testid="devtools-item-select" aria-label="Select Item to Spawn" style="flex:1;"></select>
+            <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="devtools-spawn-item">+1 Bag</button>
+          </div>
+        </div>
+
+        <!-- 3. Recruit Any Playable Pokemon -->
+        <div class="pmd-subcard">
+          <h3 class="pmd-subcard-title">Recruit Playable Pokémon</h3>
+          <div class="pmd-devtools-row-between" style="flex-wrap:nowrap;">
+            <select class="pmd-select" data-testid="devtools-recruit-select" aria-label="Select Playable Pokemon" style="flex:1;"></select>
+            <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="devtools-recruit-btn">Recruit</button>
+          </div>
+        </div>
+
+        <!-- 4. World Map & Save Controls -->
+        <div class="pmd-subcard">
+          <h3 class="pmd-subcard-title">World Map &amp; Campaign</h3>
+          <div class="pmd-inline-btns">
+            <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-unlock-all-nodes">Unlock All 5</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-reset-d1">Reset to D1</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-clear-current-node">Clear Node</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-spawn-skirmish">Spawn Skirmish</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-toggle-ngplus">NG+: OFF</button>
+          </div>
+          <div class="pmd-inline-btns">
+            <button type="button" class="pmd-btn pmd-chip-btn" data-shop-type="healing_shop" data-testid="devtools-shop-healing_shop">Shop: Heal/Stone</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-shop-type="tm_shop" data-testid="devtools-shop-tm_shop">Shop: TMs</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-shop-type="held_shop" data-testid="devtools-shop-held_shop">Shop: Held</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-shop-type="x_item_shop" data-testid="devtools-shop-x_item_shop">Shop: X-Items</button>
+          </div>
+          <div class="pmd-inline-btns">
+            <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-seed-save">Seed Demo Save</button>
+            <button type="button" class="pmd-btn pmd-btn-danger pmd-chip-btn" data-testid="devtools-delete-account-save">Delete Account Save</button>
+          </div>
+        </div>
+
+        <!-- 5. Mid-Battle Cheats -->
+        <div class="pmd-subcard">
+          <h3 class="pmd-subcard-title">Mid-Battle</h3>
+          <div class="pmd-inline-btns">
+            <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="devtools-battle-heal">Full Heal Squad</button>
+            <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="devtools-battle-win">Instant Win</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: MAP EDITOR -->
+      <div class="pmd-tab-panel" data-devtab-panel="maps" hidden>
+        <div class="pmd-subcard">
+          <div class="pmd-devtools-row-between">
+            <h3 class="pmd-subcard-title">Demo Dungeon Maps (D1–D5)</h3>
+            <span id="devtools-map-status-badge" class="pmd-editor-status-pill" data-testid="devtools-map-status-badge">DEFAULT</span>
+          </div>
+          <select
+            id="devtools-map-level-select"
+            class="pmd-select"
+            data-testid="devtools-map-level-select"
+            aria-label="Select Demo Dungeon Map"
+          ></select>
+          <div class="pmd-devtools-map-preview-wrap">
+            <canvas
+              id="devtools-map-preview-canvas"
+              class="pmd-devtools-map-preview-canvas"
+              data-testid="devtools-map-preview-canvas"
+            ></canvas>
+          </div>
+          <p id="devtools-map-meta" class="pmd-subcard-text" data-testid="devtools-map-meta">—</p>
+          <div class="pmd-inline-btns">
+            <button
+              type="button"
+              id="devtools-open-map-editor"
+              class="pmd-btn pmd-btn-primary"
+              data-testid="devtools-open-map-editor"
+            >
+              Open Map Editor
+            </button>
+            <button
+              type="button"
+              id="devtools-play-selected-map"
+              class="pmd-btn"
+              data-testid="devtools-play-selected-map"
+            >
+              Test Battle
+            </button>
+            <button
+              type="button"
+              id="devtools-sync-cloud-maps"
+              class="pmd-btn"
+              data-testid="devtools-sync-cloud-maps"
+            >
+              Sync Cloud
+            </button>
+            <button
+              type="button"
+              id="devtools-reset-selected-map"
+              class="pmd-btn pmd-btn-danger"
+              data-testid="devtools-reset-selected-map"
+            >
+              Reset Default
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    this.unitSelectEl = this.modalEl.querySelector<HTMLSelectElement>('[data-testid="devtools-unit-select"]');
+    this.unitStageBtnsEl = this.modalEl.querySelector<HTMLElement>('[data-testid="devtools-unit-stage-buttons"]');
+    this.goldLabelEl = this.modalEl.querySelector<HTMLElement>('[data-testid="devtools-gold-label"]');
+    this.itemSelectEl = this.modalEl.querySelector<HTMLSelectElement>('[data-testid="devtools-item-select"]');
+    this.recruitSelectEl = this.modalEl.querySelector<HTMLSelectElement>('[data-testid="devtools-recruit-select"]');
+    this.ngPlusBtnEl = this.modalEl.querySelector<HTMLButtonElement>('[data-testid="devtools-toggle-ngplus"]');
+    this.battleHealBtnEl = this.modalEl.querySelector<HTMLButtonElement>('[data-testid="devtools-battle-heal"]');
+    this.battleWinBtnEl = this.modalEl.querySelector<HTMLButtonElement>('[data-testid="devtools-battle-win"]');
+    this.cheatStatusEl = this.modalEl.querySelector<HTMLElement>('[data-testid="devtools-cheat-status"]');
+
+    this.mapLevelSelectEl = this.modalEl.querySelector<HTMLSelectElement>('#devtools-map-level-select');
+    this.mapStatusBadgeEl = this.modalEl.querySelector<HTMLElement>('#devtools-map-status-badge');
+    this.mapPreviewCanvasEl = this.modalEl.querySelector<HTMLCanvasElement>('#devtools-map-preview-canvas');
+    this.mapMetaEl = this.modalEl.querySelector<HTMLElement>('#devtools-map-meta');
+  }
+
+  private populateStaticSelects(): void {
+    if (this.itemSelectEl) {
+      this.itemSelectEl.innerHTML = '';
+      for (const item of ITEMS_LIST) {
+        const opt = document.createElement('option');
+        opt.value = item.id;
+        opt.textContent = `${item.name} (${item.category})`;
+        this.itemSelectEl.appendChild(opt);
+      }
     }
-    this.renderStageButtons();
-    await this.refreshSpriteAndPortraits();
+
+    if (this.recruitSelectEl) {
+      this.recruitSelectEl.innerHTML = '';
+      const recruitable = POKEMON_SPECIES_LIST.filter(
+        (sp) => sp.faction !== 'enemy' && sp.stage === 1
+      );
+      for (const sp of recruitable) {
+        const opt = document.createElement('option');
+        opt.value = sp.id;
+        opt.textContent = `${sp.name} (${sp.types.join('/')})`;
+        this.recruitSelectEl.appendChild(opt);
+      }
+    }
   }
 
-  private setSaveActionStatus(message: string): void {
-    if (!this.saveActionStatusEl) return;
-    const trimmed = message.trim();
-    this.saveActionStatusEl.textContent = trimmed;
-    this.saveActionStatusEl.hidden = trimmed.length === 0;
+  private setCheatStatus(msg: string): void {
+    if (!this.cheatStatusEl) return;
+    const trimmed = msg.trim();
+    this.cheatStatusEl.textContent = trimmed;
+    this.cheatStatusEl.hidden = trimmed.length === 0;
   }
 
-  private mountControls(): void {
-    // Sub-tab navigation buttons
-    this.modalEl.querySelectorAll<HTMLElement>('[data-devtab-btn]').forEach((btn) => {
+  private ensureActiveSaveForCheat(): void {
+    if (this.saveManager.getSave() !== null) return;
+    this.saveManager.createNewCampaignSave({
+      campaignMode: 'demo',
+      lordSpeciesId: 'dratini',
+      lordNickname: 'Bahamut',
+      partnerSpeciesId: 'bulbasaur',
+      partnerNickname: 'Sprout',
+      healerSpeciesId: 'happiny',
+      healerNickname: 'Clover',
+      startingLevel: DEMO_STARTING_LEVEL,
+      scaleStatsToLevel: true,
+      initialConvoy: DEMO_INITIAL_CONVOY,
+      overworldGraph: DEMO_OVERWORLD_GRAPH,
+    });
+  }
+
+  private bindControls(): void {
+    const signal = this.abortController.signal;
+
+    // Close button
+    bindPointerTap(
+      this.modalEl.querySelector<HTMLElement>('[data-testid="devtools-close-btn"]'),
+      () => {
+        this.audioManager.playSfx('cancel');
+        this.onClose();
+      },
+      { signal }
+    );
+
+    // Sub-tab buttons
+    this.modalEl.querySelectorAll<HTMLButtonElement>('[data-devtab-btn]').forEach((btn) => {
       bindPointerTap(
         btn,
         () => {
           const tab = btn.dataset.devtabBtn as DevToolsSubTab | undefined;
-          if (tab) this.switchSubTab(tab);
+          if (!tab) return;
+          this.audioManager.playSfx('select');
+          this.switchSubTab(tab);
         },
-        { signal: this.signal }
+        { signal }
       );
     });
 
-    // --- TAB 1: SAVE MANAGEMENT & ACCOUNT SAVE DELETION ---
-    this.saveActionStatusEl = this.modalEl.querySelector<HTMLElement>(
-      '#devtools-save-action-status'
-    );
-    this.deleteAccountSaveBtn = this.modalEl.querySelector<HTMLButtonElement>(
-      '#devtools-delete-account-save'
-    );
-    const seedSaveBtn = this.modalEl.querySelector<HTMLButtonElement>('#devtools-seed-save');
-
-    bindPointerTap(
-      seedSaveBtn,
+    // Unit select change
+    this.unitSelectEl?.addEventListener(
+      'change',
       () => {
+        this.selectedUnitInstanceId = this.unitSelectEl?.value ?? null;
+        this.renderUnitStageButtons();
+      },
+      { signal }
+    );
+
+    // Rename unit
+    bindPointerTap(
+      this.modalEl.querySelector<HTMLElement>('[data-testid="devtools-rename-unit"]'),
+      () => {
+        if (!this.selectedUnitInstanceId) return;
         this.audioManager.playSfx('select');
-        this.saveManager.createNewCampaignSave({
-          lordSpeciesId: 'dratini',
-          partnerSpeciesId: 'bulbasaur',
-          healerSpeciesId: 'happiny',
-        });
-        this.setSaveActionStatus('Seeded fresh Prologue save data.');
+        this.onRequestRenameUnit(this.selectedUnitInstanceId);
       },
-      { signal: this.signal }
+      { signal }
     );
 
-    bindPointerTap(
-      this.deleteAccountSaveBtn,
-      () => {
-        if (this.deleteAccountSaveBtn) {
-          this.deleteAccountSaveBtn.disabled = true;
-        }
-        this.audioManager.playSfx('cancel');
-        void this.saveManager
-          .deleteSaveFromLinkedAccount()
-          .then(({ deletedCloud }) => {
-            this.setSaveActionStatus(
-              deletedCloud
-                ? 'Deleted save data from linked Google account and this device.'
-                : 'Deleted local save data from this device.'
-            );
-          })
-          .catch((err: unknown) => {
-            const msg = err instanceof Error ? err.message : 'Could not delete cloud save data.';
-            this.setSaveActionStatus(`Delete failed: ${msg}`);
-          })
-          .finally(() => {
-            if (this.deleteAccountSaveBtn) {
-              this.deleteAccountSaveBtn.disabled = false;
-            }
-          });
-      },
-      { signal: this.signal }
-    );
-
-    // --- TAB 2: SPRITES & STAGES ---
-    const presetRow = this.modalEl.querySelector<HTMLElement>('#devtools-line-presets');
-    if (presetRow) {
-      presetRow.innerHTML = '';
-      for (const preset of QUICK_LINE_PRESETS) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'pmd-btn pmd-chip-btn';
-        btn.dataset.testid = `devtools-preset-${preset.speciesId}`;
-        btn.textContent = preset.label;
-        bindPointerTap(btn, () => void this.selectSpecies(preset.speciesId), {
-          signal: this.signal,
-        });
-        presetRow.appendChild(btn);
-      }
-    }
-
-    this.speciesSelectEl = this.modalEl.querySelector<HTMLSelectElement>('#devtools-species-select');
-    if (this.speciesSelectEl) {
-      this.speciesSelectEl.innerHTML = '';
-      for (const sp of POKEMON_SPECIES_LIST) {
-        const opt = document.createElement('option');
-        opt.value = sp.id;
-        opt.textContent = `#${String(sp.dexNumber).padStart(4, '0')} ${sp.name} (Stage ${sp.stage} · ${sp.pmdAssetId})`;
-        this.speciesSelectEl.appendChild(opt);
-      }
-      this.speciesSelectEl.value = this.selectedSpeciesId;
-      this.speciesSelectEl.addEventListener(
-        'change',
+    // Unit Level Delta buttons (`-1`, `+1`, `+5`)
+    this.modalEl.querySelectorAll<HTMLButtonElement>('[data-unit-lv-delta]').forEach((btn) => {
+      bindPointerTap(
+        btn,
         () => {
-          if (this.speciesSelectEl) {
-            void this.selectSpecies(this.speciesSelectEl.value);
-          }
+          const save = this.saveManager.getSave();
+          const unit = save?.roster.find((u) => u.instanceId === this.selectedUnitInstanceId);
+          if (!unit) return;
+          const delta = Number(btn.dataset.unitLvDelta ?? 0);
+          const nextLv = Math.max(1, Math.min(40, unit.level + delta));
+          this.saveManager.setUnitLevelForTest(unit.instanceId, nextLv, true);
+          this.audioManager.playSfx('select');
+          this.setCheatStatus(`${unit.nickname} → Lv.${nextLv}`);
+          this.refreshCheatsTab();
+          this.onLiveStateMutated();
         },
-        { signal: this.signal }
+        { signal }
       );
-    }
+    });
 
-    this.stageButtonsRow = this.modalEl.querySelector<HTMLElement>('#devtools-stage-buttons');
-    this.spriteMetaEl = this.modalEl.querySelector<HTMLElement>('#devtools-sprite-meta');
-    this.rosterStageBox = this.modalEl.querySelector<HTMLElement>('#devtools-roster-evo-box');
+    // Unit Level Set buttons (`10`, `20`, `40`)
+    this.modalEl.querySelectorAll<HTMLButtonElement>('[data-unit-lv-set]').forEach((btn) => {
+      bindPointerTap(
+        btn,
+        () => {
+          const save = this.saveManager.getSave();
+          const unit = save?.roster.find((u) => u.instanceId === this.selectedUnitInstanceId);
+          if (!unit) return;
+          const nextLv = Math.max(1, Math.min(40, Number(btn.dataset.unitLvSet ?? 10)));
+          this.saveManager.setUnitLevelForTest(unit.instanceId, nextLv, true);
+          this.audioManager.playSfx('select');
+          this.setCheatStatus(`${unit.nickname} → Lv.${nextLv}`);
+          this.refreshCheatsTab();
+          this.onLiveStateMutated();
+        },
+        { signal }
+      );
+    });
 
-    const spriteMount = this.modalEl.querySelector<HTMLElement>('#devtools-sprite-stage');
-    if (spriteMount) {
-      spriteMount.innerHTML = '';
-      this.previewSpriteActor = new PmdSpriteActor({
-        speciesIdOrAssetId: this.selectedSpeciesId,
-        initialAction: this.selectedAction,
-        initialDirection: this.selectedDirection,
-        testId: 'devtools-sprite-canvas',
-      });
-      spriteMount.appendChild(this.previewSpriteActor.canvas);
-    }
-
-    const actionsRow = this.modalEl.querySelector<HTMLElement>('#devtools-action-buttons');
-    if (actionsRow) {
-      actionsRow.innerHTML = '';
-      for (const act of PMD_SPRITE_ACTIONS) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `pmd-btn pmd-chip-btn${act === this.selectedAction ? ' is-active' : ''}`;
-        btn.dataset.testid = `devtools-action-${act}`;
-        btn.dataset.action = act;
-        btn.textContent = act;
-        bindPointerTap(
-          btn,
-          () => {
-            this.selectedAction = act;
-            actionsRow.querySelectorAll<HTMLElement>('[data-action]').forEach((b) => {
-              b.classList.toggle('is-active', b.dataset.action === act);
-            });
-            this.previewSpriteActor?.setAction(act, { loop: true });
-            this.updateSpriteMetaText();
-          },
-          { signal: this.signal }
-        );
-        actionsRow.appendChild(btn);
-      }
-    }
-
-    const dirsRow = this.modalEl.querySelector<HTMLElement>('#devtools-direction-buttons');
-    if (dirsRow) {
-      dirsRow.innerHTML = '';
-      for (const info of PMD_DIRECTION_INFO) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `pmd-btn pmd-chip-btn${info.dir === this.selectedDirection ? ' is-active' : ''}`;
-        btn.dataset.testid = `devtools-dir-${info.code}`;
-        btn.dataset.dir = String(info.dir);
-        btn.textContent = info.code;
-        bindPointerTap(
-          btn,
-          () => {
-            this.selectedDirection = info.dir;
-            dirsRow.querySelectorAll<HTMLElement>('[data-dir]').forEach((b) => {
-              b.classList.toggle('is-active', Number(b.dataset.dir) === info.dir);
-            });
-            this.previewSpriteActor?.setDirection(info.dir);
-            this.updateSpriteMetaText();
-          },
-          { signal: this.signal }
-        );
-        dirsRow.appendChild(btn);
-      }
-    }
-
-    const mirrorBtn = this.modalEl.querySelector<HTMLButtonElement>('#devtools-portrait-mirror-btn');
+    // Gold +1,000G
     bindPointerTap(
-      mirrorBtn,
+      this.modalEl.querySelector<HTMLElement>('[data-testid="devtools-add-gold"]'),
       () => {
-        this.mirrorPortraits = !this.mirrorPortraits;
-        if (mirrorBtn) {
-          mirrorBtn.textContent = this.mirrorPortraits
-            ? 'Facing: Right Slot (Mirrored)'
-            : 'Facing: Left Slot (Default)';
-          mirrorBtn.classList.toggle('is-active', this.mirrorPortraits);
-        }
-        for (const pv of this.portraitViews.values()) {
-          pv.setMirrored(this.mirrorPortraits);
-        }
+        this.ensureActiveSaveForCheat();
+        const total = this.saveManager.addGold(1000);
+        this.audioManager.playSfx('heal');
+        this.setCheatStatus(`Gold: ${total.toLocaleString()}G`);
+        this.refreshCheatsTab();
+        this.onLiveStateMutated();
       },
-      { signal: this.signal }
+      { signal }
     );
 
-    const portraitGrid = this.modalEl.querySelector<HTMLElement>('#devtools-portrait-grid');
-    if (portraitGrid) {
-      portraitGrid.innerHTML = '';
-      for (const emotion of PMD_PORTRAIT_EMOTIONS) {
-        const cell = document.createElement('div');
-        cell.className = 'pmd-devtools-portrait-cell';
-        const pv = new PmdPortraitView({
-          testId: `devtools-portrait-${emotion}`,
+    // Spawn Item +1 to Bag
+    bindPointerTap(
+      this.modalEl.querySelector<HTMLElement>('[data-testid="devtools-spawn-item"]'),
+      () => {
+        const itemId = this.itemSelectEl?.value;
+        if (!itemId) return;
+        this.ensureActiveSaveForCheat();
+        this.saveManager.addConvoyItem(itemId, 1);
+        const item = getItemById(itemId);
+        this.audioManager.playSfx('select');
+        this.setCheatStatus(`Added ${item?.name ?? itemId} to Bag.`);
+        this.refreshCheatsTab();
+        this.onLiveStateMutated();
+      },
+      { signal }
+    );
+
+    // Recruit Playable Pokemon
+    bindPointerTap(
+      this.modalEl.querySelector<HTMLElement>('[data-testid="devtools-recruit-btn"]'),
+      () => {
+        const speciesId = this.recruitSelectEl?.value;
+        if (!speciesId) return;
+        this.ensureActiveSaveForCheat();
+        const joined = this.saveManager.recruitPokemon({
+          speciesId,
+          level: DEMO_STARTING_LEVEL,
+          scaleStatsToLevel: true,
         });
-        const label = document.createElement('span');
-        label.className = 'pmd-devtools-portrait-label';
-        label.textContent = emotion;
-        const meta = document.createElement('span');
-        meta.className = 'pmd-devtools-portrait-sub';
-        meta.dataset.testid = `devtools-portrait-meta-${emotion}`;
-        meta.textContent = '—';
-
-        this.portraitViews.set(emotion, pv);
-        this.portraitMetaEls.set(emotion, meta);
-        cell.append(pv.canvas, label, meta);
-        portraitGrid.appendChild(cell);
-      }
-    }
-
-    // --- TAB 3: DIALOGUE TEST ---
-    this.dialogueStatusEl = this.modalEl.querySelector<HTMLElement>('#devtools-dialogue-status');
-
-    const btnLaunchDialogue = this.modalEl.querySelector<HTMLButtonElement>(
-      '#devtools-launch-dialogue'
+        this.selectedUnitInstanceId = joined.instanceId;
+        this.audioManager.playSfx('victory_fanfare');
+        this.setCheatStatus(`Recruited ${joined.nickname} (Lv.${joined.level})!`);
+        this.refreshCheatsTab();
+        this.onLiveStateMutated();
+      },
+      { signal }
     );
+
+    // World Map Controls
     bindPointerTap(
-      btnLaunchDialogue,
+      this.modalEl.querySelector<HTMLElement>('[data-testid="devtools-unlock-all-nodes"]'),
       () => {
-        void this.dialogueOverlay
-          .playScript(PROLOGUE_AWAKENING_TEST_SCRIPT, {
-            typewriterMsPerChar: this.instantDialogue ? 0 : 10,
-          })
-          .then((reason) => {
-            if (this.dialogueStatusEl) {
-              this.dialogueStatusEl.textContent = `Last run finished: ${reason}`;
-            }
-          });
-      },
-      { signal: this.signal }
-    );
-
-    const btnInstantToggle = this.modalEl.querySelector<HTMLButtonElement>(
-      '#devtools-instant-dialogue-toggle'
-    );
-    bindPointerTap(
-      btnInstantToggle,
-      () => {
-        this.instantDialogue = !this.instantDialogue;
-        if (btnInstantToggle) {
-          btnInstantToggle.textContent = this.instantDialogue
-            ? 'Text Reveal: Instant (0ms)'
-            : 'Text Reveal: Typewriter';
-          btnInstantToggle.classList.toggle('is-active', this.instantDialogue);
-        }
-      },
-      { signal: this.signal }
-    );
-
-    const btnCycleLord = this.modalEl.querySelector<HTMLButtonElement>(
-      '#devtools-cycle-lord-stage'
-    );
-    bindPointerTap(
-      btnCycleLord,
-      () => {
-        const save = this.saveManager.getSave();
-        const lord =
-          save?.roster.find((u) => u.instanceId === save.campaign.lordInstanceId) ??
-          save?.roster[0];
-        if (!lord) {
-          if (this.dialogueStatusEl) {
-            this.dialogueStatusEl.textContent =
-              'Seed a Test Save in Registry & Sync first to cycle the active Lord’s evolution stage.';
-          }
-          return;
-        }
-        const curSp = getSpeciesById(lord.speciesId);
-        if (!curSp) return;
-        const stages = getSpeciesByLineId(curSp.lineId).filter((s) => s.faction !== 'enemy');
-        const idx = stages.findIndex((s) => s.id === curSp.id);
-        const nextStage = stages[(idx + 1) % stages.length];
-        if (nextStage) {
-          this.saveManager.evolveUnitToSpecies(lord.instanceId, nextStage.id);
-          this.renderDialogueTabSummary();
-          if (this.dialogueStatusEl) {
-            this.dialogueStatusEl.textContent = `Evolved ${lord.nickname} -> ${nextStage.name} (Stage ${nextStage.stage}).`;
-          }
-        }
-      },
-      { signal: this.signal }
-    );
-
-    // --- AUDIO ENGINE & JUKEBOX HARNESS ---
-    const bgmSelectEl = this.modalEl.querySelector<HTMLSelectElement>('#devtools-bgm-select');
-    const audioStatusEl = this.modalEl.querySelector<HTMLElement>('#devtools-audio-status');
-    const btnBgmPlay = this.modalEl.querySelector<HTMLButtonElement>('#devtools-bgm-play');
-    const btnBgmStop = this.modalEl.querySelector<HTMLButtonElement>('#devtools-bgm-stop');
-    const btnAudioMute = this.modalEl.querySelector<HTMLButtonElement>('#devtools-audio-mute');
-    const btnSfxSelect = this.modalEl.querySelector<HTMLButtonElement>('#devtools-sfx-select');
-    const btnSfxCancel = this.modalEl.querySelector<HTMLButtonElement>('#devtools-sfx-cancel');
-    const btnSfxAdvance = this.modalEl.querySelector<HTMLButtonElement>('#devtools-sfx-advance');
-    const bgmVolInput = this.modalEl.querySelector<HTMLInputElement>('#devtools-bgm-volume');
-    const sfxVolInput = this.modalEl.querySelector<HTMLInputElement>('#devtools-sfx-volume');
-
-    if (bgmSelectEl) {
-      bgmSelectEl.innerHTML = '';
-      for (const track of this.audioManager.getAvailableTracks()) {
-        const opt = document.createElement('option');
-        opt.value = track.id;
-        opt.textContent = track.trackNumber
-          ? `#${track.trackNumber} · ${track.title}${track.loop ? '' : ' (Fanfare)'}`
-          : track.title;
-        bgmSelectEl.appendChild(opt);
-      }
-      const curId = this.audioManager.getCurrentTrackId();
-      if (curId) bgmSelectEl.value = curId;
-    }
-
-    bindPointerTap(
-      btnBgmPlay,
-      () => {
-        const chosen = bgmSelectEl?.value;
-        if (chosen) {
-          this.audioManager.playSfx('select');
-          this.audioManager.playBgm(chosen, { fadeMs: 250, restart: true });
-        }
-      },
-      { signal: this.signal }
-    );
-
-    bindPointerTap(
-      btnBgmStop,
-      () => {
-        this.audioManager.playSfx('cancel');
-        this.audioManager.stopBgm({ fadeMs: 250 });
-      },
-      { signal: this.signal }
-    );
-
-    bindPointerTap(
-      btnAudioMute,
-      () => {
-        const nowMuted = this.audioManager.toggleMute();
-        if (!nowMuted) {
-          this.audioManager.playSfx('select');
-        }
-      },
-      { signal: this.signal }
-    );
-
-    bindPointerTap(btnSfxSelect, () => this.audioManager.playSfx('select'), { signal: this.signal });
-    bindPointerTap(btnSfxCancel, () => this.audioManager.playSfx('cancel'), { signal: this.signal });
-    bindPointerTap(btnSfxAdvance, () => this.audioManager.playSfx('dialogue_advance'), {
-      signal: this.signal,
-    });
-
-    bgmVolInput?.addEventListener(
-      'input',
-      () => {
-        this.audioManager.setBgmVolume(Number(bgmVolInput.value) / 100);
-      },
-      { signal: this.signal }
-    );
-
-    sfxVolInput?.addEventListener(
-      'input',
-      () => {
-        this.audioManager.setSfxVolume(Number(sfxVolInput.value) / 100);
-      },
-      { signal: this.signal }
-    );
-
-    this.unsubscribeAudio = this.audioManager.subscribe((snap) => {
-      if (audioStatusEl) {
-        const trackLabel = snap.currentTrack
-          ? `#${snap.currentTrack.trackNumber ?? snap.currentTrack.id} · ${snap.currentTrack.title}`
-          : 'None';
-        const stateLabel = snap.settings.muted
-          ? 'Muted'
-          : snap.isPlaying
-            ? 'Playing'
-            : snap.awaitingUserUnlock
-              ? 'Armed (Tap to unlock)'
-              : snap.currentTrack
-                ? 'Paused'
-                : 'Stopped';
-        audioStatusEl.textContent = [
-          `Tracks in assets/audio: ${snap.discoveredTrackCount}`,
-          `Now Playing: ${trackLabel}`,
-          `State: ${stateLabel}`,
-          `BGM: ${Math.round(snap.settings.bgmVolume * 100)}% · SFX: ${Math.round(snap.settings.sfxVolume * 100)}%`,
-        ].join(' · ');
-      }
-      if (btnAudioMute) {
-        btnAudioMute.textContent = snap.settings.muted ? 'Unmute Audio' : 'Mute Audio';
-        btnAudioMute.classList.toggle('is-active', snap.settings.muted);
-      }
-      if (bgmVolInput && document.activeElement !== bgmVolInput) {
-        bgmVolInput.value = String(Math.round(snap.settings.bgmVolume * 100));
-      }
-      if (sfxVolInput && document.activeElement !== sfxVolInput) {
-        sfxVolInput.value = String(Math.round(snap.settings.sfxVolume * 100));
-      }
-      if (bgmSelectEl && snap.currentTrack && document.activeElement !== bgmSelectEl) {
-        bgmSelectEl.value = snap.currentTrack.id;
-      }
-    });
-
-    // --- TAB 4: TEST DUNGEON (SKIRMISH) LAUNCHER ---
-    const btnLaunchBattle = this.modalEl.querySelector<HTMLButtonElement>(
-      '#devtools-launch-battle'
-    );
-    bindPointerTap(
-      btnLaunchBattle,
-      () => {
+        this.ensureActiveSaveForCheat();
+        this.saveManager.unlockAllOverworldNodes(DEMO_OVERWORLD_GRAPH);
         this.audioManager.playSfx('select');
-        this.onLaunchBattle?.('drenched_bluff_vanguard');
+        this.setCheatStatus('Unlocked all 5 Demo nodes.');
+        this.onLiveStateMutated();
       },
-      { signal: this.signal }
+      { signal }
     );
 
-    const btnEditDrenchedBluff = this.modalEl.querySelector<HTMLButtonElement>(
-      '#devtools-edit-drenched-bluff'
-    );
     bindPointerTap(
-      btnEditDrenchedBluff,
+      this.modalEl.querySelector<HTMLElement>('[data-testid="devtools-reset-d1"]'),
       () => {
+        this.ensureActiveSaveForCheat();
+        this.saveManager.resetOverworldToPrologue(DEMO_OVERWORLD_GRAPH);
         this.audioManager.playSfx('select');
-        this.onLaunchMapEditor?.('drenched_bluff_vanguard');
+        this.setCheatStatus('Reset World Map to D1: Beach Cave.');
+        this.onLiveStateMutated({ snapOverworld: true });
       },
-      { signal: this.signal }
+      { signal }
     );
 
-    const btnLaunchDungeon = this.modalEl.querySelector<HTMLButtonElement>(
-      '#devtools-launch-test-dungeon'
-    );
     bindPointerTap(
-      btnLaunchDungeon,
+      this.modalEl.querySelector<HTMLElement>('[data-testid="devtools-clear-current-node"]'),
       () => {
-        this.audioManager.playSfx('select');
-        this.onLaunchTestDungeon?.();
+        this.ensureActiveSaveForCheat();
+        const nodeId = this.saveManager.getSave()?.overworld.currentNodeId ?? 'prologue';
+        this.saveManager.completeOverworldChapter(nodeId, { graph: DEMO_OVERWORLD_GRAPH });
+        this.audioManager.playSfx('victory_fanfare');
+        this.setCheatStatus(`Marked ${nodeId} cleared.`);
+        this.onLiveStateMutated();
       },
-      { signal: this.signal }
+      { signal }
     );
 
-    // --- TAB 5: LEVEL & CHAPTER MAP VIEWER / SANDBOX EDITOR LAUNCHER ---
-    this.mapGroupFiltersEl = this.modalEl.querySelector<HTMLElement>('#devtools-map-group-filters');
-    this.mapLevelSelectEl = this.modalEl.querySelector<HTMLSelectElement>(
-      '#devtools-map-level-select'
-    );
-    this.mapStatusBadgeEl = this.modalEl.querySelector<HTMLElement>('#devtools-map-status-badge');
-    this.mapMetaEl = this.modalEl.querySelector<HTMLElement>('#devtools-map-meta');
-    this.mapPreviewCanvasEl = this.modalEl.querySelector<HTMLCanvasElement>(
-      '#devtools-map-preview-canvas'
-    );
-
-    if (this.mapGroupFiltersEl) {
-      this.mapGroupFiltersEl.innerHTML = '';
-      for (const grp of MAP_GROUP_CHIPS) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `pmd-btn pmd-chip-btn${grp.id === this.selectedMapGroup ? ' is-active' : ''}`;
-        btn.dataset.mapGroup = grp.id;
-        btn.dataset.testid = `devtools-map-group-${grp.id}`;
-        btn.textContent = grp.label;
-        bindPointerTap(
-          btn,
-          () => {
-            this.audioManager.playSfx('select');
-            this.selectedMapGroup = grp.id;
-            this.populateMapLevelSelect();
-            void this.refreshMapInspectorPanel();
-          },
-          { signal: this.signal }
+    bindPointerTap(
+      this.modalEl.querySelector<HTMLElement>('[data-testid="devtools-spawn-skirmish"]'),
+      () => {
+        this.ensureActiveSaveForCheat();
+        const nodeId = this.saveManager.getSave()?.overworld.currentNodeId ?? 'prologue';
+        this.saveManager.setOverworldNodeStateCheat(
+          nodeId,
+          { unlocked: true, cleared: true },
+          DEMO_OVERWORLD_GRAPH
         );
-        this.mapGroupFiltersEl.appendChild(btn);
-      }
-    }
+        this.saveManager.spawnOverworldSkirmish(
+          nodeId,
+          undefined,
+          undefined,
+          DEMO_OVERWORLD_GRAPH
+        );
+        this.audioManager.playSfx('phase_change');
+        this.setCheatStatus(`Spawned Skirmish at ${nodeId}.`);
+        this.onLiveStateMutated();
+      },
+      { signal }
+    );
 
-    this.populateMapLevelSelect();
+    this.modalEl.querySelectorAll<HTMLButtonElement>('[data-shop-type]').forEach((btn) => {
+      bindPointerTap(
+        btn,
+        () => {
+          const shopType = btn.dataset.shopType as KecleonShopType | undefined;
+          if (!shopType) return;
+          this.ensureActiveSaveForCheat();
+          const nodeId = this.saveManager.getSave()?.overworld.currentNodeId ?? 'prologue';
+          this.saveManager.setOverworldNodeStateCheat(
+            nodeId,
+            { unlocked: true, cleared: true },
+            DEMO_OVERWORLD_GRAPH
+          );
+          this.saveManager.spawnOverworldKecleonShop(
+            nodeId,
+            shopType,
+            Math.random,
+            DEMO_OVERWORLD_GRAPH
+          );
+          this.audioManager.playSfx('select');
+          this.setCheatStatus(`Spawned Kecleon Shop (${shopType}) at ${nodeId}.`);
+          this.onLiveStateMutated();
+        },
+        { signal }
+      );
+    });
+
+    bindPointerTap(
+      this.ngPlusBtnEl,
+      () => {
+        const next = !this.saveManager.isNewGamePlusUnlocked();
+        this.saveManager.setNewGamePlusUnlocked(next);
+        this.audioManager.playSfx('select');
+        this.setCheatStatus(`New Game+ ${next ? 'Unlocked' : 'Locked'}.`);
+        this.refreshCheatsTab();
+        this.onLiveStateMutated();
+      },
+      { signal }
+    );
+
+    bindPointerTap(
+      this.modalEl.querySelector<HTMLElement>('[data-testid="devtools-seed-save"]'),
+      () => {
+        this.saveManager.createNewCampaignSave({
+          campaignMode: 'demo',
+          lordSpeciesId: 'dratini',
+          lordNickname: 'Bahamut',
+          partnerSpeciesId: 'bulbasaur',
+          partnerNickname: 'Sprout',
+          healerSpeciesId: 'happiny',
+          healerNickname: 'Clover',
+          startingLevel: DEMO_STARTING_LEVEL,
+          scaleStatsToLevel: true,
+          initialConvoy: DEMO_INITIAL_CONVOY,
+          overworldGraph: DEMO_OVERWORLD_GRAPH,
+        });
+        this.audioManager.playSfx('select');
+        this.setCheatStatus('Seeded fresh Demo save (Lv. 9).');
+        this.refreshCheatsTab();
+        this.onLiveStateMutated({ snapOverworld: true });
+      },
+      { signal }
+    );
+
+    bindPointerTap(
+      this.modalEl.querySelector<HTMLElement>('[data-testid="devtools-delete-account-save"]'),
+      async () => {
+        this.audioManager.playSfx('cancel');
+        const res = await this.saveManager.deleteSaveFromLinkedAccount();
+        this.setCheatStatus(
+          res.deletedCloud
+            ? 'Deleted local & Cloud save.'
+            : 'Cleared local save.'
+        );
+        this.refreshCheatsTab();
+        this.onLiveStateMutated({ snapOverworld: true });
+      },
+      { signal }
+    );
+
+    // Mid-Battle Cheats
+    bindPointerTap(
+      this.battleHealBtnEl,
+      () => {
+        if (!this.isBattleOpen()) return;
+        this.onCheatFullHealSquad();
+        this.setCheatStatus('Squad healed to full HP & PP.');
+      },
+      { signal }
+    );
+
+    bindPointerTap(
+      this.battleWinBtnEl,
+      () => {
+        if (!this.isBattleOpen()) return;
+        this.onCheatInstantWin();
+        this.setCheatStatus('Triggered Instant Win.');
+        this.onClose();
+      },
+      { signal }
+    );
+
+    // Map Editor Tab Controls
     this.mapLevelSelectEl?.addEventListener(
       'change',
       () => {
-        if (!this.mapLevelSelectEl) return;
         this.audioManager.playSfx('select');
-        this.selectedMapLevelId = this.mapLevelSelectEl.value;
-        void this.refreshMapInspectorPanel();
+        this.selectedMapLevelId = this.mapLevelSelectEl?.value || 'prologue';
+        this.refreshMapPreviewTab();
       },
-      { signal: this.signal }
+      { signal }
     );
 
     bindPointerTap(
-      this.modalEl.querySelector<HTMLButtonElement>('#devtools-open-map-editor'),
+      this.modalEl.querySelector<HTMLElement>('#devtools-open-map-editor'),
       () => {
         this.audioManager.playSfx('select');
-        this.onLaunchMapEditor?.(this.selectedMapLevelId);
+        this.onLaunchMapEditor(this.selectedMapLevelId);
       },
-      { signal: this.signal }
+      { signal }
     );
 
     bindPointerTap(
-      this.modalEl.querySelector<HTMLButtonElement>('#devtools-play-selected-map'),
+      this.modalEl.querySelector<HTMLElement>('#devtools-play-selected-map'),
       () => {
         this.audioManager.playSfx('select');
-        if (this.selectedMapLevelId === 'skirmish_test_convergence') {
-          this.onLaunchTestDungeon?.();
-        } else {
-          this.onLaunchBattle?.(this.selectedMapLevelId);
+        this.onPlayMapBattle(this.selectedMapLevelId);
+      },
+      { signal }
+    );
+
+    bindPointerTap(
+      this.modalEl.querySelector<HTMLElement>('#devtools-sync-cloud-maps'),
+      async () => {
+        this.audioManager.playSfx('select');
+        const res = await this.saveManager.syncCustomMapsWithActiveSave();
+        if (this.mapMetaEl) {
+          this.mapMetaEl.textContent =
+            res === 'pushed_newer_local'
+              ? 'Synced custom maps to Cloud.'
+              : res === 'pulled_newer_cloud'
+                ? 'Pulled newer custom maps from Cloud.'
+                : res === 'in_sync'
+                  ? 'Cloud maps already in sync.'
+                  : 'Sign in with Google to sync maps to Cloud.';
         }
+        this.refreshMapPreviewTab();
       },
-      { signal: this.signal }
+      { signal }
     );
 
     bindPointerTap(
-      this.modalEl.querySelector<HTMLButtonElement>('#devtools-sync-cloud-maps'),
-      () => {
-        this.audioManager.playSfx('select');
-        void this.saveManager.reconcileWithCloud().then(() => {
-          void this.refreshMapInspectorPanel();
-        });
-      },
-      { signal: this.signal }
-    );
-
-    bindPointerTap(
-      this.modalEl.querySelector<HTMLButtonElement>('#devtools-reset-selected-map'),
+      this.modalEl.querySelector<HTMLElement>('#devtools-reset-selected-map'),
       () => {
         this.audioManager.playSfx('cancel');
         resetChapterMapOverride(this.selectedMapLevelId);
         void this.saveManager.syncCustomMapsWithActiveSave();
-        void this.refreshMapInspectorPanel();
+        this.refreshMapPreviewTab();
       },
-      { signal: this.signal }
+      { signal }
     );
-
-    this.unsubscribeMaps = subscribeChapterMapChanges(() => {
-      this.populateMapLevelSelect();
-      if (this.activeSubTab === 'maps') {
-        void this.refreshMapInspectorPanel();
-      }
-    });
-
-    // --- TAB 6: STEP 4 OVERWORLD MAP, KECLEON SHOPS & SKIRMISH SANDBOX ---
-    this.overworldPreviewCanvasEl = this.modalEl.querySelector<HTMLCanvasElement>(
-      '#devtools-overworld-preview-canvas'
-    );
-    this.overworldMetaEl = this.modalEl.querySelector<HTMLElement>('#devtools-overworld-meta');
-
-    bindPointerTap(
-      this.modalEl.querySelector<HTMLButtonElement>('#devtools-launch-overworld'),
-      () => {
-        this.audioManager.playSfx('select');
-        this.onLaunchOverworld?.();
-      },
-      { signal: this.signal }
-    );
-
-    bindPointerTap(
-      this.modalEl.querySelector<HTMLButtonElement>('#devtools-overworld-seed-sandbox'),
-      () => {
-        this.audioManager.playSfx('select');
-        this.onLaunchOverworld?.('sandbox');
-      },
-      { signal: this.signal }
-    );
-
-    bindPointerTap(
-      this.modalEl.querySelector<HTMLButtonElement>('#devtools-overworld-seed-prologue'),
-      () => {
-        this.audioManager.playSfx('select');
-        this.onLaunchOverworld?.('prologue');
-      },
-      { signal: this.signal }
-    );
-
-    bindPointerTap(
-      this.modalEl.querySelector<HTMLButtonElement>('#devtools-overworld-seed-all'),
-      () => {
-        this.audioManager.playSfx('select');
-        this.onLaunchOverworld?.('all');
-      },
-      { signal: this.signal }
-    );
-
-    this.renderStageButtons();
   }
 
-  private renderStageButtons(): void {
-    if (!this.stageButtonsRow) return;
-    this.stageButtonsRow.innerHTML = '';
-    const curSp = getSpeciesById(this.selectedSpeciesId);
+  public refreshCheatsTab(): void {
+    const save = this.saveManager.getSave();
+    if (this.goldLabelEl) {
+      this.goldLabelEl.textContent = `${(save?.gold ?? 0).toLocaleString()}G`;
+    }
+    if (this.ngPlusBtnEl) {
+      const ng = this.saveManager.isNewGamePlusUnlocked();
+      this.ngPlusBtnEl.textContent = ng ? 'NG+: ON' : 'NG+: OFF';
+      this.ngPlusBtnEl.classList.toggle('is-active', ng);
+    }
+    const battleOpen = this.isBattleOpen();
+    if (this.battleHealBtnEl) this.battleHealBtnEl.disabled = !battleOpen;
+    if (this.battleWinBtnEl) this.battleWinBtnEl.disabled = !battleOpen;
+
+    if (this.unitSelectEl) {
+      this.unitSelectEl.innerHTML = '';
+      if (!save || save.roster.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'No active save (tap Seed Demo Save)';
+        this.unitSelectEl.appendChild(opt);
+        this.unitSelectEl.disabled = true;
+        this.selectedUnitInstanceId = null;
+      } else {
+        this.unitSelectEl.disabled = false;
+        if (
+          !this.selectedUnitInstanceId ||
+          !save.roster.some((u) => u.instanceId === this.selectedUnitInstanceId)
+        ) {
+          this.selectedUnitInstanceId = save.roster[0]!.instanceId;
+        }
+        for (const u of save.roster) {
+          const sp = getSpeciesById(u.speciesId);
+          const opt = document.createElement('option');
+          opt.value = u.instanceId;
+          opt.textContent = `${u.nickname} (${sp?.name ?? u.speciesId} · Lv.${u.level})`;
+          this.unitSelectEl.appendChild(opt);
+        }
+        this.unitSelectEl.value = this.selectedUnitInstanceId;
+      }
+    }
+
+    this.renderUnitStageButtons();
+  }
+
+  private renderUnitStageButtons(): void {
+    const container = this.unitStageBtnsEl;
+    if (!container) return;
+    container.innerHTML = '';
+
+    const save = this.saveManager.getSave();
+    const unit = save?.roster.find((u) => u.instanceId === this.selectedUnitInstanceId);
+    if (!unit) return;
+    const curSp = getSpeciesById(unit.speciesId);
     if (!curSp) return;
 
-    const lineMembers = getSpeciesByLineId(curSp.lineId);
-    for (const member of lineMembers) {
+    const lineForms = POKEMON_SPECIES_LIST.filter((sp) => sp.lineId === curSp.lineId).sort(
+      (a, b) => a.stage - b.stage
+    );
+    for (const form of lineForms) {
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = `pmd-btn pmd-chip-btn${member.id === this.selectedSpeciesId ? ' is-active' : ''}`;
-      btn.dataset.testid = `devtools-stage-btn-${member.id}`;
-      btn.textContent = `S${member.stage}: ${member.name}`;
-      bindPointerTap(btn, () => void this.selectSpecies(member.id), {
-        signal: this.signal,
-      });
-      this.stageButtonsRow.appendChild(btn);
+      btn.className = `pmd-btn pmd-chip-btn${form.id === unit.speciesId ? ' is-active' : ''}`;
+      btn.dataset.testid = `devtools-stage-${form.id}`;
+      btn.textContent = `S${form.stage}: ${form.name}`;
+      bindPointerTap(
+        btn,
+        () => {
+          if (form.id === unit.speciesId) return;
+          this.audioManager.playSfx('select');
+          this.saveManager.evolveUnitToSpecies(unit.instanceId, form.id);
+          this.setCheatStatus(`${unit.nickname} → ${form.name}`);
+          this.refreshCheatsTab();
+          this.onLiveStateMutated();
+        },
+        { signal: this.abortController.signal }
+      );
+      container.appendChild(btn);
     }
   }
 
-  private async refreshSpriteAndPortraits(): Promise<void> {
-    if (!this.previewSpriteActor) return;
-    const targetId = this.selectedSpeciesId;
+  public refreshMapPreviewTab(): void {
+    const selectEl = this.mapLevelSelectEl;
+    const badgeEl = this.mapStatusBadgeEl;
+    const canvasEl = this.mapPreviewCanvasEl;
+    const metaEl = this.mapMetaEl;
+    if (!selectEl || !badgeEl || !canvasEl || !metaEl) return;
 
-    await Promise.all([
-      this.previewSpriteActor.setSpecies(targetId),
-      ...PMD_PORTRAIT_EMOTIONS.map(async (emotion) => {
-        const pv = this.portraitViews.get(emotion);
-        const metaEl = this.portraitMetaEls.get(emotion);
-        if (!pv) return;
-        const asset = await pv.setPortrait({
-          speciesIdOrAssetId: targetId,
-          emotion,
-          mirrorHorizontal: this.mirrorPortraits,
-        });
-        if (asset && metaEl) {
-          metaEl.textContent =
-            asset.resolvedEmotion === emotion
-              ? 'Native'
-              : `-> ${asset.resolvedEmotion}`;
-        }
-      }),
-    ]);
-
-    this.previewSpriteActor.setAction(this.selectedAction, { loop: true });
-    this.previewSpriteActor.setDirection(this.selectedDirection);
-    this.updateSpriteMetaText();
-  }
-
-  private updateSpriteMetaText(): void {
-    if (!this.spriteMetaEl || !this.previewSpriteActor) return;
-    const snap = this.previewSpriteActor.getSnapshot();
-    if (!snap) {
-      this.spriteMetaEl.textContent = 'Loading sprite metadata...';
-      return;
-    }
-    const dirInfo = PMD_DIRECTION_INFO[snap.direction];
-    this.spriteMetaEl.textContent = [
-      `Asset: ${snap.pmdAssetId}`,
-      `Action: ${snap.action} (XML: ${snap.xmlAnimName} -> Sheet: ${snap.sheetName})`,
-      `Dir: ${dirInfo?.label ?? snap.direction}`,
-      `Frame: ${snap.frameWidth}x${snap.frameHeight}px · Scale: ${snap.scale}x (${snap.displayWidthPx}x${snap.displayHeightPx}px)`,
-      `Smoothing: ${snap.imageSmoothingEnabled ? 'ON (ERROR)' : 'OFF (Pixelated)'}`,
-      snap.synthesizedFallback ? 'Mode: Portrait Token Fallback' : 'Mode: Native PMD Sheet',
-    ].join(' · ');
-  }
-
-  private renderActiveRosterStageControls(): void {
-    if (!this.rosterStageBox) return;
-    this.rosterStageBox.innerHTML = '';
-
-    const save = this.saveManager.getSave();
-    if (!save || save.roster.length === 0) {
-      const msg = document.createElement('p');
-      msg.className = 'pmd-subcard-text';
-      msg.textContent =
-        'No active campaign save. Seed a Test Save in Registry & Sync to test live Party stage swaps.';
-      this.rosterStageBox.appendChild(msg);
-      return;
-    }
-
-    save.roster.forEach((unit, slotIdx) => {
-      const sp = getSpeciesById(unit.speciesId);
-      if (!sp) return;
-      const stages = getSpeciesByLineId(sp.lineId).filter((m) => m.faction !== 'enemy');
-
-      const row = document.createElement('div');
-      row.className = 'pmd-devtools-roster-row';
-
-      const headerRow = document.createElement('div');
-      headerRow.className = 'pmd-devtools-row-between';
-
-      const label = document.createElement('span');
-      label.className = 'pmd-subcard-text';
-      label.dataset.testid = `devtools-roster-label-slot-${slotIdx}`;
-      label.textContent = `${unit.nickname} (${sp.name} · Lv.${unit.level}):`;
-      headerRow.appendChild(label);
-
-      if (this.onRequestRenameUnit) {
-        const renameBtn = document.createElement('button');
-        renameBtn.type = 'button';
-        renameBtn.className = 'pmd-btn pmd-chip-btn';
-        renameBtn.dataset.testid = `devtools-rename-slot-${slotIdx}`;
-        renameBtn.textContent = 'Rename';
-        bindPointerTap(renameBtn, () => this.onRequestRenameUnit?.(unit.instanceId), {
-          signal: this.signal,
-        });
-        headerRow.appendChild(renameBtn);
-      }
-
-      row.appendChild(headerRow);
-
-      const btns = document.createElement('div');
-      btns.className = 'pmd-inline-btns';
-      for (const st of stages) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `pmd-btn pmd-chip-btn${st.id === unit.speciesId ? ' is-active' : ''}`;
-        btn.dataset.testid = `devtools-evolve-slot${slotIdx}-${st.id}`;
-        btn.textContent = st.name;
-        bindPointerTap(
-          btn,
-          () => {
-            this.saveManager.evolveUnitToSpecies(unit.instanceId, st.id);
-            void this.selectSpecies(st.id);
-          },
-          { signal: this.signal }
-        );
-        btns.appendChild(btn);
-      }
-      row.appendChild(btns);
-      this.rosterStageBox!.appendChild(row);
-    });
-  }
-
-  private renderDialogueTabSummary(): void {
-    const summaryEl = this.modalEl.querySelector<HTMLElement>('#devtools-dialogue-cast');
-    if (!summaryEl) return;
-    const save = this.saveManager.getSave();
-    const lord = this.dialogueOverlay.resolveSpeaker({ kind: 'lord' }, save);
-    const partner = this.dialogueOverlay.resolveSpeaker({ kind: 'partner' }, save);
-    const healer = this.dialogueOverlay.resolveSpeaker({ kind: 'healer' }, save);
-    summaryEl.textContent = `Active Cast — Lord: ${lord.nickname} (${lord.speciesName}) · Partner: ${partner.nickname} (${partner.speciesName}) · Healer: ${healer.nickname} (${healer.speciesName})`;
-  }
-
-  private populateMapLevelSelect(): void {
-    if (!this.mapLevelSelectEl) return;
-    const filtered = CHAPTER_LEVEL_CATALOG.filter(
-      (item) => this.selectedMapGroup === 'all' || item.group === this.selectedMapGroup
-    );
-    if (
-      filtered.length > 0 &&
-      !filtered.some((item) => item.id === this.selectedMapLevelId)
-    ) {
-      this.selectedMapLevelId = filtered[0]!.id;
-    }
-
-    this.mapLevelSelectEl.innerHTML = '';
-    for (const entry of filtered) {
+    selectEl.innerHTML = '';
+    for (const entry of CHAPTER_LEVEL_CATALOG) {
       const opt = document.createElement('option');
       opt.value = entry.id;
-      const suffix = hasChapterMapOverride(entry.id) ? ' ★ [Customized]' : '';
-      opt.textContent = `${entry.label}${suffix}`;
-      this.mapLevelSelectEl.appendChild(opt);
+      const customMark = hasChapterMapOverride(entry.id) ? ' ★ [Custom]' : '';
+      opt.textContent = `${entry.label}${customMark}`;
+      selectEl.appendChild(opt);
     }
-    this.mapLevelSelectEl.value = this.selectedMapLevelId;
+    if (!CHAPTER_LEVEL_CATALOG.some((e) => e.id === this.selectedMapLevelId)) {
+      this.selectedMapLevelId = CHAPTER_LEVEL_CATALOG[0]!.id;
+    }
+    selectEl.value = this.selectedMapLevelId;
 
-    this.mapGroupFiltersEl?.querySelectorAll<HTMLElement>('[data-map-group]').forEach((btn) => {
-      btn.classList.toggle('is-active', btn.dataset.mapGroup === this.selectedMapGroup);
+    const entry = getChapterCatalogEntry(this.selectedMapLevelId) ?? CHAPTER_LEVEL_CATALOG[0]!;
+    const map = getEffectiveChapterMap(entry.id);
+    const isCustom = hasChapterMapOverride(entry.id);
+
+    badgeEl.textContent = isCustom ? 'CUSTOMIZED ★' : 'DEFAULT';
+    badgeEl.className = `pmd-editor-status-pill${isCustom ? ' is-custom' : ''}`;
+
+    const cap = Math.max(1, Math.min(map.deploymentCap ?? map.playerSpawns.length, map.playerSpawns.length));
+    metaEl.textContent = `${map.name} · ${map.width}×${map.height} · Cap ${cap}/${map.playerSpawns.length} · ${map.enemySpawns.length} Enemies`;
+
+    const gen = ++this.mapPreviewGen;
+    void renderDungeonMapPreviewCanvas(canvasEl, map).then(() => {
+      if (gen !== this.mapPreviewGen) return;
     });
-  }
-
-  private async refreshMapInspectorPanel(): Promise<void> {
-    this.populateMapLevelSelect();
-    const levelId = this.selectedMapLevelId;
-    const entry = getChapterCatalogEntry(levelId) ?? CHAPTER_LEVEL_CATALOG[0]!;
-    const effectiveMap = getEffectiveChapterMap(levelId);
-    const isCustom = hasChapterMapOverride(levelId);
-
-    if (this.mapStatusBadgeEl) {
-      this.mapStatusBadgeEl.textContent = isCustom ? 'CUSTOMIZED ★' : 'DEFAULT';
-      this.mapStatusBadgeEl.className = `pmd-editor-status-pill${isCustom ? ' is-custom' : ''}`;
-    }
-
-    if (this.mapMetaEl) {
-      const cap = Math.max(
-        1,
-        Math.min(
-          effectiveMap.deploymentCap ?? effectiveMap.playerSpawns.length,
-          effectiveMap.playerSpawns.length
-        )
-      );
-      this.mapMetaEl.textContent = [
-        `ID: ${effectiveMap.id}`,
-        `Biome: ${entry.biomeName} (#${entry.primaryTilesetId})`,
-        `Grid: ${effectiveMap.width}×${effectiveMap.height} tiles`,
-        `Deploy Cap: ${cap}`,
-        `Blue Spawns: ${effectiveMap.playerSpawns.length}`,
-        `Enemy Spawns: ${effectiveMap.enemySpawns.length}`,
-      ].join(' · ');
-    }
-
-    const resetBtn = this.modalEl.querySelector<HTMLButtonElement>('#devtools-reset-selected-map');
-    if (resetBtn) {
-      resetBtn.disabled = !isCustom;
-    }
-
-    if (this.mapPreviewCanvasEl) {
-      await renderDungeonMapPreviewCanvas(this.mapPreviewCanvasEl, effectiveMap);
-    }
-  }
-
-  private async refreshOverworldInspectorPanel(): Promise<void> {
-    const save = this.saveManager.getSave();
-    const graph = DEFAULT_OVERWORLD_GRAPH;
-    const reconciled = save
-      ? ensureOverworldGraphState(save, graph)
-      : { currentNodeId: graph.startNodeId, nodes: {}, mutated: false };
-    const currentDef = getOverworldNodeById(reconciled.currentNodeId, graph);
-    const unlockedCount = save
-      ? graph.nodes.filter((n) => reconciled.nodes[n.id]?.unlocked).length
-      : 1;
-    const clearedCount = save
-      ? graph.nodes.filter((n) => reconciled.nodes[n.id]?.cleared).length
-      : 0;
-    const shopCount = save
-      ? graph.nodes.filter((n) => Boolean(reconciled.nodes[n.id]?.activeKecleonShop)).length
-      : 0;
-    const skirmishCount = save
-      ? graph.nodes.filter((n) => Boolean(reconciled.nodes[n.id]?.activeSkirmish)).length
-      : 0;
-
-    if (this.overworldPreviewCanvasEl) {
-      await renderOverworldPreviewCanvas(this.overworldPreviewCanvasEl, save, graph);
-    }
-
-    if (this.overworldMetaEl) {
-      this.overworldMetaEl.textContent = [
-        `Map: ${graph.name} (${graph.imageWidth}×${graph.imageHeight}px)`,
-        `Current Node: ${currentDef ? `${currentDef.code} · ${currentDef.name}` : reconciled.currentNodeId}`,
-        `Unlocked: ${unlockedCount}/${graph.nodes.length} (${clearedCount} Cleared)`,
-        `Kecleon Shops: ${shopCount}`,
-        `Feral Skirmishes: ${skirmishCount}`,
-        `Gold: ${save?.gold ?? 1500}G`,
-      ].join(' · ');
-    }
   }
 }

@@ -8,7 +8,7 @@ import {
 } from '../data/chapterMapRegistry';
 import { ITEM_MAP, MOVE_MAP, SPECIES_MAP } from '../data/index';
 import {
-  DEFAULT_OVERWORLD_GRAPH,
+  DEMO_OVERWORLD_GRAPH,
   getOverworldNodeById,
   type OverworldGraphDefinition,
 } from '../data/overworldMapData';
@@ -16,7 +16,6 @@ import {
   buildKecleonShopState,
   buildSkirmishSpawnState,
   createPrologueOverworldNodes,
-  createSandboxOverworldNodes,
   createUnlockedAllOverworldNodes,
   ensureOverworldGraphState,
   rollPostBattleOverworldSpawns,
@@ -578,7 +577,7 @@ export class SaveStateManager {
       unit.currentStats.mov = targetSp.baseStats.mov;
     } else {
       // Sideways branch preview (e.g., Vaporeon -> Sylveon) or Dev Tools stage reset (Stage 3 -> Stage 1)
-      unit.currentStats = { ...targetSp.baseStats };
+      unit.currentStats = computeManualScaledStatsForJoinLevel(targetSp, unit.level);
     }
 
     // Preserve custom nicknames across evolutions; only update if still using the uncustomized species name
@@ -1043,7 +1042,7 @@ export class SaveStateManager {
     return this.getSave()!;
   }
 
-  public setUnitLevelForTest(instanceId: string, level: number): OwnedPokemonInstance {
+  public setUnitLevelForTest(instanceId: string, level: number, rescaleStats = false): OwnedPokemonInstance {
     const save = this.requireActiveSave();
     const unit = save.roster.find((u) => u.instanceId === instanceId);
     if (!unit) {
@@ -1051,8 +1050,12 @@ export class SaveStateManager {
     }
     const clamped = Math.max(1, Math.min(40, Math.floor(level)));
     unit.level = clamped;
+    unit.exp = 0;
     const sp = SPECIES_MAP.get(unit.speciesId);
     if (sp) {
+      if (rescaleStats) {
+        unit.currentStats = computeManualScaledStatsForJoinLevel(sp, clamped);
+      }
       for (const entry of sp.learnset) {
         if (entry.level <= clamped && !unit.unlockedMoveIds.includes(entry.moveId)) {
           unit.unlockedMoveIds.push(entry.moveId);
@@ -1148,7 +1151,7 @@ export class SaveStateManager {
   }
 
   public ensureOverworldInitialized(
-    graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+    graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
   ): SaveData {
     const save = this.requireActiveSave();
     const reconciled = ensureOverworldGraphState(save, graph);
@@ -1162,31 +1165,65 @@ export class SaveStateManager {
     return this.getSave()!;
   }
 
-  public applyOverworldSandboxPreset(
-    graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH,
-    rng: () => number = Math.random
+  public setOverworldNodeStateCheat(
+    nodeId: string,
+    patch: {
+      unlocked?: boolean;
+      cleared?: boolean;
+      activeKecleonShop?: SaveData['overworld']['nodes'][string]['activeKecleonShop'];
+      activeSkirmish?: SaveData['overworld']['nodes'][string]['activeSkirmish'];
+    },
+    graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
   ): SaveData {
     const save = this.requireActiveSave();
-    const nodes = createSandboxOverworldNodes(graph, rng);
-    const clearedIds = Object.values(nodes)
-      .filter((st) => st.cleared)
-      .map((st) => st.nodeId);
-
-    save.campaign.completedChapterIds = clearedIds;
-    save.campaign.kecleonShopsUnlocked = true;
-    save.campaign.currentChapterId = nodes['chapter_04'] ? 'chapter_04' : graph.startNodeId;
-    save.gold = Math.max(save.gold, 2500);
+    const reconciled = ensureOverworldGraphState(save, graph);
+    const target = reconciled.nodes[nodeId];
+    if (!target) {
+      throw new Error(`Unknown Overworld node "${nodeId}".`);
+    }
+    if (patch.unlocked !== undefined) {
+      target.unlocked = patch.unlocked;
+      if (!patch.unlocked) {
+        target.cleared = false;
+        target.activeKecleonShop = null;
+        target.activeSkirmish = null;
+      }
+    }
+    if (patch.cleared !== undefined) {
+      target.cleared = patch.cleared;
+      if (patch.cleared) {
+        target.unlocked = true;
+        if (!save.campaign.completedChapterIds.includes(nodeId)) {
+          save.campaign.completedChapterIds.push(nodeId);
+        }
+      } else {
+        save.campaign.completedChapterIds = save.campaign.completedChapterIds.filter(
+          (id) => id !== nodeId
+        );
+      }
+    }
+    if (patch.activeKecleonShop !== undefined) {
+      target.activeKecleonShop = patch.activeKecleonShop;
+      if (patch.activeKecleonShop) {
+        save.campaign.kecleonShopsUnlocked = true;
+      }
+    }
+    if (patch.activeSkirmish !== undefined) {
+      target.activeSkirmish = patch.activeSkirmish;
+    }
     save.overworld = {
-      currentNodeId: graph.startNodeId,
-      nodes,
+      currentNodeId:
+        reconciled.nodes[reconciled.currentNodeId]?.unlocked
+          ? reconciled.currentNodeId
+          : graph.startNodeId,
+      nodes: reconciled.nodes,
     };
-
     this.commitSave(save);
     return this.getSave()!;
   }
 
   public resetOverworldToPrologue(
-    graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+    graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
   ): SaveData {
     const save = this.requireActiveSave();
     save.campaign.completedChapterIds = [];
@@ -1201,10 +1238,10 @@ export class SaveStateManager {
   }
 
   public unlockAllOverworldNodes(
-    graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+    graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
   ): SaveData {
     const save = this.requireActiveSave();
-    const nodes = createUnlockedAllOverworldNodes(graph);
+    const nodes = createUnlockedAllOverworldNodes(graph, save.overworld?.nodes);
     const current =
       save.overworld?.currentNodeId && nodes[save.overworld.currentNodeId]
         ? save.overworld.currentNodeId
@@ -1220,7 +1257,7 @@ export class SaveStateManager {
 
   public setOverworldCurrentNode(
     nodeId: string,
-    graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+    graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
   ): SaveData {
     const save = this.requireActiveSave();
     const reconciled = ensureOverworldGraphState(save, graph);
@@ -1240,7 +1277,7 @@ export class SaveStateManager {
     nodeId: string,
     shopType?: KecleonShopType,
     rng: () => number = Math.random,
-    graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+    graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
   ): SaveData {
     const save = this.requireActiveSave();
     const reconciled = ensureOverworldGraphState(save, graph);
@@ -1262,7 +1299,7 @@ export class SaveStateManager {
     nodeId: string,
     recommendedLevel?: number,
     tilesetId?: string,
-    graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+    graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
   ): SaveData {
     const save = this.requireActiveSave();
     const reconciled = ensureOverworldGraphState(save, graph);
@@ -1286,7 +1323,7 @@ export class SaveStateManager {
   public clearOverworldSkirmish(
     nodeId: string,
     goldBounty = 0,
-    graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+    graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
   ): SaveData {
     const save = this.requireActiveSave();
     const reconciled = ensureOverworldGraphState(save, graph);
@@ -1314,7 +1351,7 @@ export class SaveStateManager {
       shopChance?: number;
     }
   ): { save: SaveData; firstClear: boolean; spawns: PostBattleSpawnResult } {
-    const graph = opts?.graph ?? DEFAULT_OVERWORLD_GRAPH;
+    const graph = opts?.graph ?? DEMO_OVERWORLD_GRAPH;
     const save = this.requireActiveSave();
     const reconciled = ensureOverworldGraphState(save, graph);
     const def = getOverworldNodeById(nodeId, graph);
@@ -1375,7 +1412,7 @@ export class SaveStateManager {
   public buyKecleonShopItem(
     nodeId: string,
     itemId: string,
-    graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+    graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
   ): { save: SaveData; item: ItemDefinition; remainingStock: number } {
     const save = this.requireActiveSave();
     const reconciled = ensureOverworldGraphState(save, graph);

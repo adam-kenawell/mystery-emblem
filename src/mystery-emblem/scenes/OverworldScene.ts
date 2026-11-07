@@ -1,17 +1,13 @@
 /**
  * Mystery Emblem — Fire Emblem Awakening Overworld Map Scene (`OVERWORLD_SCENE`, Step 4)
  *
- * Reusable across both:
- * 1. Admin Dev Tools Overworld Sandbox (`sandboxMode: true`), and
- * 2. Upcoming Campaign / Demo Mode (`sandboxMode: false`).
- *
  * Strictly obeys:
  * - Rule 1: 100% Data-Driven Manual Balance (reads manual registries & skirmish stat blocks)
  * - Rule 2: Unified Pointer Events ONLY (`pointerdown`, `pointermove`, `pointerup`, `pointercancel`);
  *   ZERO keyboard listeners; PC right-click + Mobile long-press + Top-Right `Menu`/`Back` parity;
  *   `>= 44x44px` touch targets; zero clipping on `1920x1080`, `390x844`, and `844x390`.
  * - Rule 3: Authentic PMD: Explorers of Sky visual skin, crisp `imageSmoothingEnabled = false` map & sprites,
- *   Master Merchant Kecleon (`0352`) sprite/portrait, and `#025 Kecleon's Shop` BGM.
+ *   Kecleon (`0352`) sprite/portrait, and `#025 Kecleon's Shop` BGM.
  * - Rule 5 & 7: Strict faction separation, 1-item-slot per unit, and instant localStorage + Firestore sync.
  */
 
@@ -25,8 +21,7 @@ import {
 } from '../assets/pmdAssetLoader';
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
 import {
-  ALL_KECLEON_SHOP_TYPES,
-  DEFAULT_OVERWORLD_GRAPH,
+  DEMO_OVERWORLD_GRAPH,
   KECLEON_PMD_ASSET_ID,
   KECLEON_SHOP_METADATA,
   buildSkirmishBattlePayload,
@@ -41,7 +36,6 @@ import {
   getPersonalSkillById,
   getSpeciesById,
 } from '../data/index';
-import type { ManualEnemyBattleSpawn } from '../data/playableBattleMap';
 import {
   ensureOverworldGraphState,
   findOverworldRoute,
@@ -50,14 +44,13 @@ import {
   type OverworldRouteResult,
 } from '../engine/overworldEngine';
 import {
-  SUPPORT_LEVEL_THRESHOLDS,
   getUnitEquippedItemId,
-  makeSupportPairKey,
   type SaveStateManager,
 } from '../state/SaveStateManager';
 import type {
   DungeonMapDefinition,
   KecleonShopType,
+  ManualEnemyBattleSpawn,
   OverworldNodeState,
   OwnedPokemonInstance,
   SaveData,
@@ -70,17 +63,17 @@ const LONG_PRESS_MS = 520;
 const LORD_WALK_SPEED_NORMAL_PX_PER_SEC = 105;
 const LORD_WALK_SPEED_FAST_PX_PER_SEC = 560;
 
-export type OverworldMenuTab = 'units' | 'convoy' | 'supports' | 'system';
+export type OverworldMenuTab = 'units' | 'convoy' | 'system';
 
 export interface OverworldSceneOptions {
   viewportEl: HTMLElement;
   saveManager: SaveStateManager;
   audioManager?: AudioManager;
   graph?: OverworldGraphDefinition;
-  sandboxMode?: boolean;
   onExit: () => void;
+  onRequestNewGame?: () => void;
   onLayerStateChanged: () => void;
-  onRequestRenameUnit?: (instanceId: string) => void;
+  onRequestRenameUnit?: (instanceId: string) => Promise<void> | void;
   onLaunchChapterBattle?: (payload: { nodeId: string; levelId: string }) => void;
   onLaunchSkirmishBattle?: (payload: {
     nodeId: string;
@@ -92,7 +85,6 @@ export interface OverworldSceneOptions {
 
 export interface OverworldSceneSnapshot {
   isOpen: boolean;
-  sandboxMode: boolean;
   currentNodeId: string;
   isTraveling: boolean;
   travelTargetNodeId: string | null;
@@ -119,7 +111,6 @@ export interface OverworldSceneSnapshot {
   kecleonShopOpen: boolean;
   systemMenuOpen: boolean;
   activeMenuTab: OverworldMenuTab;
-  sandboxDrawerOpen: boolean;
   fastMode: boolean;
 }
 
@@ -144,7 +135,7 @@ function createFallbackOverworldCanvas(width: number, height: number): HTMLCanva
 }
 
 export function loadOverworldMapImage(
-  graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+  graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
 ): Promise<CanvasImageSource> {
   const existing = mapImageCache.get(graph.imageUrl);
   if (existing) return existing;
@@ -156,15 +147,10 @@ export function loadOverworldMapImage(
   return p;
 }
 
-/**
- * Renders a crisp static overview of the Overworld Wonder Map, road network, unlocked/cleared nodes,
- * active Kecleon Shops, Feral Skirmishes, and the Dragon Lord's current node into `canvas`
- * (used by the Admin Dev Tools `Overworld` tab preview).
- */
 export async function renderOverworldPreviewCanvas(
   canvas: HTMLCanvasElement,
   save: SaveData | null,
-  graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+  graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
 ): Promise<void> {
   const mapSource = await loadOverworldMapImage(graph);
   canvas.width = graph.imageWidth;
@@ -197,7 +183,6 @@ export async function renderOverworldPreviewCanvas(
 
   const nodeMap = new Map(graph.nodes.map((n) => [n.id, n]));
 
-  // Roads
   for (const edge of graph.edges) {
     const a = nodeMap.get(edge.fromNodeId);
     const b = nodeMap.get(edge.toNodeId);
@@ -228,7 +213,6 @@ export async function renderOverworldPreviewCanvas(
     ctx.restore();
   }
 
-  // Nodes
   for (const node of graph.nodes) {
     const st = reconciled.nodes[node.id];
     const isCurrent = reconciled.currentNodeId === node.id;
@@ -252,16 +236,10 @@ export async function renderOverworldPreviewCanvas(
     if (st?.activeKecleonShop) {
       ctx.fillStyle = '#38c868';
       ctx.fillRect(node.x + 5, node.y - 9, 6, 6);
-      ctx.strokeStyle = '#081810';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(node.x + 5, node.y - 9, 6, 6);
     }
     if (st?.activeSkirmish) {
       ctx.fillStyle = '#ff4858';
       ctx.fillRect(node.x - 11, node.y - 9, 6, 6);
-      ctx.strokeStyle = '#240408';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(node.x - 11, node.y - 9, 6, 6);
     }
     ctx.restore();
   }
@@ -272,10 +250,10 @@ export class OverworldScene {
   private readonly saveManager: SaveStateManager;
   private readonly audioManager: AudioManager;
   private graph: OverworldGraphDefinition;
-  private sandboxMode: boolean;
   private readonly onExitCallback: () => void;
+  private readonly onRequestNewGame?: () => void;
   private readonly onLayerStateChanged: () => void;
-  private readonly onRequestRenameUnit?: (instanceId: string) => void;
+  private readonly onRequestRenameUnit?: (instanceId: string) => Promise<void> | void;
   private readonly onLaunchChapterBattle?: OverworldSceneOptions['onLaunchChapterBattle'];
   private readonly onLaunchSkirmishBattle?: OverworldSceneOptions['onLaunchSkirmishBattle'];
 
@@ -288,23 +266,17 @@ export class OverworldScene {
   private readonly topHudBarEl: HTMLElement;
   private readonly lordHudPillEl: HTMLElement;
   private readonly goldHudPillEl: HTMLElement;
-  private readonly sandboxToggleBtnEl: HTMLButtonElement;
 
-  // Toast Banner & Bottom Location Dock
+  // Toast Banner & Concise Bottom Location Dock
   private readonly toastEl: HTMLElement;
   private toastTimer: number | null = null;
   private readonly dockEl: HTMLElement;
   private readonly dockTitleEl: HTMLElement;
   private readonly dockBadgesEl: HTMLElement;
-  private readonly dockSubEl: HTMLElement;
+  private readonly dockActionsEl: HTMLElement;
   private readonly btnEnterChapterEl: HTMLButtonElement;
   private readonly btnFightSkirmishEl: HTMLButtonElement;
   private readonly btnOpenShopEl: HTMLButtonElement;
-  private readonly btnCenterLordEl: HTMLButtonElement;
-
-  // Sandbox Drawer (strictly shown only when `sandboxMode === true`)
-  private readonly sandboxDrawerEl: HTMLElement;
-  private readonly sandboxSummaryEl: HTMLElement;
 
   // Kecleon Shop Modal
   private readonly kecleonBackdropEl: HTMLElement;
@@ -316,7 +288,7 @@ export class OverworldScene {
   private readonly kecleonStatusEl: HTMLElement;
   private readonly kecleonPortraitView: PmdPortraitView;
 
-  // Overworld System Menu Modal (`Units / Roster`, `Items / Convoy`, `Supports`, `Save / System`)
+  // Overworld System Menu Modal (3 Tabs: `Units`, `Items`, `System`)
   private readonly systemMenuBackdropEl: HTMLElement;
   private readonly menuPanelBodyEl: HTMLElement;
   private readonly menuFeedbackEl: HTMLElement;
@@ -326,9 +298,9 @@ export class OverworldScene {
   private previousBgmId: string | null = null;
   private kecleonShopOpen = false;
   private systemMenuOpen = false;
-  private sandboxDrawerOpen = false;
   private activeMenuTab: OverworldMenuTab = 'units';
   private selectedUnitInstanceId: string | null = null;
+  private pendingSystemConfirm: 'new_game' | 'delete_save' | null = null;
   private menuFeedbackMessage = '';
   private kecleonStatusMessage = '';
   private fastMode = false;
@@ -382,9 +354,9 @@ export class OverworldScene {
     this.viewportEl = options.viewportEl;
     this.saveManager = options.saveManager;
     this.audioManager = options.audioManager ?? getAudioManager();
-    this.graph = options.graph ?? DEFAULT_OVERWORLD_GRAPH;
-    this.sandboxMode = Boolean(options.sandboxMode);
+    this.graph = options.graph ?? DEMO_OVERWORLD_GRAPH;
     this.onExitCallback = options.onExit;
+    this.onRequestNewGame = options.onRequestNewGame;
     this.onLayerStateChanged = options.onLayerStateChanged;
     this.onRequestRenameUnit = options.onRequestRenameUnit;
     this.onLaunchChapterBattle = options.onLaunchChapterBattle;
@@ -412,20 +384,15 @@ export class OverworldScene {
     this.ctx = ctx;
     this.canvasStageEl.appendChild(this.canvas);
 
-    // 2. Top HUD Bar (Clears top-left `Dev Tools` & top-right `Menu`/`Back`)
+    // 2. Top HUD Bar
     this.topHudBarEl = document.createElement('div');
     this.topHudBarEl.className = 'pmd-battle-hud-top';
     this.topHudBarEl.innerHTML = `
-      <div class="pmd-window pmd-window--compact pmd-window--translucent pmd-battle-pill" data-testid="overworld-lord-pill">Lord: —</div>
+      <div class="pmd-window pmd-window--compact pmd-window--translucent pmd-battle-pill" data-testid="overworld-lord-pill">Squad</div>
       <div class="pmd-window pmd-window--compact pmd-window--translucent pmd-battle-pill" data-testid="overworld-gold-pill">0G</div>
-      <button type="button" class="pmd-btn pmd-battle-hud-btn" data-testid="overworld-sandbox-toggle">Sandbox</button>
     `;
     this.lordHudPillEl = this.topHudBarEl.querySelector('[data-testid="overworld-lord-pill"]')!;
     this.goldHudPillEl = this.topHudBarEl.querySelector('[data-testid="overworld-gold-pill"]')!;
-    this.sandboxToggleBtnEl = this.topHudBarEl.querySelector(
-      '[data-testid="overworld-sandbox-toggle"]'
-    )!;
-    this.sandboxToggleBtnEl.hidden = !this.sandboxMode;
 
     // 3. Toast Notification Banner
     this.toastEl = document.createElement('div');
@@ -433,7 +400,7 @@ export class OverworldScene {
     this.toastEl.dataset.testid = 'overworld-toast';
     this.toastEl.hidden = true;
 
-    // 4. Bottom Location Dock
+    // 4. Concise Bottom Location Dock (No lore paragraph, no Replay button on cleared nodes)
     this.dockEl = document.createElement('div');
     this.dockEl.className = 'pmd-window pmd-window--translucent pmd-overworld-dock';
     this.dockEl.dataset.testid = 'overworld-location-dock';
@@ -443,18 +410,16 @@ export class OverworldScene {
           <h3 class="pmd-overworld-dock-title" data-testid="overworld-current-node-title">—</h3>
           <div class="pmd-inline-btns" data-dock-badges></div>
         </div>
-        <p class="pmd-overworld-dock-sub" data-testid="overworld-current-node-desc">—</p>
       </div>
-      <div class="pmd-overworld-dock-actions">
-        <button type="button" class="pmd-btn pmd-btn-primary" data-testid="overworld-enter-chapter-btn">Enter Chapter</button>
-        <button type="button" class="pmd-btn pmd-btn-danger" data-testid="overworld-fight-skirmish-btn" hidden>Fight Skirmish</button>
-        <button type="button" class="pmd-btn pmd-btn-primary" data-testid="overworld-open-shop-btn" hidden>Kecleon Shop</button>
-        <button type="button" class="pmd-btn" data-testid="overworld-center-lord-btn">Center</button>
+      <div class="pmd-overworld-dock-actions" data-dock-actions>
+        <button type="button" class="pmd-btn pmd-btn-primary" data-testid="overworld-enter-chapter-btn">Enter Dungeon</button>
+        <button type="button" class="pmd-btn pmd-btn-danger" data-testid="overworld-fight-skirmish-btn" hidden>Skirmish</button>
+        <button type="button" class="pmd-btn pmd-btn-primary" data-testid="overworld-open-shop-btn" hidden>Shop</button>
       </div>
     `;
     this.dockTitleEl = this.dockEl.querySelector('[data-testid="overworld-current-node-title"]')!;
     this.dockBadgesEl = this.dockEl.querySelector('[data-dock-badges]')!;
-    this.dockSubEl = this.dockEl.querySelector('[data-testid="overworld-current-node-desc"]')!;
+    this.dockActionsEl = this.dockEl.querySelector('[data-dock-actions]')!;
     this.btnEnterChapterEl = this.dockEl.querySelector(
       '[data-testid="overworld-enter-chapter-btn"]'
     )!;
@@ -462,60 +427,8 @@ export class OverworldScene {
       '[data-testid="overworld-fight-skirmish-btn"]'
     )!;
     this.btnOpenShopEl = this.dockEl.querySelector('[data-testid="overworld-open-shop-btn"]')!;
-    this.btnCenterLordEl = this.dockEl.querySelector(
-      '[data-testid="overworld-center-lord-btn"]'
-    )!;
 
-    // 5. Dev Tools Sandbox Drawer (`sandboxMode === true`)
-    this.sandboxDrawerEl = document.createElement('aside');
-    this.sandboxDrawerEl.className = 'pmd-window pmd-battle-sandbox-drawer';
-    this.sandboxDrawerEl.dataset.testid = 'overworld-sandbox-drawer';
-    this.sandboxDrawerEl.hidden = true;
-    this.sandboxDrawerEl.innerHTML = `
-      <div class="pmd-devtools-row-between">
-        <h3 class="pmd-panel-title" style="margin:0;font-size:0.9rem;">OVERWORLD SANDBOX</h3>
-        <button type="button" class="pmd-btn pmd-chip-btn" data-testid="ow-sandbox-close">Close</button>
-      </div>
-      <p class="pmd-subcard-text" data-ow-sandbox-summary>—</p>
-
-      <div class="pmd-battle-sandbox-section">
-        <strong style="font-size:0.76rem;color:#f8d048;">1. Map Progression Presets</strong>
-        <div class="pmd-inline-btns">
-          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="ow-sandbox-preset-tour">Sandbox Tour</button>
-          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="ow-sandbox-preset-prologue">Prologue Start</button>
-          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="ow-sandbox-preset-all">Unlock All (12)</button>
-        </div>
-      </div>
-
-      <div class="pmd-battle-sandbox-section">
-        <strong style="font-size:0.76rem;color:#90ffbe;">2. Spawn Kecleon Shop on Current Node</strong>
-        <div class="pmd-inline-btns">
-          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="ow-sandbox-spawn-shop-tm_shop">TM Shop</button>
-          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="ow-sandbox-spawn-shop-held_shop">Held Shop</button>
-          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="ow-sandbox-spawn-shop-healing_shop">Heal/Stone Shop</button>
-          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="ow-sandbox-spawn-shop-x_item_shop">X-Item Shop</button>
-        </div>
-      </div>
-
-      <div class="pmd-battle-sandbox-section">
-        <strong style="font-size:0.76rem;color:#ff9aa2;">3. Feral Skirmish &amp; Post-Battle Spawner</strong>
-        <div class="pmd-inline-btns">
-          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="ow-sandbox-spawn-skirmish">Spawn Skirmish Here</button>
-          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="ow-sandbox-complete-chapter">Simulate Chapter Clear (+Roll)</button>
-        </div>
-      </div>
-
-      <div class="pmd-battle-sandbox-section">
-        <strong style="font-size:0.76rem;color:#90d8f8;">4. Gold, Vitamins &amp; Promotion Kit</strong>
-        <div class="pmd-inline-btns">
-          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="ow-sandbox-grant-kit">+2,500G &amp; Test Kit</button>
-          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="ow-sandbox-level-boost">+5 Squad Levels</button>
-        </div>
-      </div>
-    `;
-    this.sandboxSummaryEl = this.sandboxDrawerEl.querySelector('[data-ow-sandbox-summary]')!;
-
-    // 6. Kecleon Shop Modal (`#025 Kecleon's Shop` BGM)
+    // 5. Kecleon Shop Modal (`#025 Kecleon's Shop` BGM)
     this.kecleonBackdropEl = document.createElement('div');
     this.kecleonBackdropEl.className = 'pmd-battle-modal-backdrop';
     this.kecleonBackdropEl.dataset.testid = 'overworld-kecleon-shop-modal';
@@ -526,15 +439,15 @@ export class OverworldScene {
           <h3 id="kecleon-shop-title" class="pmd-panel-title" style="margin:0;">KECLEON SHOP</h3>
           <div class="pmd-inline-btns">
             <span class="pmd-window pmd-window--compact pmd-battle-pill" data-testid="kecleon-shop-gold">0G</span>
-            <button type="button" class="pmd-btn pmd-chip-btn" data-testid="kecleon-open-units-btn">Units / Teach TM</button>
-            <button type="button" class="pmd-btn pmd-chip-btn" data-testid="kecleon-shop-close-btn">Leave Shop</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-testid="kecleon-open-units-btn">Units</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-testid="kecleon-shop-close-btn">Leave</button>
           </div>
         </div>
         <div class="pmd-kecleon-hero">
           <div class="pmd-kecleon-portrait-box" data-kecleon-portrait-slot></div>
           <div class="pmd-kecleon-speech">
-            <strong data-kecleon-speech-name>Master Merchant Kecleon</strong>
-            <p data-kecleon-speech-text>Welcome, traveler!</p>
+            <strong data-kecleon-speech-name>Kecleon</strong>
+            <p data-kecleon-speech-text>Welcome!</p>
           </div>
         </div>
         <p class="pmd-subcard-text" data-testid="kecleon-shop-status" hidden></p>
@@ -559,7 +472,7 @@ export class OverworldScene {
       .querySelector('[data-kecleon-portrait-slot]')!
       .appendChild(this.kecleonPortraitView.canvas);
 
-    // 7. Overworld System Menu Modal (`Units / Roster`, `Items / Convoy`, `Supports`, `Save / System`)
+    // 6. Overworld System Menu Modal (3 Tabs: `Units`, `Items`, `System`)
     this.systemMenuBackdropEl = document.createElement('div');
     this.systemMenuBackdropEl.className = 'pmd-battle-modal-backdrop';
     this.systemMenuBackdropEl.dataset.testid = 'overworld-system-menu';
@@ -567,14 +480,13 @@ export class OverworldScene {
     this.systemMenuBackdropEl.innerHTML = `
       <div class="pmd-window pmd-overworld-modal-dialog" role="dialog" aria-modal="true" aria-label="Overworld Menu">
         <div class="pmd-devtools-row-between">
-          <h3 class="pmd-panel-title" style="margin:0;">OVERWORLD MENU</h3>
-          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="overworld-menu-close-btn">Resume Map</button>
+          <h3 class="pmd-panel-title" style="margin:0;">MENU</h3>
+          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="overworld-menu-close-btn">Close</button>
         </div>
         <nav class="pmd-inline-btns" aria-label="Overworld Menu Sections">
-          <button type="button" class="pmd-btn pmd-chip-btn is-active" data-ow-tab="units" data-testid="overworld-menu-tab-units">Units / Roster</button>
-          <button type="button" class="pmd-btn pmd-chip-btn" data-ow-tab="convoy" data-testid="overworld-menu-tab-convoy">Items / Convoy</button>
-          <button type="button" class="pmd-btn pmd-chip-btn" data-ow-tab="supports" data-testid="overworld-menu-tab-supports">Supports</button>
-          <button type="button" class="pmd-btn pmd-chip-btn" data-ow-tab="system" data-testid="overworld-menu-tab-system">Save / System</button>
+          <button type="button" class="pmd-btn pmd-chip-btn is-active" data-ow-tab="units" data-testid="overworld-menu-tab-units">Units</button>
+          <button type="button" class="pmd-btn pmd-chip-btn" data-ow-tab="convoy" data-testid="overworld-menu-tab-convoy">Items</button>
+          <button type="button" class="pmd-btn pmd-chip-btn" data-ow-tab="system" data-testid="overworld-menu-tab-system">System</button>
         </nav>
         <p class="pmd-subcard-text" data-testid="overworld-menu-feedback" style="color:#90ffbe;" hidden></p>
         <div data-testid="overworld-menu-body"></div>
@@ -592,7 +504,6 @@ export class OverworldScene {
       this.topHudBarEl,
       this.toastEl,
       this.dockEl,
-      this.sandboxDrawerEl,
       this.kecleonBackdropEl,
       this.systemMenuBackdropEl
     );
@@ -611,7 +522,7 @@ export class OverworldScene {
 
   public hasActiveSubLayer(): boolean {
     if (!this.openState) return false;
-    return this.kecleonShopOpen || this.systemMenuOpen || this.sandboxDrawerOpen;
+    return this.kecleonShopOpen || this.systemMenuOpen;
   }
 
   public setFastMode(enabled: boolean): void {
@@ -619,21 +530,11 @@ export class OverworldScene {
   }
 
   public async open(options?: {
-    sandboxMode?: boolean;
     graph?: OverworldGraphDefinition;
     preservePosition?: boolean;
-    skipDefaultSandboxSeed?: boolean;
   }): Promise<void> {
-    if (options?.sandboxMode !== undefined) {
-      this.sandboxMode = options.sandboxMode;
-    }
     if (options?.graph) {
       this.graph = options.graph;
-    }
-    this.sandboxToggleBtnEl.hidden = !this.sandboxMode;
-    if (!this.sandboxMode) {
-      this.sandboxDrawerOpen = false;
-      this.sandboxDrawerEl.hidden = true;
     }
 
     if (!this.openState) {
@@ -641,38 +542,22 @@ export class OverworldScene {
     }
     this.openState = true;
 
-    // Ensure an active save exists and has valid Overworld state
     let save = this.saveManager.getSave();
     if (!save) {
       save = this.saveManager.createNewCampaignSave({
         lordSpeciesId: 'dratini',
-        lordNickname: 'Bahamut',
+        lordNickname: 'Dratini',
         partnerSpeciesId: 'bulbasaur',
-        partnerNickname: 'Sprout',
+        partnerNickname: 'Bulbasaur',
         healerSpeciesId: 'happiny',
-        healerNickname: 'Clover',
+        healerNickname: 'Happiny',
       });
-      if (this.sandboxMode && !options?.skipDefaultSandboxSeed) {
-        save = this.saveManager.applyOverworldSandboxPreset(this.graph);
-      } else {
-        save = this.saveManager.ensureOverworldInitialized(this.graph);
-      }
-    } else {
-      const existingNodeKeyCount = Object.keys(save.overworld?.nodes ?? {}).length;
-      if (
-        this.sandboxMode &&
-        !options?.skipDefaultSandboxSeed &&
-        existingNodeKeyCount <= 1 &&
-        save.campaign.completedChapterIds.length === 0
-      ) {
-        save = this.saveManager.applyOverworldSandboxPreset(this.graph);
-      } else {
-        save = this.saveManager.ensureOverworldInitialized(this.graph);
-      }
     }
+    this.saveManager.ensureOverworldInitialized(this.graph);
 
     this.kecleonShopOpen = false;
     this.systemMenuOpen = false;
+    this.pendingSystemConfirm = null;
     this.kecleonBackdropEl.hidden = true;
     this.systemMenuBackdropEl.hidden = true;
     this.activeTravel = null;
@@ -690,9 +575,6 @@ export class OverworldScene {
       }
       if (this.systemMenuOpen) {
         this.renderSystemMenuBody();
-      }
-      if (this.sandboxDrawerOpen) {
-        this.renderSandboxSummary();
       }
       this.renderFrame();
     });
@@ -717,6 +599,10 @@ export class OverworldScene {
   }
 
   public close(): void {
+    this.closeInternal(true);
+  }
+
+  private closeInternal(notifyExit: boolean): void {
     if (!this.openState) return;
     this.openState = false;
     this.stopLoop();
@@ -724,24 +610,27 @@ export class OverworldScene {
     this.activeTravel = null;
     this.kecleonShopOpen = false;
     this.systemMenuOpen = false;
-    this.sandboxDrawerOpen = false;
+    this.pendingSystemConfirm = null;
     this.kecleonBackdropEl.hidden = true;
     this.systemMenuBackdropEl.hidden = true;
-    this.sandboxDrawerEl.hidden = true;
     this.unsubscribeSave?.();
     this.unsubscribeSave = null;
 
     this.rootEl.hidden = true;
     this.viewportEl.classList.remove('is-battle-active');
 
-    if (this.previousBgmId) {
-      this.audioManager.playBgm(this.previousBgmId, { fadeMs: 250 });
-    } else {
-      this.audioManager.playBgm('top_menu', { fadeMs: 250 });
+    if (notifyExit) {
+      if (this.previousBgmId) {
+        this.audioManager.playBgm(this.previousBgmId, { fadeMs: 250 });
+      } else {
+        this.audioManager.playBgm('top_menu', { fadeMs: 250 });
+      }
     }
 
     this.onLayerStateChanged();
-    this.onExitCallback();
+    if (notifyExit) {
+      this.onExitCallback();
+    }
   }
 
   public destroy(): void {
@@ -774,20 +663,12 @@ export class OverworldScene {
       this.closeSystemMenu();
       return;
     }
-    if (this.sandboxDrawerOpen) {
-      this.audioManager.playSfx('cancel');
-      this.sandboxDrawerOpen = false;
-      this.sandboxDrawerEl.hidden = true;
-      this.sandboxToggleBtnEl.classList.remove('is-active');
-      this.onLayerStateChanged();
-      return;
-    }
 
     this.openSystemMenu('units');
   }
 
   // ==========================================================================
-  // Diagnostics & Playwright Inspection Helpers
+  // Inspection & Travel Helpers
   // ==========================================================================
 
   public getNodeClientCenter(nodeId: string): { clientX: number; clientY: number } | null {
@@ -807,6 +688,14 @@ export class OverworldScene {
     this.renderFrame();
   }
 
+  public snapToCurrentSaveNode(): void {
+    if (!this.openState) return;
+    this.snapLordToCurrentNode();
+    this.centerCameraOnMapPoint(this.lordWorldX, this.lordWorldY);
+    this.syncHudAndDock();
+    this.renderFrame();
+  }
+
   public async travelToNode(nodeId: string): Promise<boolean> {
     if (!this.openState || this.activeTravel) return false;
     const save = this.saveManager.getSave();
@@ -822,7 +711,7 @@ export class OverworldScene {
     const route = findOverworldRoute(this.graph, reconciled.nodes, currentId, nodeId);
     if (!route.reachable || route.points.length < 2) {
       this.audioManager.playSfx('cancel');
-      this.showToast('That destination is still locked!');
+      this.showToast('Locked');
       return false;
     }
 
@@ -884,7 +773,6 @@ export class OverworldScene {
 
     return {
       isOpen: this.openState,
-      sandboxMode: this.sandboxMode,
       currentNodeId: reconciled.currentNodeId,
       isTraveling: Boolean(this.activeTravel),
       travelTargetNodeId: this.activeTravel?.targetNodeId ?? null,
@@ -897,7 +785,7 @@ export class OverworldScene {
       },
       lordDirection: this.lordDirection,
       lordSpeciesId: lord?.speciesId ?? 'dratini',
-      lordNickname: lord?.nickname ?? 'Bahamut',
+      lordNickname: lord?.nickname ?? 'Dratini',
       displayScale: this.displayScale,
       camera: {
         x: Math.round(this.cameraX * 100) / 100,
@@ -914,7 +802,6 @@ export class OverworldScene {
       kecleonShopOpen: this.kecleonShopOpen,
       systemMenuOpen: this.systemMenuOpen,
       activeMenuTab: this.activeMenuTab,
-      sandboxDrawerOpen: this.sandboxDrawerOpen,
       fastMode: this.fastMode,
     };
   }
@@ -1044,7 +931,6 @@ export class OverworldScene {
     this.lordAction = 'Walk';
     this.recordTravelDirection(sample.direction);
 
-    // Smoothly keep traveling Lord framed inside the camera viewport
     this.ensurePointComfortableInCamera(this.lordWorldX, this.lordWorldY);
 
     if (sample.completed) {
@@ -1237,7 +1123,6 @@ export class OverworldScene {
           return;
         }
 
-        // Desktop hover route preview
         if (e.pointerType === 'mouse' && !this.activeTravel) {
           const hovered = this.hitTestNodeAtLocalCss(localX, localY);
           const nextHoverId = hovered?.id ?? null;
@@ -1298,23 +1183,6 @@ export class OverworldScene {
     this.canvas.addEventListener('pointerup', (e) => finishPointer(e, false), { signal });
     this.canvas.addEventListener('pointercancel', (e) => finishPointer(e, true), { signal });
 
-    // Top HUD Sandbox Toggle
-    bindPointerTap(
-      this.sandboxToggleBtnEl,
-      () => {
-        if (!this.sandboxMode) return;
-        this.audioManager.playSfx('select');
-        this.sandboxDrawerOpen = !this.sandboxDrawerOpen;
-        this.sandboxDrawerEl.hidden = !this.sandboxDrawerOpen;
-        this.sandboxToggleBtnEl.classList.toggle('is-active', this.sandboxDrawerOpen);
-        if (this.sandboxDrawerOpen) {
-          this.renderSandboxSummary();
-        }
-        this.onLayerStateChanged();
-      },
-      { signal }
-    );
-
     // Bottom Dock Buttons
     bindPointerTap(
       this.btnEnterChapterEl,
@@ -1339,156 +1207,6 @@ export class OverworldScene {
       () => {
         if (this.activeTravel) return;
         this.openKecleonShop();
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      this.btnCenterLordEl,
-      () => {
-        this.audioManager.playSfx('select');
-        this.centerCameraOnMapPoint(this.lordWorldX, this.lordWorldY);
-        this.renderFrame();
-      },
-      { signal }
-    );
-
-    // Sandbox Drawer Buttons
-    bindPointerTap(
-      this.sandboxDrawerEl.querySelector<HTMLElement>('[data-testid="ow-sandbox-close"]'),
-      () => {
-        this.audioManager.playSfx('cancel');
-        this.sandboxDrawerOpen = false;
-        this.sandboxDrawerEl.hidden = true;
-        this.sandboxToggleBtnEl.classList.remove('is-active');
-        this.onLayerStateChanged();
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      this.sandboxDrawerEl.querySelector<HTMLElement>('[data-testid="ow-sandbox-preset-tour"]'),
-      () => {
-        this.audioManager.playSfx('select');
-        this.saveManager.applyOverworldSandboxPreset(this.graph);
-        this.snapLordToCurrentNode();
-        this.centerCameraOnMapPoint(this.lordWorldX, this.lordWorldY);
-        this.showToast('Loaded Sandbox Tour (6 cleared nodes + Kecleon Shop + Skirmish)!');
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      this.sandboxDrawerEl.querySelector<HTMLElement>('[data-testid="ow-sandbox-preset-prologue"]'),
-      () => {
-        this.audioManager.playSfx('select');
-        this.saveManager.resetOverworldToPrologue(this.graph);
-        this.snapLordToCurrentNode();
-        this.centerCameraOnMapPoint(this.lordWorldX, this.lordWorldY);
-        this.showToast('Reset Overworld to fresh Prologue start!');
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      this.sandboxDrawerEl.querySelector<HTMLElement>('[data-testid="ow-sandbox-preset-all"]'),
-      () => {
-        this.audioManager.playSfx('select');
-        this.saveManager.unlockAllOverworldNodes(this.graph);
-        this.showToast('Unlocked all 12 Overworld nodes across the continent!');
-      },
-      { signal }
-    );
-
-    for (const shopType of ALL_KECLEON_SHOP_TYPES) {
-      bindPointerTap(
-        this.sandboxDrawerEl.querySelector<HTMLElement>(
-          `[data-testid="ow-sandbox-spawn-shop-${shopType}"]`
-        ),
-        () => {
-          const save = this.saveManager.getSave();
-          if (!save) return;
-          const nodeId = ensureOverworldGraphState(save, this.graph).currentNodeId;
-          this.audioManager.playSfx('select');
-          this.saveManager.spawnOverworldKecleonShop(nodeId, shopType, Math.random, this.graph);
-          const meta = KECLEON_SHOP_METADATA[shopType];
-          this.showToast(`Spawned ${meta.title} on current node!`);
-        },
-        { signal }
-      );
-    }
-
-    bindPointerTap(
-      this.sandboxDrawerEl.querySelector<HTMLElement>('[data-testid="ow-sandbox-spawn-skirmish"]'),
-      () => {
-        const save = this.saveManager.getSave();
-        if (!save) return;
-        const nodeId = ensureOverworldGraphState(save, this.graph).currentNodeId;
-        this.audioManager.playSfx('select');
-        this.saveManager.spawnOverworldSkirmish(nodeId, undefined, undefined, this.graph);
-        this.preloadActiveSprites();
-        this.showToast('Spawned Feral Skirmish encounter on current node!');
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      this.sandboxDrawerEl.querySelector<HTMLElement>(
-        '[data-testid="ow-sandbox-complete-chapter"]'
-      ),
-      () => {
-        const save = this.saveManager.getSave();
-        if (!save) return;
-        const nodeId = ensureOverworldGraphState(save, this.graph).currentNodeId;
-        this.audioManager.playSfx('victory_fanfare');
-        const res = this.saveManager.completeOverworldChapter(nodeId, {
-          graph: this.graph,
-          skirmishChance: 0.75,
-          shopChance: 0.85,
-        });
-        this.preloadActiveSprites();
-        const notes: string[] = [`Cleared ${getOverworldNodeById(nodeId, this.graph)?.name ?? nodeId}!`];
-        if (res.spawns.spawnedSkirmishNodeId) {
-          notes.push(
-            `Skirmish at ${getOverworldNodeById(res.spawns.spawnedSkirmishNodeId, this.graph)?.name}`
-          );
-        }
-        if (res.spawns.spawnedShopNodeId) {
-          notes.push(
-            `Kecleon at ${getOverworldNodeById(res.spawns.spawnedShopNodeId, this.graph)?.name}`
-          );
-        }
-        this.showToast(notes.join(' · '));
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      this.sandboxDrawerEl.querySelector<HTMLElement>('[data-testid="ow-sandbox-grant-kit"]'),
-      () => {
-        this.audioManager.playSfx('heal');
-        this.saveManager.addGold(2500);
-        this.saveManager.addConvoyItem('protein', 2);
-        this.saveManager.addConvoyItem('carbos', 2);
-        this.saveManager.addConvoyItem('hp_up', 2);
-        this.saveManager.addConvoyItem('evolution_stone', 2);
-        this.saveManager.addConvoyItem('evolution_gem', 2);
-        this.saveManager.addConvoyItem('tm05_aerial_ace', 1);
-        this.showToast('Added +2,500G, Vitamins, Evolution Stones/Gems & TM05 Aerial Ace!');
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      this.sandboxDrawerEl.querySelector<HTMLElement>('[data-testid="ow-sandbox-level-boost"]'),
-      () => {
-        const save = this.saveManager.getSave();
-        if (!save) return;
-        this.audioManager.playSfx('heal');
-        for (const unit of save.roster) {
-          this.saveManager.setUnitLevelForTest(unit.instanceId, Math.min(40, unit.level + 5));
-        }
-        this.showToast('Boosted all squad members by +5 Levels!');
       },
       { signal }
     );
@@ -1524,6 +1242,7 @@ export class OverworldScene {
           if (!tab) return;
           this.audioManager.playSfx('select');
           this.activeMenuTab = tab;
+          this.pendingSystemConfirm = null;
           this.menuFeedbackMessage = '';
           this.renderSystemMenuBody();
         },
@@ -1540,19 +1259,21 @@ export class OverworldScene {
     const st = reconciled.nodes[node.id];
     if (!st?.unlocked) {
       this.audioManager.playSfx('cancel');
-      this.showToast(`${node.code}: ${node.name} is still locked!`);
+      this.showToast(`${node.name} is locked`);
       return;
     }
 
     if (node.id === reconciled.currentNodeId) {
-      // Tapping the current node opens Kecleon Shop if present and cleared, or pulses dock
       if (st.activeKecleonShop && st.cleared && !st.activeSkirmish) {
         this.openKecleonShop();
+      } else if (!st.cleared) {
+        this.launchCurrentChapterBattle();
+      } else if (st.activeSkirmish) {
+        this.launchCurrentSkirmishBattle();
       } else {
         this.audioManager.playSfx('select');
-        this.showToast(
-          `${node.code} · ${node.name} — Choose an action in the bottom dock!`
-        );
+        this.centerCameraOnMapPoint(this.lordWorldX, this.lordWorldY);
+        this.renderFrame();
       }
       return;
     }
@@ -1570,7 +1291,8 @@ export class OverworldScene {
     if (!save) return;
     const reconciled = ensureOverworldGraphState(save, this.graph);
     const def = getOverworldNodeById(reconciled.currentNodeId, this.graph);
-    if (!def) return;
+    const st = def ? reconciled.nodes[def.id] : undefined;
+    if (!def || st?.cleared) return;
 
     this.audioManager.playSfx('select');
     if (this.onLaunchChapterBattle) {
@@ -1608,7 +1330,7 @@ export class OverworldScene {
     const shop = reconciled.nodes[reconciled.currentNodeId]?.activeKecleonShop;
     if (!shop) {
       this.audioManager.playSfx('cancel');
-      this.showToast('No Kecleon merchant is currently camped at this landmark.');
+      this.showToast('No shop here.');
       return;
     }
 
@@ -1640,7 +1362,6 @@ export class OverworldScene {
     const save = this.saveManager.getSave();
     if (!save) return;
     const reconciled = ensureOverworldGraphState(save, this.graph);
-    const nodeDef = getOverworldNodeById(reconciled.currentNodeId, this.graph);
     const shop = reconciled.nodes[reconciled.currentNodeId]?.activeKecleonShop;
 
     this.kecleonGoldEl.textContent = `${save.gold}G`;
@@ -1651,15 +1372,14 @@ export class OverworldScene {
 
     if (!shop) {
       this.kecleonTitleEl.textContent = 'KECLEON SHOP — SOLD OUT';
-      this.kecleonSpeechNameEl.textContent = 'Master Merchant Kecleon';
-      this.kecleonSpeechTextEl.textContent =
-        'Thank you kindly! You bought every last item on our wagon—safe travels, friend!';
+      this.kecleonSpeechNameEl.textContent = 'Kecleon';
+      this.kecleonSpeechTextEl.textContent = 'Sold out! Safe travels!';
       return;
     }
 
     const meta = KECLEON_SHOP_METADATA[shop.shopType];
-    this.kecleonTitleEl.textContent = `${meta.title.toUpperCase()} · ${nodeDef?.name ?? ''}`;
-    this.kecleonSpeechNameEl.textContent = `Master Merchant Kecleon (${meta.shortBadge})`;
+    this.kecleonTitleEl.textContent = meta.title.toUpperCase();
+    this.kecleonSpeechNameEl.textContent = 'Kecleon';
     this.kecleonSpeechTextEl.textContent = meta.greeting;
 
     for (const itemId of shop.inventoryItemIds) {
@@ -1682,8 +1402,8 @@ export class OverworldScene {
           .map((u) => u.nickname);
         compatNote =
           compatibleUnits.length > 0
-            ? `Compatible: ${compatibleUnits.join(', ')}`
-            : 'Compatible: None in current party';
+            ? `Fits: ${compatibleUnits.join(', ')}`
+            : 'Fits: None in party';
       }
 
       const card = document.createElement('div');
@@ -1698,7 +1418,7 @@ export class OverworldScene {
           ${compatNote ? `<p class="pmd-kecleon-item-desc" style="color:#90ffbe;margin-top:0.2rem;">${compatNote}</p>` : ''}
         </div>
         <button type="button" class="pmd-btn pmd-btn-primary" data-testid="kecleon-buy-${item.id}" ${canAfford ? '' : 'disabled'}>
-          ${canAfford ? `Buy (${item.buyPrice}G)` : `Need ${item.buyPrice}G`}
+          ${canAfford ? `Buy (${item.buyPrice}G)` : `${item.buyPrice}G`}
         </button>
       `;
 
@@ -1711,12 +1431,12 @@ export class OverworldScene {
             this.graph
           );
           this.audioManager.playSfx('heal');
-          this.kecleonStatusMessage = `Purchased ${outcome.item.name}! Stored in Convoy (${outcome.save.gold}G left).`;
+          this.kecleonStatusMessage = `Bought ${outcome.item.name} (${outcome.save.gold}G left).`;
           this.renderKecleonShopContents();
         } catch (err) {
           this.audioManager.playSfx('cancel');
           this.kecleonStatusMessage =
-            err instanceof Error ? err.message : 'Purchase could not be completed.';
+            err instanceof Error ? err.message : 'Purchase failed.';
           this.renderKecleonShopContents();
         }
       });
@@ -1726,11 +1446,12 @@ export class OverworldScene {
   }
 
   // ==========================================================================
-  // Overworld System Menu (`Units / Roster`, `Items / Convoy`, `Supports`, `System`)
+  // Overworld System Menu (`Units`, `Items`, `System`)
   // ==========================================================================
 
   public openSystemMenu(tab: OverworldMenuTab = 'units'): void {
     this.activeMenuTab = tab;
+    this.pendingSystemConfirm = null;
     this.menuFeedbackMessage = '';
     this.systemMenuOpen = true;
     this.systemMenuBackdropEl.hidden = false;
@@ -1742,6 +1463,7 @@ export class OverworldScene {
   private closeSystemMenu(): void {
     if (!this.systemMenuOpen) return;
     this.systemMenuOpen = false;
+    this.pendingSystemConfirm = null;
     this.systemMenuBackdropEl.hidden = true;
     this.audioManager.playSfx('cancel');
     this.onLayerStateChanged();
@@ -1767,8 +1489,6 @@ export class OverworldScene {
       this.renderUnitsRosterTab(save);
     } else if (this.activeMenuTab === 'convoy') {
       this.renderConvoyTab(save);
-    } else if (this.activeMenuTab === 'supports') {
-      this.renderSupportsTab(save);
     } else {
       this.renderSystemTab(save);
     }
@@ -1790,13 +1510,15 @@ export class OverworldScene {
 
     for (const u of save.roster) {
       const sp = getSpeciesById(u.speciesId);
+      const showSpecies =
+        sp && u.nickname.trim().toLowerCase() !== sp.name.trim().toLowerCase();
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = `pmd-btn pmd-menu-row pmd-overworld-unit-btn${u.instanceId === this.selectedUnitInstanceId ? ' is-active' : ''}`;
       btn.dataset.testid = `overworld-roster-unit-${u.instanceId}`;
       btn.innerHTML = `
-        <span><strong>${u.nickname}</strong>${u.isLord ? ' ★' : ''}<br/><small style="color:#a8e0f8;">${sp?.name ?? u.speciesId} · Lv.${u.level}</small></span>
-        <span style="font-size:11px;color:#58f858;">S${sp?.stage ?? 1}</span>
+        <span><strong>${u.nickname}</strong>${u.isLord ? ' ★' : ''}${showSpecies ? `<br/><small style="color:#a8e0f8;">${sp.name}</small>` : ''}</span>
+        <span style="font-size:12px;color:#a8e0f8;">Lv.${u.level}</span>
       `;
       bindPointerTap(btn, () => {
         this.audioManager.playSfx('select');
@@ -1816,6 +1538,10 @@ export class OverworldScene {
       const skill = sp ? getPersonalSkillById(sp.personalSkillId) : undefined;
       const equippedItemId = getUnitEquippedItemId(selected);
       const equippedItem = equippedItemId ? getItemById(equippedItemId) : undefined;
+      const showSpeciesMeta =
+        sp && selected.nickname.trim().toLowerCase() !== sp.name.trim().toLowerCase()
+          ? `${sp.name} · `
+          : '';
 
       const headerRow = document.createElement('div');
       headerRow.className = 'pmd-devtools-row-between';
@@ -1823,8 +1549,8 @@ export class OverworldScene {
         <div class="pmd-forecast-unit-head">
           <div class="pmd-forecast-portrait-slot" data-ow-unit-portrait></div>
           <div class="pmd-forecast-unit-id">
-            <strong class="pmd-forecast-unit-name" data-testid="overworld-unit-detail-name">${selected.nickname}${selected.isLord ? ' ★ [LORD]' : ''}</strong>
-            <span class="pmd-forecast-unit-meta">${sp?.name ?? selected.speciesId} · Stage ${sp?.stage ?? 1} · Lv. ${selected.level} · ${sp?.types.join('/') ?? ''} · ${sp?.traversalClass ?? 'Grounded'}</span>
+            <strong class="pmd-forecast-unit-name" data-testid="overworld-unit-detail-name">${selected.nickname}${selected.isLord ? ' ★' : ''}</strong>
+            <span class="pmd-forecast-unit-meta">${showSpeciesMeta}Lv. ${selected.level} · ${sp?.types.join('/') ?? ''} · ${sp?.traversalClass ?? 'Grounded'}</span>
           </div>
         </div>
         <button type="button" class="pmd-btn pmd-chip-btn" data-testid="overworld-unit-rename-btn">Rename</button>
@@ -1844,8 +1570,13 @@ export class OverworldScene {
       bindPointerTap(
         headerRow.querySelector<HTMLElement>('[data-testid="overworld-unit-rename-btn"]'),
         () => {
+          if (!this.onRequestRenameUnit) return;
           this.audioManager.playSfx('select');
-          this.onRequestRenameUnit?.(selected.instanceId);
+          void Promise.resolve(this.onRequestRenameUnit(selected.instanceId)).then(() => {
+            if (this.systemMenuOpen) {
+              this.renderSystemMenuBody();
+            }
+          });
         }
       );
 
@@ -1869,21 +1600,20 @@ export class OverworldScene {
         statStrip.appendChild(cell);
       }
 
-      // Personal Skill + Equipped Item Box
+      // Concise Ability + Item Box
       const gearBox = document.createElement('div');
       gearBox.className = 'pmd-overworld-subbox';
       gearBox.innerHTML = `
-        <p class="pmd-overworld-subbox-title">Personal Skill &amp; 1-Slot Item</p>
         <div class="pmd-overworld-action-row">
           <div class="pmd-overworld-action-meta">
-            <strong>Ability: ${skill?.name ?? 'None'}</strong>
+            <strong>${skill?.name ?? 'Ability'}</strong>
             <span>${skill?.description ?? ''}</span>
           </div>
         </div>
         <div class="pmd-overworld-action-row">
           <div class="pmd-overworld-action-meta">
-            <strong data-testid="overworld-unit-equipped-item">Item Slot: ${equippedItem ? equippedItem.name : 'Empty'}</strong>
-            <span>${equippedItem ? equippedItem.description : 'Equip 1 Held Gear, Berry, Potion, Stone, or X-Item from Convoy.'}</span>
+            <strong data-testid="overworld-unit-equipped-item">Item: ${equippedItem ? equippedItem.name : 'Empty'}</strong>
+            ${equippedItem ? `<span>${equippedItem.description}</span>` : ''}
           </div>
           ${equippedItem ? '<button type="button" class="pmd-btn pmd-chip-btn" data-testid="overworld-unequip-item-btn">Unequip</button>' : ''}
         </div>
@@ -1893,65 +1623,74 @@ export class OverworldScene {
         () => {
           this.audioManager.playSfx('cancel');
           this.saveManager.equipItemToUnit(selected.instanceId, null);
-          this.setMenuFeedback(`Returned ${equippedItem?.name ?? 'item'} to Convoy.`);
+          this.setMenuFeedback(`Returned ${equippedItem?.name ?? 'item'} to Bag.`);
           this.renderSystemMenuBody();
         }
       );
 
-      // Active Moves & `[E]` Counter Move Box
-      const movesBox = document.createElement('div');
-      movesBox.className = 'pmd-overworld-subbox';
-      movesBox.innerHTML = `<p class="pmd-overworld-subbox-title">Unlocked Moves (${selected.unlockedMoveIds.length}) &amp; [E] Counter</p>`;
-      for (const mId of selected.unlockedMoveIds) {
-        const mv = getMoveById(mId);
-        if (!mv) continue;
-        const isActive = selected.activeMoveIds.includes(mId);
-        const isEquipped = selected.equippedMoveId === mId;
-        const canCounter = mv.category === 'Physical' || mv.category === 'Special';
-        const row = document.createElement('div');
-        row.className = 'pmd-overworld-action-row';
-        row.dataset.testid = `overworld-unit-move-${mId}`;
-        row.innerHTML = `
-          <div class="pmd-overworld-action-meta">
-            <strong>${isEquipped ? '[E] ' : ''}${mv.name} (${mv.type} · ${mv.category} R${mv.range[0]})</strong>
-            <span>Mt ${mv.mt} · Hit ${mv.hit} · PP ${mv.pp + (selected.bonusPpByMoveId[mId] ?? 0)}</span>
-          </div>
-          <div class="pmd-inline-btns">
-            ${
-              isActive && canCounter && !isEquipped
-                ? `<button type="button" class="pmd-btn pmd-chip-btn" data-set-eq="${mId}">Set [E]</button>`
-                : ''
+      detailCol.append(headerRow, statStrip, gearBox);
+
+      // Conditional Evolution Promotion Box (only when applicable stone/gem is owned)
+      const ownedBranches = (sp?.evolutions ?? []).filter(
+        (b) =>
+          selected.consumableItemId === b.requiredItemId ||
+          save.convoy.some((c) => c.itemId === b.requiredItemId && c.quantity > 0)
+      );
+      if (ownedBranches.length > 0) {
+        const promoBox = document.createElement('div');
+        promoBox.className = 'pmd-overworld-subbox';
+        promoBox.innerHTML = `<p class="pmd-overworld-subbox-title">Evolution</p>`;
+        for (const branch of ownedBranches) {
+          const targetSp = getSpeciesById(branch.targetSpeciesId);
+          const reqItem = getItemById(branch.requiredItemId);
+          const meetsLevel = selected.level >= branch.minLevel;
+          const row = document.createElement('div');
+          row.className = 'pmd-overworld-action-row';
+          row.innerHTML = `
+            <div class="pmd-overworld-action-meta">
+              <strong>Evolve → ${targetSp?.name ?? branch.targetSpeciesId}</strong>
+              <span>Lv. ${branch.minLevel}+ · ${reqItem?.name ?? branch.requiredItemId}</span>
+            </div>
+            <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="overworld-promote-${branch.targetSpeciesId}" ${meetsLevel ? '' : 'disabled'}>
+              Evolve
+            </button>
+          `;
+          bindPointerTap(
+            row.querySelector<HTMLElement>(
+              `[data-testid="overworld-promote-${branch.targetSpeciesId}"]`
+            ),
+            () => {
+              try {
+                this.saveManager.useEvolutionItemOnUnit(
+                  selected.instanceId,
+                  branch.requiredItemId,
+                  branch.targetSpeciesId
+                );
+                this.audioManager.playSfx('victory_fanfare');
+                this.preloadActiveSprites();
+                this.setMenuFeedback(
+                  `${selected.nickname} evolved into ${targetSp?.name ?? branch.targetSpeciesId}!`
+                );
+                this.renderSystemMenuBody();
+              } catch (err) {
+                this.audioManager.playSfx('cancel');
+                this.setMenuFeedback(err instanceof Error ? err.message : 'Cannot evolve yet.');
+              }
             }
-            ${
-              !isActive && selected.activeMoveIds.length < 4
-                ? `<button type="button" class="pmd-btn pmd-chip-btn" data-add-active="${mId}">Equip</button>`
-                : ''
-            }
-          </div>
-        `;
-        bindPointerTap(row.querySelector<HTMLElement>(`[data-set-eq="${mId}"]`), () => {
-          this.audioManager.playSfx('select');
-          this.saveManager.setEquippedMove(selected.instanceId, mId);
-          this.setMenuFeedback(`${selected.nickname} set [E] ${mv.name} for Enemy Phase!`);
-          this.renderSystemMenuBody();
-        });
-        bindPointerTap(row.querySelector<HTMLElement>(`[data-add-active="${mId}"]`), () => {
-          this.audioManager.playSfx('select');
-          this.saveManager.setActiveMoves(selected.instanceId, [...selected.activeMoveIds, mId]);
-          this.setMenuFeedback(`Equipped ${mv.name} to ${selected.nickname}'s 4-move loadout!`);
-          this.renderSystemMenuBody();
-        });
-        movesBox.appendChild(row);
+          );
+          promoBox.appendChild(row);
+        }
+        detailCol.appendChild(promoBox);
       }
 
-      // Vitamins Box (Step 4 Checklist: permanent stat boost)
-      const vitaminsInBag = save.convoy.filter((c) => getItemById(c.itemId)?.category === 'vitamin');
-      const vitaminBox = document.createElement('div');
-      vitaminBox.className = 'pmd-overworld-subbox';
-      vitaminBox.innerHTML = `<p class="pmd-overworld-subbox-title">Stat Vitamins in Convoy (${vitaminsInBag.length})</p>`;
-      if (vitaminsInBag.length === 0) {
-        vitaminBox.innerHTML += `<span style="font-size:0.66rem;color:#9ab8d8;">No Vitamins currently in Convoy.</span>`;
-      } else {
+      // Conditional Stat Vitamins Box (only when Vitamins exist in Bag)
+      const vitaminsInBag = save.convoy.filter(
+        (c) => c.quantity > 0 && getItemById(c.itemId)?.category === 'vitamin'
+      );
+      if (vitaminsInBag.length > 0) {
+        const vitaminBox = document.createElement('div');
+        vitaminBox.className = 'pmd-overworld-subbox';
+        vitaminBox.innerHTML = `<p class="pmd-overworld-subbox-title">Vitamins</p>`;
         for (const slot of vitaminsInBag) {
           const item = getItemById(slot.itemId)!;
           const row = document.createElement('div');
@@ -1969,7 +1708,7 @@ export class OverworldScene {
               try {
                 this.saveManager.useVitaminOnUnit(selected.instanceId, item.id);
                 this.audioManager.playSfx('heal');
-                this.setMenuFeedback(`Used ${item.name} on ${selected.nickname}! Permanent stat increased.`);
+                this.setMenuFeedback(`Used ${item.name} on ${selected.nickname}!`);
                 this.renderSystemMenuBody();
               } catch (err) {
                 this.audioManager.playSfx('cancel');
@@ -1979,16 +1718,17 @@ export class OverworldScene {
           );
           vitaminBox.appendChild(row);
         }
+        detailCol.appendChild(vitaminBox);
       }
 
-      // Technical Machines Box (Step 4 Checklist: consumes TM & adds move to permanent Unlocked Move Pool)
-      const tmsInBag = save.convoy.filter((c) => getItemById(c.itemId)?.category === 'tm');
-      const tmBox = document.createElement('div');
-      tmBox.className = 'pmd-overworld-subbox';
-      tmBox.innerHTML = `<p class="pmd-overworld-subbox-title">Technical Machines in Convoy (${tmsInBag.length})</p>`;
-      if (tmsInBag.length === 0) {
-        tmBox.innerHTML += `<span style="font-size:0.66rem;color:#9ab8d8;">Buy TMs from a Kecleon TM Shop to teach permanent new moves!</span>`;
-      } else {
+      // Conditional Technical Machines Box (only when TMs exist in Bag)
+      const tmsInBag = save.convoy.filter(
+        (c) => c.quantity > 0 && getItemById(c.itemId)?.category === 'tm'
+      );
+      if (tmsInBag.length > 0) {
+        const tmBox = document.createElement('div');
+        tmBox.className = 'pmd-overworld-subbox';
+        tmBox.innerHTML = `<p class="pmd-overworld-subbox-title">TMs</p>`;
         for (const slot of tmsInBag) {
           const item = getItemById(slot.itemId)!;
           const moveId = item.effect.teachesMoveId ?? '';
@@ -2004,10 +1744,10 @@ export class OverworldScene {
               <strong>${item.name} ×${slot.quantity}</strong>
               <span>${
                 alreadyKnown
-                  ? `${selected.nickname} already knows ${move?.name ?? moveId}`
+                  ? 'Already known'
                   : compatible
-                    ? `Compatible with ${selected.nickname}! Teaches ${move?.name ?? moveId}`
-                    : `Incompatible with ${sp?.name ?? selected.speciesId}`
+                    ? `Teaches ${move?.name ?? moveId}`
+                    : 'Incompatible'
               }</span>
             </div>
             <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="overworld-teach-tm-${item.id}" ${canTeach ? '' : 'disabled'}>
@@ -2021,7 +1761,7 @@ export class OverworldScene {
                 this.saveManager.teachTmMove(selected.instanceId, item.id);
                 this.audioManager.playSfx('heal');
                 this.setMenuFeedback(
-                  `${selected.nickname} permanently learned ${move?.name ?? item.name}! (${item.name} consumed)`
+                  `${selected.nickname} learned ${move?.name ?? item.name}!`
                 );
                 this.renderSystemMenuBody();
               } catch (err) {
@@ -2032,63 +1772,70 @@ export class OverworldScene {
           );
           tmBox.appendChild(row);
         }
+        detailCol.appendChild(tmBox);
       }
 
-      // Evolution Promotion Box (Lv.10+ Stone, Lv.15+ Eevee 8-way, Lv.20+ Gem)
-      const promoBox = document.createElement('div');
-      promoBox.className = 'pmd-overworld-subbox';
-      promoBox.innerHTML = `<p class="pmd-overworld-subbox-title">Evolution Promotion</p>`;
-      if (!sp || sp.evolutions.length === 0) {
-        promoBox.innerHTML += `<span style="font-size:0.66rem;color:#9ab8d8;">${selected.nickname} is at final evolution stage.</span>`;
-      } else {
-        for (const branch of sp.evolutions) {
-          const targetSp = getSpeciesById(branch.targetSpeciesId);
-          const reqItem = getItemById(branch.requiredItemId);
-          const hasItem =
-            selected.consumableItemId === branch.requiredItemId ||
-            save.convoy.some((c) => c.itemId === branch.requiredItemId && c.quantity > 0);
-          const meetsLevel = selected.level >= branch.minLevel;
-          const canPromote = hasItem && meetsLevel;
-
-          const row = document.createElement('div');
-          row.className = 'pmd-overworld-action-row';
-          row.innerHTML = `
-            <div class="pmd-overworld-action-meta">
-              <strong>Promote → ${targetSp?.name ?? branch.targetSpeciesId}</strong>
-              <span>Requires Lv. ${branch.minLevel}+ &amp; ${reqItem?.name ?? branch.requiredItemId} ${hasItem ? '(Owned)' : '(Missing)'}</span>
-            </div>
-            <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="overworld-promote-${branch.targetSpeciesId}" ${canPromote ? '' : 'disabled'}>
-              Promote
-            </button>
-          `;
-          bindPointerTap(
-            row.querySelector<HTMLElement>(
-              `[data-testid="overworld-promote-${branch.targetSpeciesId}"]`
-            ),
-            () => {
-              try {
-                this.saveManager.useEvolutionItemOnUnit(
-                  selected.instanceId,
-                  branch.requiredItemId,
-                  branch.targetSpeciesId
-                );
-                this.audioManager.playSfx('victory_fanfare');
-                this.preloadActiveSprites();
-                this.setMenuFeedback(
-                  `${selected.nickname} promoted into ${targetSp?.name ?? branch.targetSpeciesId}!`
-                );
-                this.renderSystemMenuBody();
-              } catch (err) {
-                this.audioManager.playSfx('cancel');
-                this.setMenuFeedback(err instanceof Error ? err.message : 'Cannot promote yet.');
-              }
+      // Moves & `[E]` Counter Move Box
+      const movesBox = document.createElement('div');
+      movesBox.className = 'pmd-overworld-subbox';
+      movesBox.innerHTML = `<p class="pmd-overworld-subbox-title">Moves (${selected.activeMoveIds.length}/4 Active · [E] Counter)</p>`;
+      for (const mId of selected.unlockedMoveIds) {
+        const mv = getMoveById(mId);
+        if (!mv) continue;
+        const isActive = selected.activeMoveIds.includes(mId);
+        const isEquipped = selected.equippedMoveId === mId;
+        const canCounter = mv.category === 'Physical' || mv.category === 'Special';
+        const row = document.createElement('div');
+        row.className = 'pmd-overworld-action-row';
+        row.dataset.testid = `overworld-unit-move-${mId}`;
+        row.innerHTML = `
+          <div class="pmd-overworld-action-meta">
+            <strong>${isEquipped ? '[E] ' : ''}${mv.name}</strong>
+            <span>${mv.type} · R${mv.range[0]} · ${canCounter ? `Mt ${mv.mt} · Hit ${mv.hit}% · ` : ''}PP ${mv.pp + (selected.bonusPpByMoveId[mId] ?? 0)}</span>
+          </div>
+          <div class="pmd-inline-btns">
+            ${
+              isActive && canCounter && !isEquipped
+                ? `<button type="button" class="pmd-btn pmd-chip-btn" data-set-eq="${mId}">Set [E]</button>`
+                : ''
             }
+            ${
+              !isActive && selected.activeMoveIds.length < 4
+                ? `<button type="button" class="pmd-btn pmd-chip-btn" data-add-active="${mId}">Equip</button>`
+                : ''
+            }
+            ${
+              isActive && selected.activeMoveIds.length > 1
+                ? `<button type="button" class="pmd-btn pmd-chip-btn" data-rem-active="${mId}">Unequip</button>`
+                : ''
+            }
+          </div>
+        `;
+        bindPointerTap(row.querySelector<HTMLElement>(`[data-set-eq="${mId}"]`), () => {
+          this.audioManager.playSfx('select');
+          this.saveManager.setEquippedMove(selected.instanceId, mId);
+          this.setMenuFeedback(`[E] ${mv.name} set for Enemy Phase.`);
+          this.renderSystemMenuBody();
+        });
+        bindPointerTap(row.querySelector<HTMLElement>(`[data-add-active="${mId}"]`), () => {
+          this.audioManager.playSfx('select');
+          this.saveManager.setActiveMoves(selected.instanceId, [...selected.activeMoveIds, mId]);
+          this.setMenuFeedback(`Equipped ${mv.name}.`);
+          this.renderSystemMenuBody();
+        });
+        bindPointerTap(row.querySelector<HTMLElement>(`[data-rem-active="${mId}"]`), () => {
+          this.audioManager.playSfx('cancel');
+          this.saveManager.setActiveMoves(
+            selected.instanceId,
+            selected.activeMoveIds.filter((id) => id !== mId)
           );
-          promoBox.appendChild(row);
-        }
+          this.setMenuFeedback(`Unequipped ${mv.name}.`);
+          this.renderSystemMenuBody();
+        });
+        movesBox.appendChild(row);
       }
 
-      detailCol.append(headerRow, statStrip, gearBox, vitaminBox, tmBox, promoBox, movesBox);
+      detailCol.appendChild(movesBox);
     }
 
     grid.append(listCol, detailCol);
@@ -2096,17 +1843,42 @@ export class OverworldScene {
   }
 
   private renderConvoyTab(save: SaveData): void {
-    const box = document.createElement('div');
-    box.className = 'pmd-overworld-subbox';
-    box.innerHTML = `<p class="pmd-overworld-subbox-title">Convoy Inventory (${save.convoy.length} stacks · ${save.gold}G)</p>`;
-
+    if (
+      !this.selectedUnitInstanceId ||
+      !save.roster.some((u) => u.instanceId === this.selectedUnitInstanceId)
+    ) {
+      this.selectedUnitInstanceId = save.roster[0]?.instanceId ?? null;
+    }
     const targetUnit =
       save.roster.find((u) => u.instanceId === this.selectedUnitInstanceId) ?? save.roster[0];
 
+    const unitBar = document.createElement('div');
+    unitBar.className = 'pmd-inline-btns';
+    unitBar.style.marginBottom = '0.45rem';
+    for (const u of save.roster) {
+      const uItemId = getUnitEquippedItemId(u);
+      const uItem = uItemId ? getItemById(uItemId) : undefined;
+      const pill = document.createElement('button');
+      pill.type = 'button';
+      pill.className = `pmd-btn pmd-chip-btn${u.instanceId === targetUnit?.instanceId ? ' is-active' : ''}`;
+      pill.textContent = `${u.nickname} · ${uItem ? uItem.name : 'Empty'}`;
+      bindPointerTap(pill, () => {
+        this.audioManager.playSfx('select');
+        this.selectedUnitInstanceId = u.instanceId;
+        this.renderSystemMenuBody();
+      });
+      unitBar.appendChild(pill);
+    }
+
+    const box = document.createElement('div');
+    box.className = 'pmd-overworld-subbox';
+    box.innerHTML = `<p class="pmd-overworld-subbox-title">Bag (${save.gold}G)</p>`;
+
     if (save.convoy.length === 0) {
-      box.innerHTML += `<span style="font-size:0.72rem;color:#b8dcff;">Convoy is currently empty.</span>`;
+      box.innerHTML += `<span style="font-size:0.72rem;color:#b8dcff;">Bag is empty.</span>`;
     } else {
       for (const entry of save.convoy) {
+        if (entry.quantity <= 0) continue;
         const item = getItemById(entry.itemId);
         if (!item) continue;
         const equippable = item.equipSlot === 'held' || item.equipSlot === 'consumable';
@@ -2128,77 +1900,211 @@ export class OverworldScene {
           if (!targetUnit) return;
           this.audioManager.playSfx('select');
           this.saveManager.equipItemToUnit(targetUnit.instanceId, item.id);
-          this.setMenuFeedback(`Equipped ${item.name} on ${targetUnit.nickname}!`);
+          this.setMenuFeedback(`Equipped ${item.name} on ${targetUnit.nickname}.`);
           this.renderSystemMenuBody();
         });
         box.appendChild(row);
       }
     }
 
-    this.menuPanelBodyEl.appendChild(box);
-  }
-
-  private renderSupportsTab(save: SaveData): void {
-    const box = document.createElement('div');
-    box.className = 'pmd-overworld-subbox';
-    box.innerHTML = `<p class="pmd-overworld-subbox-title">Squad Bond Supports (Levels 1–5 · Thresholds ${SUPPORT_LEVEL_THRESHOLDS.join('/')})</p>`;
-
-    for (let i = 0; i < save.roster.length; i++) {
-      for (let j = i + 1; j < save.roster.length; j++) {
-        const a = save.roster[i]!;
-        const b = save.roster[j]!;
-        const pairKey = makeSupportPairKey(a.instanceId, b.instanceId);
-        const prog = save.supports[pairKey] ?? { points: 0, level: 0 };
-        const nextThresh =
-          prog.level < 5 ? SUPPORT_LEVEL_THRESHOLDS[prog.level] : SUPPORT_LEVEL_THRESHOLDS[4];
-
-        const row = document.createElement('div');
-        row.className = 'pmd-overworld-action-row';
-        row.innerHTML = `
-          <div class="pmd-overworld-action-meta">
-            <strong>${a.nickname} &amp; ${b.nickname}</strong>
-            <span>Support Rank: Lv. ${prog.level} (${prog.points}/${nextThresh} pts)</span>
-          </div>
-        `;
-        box.appendChild(row);
-      }
-    }
-
-    this.menuPanelBodyEl.appendChild(box);
+    this.menuPanelBodyEl.append(unitBar, box);
   }
 
   private renderSystemTab(save: SaveData): void {
     const sync = this.saveManager.getSyncStatus();
-    const box = document.createElement('div');
-    box.className = 'pmd-overworld-subbox';
-    box.innerHTML = `
-      <p class="pmd-overworld-subbox-title">Save &amp; Overworld System</p>
+    const audioSettings = this.audioManager.getSettings();
+
+    // 1. Audio Controls Box
+    const audioBox = document.createElement('div');
+    audioBox.className = 'pmd-overworld-subbox';
+    audioBox.innerHTML = `
+      <p class="pmd-overworld-subbox-title">Audio</p>
       <div class="pmd-overworld-action-row">
-        <div class="pmd-overworld-action-meta">
-          <strong>Save Sync Status</strong>
-          <span>Account: ${sync.user?.email ?? 'Guest (localStorage)'} · Last Updated: ${new Date(save.lastUpdated).toLocaleTimeString()}</span>
-        </div>
-      </div>
-      <div class="pmd-inline-btns">
-        <button type="button" class="pmd-btn" data-testid="overworld-sys-center-btn">Center Camera on Lord</button>
-        <button type="button" class="pmd-btn pmd-btn-danger" data-testid="overworld-exit-btn">Exit Overworld</button>
+        <button type="button" class="pmd-btn pmd-chip-btn${audioSettings.muted ? '' : ' is-active'}" data-testid="overworld-audio-mute-btn">
+          ${audioSettings.muted ? 'Audio: Muted' : 'Audio: ON'}
+        </button>
+        <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;">
+          <span>BGM</span>
+          <input type="range" min="0" max="100" value="${Math.round(audioSettings.bgmVolume * 100)}" data-testid="overworld-bgm-slider" />
+        </label>
+        <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;">
+          <span>SFX</span>
+          <input type="range" min="0" max="100" value="${Math.round(audioSettings.sfxVolume * 100)}" data-testid="overworld-sfx-slider" />
+        </label>
       </div>
     `;
 
     bindPointerTap(
-      box.querySelector<HTMLElement>('[data-testid="overworld-sys-center-btn"]'),
+      audioBox.querySelector<HTMLElement>('[data-testid="overworld-audio-mute-btn"]'),
       () => {
-        this.closeSystemMenu();
-        this.centerCameraOnMapPoint(this.lordWorldX, this.lordWorldY);
-        this.renderFrame();
+        const nowMuted = this.audioManager.toggleMute();
+        if (!nowMuted) this.audioManager.playSfx('select');
+        this.renderSystemMenuBody();
       }
     );
-    bindPointerTap(box.querySelector<HTMLElement>('[data-testid="overworld-exit-btn"]'), () => {
+
+    const bgmSlider = audioBox.querySelector<HTMLInputElement>('[data-testid="overworld-bgm-slider"]');
+    bgmSlider?.addEventListener('input', () => {
+      this.audioManager.setBgmVolume(Number(bgmSlider.value) / 100);
+    });
+
+    const sfxSlider = audioBox.querySelector<HTMLInputElement>('[data-testid="overworld-sfx-slider"]');
+    sfxSlider?.addEventListener('input', () => {
+      this.audioManager.setSfxVolume(Number(sfxSlider.value) / 100);
+    });
+
+    // 2. Save Sync & Backup Box
+    const saveBox = document.createElement('div');
+    saveBox.className = 'pmd-overworld-subbox';
+    saveBox.style.marginTop = '0.5rem';
+    saveBox.innerHTML = `
+      <p class="pmd-overworld-subbox-title">Save Data</p>
+      <div class="pmd-overworld-action-row">
+        <div class="pmd-overworld-action-meta">
+          <strong>${sync.user?.email ?? 'Local Save'}</strong>
+          <span>Saved ${new Date(save.lastUpdated).toLocaleTimeString()}</span>
+        </div>
+        <div class="pmd-inline-btns">
+          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="overworld-export-save-btn">Export</button>
+          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="overworld-import-save-btn">Import</button>
+          <input type="file" accept=".json,application/json" hidden data-ow-import-input />
+        </div>
+      </div>
+    `;
+
+    bindPointerTap(
+      saveBox.querySelector<HTMLElement>('[data-testid="overworld-export-save-btn"]'),
+      () => {
+        try {
+          const json = this.saveManager.exportSaveJson();
+          const blob = new Blob([json], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `mystery-emblem-save.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          this.audioManager.playSfx('select');
+          this.setMenuFeedback('Exported save backup.');
+        } catch (err) {
+          this.audioManager.playSfx('cancel');
+          this.setMenuFeedback(err instanceof Error ? err.message : 'Export failed.');
+        }
+      }
+    );
+
+    const fileInput = saveBox.querySelector<HTMLInputElement>('[data-ow-import-input]');
+    bindPointerTap(
+      saveBox.querySelector<HTMLElement>('[data-testid="overworld-import-save-btn"]'),
+      () => {
+        fileInput?.click();
+      }
+    );
+    fileInput?.addEventListener('change', () => {
+      const f = fileInput.files?.[0];
+      if (!f) return;
+      void f.text().then((raw) => {
+        try {
+          this.saveManager.importSaveJson(raw);
+          this.snapLordToCurrentNode();
+          this.centerCameraOnMapPoint(this.lordWorldX, this.lordWorldY);
+          this.audioManager.playSfx('heal');
+          this.setMenuFeedback('Imported save backup!');
+          this.renderSystemMenuBody();
+        } catch (err) {
+          this.audioManager.playSfx('cancel');
+          this.setMenuFeedback(err instanceof Error ? err.message : 'Invalid save JSON.');
+        }
+      });
+    });
+
+    // 3. Campaign Actions Box (`New Game`, `Delete Save`, `Title Screen`)
+    const actionsBox = document.createElement('div');
+    actionsBox.className = 'pmd-overworld-subbox';
+    actionsBox.style.marginTop = '0.5rem';
+    actionsBox.innerHTML = `
+      <p class="pmd-overworld-subbox-title">Campaign</p>
+      <div class="pmd-inline-btns">
+        <button type="button" class="pmd-btn" data-testid="overworld-new-game-btn">New Game</button>
+        <button type="button" class="pmd-btn pmd-btn-danger" data-testid="overworld-delete-save-btn">Delete Save</button>
+        <button type="button" class="pmd-btn" data-testid="overworld-exit-btn">Title Screen</button>
+      </div>
+      <div data-ow-confirm-slot style="margin-top:0.45rem;" ${this.pendingSystemConfirm ? '' : 'hidden'}></div>
+    `;
+
+    bindPointerTap(
+      actionsBox.querySelector<HTMLElement>('[data-testid="overworld-new-game-btn"]'),
+      () => {
+        this.audioManager.playSfx('select');
+        this.pendingSystemConfirm = 'new_game';
+        this.renderSystemMenuBody();
+      }
+    );
+
+    bindPointerTap(
+      actionsBox.querySelector<HTMLElement>('[data-testid="overworld-delete-save-btn"]'),
+      () => {
+        this.audioManager.playSfx('select');
+        this.pendingSystemConfirm = 'delete_save';
+        this.renderSystemMenuBody();
+      }
+    );
+
+    bindPointerTap(actionsBox.querySelector<HTMLElement>('[data-testid="overworld-exit-btn"]'), () => {
       this.audioManager.playSfx('cancel');
       this.close();
     });
 
-    this.menuPanelBodyEl.appendChild(box);
+    const confirmSlot = actionsBox.querySelector<HTMLElement>('[data-ow-confirm-slot]');
+    if (confirmSlot && this.pendingSystemConfirm) {
+      if (this.pendingSystemConfirm === 'new_game') {
+        confirmSlot.innerHTML = `
+          <div class="pmd-overworld-action-row">
+            <span style="color:#ffd878;font-size:0.78rem;">Start a new run? Current progress will be replaced.</span>
+            <div class="pmd-inline-btns">
+              <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="overworld-confirm-new-game-btn">Start New Game</button>
+              <button type="button" class="pmd-btn pmd-chip-btn" data-ow-cancel-confirm>Cancel</button>
+            </div>
+          </div>
+        `;
+        bindPointerTap(
+          confirmSlot.querySelector<HTMLElement>('[data-testid="overworld-confirm-new-game-btn"]'),
+          () => {
+            this.audioManager.playSfx('select');
+            this.closeInternal(false);
+            this.onRequestNewGame?.();
+          }
+        );
+      } else {
+        confirmSlot.innerHTML = `
+          <div class="pmd-overworld-action-row">
+            <span style="color:#ff9aa2;font-size:0.78rem;">Delete your save file permanently?</span>
+            <div class="pmd-inline-btns">
+              <button type="button" class="pmd-btn pmd-btn-danger pmd-chip-btn" data-testid="overworld-confirm-delete-save-btn">Confirm Delete</button>
+              <button type="button" class="pmd-btn pmd-chip-btn" data-ow-cancel-confirm>Cancel</button>
+            </div>
+          </div>
+        `;
+        bindPointerTap(
+          confirmSlot.querySelector<HTMLElement>(
+            '[data-testid="overworld-confirm-delete-save-btn"]'
+          ),
+          () => {
+            this.audioManager.playSfx('cancel');
+            void this.saveManager.deleteSaveFromLinkedAccount().then(() => {
+              this.close();
+            });
+          }
+        );
+      }
+      bindPointerTap(confirmSlot.querySelector<HTMLElement>('[data-ow-cancel-confirm]'), () => {
+        this.audioManager.playSfx('cancel');
+        this.pendingSystemConfirm = null;
+        this.renderSystemMenuBody();
+      });
+    }
+
+    this.menuPanelBodyEl.append(audioBox, saveBox, actionsBox);
   }
 
   // ==========================================================================
@@ -2216,7 +2122,7 @@ export class OverworldScene {
         this.toastEl.hidden = true;
         this.toastTimer = null;
       },
-      this.fastMode ? 350 : 2100
+      this.fastMode ? 350 : 1800
     );
   }
 
@@ -2225,10 +2131,9 @@ export class OverworldScene {
     if (!save) return;
     const reconciled = ensureOverworldGraphState(save, this.graph);
     const lord = this.getActiveLordUnit(save);
-    const lordSp = lord ? getSpeciesById(lord.speciesId) : undefined;
 
     this.lordHudPillEl.textContent = lord
-      ? `${lord.nickname} (${lordSp?.name ?? lord.speciesId} Lv.${lord.level})`
+      ? `${lord.nickname} · Lv.${lord.level}`
       : 'Squad';
     this.goldHudPillEl.textContent = `${save.gold}G`;
 
@@ -2240,18 +2145,14 @@ export class OverworldScene {
     if (!nodeDef) return;
 
     this.dockTitleEl.textContent = `${nodeDef.code} · ${nodeDef.name}`;
-    this.dockSubEl.textContent = `${nodeDef.kingdom} — ${nodeDef.description}`;
 
     this.dockBadgesEl.innerHTML = '';
-    const statusBadge = document.createElement('span');
     if (nodeState?.cleared) {
+      const statusBadge = document.createElement('span');
       statusBadge.className = 'pmd-overworld-badge is-cleared';
       statusBadge.textContent = 'CLEARED';
-    } else {
-      statusBadge.className = 'pmd-overworld-badge is-story';
-      statusBadge.textContent = nodeDef.kind === 'paralogue' ? 'PARALOGUE' : 'NEXT CHAPTER';
+      this.dockBadgesEl.appendChild(statusBadge);
     }
-    this.dockBadgesEl.appendChild(statusBadge);
 
     if (nodeState?.activeKecleonShop) {
       const shopMeta = KECLEON_SHOP_METADATA[nodeState.activeKecleonShop.shopType];
@@ -2264,24 +2165,18 @@ export class OverworldScene {
     if (nodeState?.activeSkirmish) {
       const skBadge = document.createElement('span');
       skBadge.className = 'pmd-overworld-badge is-skirmish';
-      skBadge.textContent = `SKIRMISH LV.${nodeState.activeSkirmish.recommendedLevel}`;
+      skBadge.textContent = 'SKIRMISH';
       this.dockBadgesEl.appendChild(skBadge);
     }
 
-    this.btnEnterChapterEl.textContent = nodeState?.cleared ? 'Replay Chapter' : 'Enter Chapter';
-    this.btnFightSkirmishEl.hidden = !nodeState?.activeSkirmish;
-    this.btnOpenShopEl.hidden = !nodeState?.activeKecleonShop;
-  }
+    const canEnterDungeon = !nodeState?.cleared;
+    const hasSkirmish = Boolean(nodeState?.activeSkirmish);
+    const hasShop = Boolean(nodeState?.activeKecleonShop);
 
-  private renderSandboxSummary(): void {
-    const snap = this.getSnapshot();
-    this.sandboxSummaryEl.textContent = [
-      `Node: ${snap.currentNodeId}`,
-      `Unlocked: ${snap.unlockedNodeIds.length}/${this.graph.nodes.length}`,
-      `Cleared: ${snap.clearedNodeIds.length}`,
-      `Active Shops: ${snap.activeShopNodes.length}`,
-      `Active Skirmishes: ${snap.activeSkirmishNodes.length}`,
-    ].join(' · ');
+    this.btnEnterChapterEl.hidden = !canEnterDungeon;
+    this.btnFightSkirmishEl.hidden = !hasSkirmish;
+    this.btnOpenShopEl.hidden = !hasShop;
+    this.dockActionsEl.hidden = !canEnterDungeon && !hasSkirmish && !hasShop;
   }
 
   // ==========================================================================
@@ -2302,7 +2197,6 @@ export class OverworldScene {
     const screenX = Math.round((mapX - this.cameraX) * scale);
     const screenY = Math.round((mapY - this.cameraY) * scale);
 
-    // Compute current animation frame from durationsMs
     const totalAnimMs = Math.max(
       80,
       anim.durationsMs.reduce((acc, d) => acc + Math.max(16, d), 0)
@@ -2322,7 +2216,6 @@ export class OverworldScene {
     const sx = frameIdx * anim.frameWidth;
     const sy = rowIdx * anim.frameHeight;
 
-    // Anchor ground shadow directly onto `(mapX, mapY)` using PMD footline placement
     const placement = computePmdTileSpritePlacement(
       -12,
       -20,
@@ -2338,7 +2231,6 @@ export class OverworldScene {
     this.ctx.save();
     this.ctx.imageSmoothingEnabled = false;
 
-    // Ground shadow ellipse
     this.ctx.fillStyle = tintGlowColor ?? 'rgba(8, 12, 24, 0.55)';
     this.ctx.beginPath();
     this.ctx.ellipse(screenX, screenY + 2 * scale, 6 * scale, 2.6 * scale, 0, 0, Math.PI * 2);
@@ -2364,7 +2256,6 @@ export class OverworldScene {
     const scale = this.displayScale;
     ctx.imageSmoothingEnabled = false;
 
-    // Parchment ocean backdrop
     ctx.fillStyle = '#141c2c';
     ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -2424,7 +2315,6 @@ export class OverworldScene {
         ctx.lineWidth = Math.max(3, 1.3 * scale);
         ctx.stroke();
 
-        // Draw intermediate trail stepping-stones along waypoints
         for (const wp of edge.waypoints) {
           const wx = (wp.x - this.cameraX) * scale;
           const wy = (wp.y - this.cameraY) * scale;
@@ -2484,7 +2374,6 @@ export class OverworldScene {
       ctx.fill();
       ctx.stroke();
 
-      // Inner gem highlight
       if (isUnlocked) {
         ctx.beginPath();
         ctx.arc(cx, cy, 1.8 * scale, 0, Math.PI * 2);
@@ -2493,7 +2382,6 @@ export class OverworldScene {
       }
       ctx.restore();
 
-      // Spawned Kecleon Merchant Sprite (`0352`) beside node
       if (isUnlocked && st?.activeKecleonShop) {
         const kecBundle = this.spriteBundles.get(KECLEON_PMD_ASSET_ID);
         this.drawAnimatedSpriteAtMapPoint(
@@ -2506,7 +2394,6 @@ export class OverworldScene {
         );
       }
 
-      // Spawned Feral Skirmish Enemy Scout Sprite beside node
       if (isUnlocked && st?.activeSkirmish) {
         const scoutBundle = this.spriteBundles.get(def.skirmishScoutSpeciesId);
         this.drawAnimatedSpriteAtMapPoint(
@@ -2519,7 +2406,6 @@ export class OverworldScene {
         );
       }
 
-      // Crisp Bitmap Landmark Nameplate for Unlocked Nodes
       if (isUnlocked) {
         const label = `${def.code}: ${def.name}`;
         ctx.save();

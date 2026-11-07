@@ -80,6 +80,10 @@ input[type='radio']:not(:disabled) {
   border: 0 !important;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 /* ==========================================================================
    CORE PMD STEPPED 2X PIXEL WINDOW FRAMES & BUTTONS
    ========================================================================== */

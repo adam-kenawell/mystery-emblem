@@ -1,24 +1,20 @@
 /**
- * Mystery Emblem — Starting Personality Quiz, Partner Select, Reusable Nickname Wizard & NG+ Picker (Step 3)
+ * Mystery Emblem — Personality Quiz, Partner Select, Unified Nickname Modal & NG+ Picker
  *
  * Implements:
- * 1. `RecruitNicknameOverlay`: Reusable PMD modal prompting custom nicknames whenever new Pokémon
- *    join the squad (both the initial Prologue trio after the Quiz and chapter recruits across maps).
+ * 1. `RecruitNicknameOverlay`: Single unified PMD modal for naming newly recruited Pokémon
+ *    AND renaming existing squad members from Overworld or Dungeon Prep.
  * 2. `QuizScene`:
- *    - 9-question PMD Personality Quiz tallying Dragon Lord trait points + seeding Q1–Q9 chapter recruits
+ *    - 9-question PMD Personality Quiz tallying Dragon Lord trait points + seeding recruits
  *    - Dragon Lord Aura Reveal (with optional manual Dragon Lord override)
- *    - Stage-1 Starter Partner Selection screen with live PMD portrait & Personal Skill preview
- *    - `NG_PLUS_SELECT_SCENE` manual roster selector (unlocked when `newGamePlusUnlocked === true`)
- *
- * Strictly obeys Rule 2 (100% Unified Pointer Events via `bindPointerTap` — ZERO keyboard listeners,
- * `>= 44x44px` touch targets, and zero viewport overflow across `1920x1080`, `390x844`, and `844x390`).
+ *    - Stage-1 Starter Partner Selection screen
+ *    - `NG_PLUS_SELECT_SCENE` manual roster selector (trimmed cleanly to the 6 Demo slots)
  */
 
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
 import { DEMO_INITIAL_CONVOY, DEMO_STARTING_LEVEL } from '../data/campaignRegistry';
 import { getPersonalSkillById, getSpeciesById } from '../data/index';
 import {
-  DEFAULT_OVERWORLD_GRAPH,
   DEMO_OVERWORLD_GRAPH,
   type OverworldGraphDefinition,
 } from '../data/overworldMapData';
@@ -41,7 +37,7 @@ import { PmdPortraitView } from './PmdSpriteCanvas';
 import { bindBackGestureSurface, bindPointerTap } from './pointerControls';
 
 // ============================================================================
-// Reusable Multi-Unit Nickname Prompt Modal (`RecruitNicknameOverlay`)
+// Unified Nickname / Rename Modal (`RecruitNicknameOverlay`)
 // ============================================================================
 
 export interface PromptRecruitsOptions {
@@ -50,6 +46,7 @@ export interface PromptRecruitsOptions {
 
 export class RecruitNicknameOverlay {
   public readonly rootEl: HTMLElement;
+  private readonly modalTitleEl: HTMLElement;
   private readonly bannerEl: HTMLElement;
   private readonly stepBadgeEl: HTMLElement;
   private readonly speciesTitleEl: HTMLElement;
@@ -58,13 +55,16 @@ export class RecruitNicknameOverlay {
   private readonly inputEl: HTMLInputElement;
   private readonly portraitView: PmdPortraitView;
   private readonly confirmBtn: HTMLButtonElement;
-  private readonly skipAllBtn: HTMLButtonElement;
+  private readonly secondaryBtn: HTMLButtonElement;
+  private readonly cancelBtn: HTMLButtonElement;
 
   private readonly saveManager: SaveStateManager;
   private readonly audioManager: AudioManager;
   private readonly onStateChange?: () => void;
   private readonly abortController = new AbortController();
 
+  private mode: 'recruit' | 'rename' = 'recruit';
+  private activeSaveManagerOverride: SaveStateManager | null = null;
   private queue: OwnedPokemonInstance[] = [];
   private queueIndex = 0;
   private resolver: (() => void) | null = null;
@@ -85,12 +85,12 @@ export class RecruitNicknameOverlay {
     this.rootEl.style.zIndex = '96';
 
     this.rootEl.innerHTML = `
-      <div class="pmd-window pmd-modal-card" role="dialog" aria-modal="true" aria-label="Name Recruited Pokémon" style="width:min(460px, 95vw); max-height:min(90dvh, 540px); overflow-y:auto;">
-        <div class="pmd-devtools-row-between">
-          <h2 class="pmd-modal-title" style="margin:0; color:#f8f800;">NEW ALLY JOINED!</h2>
+      <div class="pmd-window pmd-modal-card" role="dialog" aria-modal="true" aria-label="Pokémon Nickname" style="width:min(420px, 94vw); max-height:min(90dvh, 480px); overflow-y:auto;">
+        <div class="pmd-devtools-row-between" style="margin-bottom:6px;">
+          <h2 class="pmd-modal-title" data-nickname-modal-title style="margin:0; color:#f8f800;">NEW ALLY</h2>
           <span class="pmd-chapter-badge" data-recruit-step-badge>1 / 1</span>
         </div>
-        <p class="pmd-modal-sub" data-recruit-banner style="margin:0.35rem 0 0.55rem; color:#a8e0f8;"></p>
+        <p class="pmd-modal-sub" data-recruit-banner style="margin:0 0 8px; color:#a8e0f8; font-size:13px;" hidden></p>
         <div class="pmd-forecast-unit-head" style="background:#16344c; border:2px solid #a8c0e0; padding:8px; margin-bottom:8px;">
           <div class="pmd-forecast-portrait-slot" data-recruit-portrait></div>
           <div class="pmd-forecast-unit-id">
@@ -99,7 +99,7 @@ export class RecruitNicknameOverlay {
             <span class="pmd-forecast-unit-meta" data-recruit-skill-desc style="color:#58f858; margin-top:2px;"></span>
           </div>
         </div>
-        <label class="pmd-field-label" for="pmd-recruit-nickname-input">Custom Nickname (1–16 chars)</label>
+        <label class="pmd-field-label" for="pmd-recruit-nickname-input">Nickname</label>
         <input
           id="pmd-recruit-nickname-input"
           data-testid="recruit-nickname-input"
@@ -108,17 +108,21 @@ export class RecruitNicknameOverlay {
           maxlength="16"
           autocomplete="off"
         />
-        <div class="pmd-modal-actions" style="margin-top:0.65rem; display:flex; flex-wrap:wrap; gap:0.45rem; justify-content:space-between;">
+        <div class="pmd-modal-actions" style="margin-top:0.65rem; display:flex; flex-wrap:wrap; gap:0.4rem; justify-content:flex-end;">
+          <button type="button" class="pmd-btn" data-testid="rename-cancel-btn" style="min-height:44px;" hidden>
+            Cancel
+          </button>
           <button type="button" class="pmd-btn" data-testid="recruit-nickname-skip-all-btn" style="min-height:44px;">
-            Keep Default Names
+            Skip
           </button>
           <button type="button" class="pmd-btn pmd-btn-primary" data-testid="recruit-nickname-confirm-btn" style="min-height:44px;">
-            Confirm Name
+            Confirm
           </button>
         </div>
       </div>
     `;
 
+    this.modalTitleEl = this.rootEl.querySelector('[data-nickname-modal-title]')!;
     this.bannerEl = this.rootEl.querySelector('[data-recruit-banner]')!;
     this.stepBadgeEl = this.rootEl.querySelector('[data-recruit-step-badge]')!;
     this.speciesTitleEl = this.rootEl.querySelector('[data-testid="recruit-species-title"]')!;
@@ -126,7 +130,8 @@ export class RecruitNicknameOverlay {
     this.skillDescEl = this.rootEl.querySelector('[data-recruit-skill-desc]')!;
     this.inputEl = this.rootEl.querySelector('[data-testid="recruit-nickname-input"]')!;
     this.confirmBtn = this.rootEl.querySelector('[data-testid="recruit-nickname-confirm-btn"]')!;
-    this.skipAllBtn = this.rootEl.querySelector('[data-testid="recruit-nickname-skip-all-btn"]')!;
+    this.secondaryBtn = this.rootEl.querySelector('[data-testid="recruit-nickname-skip-all-btn"]')!;
+    this.cancelBtn = this.rootEl.querySelector('[data-testid="rename-cancel-btn"]')!;
 
     this.portraitView = new PmdPortraitView({ testId: 'recruit-nickname-portrait' });
     this.rootEl.querySelector('[data-recruit-portrait]')!.appendChild(this.portraitView.canvas);
@@ -138,11 +143,58 @@ export class RecruitNicknameOverlay {
       signal,
       stopPropagation: true,
     });
-    bindPointerTap(this.skipAllBtn, () => this.finishAll(), {
-      signal,
-      stopPropagation: true,
-    });
-    bindBackGestureSurface(this.rootEl, () => this.confirmCurrentAndAdvance(), { signal });
+    bindPointerTap(
+      this.secondaryBtn,
+      () => {
+        if (this.mode === 'rename') {
+          const current = this.queue[0];
+          if (current) {
+            const sp = getSpeciesById(current.speciesId);
+            this.inputEl.value = sp?.name ?? current.speciesId;
+            this.confirmCurrentAndAdvance();
+          }
+        } else {
+          this.finishAll();
+        }
+      },
+      {
+        signal,
+        stopPropagation: true,
+      }
+    );
+    bindPointerTap(
+      this.cancelBtn,
+      () => {
+        this.audioManager.playSfx('cancel');
+        this.finishAll();
+      },
+      {
+        signal,
+        stopPropagation: true,
+      }
+    );
+    bindPointerTap(
+      this.rootEl,
+      (ev) => {
+        if (ev.target === this.rootEl && this.mode === 'rename') {
+          this.audioManager.playSfx('cancel');
+          this.finishAll();
+        }
+      },
+      { signal }
+    );
+    bindBackGestureSurface(
+      this.rootEl,
+      () => {
+        if (this.mode === 'rename') {
+          this.audioManager.playSfx('cancel');
+          this.finishAll();
+        } else {
+          this.confirmCurrentAndAdvance();
+        }
+      },
+      { signal }
+    );
   }
 
   public isOpen(): boolean {
@@ -161,11 +213,21 @@ export class RecruitNicknameOverlay {
       prev();
     }
 
+    this.mode = 'recruit';
+    this.activeSaveManagerOverride = null;
     this.queue = [...units];
     this.queueIndex = 0;
-    this.bannerEl.textContent =
-      options?.bannerText ?? 'Give your newly recruited Pokémon a custom nickname (or keep their species name)!';
-    this.skipAllBtn.hidden = units.length <= 1;
+
+    const banner = options?.bannerText?.trim() ?? '';
+    this.bannerEl.textContent = banner;
+    this.bannerEl.hidden = banner.length === 0;
+
+    this.modalTitleEl.textContent = 'NEW ALLY';
+    this.cancelBtn.hidden = true;
+    this.secondaryBtn.textContent = 'Skip';
+    this.secondaryBtn.hidden = units.length <= 1;
+    this.stepBadgeEl.hidden = units.length <= 1;
+
     this.rootEl.hidden = false;
     this.audioManager.playSfx('heal');
     this.renderCurrentUnit();
@@ -176,9 +238,51 @@ export class RecruitNicknameOverlay {
     });
   }
 
+  public async promptRenameUnit(
+    instanceId: string,
+    overrideManager?: SaveStateManager
+  ): Promise<void> {
+    const mgr = overrideManager ?? this.saveManager;
+    const save = mgr.getSave();
+    const unit = save?.roster.find((u) => u.instanceId === instanceId);
+    if (!unit) return;
+
+    if (this.resolver) {
+      const prev = this.resolver;
+      this.resolver = null;
+      prev();
+    }
+
+    this.mode = 'rename';
+    this.activeSaveManagerOverride = mgr;
+    this.queue = [unit];
+    this.queueIndex = 0;
+
+    this.modalTitleEl.textContent = 'RENAME';
+    this.bannerEl.hidden = true;
+    this.stepBadgeEl.hidden = true;
+    this.cancelBtn.hidden = false;
+    this.secondaryBtn.textContent = 'Default';
+    this.secondaryBtn.hidden = false;
+
+    this.rootEl.hidden = false;
+    this.audioManager.playSfx('select');
+    this.renderCurrentUnit();
+    this.onStateChange?.();
+
+    return new Promise<void>((resolve) => {
+      this.resolver = resolve;
+    });
+  }
+
   public handleBack(): void {
     if (!this.isOpen()) return;
-    this.confirmCurrentAndAdvance();
+    if (this.mode === 'rename') {
+      this.audioManager.playSfx('cancel');
+      this.finishAll();
+    } else {
+      this.confirmCurrentAndAdvance();
+    }
   }
 
   private renderCurrentUnit(): void {
@@ -190,15 +294,20 @@ export class RecruitNicknameOverlay {
 
     const sp = getSpeciesById(current.speciesId);
     const skill = sp ? getPersonalSkillById(sp.personalSkillId) : undefined;
-    const roleTag = current.isLord ? ' ★ [Dragon Lord]' : '';
+    const roleTag = current.isLord ? ' ★' : '';
 
     this.stepBadgeEl.textContent = `${this.queueIndex + 1} / ${this.queue.length}`;
     this.speciesTitleEl.textContent = `${sp?.name ?? current.speciesId}${roleTag}`;
     this.speciesMetaEl.textContent = `Lv. ${current.level} · ${sp?.types.join(' / ') ?? 'Normal'} · ${sp?.traversalClass ?? 'Grounded'}`;
-    this.skillDescEl.textContent = skill ? `Skill: ${skill.name} — ${skill.description}` : '';
+    this.skillDescEl.textContent = skill && this.mode === 'recruit' ? `${skill.name}` : '';
     this.inputEl.value = current.nickname || sp?.name || current.speciesId;
-    this.confirmBtn.textContent =
-      this.queueIndex + 1 < this.queue.length ? 'Save & Next ▶' : 'Confirm & Continue';
+
+    if (this.mode === 'rename') {
+      this.confirmBtn.textContent = 'Save';
+    } else {
+      this.confirmBtn.textContent =
+        this.queueIndex + 1 < this.queue.length ? 'Next ▶' : 'Confirm';
+    }
 
     void this.portraitView.setPortrait({
       speciesIdOrAssetId: current.speciesId,
@@ -208,11 +317,12 @@ export class RecruitNicknameOverlay {
 
   private confirmCurrentAndAdvance(): void {
     const current = this.queue[this.queueIndex];
+    const mgr = this.activeSaveManagerOverride ?? this.saveManager;
     if (current) {
       const sp = getSpeciesById(current.speciesId);
-      const trimmed = this.inputEl.value.trim() || current.nickname || sp?.name || 'Ally';
+      const trimmed = this.inputEl.value.trim() || sp?.name || current.nickname || 'Ally';
       try {
-        this.saveManager.renamePokemon(current.instanceId, trimmed);
+        mgr.renamePokemon(current.instanceId, trimmed);
       } catch {
         // Ignore if save was reset externally
       }
@@ -231,6 +341,7 @@ export class RecruitNicknameOverlay {
     this.rootEl.hidden = true;
     this.queue = [];
     this.queueIndex = 0;
+    this.activeSaveManagerOverride = null;
     this.onStateChange?.();
     if (this.resolver) {
       const done = this.resolver;
@@ -302,17 +413,11 @@ export class QuizScene {
   private partnerTypeFilter: 'All' | 'Grass' | 'Fire' | 'Water' = 'All';
   private computedQuizSeeds: QuizRecruitSeeds | null = null;
 
-  // NG+ Custom Picker Selections (`Q1`..`Q9` option indices)
   private ngPlusSeedChoices: Record<string, QuizOptionKey> = {
     q1: 'A',
     q2: 'A',
     q3: 'A',
     q4: 'A',
-    q5: 'A',
-    q6: 'A',
-    q7: 'A',
-    q8: 'A',
-    q9: 'A',
   };
 
   private activeOptions: OpenQuizSceneOptions = {};
@@ -357,11 +462,11 @@ export class QuizScene {
     const card = document.createElement('div');
     card.className = 'pmd-window';
     card.style.cssText = [
-      'width:min(760px, 96vw)',
+      'width:min(720px, 96vw)',
       'max-height:calc(100dvh - 3.6rem)',
       'display:flex',
       'flex-direction:column',
-      'padding:clamp(0.65rem, 2vw, 1.1rem)',
+      'padding:clamp(0.6rem, 2vw, 1rem)',
       'box-sizing:border-box',
       'overflow:hidden',
     ].join(';');
@@ -372,7 +477,7 @@ export class QuizScene {
       'padding-bottom:6px; margin-bottom:8px; border-bottom:2px solid rgba(248, 248, 248, 0.85); flex-shrink:0;';
     header.innerHTML = `
       <strong data-quiz-header-title style="font-size:clamp(14px, 2.2vw, 18px); color:#f8f800; letter-spacing:0.04em;">
-        AURA PERSONALITY QUIZ
+        AURA QUIZ
       </strong>
       <span class="pmd-chapter-badge" data-quiz-step-badge>Q1 / 9</span>
     `;
@@ -388,7 +493,6 @@ export class QuizScene {
     this.rootEl.appendChild(card);
     mountParent.appendChild(this.rootEl);
 
-    // Ensure `[hidden]` always hides flex container
     const styleEl = document.createElement('style');
     styleEl.textContent = `
       .pmd-quiz-scene[hidden] { display: none !important; }
@@ -403,7 +507,7 @@ export class QuizScene {
       }
       .pmd-quiz-partner-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(114px, 1fr));
         gap: 6px;
         margin-top: 8px;
       }
@@ -531,24 +635,19 @@ export class QuizScene {
   }
 
   private renderModeSelect(): void {
-    this.headerTitleEl.textContent = 'NEW CAMPAIGN — SELECT MODE';
-    this.headerStepBadgeEl.textContent = 'NG+ UNLOCKED';
+    this.headerTitleEl.textContent = 'NEW GAME';
+    this.headerStepBadgeEl.textContent = 'NG+';
 
     const wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex; flex-direction:column; gap:8px;';
+    wrap.className = 'pmd-menu-list';
+    wrap.style.cssText = 'display:flex; flex-direction:column; gap:0;';
     wrap.innerHTML = `
-      <p style="margin:0; color:#f8f8f8; font-size:14px; line-height:1.45; background:#16344c; border:2px solid rgba(168, 192, 224, 0.45); padding:8px 10px;">
-        A mysterious voice echoes from across the Five Kingdoms... Because New Game+ is unlocked,
-        you may either answer the 9-question Aura Quiz or hand-pick your Dragon Lord, Partner, and chapter recruits!
-      </p>
-      <div class="pmd-menu-list" style="display:flex; flex-direction:column; gap:0;">
-        <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row pmd-quiz-opt-btn" data-testid="quiz-mode-standard-btn">
-          <span><strong>Standard Personality Quiz</strong><br/><small style="color:#a8e0f8;">Answer 9 questions to discover your Dragon Lord &amp; chapter allies</small></span>
-        </button>
-        <button type="button" class="pmd-btn pmd-menu-row pmd-quiz-opt-btn" data-testid="quiz-mode-ngplus-btn">
-          <span><strong>New Game+ Custom Roster Selector</strong><br/><small style="color:#58f858;">Directly choose your Dragon Lord, Partner, Healer &amp; Q2–Q9 recruits</small></span>
-        </button>
-      </div>
+      <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row pmd-quiz-opt-btn" data-testid="quiz-mode-standard-btn">
+        <span><strong>Personality Quiz</strong> — <small style="color:#a8e0f8;">9 questions</small></span>
+      </button>
+      <button type="button" class="pmd-btn pmd-menu-row pmd-quiz-opt-btn" data-testid="quiz-mode-ngplus-btn">
+        <span><strong>Custom Roster (NG+)</strong> — <small style="color:#58f858;">Pick every unit</small></span>
+      </button>
     `;
 
     bindPointerTap(wrap.querySelector('[data-testid="quiz-mode-standard-btn"]'), () => {
@@ -569,8 +668,8 @@ export class QuizScene {
 
   private renderQuestionStep(): void {
     const q = PERSONALITY_QUIZ_QUESTIONS[this.questionIndex] ?? PERSONALITY_QUIZ_QUESTIONS[0]!;
-    this.headerTitleEl.textContent = 'AURA PERSONALITY QUIZ';
-    this.headerStepBadgeEl.textContent = `Q${this.questionIndex + 1} / ${PERSONALITY_QUIZ_QUESTIONS.length}`;
+    this.headerTitleEl.textContent = 'AURA QUIZ';
+    this.headerStepBadgeEl.textContent = `${this.questionIndex + 1} / ${PERSONALITY_QUIZ_QUESTIONS.length}`;
 
     const wrap = document.createElement('div');
     wrap.style.cssText = 'display:flex; flex-direction:column; gap:8px;';
@@ -578,7 +677,7 @@ export class QuizScene {
     const promptP = document.createElement('p');
     promptP.dataset.testid = 'quiz-question-prompt';
     promptP.style.cssText =
-      'margin:0; color:#f8f8f8; font-size:clamp(14px, 2.1vw, 16px); line-height:1.45; background:#16344c; border:2px solid #a8c0e0; padding:8px 10px;';
+      'margin:0; color:#f8f8f8; font-size:clamp(14px, 2.1vw, 16px); line-height:1.4; background:#16344c; border:2px solid #a8c0e0; padding:8px 10px;';
     promptP.textContent = q.prompt;
     wrap.appendChild(promptP);
 
@@ -616,8 +715,8 @@ export class QuizScene {
   }
 
   private renderLordRevealStep(): void {
-    this.headerTitleEl.textContent = 'YOUR DRAGON AURA AWAKENS!';
-    this.headerStepBadgeEl.textContent = 'LORD REVEAL';
+    this.headerTitleEl.textContent = 'YOUR DRAGON AURA';
+    this.headerStepBadgeEl.textContent = 'LORD';
 
     const lordMeta =
       DRAGON_LORD_OPTIONS.find((d) => d.speciesId === this.selectedLordSpeciesId) ??
@@ -637,17 +736,17 @@ export class QuizScene {
       <div class="pmd-forecast-portrait-slot" data-quiz-lord-portrait></div>
       <div style="flex:1; min-width:190px;">
         <div style="font-size:16px; font-weight:700; color:#f8f800;" data-testid="quiz-revealed-lord-name">
-          ${sp?.name ?? lordMeta.speciesId} — ${lordMeta.traitLabel}
+          ${sp?.name ?? lordMeta.speciesId} · ${lordMeta.traitLabel}
         </div>
         <div style="font-size:12px; color:#a8e0f8; margin-top:2px;">
-          Type: ${sp?.types.join(' / ') ?? 'Dragon'} · Prologue Healer Friend: <strong style="color:#f8f800;">${healerSp?.name ?? healerId}</strong>
+          ${sp?.types.join(' / ') ?? 'Dragon'} · Healer: <strong style="color:#f8f800;">${healerSp?.name ?? healerId}</strong>
         </div>
-        <p style="margin:6px 0 0; font-size:13px; color:#f8f8f8; line-height:1.4;">
+        <div style="margin-top:4px; font-size:13px; color:#f8f8f8;">
           ${lordMeta.auraSummary}
-        </p>
-        <p style="margin:4px 0 0; font-size:12px; color:#58f858;">
-          Personal Skill: <strong>${skill?.name ?? 'Dragon Aura'}</strong> — ${skill?.description ?? 'Grants +2 Atk/SpA/+10 Hit to allies within 2 tiles.'}
-        </p>
+        </div>
+        <div style="margin-top:3px; font-size:12px; color:#58f858;">
+          <strong>${skill?.name ?? 'Dragon Aura'}</strong>: ${skill?.description ?? '+2 Atk/SpA, +10 Hit within 2 tiles.'}
+        </div>
       </div>
     `;
 
@@ -666,7 +765,7 @@ export class QuizScene {
     actionRow.style.cssText = 'display:flex; flex-wrap:wrap; gap:0.45rem; justify-content:space-between;';
     actionRow.innerHTML = `
       <button type="button" class="pmd-btn" data-testid="quiz-toggle-override-lord-btn" style="min-height:44px;">
-        ${this.overrideLordDrawerOpen ? 'Hide Dragon Lord List' : 'Choose Another Dragon Lord'}
+        ${this.overrideLordDrawerOpen ? 'Hide List' : 'Change Lord'}
       </button>
       <button type="button" class="pmd-btn pmd-btn-primary" data-testid="quiz-accept-lord-btn" style="min-height:44px;">
         Continue as ${sp?.name ?? lordMeta.speciesId} ▶
@@ -712,8 +811,8 @@ export class QuizScene {
   }
 
   private renderPartnerSelectStep(): void {
-    this.headerTitleEl.textContent = 'CHOOSE YOUR PARTNER STARTER';
-    this.headerStepBadgeEl.textContent = 'PARTNER SELECT';
+    this.headerTitleEl.textContent = 'CHOOSE PARTNER';
+    this.headerStepBadgeEl.textContent = 'PARTNER';
 
     const allStarters = getStarterPartnerOptions();
     const filtered =
@@ -739,12 +838,12 @@ export class QuizScene {
         <div class="pmd-forecast-portrait-slot" data-quiz-partner-portrait></div>
         <div>
           <strong style="color:#f8f800; font-size:16px;" data-testid="quiz-selected-partner-name">${activeSp.name}</strong>
-          <div style="font-size:12px; color:#a8e0f8;">${activeSp.types.join(' / ')} · Mov ${activeSp.baseStats.mov} · Skill: <span style="color:#58f858;">${activeSkill?.name ?? activeSp.personalSkillId}</span></div>
-          <div style="font-size:12px; color:#f8f8f8; margin-top:2px;">${activeSkill?.description ?? ''}</div>
+          <div style="font-size:12px; color:#a8e0f8;">${activeSp.types.join(' / ')} · Mov ${activeSp.baseStats.mov}</div>
+          <div style="font-size:12px; color:#58f858; margin-top:2px;"><strong>${activeSkill?.name ?? activeSp.personalSkillId}</strong>: ${activeSkill?.description ?? ''}</div>
         </div>
       </div>
       <button type="button" class="pmd-btn pmd-btn-primary" data-testid="quiz-confirm-partner-btn" style="min-height:44px;">
-        Begin Campaign with ${activeSp.name} ▶
+        Start with ${activeSp.name} ▶
       </button>
     `;
 
@@ -768,7 +867,6 @@ export class QuizScene {
     });
     wrap.appendChild(previewCard);
 
-    // Elemental Filter Bar
     const filterRow = document.createElement('div');
     filterRow.style.cssText = 'display:flex; flex-wrap:wrap; gap:0.35rem;';
     for (const f of ['All', 'Grass', 'Fire', 'Water'] as const) {
@@ -811,13 +909,13 @@ export class QuizScene {
   }
 
   private renderNgPlusPicker(): void {
-    this.headerTitleEl.textContent = 'NEW GAME+ CUSTOM ROSTER PICKER';
-    this.headerStepBadgeEl.textContent = 'NG+ SELECTOR';
+    this.headerTitleEl.textContent = 'CUSTOM ROSTER';
+    this.headerStepBadgeEl.textContent = 'NG+';
 
     const starters = getStarterPartnerOptions();
     const wrap = document.createElement('div');
     wrap.dataset.testid = 'ngplus-selector-panel';
-    wrap.style.cssText = 'display:flex; flex-direction:column; gap:0.55rem;';
+    wrap.style.cssText = 'display:flex; flex-direction:column; gap:0.5rem;';
 
     const buildChoiceGroup = (
       title: string,
@@ -853,7 +951,7 @@ export class QuizScene {
 
     wrap.appendChild(
       buildChoiceGroup(
-        '1. Dragon Lord (Stage 1)',
+        '1. Dragon Lord',
         DRAGON_LORD_OPTIONS.map((d) => ({
           id: d.speciesId,
           label: getSpeciesById(d.speciesId)?.name ?? d.speciesId,
@@ -868,7 +966,7 @@ export class QuizScene {
 
     wrap.appendChild(
       buildChoiceGroup(
-        '2. Partner Starter (Stage 1)',
+        '2. Partner',
         starters.map((s) => ({
           id: s.id,
           label: s.name,
@@ -881,19 +979,14 @@ export class QuizScene {
       )
     );
 
-    const slotLabels: ReadonlyArray<{ qIndex: number; key: string; title: string }> = [
-      { qIndex: 0, key: 'q1', title: '3. Prologue Healer Friend (Q1)' },
-      { qIndex: 1, key: 'q2', title: '4. Ch. 1 / Dungeon 2 Bug & Flying Duo (Q2)' },
-      { qIndex: 2, key: 'q3', title: '5. Ch. 2 / Dungeon 3 Ghost & Psychic Duo (Q3)' },
-      { qIndex: 3, key: 'q4', title: '6. Ch. 4 / Dungeon 5 Electric Tracker (Q4)' },
-      { qIndex: 4, key: 'q5', title: '7. Ch. 5 Frontline Trio (Q5)' },
-      { qIndex: 5, key: 'q6', title: '8. Ch. 7 Elemental Duo (Q6)' },
-      { qIndex: 6, key: 'q7', title: '9. Ch. 8 Fire Vanguard (Q7)' },
-      { qIndex: 7, key: 'q8', title: '10. Ch. 10 Steel & Fairy Duo (Q8)' },
-      { qIndex: 8, key: 'q9', title: '11. Ch. 12 Ice & Armored Duo (Q9)' },
+    const demoSlots: ReadonlyArray<{ qIndex: number; key: string; title: string }> = [
+      { qIndex: 0, key: 'q1', title: '3. Beach Cave Healer' },
+      { qIndex: 1, key: 'q2', title: '4. Drenched Bluff Duo' },
+      { qIndex: 2, key: 'q3', title: '5. Mt. Bristle Duo' },
+      { qIndex: 3, key: 'q4', title: '6. Apple Woods Tracker' },
     ];
 
-    for (const slot of slotLabels) {
+    for (const slot of demoSlots) {
       const qDef = PERSONALITY_QUIZ_QUESTIONS[slot.qIndex]!;
       wrap.appendChild(
         buildChoiceGroup(
@@ -918,18 +1011,18 @@ export class QuizScene {
     confirmBtn.className = 'pmd-btn pmd-btn-primary';
     confirmBtn.dataset.testid = 'ngplus-confirm-roster-btn';
     confirmBtn.style.minHeight = '46px';
-    confirmBtn.textContent = 'Start New Game+ Campaign with Custom Roster ▶';
+    confirmBtn.textContent = 'Start Campaign ▶';
     bindPointerTap(confirmBtn, () => {
       const answerArray: QuizOptionKey[] = [
         this.ngPlusSeedChoices.q1 ?? 'A',
         this.ngPlusSeedChoices.q2 ?? 'A',
         this.ngPlusSeedChoices.q3 ?? 'A',
         this.ngPlusSeedChoices.q4 ?? 'A',
-        this.ngPlusSeedChoices.q5 ?? 'A',
-        this.ngPlusSeedChoices.q6 ?? 'A',
-        this.ngPlusSeedChoices.q7 ?? 'A',
-        this.ngPlusSeedChoices.q8 ?? 'A',
-        this.ngPlusSeedChoices.q9 ?? 'A',
+        'A',
+        'A',
+        'A',
+        'A',
+        'A',
       ];
       const evaluated = evaluatePersonalityQuiz(answerArray);
       void this.finalizeCampaignCreation(
@@ -950,16 +1043,10 @@ export class QuizScene {
   ): Promise<void> {
     this.audioManager.playSfx('heal');
     const campaignMode: CampaignMode = this.activeOptions.campaignMode ?? 'demo';
-    const isDemo = campaignMode === 'demo';
-    const startingLevel =
-      this.activeOptions.startingLevel ?? (isDemo ? DEMO_STARTING_LEVEL : 1);
-    const scaleStatsToLevel =
-      this.activeOptions.scaleStatsToLevel ?? isDemo;
-    const initialConvoy =
-      this.activeOptions.initialConvoy ?? (isDemo ? DEMO_INITIAL_CONVOY : undefined);
-    const graph =
-      this.activeOptions.overworldGraph ??
-      (isDemo ? DEMO_OVERWORLD_GRAPH : DEFAULT_OVERWORLD_GRAPH);
+    const startingLevel = this.activeOptions.startingLevel ?? DEMO_STARTING_LEVEL;
+    const scaleStatsToLevel = this.activeOptions.scaleStatsToLevel ?? true;
+    const initialConvoy = this.activeOptions.initialConvoy ?? DEMO_INITIAL_CONVOY;
+    const graph = this.activeOptions.overworldGraph ?? DEMO_OVERWORLD_GRAPH;
 
     const healerSpeciesId = quizSeeds.q1Healer[0] ?? 'happiny';
     const preserveNgPlus = this.saveManager.isNewGamePlusUnlocked();
@@ -983,10 +1070,7 @@ export class QuizScene {
     this.close();
 
     if (!skipPrompts && created.roster.length > 0) {
-      await this.nicknameOverlay.promptRecruits(created.roster, {
-        bannerText:
-          'Name your awakened Dragon Lord, Partner Starter, and Prologue Healer Friend!',
-      });
+      await this.nicknameOverlay.promptRecruits(created.roster);
     }
 
     const latest = this.saveManager.getSave() ?? created;

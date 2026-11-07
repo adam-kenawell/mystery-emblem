@@ -40,24 +40,20 @@ import {
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
 import type { ReinforcementWaveDefinition } from '../data/campaignRegistry';
 import {
+  cloneDungeonMap,
   getEffectiveChapterMap,
   hasChapterMapOverride,
   subscribeChapterMapChanges,
 } from '../data/chapterMapRegistry';
 import { getItemById, getMoveById, getPersonalSkillById } from '../data/index';
 import {
-  DEFAULT_VANGUARD_ENEMY_SPAWNS,
   buildBattleUnitsFromPrepDeployment,
   buildSingleEnemyBattleUnit,
-  createDefaultDrenchedBluffPrepManager,
+  createFallbackBattlePrepManager,
   createInitialPrepDeploymentSlots,
-  createPlayableVanguardBattleMap,
   getMapDeploymentCap,
   resolveEnemySpawnsForMap,
-  type ManualEnemyBattleSpawn,
-  type PrepDeploymentSlot,
-} from '../data/playableBattleMap';
-import { cloneDungeonMap } from '../data/testDungeonMap';
+} from '../engine/battleSetup';
 import {
   computeCombatForecast,
   computeHealForecast,
@@ -103,13 +99,17 @@ import type {
   BattleObjectiveType,
   ConvoyEntry,
   DungeonMapDefinition,
+  ManualEnemyBattleSpawn,
   PokemonType,
+  PrepDeploymentSlot,
   TraversalClass,
 } from '../types/schemas';
 import { DungeonPrepOverlay, type PrepSubMode } from '../ui/DungeonPrepOverlay';
 import { PmdPortraitView } from '../ui/PmdSpriteCanvas';
 import { bindPointerTap } from '../ui/pointerControls';
-import { BATTLE_TILE_DISPLAY_PX, BATTLE_TILE_SCALE } from './TestDungeonScene';
+
+export const BATTLE_TILE_SCALE = 2;
+export const BATTLE_TILE_DISPLAY_PX = PMD_TILE_NATIVE_PX * BATTLE_TILE_SCALE;
 
 const DRAG_THRESHOLD_PX = 8;
 const LONG_PRESS_MS = 520;
@@ -171,6 +171,7 @@ export interface BattleSceneOptions {
   audioManager?: AudioManager;
   onExit: () => void;
   onLayerStateChanged: () => void;
+  onRequestRenameUnit?: (instanceId: string) => Promise<void> | void;
 }
 
 export interface BattleSceneSnapshot {
@@ -254,6 +255,7 @@ export class BattleScene {
   private readonly audioManager: AudioManager;
   private readonly onExitCallback: () => void;
   private readonly onLayerStateChanged: () => void;
+  private readonly onRequestRenameUnit?: (instanceId: string) => Promise<void> | void;
 
   private readonly rootEl: HTMLElement;
   private readonly canvasStageEl: HTMLElement;
@@ -287,6 +289,7 @@ export class BattleScene {
   private readonly levelUpPortraitView: PmdPortraitView;
   private readonly systemMenuBackdropEl: HTMLElement;
   private readonly systemDangerBtnEl: HTMLButtonElement;
+  private readonly systemAudioBtnEl: HTMLButtonElement;
   private readonly systemEndPhaseBtnEl: HTMLButtonElement;
   private readonly victoryModalBackdropEl: HTMLElement;
   private readonly defeatModalBackdropEl: HTMLElement;
@@ -300,7 +303,7 @@ export class BattleScene {
   private openState = false;
   private battleRunGen = 0;
   private previousBgmId: string | null = null;
-  private activeLevelId = 'drenched_bluff_vanguard';
+  private activeLevelId = 'prologue';
   private explicitCustomMap: DungeonMapDefinition | null = null;
   private explicitEnemyOverrides: ReadonlyArray<ManualEnemyBattleSpawn> | undefined = undefined;
   private explicitObjectiveType: BattleObjectiveType | undefined = undefined;
@@ -318,8 +321,10 @@ export class BattleScene {
   private levelUpResolver: (() => void) | null = null;
   private currentOnVictory: (() => void) | undefined = undefined;
   private victoryCallbackFired = false;
-  private map: DungeonMapDefinition = createPlayableVanguardBattleMap();
-  private enemySpawnDefs: ReadonlyArray<ManualEnemyBattleSpawn> = DEFAULT_VANGUARD_ENEMY_SPAWNS;
+  private map: DungeonMapDefinition = getEffectiveChapterMap('prologue');
+  private enemySpawnDefs: ReadonlyArray<ManualEnemyBattleSpawn> = resolveEnemySpawnsForMap(
+    this.map
+  );
   private guestPrepManager: SaveStateManager | null = null;
   private deploymentSlots: PrepDeploymentSlot[] = [];
   private prepSwapSlotIndex: number | null = null;
@@ -396,6 +401,7 @@ export class BattleScene {
     this.audioManager = options.audioManager ?? getAudioManager();
     this.onExitCallback = options.onExit;
     this.onLayerStateChanged = options.onLayerStateChanged;
+    this.onRequestRenameUnit = options.onRequestRenameUnit;
 
     this.tintScratchCanvas = document.createElement('canvas');
     this.tintScratchCanvas.width = 96;
@@ -601,9 +607,10 @@ export class BattleScene {
     this.systemMenuBackdropEl.innerHTML = `
       <div class="pmd-window pmd-battle-system-dialog" role="dialog" aria-modal="true" aria-label="Battlefield Menu">
         <h3 class="pmd-panel-title">BATTLE MENU</h3>
-        <p class="pmd-panel-sub" data-sys-sub>Turn 1 · Drenched Bluff</p>
+        <p class="pmd-panel-sub" data-sys-sub>Turn 1 · Beach Cave</p>
         <div class="pmd-battle-system-actions pmd-menu-list">
           <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-sys-danger">Danger Area: OFF</button>
+          <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-sys-audio">Audio: ON</button>
           <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row" data-testid="battle-sys-end-phase">End Phase</button>
           <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-sys-restart">Restart Match</button>
           <button type="button" class="pmd-btn pmd-btn-danger pmd-menu-row" data-testid="battle-sys-exit">Return to Menu</button>
@@ -613,6 +620,9 @@ export class BattleScene {
     `;
     this.systemDangerBtnEl = this.systemMenuBackdropEl.querySelector(
       '[data-testid="battle-sys-danger"]'
+    )!;
+    this.systemAudioBtnEl = this.systemMenuBackdropEl.querySelector(
+      '[data-testid="battle-sys-audio"]'
     )!;
     this.systemEndPhaseBtnEl = this.systemMenuBackdropEl.querySelector(
       '[data-testid="battle-sys-end-phase"]'
@@ -712,6 +722,7 @@ export class BattleScene {
       getSelectedSwapSlotIndex: () => this.prepSwapSlotIndex,
       onToggleDeployUnit: (instanceId) => this.togglePrepDeployUnit(instanceId),
       onRosterOrLoadoutMutated: () => this.rebuildPrepBattleUnits(),
+      onRequestRenameUnit: (instanceId) => this.onRequestRenameUnit?.(instanceId),
       onEnterViewMap: () => {
         this.prepSwapSlotIndex = null;
         this.syncPrepChromeVisibility();
@@ -790,8 +801,7 @@ export class BattleScene {
     hideReplayOnVictory?: boolean;
   }): Promise<void> {
     this.battleRunGen += 1;
-    this.activeLevelId =
-      options?.levelId?.trim() || options?.customMap?.id || 'drenched_bluff_vanguard';
+    this.activeLevelId = options?.levelId?.trim() || options?.customMap?.id || 'prologue';
     this.explicitCustomMap = options?.customMap ? cloneDungeonMap(options.customMap) : null;
     this.explicitEnemyOverrides = options?.enemyOverrides;
     this.explicitObjectiveType = options?.objectiveType;
@@ -843,7 +853,7 @@ export class BattleScene {
 
     if (this.saveManager.getSave() === null) {
       this.guestPrepManager?.dispose();
-      this.guestPrepManager = createDefaultDrenchedBluffPrepManager(
+      this.guestPrepManager = createFallbackBattlePrepManager(
         Math.max(5, getMapDeploymentCap(this.map) + 2)
       );
     }
@@ -1054,6 +1064,72 @@ export class BattleScene {
     this.renderFrame(performance.now());
   }
 
+  public cheatFullHealSquad(): void {
+    if (!this.openState) return;
+    for (const u of this.units) {
+      if (u.faction !== 'player' || u.defeated) continue;
+      u.currentHp = u.maxHp;
+      u.status = null;
+      u.statusTurns = 0;
+      u.waited = false;
+      for (const slot of u.activeMoves) {
+        slot.ppRemaining = slot.maxPp;
+      }
+      this.spawnFloatingText(u.x, u.y, 'FULL HEAL!', '#68f8a8', 900);
+    }
+    this.audioManager.playSfx('heal');
+    this.showPhaseBanner('SQUAD FULLY RESTORED!');
+    this.recomputeDangerArea();
+    this.syncHudControls();
+    this.updateInfoStrip();
+    this.renderFrame(performance.now());
+  }
+
+  public cheatInstantWin(): void {
+    if (!this.openState) return;
+    if (this.phase === 'dungeon_prep') {
+      this.confirmEnterDungeonFromPrep();
+    }
+    if (this.phase !== 'player_phase' && this.phase !== 'enemy_phase') {
+      return;
+    }
+    this.battleRunGen += 1;
+    this.activeWalk = null;
+    this.activeStrikeVfx = null;
+    for (const enemy of this.getLivingEnemies()) {
+      if (enemy.droppableItemId) {
+        this.collectedDrops.push(enemy.droppableItemId);
+        enemy.droppableItemId = null;
+      }
+      enemy.currentHp = 0;
+      enemy.defeated = true;
+      this.trackedEnemyIds.delete(enemy.id);
+    }
+    this.recomputeDangerArea();
+    this.triggerVictoryModal();
+  }
+
+  public refreshFromExternalSaveCheat(): void {
+    if (!this.openState) return;
+    if (this.phase === 'dungeon_prep') {
+      const activeSave = this.getActivePrepSaveManager().getSave();
+      if (activeSave) {
+        const rosterIds = new Set(activeSave.roster.map((u) => u.instanceId));
+        const slotsStillValid =
+          this.deploymentSlots.length > 0 &&
+          this.deploymentSlots.every(
+            (s) => s.unitInstanceId === null || rosterIds.has(s.unitInstanceId)
+          ) &&
+          this.deploymentSlots.some((s) => s.unitInstanceId !== null);
+        if (!slotsStillValid) {
+          this.deploymentSlots = createInitialPrepDeploymentSlots(this.map, activeSave.roster);
+        }
+        this.rebuildPrepBattleUnits();
+        this.prepOverlay.refreshAll();
+      }
+    }
+  }
+
   public centerCameraOnTile(tx: number, ty: number): void {
     const targetWorldX =
       tx * PMD_TILE_NATIVE_PX + PMD_TILE_NATIVE_PX / 2 - this.bufferWidth / 2;
@@ -1194,7 +1270,7 @@ export class BattleScene {
       return this.saveManager;
     }
     if (!this.guestPrepManager) {
-      this.guestPrepManager = createDefaultDrenchedBluffPrepManager();
+      this.guestPrepManager = createFallbackBattlePrepManager();
     }
     return this.guestPrepManager;
   }
@@ -1285,7 +1361,7 @@ export class BattleScene {
     this.rebuildPrepBattleUnits();
     return {
       ok: true,
-      message: `${unit.nickname} will enter the dungeon at (${openSlot.x}, ${openSlot.y})!`,
+      message: `${unit.nickname} deployed.`,
     };
   }
 
@@ -1518,6 +1594,17 @@ export class BattleScene {
 
     // Battlefield System Menu Buttons
     bindPointerTap(this.systemDangerBtnEl, () => this.toggleGlobalDangerArea(), { signal });
+    bindPointerTap(
+      this.systemAudioBtnEl,
+      () => {
+        const muted = this.audioManager.toggleMute();
+        if (!muted) {
+          this.audioManager.playSfx('select');
+        }
+        this.syncSystemAudioButton();
+      },
+      { signal }
+    );
     bindPointerTap(
       this.systemEndPhaseBtnEl,
       () => {
@@ -2033,8 +2120,8 @@ export class BattleScene {
           (u) => u.instanceId === clickedSlot.unitInstanceId
         );
         this.infoStripEl.textContent = selectedOwned
-          ? `Selected ${selectedOwned.nickname} (${tx},${ty}) — tap another blue starting tile to switch positions.`
-          : `Selected starting tile (${tx},${ty}) — tap another blue starting tile to switch.`;
+          ? `Selected ${selectedOwned.nickname} — tap another blue tile to swap.`
+          : 'Selected starting tile — tap another blue tile to swap.';
         this.onLayerStateChanged();
         this.renderFrame(performance.now());
         return;
@@ -2042,7 +2129,7 @@ export class BattleScene {
 
       if (clickedSlot) {
         this.audioManager.playSfx('dialogue_advance');
-        this.infoStripEl.textContent = `(${tx},${ty}) Open Starting Tile — tap a deployed Pokémon on a blue tile first to move it here.`;
+        this.infoStripEl.textContent = 'Open starting tile — tap a deployed unit first.';
         this.renderFrame(performance.now());
         return;
       }
@@ -2093,9 +2180,9 @@ export class BattleScene {
         (u) => u.instanceId === sourceSlot.unitInstanceId
       );
       if (unitAtDest && unitAtSource) {
-        this.infoStripEl.textContent = `Swapped ${unitAtDest.nickname} (${clickedSlot.x},${clickedSlot.y}) and ${unitAtSource.nickname} (${sourceSlot.x},${sourceSlot.y})!`;
+        this.infoStripEl.textContent = `Swapped ${unitAtDest.nickname} and ${unitAtSource.nickname}.`;
       } else if (unitAtDest) {
-        this.infoStripEl.textContent = `Moved ${unitAtDest.nickname} to starting tile (${clickedSlot.x},${clickedSlot.y})!`;
+        this.infoStripEl.textContent = `Moved ${unitAtDest.nickname}.`;
       } else {
         this.updateInfoStrip();
       }
@@ -2108,7 +2195,7 @@ export class BattleScene {
     this.prepSwapSlotIndex = null;
     this.audioManager.playSfx('cancel');
     this.prepOverlay.syncMapHudState();
-    this.infoStripEl.textContent = `Cannot move unit to (${tx},${ty}) — units can only swap among blue starting tiles!`;
+    this.infoStripEl.textContent = 'Units can only swap among blue starting tiles.';
     this.onLayerStateChanged();
     this.renderFrame(performance.now());
   }
@@ -2624,15 +2711,23 @@ export class BattleScene {
     );
     const atkSide = forecast.attackerSide;
     if (subEl) {
-      const rangeWord = forecast.distance === 1 ? 'Melee' : 'Ranged';
-      subEl.textContent = `Range ${forecast.distance} (${rangeWord}) · ${atkSide.move.category} · ${atkSide.move.type}`;
+      subEl.textContent = `R${forecast.distance} · ${atkSide.move.category} · ${atkSide.move.type}`;
     }
     if (effBadgeEl) {
-      const stabPart = atkSide.hasStab ? ' · STAB 1.25x' : '';
-      effBadgeEl.textContent = `${atkSide.effectivenessLabel} (${atkSide.typeMultiplier}x)${stabPart}`;
       effBadgeEl.className = 'pmd-forecast-eff-badge';
-      if (atkSide.typeMultiplier > 1) effBadgeEl.classList.add('is-super');
-      else if (atkSide.typeMultiplier < 1) effBadgeEl.classList.add('is-resisted');
+      if (atkSide.typeMultiplier === 1 && !atkSide.hasStab) {
+        effBadgeEl.textContent = 'Neutral (1x)';
+        effBadgeEl.hidden = true;
+      } else if (atkSide.typeMultiplier === 1 && atkSide.hasStab) {
+        effBadgeEl.textContent = 'STAB 1.25x';
+        effBadgeEl.hidden = false;
+      } else {
+        const stabPart = atkSide.hasStab ? ' · STAB' : '';
+        effBadgeEl.textContent = `${atkSide.effectivenessLabel} (${atkSide.typeMultiplier}x)${stabPart}`;
+        if (atkSide.typeMultiplier > 1) effBadgeEl.classList.add('is-super');
+        else if (atkSide.typeMultiplier < 1) effBadgeEl.classList.add('is-resisted');
+        effBadgeEl.hidden = false;
+      }
     }
 
     // Target selector pills (shown when 2+ enemies are in range from current tile)
@@ -2685,7 +2780,7 @@ export class BattleScene {
         btn.type = 'button';
         btn.className = `pmd-btn pmd-chip-btn${isSelected ? ' is-active' : ''}`;
         btn.dataset.testid = `forecast-move-${slot.id}`;
-        btn.textContent = `${slot.move.name} (${slot.move.type} · R${slot.range[0]} · PP ${slot.ppRemaining}/${slot.maxPp})`;
+        btn.textContent = `${slot.move.name} · R${slot.range[0]} · ${slot.ppRemaining} PP`;
         bindPointerTap(
           btn,
           () => {
@@ -2732,7 +2827,8 @@ export class BattleScene {
       atkNameEl.textContent = `${attacker.nickname}${attacker.isLord ? ' ★' : ''}`;
     }
     if (atkMetaEl) {
-      atkMetaEl.textContent = `${attacker.speciesName} Lv.${attacker.level} · ${atkTerrainMeta.label}`;
+      const spPrefix = attacker.nickname === attacker.speciesName ? '' : `${attacker.speciesName} `;
+      atkMetaEl.textContent = `${spPrefix}Lv.${attacker.level} · ${atkTerrainMeta.label}`;
     }
     if (atkWpnEl) {
       atkWpnEl.textContent = `[E] ${atkSide.move.name} (Mt ${atkSide.move.mt})`;
@@ -2794,7 +2890,8 @@ export class BattleScene {
         if (dropItem) extraTags.push(`Drops: ${dropItem.name}`);
       }
       const tagSuffix = extraTags.length > 0 ? ` · ${extraTags.join(' · ')}` : '';
-      defMetaEl.textContent = `${defender.speciesName} Lv.${defender.level} · ${defTerrainMeta.label}${tagSuffix}`;
+      const spPrefix = defender.nickname === defender.speciesName ? '' : `${defender.speciesName} `;
+      defMetaEl.textContent = `${spPrefix}Lv.${defender.level} · ${defTerrainMeta.label}${tagSuffix}`;
     }
     if (defHpEl) {
       defHpEl.textContent =
@@ -2811,7 +2908,7 @@ export class BattleScene {
       if (defCritEl) defCritEl.textContent = `${ds.critRate}%`;
     } else {
       if (defWpnEl) {
-        defWpnEl.textContent = `Cannot Counter (${forecast.defenderCounterReason ?? 'Out of Range'})`;
+        defWpnEl.textContent = 'No Counter';
       }
       if (defDmgEl) defDmgEl.textContent = '—';
       if (defHitEl) defHitEl.textContent = '—';
@@ -2888,13 +2985,13 @@ export class BattleScene {
       '[data-testid="forecast-effectiveness-badge"]'
     );
     if (subEl) {
-      const rangeDesc =
-        healForecast.distance === 0 ? 'Self' : `Range ${healForecast.distance} (Support)`;
+      const rangeDesc = healForecast.distance === 0 ? 'Self' : `R${healForecast.distance}`;
       subEl.textContent = `${rangeDesc} · ${healForecast.move.category} · ${healForecast.move.type}`;
     }
     if (effBadgeEl) {
-      effBadgeEl.textContent = `Restores +${healForecast.actualHeal} HP`;
+      effBadgeEl.textContent = `+${healForecast.actualHeal} HP`;
       effBadgeEl.className = 'pmd-forecast-eff-badge is-super';
+      effBadgeEl.hidden = false;
     }
 
     // Target selector pills (shown when 2+ allies/self are healable from current tile)
@@ -2950,7 +3047,7 @@ export class BattleScene {
         btn.type = 'button';
         btn.className = `pmd-btn pmd-chip-btn${isSelected ? ' is-active' : ''}`;
         btn.dataset.testid = `forecast-move-${slot.id}`;
-        btn.textContent = `${slot.move.name} (Heal · R${slot.range[0]} · PP ${slot.ppRemaining}/${slot.maxPp})`;
+        btn.textContent = `${slot.move.name} · R${slot.range[0]} · ${slot.ppRemaining} PP`;
         bindPointerTap(
           btn,
           () => {
@@ -2998,7 +3095,8 @@ export class BattleScene {
       atkNameEl.textContent = `${healer.nickname}${healer.isLord ? ' ★' : ''}`;
     }
     if (atkMetaEl) {
-      atkMetaEl.textContent = `${healer.speciesName} Lv.${healer.level} · ${healerTerrainMeta.label}`;
+      const spPrefix = healer.nickname === healer.speciesName ? '' : `${healer.speciesName} `;
+      atkMetaEl.textContent = `${spPrefix}Lv.${healer.level} · ${healerTerrainMeta.label}`;
     }
     if (atkWpnEl) {
       atkWpnEl.textContent = `${healForecast.move.name} (PP ${healForecast.ppBefore} → ${healForecast.ppAfter})`;
@@ -3052,7 +3150,8 @@ export class BattleScene {
       defNameEl.textContent = `${target.nickname}${target.isLord ? ' ★' : ''}`;
     }
     if (defMetaEl) {
-      defMetaEl.textContent = `${target.speciesName} Lv.${target.level} · ${targetTerrainMeta.label}`;
+      const spPrefix = target.nickname === target.speciesName ? '' : `${target.speciesName} `;
+      defMetaEl.textContent = `${spPrefix}Lv.${target.level} · ${targetTerrainMeta.label}`;
     }
     if (defWpnEl) {
       defWpnEl.textContent = `Recovers +${healForecast.actualHeal} HP (${Math.round((healForecast.projectedTargetHp / target.maxHp) * 100)}% Max)`;
@@ -3916,14 +4015,13 @@ export class BattleScene {
     }
 
     const subEl = this.victoryModalBackdropEl.querySelector('[data-victory-sub]');
-    const summaryEl = this.victoryModalBackdropEl.querySelector('[data-victory-summary]');
+    const summaryEl = this.victoryModalBackdropEl.querySelector<HTMLElement>(
+      '[data-victory-summary]'
+    );
     if (subEl) {
-      subEl.textContent = `${this.map.name} · Cleared in ${this.turnNumber} Turn${this.turnNumber === 1 ? '' : 's'}!`;
+      subEl.textContent = `${this.map.name} · Turn ${this.turnNumber}`;
     }
     if (summaryEl) {
-      const survivors = this.getLivingPlayers()
-        .map((p) => `${p.nickname} Lv.${p.level} (HP ${p.currentHp}/${p.maxHp})`)
-        .join(' · ');
       const lootNames: string[] = [];
       for (const dropId of this.collectedDrops) {
         lootNames.push(getItemById(dropId)?.name ?? dropId);
@@ -3932,9 +4030,13 @@ export class BattleScene {
         const nm = getItemById(rew.itemId)?.name ?? rew.itemId;
         lootNames.push(rew.quantity > 1 ? `${nm} ×${rew.quantity}` : nm);
       }
-      const lootSuffix =
-        lootNames.length > 0 ? ` · Acquired: ${lootNames.join(', ')}!` : '';
-      summaryEl.textContent = `Surviving Party: ${survivors}${lootSuffix}`;
+      if (lootNames.length > 0) {
+        summaryEl.textContent = `Acquired: ${lootNames.join(', ')}`;
+        summaryEl.hidden = false;
+      } else {
+        summaryEl.textContent = '';
+        summaryEl.hidden = true;
+      }
     }
 
     this.victoryModalBackdropEl.hidden = false;
@@ -3953,15 +4055,15 @@ export class BattleScene {
 
     const lord = this.getLordUnit();
     const subEl = this.defeatModalBackdropEl.querySelector('[data-defeat-sub]');
-    const summaryEl = this.defeatModalBackdropEl.querySelector('[data-defeat-summary]');
+    const summaryEl = this.defeatModalBackdropEl.querySelector<HTMLElement>(
+      '[data-defeat-summary]'
+    );
     if (subEl) {
-      subEl.textContent = lord
-        ? `${lord.nickname} (${lord.speciesName}) fell on Turn ${this.turnNumber}!`
-        : `Your squad fell on Turn ${this.turnNumber}!`;
+      subEl.textContent = `${lord ? lord.nickname : 'Squad'} fainted on Turn ${this.turnNumber}.`;
     }
     if (summaryEl) {
-      summaryEl.textContent =
-        'If your Dragon Lord reaches 0 HP, the battle is lost. Restart the match to try a new strategy!';
+      summaryEl.textContent = '';
+      summaryEl.hidden = true;
     }
 
     this.defeatModalBackdropEl.hidden = false;
@@ -4006,15 +4108,22 @@ export class BattleScene {
     this.prepOverlay.syncMapHudState();
   }
 
+  private syncSystemAudioButton(): void {
+    const muted = this.audioManager.getSettings().muted;
+    this.systemAudioBtnEl.textContent = muted ? 'Audio: Muted' : 'Audio: ON';
+    this.systemAudioBtnEl.classList.toggle('is-active', !muted);
+  }
+
   private openSystemMenu(): void {
     this.systemMenuOpen = true;
     const sub = this.systemMenuBackdropEl.querySelector('[data-sys-sub]');
     if (sub) {
       sub.textContent =
         this.phase === 'dungeon_prep'
-          ? `Dungeon Prep · ${this.map.name}`
+          ? `Prep · ${this.map.name}`
           : `Turn ${this.turnNumber} · ${this.map.name}`;
     }
+    this.syncSystemAudioButton();
     this.syncHudControls();
     this.systemMenuBackdropEl.hidden = false;
     this.audioManager.playSfx('select');
@@ -4049,14 +4158,10 @@ export class BattleScene {
     const occupant = this.getLivingUnits().find((u) => u.x === x && u.y === y);
     const contextUnit = this.getSelectedUnit() ?? occupant;
 
-    const parts: string[] = [`(${x},${y}) ${meta.label}`];
+    const parts: string[] = [meta.label];
 
     if (contextUnit) {
       const bonuses = getTerrainBonuses(terrain, contextUnit);
-      const bonusText =
-        bonuses.defBonus || bonuses.avoidBonus
-          ? `+${bonuses.defBonus} Def/SpD, +${bonuses.avoidBonus}% Avo`
-          : '0 Bonus';
       const eqMove = contextUnit.equippedMoveId
         ? getMoveById(contextUnit.equippedMoveId)
         : undefined;
@@ -4070,12 +4175,14 @@ export class BattleScene {
         : contextUnit.isBoss
           ? ' [BOSS]'
           : '';
-      const expSuffix =
-        contextUnit.faction === 'player' ? ` · EXP ${contextUnit.exp ?? 0}/100` : '';
+      const spPrefix =
+        contextUnit.nickname === contextUnit.speciesName ? '' : `${contextUnit.speciesName} `;
       parts.push(
-        `${contextUnit.nickname}${roleBadge} (${contextUnit.speciesName} Lv.${contextUnit.level}${expSuffix} · HP ${contextUnit.currentHp}/${contextUnit.maxHp} · Mov ${effMov}${contextUnit.stationary ? ' [Immovable]' : ''})`,
-        bonusText
+        `${contextUnit.nickname}${roleBadge} (${spPrefix}Lv.${contextUnit.level} · HP ${contextUnit.currentHp}/${contextUnit.maxHp} · Mov ${effMov}${contextUnit.stationary ? ' · Immovable' : ''})`
       );
+      if (bonuses.defBonus || bonuses.avoidBonus) {
+        parts.push(`+${bonuses.defBonus} Def/SpD, +${bonuses.avoidBonus}% Avo`);
+      }
       if (eqMove) {
         parts.push(`[E] ${eqMove.name} (R${eqMove.range[0]})`);
       }

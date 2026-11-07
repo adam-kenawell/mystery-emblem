@@ -1,15 +1,15 @@
 /**
  * Chapter & Level Map Catalog + Persistent Dev Tools Map Override Store
  *
- * Covers every playable level & chapter in Mystery Emblem:
- * - `drenched_bluff_vanguard` — Drenched Bluff (Test Dungeon) [Default selected in Dev Tools]
- * - `skirmish_test_convergence` — Convergence Ruins (Skirmish Sandbox)
- * - `prologue` — Prologue: Beach Cave
- * - `chapter_01`..`chapter_25` — Main Campaign Chapters 1–25 across Acts 1–4
- * - `paralogue_01`..`paralogue_06` — Optional Paralogues 1–6
+ * Covers the 5 playable Demo Dungeons:
+ * - `prologue`   — Dungeon 1: Beach Cave
+ * - `chapter_01` — Dungeon 2: Drenched Bluff
+ * - `chapter_02` — Dungeon 3: Mt. Bristle
+ * - `chapter_03` — Dungeon 4: Waterfall Cave
+ * - `chapter_04` — Dungeon 5: Apple Woods
  *
  * Persists customized maps immediately to `localStorage` (`mystery_emblem_map_overrides_v1`)
- * and syncs via `SaveData.customMaps` to Cloud Firestore (`saves/{uid}`) when signed in.
+ * and syncs via `SaveData.customMaps` / `customMapsEnvelopeJson` to Cloud Firestore (`saves/{uid}`).
  */
 
 import { normalizeTilesetId } from '../assets/tilesetLoader';
@@ -22,23 +22,43 @@ import {
   type TerrainType,
 } from '../types/schemas';
 import { getSpeciesById } from './index';
-import { createPlayableVanguardBattleMap } from './playableBattleMap';
-import {
-  DEFAULT_TERRAIN_PALETTE,
-  cloneDungeonMap,
-  createDefaultTestDungeonMap,
-} from './testDungeonMap';
 
 export const MAP_OVERRIDES_STORAGE_KEY = 'mystery_emblem_map_overrides_v1';
 
-export type ChapterLevelGroup = 'test' | 'act1' | 'act2' | 'act3' | 'act4' | 'paralogue';
+export const DEFAULT_TERRAIN_PALETTE: Readonly<
+  Record<TerrainType, { tilesetId: string; chunkIndex: number }>
+> = {
+  floor: { tilesetId: '142', chunkIndex: 59 },
+  trees: { tilesetId: '142', chunkIndex: 1 },
+  stairs: { tilesetId: '142', chunkIndex: 59 },
+  water: { tilesetId: '142', chunkIndex: 88 },
+  lava: { tilesetId: '110', chunkIndex: 106 },
+  mountain: { tilesetId: '110', chunkIndex: 1 },
+  void: { tilesetId: '061', chunkIndex: 100 },
+  wonder_tile: { tilesetId: '142', chunkIndex: 59 },
+  wall: { tilesetId: '001', chunkIndex: 1 },
+  barrier: { tilesetId: '080', chunkIndex: 15 },
+};
+
+export function cloneDungeonMap(map: DungeonMapDefinition): DungeonMapDefinition {
+  return {
+    id: map.id,
+    name: map.name,
+    bgmCue: map.bgmCue,
+    objectiveType: map.objectiveType,
+    deploymentCap: map.deploymentCap,
+    width: map.width,
+    height: map.height,
+    tiles: map.tiles.map((row) => row.map((c) => ({ ...c }))),
+    playerSpawns: map.playerSpawns.map((s) => ({ ...s })),
+    enemySpawns: map.enemySpawns.map((s) => ({ ...s })),
+  };
+}
 
 export interface ChapterLevelCatalogEntry {
   id: string;
   shortCode: string;
   label: string;
-  group: ChapterLevelGroup;
-  groupLabel: string;
   biomeName: string;
   primaryTilesetId: string;
   bgmCue: string;
@@ -47,6 +67,7 @@ export interface ChapterLevelCatalogEntry {
 
 interface GeneratedChapterSpec {
   entry: ChapterLevelCatalogEntry;
+  objectiveType: 'rout' | 'defeat_boss';
   wallTilesetId: string;
   floorTilesetId: string;
   altFloorTilesetId: string;
@@ -54,13 +75,7 @@ interface GeneratedChapterSpec {
   treeTilesetId?: string;
   mountainTilesetId?: string;
   ascii: ReadonlyArray<string>;
-  enemies: ReadonlyArray<{
-    x: number;
-    y: number;
-    speciesId: string;
-    level: number;
-    nickname: string;
-  }>;
+  enemies: ReadonlyArray<DungeonUnitSpawn>;
 }
 
 const STANDARD_18X12_COASTAL: ReadonlyArray<string> = [
@@ -78,7 +93,22 @@ const STANDARD_18X12_COASTAL: ReadonlyArray<string> = [
   '##################',
 ];
 
-const STANDARD_20X12_WOODLAND: ReadonlyArray<string> = [
+const MT_BRISTLE_20X12_LAYOUT: ReadonlyArray<string> = [
+  '####################',
+  '#...TT....~~...,,,,#',
+  '#.T....S..~~..T,,,S#',
+  '#....T....~~...,,,,#',
+  '#..T....W......,,,M#',
+  '#......,,,,...,,,,,#',
+  '#......,,,,W..,,,,,#',
+  '#..T....~~....T,,,,#',
+  '#.TT....~~...TT,,,S#',
+  '#.......~~.....,,,,#',
+  '#...T..........T...#',
+  '####################',
+];
+
+const APPLE_WOODS_20X12_LAYOUT: ReadonlyArray<string> = [
   '####################',
   '#...TT....~~...,,,,#',
   '#.T....T..~~..T,,,S#',
@@ -91,55 +121,6 @@ const STANDARD_20X12_WOODLAND: ReadonlyArray<string> = [
   '#.......~~.....,,,,#',
   '#...T..........T...#',
   '####################',
-];
-
-const STANDARD_20X13_FORTRESS: ReadonlyArray<string> = [
-  '####################',
-  '#..MM....#...,,,,S.#',
-  '#..MM..T.#...,,,,,M#',
-  '#........B...,,,,,,#',
-  '#..T.....B..T,,,,,,#',
-  '#.....,,,.,,,.,,,,,,#',
-  '#.....,,W.,,,.,,,,,,#',
-  '#.....,,,.,,,.,,,,,,#',
-  '#..T.....B..T,,,,,,#',
-  '#........B...,,,,,,#',
-  '#..MM..T.#...,,,,,S#',
-  '#..MM....#...,,,,,,#',
-  '####################',
-];
-
-const STANDARD_20X13_VOLCANIC: ReadonlyArray<string> = [
-  '####################',
-  '#..MM...LLLL..,,,,.#',
-  '#..MM...LLLL..,,,S.#',
-  '#.......LL....,,,,M#',
-  '#..M.........M,,,,,#',
-  '#.....,,,,,,,.,,,,,#',
-  '#.....,,,W,,,.,,,,,#',
-  '#.....,,,,,,,.,,,,,#',
-  '#..M....LL...M,,,,,#',
-  '#.......LLLL..,,,,M#',
-  '#..MM...LLLL..,,,S.#',
-  '#................,.#',
-  '####################',
-];
-
-const STANDARD_22X14_ABYSS: ReadonlyArray<string> = [
-  '######################',
-  '#...VVVV....MM..,,,,.#',
-  '#...VVVV..T.MM..,,,S.#',
-  '#....VV.........,,,,M#',
-  '#..T......B....T,,,,,#',
-  '#......,,,,,,,..,,,,,#',
-  '#......,,,W,,,..,,,,,#',
-  '#......,,,,,,,..,,,,,#',
-  '#..T......B....T,,,,,#',
-  '#....VV....LL...,,,,M#',
-  '#...VVVV...LL...,,,S.#',
-  '#...VVVV........,,,,W#',
-  '#....................#',
-  '######################',
 ];
 
 const DEFAULT_PLAYER_SPAWN_POOL: ReadonlyArray<{
@@ -156,10 +137,6 @@ const DEFAULT_PLAYER_SPAWN_POOL: ReadonlyArray<{
   { x: 2, y: 8, speciesId: 'duskull', nickname: 'Duskull' },
   { x: 4, y: 4, speciesId: 'abra', nickname: 'Abra' },
   { x: 4, y: 6, speciesId: 'shinx', nickname: 'Shinx' },
-  { x: 2, y: 2, speciesId: 'machop', nickname: 'Machop' },
-  { x: 4, y: 2, speciesId: 'geodude', nickname: 'Geodude' },
-  { x: 4, y: 8, speciesId: 'poliwag', nickname: 'Poliwag' },
-  { x: 2, y: 9, speciesId: 'magby', nickname: 'Magby' },
 ];
 
 function makeCell(
@@ -232,13 +209,12 @@ function buildGeneratedChapterMap(spec: GeneratedChapterSpec): DungeonMapDefinit
   const playerSpawns: DungeonUnitSpawn[] = DEFAULT_PLAYER_SPAWN_POOL.slice(0, cap).map((s) => {
     const safeX = Math.max(1, Math.min(width - 2, s.x));
     const safeY = Math.max(1, Math.min(height - 2, s.y));
-    // Ensure spawn sits on a walkable floor tile
     tiles[safeY]![safeX] = makeCell('floor', spec.floorTilesetId, 59);
     return {
       x: safeX,
       y: safeY,
       speciesId: s.speciesId,
-      level: 1,
+      level: 9,
       nickname: s.nickname,
       heldItemId: null,
     };
@@ -251,12 +227,10 @@ function buildGeneratedChapterMap(spec: GeneratedChapterSpec): DungeonMapDefinit
       tiles[safeY]![safeX] = makeCell('floor', spec.altFloorTilesetId, 59);
     }
     return {
+      ...e,
       x: safeX,
       y: safeY,
-      speciesId: e.speciesId,
-      level: e.level,
-      nickname: e.nickname,
-      heldItemId: null,
+      heldItemId: e.heldItemId ?? null,
     };
   });
 
@@ -264,6 +238,7 @@ function buildGeneratedChapterMap(spec: GeneratedChapterSpec): DungeonMapDefinit
     id: spec.entry.id,
     name: spec.entry.label,
     bgmCue: spec.entry.bgmCue,
+    objectiveType: spec.objectiveType,
     deploymentCap: cap,
     width,
     height,
@@ -273,752 +248,268 @@ function buildGeneratedChapterMap(spec: GeneratedChapterSpec): DungeonMapDefinit
   };
 }
 
-const GENERATED_CHAPTER_SPECS: ReadonlyArray<GeneratedChapterSpec> = [
-  // --- ACT 1: Prologue - Chapter 6 ---
+const DEMO_CHAPTER_SPECS: ReadonlyArray<GeneratedChapterSpec> = [
   {
     entry: {
       id: 'prologue',
-      shortCode: 'Prologue',
-      label: 'Prologue — Beach Cave',
-      group: 'act1',
-      groupLabel: 'Act 1',
+      shortCode: 'D1',
+      label: 'Dungeon 1 — Beach Cave',
       biomeName: 'Beach Cave',
       primaryTilesetId: '001',
       bgmCue: 'beach_cave',
       defaultDeploymentCap: 3,
     },
+    objectiveType: 'rout',
     wallTilesetId: '001',
     floorTilesetId: '001',
     altFloorTilesetId: '108',
     ascii: STANDARD_18X12_COASTAL,
     enemies: [
-      { x: 10, y: 5, speciesId: 'zigzagoon_galar', level: 1, nickname: 'Beach Scout' },
-      { x: 12, y: 3, speciesId: 'rookidee', level: 1, nickname: 'Sky Sentry' },
-      { x: 13, y: 7, speciesId: 'pawniard', level: 2, nickname: 'Ironscale Vanguard' },
+      {
+        x: 12,
+        y: 5,
+        speciesId: 'zigzagoon_galar',
+        level: 9,
+        nickname: 'Coastal Scout',
+        aiMode: 'wait_until_in_range',
+      },
+      {
+        x: 12,
+        y: 3,
+        speciesId: 'impidimp',
+        level: 10,
+        nickname: 'Treasure Raider',
+        droppableItemId: 'evolution_stone',
+        aiMode: 'wait_until_in_range',
+      },
+      {
+        x: 13,
+        y: 7,
+        speciesId: 'pawniard',
+        level: 10,
+        nickname: 'Ironscale Vanguard',
+        aiMode: 'wait_until_in_range',
+      },
     ],
   },
   {
     entry: {
       id: 'chapter_01',
-      shortCode: 'Ch. 1',
-      label: 'Chapter 1 — Drenched Bluff',
-      group: 'act1',
-      groupLabel: 'Act 1',
+      shortCode: 'D2',
+      label: 'Dungeon 2 — Drenched Bluff',
       biomeName: 'Drenched Bluff',
       primaryTilesetId: '003',
       bgmCue: 'drenched_bluff',
       defaultDeploymentCap: 5,
     },
+    objectiveType: 'defeat_boss',
     wallTilesetId: '003',
     floorTilesetId: '003',
     altFloorTilesetId: '142',
     ascii: STANDARD_18X12_COASTAL,
     enemies: [
-      { x: 10, y: 4, speciesId: 'zigzagoon_galar', level: 2, nickname: 'Bluff Raider' },
-      { x: 12, y: 6, speciesId: 'seedot', level: 2, nickname: 'Coastal Guerilla' },
-      { x: 14, y: 3, speciesId: 'rookidee', level: 2, nickname: 'Bluff Harrier' },
-      { x: 14, y: 8, speciesId: 'aron', level: 3, nickname: 'Ironscale Shield' },
+      {
+        x: 12,
+        y: 4,
+        speciesId: 'zigzagoon_galar',
+        level: 9,
+        nickname: 'Bluff Outrider',
+        aiMode: 'wait_until_in_range',
+      },
+      {
+        x: 11,
+        y: 7,
+        speciesId: 'seedot',
+        level: 9,
+        nickname: 'Cliff Guerilla',
+        aiMode: 'wait_until_in_range',
+      },
+      {
+        x: 13,
+        y: 3,
+        speciesId: 'rookidee',
+        level: 10,
+        nickname: 'Bluff Harrier',
+        aiMode: 'wait_until_in_range',
+      },
+      {
+        x: 15,
+        y: 5,
+        speciesId: 'aron',
+        level: 11,
+        nickname: 'Captain Aron',
+        isBoss: true,
+        stationary: true,
+        droppableItemId: 'oran_berry',
+        aiMode: 'stationary',
+      },
     ],
   },
   {
     entry: {
       id: 'chapter_02',
-      shortCode: 'Ch. 2',
-      label: 'Chapter 2 — Mt. Bristle',
-      group: 'act1',
-      groupLabel: 'Act 1',
+      shortCode: 'D3',
+      label: 'Dungeon 3 — Mt. Bristle',
       biomeName: 'Mt. Bristle',
       primaryTilesetId: '014',
       bgmCue: 'mt_bristle',
       defaultDeploymentCap: 6,
     },
+    objectiveType: 'rout',
     wallTilesetId: '014',
     floorTilesetId: '014',
     altFloorTilesetId: '110',
     mountainTilesetId: '014',
-    ascii: STANDARD_20X12_WOODLAND,
+    ascii: MT_BRISTLE_20X12_LAYOUT,
     enemies: [
-      { x: 12, y: 4, speciesId: 'rolycoly', level: 3, nickname: 'Crag Sapper' },
-      { x: 14, y: 7, speciesId: 'zubat', level: 3, nickname: 'Peak Flier' },
-      { x: 16, y: 5, speciesId: 'gothita', level: 4, nickname: 'Commander Gothita' },
+      {
+        x: 12,
+        y: 4,
+        speciesId: 'rolycoly',
+        level: 10,
+        nickname: 'Crag Sapper',
+        aiMode: 'wait_until_in_range',
+      },
+      {
+        x: 13,
+        y: 7,
+        speciesId: 'zubat',
+        level: 10,
+        nickname: 'Peak Flier',
+        aiMode: 'wait_until_in_range',
+      },
+      {
+        x: 16,
+        y: 5,
+        speciesId: 'gothita',
+        level: 11,
+        nickname: 'Hexer Gothita',
+        droppableItemId: 'super_potion',
+        aiMode: 'wait_until_in_range',
+      },
     ],
   },
   {
     entry: {
       id: 'chapter_03',
-      shortCode: 'Ch. 3',
-      label: 'Chapter 3 — Waterfall Cave',
-      group: 'act1',
-      groupLabel: 'Act 1',
+      shortCode: 'D4',
+      label: 'Dungeon 4 — Waterfall Cave',
       biomeName: 'Waterfall Cave',
       primaryTilesetId: '016',
       bgmCue: 'waterfall_cave',
       defaultDeploymentCap: 6,
     },
+    objectiveType: 'rout',
     wallTilesetId: '016',
     floorTilesetId: '016',
     altFloorTilesetId: '075',
     waterTilesetId: '075',
     ascii: STANDARD_18X12_COASTAL,
     enemies: [
-      { x: 10, y: 5, speciesId: 'spheal', level: 4, nickname: 'Falls Guard' },
-      { x: 13, y: 3, speciesId: 'croagunk', level: 4, nickname: 'Cavern Striker' },
-      { x: 14, y: 6, speciesId: 'pawniard', level: 5, nickname: 'Garrison Captain' },
+      {
+        x: 10,
+        y: 5,
+        speciesId: 'spheal',
+        level: 10,
+        nickname: 'Falls Guard',
+        aiMode: 'wait_until_in_range',
+      },
+      {
+        x: 12,
+        y: 3,
+        speciesId: 'tynamo',
+        level: 10,
+        nickname: 'Current Spark',
+        aiMode: 'wait_until_in_range',
+      },
+      {
+        x: 13,
+        y: 7,
+        speciesId: 'croagunk',
+        level: 11,
+        nickname: 'Cavern Striker',
+        droppableItemId: 'protein',
+        aiMode: 'wait_until_in_range',
+      },
+      {
+        x: 15,
+        y: 5,
+        speciesId: 'lairon',
+        level: 11,
+        nickname: 'Ironclad Warden',
+        droppableItemId: 'evolution_stone',
+        aiMode: 'wait_until_in_range',
+      },
     ],
   },
   {
     entry: {
       id: 'chapter_04',
-      shortCode: 'Ch. 4',
-      label: 'Chapter 4 — Apple Woods',
-      group: 'act1',
-      groupLabel: 'Act 1',
+      shortCode: 'D5',
+      label: 'Dungeon 5 — Apple Woods',
       biomeName: 'Apple Woods',
       primaryTilesetId: '042',
       bgmCue: 'apple_woods',
       defaultDeploymentCap: 7,
     },
+    objectiveType: 'defeat_boss',
     wallTilesetId: '042',
     floorTilesetId: '042',
     altFloorTilesetId: '142',
     treeTilesetId: '142',
-    ascii: STANDARD_20X12_WOODLAND,
+    ascii: APPLE_WOODS_20X12_LAYOUT,
     enemies: [
-      { x: 12, y: 3, speciesId: 'seedot', level: 5, nickname: 'Woods Guerilla' },
-      { x: 13, y: 8, speciesId: 'venipede', level: 5, nickname: 'Thicket Stalker' },
-      { x: 16, y: 5, speciesId: 'rookidee', level: 5, nickname: 'Canopy Wing' },
-      { x: 17, y: 6, speciesId: 'nuzleaf', level: 6, nickname: 'Ambush Leader' },
-    ],
-  },
-  {
-    entry: {
-      id: 'chapter_05',
-      shortCode: 'Ch. 5',
-      label: 'Chapter 5 — Craggy Coast',
-      group: 'act1',
-      groupLabel: 'Act 1',
-      biomeName: 'Craggy Coast',
-      primaryTilesetId: '108',
-      bgmCue: 'craggy_coast',
-      defaultDeploymentCap: 8,
-    },
-    wallTilesetId: '108',
-    floorTilesetId: '108',
-    altFloorTilesetId: '003',
-    ascii: STANDARD_18X12_COASTAL,
-    enemies: [
-      { x: 10, y: 5, speciesId: 'sandile', level: 6, nickname: 'Cliff Raider' },
-      { x: 12, y: 3, speciesId: 'zigzagoon_galar', level: 6, nickname: 'Coast Outrider' },
-      { x: 13, y: 8, speciesId: 'impidimp', level: 6, nickname: 'Shadow Trickster' },
-      { x: 15, y: 6, speciesId: 'timburr', level: 7, nickname: 'Breaker Enforcer' },
-    ],
-  },
-  {
-    entry: {
-      id: 'chapter_06',
-      shortCode: 'Ch. 6',
-      label: 'Chapter 6 — Mt. Horn',
-      group: 'act1',
-      groupLabel: 'Act 1',
-      biomeName: 'Mt. Horn',
-      primaryTilesetId: '018',
-      bgmCue: 'mt_horn',
-      defaultDeploymentCap: 8,
-    },
-    wallTilesetId: '018',
-    floorTilesetId: '018',
-    altFloorTilesetId: '014',
-    ascii: STANDARD_20X13_FORTRESS,
-    enemies: [
-      { x: 13, y: 4, speciesId: 'aron', level: 7, nickname: 'Traitor Guard' },
-      { x: 14, y: 8, speciesId: 'corvisquire', level: 8, nickname: 'Sky Vanguard' },
-      { x: 16, y: 5, speciesId: 'lairon', level: 8, nickname: 'Cragforge Captain' },
-      { x: 17, y: 7, speciesId: 'carkol', level: 9, nickname: 'Siege Lieutenant' },
-    ],
-  },
-
-  // --- ACT 2: Chapters 7 - 13 ---
-  {
-    entry: {
-      id: 'chapter_07',
-      shortCode: 'Ch. 7',
-      label: 'Chapter 7 — Foggy Forest',
-      group: 'act2',
-      groupLabel: 'Act 2',
-      biomeName: 'Foggy Forest',
-      primaryTilesetId: '096',
-      bgmCue: 'foggy_forest',
-      defaultDeploymentCap: 9,
-    },
-    wallTilesetId: '096',
-    floorTilesetId: '096',
-    altFloorTilesetId: '142',
-    ascii: STANDARD_20X12_WOODLAND,
-    enemies: [
-      { x: 12, y: 4, speciesId: 'impidimp', level: 9, nickname: 'Mist Stalker' },
-      { x: 14, y: 7, speciesId: 'venipede', level: 9, nickname: 'Fog Ambusher' },
-      { x: 16, y: 5, speciesId: 'honedge', level: 10, nickname: 'Cursed Blade' },
-    ],
-  },
-  {
-    entry: {
-      id: 'chapter_08',
-      shortCode: 'Ch. 8',
-      label: 'Chapter 8 — Steam Cave',
-      group: 'act2',
-      groupLabel: 'Act 2',
-      biomeName: 'Steam Cave',
-      primaryTilesetId: '110',
-      bgmCue: 'steam_cave',
-      defaultDeploymentCap: 9,
-    },
-    wallTilesetId: '110',
-    floorTilesetId: '110',
-    altFloorTilesetId: '018',
-    ascii: STANDARD_20X13_VOLCANIC,
-    enemies: [
-      { x: 13, y: 4, speciesId: 'rolycoly', level: 10, nickname: 'Magma Sentry' },
-      { x: 14, y: 8, speciesId: 'elekid', level: 10, nickname: 'Vent Raider' },
-      { x: 17, y: 6, speciesId: 'carkol', level: 11, nickname: 'Boss Carkol' },
-    ],
-  },
-  {
-    entry: {
-      id: 'chapter_09',
-      shortCode: 'Ch. 9',
-      label: 'Chapter 9 — Amp Plains',
-      group: 'act2',
-      groupLabel: 'Act 2',
-      biomeName: 'Amp Plains',
-      primaryTilesetId: '036',
-      bgmCue: 'amp_plains',
-      defaultDeploymentCap: 9,
-    },
-    wallTilesetId: '042',
-    floorTilesetId: '142',
-    altFloorTilesetId: '120',
-    ascii: STANDARD_20X12_WOODLAND,
-    enemies: [
-      { x: 12, y: 3, speciesId: 'tynamo', level: 11, nickname: 'Plains Spark' },
-      { x: 14, y: 8, speciesId: 'elekid', level: 11, nickname: 'Storm Raider' },
-      { x: 17, y: 5, speciesId: 'gothorita', level: 12, nickname: 'Saboteur Gothorita' },
-    ],
-  },
-  {
-    entry: {
-      id: 'chapter_10',
-      shortCode: 'Ch. 10',
-      label: 'Chapter 10 — Northern Desert',
-      group: 'act2',
-      groupLabel: 'Act 2',
-      biomeName: 'Northern Desert',
-      primaryTilesetId: '017',
-      bgmCue: 'craggy_coast',
-      defaultDeploymentCap: 10,
-    },
-    wallTilesetId: '017',
-    floorTilesetId: '017',
-    altFloorTilesetId: '085',
-    ascii: STANDARD_20X13_FORTRESS,
-    enemies: [
-      { x: 13, y: 4, speciesId: 'sandile', level: 12, nickname: 'Dune Stalker' },
-      { x: 14, y: 8, speciesId: 'skarmory', level: 12, nickname: 'Iron Wing' },
-      { x: 17, y: 6, speciesId: 'krokorok', level: 13, nickname: 'Boss Krokorok' },
-    ],
-  },
-  {
-    entry: {
-      id: 'chapter_11',
-      shortCode: 'Ch. 11',
-      label: 'Chapter 11 — Quicksand Cave',
-      group: 'act2',
-      groupLabel: 'Act 2',
-      biomeName: 'Quicksand Cave',
-      primaryTilesetId: '085',
-      bgmCue: 'depths_of_the_pit',
-      defaultDeploymentCap: 10,
-    },
-    wallTilesetId: '085',
-    floorTilesetId: '085',
-    altFloorTilesetId: '017',
-    ascii: STANDARD_22X14_ABYSS,
-    enemies: [
-      { x: 14, y: 4, speciesId: 'krokorok', level: 13, nickname: 'Sand Sapper' },
-      { x: 15, y: 9, speciesId: 'haunter', level: 14, nickname: 'Shadow Assassin' },
-      { x: 18, y: 6, speciesId: 'morgrem', level: 14, nickname: 'Cabal Captain' },
-    ],
-  },
-  {
-    entry: {
-      id: 'chapter_12',
-      shortCode: 'Ch. 12',
-      label: 'Chapter 12 — Crystal Cave',
-      group: 'act2',
-      groupLabel: 'Act 2',
-      biomeName: 'Crystal Cave',
-      primaryTilesetId: '080',
-      bgmCue: 'cave_and_side_path',
-      defaultDeploymentCap: 10,
-    },
-    wallTilesetId: '080',
-    floorTilesetId: '080',
-    altFloorTilesetId: '082',
-    ascii: STANDARD_20X13_FORTRESS,
-    enemies: [
-      { x: 13, y: 4, speciesId: 'honedge', level: 14, nickname: 'Prism Guard' },
-      { x: 14, y: 9, speciesId: 'lairon', level: 15, nickname: 'Crystal Warden' },
-      { x: 17, y: 6, speciesId: 'doublade', level: 16, nickname: 'Boss Doublade' },
-    ],
-  },
-  {
-    entry: {
-      id: 'chapter_13',
-      shortCode: 'Ch. 13',
-      label: 'Chapter 13 — Crystal Crossing',
-      group: 'act2',
-      groupLabel: 'Act 2',
-      biomeName: 'Crystal Crossing',
-      primaryTilesetId: '025',
-      bgmCue: 'boss_battle',
-      defaultDeploymentCap: 10,
-    },
-    wallTilesetId: '025',
-    floorTilesetId: '025',
-    altFloorTilesetId: '079',
-    waterTilesetId: '082',
-    ascii: STANDARD_18X12_COASTAL,
-    enemies: [
-      { x: 11, y: 4, speciesId: 'sealeo', level: 15, nickname: 'Frost Guard' },
-      { x: 13, y: 8, speciesId: 'bisharp', level: 16, nickname: 'Imperial Blade' },
-      { x: 15, y: 6, speciesId: 'krookodile', level: 17, nickname: 'General Krookodile' },
-    ],
-  },
-
-  // --- ACT 3: Chapters 14 - 20 ---
-  {
-    entry: {
-      id: 'chapter_14',
-      shortCode: 'Ch. 14',
-      label: 'Chapter 14 — Chasm Cave',
-      group: 'act3',
-      groupLabel: 'Act 3',
-      biomeName: 'Chasm Cave',
-      primaryTilesetId: '026',
-      bgmCue: 'depths_of_the_pit',
-      defaultDeploymentCap: 10,
-    },
-    wallTilesetId: '026',
-    floorTilesetId: '026',
-    altFloorTilesetId: '027',
-    ascii: STANDARD_22X14_ABYSS,
-    enemies: [
-      { x: 14, y: 4, speciesId: 'golbat', level: 17, nickname: 'Abyss Wing' },
-      { x: 16, y: 9, speciesId: 'corvisquire', level: 17, nickname: 'Bridge Guard' },
-      { x: 18, y: 6, speciesId: 'skarmory', level: 18, nickname: 'Chasm Warden' },
-    ],
-  },
-  {
-    entry: {
-      id: 'chapter_15',
-      shortCode: 'Ch. 15',
-      label: 'Chapter 15 — Dark Hill',
-      group: 'act3',
-      groupLabel: 'Act 3',
-      biomeName: 'Dark Hill',
-      primaryTilesetId: '064',
-      bgmCue: 'growing_anxiety',
-      defaultDeploymentCap: 11,
-    },
-    wallTilesetId: '064',
-    floorTilesetId: '064',
-    altFloorTilesetId: '061',
-    ascii: STANDARD_20X13_FORTRESS,
-    enemies: [
-      { x: 13, y: 4, speciesId: 'haunter', level: 18, nickname: 'Feral Phantom' },
-      { x: 15, y: 8, speciesId: 'morgrem', level: 18, nickname: 'Night Stalker' },
-      { x: 17, y: 6, speciesId: 'gothitelle', level: 19, nickname: 'Oracle Gothitelle' },
-    ],
-  },
-  {
-    entry: {
-      id: 'chapter_16',
-      shortCode: 'Ch. 16',
-      label: 'Chapter 16 — Sealed Ruin',
-      group: 'act3',
-      groupLabel: 'Act 3',
-      biomeName: 'Sealed Ruin',
-      primaryTilesetId: '050',
-      bgmCue: 'time_gear_remix',
-      defaultDeploymentCap: 11,
-    },
-    wallTilesetId: '050',
-    floorTilesetId: '050',
-    altFloorTilesetId: '138',
-    ascii: STANDARD_20X13_FORTRESS,
-    enemies: [
-      { x: 13, y: 3, speciesId: 'spiritomb', level: 19, nickname: 'Bound Wraith' },
-      { x: 15, y: 9, speciesId: 'doublade', level: 20, nickname: 'Ruin Executioner' },
-      { x: 17, y: 6, speciesId: 'bisharp', level: 20, nickname: 'Seal Breaker' },
-    ],
-  },
-  {
-    entry: {
-      id: 'chapter_17',
-      shortCode: 'Ch. 17',
-      label: 'Chapter 17 — Dusk Forest',
-      group: 'act3',
-      groupLabel: 'Act 3',
-      biomeName: 'Dusk Forest',
-      primaryTilesetId: '020',
-      bgmCue: 'foggy_forest',
-      defaultDeploymentCap: 11,
-    },
-    wallTilesetId: '020',
-    floorTilesetId: '020',
-    altFloorTilesetId: '096',
-    ascii: STANDARD_20X12_WOODLAND,
-    enemies: [
-      { x: 13, y: 4, speciesId: 'lairon', level: 20, nickname: 'Ironclad Veteran' },
-      { x: 15, y: 8, speciesId: 'gurdurr', level: 20, nickname: 'Crag Breaker' },
-      { x: 17, y: 6, speciesId: 'aggron', level: 21, nickname: 'Warlord Aggron' },
-    ],
-  },
-  {
-    entry: {
-      id: 'chapter_18',
-      shortCode: 'Ch. 18',
-      label: 'Chapter 18 — Treeshroud Forest',
-      group: 'act3',
-      groupLabel: 'Act 3',
-      biomeName: 'Treeshroud Forest',
-      primaryTilesetId: '068',
-      bgmCue: 'boss_battle',
-      defaultDeploymentCap: 11,
-    },
-    wallTilesetId: '068',
-    floorTilesetId: '068',
-    altFloorTilesetId: '020',
-    ascii: STANDARD_20X12_WOODLAND,
-    enemies: [
-      { x: 13, y: 4, speciesId: 'shiftry', level: 21, nickname: 'Canopy Stalker' },
-      { x: 15, y: 8, speciesId: 'scolipede', level: 21, nickname: 'Venom Lancer' },
-      { x: 17, y: 6, speciesId: 'coalossal', level: 22, nickname: 'Warden Coalossal' },
-    ],
-  },
-  {
-    entry: {
-      id: 'chapter_19',
-      shortCode: 'Ch. 19',
-      label: 'Chapter 19 — Brine Cave',
-      group: 'act3',
-      groupLabel: 'Act 3',
-      biomeName: 'Brine Cave',
-      primaryTilesetId: '108',
-      bgmCue: 'waterfall_cave',
-      defaultDeploymentCap: 12,
-    },
-    wallTilesetId: '108',
-    floorTilesetId: '108',
-    altFloorTilesetId: '016',
-    ascii: STANDARD_18X12_COASTAL,
-    enemies: [
-      { x: 11, y: 4, speciesId: 'walrein', level: 22, nickname: 'Fleet Bastion' },
-      { x: 13, y: 8, speciesId: 'eelektross', level: 22, nickname: 'Brine Eel' },
-      { x: 15, y: 6, speciesId: 'obstagoon', level: 23, nickname: 'Port Admiral' },
-    ],
-  },
-  {
-    entry: {
-      id: 'chapter_20',
-      shortCode: 'Ch. 20',
-      label: 'Chapter 20 — Blizzard Island',
-      group: 'act3',
-      groupLabel: 'Act 3',
-      biomeName: 'Blizzard Island',
-      primaryTilesetId: '079',
-      bgmCue: 'boss_battle',
-      defaultDeploymentCap: 12,
-    },
-    wallTilesetId: '079',
-    floorTilesetId: '079',
-    altFloorTilesetId: '143',
-    ascii: STANDARD_22X14_ABYSS,
-    enemies: [
-      { x: 14, y: 4, speciesId: 'walrein', level: 23, nickname: 'Glacier Guard' },
-      { x: 16, y: 9, speciesId: 'grimmsnarl', level: 23, nickname: 'Cabal Enforcer' },
-      { x: 18, y: 6, speciesId: 'gothitelle', level: 24, nickname: 'Grand Oracle Gothitelle' },
-    ],
-  },
-
-  // --- ACT 4: Chapters 21 - 25 ---
-  {
-    entry: {
-      id: 'chapter_21',
-      shortCode: 'Ch. 21',
-      label: 'Chapter 21 — Miracle Sea',
-      group: 'act4',
-      groupLabel: 'Act 4',
-      biomeName: 'Miracle Sea',
-      primaryTilesetId: '082',
-      bgmCue: 'craggy_coast',
-      defaultDeploymentCap: 12,
-    },
-    wallTilesetId: '082',
-    floorTilesetId: '082',
-    altFloorTilesetId: '075',
-    waterTilesetId: '082',
-    ascii: STANDARD_18X12_COASTAL,
-    enemies: [
-      { x: 11, y: 4, speciesId: 'crobat', level: 24, nickname: 'Sea Interceptor' },
-      { x: 13, y: 8, speciesId: 'electivire', level: 25, nickname: 'Deck Dynamo' },
-      { x: 15, y: 6, speciesId: 'corviknight', level: 26, nickname: 'Marshal Corviknight' },
-    ],
-  },
-  {
-    entry: {
-      id: 'chapter_22',
-      shortCode: 'Ch. 22',
-      label: 'Chapter 22 — Aegis Cave',
-      group: 'act4',
-      groupLabel: 'Act 4',
-      biomeName: 'Aegis Cave',
-      primaryTilesetId: '138',
-      bgmCue: 'depths_of_the_pit',
-      defaultDeploymentCap: 12,
-    },
-    wallTilesetId: '138',
-    floorTilesetId: '138',
-    altFloorTilesetId: '050',
-    ascii: STANDARD_20X13_FORTRESS,
-    enemies: [
-      { x: 13, y: 4, speciesId: 'aggron', level: 26, nickname: 'Armor Remnant' },
-      { x: 15, y: 9, speciesId: 'conkeldurr', level: 26, nickname: 'Gate Pillar' },
-      { x: 17, y: 6, speciesId: 'coalossal', level: 27, nickname: 'Siege Warden Coalossal' },
-    ],
-  },
-  {
-    entry: {
-      id: 'chapter_23',
-      shortCode: 'Ch. 23',
-      label: 'Chapter 23 — Dark Crater',
-      group: 'act4',
-      groupLabel: 'Act 4',
-      biomeName: 'Dark Crater',
-      primaryTilesetId: '112',
-      bgmCue: 'monster_house',
-      defaultDeploymentCap: 12,
-    },
-    wallTilesetId: '112',
-    floorTilesetId: '112',
-    altFloorTilesetId: '110',
-    ascii: STANDARD_20X13_VOLCANIC,
-    enemies: [
-      { x: 13, y: 4, speciesId: 'spiritomb', level: 27, nickname: 'Rift Keeper' },
-      { x: 15, y: 9, speciesId: 'grimmsnarl', level: 27, nickname: 'Abyssal Herald' },
-      { x: 17, y: 6, speciesId: 'gengar', level: 28, nickname: 'Tactician Gengar' },
-    ],
-  },
-  {
-    entry: {
-      id: 'chapter_24',
-      shortCode: 'Ch. 24',
-      label: 'Chapter 24 — Temporal Spire',
-      group: 'act4',
-      groupLabel: 'Act 4',
-      biomeName: 'Temporal Spire',
-      primaryTilesetId: '141',
-      bgmCue: 'time_gear_remix',
-      defaultDeploymentCap: 12,
-    },
-    wallTilesetId: '141',
-    floorTilesetId: '141',
-    altFloorTilesetId: '061',
-    ascii: STANDARD_22X14_ABYSS,
-    enemies: [
-      { x: 14, y: 4, speciesId: 'bisharp', level: 28, nickname: 'Royal Honour Guard' },
-      { x: 16, y: 9, speciesId: 'bewear', level: 28, nickname: 'Spire Sentinel' },
-      { x: 18, y: 6, speciesId: 'aegislash', level: 29, nickname: 'Protector Aegislash' },
-    ],
-  },
-  {
-    entry: {
-      id: 'chapter_25',
-      shortCode: 'Ch. 25',
-      label: 'Chapter 25 — Throne Pinnacle',
-      group: 'act4',
-      groupLabel: 'Act 4',
-      biomeName: 'Sky Peak Pinnacle',
-      primaryTilesetId: '061',
-      bgmCue: 'boss_battle',
-      defaultDeploymentCap: 12,
-    },
-    wallTilesetId: '141',
-    floorTilesetId: '061',
-    altFloorTilesetId: '141',
-    ascii: STANDARD_22X14_ABYSS,
-    enemies: [
-      { x: 15, y: 4, speciesId: 'corviknight', level: 29, nickname: 'Imperial Wing' },
-      { x: 15, y: 9, speciesId: 'aegislash', level: 29, nickname: 'Throne Shield' },
-      { x: 19, y: 6, speciesId: 'kingambit', level: 30, nickname: 'Emperor Kingambit' },
-    ],
-  },
-
-  // --- PARALOGUES 1 - 6 ---
-  {
-    entry: {
-      id: 'paralogue_01',
-      shortCode: 'Para. 1',
-      label: 'Paralogue 1 — Lush Prairie (Slakoth)',
-      group: 'paralogue',
-      groupLabel: 'Paralogues',
-      biomeName: 'Lush Prairie',
-      primaryTilesetId: '142',
-      bgmCue: 'apple_woods',
-      defaultDeploymentCap: 6,
-    },
-    wallTilesetId: '042',
-    floorTilesetId: '142',
-    altFloorTilesetId: '120',
-    ascii: STANDARD_20X12_WOODLAND,
-    enemies: [
-      { x: 13, y: 4, speciesId: 'zigzagoon_galar', level: 5, nickname: 'Prairie Bandit' },
-      { x: 15, y: 8, speciesId: 'stufful', level: 5, nickname: 'Feral Bruiser' },
-    ],
-  },
-  {
-    entry: {
-      id: 'paralogue_02',
-      shortCode: 'Para. 2',
-      label: 'Paralogue 2 — Oran Forest (Eevee & Kecleon)',
-      group: 'paralogue',
-      groupLabel: 'Paralogues',
-      biomeName: 'Oran Forest',
-      primaryTilesetId: '120',
-      bgmCue: 'kecleon_shop',
-      defaultDeploymentCap: 8,
-    },
-    wallTilesetId: '120',
-    floorTilesetId: '120',
-    altFloorTilesetId: '142',
-    ascii: STANDARD_20X12_WOODLAND,
-    enemies: [
-      { x: 13, y: 4, speciesId: 'croagunk', level: 8, nickname: 'Shrine Poacher' },
-      { x: 16, y: 7, speciesId: 'pawniard', level: 9, nickname: 'Caravan Captor' },
-    ],
-  },
-  {
-    entry: {
-      id: 'paralogue_03',
-      shortCode: 'Para. 3',
-      label: 'Paralogue 3 — Serenity River (Twin Horns)',
-      group: 'paralogue',
-      groupLabel: 'Paralogues',
-      biomeName: 'Serenity River',
-      primaryTilesetId: '075',
-      bgmCue: 'waterfall_cave',
-      defaultDeploymentCap: 9,
-    },
-    wallTilesetId: '075',
-    floorTilesetId: '075',
-    altFloorTilesetId: '142',
-    waterTilesetId: '075',
-    ascii: STANDARD_18X12_COASTAL,
-    enemies: [
-      { x: 11, y: 4, speciesId: 'toxicroak', level: 11, nickname: 'River Hunter' },
-      { x: 14, y: 7, speciesId: 'linoone_galar', level: 11, nickname: 'Bank Outrider' },
-    ],
-  },
-  {
-    entry: {
-      id: 'paralogue_04',
-      shortCode: 'Para. 4',
-      label: 'Paralogue 4 — Labyrinth Cave (Teddiursa)',
-      group: 'paralogue',
-      groupLabel: 'Paralogues',
-      biomeName: 'Labyrinth Cave',
-      primaryTilesetId: '072',
-      bgmCue: 'cave_and_side_path',
-      defaultDeploymentCap: 10,
-    },
-    wallTilesetId: '072',
-    floorTilesetId: '072',
-    altFloorTilesetId: '014',
-    ascii: STANDARD_20X13_FORTRESS,
-    enemies: [
-      { x: 13, y: 4, speciesId: 'aron', level: 13, nickname: 'Pass Blocker' },
-      { x: 16, y: 7, speciesId: 'lairon', level: 14, nickname: 'Raider Captain' },
-    ],
-  },
-  {
-    entry: {
-      id: 'paralogue_05',
-      shortCode: 'Para. 5',
-      label: 'Paralogue 5 — Mt. Travail (Hoppip)',
-      group: 'paralogue',
-      groupLabel: 'Paralogues',
-      biomeName: 'Mt. Travail',
-      primaryTilesetId: '143',
-      bgmCue: 'mt_horn',
-      defaultDeploymentCap: 11,
-    },
-    wallTilesetId: '143',
-    floorTilesetId: '143',
-    altFloorTilesetId: '014',
-    ascii: STANDARD_20X13_FORTRESS,
-    enemies: [
-      { x: 13, y: 4, speciesId: 'golbat', level: 18, nickname: 'Gale Rider' },
-      { x: 16, y: 7, speciesId: 'corvisquire', level: 19, nickname: 'Peak Talon' },
-    ],
-  },
-  {
-    entry: {
-      id: 'paralogue_06',
-      shortCode: 'Para. 6',
-      label: 'Paralogue 6 — Concealed Ruins (Defecting Gastly)',
-      group: 'paralogue',
-      groupLabel: 'Paralogues',
-      biomeName: 'Concealed Ruins',
-      primaryTilesetId: '050',
-      bgmCue: 'growing_anxiety',
-      defaultDeploymentCap: 11,
-    },
-    wallTilesetId: '050',
-    floorTilesetId: '050',
-    altFloorTilesetId: '064',
-    ascii: STANDARD_20X13_FORTRESS,
-    enemies: [
-      { x: 12, y: 5, speciesId: 'gastly', level: 18, nickname: 'Defecting Gastly' },
-      { x: 16, y: 4, speciesId: 'doublade', level: 21, nickname: 'Ruin Warden' },
-      { x: 17, y: 8, speciesId: 'bisharp', level: 22, nickname: 'Inquisitor Blade' },
+      {
+        x: 12,
+        y: 3,
+        speciesId: 'seedot',
+        level: 11,
+        nickname: 'Orchard Ranger',
+        aiMode: 'wait_until_in_range',
+      },
+      {
+        x: 13,
+        y: 8,
+        speciesId: 'venipede',
+        level: 11,
+        nickname: 'Thicket Lancer',
+        droppableItemId: 'sitrus_berry',
+        aiMode: 'wait_until_in_range',
+      },
+      {
+        x: 15,
+        y: 4,
+        speciesId: 'corvisquire',
+        level: 11,
+        nickname: 'Canopy Captain',
+        aiMode: 'wait_until_in_range',
+      },
+      {
+        x: 15,
+        y: 7,
+        speciesId: 'morgrem',
+        level: 11,
+        nickname: 'Shadow Envoy',
+        aiMode: 'wait_until_in_range',
+      },
+      {
+        x: 17,
+        y: 5,
+        speciesId: 'nuzleaf',
+        level: 12,
+        nickname: 'Commander Nuzleaf',
+        heldItemId: 'oran_berry',
+        isBoss: true,
+        stationary: false,
+        droppableItemId: 'carbos',
+        aiMode: 'wait_until_in_range',
+      },
     ],
   },
 ];
 
-export const CHAPTER_LEVEL_CATALOG: ReadonlyArray<ChapterLevelCatalogEntry> = [
-  {
-    id: 'drenched_bluff_vanguard',
-    shortCode: 'Test 1',
-    label: 'Drenched Bluff (Test Dungeon)',
-    group: 'test',
-    groupLabel: 'Test & Sandbox',
-    biomeName: 'Drenched Bluff / Lush Stream',
-    primaryTilesetId: '003',
-    bgmCue: 'drenched_bluff',
-    defaultDeploymentCap: 3,
-  },
-  {
-    id: 'skirmish_test_convergence',
-    shortCode: 'Test 2',
-    label: 'Convergence Ruins (Skirmish Sandbox)',
-    group: 'test',
-    groupLabel: 'Test & Sandbox',
-    biomeName: 'Multi-Biome Sandbox',
-    primaryTilesetId: '142',
-    bgmCue: 'apple_woods',
-    defaultDeploymentCap: 3,
-  },
-  ...GENERATED_CHAPTER_SPECS.map((s) => s.entry),
-];
+export const CHAPTER_LEVEL_CATALOG: ReadonlyArray<ChapterLevelCatalogEntry> =
+  DEMO_CHAPTER_SPECS.map((s) => s.entry);
 
 const catalogById = new Map<string, ChapterLevelCatalogEntry>();
 for (const entry of CHAPTER_LEVEL_CATALOG) {
@@ -1026,7 +517,7 @@ for (const entry of CHAPTER_LEVEL_CATALOG) {
 }
 
 const generatedSpecById = new Map<string, GeneratedChapterSpec>();
-for (const spec of GENERATED_CHAPTER_SPECS) {
+for (const spec of DEMO_CHAPTER_SPECS) {
   generatedSpecById.set(spec.entry.id, spec);
 }
 
@@ -1035,17 +526,8 @@ export function getChapterCatalogEntry(levelId: string): ChapterLevelCatalogEntr
 }
 
 export function getDefaultChapterMap(levelId: string): DungeonMapDefinition {
-  if (levelId === 'drenched_bluff_vanguard') {
-    return createPlayableVanguardBattleMap();
-  }
-  if (levelId === 'skirmish_test_convergence') {
-    return createDefaultTestDungeonMap();
-  }
-  const spec = generatedSpecById.get(levelId);
-  if (spec) {
-    return buildGeneratedChapterMap(spec);
-  }
-  return createPlayableVanguardBattleMap();
+  const spec = generatedSpecById.get(levelId) ?? DEMO_CHAPTER_SPECS[0]!;
+  return buildGeneratedChapterMap(spec);
 }
 
 const VALID_TERRAIN_SET = new Set<string>(TERRAIN_TYPES);
@@ -1151,7 +633,6 @@ export function validateDungeonMapDefinition(
       }
       const speciesId = String(sp?.speciesId || 'zigzagoon_galar');
       const def = getSpeciesById(speciesId);
-      // Rule 5: Enemy spawns must come from enemy lines (or shared_paralogue6 Gastly line)
       if (!def || def.faction === 'playable') {
         errors.push(
           `Rule 5: Enemy spawn species "${speciesId}" must be an enemy faction species.`
@@ -1233,7 +714,6 @@ function normalizeIncomingEnvelope(
       resets: cleanResets,
     };
   }
-  // Legacy v1 flat record `{ [levelId]: CustomMapOverrideEntry }`
   return {
     overrides: candidate as Record<string, CustomMapOverrideEntry>,
     resets: {},
@@ -1435,11 +915,6 @@ class ChapterMapOverrideStore {
     return this.reconcileEnvelope(incoming).localChanged;
   }
 
-  /**
-   * Reconciles local custom maps & reset tombstones against an incoming Cloud Firestore envelope
-   * using deterministic per-level Last-Write-Wins timestamps.
-   * Returns `{ localChanged, cloudOutdated }` so callers know whether Cloud needs an upload.
-   */
   public reconcileEnvelope(
     incoming: CustomMapsSyncEnvelope | Record<string, CustomMapOverrideEntry> | null | undefined
   ): { localChanged: boolean; cloudOutdated: boolean } {
@@ -1611,8 +1086,8 @@ export function importChapterMapJson(
   const resolvedId =
     targetLevelId ??
     (parsed && typeof parsed === 'object' && typeof (parsed as { id?: unknown }).id === 'string'
-      ? ((parsed as { id: string }).id.trim() || 'drenched_bluff_vanguard')
-      : 'drenched_bluff_vanguard');
+      ? ((parsed as { id: string }).id.trim() || 'prologue')
+      : 'prologue');
   return saveChapterMapOverride(resolvedId, parsed as DungeonMapDefinition);
 }
 

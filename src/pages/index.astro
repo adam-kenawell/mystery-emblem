@@ -26,7 +26,7 @@ const canonicalUrl = Astro.url.href;
   <body>
     <main class="mystery-emblem-shell">
       <div id="mystery-emblem-root" class="pmd-viewport">
-        <!-- Full-Bleed Mystery Emblem Box Art Backdrop (Shown on Landing, Gate & Campaign Menu) -->
+        <!-- Full-Bleed Mystery Emblem Box Art Backdrop (Shown on Landing Title Screen) -->
         <div
           id="pmd-landing-backdrop"
           class="pmd-landing-backdrop"
@@ -52,7 +52,7 @@ const canonicalUrl = Astro.url.href;
           Dev Tools
         </button>
 
-        <!-- Persistent Top-Right Corner Button: Google Log In / Log Out on Gate & Title; Menu / Back in Scenes -->
+        <!-- Persistent Top-Right Corner Button: Google Log In / Log Out on Title; Menu / Back in Scenes -->
         <button
           id="pmd-corner-menu-btn"
           class="pmd-window pmd-window--compact pmd-corner-btn pmd-corner-right"
@@ -88,30 +88,9 @@ const canonicalUrl = Astro.url.href;
           <span>Log In</span>
         </button>
 
-        <!-- In-Development Gate Screen (Hidden by default while public Demo is live; active if DEV_PREVIEW_GATE_ENABLED is true) -->
-        <section
-          id="pmd-under-dev-screen"
-          class="pmd-window pmd-gate-card"
-          data-testid="under-dev-screen"
-          hidden
-        >
-          <span class="pmd-dev-badge">IN DEVELOPMENT</span>
-          <h1 class="pmd-title">MYSTERY EMBLEM</h1>
-          <p id="pmd-under-dev-message" class="pmd-desc">
-            This website is currently in active development. Sign in with an authorized Google account at the top right for preview access.
-          </p>
-          <p id="pmd-under-dev-status" class="pmd-status" aria-live="polite" hidden></p>
-        </section>
-
         <!-- Authentic PMD: Explorers of Sky Compact Start/Continue Window Over Box Art -->
         <section id="pmd-title-screen" class="pmd-window pmd-title-card">
           <h1 class="pmd-title pmd-sr-only">MYSTERY EMBLEM</h1>
-          <p class="pmd-subtitle pmd-sr-only">Echoes of the Dragon Lineage</p>
-
-          <p id="pmd-save-summary" class="pmd-desc pmd-sr-only">
-            Command your Pokémon squad across five kingdoms in a tactical RPG adventure.
-          </p>
-
           <div class="pmd-actions pmd-menu-list">
             <button
               class="pmd-btn pmd-btn-primary pmd-menu-row pmd-continue-btn"
@@ -127,536 +106,23 @@ const canonicalUrl = Astro.url.href;
               ></span>
             </button>
           </div>
-
           <p id="pmd-status-msg" class="pmd-status" aria-live="polite" hidden></p>
         </section>
 
-        <!-- Compact PMD Cursor Campaign Menu Over Box Art -->
-        <section id="pmd-campaign-menu" class="pmd-window pmd-campaign-card" hidden>
-          <header class="pmd-panel-header pmd-campaign-header">
-            <h2 class="pmd-panel-title">CAMPAIGN MENU</h2>
-            <p class="pmd-panel-sub">Choose a mode to begin.</p>
-          </header>
-
-          <div class="pmd-campaign-options pmd-menu-list" role="group" aria-label="Campaign Menu Options">
-            <button
-              type="button"
-              id="btn-campaign-demo"
-              class="pmd-btn pmd-btn-primary pmd-menu-row pmd-campaign-option-btn"
-              data-testid="btn-campaign-demo"
-            >
-              <span class="pmd-campaign-option-title" id="btn-campaign-demo-title">5-Dungeon Demo</span>
-              <span class="pmd-campaign-option-sub" id="btn-campaign-demo-sub">
-                Quiz · 5 Dungeons · World Map · Cutscenes
-              </span>
-            </button>
-
-            <button
-              type="button"
-              id="btn-campaign-demo-new"
-              class="pmd-btn pmd-menu-row pmd-campaign-option-btn"
-              data-testid="btn-campaign-demo-new"
-              hidden
-            >
-              <span class="pmd-campaign-option-title" id="btn-campaign-demo-new-title">
-                New Demo Run
-              </span>
-              <span class="pmd-campaign-option-sub" id="btn-campaign-demo-new-sub">
-                Start Fresh Personality Quiz (Lv. 9)
-              </span>
-            </button>
-
-            <button
-              type="button"
-              id="btn-enter-dungeon"
-              class="pmd-btn pmd-menu-row pmd-campaign-option-btn"
-              data-testid="btn-enter-dungeon"
-            >
-              <span class="pmd-campaign-option-title">Drenched Bluff</span>
-              <span class="pmd-campaign-option-sub">Single Test Dungeon</span>
-            </button>
-          </div>
-
-          <p id="pmd-campaign-status" class="pmd-status" aria-live="polite" hidden></p>
-        </section>
-
-        <!-- Admin-Only Dev Tools Modal (Accessible ONLY when signed in as ADMIN_DEVTOOLS_EMAILS) -->
-        <section id="pmd-devtools-modal" class="pmd-window pmd-panel" hidden>
-          <header class="pmd-panel-header">
-            <h2 class="pmd-panel-title">DEV TOOLS</h2>
-            <p class="pmd-panel-sub">
-              Admin diagnostics: balance registries, Cloud Sync, PMD sprites &amp; evolution stages, and portrait dialogue.
-            </p>
-          </header>
-
-          <nav class="pmd-tabs" aria-label="Dev Tools Sub-Tabs">
-            <button
-              type="button"
-              class="pmd-btn pmd-tab-btn is-active"
-              data-devtab-btn="audit"
-              data-testid="devtools-tab-audit"
-            >
-              Registry &amp; Sync
-            </button>
-            <button
-              type="button"
-              class="pmd-btn pmd-tab-btn"
-              data-devtab-btn="sprites"
-              data-testid="devtools-tab-sprites"
-            >
-              Sprites &amp; Stages
-            </button>
-            <button
-              type="button"
-              class="pmd-btn pmd-tab-btn"
-              data-devtab-btn="dialogue"
-              data-testid="devtools-tab-dialogue"
-            >
-              Dialogue &amp; Audio
-            </button>
-            <button
-              type="button"
-              class="pmd-btn pmd-tab-btn"
-              data-devtab-btn="skirmish"
-              data-testid="devtools-tab-skirmish"
-            >
-              Test Dungeon
-            </button>
-            <button
-              type="button"
-              class="pmd-btn pmd-tab-btn"
-              data-devtab-btn="maps"
-              data-testid="devtools-tab-maps"
-            >
-              Map Editor
-            </button>
-            <button
-              type="button"
-              class="pmd-btn pmd-tab-btn"
-              data-devtab-btn="overworld"
-              data-testid="devtools-tab-overworld"
-            >
-              Overworld
-            </button>
-          </nav>
-
-          <!-- DEV TAB 1: REGISTRY & CLOUD SYNC (Step 1) -->
-          <div class="pmd-tab-panel" data-devtab-panel="audit">
-            <div class="pmd-subcard">
-              <h3 class="pmd-subcard-title">Save &amp; Cloud Sync Diagnostics</h3>
-              <p id="devtools-sync-diagnostics" class="pmd-subcard-text">—</p>
-              <div class="pmd-inline-btns">
-                <button
-                  type="button"
-                  id="devtools-seed-save"
-                  class="pmd-btn"
-                  data-testid="devtools-seed-save"
-                >
-                  Seed Test Save (Prologue)
-                </button>
-                <button
-                  type="button"
-                  id="devtools-delete-account-save"
-                  class="pmd-btn pmd-btn-danger"
-                  data-testid="devtools-delete-account-save"
-                >
-                  Delete Save Data from Linked Account
-                </button>
-              </div>
-              <p id="devtools-save-action-status" class="pmd-subcard-text" hidden></p>
-            </div>
-
-            <div id="registry-audit-banner" class="pmd-audit-banner"></div>
-            <div id="registry-metrics-grid" class="pmd-metrics-grid"></div>
-            <div id="registry-errors-box" class="pmd-errors-box" hidden></div>
-          </div>
-
-          <!-- DEV TAB 2: PMD SPRITES, EMOTION PORTRAITS & EVOLUTION STAGES (Step 2) -->
-          <div class="pmd-tab-panel" data-devtab-panel="sprites" hidden>
-            <div class="pmd-subcard">
-              <h3 class="pmd-subcard-title">Species &amp; Evolutionary Stage Selector</h3>
-              <div id="devtools-line-presets" class="pmd-inline-btns"></div>
-              <select
-                id="devtools-species-select"
-                class="pmd-select"
-                aria-label="Inspect Pokémon Species"
-              ></select>
-              <div id="devtools-stage-buttons" class="pmd-inline-btns"></div>
-            </div>
-
-            <div class="pmd-devtools-sprite-layout">
-              <div class="pmd-subcard pmd-devtools-sprite-card">
-                <h3 class="pmd-subcard-title">8-Directional Map Sprite</h3>
-                <div id="devtools-sprite-stage" class="pmd-devtools-sprite-stage"></div>
-                <p id="devtools-sprite-meta" class="pmd-subcard-text">—</p>
-              </div>
-
-              <div class="pmd-subcard">
-                <h3 class="pmd-subcard-title">Actions (5) &amp; Directions (8)</h3>
-                <div id="devtools-action-buttons" class="pmd-inline-btns"></div>
-                <div id="devtools-direction-buttons" class="pmd-inline-btns"></div>
-              </div>
-            </div>
-
-            <div class="pmd-subcard">
-              <div class="pmd-devtools-row-between">
-                <h3 class="pmd-subcard-title">8-Emotion Character Portraits</h3>
-                <button
-                  type="button"
-                  id="devtools-portrait-mirror-btn"
-                  class="pmd-btn pmd-chip-btn"
-                  data-testid="devtools-portrait-mirror-btn"
-                >
-                  Facing: Left Slot (Default)
-                </button>
-              </div>
-              <div id="devtools-portrait-grid" class="pmd-devtools-portrait-grid"></div>
-            </div>
-
-            <div class="pmd-subcard">
-              <h3 class="pmd-subcard-title">Active Party Live Evolution Stage Swapper</h3>
-              <div id="devtools-roster-evo-box" class="pmd-devtools-roster-list"></div>
-            </div>
-          </div>
-
-          <!-- DEV TAB 3: PORTRAIT DIALOGUE OVERLAY & AUDIO JUKEBOX HARNESS -->
-          <div class="pmd-tab-panel" data-devtab-panel="dialogue" hidden>
-            <div class="pmd-subcard">
-              <h3 class="pmd-subcard-title">Portrait Dialogue Engine (`DIALOGUE_OVERLAY`)</h3>
-              <p id="devtools-dialogue-cast" class="pmd-subcard-text">—</p>
-              <p class="pmd-subcard-text">
-                Sample cutscene cues: <em>#004 On the Beach at Dusk</em> → <em>#016 Growing Anxiety</em> → <em>#017 Oh No!</em> → <em>#019 Boss Battle!</em> → <em>#020 Time Gear Remix</em>.
-              </p>
-              <div class="pmd-inline-btns">
-                <button
-                  type="button"
-                  id="devtools-launch-dialogue"
-                  class="pmd-btn pmd-btn-primary"
-                  data-testid="devtools-launch-dialogue"
-                >
-                  Play Prologue Awakening Cutscene
-                </button>
-                <button
-                  type="button"
-                  id="devtools-cycle-lord-stage"
-                  class="pmd-btn"
-                  data-testid="devtools-cycle-lord-stage"
-                >
-                  Cycle Active Lord Stage
-                </button>
-                <button
-                  type="button"
-                  id="devtools-instant-dialogue-toggle"
-                  class="pmd-btn"
-                  data-testid="devtools-instant-dialogue-toggle"
-                >
-                  Text Reveal: Typewriter
-                </button>
-              </div>
-              <p id="devtools-dialogue-status" class="pmd-subcard-text">Ready.</p>
-            </div>
-
-            <div class="pmd-subcard">
-              <div class="pmd-devtools-row-between">
-                <h3 class="pmd-subcard-title">Explorers of Sky Audio Engine &amp; BGM Jukebox</h3>
-                <button
-                  type="button"
-                  id="devtools-audio-mute"
-                  class="pmd-btn pmd-chip-btn"
-                  data-testid="devtools-audio-mute"
-                >
-                  Mute Audio
-                </button>
-              </div>
-              <p
-                id="devtools-audio-status"
-                class="pmd-subcard-text"
-                data-testid="devtools-audio-status"
-              >
-                —
-              </p>
-              <select
-                id="devtools-bgm-select"
-                class="pmd-select"
-                data-testid="devtools-bgm-select"
-                aria-label="Select Explorers of Sky BGM Track"
-              ></select>
-              <div class="pmd-inline-btns">
-                <button
-                  type="button"
-                  id="devtools-bgm-play"
-                  class="pmd-btn pmd-btn-primary"
-                  data-testid="devtools-bgm-play"
-                >
-                  Play Selected Track
-                </button>
-                <button
-                  type="button"
-                  id="devtools-bgm-stop"
-                  class="pmd-btn"
-                  data-testid="devtools-bgm-stop"
-                >
-                  Stop BGM
-                </button>
-                <button type="button" id="devtools-sfx-select" class="pmd-btn pmd-chip-btn">
-                  SFX: Confirm
-                </button>
-                <button type="button" id="devtools-sfx-cancel" class="pmd-btn pmd-chip-btn">
-                  SFX: Cancel
-                </button>
-                <button type="button" id="devtools-sfx-advance" class="pmd-btn pmd-chip-btn">
-                  SFX: Advance
-                </button>
-              </div>
-              <div class="pmd-sync-grid">
-                <label class="pmd-slider-row" for="devtools-bgm-volume">
-                  <span>BGM Vol</span>
-                  <input
-                    id="devtools-bgm-volume"
-                    class="pmd-range"
-                    type="range"
-                    min="0"
-                    max="100"
-                    value="65"
-                  />
-                </label>
-                <label class="pmd-slider-row" for="devtools-sfx-volume">
-                  <span>SFX Vol</span>
-                  <input
-                    id="devtools-sfx-volume"
-                    class="pmd-range"
-                    type="range"
-                    min="0"
-                    max="100"
-                    value="70"
-                  />
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <!-- DEV TAB 4: TEST DUNGEON / SKIRMISH BATTLEFIELD SANDBOX (Step 5) -->
-          <div class="pmd-tab-panel" data-devtab-panel="skirmish" hidden>
-            <div class="pmd-subcard">
-              <h3 class="pmd-subcard-title">Playable Dungeon Battle — Drenched Bluff</h3>
-              <p class="pmd-subcard-text">
-                Full Turn-Based Player &amp; Enemy Phase dungeon battle flow with <strong>DUNGEON PREP</strong> (Manage Units, Manage Items, View Map &amp; Enter Dungeon), Fire Emblem <strong>Combat Forecast</strong>, 8-directional attack/hurt animations, active pursue-and-attack Enemy AI, <strong>VICTORY!</strong>, and Dragon Lord <strong>DEFEAT / Restart Match</strong>.
-              </p>
-              <div class="pmd-inline-btns">
-                <button
-                  type="button"
-                  id="devtools-launch-battle"
-                  class="pmd-btn pmd-btn-primary"
-                  data-testid="devtools-launch-battle"
-                >
-                  Play Dungeon Battle
-                </button>
-                <button
-                  type="button"
-                  id="devtools-edit-drenched-bluff"
-                  class="pmd-btn"
-                  data-testid="devtools-edit-drenched-bluff"
-                >
-                  Edit Drenched Bluff Map
-                </button>
-              </div>
-            </div>
-            <div class="pmd-subcard">
-              <h3 class="pmd-subcard-title">Test Dungeon (Skirmish) — Convergence Ruins</h3>
-              <p class="pmd-subcard-text">
-                Full-viewport tactical grid rendered from flat <em>Explorers of Sky</em> 24×24px tilesets at crisp 2× pixel scale across all 10 PMD terrain types (<em>Floor</em>, <em>Trees</em>, <em>Stairs</em>, <em>Water</em>, <em>Lava</em>, <em>Mountain</em>, <em>Void / Chasm</em>, <em>Wonder Tile</em>, <em>Low Barrier</em>, and <em>Wall</em>).
-              </p>
-              <p class="pmd-subcard-text">
-                Spawns 3 test Pokémon covering all 3 traversal classes — <strong>Bahamut</strong> (Dratini · Grounded), <strong>Zephyr</strong> (Pidgey · Flying), and <strong>Wisp</strong> (Duskull · Levitate) — plus 2 stationary dummy enemies for Danger Area testing, species/Heavy-Duty Boots sandbox controls, and a live 144-sheet 24×24 chunk brush with JSON export.
-              </p>
-              <div class="pmd-inline-btns">
-                <button
-                  type="button"
-                  id="devtools-launch-test-dungeon"
-                  class="pmd-btn pmd-btn-primary"
-                  data-testid="devtools-launch-test-dungeon"
-                >
-                  Launch Test Dungeon (Skirmish)
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- DEV TAB 6: STEP 4 OVERWORLD MAP, KECLEON SHOPS & SKIRMISH SANDBOX -->
-          <div class="pmd-tab-panel" data-devtab-panel="overworld" hidden>
-            <div class="pmd-subcard">
-              <div class="pmd-devtools-row-between">
-                <h3 class="pmd-subcard-title">Five Kingdoms — Wonder Map Overworld (Step 4)</h3>
-                <span class="pmd-editor-status-pill is-custom">DEMO-READY</span>
-              </div>
-              <p class="pmd-subcard-text">
-                Interactive <em>Explorers of Sky</em> Wonder Map (`504×336`px) with multi-waypoint road pathfinding, animated 8-directional <strong>Dragon Lord</strong> traversal, all 4 <strong>Kecleon Shop</strong> types (`TM`, `Held`, `Heal/Stones`, `X-Items`), one-shot <strong>Feral Dungeon Skirmishes</strong>, and the full Overworld Roster / Vitamin / TM / Promotion menu.
-              </p>
-              <div class="pmd-devtools-map-preview-wrap">
-                <canvas
-                  id="devtools-overworld-preview-canvas"
-                  class="pmd-devtools-map-preview-canvas"
-                  data-testid="devtools-overworld-preview-canvas"
-                ></canvas>
-              </div>
-              <p
-                id="devtools-overworld-meta"
-                class="pmd-subcard-text"
-                data-testid="devtools-overworld-meta"
-              >
-                —
-              </p>
-              <div class="pmd-inline-btns">
-                <button
-                  type="button"
-                  id="devtools-launch-overworld"
-                  class="pmd-btn pmd-btn-primary"
-                  data-testid="devtools-launch-overworld"
-                >
-                  Launch Overworld Map
-                </button>
-                <button
-                  type="button"
-                  id="devtools-overworld-seed-sandbox"
-                  class="pmd-btn"
-                  data-testid="devtools-overworld-seed-sandbox"
-                >
-                  Reset Sandbox Tour (Shop + Skirmish)
-                </button>
-                <button
-                  type="button"
-                  id="devtools-overworld-seed-prologue"
-                  class="pmd-btn"
-                  data-testid="devtools-overworld-seed-prologue"
-                >
-                  Launch Demo Start (Prologue)
-                </button>
-                <button
-                  type="button"
-                  id="devtools-overworld-seed-all"
-                  class="pmd-btn"
-                  data-testid="devtools-overworld-seed-all"
-                >
-                  Unlock All 12 Nodes
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- DEV TAB 5: LEVEL & CHAPTER MAP VIEWER & SANDBOX EDITOR -->
-          <div class="pmd-tab-panel" data-devtab-panel="maps" hidden>
-            <div class="pmd-subcard">
-              <div class="pmd-devtools-row-between">
-                <h3 class="pmd-subcard-title">Level &amp; Chapter Map Customizer</h3>
-                <span
-                  id="devtools-map-status-badge"
-                  class="pmd-editor-status-pill"
-                  data-testid="devtools-map-status-badge"
-                >
-                  DEFAULT
-                </span>
-              </div>
-              <p class="pmd-subcard-text">
-                Select <strong>Drenched Bluff (Test Dungeon)</strong> or any campaign chapter (Prologue, Chapters 1–25, Paralogues 1–6) to preview its layout, paint custom <em>Explorers of Sky</em> 24×24 tiles in the Sandbox Editor, and immediately update the live in-game map.
-              </p>
-              <div id="devtools-map-group-filters" class="pmd-inline-btns"></div>
-              <select
-                id="devtools-map-level-select"
-                class="pmd-select"
-                data-testid="devtools-map-level-select"
-                aria-label="Select Level or Chapter Map"
-              ></select>
-              <div class="pmd-devtools-map-preview-wrap">
-                <canvas
-                  id="devtools-map-preview-canvas"
-                  class="pmd-devtools-map-preview-canvas"
-                  data-testid="devtools-map-preview-canvas"
-                ></canvas>
-              </div>
-              <p
-                id="devtools-map-meta"
-                class="pmd-subcard-text"
-                data-testid="devtools-map-meta"
-              >
-                —
-              </p>
-              <div class="pmd-inline-btns">
-                <button
-                  type="button"
-                  id="devtools-open-map-editor"
-                  class="pmd-btn pmd-btn-primary"
-                  data-testid="devtools-open-map-editor"
-                >
-                  Customize Map in Sandbox Editor
-                </button>
-                <button
-                  type="button"
-                  id="devtools-play-selected-map"
-                  class="pmd-btn"
-                  data-testid="devtools-play-selected-map"
-                >
-                  Play Selected Level
-                </button>
-                <button
-                  type="button"
-                  id="devtools-sync-cloud-maps"
-                  class="pmd-btn"
-                  data-testid="devtools-sync-cloud-maps"
-                >
-                  Sync Maps w/ Cloud
-                </button>
-                <button
-                  type="button"
-                  id="devtools-reset-selected-map"
-                  class="pmd-btn pmd-btn-danger"
-                  data-testid="devtools-reset-selected-map"
-                >
-                  Reset Level to Default
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Reusable PMD Nickname Modal (Pointer-driven, PC + Mobile) -->
-        <div id="pmd-nickname-backdrop" class="pmd-modal-backdrop" hidden>
-          <div
-            class="pmd-window pmd-nickname-dialog"
+        <!-- Admin-Only Dev Tools Overlay Modal (Strictly accessible ONLY for ADMIN_DEVTOOLS_EMAILS) -->
+        <div
+          id="pmd-devtools-backdrop"
+          class="pmd-devtools-backdrop"
+          data-testid="devtools-backdrop"
+          hidden
+        >
+          <section
+            id="pmd-devtools-modal"
+            class="pmd-window pmd-panel"
             role="dialog"
             aria-modal="true"
-            aria-labelledby="nickname-modal-title"
-          >
-            <h3 id="nickname-modal-title" class="pmd-panel-title">Give a Nickname</h3>
-            <p id="nickname-modal-species" class="pmd-panel-sub"></p>
-
-            <input
-              id="nickname-input"
-              type="text"
-              maxlength="16"
-              class="pmd-text-input"
-              placeholder="Enter nickname (up to 16 characters)"
-              autocomplete="off"
-            />
-
-            <div class="pmd-preset-row">
-              <span class="pmd-preset-label">Suggestions:</span>
-              <button type="button" class="pmd-btn pmd-chip-btn" data-preset="Bahamut">Bahamut</button>
-              <button type="button" class="pmd-btn pmd-chip-btn" data-preset="Sprout">Sprout</button>
-              <button type="button" class="pmd-btn pmd-chip-btn" data-preset="Clover">Clover</button>
-            </div>
-
-            <div class="pmd-inline-btns pmd-modal-actions">
-              <button type="button" id="btn-save-nickname" class="pmd-btn pmd-btn-primary">
-                Confirm
-              </button>
-              <button type="button" id="btn-reset-nickname" class="pmd-btn">
-                Default Name
-              </button>
-              <button type="button" id="btn-cancel-nickname" class="pmd-btn">
-                Cancel
-              </button>
-            </div>
-          </div>
+            aria-label="Admin Dev Tools"
+          ></section>
         </div>
       </div>
     </main>
@@ -669,6 +135,7 @@ const canonicalUrl = Astro.url.href;
     PMD_PORTRAIT_EMOTIONS,
     PMD_SPRITE_ACTIONS,
     clearPmdAssetCache,
+    computePmdTileSpritePlacement,
     loadSpeciesPortrait,
     loadSpeciesSpriteBundle,
   } from '../mystery-emblem/assets/pmdAssetLoader';
@@ -680,10 +147,7 @@ const canonicalUrl = Astro.url.href;
   import { getAudioManager } from '../mystery-emblem/audio/AudioManager';
   import {
     ADMIN_DEVTOOLS_EMAILS,
-    ALLOWED_PREVIEW_EMAILS,
-    DEV_PREVIEW_GATE_ENABLED,
     hasAdminDevToolsAccess,
-    hasPreviewSiteAccess,
   } from '../mystery-emblem/data/accessControl';
   import {
     getRegistryValidationSummary,
@@ -739,19 +203,15 @@ const canonicalUrl = Astro.url.href;
   import { ChapterMapEditorScene } from '../mystery-emblem/scenes/ChapterMapEditorScene';
   import { OverworldScene } from '../mystery-emblem/scenes/OverworldScene';
   import {
-    DEFAULT_OVERWORLD_GRAPH,
     DEMO_OVERWORLD_GRAPH,
     buildKecleonShopInventory,
     buildSkirmishBattlePayload,
-    getOverworldGraph,
-    type OverworldGraphDefinition,
   } from '../mystery-emblem/data/overworldMapData';
   import {
     findOverworldRoute,
     rollPostBattleOverworldSpawns,
     samplePolylineAtDistance,
   } from '../mystery-emblem/engine/overworldEngine';
-  import { TestDungeonScene } from '../mystery-emblem/scenes/TestDungeonScene';
   import {
     InMemoryCloudSyncAdapter,
     type CloudSyncAdapter,
@@ -764,7 +224,11 @@ const canonicalUrl = Astro.url.href;
   import { DevToolsHarness } from '../mystery-emblem/ui/DevToolsHarness';
   import { DialogueOverlay } from '../mystery-emblem/ui/DialogueOverlay';
   import { QuizScene, RecruitNicknameOverlay } from '../mystery-emblem/ui/QuizScene';
-  import { destroyAllPmdSpriteActors } from '../mystery-emblem/ui/PmdSpriteCanvas';
+  import {
+    PmdPortraitView,
+    PmdSpriteActor,
+    destroyAllPmdSpriteActors,
+  } from '../mystery-emblem/ui/PmdSpriteCanvas';
   import {
     BackStackController,
     bindBackGestureSurface,
@@ -779,7 +243,6 @@ const canonicalUrl = Astro.url.href;
   let currentQuizScene: QuizScene | null = null;
   let currentDevToolsHarness: DevToolsHarness | null = null;
   let currentBattleScene: BattleScene | null = null;
-  let currentTestDungeonScene: TestDungeonScene | null = null;
   let currentMapEditorScene: ChapterMapEditorScene | null = null;
   let currentOverworldScene: OverworldScene | null = null;
   let uiAbortController: AbortController | null = null;
@@ -789,8 +252,6 @@ const canonicalUrl = Astro.url.href;
     destroyAllPmdSpriteActors();
     currentBattleScene?.destroy();
     currentBattleScene = null;
-    currentTestDungeonScene?.destroy();
-    currentTestDungeonScene = null;
     currentMapEditorScene?.destroy();
     currentMapEditorScene = null;
     currentOverworldScene?.destroy();
@@ -817,95 +278,83 @@ const canonicalUrl = Astro.url.href;
     currentManager = manager;
     const audioManager = getAudioManager();
 
-    const validation = getRegistryValidationSummary();
-
     const viewportEl = document.getElementById('mystery-emblem-root');
     const landingBackdrop = document.getElementById('pmd-landing-backdrop');
-    const underDevScreen = document.getElementById('pmd-under-dev-screen');
-    const underDevMessageEl = document.getElementById('pmd-under-dev-message');
-    const underDevStatusEl = document.getElementById('pmd-under-dev-status');
     const titleScreen = document.getElementById('pmd-title-screen');
-    const campaignMenu = document.getElementById('pmd-campaign-menu');
+    const devToolsBackdrop = document.getElementById('pmd-devtools-backdrop');
     const devToolsModal = document.getElementById('pmd-devtools-modal');
     const devToolsBtn = document.getElementById('pmd-dev-tools-btn');
     const cornerMenuBtn = document.getElementById('pmd-corner-menu-btn') as HTMLButtonElement | null;
     const statusMsgEl = document.getElementById('pmd-status-msg');
-    const campaignStatusEl = document.getElementById('pmd-campaign-status');
 
     const btnContinue = document.getElementById('btn-continue') as HTMLButtonElement | null;
     const btnContinueLabel = document.getElementById('btn-continue-label');
     const btnContinueChapter = document.getElementById('btn-continue-chapter');
 
-    const btnEnterDungeon = document.getElementById('btn-enter-dungeon');
-    const btnCampaignDemo = document.getElementById('btn-campaign-demo');
-    const btnCampaignDemoSub = document.getElementById('btn-campaign-demo-sub');
-    const btnCampaignDemoNew = document.getElementById('btn-campaign-demo-new');
-    const btnCampaignDemoNewSub = document.getElementById('btn-campaign-demo-new-sub');
-
-    const devToolsSyncDiagnostics = document.getElementById('devtools-sync-diagnostics');
-    const auditBanner = document.getElementById('registry-audit-banner');
-    const metricsGrid = document.getElementById('registry-metrics-grid');
-    const errorsBox = document.getElementById('registry-errors-box');
-
-    const nicknameBackdrop = document.getElementById('pmd-nickname-backdrop');
-    const nicknameSpeciesEl = document.getElementById('nickname-modal-species');
-    const nicknameInput = document.getElementById('nickname-input') as HTMLInputElement | null;
-    const btnSaveNickname = document.getElementById('btn-save-nickname');
-    const btnResetNickname = document.getElementById('btn-reset-nickname');
-    const btnCancelNickname = document.getElementById('btn-cancel-nickname');
-
-    let editingUnitId: string | null = null;
     let battleScene: BattleScene | null = null;
-    let battleReturnTarget: 'campaign' | 'devtools' | 'overworld' | 'title' = 'campaign';
+    let battleReturnTarget: 'devtools' | 'overworld' | 'title' = 'overworld';
     let overworldScene: OverworldScene | null = null;
-    let overworldReturnTarget: 'devtools' | 'campaign' | 'suppress' = 'devtools';
-    let activeOverworldSession: {
-      sandboxMode: boolean;
-      returnTo: 'devtools' | 'campaign';
-      graph: OverworldGraphDefinition;
-    } = {
-      sandboxMode: true,
-      returnTo: 'devtools',
-      graph: DEFAULT_OVERWORLD_GRAPH,
-    };
+    let overworldReturnTarget: 'title' | 'suppress' = 'title';
     let pendingDemoOutroChapter: CampaignChapterConfig | null = null;
     let demoLaunchInProgress = false;
-    let testDungeonScene: TestDungeonScene | null = null;
     let mapEditorScene: ChapterMapEditorScene | null = null;
-
-    function getExtraPreviewEmails(): ReadonlyArray<string> | undefined {
-      const injected = (window as unknown as Record<string, unknown>)
-        .__MYSTERY_EMBLEM_TEST_EXTRA_PREVIEW_EMAILS__;
-      return Array.isArray(injected) ? (injected as string[]) : undefined;
-    }
-
-    function isPreviewAuthorized(): boolean {
-      const email = manager.getSyncStatus().user?.email;
-      return hasPreviewSiteAccess(email, getExtraPreviewEmails());
-    }
 
     function isAdminSignedIn(): boolean {
       const email = manager.getSyncStatus().user?.email;
       return hasAdminDevToolsAccess(email);
     }
 
+    function isDevToolsOpen(): boolean {
+      return Boolean(devToolsBackdrop && !devToolsBackdrop.hidden);
+    }
+
+    function closeDevToolsOverlay(): void {
+      if (!devToolsBackdrop) return;
+      devToolsBackdrop.hidden = true;
+      const anySceneOpen =
+        Boolean(battleScene?.isOpen()) ||
+        Boolean(overworldScene?.isOpen()) ||
+        Boolean(mapEditorScene?.isOpen()) ||
+        Boolean(quizScene?.isOpen());
+      if (!anySceneOpen && titleScreen) {
+        titleScreen.hidden = false;
+      }
+      backStack.syncButtonLabel();
+    }
+
+    function openDevToolsOverlay(tab?: 'cheats' | 'maps'): void {
+      if (!isAdminSignedIn() || !devToolsBackdrop) return;
+      devToolsBackdrop.hidden = false;
+      currentDevToolsHarness?.onSaveChanged();
+      if (tab) {
+        currentDevToolsHarness?.switchSubTab(tab);
+      }
+      backStack.syncButtonLabel();
+    }
+
+    function toggleDevTools(): void {
+      if (!isAdminSignedIn() || !devToolsBackdrop) return;
+      if (isDevToolsOpen()) {
+        audioManager.playSfx('cancel');
+        closeDevToolsOverlay();
+      } else {
+        audioManager.playSfx('select');
+        openDevToolsOverlay();
+      }
+    }
+
     const backStack = new BackStackController(
       cornerMenuBtn,
       () => {
-        if (!isPreviewAuthorized()) return;
         if (battleScene?.isOpen()) {
           battleScene.handleMenuOrBack();
-          return;
-        }
-        if (testDungeonScene?.isOpen()) {
-          testDungeonScene.handleMenuOrBack();
           return;
         }
         if (overworldScene?.isOpen()) {
           overworldScene.handleMenuOrBack();
           return;
         }
-      if (mapEditorScene?.isOpen()) {
+        if (mapEditorScene?.isOpen()) {
           mapEditorScene.handleMenuOrBack();
           return;
         }
@@ -913,11 +362,9 @@ const canonicalUrl = Astro.url.href;
       {
         syncIdleButton: (btn) => {
           if (
-            isPreviewAuthorized() &&
-            (battleScene?.isOpen() ||
-              testDungeonScene?.isOpen() ||
-              mapEditorScene?.isOpen() ||
-              overworldScene?.isOpen())
+            battleScene?.isOpen() ||
+            mapEditorScene?.isOpen() ||
+            overworldScene?.isOpen()
           ) {
             btn.textContent = 'Menu';
             btn.dataset.cornerMode = 'menu';
@@ -947,16 +394,10 @@ const canonicalUrl = Astro.url.href;
       if (!landingBackdrop) return;
       const inGameplayScene =
         Boolean(battleScene?.isOpen()) ||
-        Boolean(testDungeonScene?.isOpen()) ||
         Boolean(mapEditorScene?.isOpen()) ||
         Boolean(overworldScene?.isOpen()) ||
         Boolean(quizScene?.isOpen());
-      const showArt =
-        !inGameplayScene &&
-        (Boolean(underDevScreen && !underDevScreen.hidden) ||
-          Boolean(titleScreen && !titleScreen.hidden) ||
-          Boolean(campaignMenu && !campaignMenu.hidden));
-      landingBackdrop.hidden = !showArt;
+      landingBackdrop.hidden = inGameplayScene || Boolean(titleScreen?.hidden);
     }
 
     const origSyncButtonLabel = backStack.syncButtonLabel.bind(backStack);
@@ -985,82 +426,68 @@ const canonicalUrl = Astro.url.href;
       viewportEl && recruitNicknameOverlay
         ? new QuizScene(viewportEl, manager, recruitNicknameOverlay, {
             audioManager,
-            onCancel: () => openCampaignMenu(),
+            onCancel: () => showTitleScreen(),
             onStateChange: () => backStack.syncButtonLabel(),
           })
         : null;
     currentQuizScene = quizScene;
 
+    function showTitleScreen(): void {
+      if (devToolsBackdrop) devToolsBackdrop.hidden = true;
+      if (titleScreen) titleScreen.hidden = false;
+      backStack.syncButtonLabel();
+    }
+
     async function openBattleScene(
-      source: 'campaign' | 'devtools' = 'campaign',
-      levelId = 'drenched_bluff_vanguard'
+      source: 'devtools' | 'overworld' = 'devtools',
+      levelId = 'prologue'
     ): Promise<void> {
-      if (!battleScene || !isPreviewAuthorized()) return;
+      if (!battleScene) return;
       if (source === 'devtools' && !isAdminSignedIn()) return;
+      if (overworldScene?.isOpen()) {
+        overworldReturnTarget = 'suppress';
+        overworldScene.close();
+      }
+      if (mapEditorScene?.isOpen()) {
+        mapEditorScene.close();
+      }
+      if (quizScene?.isOpen()) {
+        quizScene.close();
+      }
       battleReturnTarget = source;
-      if (underDevScreen) underDevScreen.hidden = true;
       if (titleScreen) titleScreen.hidden = true;
-      if (campaignMenu) campaignMenu.hidden = true;
-      if (devToolsModal) devToolsModal.hidden = true;
+      if (devToolsBackdrop) devToolsBackdrop.hidden = true;
       await battleScene.open({ levelId });
       backStack.syncButtonLabel();
     }
 
-    async function openTestDungeon(): Promise<void> {
-      if (!testDungeonScene || !isPreviewAuthorized() || !isAdminSignedIn()) return;
-      if (underDevScreen) underDevScreen.hidden = true;
-      if (titleScreen) titleScreen.hidden = true;
-      if (campaignMenu) campaignMenu.hidden = true;
-      if (devToolsModal) devToolsModal.hidden = true;
-      await testDungeonScene.open();
-      backStack.syncButtonLabel();
-    }
-
     async function openOverworldScene(opts?: {
-      preset?: 'sandbox' | 'prologue' | 'all';
-      sandboxMode?: boolean;
-      returnTo?: 'devtools' | 'campaign';
-      graph?: OverworldGraphDefinition;
       preservePosition?: boolean;
     }): Promise<void> {
-      const sandboxMode = opts?.sandboxMode ?? true;
-      if (!overworldScene || !isPreviewAuthorized()) return;
-      if (sandboxMode && !isAdminSignedIn()) return;
+      if (!overworldScene) return;
+      overworldReturnTarget = 'title';
 
-      const returnTo = opts?.returnTo ?? (sandboxMode ? 'devtools' : 'campaign');
-      const graph = opts?.graph ?? (sandboxMode ? DEFAULT_OVERWORLD_GRAPH : DEMO_OVERWORLD_GRAPH);
-      overworldReturnTarget = returnTo;
-      activeOverworldSession = { sandboxMode, returnTo, graph };
-
-      if (opts?.preset) {
-        if (!manager.getSave()) {
-          manager.createNewCampaignSave({
-            lordSpeciesId: 'dratini',
-            lordNickname: 'Bahamut',
-            partnerSpeciesId: 'bulbasaur',
-            partnerNickname: 'Sprout',
-            healerSpeciesId: 'happiny',
-            healerNickname: 'Clover',
-          });
-        }
-        if (opts.preset === 'sandbox') {
-          manager.applyOverworldSandboxPreset(graph);
-        } else if (opts.preset === 'prologue') {
-          manager.resetOverworldToPrologue(graph);
-        } else if (opts.preset === 'all') {
-          manager.unlockAllOverworldNodes(graph);
-        }
+      if (!manager.getSave()) {
+        manager.createNewCampaignSave({
+          campaignMode: 'demo',
+          lordSpeciesId: 'dratini',
+          lordNickname: 'Bahamut',
+          partnerSpeciesId: 'bulbasaur',
+          partnerNickname: 'Sprout',
+          healerSpeciesId: 'happiny',
+          healerNickname: 'Clover',
+          startingLevel: DEMO_STARTING_LEVEL,
+          scaleStatsToLevel: true,
+          initialConvoy: DEMO_INITIAL_CONVOY,
+          overworldGraph: DEMO_OVERWORLD_GRAPH,
+        });
       }
 
-      if (underDevScreen) underDevScreen.hidden = true;
       if (titleScreen) titleScreen.hidden = true;
-      if (campaignMenu) campaignMenu.hidden = true;
-      if (devToolsModal) devToolsModal.hidden = true;
+      if (devToolsBackdrop) devToolsBackdrop.hidden = true;
       await overworldScene.open({
-        sandboxMode,
-        graph,
-        preservePosition: opts?.preservePosition,
-        skipDefaultSandboxSeed: Boolean(opts?.preset || opts?.preservePosition),
+        graph: DEMO_OVERWORLD_GRAPH,
+        preservePosition: opts?.preservePosition ?? true,
       });
       backStack.syncButtonLabel();
 
@@ -1079,11 +506,17 @@ const canonicalUrl = Astro.url.href;
     }
 
     function openDemoQuizFlow(opts?: { skipNicknamePrompts?: boolean; forceNgPlus?: boolean }): void {
-      if (!quizScene || !isPreviewAuthorized()) return;
-      if (underDevScreen) underDevScreen.hidden = true;
+      if (!quizScene) return;
+      if (overworldScene?.isOpen()) {
+        overworldReturnTarget = 'suppress';
+        overworldScene.close();
+      }
+      if (battleScene?.isOpen()) {
+        battleReturnTarget = 'title';
+        battleScene.close();
+      }
       if (titleScreen) titleScreen.hidden = true;
-      if (campaignMenu) campaignMenu.hidden = true;
-      if (devToolsModal) devToolsModal.hidden = true;
+      if (devToolsBackdrop) devToolsBackdrop.hidden = true;
       quizScene.open({
         campaignMode: 'demo',
         startingLevel: DEMO_STARTING_LEVEL,
@@ -1093,12 +526,7 @@ const canonicalUrl = Astro.url.href;
         skipNicknamePrompts: opts?.skipNicknamePrompts,
         forceNgPlus: opts?.forceNgPlus,
         onComplete: () => {
-          void openOverworldScene({
-            sandboxMode: false,
-            returnTo: 'campaign',
-            graph: DEMO_OVERWORLD_GRAPH,
-            preservePosition: false,
-          });
+          void openOverworldScene({ preservePosition: false });
         },
       });
       backStack.syncButtonLabel();
@@ -1152,10 +580,8 @@ const canonicalUrl = Astro.url.href;
         overworldReturnTarget = 'suppress';
         overworldScene?.close();
         battleReturnTarget = 'overworld';
-        if (underDevScreen) underDevScreen.hidden = true;
         if (titleScreen) titleScreen.hidden = true;
-        if (campaignMenu) campaignMenu.hidden = true;
-        if (devToolsModal) devToolsModal.hidden = true;
+        if (devToolsBackdrop) devToolsBackdrop.hidden = true;
 
         await battleScene.open({
           levelId: demoChapter.levelId,
@@ -1195,14 +621,33 @@ const canonicalUrl = Astro.url.href;
       }
     }
 
-    async function openMapEditor(levelId = 'drenched_bluff_vanguard'): Promise<void> {
-      if (!mapEditorScene || !isPreviewAuthorized() || !isAdminSignedIn()) return;
-      if (underDevScreen) underDevScreen.hidden = true;
+    async function openMapEditor(levelId = 'prologue'): Promise<void> {
+      if (!mapEditorScene || !isAdminSignedIn()) return;
+      if (overworldScene?.isOpen()) {
+        overworldReturnTarget = 'suppress';
+        overworldScene.close();
+      }
+      if (battleScene?.isOpen()) {
+        battleReturnTarget = 'title';
+        battleScene.close();
+      }
+      if (quizScene?.isOpen()) {
+        quizScene.close();
+      }
       if (titleScreen) titleScreen.hidden = true;
-      if (campaignMenu) campaignMenu.hidden = true;
-      if (devToolsModal) devToolsModal.hidden = true;
+      if (devToolsBackdrop) devToolsBackdrop.hidden = true;
       await mapEditorScene.open(levelId);
       backStack.syncButtonLabel();
+    }
+
+    async function promptRenameUnit(
+      instanceId: string,
+      overrideManager?: SaveStateManager
+    ): Promise<void> {
+      if (!recruitNicknameOverlay) return;
+      await recruitNicknameOverlay.promptRenameUnit(instanceId, overrideManager);
+      battleScene?.refreshFromExternalSaveCheat();
+      currentDevToolsHarness?.onSaveChanged();
     }
 
     if (viewportEl) {
@@ -1210,27 +655,20 @@ const canonicalUrl = Astro.url.href;
         viewportEl,
         saveManager: manager,
         audioManager,
+        onRequestRenameUnit: (instanceId) =>
+          promptRenameUnit(instanceId, battleScene?.getPrepSaveManager()),
         onExit: () => {
-          if (!isPreviewAuthorized()) {
-            showTitleScreen();
-            return;
-          }
-          if (battleReturnTarget === 'devtools' && isAdminSignedIn() && devToolsModal) {
-            if (underDevScreen) underDevScreen.hidden = true;
-            if (titleScreen) titleScreen.hidden = true;
-            if (campaignMenu) campaignMenu.hidden = true;
-            devToolsModal.hidden = false;
-            currentDevToolsHarness?.onSaveChanged();
-            backStack.syncButtonLabel();
+          if (battleReturnTarget === 'devtools' && isAdminSignedIn()) {
+            if (manager.getSave()) {
+              void openOverworldScene({ preservePosition: true }).then(() => {
+                openDevToolsOverlay('maps');
+              });
+            } else {
+              showTitleScreen();
+              openDevToolsOverlay('maps');
+            }
           } else if (battleReturnTarget === 'overworld') {
-            void openOverworldScene({
-              sandboxMode: activeOverworldSession.sandboxMode,
-              returnTo: activeOverworldSession.returnTo,
-              graph: activeOverworldSession.graph,
-              preservePosition: true,
-            });
-          } else if (battleReturnTarget === 'campaign') {
-            openCampaignMenu();
+            void openOverworldScene({ preservePosition: true });
           } else {
             showTitleScreen();
           }
@@ -1239,47 +677,26 @@ const canonicalUrl = Astro.url.href;
       });
       currentBattleScene = battleScene;
 
-      testDungeonScene = new TestDungeonScene({
-        viewportEl,
-        audioManager,
-        onExit: () => {
-          if (isPreviewAuthorized() && isAdminSignedIn() && devToolsModal) {
-            if (underDevScreen) underDevScreen.hidden = true;
-            if (titleScreen) titleScreen.hidden = true;
-            if (campaignMenu) campaignMenu.hidden = true;
-            devToolsModal.hidden = false;
-            currentDevToolsHarness?.onSaveChanged();
-            backStack.syncButtonLabel();
-          } else {
-            showTitleScreen();
-          }
-        },
-        onLayerStateChanged: () => backStack.syncButtonLabel(),
-      });
-      currentTestDungeonScene = testDungeonScene;
-
       mapEditorScene = new ChapterMapEditorScene({
         viewportEl,
         saveManager: manager,
         audioManager,
         onExit: () => {
-          if (isPreviewAuthorized() && isAdminSignedIn() && devToolsModal) {
-            if (underDevScreen) underDevScreen.hidden = true;
-            if (titleScreen) titleScreen.hidden = true;
-            if (campaignMenu) campaignMenu.hidden = true;
-            devToolsModal.hidden = false;
-            currentDevToolsHarness?.switchSubTab('maps');
-            backStack.syncButtonLabel();
+          if (isAdminSignedIn()) {
+            if (manager.getSave()) {
+              void openOverworldScene({ preservePosition: true }).then(() => {
+                openDevToolsOverlay('maps');
+              });
+            } else {
+              showTitleScreen();
+              openDevToolsOverlay('maps');
+            }
           } else {
             showTitleScreen();
           }
         },
         onPlayLevel: (targetLevelId) => {
-          if (targetLevelId === 'skirmish_test_convergence') {
-            void openTestDungeon();
-          } else {
-            void openBattleScene('devtools', targetLevelId);
-          }
+          void openBattleScene('devtools', targetLevelId);
         },
         onLayerStateChanged: () => backStack.syncButtonLabel(),
       });
@@ -1289,35 +706,18 @@ const canonicalUrl = Astro.url.href;
         viewportEl,
         saveManager: manager,
         audioManager,
-        sandboxMode: true,
         onExit: () => {
           if (overworldReturnTarget === 'suppress') {
             return;
           }
-          if (
-            overworldReturnTarget === 'devtools' &&
-            isPreviewAuthorized() &&
-            isAdminSignedIn() &&
-            devToolsModal
-          ) {
-            if (underDevScreen) underDevScreen.hidden = true;
-            if (titleScreen) titleScreen.hidden = true;
-            if (campaignMenu) campaignMenu.hidden = true;
-            devToolsModal.hidden = false;
-            currentDevToolsHarness?.switchSubTab('overworld');
-            backStack.syncButtonLabel();
-          } else if (overworldReturnTarget === 'campaign' && isPreviewAuthorized()) {
-            openCampaignMenu();
-          } else {
-            showTitleScreen();
-          }
+          showTitleScreen();
         },
         onLayerStateChanged: () => backStack.syncButtonLabel(),
-        onRequestRenameUnit: (instanceId) => openNicknameModal(instanceId),
+        onRequestRenameUnit: (instanceId) => void promptRenameUnit(instanceId),
+        onRequestNewGame: () => openDemoQuizFlow(),
         onLaunchChapterBattle: ({ nodeId, levelId }) => {
           if (!battleScene) return;
-          const isSandbox = overworldScene?.getSnapshot().sandboxMode ?? true;
-          const demoChapter = !isSandbox ? getDemoChapterByNodeId(nodeId) : undefined;
+          const demoChapter = getDemoChapterByNodeId(nodeId);
           if (demoChapter) {
             void launchDemoChapterBattle(demoChapter);
             return;
@@ -1325,18 +725,17 @@ const canonicalUrl = Astro.url.href;
           overworldReturnTarget = 'suppress';
           overworldScene?.close();
           battleReturnTarget = 'overworld';
-          if (underDevScreen) underDevScreen.hidden = true;
           if (titleScreen) titleScreen.hidden = true;
-          if (campaignMenu) campaignMenu.hidden = true;
-          if (devToolsModal) devToolsModal.hidden = true;
+          if (devToolsBackdrop) devToolsBackdrop.hidden = true;
           void battleScene
             .open({
               levelId,
-              commitToSaveOnVictory: !isSandbox,
-              exitButtonLabel: 'Return to Overworld',
+              commitToSaveOnVictory: true,
+              exitButtonLabel: 'Return to World Map',
+              hideReplayOnVictory: true,
               onVictory: () => {
                 manager.completeOverworldChapter(nodeId, {
-                  graph: activeOverworldSession.graph,
+                  graph: DEMO_OVERWORLD_GRAPH,
                 });
               },
             })
@@ -1344,26 +743,23 @@ const canonicalUrl = Astro.url.href;
         },
         onLaunchSkirmishBattle: ({ nodeId, customMap, enemyOverrides, goldBounty }) => {
           if (!battleScene) return;
-          const isSandbox = overworldScene?.getSnapshot().sandboxMode ?? true;
           overworldReturnTarget = 'suppress';
           overworldScene?.close();
           battleReturnTarget = 'overworld';
-          if (underDevScreen) underDevScreen.hidden = true;
           if (titleScreen) titleScreen.hidden = true;
-          if (campaignMenu) campaignMenu.hidden = true;
-          if (devToolsModal) devToolsModal.hidden = true;
+          if (devToolsBackdrop) devToolsBackdrop.hidden = true;
           void battleScene
             .open({
               customMap,
               enemyOverrides,
-              commitToSaveOnVictory: !isSandbox,
-              exitButtonLabel: 'Return to Overworld',
+              commitToSaveOnVictory: true,
+              exitButtonLabel: 'Return to World Map',
               hideReplayOnVictory: true,
               onVictory: () => {
                 manager.clearOverworldSkirmish(
                   nodeId,
                   goldBounty,
-                  activeOverworldSession.graph
+                  DEMO_OVERWORLD_GRAPH
                 );
               },
             })
@@ -1373,61 +769,60 @@ const canonicalUrl = Astro.url.href;
       currentOverworldScene = overworldScene;
     }
 
-    function openNicknameModal(instanceId: string): void {
-      if (!isPreviewAuthorized()) return;
-      const save = manager.getSave();
-      const unit = save?.roster.find((u) => u.instanceId === instanceId);
-      if (!unit || !nicknameBackdrop || !nicknameInput) return;
-      const sp = getSpeciesById(unit.speciesId);
-      editingUnitId = instanceId;
-      if (nicknameSpeciesEl) {
-        nicknameSpeciesEl.textContent = `${sp?.name ?? unit.speciesId} · Lv. ${unit.level}`;
-      }
-      nicknameInput.value = unit.nickname;
-      nicknameBackdrop.hidden = false;
-      backStack.syncButtonLabel();
-    }
-
-    function closeNicknameModal(): void {
-      editingUnitId = null;
-      if (nicknameBackdrop) nicknameBackdrop.hidden = true;
-      backStack.syncButtonLabel();
-    }
-
-    if (devToolsModal && dialogueOverlay) {
+    if (devToolsModal) {
       currentDevToolsHarness = new DevToolsHarness({
         modalEl: devToolsModal,
         saveManager: manager,
-        dialogueOverlay,
         audioManager,
-        onLaunchBattle: (levelId) => {
-          void openBattleScene('devtools', levelId);
-        },
-        onLaunchTestDungeon: () => {
-          void openTestDungeon();
-        },
-        onLaunchOverworld: (preset) => {
-          void openOverworldScene({ preset, sandboxMode: true, returnTo: 'devtools' });
+        isBattleOpen: () => Boolean(battleScene?.isOpen()),
+        onCheatFullHealSquad: () => battleScene?.cheatFullHealSquad(),
+        onCheatInstantWin: () => battleScene?.cheatInstantWin(),
+        onLiveStateMutated: (opts) => {
+          if (opts?.snapOverworld && overworldScene?.isOpen()) {
+            overworldScene.snapToCurrentSaveNode();
+          }
+          battleScene?.refreshFromExternalSaveCheat();
         },
         onLaunchMapEditor: (levelId) => {
           void openMapEditor(levelId);
         },
-        onRequestRenameUnit: (instanceId) => {
-          openNicknameModal(instanceId);
+        onPlayMapBattle: (levelId) => {
+          void openBattleScene('devtools', levelId);
         },
+        onRequestRenameUnit: (instanceId) => {
+          void promptRenameUnit(instanceId);
+        },
+        onClose: () => closeDevToolsOverlay(),
         signal,
       });
     }
+
+    // Close Dev Tools when clicking backdrop outside modal
+    devToolsBackdrop?.addEventListener(
+      'pointerdown',
+      (ev: PointerEvent) => {
+        if (ev.target === devToolsBackdrop) {
+          ev.stopPropagation();
+          audioManager.playSfx('cancel');
+          closeDevToolsOverlay();
+        }
+      },
+      { signal }
+    );
+    devToolsModal?.addEventListener(
+      'pointerdown',
+      (ev: PointerEvent) => {
+        ev.stopPropagation();
+      },
+      { signal }
+    );
 
     (window as unknown as Record<string, unknown>).__MYSTERY_EMBLEM_DEBUG__ = {
       saveManager: manager,
       SaveStateManager,
       formatCampaignChapterLabel,
       getUnitEquippedItemId,
-      DEV_PREVIEW_GATE_ENABLED,
-      ALLOWED_PREVIEW_EMAILS,
       ADMIN_DEVTOOLS_EMAILS,
-      hasPreviewSiteAccess,
       hasAdminDevToolsAccess,
       InMemoryCloudSyncAdapter,
       getRegistryValidationSummary,
@@ -1440,12 +835,10 @@ const canonicalUrl = Astro.url.href;
       devToolsHarness: currentDevToolsHarness,
       battleScene,
       openBattleScene,
-      testDungeonScene,
       mapEditorScene,
       openMapEditor,
       overworldScene,
       openOverworldScene,
-      DEFAULT_OVERWORLD_GRAPH,
       DEMO_OVERWORLD_GRAPH,
       DEMO_CAMPAIGN_CHAPTERS,
       DEMO_STARTING_LEVEL,
@@ -1460,7 +853,6 @@ const canonicalUrl = Astro.url.href;
       computeSupportHealExpGain,
       getEligibleEvolutionBranches,
       promoteBattleUnitMidBattle,
-      getOverworldGraph,
       buildKecleonShopInventory,
       buildSkirmishBattlePayload,
       findOverworldRoute,
@@ -1475,16 +867,18 @@ const canonicalUrl = Astro.url.href;
       resetAllChapterMapOverrides,
       exportChapterMapJson,
       importChapterMapJson,
-      openNicknameModal,
+      promptRenameUnit,
       computeCombatForecast,
       computeHealForecast,
       resolveCombatExchange,
       getTypeEffectiveness,
       chooseEnemyAction,
-      openTestDungeon,
       loadSpeciesSpriteBundle,
       loadSpeciesPortrait,
       clearPmdAssetCache,
+      computePmdTileSpritePlacement,
+      PmdSpriteActor,
+      PmdPortraitView,
       PMD_SPRITE_ACTIONS,
       PMD_PORTRAIT_EMOTIONS,
       PMD_TILESET_LIST,
@@ -1498,103 +892,17 @@ const canonicalUrl = Astro.url.href;
     };
 
     function setStatus(msg: string): void {
+      if (!statusMsgEl) return;
       const trimmed = msg.trim();
-      const targetEl = isPreviewAuthorized() ? statusMsgEl : underDevStatusEl;
-      const otherEl = isPreviewAuthorized() ? underDevStatusEl : statusMsgEl;
-      if (otherEl) {
-        otherEl.textContent = '';
-        otherEl.hidden = true;
-      }
-      if (!targetEl) return;
-      targetEl.textContent = trimmed;
-      targetEl.hidden = trimmed.length === 0;
-    }
-
-    function setCampaignStatus(msg: string): void {
-      if (!campaignStatusEl) return;
-      const trimmed = msg.trim();
-      campaignStatusEl.textContent = trimmed;
-      campaignStatusEl.hidden = trimmed.length === 0;
-    }
-
-    function showTitleScreen(): void {
-      if (campaignMenu) campaignMenu.hidden = true;
-      if (devToolsModal) devToolsModal.hidden = true;
-      if (isPreviewAuthorized()) {
-        if (underDevScreen) underDevScreen.hidden = true;
-        if (titleScreen) titleScreen.hidden = false;
-      } else {
-        if (titleScreen) titleScreen.hidden = true;
-        if (underDevScreen) underDevScreen.hidden = false;
-      }
-      backStack.syncButtonLabel();
-    }
-
-    function openCampaignMenu(): void {
-      if (!isPreviewAuthorized()) return;
-      setCampaignStatus('');
-      if (underDevScreen) underDevScreen.hidden = true;
-      if (titleScreen) titleScreen.hidden = true;
-      if (devToolsModal) devToolsModal.hidden = true;
-      if (campaignMenu) campaignMenu.hidden = false;
-      backStack.syncButtonLabel();
-    }
-
-    function toggleDevTools(): void {
-      if (!isPreviewAuthorized() || !isAdminSignedIn() || !devToolsModal) return;
-      if (battleScene?.isOpen()) {
-        battleReturnTarget = 'devtools';
-        battleScene.close();
-        return;
-      }
-      if (testDungeonScene?.isOpen()) {
-        testDungeonScene.close();
-        return;
-      }
-      if (overworldScene?.isOpen()) {
-        overworldReturnTarget = 'devtools';
-        overworldScene.close();
-        return;
-      }
-      if (mapEditorScene?.isOpen()) {
-        mapEditorScene.close();
-        return;
-      }
-      if (quizScene?.isOpen()) {
-        quizScene.close();
-      }
-      if (!devToolsModal.hidden) {
-        showTitleScreen();
-        return;
-      }
-      if (underDevScreen) underDevScreen.hidden = true;
-      if (titleScreen) titleScreen.hidden = true;
-      if (campaignMenu) campaignMenu.hidden = true;
-      devToolsModal.hidden = false;
-      currentDevToolsHarness?.onSaveChanged();
-      backStack.syncButtonLabel();
+      statusMsgEl.textContent = trimmed;
+      statusMsgEl.hidden = trimmed.length === 0;
     }
 
     // Register navigation layers from lowest to highest LIFO priority
     backStack.registerLayer({
-      id: 'campaign-menu',
-      isActive: () => Boolean(campaignMenu && !campaignMenu.hidden),
-      onBack: () => showTitleScreen(),
-    });
-    backStack.registerLayer({
-      id: 'devtools-modal',
-      isActive: () => Boolean(devToolsModal && !devToolsModal.hidden),
-      onBack: () => showTitleScreen(),
-    });
-    backStack.registerLayer({
       id: 'battle-scene-sublayer',
       isActive: () => Boolean(battleScene?.isOpen() && battleScene.hasActiveSubLayer()),
       onBack: () => battleScene?.handleMenuOrBack(),
-    });
-    backStack.registerLayer({
-      id: 'test-dungeon-sublayer',
-      isActive: () => Boolean(testDungeonScene?.isOpen() && testDungeonScene.hasActiveSubLayer()),
-      onBack: () => testDungeonScene?.handleMenuOrBack(),
     });
     backStack.registerLayer({
       id: 'map-editor-sublayer',
@@ -1612,6 +920,14 @@ const canonicalUrl = Astro.url.href;
       onBack: () => quizScene?.handleBack(),
     });
     backStack.registerLayer({
+      id: 'devtools-modal',
+      isActive: () => isDevToolsOpen(),
+      onBack: () => {
+        audioManager.playSfx('cancel');
+        closeDevToolsOverlay();
+      },
+    });
+    backStack.registerLayer({
       id: 'dialogue-overlay',
       isActive: () => Boolean(dialogueOverlay?.isOpen()),
       onBack: () => dialogueOverlay?.close('cancelled'),
@@ -1621,162 +937,36 @@ const canonicalUrl = Astro.url.href;
       isActive: () => Boolean(recruitNicknameOverlay?.isOpen()),
       onBack: () => recruitNicknameOverlay?.handleBack(),
     });
-    backStack.registerLayer({
-      id: 'nickname-modal',
-      isActive: () => Boolean(nicknameBackdrop && !nicknameBackdrop.hidden),
-      onBack: () => closeNicknameModal(),
-    });
-
-    function renderRegistryAudit(): void {
-      if (!auditBanner || !metricsGrid) return;
-      const c = validation.counts;
-      auditBanner.className = validation.valid
-        ? 'pmd-audit-banner is-valid'
-        : 'pmd-audit-banner is-invalid';
-      auditBanner.textContent = validation.valid
-        ? `SCHEMA & FACTION AUDIT PASSED · 0 ERRORS · Sole Shared Line: ${c.sharedLines.join(', ')}`
-        : `SCHEMA AUDIT FAILED · ${validation.errors.length} Error(s)`;
-
-      const metrics: Array<[string, string]> = [
-        ['Total Species Stages', String(c.totalSpecies)],
-        ['Evolutionary Lines', String(c.totalLines)],
-        ['Dragon Lords', `${c.dragonLordLines} lines`],
-        ['Starter Partners', `${c.starterPartnerLines} lines`],
-        ['Q1–Q9 Quiz Pool', `${c.quizRecruitLines} lines`],
-        ['Story Chapter Recruits', `${c.storyRecruitLines} lines`],
-        ['Paralogue Recruits', `${c.paralogueRecruitLines} lines`],
-        ['Enemy Roster Lines', `${c.enemyLines} lines`],
-        ['Moves (1R / 2R / Sup)', `${c.totalMoves} (${c.physicalMoves}/${c.specialMoves}/${c.supportHealMoves})`],
-        ['Pure Stat Moves', `${c.pureStatChangeMoves} (Rule 4)`],
-        ['Items & TMs', `${c.totalItems} (${c.tmCount} TMs)`],
-        ['Personal Skills', String(c.totalPersonalSkills)],
-      ];
-
-      metricsGrid.innerHTML = '';
-      for (const [label, value] of metrics) {
-        const card = document.createElement('div');
-        card.className = 'pmd-metric-card';
-        card.innerHTML = `<span class="pmd-metric-label">${label}</span><strong class="pmd-metric-val">${value}</strong>`;
-        metricsGrid.appendChild(card);
-      }
-
-      if (errorsBox) {
-        if (validation.errors.length > 0) {
-          errorsBox.hidden = false;
-          errorsBox.textContent = validation.errors.join('\n');
-        } else {
-          errorsBox.hidden = true;
-        }
-      }
-    }
 
     function renderAll(): void {
       const save = manager.getSave();
-      const sync = manager.getSyncStatus();
-      const previewAllowed = isPreviewAuthorized();
-      const adminActive = previewAllowed && isAdminSignedIn();
+      const adminActive = isAdminSignedIn();
 
-      if (!previewAllowed) {
-        if (devToolsBtn) devToolsBtn.hidden = true;
-        if (battleScene?.isOpen()) battleScene.close();
-        if (testDungeonScene?.isOpen()) testDungeonScene.close();
-        if (mapEditorScene?.isOpen()) mapEditorScene.close();
-        if (overworldScene?.isOpen()) {
-          overworldReturnTarget = 'suppress';
-          overworldScene.close();
-        }
-        if (dialogueOverlay?.isOpen()) dialogueOverlay.close('cancelled');
-        if (quizScene?.isOpen()) quizScene.close();
-        if (recruitNicknameOverlay?.isOpen()) recruitNicknameOverlay.handleBack();
-        if (nicknameBackdrop && !nicknameBackdrop.hidden) {
-          editingUnitId = null;
-          nicknameBackdrop.hidden = true;
-        }
-        if (devToolsModal) devToolsModal.hidden = true;
-        if (campaignMenu) campaignMenu.hidden = true;
-        if (titleScreen) titleScreen.hidden = true;
-        if (underDevScreen) underDevScreen.hidden = false;
-
-        if (underDevMessageEl) {
-          if (sync.user) {
-            const who = sync.user.email ?? sync.user.displayName ?? 'this Google account';
-            underDevMessageEl.textContent = `This website is currently in active development. Signed in as ${who} — this account does not have preview access yet.`;
-          } else {
-            underDevMessageEl.textContent =
-              'This website is currently in active development. Sign in with an authorized Google account at the top right for preview access.';
-          }
-        }
-
-        if (audioManager.getCurrentTrackId()) {
-          audioManager.stopBgm({ fadeMs: 200 });
-        }
-
-        backStack.syncButtonLabel();
-        return;
-      }
-
-      // Authorized preview account: hide In-Development gate and arm Top Menu BGM (`002`)
-      if (underDevScreen) underDevScreen.hidden = true;
-      if (underDevStatusEl) {
-        underDevStatusEl.textContent = '';
-        underDevStatusEl.hidden = true;
-      }
       if (!audioManager.getCurrentTrackId()) {
         audioManager.playBgm('top_menu', { fadeMs: 350 });
       }
 
-      // Reveal Title Screen if no other authorized scene/panel is currently open
-      const anyPanelOrSceneOpen =
-        Boolean(campaignMenu && !campaignMenu.hidden) ||
-        Boolean(devToolsModal && !devToolsModal.hidden) ||
+      const anySceneOpen =
         Boolean(quizScene?.isOpen()) ||
         Boolean(recruitNicknameOverlay?.isOpen()) ||
         Boolean(dialogueOverlay?.isOpen()) ||
         Boolean(battleScene?.isOpen()) ||
-        Boolean(testDungeonScene?.isOpen()) ||
         Boolean(mapEditorScene?.isOpen()) ||
         Boolean(overworldScene?.isOpen());
-      if (!anyPanelOrSceneOpen && titleScreen) {
+      if (!anySceneOpen && titleScreen) {
         titleScreen.hidden = false;
       }
 
-      const isActiveDemoSave = Boolean(save && save.campaign.campaignMode === 'demo');
-      const ngPlusReady = manager.isNewGamePlusUnlocked();
-      if (btnCampaignDemoSub) {
-        if (isActiveDemoSave && save) {
-          const clearedCount = save.campaign.completedChapterIds.length;
-          const lordUnit = save.roster.find((u) => u.isLord) ?? save.roster[0];
-          const lordInfo = lordUnit ? `${lordUnit.nickname} Lv.${lordUnit.level}` : 'Squad';
-          btnCampaignDemoSub.textContent = `Continue World Map (${Math.min(5, clearedCount)}/5 Cleared · ${lordInfo})`;
-        } else {
-          btnCampaignDemoSub.textContent = 'Quiz · 5 Dungeons · World Map · Cutscenes';
-        }
-      }
-      if (btnCampaignDemoNew) {
-        btnCampaignDemoNew.hidden = !save && !ngPlusReady;
-      }
-      if (btnCampaignDemoNewSub) {
-        btnCampaignDemoNewSub.textContent = ngPlusReady
-          ? 'Personality Quiz or New Game+ Custom Roster (Lv. 9)'
-          : 'Start Fresh Personality Quiz (Lv. 9)';
-      }
-
-      // Strictly gate Top-Left Dev Tools button, modal & Test Dungeon / Map Editor to ADMIN_DEVTOOLS_EMAILS
       if (devToolsBtn) {
         devToolsBtn.hidden = !adminActive;
       }
-      if (!adminActive && testDungeonScene?.isOpen()) {
-        testDungeonScene.close();
-      }
-      if (!adminActive && overworldScene?.isOpen() && overworldScene.getSnapshot().sandboxMode) {
-        overworldReturnTarget = 'suppress';
-        overworldScene.close();
-      }
-      if (!adminActive && mapEditorScene?.isOpen()) {
-        mapEditorScene.close();
-      }
-      if (!adminActive && devToolsModal && !devToolsModal.hidden) {
-        showTitleScreen();
+      if (!adminActive) {
+        if (mapEditorScene?.isOpen()) {
+          mapEditorScene.close();
+        }
+        if (isDevToolsOpen()) {
+          closeDevToolsOverlay();
+        }
       }
 
       if (save) {
@@ -1798,29 +988,13 @@ const canonicalUrl = Astro.url.href;
         }
       }
 
-      if (devToolsSyncDiagnostics) {
-        const iso = save ? new Date(save.lastUpdated).toISOString() : 'none';
-        const uidPath = sync.user ? `saves/${sync.user.uid}` : 'unauthenticated';
-        const chapterInfo = save
-          ? `${formatCampaignChapterLabel(save.campaign.currentChapterId)} (${save.campaign.currentChapterId})`
-          : 'none';
-        devToolsSyncDiagnostics.textContent = [
-          `Save ID: ${save?.saveId ?? 'none'}`,
-          `Chapter: ${chapterInfo}`,
-          `Schema: v${save?.schemaVersion ?? '—'}`,
-          `lastUpdated: ${iso}${save ? ` (${save.lastUpdated})` : ''}`,
-          `Firestore Doc: ${uidPath}`,
-          `Last Resolution: ${sync.lastResolution ?? 'none'}`,
-        ].join(' · ');
-      }
-
       currentDevToolsHarness?.onSaveChanged();
       backStack.syncButtonLabel();
     }
 
     // Top-Right Corner Button:
-    // - In `back` / `menu` mode (Campaign Menu, Dev Tools, Dialogue, Battle/Test Dungeon): unified pointer tap
-    // - In `login` / `logout` mode (Gate & Title Screen): native `click` activation so iOS Safari & Android Chrome permit `signInWithPopup`
+    // - In `back` / `menu` mode: unified pointer tap
+    // - In `login` / `logout` mode (Title Screen): native `click` activation so iOS Safari & Android Chrome permit `signInWithPopup`
     let cornerPressedInNavMode = false;
     cornerMenuBtn?.addEventListener(
       'pointerdown',
@@ -1889,41 +1063,16 @@ const canonicalUrl = Astro.url.href;
     // PC Right-Click parity + Mobile Long-Press parity on viewport background
     bindBackGestureSurface(viewportEl, () => backStack.triggerMenuOrBack(), { signal });
 
+    // Single Direct Title CTA:
+    // - `Continue` -> jumps straight into active Overworld save
+    // - `Start`    -> jumps straight into 5-Dungeon Demo Quiz / NG+ Picker
     bindPointerTap(
       btnContinue,
       () => {
-        if (!isPreviewAuthorized()) return;
         audioManager.playSfx('select');
         setStatus('');
-        openCampaignMenu();
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      btnEnterDungeon,
-      () => {
-        if (!isPreviewAuthorized()) return;
-        audioManager.playSfx('select');
-        void openBattleScene('campaign');
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      btnCampaignDemo,
-      () => {
-        if (!isPreviewAuthorized()) return;
-        audioManager.playSfx('select');
-        setCampaignStatus('');
-        const currentSave = manager.getSave();
-        if (currentSave && currentSave.campaign.campaignMode === 'demo') {
-          void openOverworldScene({
-            sandboxMode: false,
-            returnTo: 'campaign',
-            graph: DEMO_OVERWORLD_GRAPH,
-            preservePosition: true,
-          });
+        if (manager.getSave() !== null) {
+          void openOverworldScene({ preservePosition: true });
         } else {
           openDemoQuizFlow();
         }
@@ -1931,53 +1080,6 @@ const canonicalUrl = Astro.url.href;
       { signal }
     );
 
-    bindPointerTap(
-      btnCampaignDemoNew,
-      () => {
-        if (!isPreviewAuthorized()) return;
-        audioManager.playSfx('select');
-        setCampaignStatus('');
-        openDemoQuizFlow();
-      },
-      { signal }
-    );
-
-    // Nickname Modal Controls
-    document.querySelectorAll<HTMLElement>('.pmd-chip-btn[data-preset]').forEach((chip) => {
-      bindPointerTap(
-        chip,
-        () => {
-          if (nicknameInput && chip.dataset.preset) {
-            nicknameInput.value = chip.dataset.preset;
-          }
-        },
-        { signal }
-      );
-    });
-
-    bindPointerTap(
-      btnSaveNickname,
-      () => {
-        if (!editingUnitId || !nicknameInput) return;
-        manager.renamePokemon(editingUnitId, nicknameInput.value);
-        closeNicknameModal();
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      btnResetNickname,
-      () => {
-        if (!editingUnitId) return;
-        manager.renamePokemon(editingUnitId, '');
-        closeNicknameModal();
-      },
-      { signal }
-    );
-
-    bindPointerTap(btnCancelNickname, () => closeNicknameModal(), { signal });
-
-    renderRegistryAudit();
     manager.subscribe(() => renderAll());
   }
 
@@ -2027,15 +1129,6 @@ const canonicalUrl = Astro.url.href;
     user-select: none;
     touch-action: manipulation;
   }
-
-  /* ==========================================================================
-     LANDING BOX ART BACKDROP (`boxart.png` — 1024x572)
-     - Desktop & Landscape (`min-aspect-ratio: 1/1`): Full-bleed cover with
-       compact PMD Start/Continue prompt anchored bottom-right over snowbank.
-     - Mobile Portrait (`max-aspect-ratio: 999/1000`): Full-width upper/middle
-       contain framing over matching starry-aurora sky so zero logo/Piplup/peak
-       art is cropped, with compact PMD Start/Continue prompt anchored below.
-     ========================================================================== */
 
   .pmd-landing-backdrop {
     position: absolute;
@@ -2098,20 +1191,6 @@ const canonicalUrl = Astro.url.href;
     color: #f8f800;
   }
 
-  /* Gate Card (In-Development Preview Gate) */
-  .pmd-gate-card {
-    position: relative;
-    z-index: 2;
-    max-width: 500px;
-    width: 100%;
-    padding: 16px 20px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-  }
-
   /* Compact PMD Title Prompt Window Over Box Art */
   .pmd-title-card {
     position: relative;
@@ -2127,41 +1206,6 @@ const canonicalUrl = Astro.url.href;
     margin-top: auto;
     margin-right: clamp(0.4rem, 2.8vw, 2.25rem);
     margin-bottom: clamp(0.25rem, 1.8vh, 1rem);
-  }
-
-  .pmd-dev-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border: 2px solid #f8d838;
-    background: #102638;
-    color: #f8f800;
-    font-size: 12px;
-    letter-spacing: 0.06em;
-  }
-
-  /* Compact Single-Window PMD Cursor Campaign Menu Over Box Art */
-  .pmd-campaign-card {
-    position: relative;
-    z-index: 2;
-    max-width: 420px;
-    width: 100%;
-    padding: 8px 12px;
-    text-align: left;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-
-  @media (min-width: 900px) and (min-height: 560px) {
-    .pmd-campaign-card {
-      max-width: 390px;
-      align-self: flex-end;
-      margin-left: auto;
-      margin-top: auto;
-      margin-right: clamp(0.4rem, 2.8vw, 2.25rem);
-      margin-bottom: clamp(0.25rem, 1.8vh, 1rem);
-    }
   }
 
   @media (max-aspect-ratio: 999/1000) {
@@ -2196,46 +1240,6 @@ const canonicalUrl = Astro.url.href;
       align-self: center;
       margin: calc(clamp(0.4rem, 6.5dvh, 3rem) + 56vw + 1.5rem) auto auto;
     }
-
-    .pmd-campaign-card {
-      margin: auto auto 2rem;
-    }
-  }
-
-  .pmd-campaign-header {
-    border-bottom: 2px solid rgba(248, 248, 248, 0.85);
-    padding-bottom: 6px;
-  }
-
-  .pmd-campaign-options {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-  }
-
-  .pmd-campaign-option-btn {
-    width: 100%;
-    min-height: 52px;
-    padding: 8px 10px 8px 26px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-    gap: 2px;
-    text-align: left;
-  }
-
-  .pmd-campaign-option-title {
-    font-size: 16px;
-    font-weight: bold;
-    letter-spacing: 0.02em;
-    color: inherit;
-  }
-
-  .pmd-campaign-option-sub {
-    font-size: 12px;
-    color: #a8e0f8;
   }
 
   .pmd-continue-btn {
@@ -2262,44 +1266,6 @@ const canonicalUrl = Astro.url.href;
     margin-left: auto;
   }
 
-  .pmd-landing-backdrop[hidden],
-  .pmd-corner-btn[hidden],
-  .pmd-gate-card[hidden],
-  .pmd-title-card[hidden],
-  .pmd-campaign-card[hidden],
-  .pmd-panel[hidden],
-  .pmd-tab-panel[hidden],
-  .pmd-modal-backdrop[hidden],
-  .pmd-errors-box[hidden],
-  .pmd-status[hidden],
-  .pmd-continue-chapter[hidden],
-  .pmd-subcard[hidden],
-  .pmd-subcard-text[hidden],
-  .pmd-btn[hidden] {
-    display: none !important;
-  }
-
-  .pmd-title {
-    font-size: 28px;
-    color: #f8f800;
-    letter-spacing: 0.06em;
-    line-height: 1.2;
-    text-shadow: 2px 2px 0 #000000;
-  }
-
-  .pmd-subtitle {
-    font-size: 14px;
-    color: #a8e0f8;
-  }
-
-  .pmd-desc {
-    font-size: 14px;
-    color: #f8f8f8;
-    line-height: 1.5;
-    max-width: 450px;
-    word-break: break-word;
-  }
-
   .pmd-actions {
     display: flex;
     flex-direction: column;
@@ -2316,117 +1282,63 @@ const canonicalUrl = Astro.url.href;
     width: 100%;
   }
 
-  /* Dev Tools Panel Layout */
-  .pmd-panel {
-    position: relative;
-    z-index: 2;
-    width: 100%;
-    max-width: 920px;
-    padding: 14px 16px;
+  /* Admin Dev Tools Overlay Backdrop & Panel */
+  .pmd-devtools-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 93;
+    background: rgba(4, 8, 16, 0.72);
     display: flex;
-    flex-direction: column;
-    gap: 12px;
-    overflow-x: hidden;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 4.1rem 0.85rem 0.85rem;
+    overflow-y: auto;
+    touch-action: pan-y;
   }
 
-  .pmd-panel-title {
+  :global(.pmd-panel) {
+    position: relative;
+    width: 100%;
+    max-width: 780px;
+    max-height: calc(100dvh - 5rem);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    touch-action: pan-y;
+  }
+
+  :global(.pmd-panel-title) {
     font-size: 18px;
     color: #f8f800;
     letter-spacing: 0.04em;
     text-shadow: 2px 2px 0 #000000;
   }
 
-  .pmd-panel-sub {
+  :global(.pmd-panel-sub) {
     font-size: 12px;
     color: #a8e0f8;
   }
 
-  .pmd-tabs {
+  :global(.pmd-tabs) {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
   }
 
-  .pmd-tab-btn {
-    flex: 1 1 140px;
+  :global(.pmd-tab-btn) {
+    flex: 1 1 130px;
   }
 
-  .pmd-tab-panel {
+  :global(.pmd-tab-panel) {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-  }
-
-  /* Dev Tools Audit & Step 2 Harnesses */
-  .pmd-audit-banner {
-    padding: 8px 12px;
-    font-size: 14px;
-    font-weight: bold;
-  }
-
-  .pmd-audit-banner.is-valid {
-    background: #143c2c;
-    border: 2px solid #58f858;
-    color: #d8ffe0;
-  }
-
-  .pmd-audit-banner.is-invalid {
-    background: #481828;
-    border: 2px solid #ff8898;
-    color: #ffd8e0;
-  }
-
-  .pmd-metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 175px), 1fr));
     gap: 8px;
   }
 
-  :global(.pmd-metric-card) {
-    background: #16344c;
-    border: 2px solid rgba(168, 192, 224, 0.45);
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  :global(.pmd-metric-label) {
-    font-size: 12px;
-    color: #a8e0f8;
-  }
-
-  :global(.pmd-metric-val) {
-    font-size: 14px;
-    color: #f8f800;
-  }
-
-  .pmd-errors-box {
-    white-space: pre-wrap;
-    font-size: 12px;
-    color: #ffd8e0;
-    background: #381424;
-    border: 2px solid #ff8898;
-    padding: 10px;
-  }
-
-  .pmd-devtools-sprite-layout {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
-    gap: 10px;
-  }
-
-  .pmd-devtools-sprite-stage {
-    min-height: 140px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #102638;
-    border: 2px solid #a8c0e0;
-    overflow: hidden;
-  }
-
-  .pmd-devtools-row-between {
+  :global(.pmd-devtools-row-between) {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -2434,83 +1346,36 @@ const canonicalUrl = Astro.url.href;
     gap: 8px;
   }
 
-  .pmd-devtools-portrait-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
-    gap: 8px;
-  }
-
-  :global(.pmd-devtools-portrait-cell) {
-    background: #102638;
-    border: 2px solid rgba(168, 192, 224, 0.5);
-    padding: 6px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
-
-  :global(.pmd-devtools-portrait-label) {
-    font-size: 12px;
-    color: #f8f800;
-  }
-
-  :global(.pmd-devtools-portrait-sub) {
-    font-size: 11px;
-    color: #a8e0f8;
-  }
-
-  .pmd-devtools-roster-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  :global(.pmd-devtools-roster-row) {
+  :global(.pmd-subcard) {
+    background: #16344c;
+    border: 2px solid rgba(168, 192, 224, 0.45);
+    padding: 8px 10px;
     display: flex;
     flex-direction: column;
     gap: 6px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid rgba(168, 192, 224, 0.35);
   }
 
-  /* Sync & Audio Grid */
-  .pmd-sync-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
-    gap: 10px;
-  }
-
-  .pmd-subcard {
-    background: #16344c;
-    border: 2px solid rgba(168, 192, 224, 0.45);
-    padding: 10px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .pmd-subcard-title {
+  :global(.pmd-subcard-title) {
     font-size: 14px;
     color: #f8f800;
   }
 
-  .pmd-subcard-text {
+  :global(.pmd-subcard-text) {
     font-size: 12px;
     color: #f8f8f8;
-    line-height: 1.5;
+    line-height: 1.45;
     word-break: break-word;
   }
 
-  .pmd-inline-btns {
+  :global(.pmd-inline-btns) {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
   }
 
-  .pmd-textarea,
-  .pmd-text-input,
-  .pmd-select {
+  :global(.pmd-textarea),
+  :global(.pmd-text-input),
+  :global(.pmd-select) {
     width: 100%;
     padding: 8px 10px;
     background: #102638;
@@ -2521,12 +1386,12 @@ const canonicalUrl = Astro.url.href;
     user-select: text;
   }
 
-  .pmd-text-input,
-  .pmd-select {
-    min-height: 46px;
+  :global(.pmd-text-input),
+  :global(.pmd-select) {
+    min-height: 44px;
   }
 
-  .pmd-slider-row {
+  :global(.pmd-slider-row) {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -2536,22 +1401,21 @@ const canonicalUrl = Astro.url.href;
     color: #a8e0f8;
   }
 
-  .pmd-range {
+  :global(.pmd-range) {
     flex: 1;
     min-height: 44px;
     accent-color: #f8f800;
     cursor: inherit;
   }
 
-  .pmd-textarea:focus,
-  .pmd-text-input:focus,
-  .pmd-select:focus {
+  :global(.pmd-textarea:focus),
+  :global(.pmd-text-input:focus),
+  :global(.pmd-select:focus) {
     outline: 2px solid #f8f800;
     border-color: #f8f800;
   }
 
-  /* Nickname Modal */
-  .pmd-modal-backdrop {
+  :global(.pmd-modal-backdrop) {
     position: fixed;
     inset: 0;
     background: rgba(4, 8, 16, 0.78);
@@ -2562,25 +1426,7 @@ const canonicalUrl = Astro.url.href;
     z-index: 100;
   }
 
-  .pmd-nickname-dialog {
-    width: 100%;
-    max-width: 440px;
-    max-height: calc(100dvh - 1.5rem);
-    overflow-y: auto;
-    padding: 12px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .pmd-preset-row {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-
-  .pmd-preset-label {
+  :global(.pmd-preset-label) {
     font-size: 12px;
     color: #a8e0f8;
   }
@@ -2591,27 +1437,17 @@ const canonicalUrl = Astro.url.href;
     font-size: 12px;
   }
 
-  .pmd-modal-actions {
-    justify-content: flex-end;
-  }
-
   @media (max-width: 640px) {
     .pmd-viewport {
       min-height: 100dvh;
       padding: 4.15rem 0.65rem 1rem;
     }
 
-    .pmd-gate-card,
-    .pmd-panel {
-      padding: 10px 10px;
-    }
-
-    .pmd-title {
-      font-size: 22px;
+    :global(.pmd-panel) {
+      padding: 8px 10px;
     }
   }
 
-  /* Short Mobile Landscape (e.g., 844x390) — compact spacing so windows fit cleanly without clipping */
   @media (max-height: 500px) {
     .pmd-viewport {
       min-height: 100dvh;
@@ -2623,53 +1459,19 @@ const canonicalUrl = Astro.url.href;
       min-height: 44px;
     }
 
-    .pmd-gate-card {
-      max-width: 640px;
-      padding: 8px 12px;
-      gap: 6px;
-    }
-
     .pmd-title-card {
       width: min(260px, 84vw);
       padding: 2px 6px;
       margin-bottom: 0.25rem;
     }
 
-    .pmd-campaign-card {
-      max-width: 460px;
-      padding: 6px 10px;
-      gap: 4px;
+    .pmd-devtools-backdrop {
+      padding: 3.35rem 0.65rem 0.45rem;
     }
 
-    .pmd-campaign-header {
-      padding-bottom: 4px;
-    }
-
-    .pmd-campaign-options {
-      flex-direction: column;
-      gap: 0;
-    }
-
-    .pmd-campaign-option-btn {
-      min-height: 46px;
-      padding: 4px 8px 4px 24px;
-      gap: 1px;
-    }
-
-    .pmd-campaign-option-title {
-      font-size: 14px;
-    }
-
-    .pmd-campaign-option-sub {
-      font-size: 11px;
-    }
-
-    .pmd-title {
-      font-size: 20px;
-    }
-
-    .pmd-nickname-dialog {
-      padding: 8px 10px;
+    :global(.pmd-panel) {
+      max-height: calc(100dvh - 3.85rem);
+      padding: 6px 8px;
       gap: 6px;
     }
   }

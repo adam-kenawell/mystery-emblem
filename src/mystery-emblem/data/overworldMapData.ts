@@ -1,14 +1,8 @@
 /**
- * Mystery Emblem — Overworld Continent Graph, Kecleon Shop Catalogs & Manual Skirmish Encounters (Step 4)
+ * Mystery Emblem — Overworld Continent Graph, Kecleon Shop Catalogs & Manual Skirmish Encounters
  *
- * Designed as a clean, reusable data-driven registry so both:
- * 1. The Admin Dev Tools Overworld Sandbox, and
- * 2. The upcoming playable Demo / 5-Kingdom Campaign (`OverworldScene`)
- * share 100% of their graph topology, path waypoints, Kecleon Shop tables, and Feral Skirmish spawns.
- *
- * Strictly obeys:
- * - Rule 1: 100% Data-Driven Manual Balance (Zero automated PokéAPI stat formulas)
- * - Rule 5: Strict Faction Separation (Skirmish scouts & enemies use enemy-only lines exclusively)
+ * Canonical 5-Dungeon Demo Overworld Graph (`DEMO_OVERWORLD_GRAPH`), Kecleon Shop catalogs,
+ * and manually balanced Feral Skirmish encounter tiers (Rule 1 & Rule 5 compliant).
  */
 
 import wonderMapAssetUrl from '../../../assets/overworld/wonder_map.jpg?url';
@@ -16,13 +10,12 @@ import type {
   DungeonMapDefinition,
   ItemDefinition,
   KecleonShopType,
+  ManualEnemyBattleSpawn,
   SkirmishSpawnState,
   StatBlockSeven,
 } from '../types/schemas';
-import { getEffectiveChapterMap } from './chapterMapRegistry';
+import { cloneDungeonMap, getEffectiveChapterMap } from './chapterMapRegistry';
 import { ITEMS_LIST, getItemById } from './index';
-import type { ManualEnemyBattleSpawn } from './playableBattleMap';
-import { cloneDungeonMap } from './testDungeonMap';
 
 export const OVERWORLD_MAP_IMAGE_URL: string = wonderMapAssetUrl;
 export const OVERWORLD_MAP_NATIVE_WIDTH = 504;
@@ -43,7 +36,6 @@ export interface OverworldNodeDefinition {
   code: string;
   name: string;
   kingdom: string;
-  description: string;
   kind: OverworldNodeKind;
   act: 1 | 2 | 3 | 4;
   /** Native pixel coordinate (`0..504`, `0..336`) on `wonder_map.jpg` */
@@ -60,7 +52,7 @@ export interface OverworldNodeDefinition {
   clearGoldReward: number;
   /** Downstream Overworld node IDs unlocked when this node is cleared */
   unlocksNodeIdsOnClear: ReadonlyArray<string>;
-  /** True on Paralogue 2 (`Oran Forest`), permanently unlocking random Kecleon Shops */
+  /** Unlocks random Kecleon Shops across cleared nodes */
   unlocksKecleonShopsOnClear?: boolean;
   /** True for nodes available at the start of a fresh campaign (`prologue`) */
   initiallyUnlocked?: boolean;
@@ -85,403 +77,12 @@ export interface OverworldGraphDefinition {
   edges: ReadonlyArray<OverworldEdgeDefinition>;
 }
 
-/**
- * Primary Continent Overworld Graph anchored to exact PMD Wonder Map landmarks (`504x336`).
- * Covers the complete Act 1 / Demo arc (`Prologue` + `Chapters 1–6` + `Paralogues 1–2`) plus
- * frontier Act 2 border gateways across the Mistveil Enclave and Mirage Sultanate.
- */
-export const OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
-  {
-    id: 'prologue',
-    code: 'Prologue',
-    name: 'Beach Cave',
-    kingdom: 'Verdant Commonwealth',
-    description:
-      'Where you washed ashore beside your Partner and awakened your dormant Dragon Aura against Ironscale scouts.',
-    kind: 'story',
-    act: 1,
-    x: 208,
-    y: 194,
-    levelId: 'prologue',
-    tilesetId: '001',
-    recommendedLevel: 1,
-    skirmishScoutSpeciesId: 'zigzagoon_galar',
-    clearGoldReward: 500,
-    unlocksNodeIdsOnClear: ['chapter_01'],
-    initiallyUnlocked: true,
-  },
-  {
-    id: 'chapter_01',
-    code: 'Ch. 1',
-    name: 'Drenched Bluff',
-    kingdom: 'Verdant Commonwealth',
-    description:
-      'Sea-sprayed coastal bluffs climbing toward Chancellor Serperior’s capital. Unlocks wider Overworld travel.',
-    kind: 'story',
-    act: 1,
-    x: 188,
-    y: 138,
-    levelId: 'drenched_bluff_vanguard',
-    tilesetId: '003',
-    recommendedLevel: 2,
-    skirmishScoutSpeciesId: 'zigzagoon_galar',
-    clearGoldReward: 600,
-    unlocksNodeIdsOnClear: ['chapter_02', 'chapter_03'],
-  },
-  {
-    id: 'chapter_02',
-    code: 'Ch. 2',
-    name: 'Mt. Bristle',
-    kingdom: 'Verdant Commonwealth',
-    description:
-      'Jagged highland crags overlooking the northern border fort held against Gothita’s Ironscale raiders.',
-    kind: 'story',
-    act: 1,
-    x: 308,
-    y: 122,
-    levelId: 'chapter_02',
-    tilesetId: '014',
-    recommendedLevel: 3,
-    skirmishScoutSpeciesId: 'gothita',
-    clearGoldReward: 650,
-    unlocksNodeIdsOnClear: ['chapter_03'],
-  },
-  {
-    id: 'chapter_03',
-    code: 'Ch. 3',
-    name: 'Waterfall Cave',
-    kingdom: 'Verdant Commonwealth',
-    description:
-      'Subterranean river caverns behind the roaring falls where Commonwealth envoys are held captive.',
-    kind: 'story',
-    act: 1,
-    x: 244,
-    y: 152,
-    levelId: 'chapter_03',
-    tilesetId: '016',
-    recommendedLevel: 4,
-    skirmishScoutSpeciesId: 'zubat',
-    clearGoldReward: 700,
-    unlocksNodeIdsOnClear: ['paralogue_01', 'chapter_04'],
-  },
-  {
-    id: 'paralogue_01',
-    code: 'Para. 1',
-    name: 'Lush Prairie',
-    kingdom: 'Verdant Commonwealth',
-    description:
-      'Sunlit clover meadows where a sleepy Slakoth with Hidden Potential (+20% growths) is cornered by feral bandits.',
-    kind: 'paralogue',
-    act: 1,
-    x: 256,
-    y: 106,
-    levelId: 'paralogue_01',
-    tilesetId: '142',
-    recommendedLevel: 4,
-    skirmishScoutSpeciesId: 'seedot',
-    clearGoldReward: 750,
-    unlocksNodeIdsOnClear: [],
-  },
-  {
-    id: 'chapter_04',
-    code: 'Ch. 4',
-    name: 'Apple Woods',
-    kingdom: 'Verdant Commonwealth',
-    description:
-      'Dense orchard canopy dotted with Wonder Tiles where Seedot guerillas and Feral shock troops ambush travelers.',
-    kind: 'story',
-    act: 1,
-    x: 298,
-    y: 150,
-    levelId: 'chapter_04',
-    tilesetId: '042',
-    recommendedLevel: 5,
-    skirmishScoutSpeciesId: 'seedot',
-    clearGoldReward: 750,
-    unlocksNodeIdsOnClear: ['chapter_05', 'paralogue_02'],
-  },
-  {
-    id: 'paralogue_02',
-    code: 'Para. 2',
-    name: 'Oran Forest',
-    kingdom: 'Verdant Commonwealth',
-    description:
-      'Ancient elemental berry shrine. Rescuing Master Merchant Kecleon permanently unlocks Kecleon Shops across the map!',
-    kind: 'paralogue',
-    act: 1,
-    x: 236,
-    y: 126,
-    levelId: 'paralogue_02',
-    tilesetId: '120',
-    recommendedLevel: 6,
-    skirmishScoutSpeciesId: 'venipede',
-    clearGoldReward: 850,
-    unlocksNodeIdsOnClear: [],
-    unlocksKecleonShopsOnClear: true,
-  },
-  {
-    id: 'chapter_05',
-    code: 'Ch. 5',
-    name: 'Craggy Coast',
-    kingdom: 'Verdant Commonwealth',
-    description:
-      'Wind-lashed sea cliffs where a frontline trio helps hold the coastal highway against Sandile and Impidimp.',
-    kind: 'story',
-    act: 1,
-    x: 284,
-    y: 184,
-    levelId: 'chapter_05',
-    tilesetId: '108',
-    recommendedLevel: 6,
-    skirmishScoutSpeciesId: 'sandile',
-    clearGoldReward: 800,
-    unlocksNodeIdsOnClear: ['chapter_06'],
-  },
-  {
-    id: 'chapter_06',
-    code: 'Ch. 6',
-    name: 'Mt. Horn',
-    kingdom: 'Cragforge Clans',
-    description:
-      'Snow-crowned mountain switchbacks leading into Cragforge territory, blockaded by Warlord Aggron and Sky Marshal Corviknight.',
-    kind: 'story',
-    act: 1,
-    x: 345,
-    y: 174,
-    levelId: 'chapter_06',
-    tilesetId: '014',
-    recommendedLevel: 8,
-    skirmishScoutSpeciesId: 'aron',
-    clearGoldReward: 950,
-    unlocksNodeIdsOnClear: ['chapter_07', 'chapter_10'],
-  },
-  {
-    id: 'chapter_07',
-    code: 'Ch. 7',
-    name: 'Foggy Forest',
-    kingdom: 'Mistveil Enclave',
-    description:
-      'Misty pine wetlands of High Seeress Milotic where the first Evolution Stones appear.',
-    kind: 'story',
-    act: 2,
-    x: 368,
-    y: 102,
-    levelId: 'chapter_07',
-    tilesetId: '096',
-    recommendedLevel: 9,
-    skirmishScoutSpeciesId: 'impidimp',
-    clearGoldReward: 1000,
-    unlocksNodeIdsOnClear: ['chapter_09'],
-  },
-  {
-    id: 'chapter_09',
-    code: 'Ch. 9',
-    name: 'Amp Plains',
-    kingdom: 'Mistveil Enclave',
-    description:
-      'Thunder-swept eastern savannah where Gothorita’s false-flag saboteurs operate along the border.',
-    kind: 'story',
-    act: 2,
-    x: 432,
-    y: 124,
-    levelId: 'chapter_09',
-    tilesetId: '142',
-    recommendedLevel: 11,
-    skirmishScoutSpeciesId: 'elekid',
-    clearGoldReward: 1100,
-    unlocksNodeIdsOnClear: [],
-  },
-  {
-    id: 'chapter_10',
-    code: 'Ch. 10',
-    name: 'Northern Desert',
-    kingdom: 'Mirage Sultanate',
-    description:
-      'Golden sand dunes outside Sultan Hippowdon’s oasis besieged by Krokorok’s desert raiders.',
-    kind: 'story',
-    act: 2,
-    x: 182,
-    y: 92,
-    levelId: 'chapter_10',
-    tilesetId: '017',
-    recommendedLevel: 12,
-    skirmishScoutSpeciesId: 'sandile',
-    clearGoldReward: 1150,
-    unlocksNodeIdsOnClear: [],
-  },
-];
-
-export const OVERWORLD_EDGES: ReadonlyArray<OverworldEdgeDefinition> = [
-  {
-    id: 'edge_prologue_ch1',
-    fromNodeId: 'prologue',
-    toNodeId: 'chapter_01',
-    waypoints: [
-      { x: 198, y: 178 },
-      { x: 190, y: 158 },
-    ],
-  },
-  {
-    id: 'edge_ch1_para2',
-    fromNodeId: 'chapter_01',
-    toNodeId: 'paralogue_02',
-    waypoints: [
-      { x: 208, y: 130 },
-      { x: 222, y: 128 },
-    ],
-  },
-  {
-    id: 'edge_ch1_ch3',
-    fromNodeId: 'chapter_01',
-    toNodeId: 'chapter_03',
-    waypoints: [
-      { x: 206, y: 146 },
-      { x: 224, y: 154 },
-    ],
-  },
-  {
-    id: 'edge_para2_para1',
-    fromNodeId: 'paralogue_02',
-    toNodeId: 'paralogue_01',
-    waypoints: [{ x: 246, y: 116 }],
-  },
-  {
-    id: 'edge_ch3_para1',
-    fromNodeId: 'chapter_03',
-    toNodeId: 'paralogue_01',
-    waypoints: [
-      { x: 252, y: 136 },
-      { x: 255, y: 120 },
-    ],
-  },
-  {
-    id: 'edge_para1_ch2',
-    fromNodeId: 'paralogue_01',
-    toNodeId: 'chapter_02',
-    waypoints: [
-      { x: 276, y: 108 },
-      { x: 292, y: 114 },
-    ],
-  },
-  {
-    id: 'edge_ch1_ch2_north_trail',
-    fromNodeId: 'chapter_02',
-    toNodeId: 'chapter_03',
-    waypoints: [
-      { x: 288, y: 132 },
-      { x: 266, y: 142 },
-    ],
-  },
-  {
-    id: 'edge_ch3_ch4',
-    fromNodeId: 'chapter_03',
-    toNodeId: 'chapter_04',
-    waypoints: [
-      { x: 264, y: 154 },
-      { x: 282, y: 152 },
-    ],
-  },
-  {
-    id: 'edge_ch2_ch4',
-    fromNodeId: 'chapter_02',
-    toNodeId: 'chapter_04',
-    waypoints: [{ x: 304, y: 136 }],
-  },
-  {
-    id: 'edge_ch4_ch5',
-    fromNodeId: 'chapter_04',
-    toNodeId: 'chapter_05',
-    waypoints: [{ x: 288, y: 168 }],
-  },
-  {
-    id: 'edge_prologue_ch5',
-    fromNodeId: 'prologue',
-    toNodeId: 'chapter_05',
-    waypoints: [
-      { x: 236, y: 192 },
-      { x: 262, y: 190 },
-    ],
-  },
-  {
-    id: 'edge_ch5_ch6',
-    fromNodeId: 'chapter_05',
-    toNodeId: 'chapter_06',
-    waypoints: [
-      { x: 308, y: 184 },
-      { x: 326, y: 180 },
-    ],
-  },
-  {
-    id: 'edge_ch4_ch6',
-    fromNodeId: 'chapter_04',
-    toNodeId: 'chapter_06',
-    waypoints: [
-      { x: 320, y: 158 },
-      { x: 332, y: 166 },
-    ],
-  },
-  {
-    id: 'edge_ch2_ch7',
-    fromNodeId: 'chapter_02',
-    toNodeId: 'chapter_07',
-    waypoints: [
-      { x: 330, y: 112 },
-      { x: 350, y: 106 },
-    ],
-  },
-  {
-    id: 'edge_ch6_ch7',
-    fromNodeId: 'chapter_06',
-    toNodeId: 'chapter_07',
-    waypoints: [
-      { x: 358, y: 148 },
-      { x: 364, y: 124 },
-    ],
-  },
-  {
-    id: 'edge_ch7_ch9',
-    fromNodeId: 'chapter_07',
-    toNodeId: 'chapter_09',
-    waypoints: [
-      { x: 396, y: 108 },
-      { x: 416, y: 116 },
-    ],
-  },
-  {
-    id: 'edge_ch1_ch10',
-    fromNodeId: 'chapter_01',
-    toNodeId: 'chapter_10',
-    waypoints: [
-      { x: 184, y: 120 },
-      { x: 182, y: 106 },
-    ],
-  },
-];
-
-export const DEFAULT_OVERWORLD_GRAPH: OverworldGraphDefinition = {
-  id: 'continent_wonder_map',
-  name: 'Five Kingdoms — Wonder Map',
-  imageUrl: OVERWORLD_MAP_IMAGE_URL,
-  imageWidth: OVERWORLD_MAP_NATIVE_WIDTH,
-  imageHeight: OVERWORLD_MAP_NATIVE_HEIGHT,
-  startNodeId: 'prologue',
-  nodes: OVERWORLD_NODES,
-  edges: OVERWORLD_EDGES,
-};
-
-/**
- * Sequential 5-Dungeon Demo Overworld Graph (`prologue` -> `chapter_01` -> `chapter_02` -> `chapter_03` -> `chapter_04`).
- * Reuses the exact Wonder Map landmark coordinates while tuning recommended levels to the Lv. 9–12 Demo curve
- * and providing direct road edges between every consecutive Demo dungeon.
- */
 export const DEMO_OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
   {
     id: 'prologue',
-    code: 'Dungeon 1',
+    code: 'D1',
     name: 'Beach Cave',
     kingdom: 'Verdant Commonwealth',
-    description:
-      'Coastal cavern where Ironscale scouts ambush your newly awakened squad. One raider carries a rare Evolution Stone!',
     kind: 'story',
     act: 1,
     x: 208,
@@ -496,11 +97,9 @@ export const DEMO_OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
   },
   {
     id: 'chapter_01',
-    code: 'Dungeon 2',
+    code: 'D2',
     name: 'Drenched Bluff',
     kingdom: 'Verdant Commonwealth',
-    description:
-      'Sea-sprayed bluffs held by Bastion Captain Aron. Victory Condition: Defeat the immovable Enemy Leader!',
     kind: 'story',
     act: 1,
     x: 188,
@@ -514,11 +113,9 @@ export const DEMO_OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
   },
   {
     id: 'chapter_02',
-    code: 'Dungeon 3',
+    code: 'D3',
     name: 'Mt. Bristle',
     kingdom: 'Verdant Commonwealth',
-    description:
-      'Highland crags riddled with Dungeon Stairs where Ironscale reinforcements climb into the fray—stand on Stairs to block them!',
     kind: 'story',
     act: 1,
     x: 308,
@@ -532,11 +129,9 @@ export const DEMO_OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
   },
   {
     id: 'chapter_03',
-    code: 'Dungeon 4',
+    code: 'D4',
     name: 'Waterfall Cave',
     kingdom: 'Verdant Commonwealth',
-    description:
-      'Subterranean river stronghold. Clearing the falls rescues Master Merchant Kecleon’s caravan for pre-finale shopping!',
     kind: 'story',
     act: 1,
     x: 244,
@@ -551,11 +146,9 @@ export const DEMO_OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
   },
   {
     id: 'chapter_04',
-    code: 'Dungeon 5',
+    code: 'D5',
     name: 'Apple Woods',
     kingdom: 'Verdant Commonwealth',
-    description:
-      'Demo Finale! Wonder-Tile orchard fortified by Commander Nuzleaf’s shock vanguard. Defeat the Boss to secure the Commonwealth!',
     kind: 'story',
     act: 1,
     x: 298,
@@ -626,7 +219,7 @@ export const DEMO_OVERWORLD_EDGES: ReadonlyArray<OverworldEdgeDefinition> = [
 
 export const DEMO_OVERWORLD_GRAPH: OverworldGraphDefinition = {
   id: 'demo_5_dungeon_wonder_map',
-  name: '5-Dungeon Demo — Verdant Commonwealth',
+  name: 'Verdant Commonwealth',
   imageUrl: OVERWORLD_MAP_IMAGE_URL,
   imageWidth: OVERWORLD_MAP_NATIVE_WIDTH,
   imageHeight: OVERWORLD_MAP_NATIVE_HEIGHT,
@@ -635,39 +228,15 @@ export const DEMO_OVERWORLD_GRAPH: OverworldGraphDefinition = {
   edges: DEMO_OVERWORLD_EDGES,
 };
 
-/**
- * Demo-ready subgraph helper: allows future Demo mode to filter to Act 1 nodes (`maxAct = 1`)
- * or custom chapter subsets without duplicating coordinates or path waypoints.
- */
-export function getOverworldGraph(options?: { maxAct?: 1 | 2 | 3 | 4 }): OverworldGraphDefinition {
-  if (!options?.maxAct) {
-    return DEFAULT_OVERWORLD_GRAPH;
-  }
-  const nodes = OVERWORLD_NODES.filter((n) => n.act <= options.maxAct!);
-  const nodeSet = new Set(nodes.map((n) => n.id));
-  const edges = OVERWORLD_EDGES.filter(
-    (e) => nodeSet.has(e.fromNodeId) && nodeSet.has(e.toNodeId)
-  );
-  return {
-    ...DEFAULT_OVERWORLD_GRAPH,
-    id: `continent_act_${options.maxAct}`,
-    nodes: nodes.map((n) => ({
-      ...n,
-      unlocksNodeIdsOnClear: n.unlocksNodeIdsOnClear.filter((id) => nodeSet.has(id)),
-    })),
-    edges,
-  };
-}
-
 export function getOverworldNodeById(
   nodeId: string,
-  graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+  graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
 ): OverworldNodeDefinition | undefined {
   return graph.nodes.find((n) => n.id === nodeId);
 }
 
 // ============================================================================
-// Kecleon Shop Types & Curated Inventory Builder (Spec 1.2 & Step 4)
+// Kecleon Shop Types & Curated Inventory Builder
 // ============================================================================
 
 export const ALL_KECLEON_SHOP_TYPES: ReadonlyArray<KecleonShopType> = [
@@ -689,37 +258,33 @@ export interface KecleonShopTypeMetadata {
 export const KECLEON_SHOP_METADATA: Readonly<Record<KecleonShopType, KecleonShopTypeMetadata>> = {
   tm_shop: {
     shopType: 'tm_shop',
-    title: 'Kecleon TM Emporium',
+    title: 'Kecleon TM Stall',
     shortBadge: 'TM SHOP',
-    greeting:
-      'Welcome, friend! Rare single-use Technical Machines fresh from our caravan—teach your squad new coverage!',
+    greeting: 'Single-use Technical Machines—teach your squad new moves!',
     accentColor: '#90d8f8',
     stockCount: 6,
   },
   held_shop: {
     shopType: 'held_shop',
-    title: 'Kecleon Gear & Berry Stall',
+    title: 'Kecleon Gear & Berries',
     shortBadge: 'HELD SHOP',
-    greeting:
-      'Step right up! Finest combat gear, type enhancers, and fresh Oran & Sitrus Berries in the Five Kingdoms!',
+    greeting: 'Combat gear, type charms, and fresh berries!',
     accentColor: '#68d888',
     stockCount: 6,
   },
   healing_shop: {
     shopType: 'healing_shop',
-    title: 'Kecleon Apothecary & Stones',
+    title: 'Kecleon Apothecary',
     shortBadge: 'HEAL SHOP',
-    greeting:
-      'Stock up before your next march! Potions, Full Heals, Reviver Seeds, and rare Evolution Stones!',
+    greeting: 'Potions, Full Heals, and rare Evolution Stones!',
     accentColor: '#f8d048',
     stockCount: 6,
   },
   x_item_shop: {
     shopType: 'x_item_shop',
-    title: 'Kecleon Tactical X-Items',
+    title: 'Kecleon X-Items',
     shortBadge: 'X-SHOP',
-    greeting:
-      'Need a decisive edge against an Imperial commander? Our X-Items boost a Pokémon for an entire battle!',
+    greeting: 'Single-battle stat & crit boosters for tough bosses!',
     accentColor: '#ff9868',
     stockCount: 6,
   },
@@ -739,7 +304,6 @@ export function buildKecleonShopInventory(
     return [...pool];
   }
 
-  // Deterministic Fisher-Yates sample using supplied RNG
   const copy = [...pool];
   for (let i = copy.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1)) % (i + 1);
@@ -748,8 +312,6 @@ export function buildKecleonShopInventory(
     copy[j] = tmp;
   }
   const picked = copy.slice(0, meta.stockCount);
-
-  // Sort by buyPrice ascending for clean shop shelf presentation
   picked.sort((a, b) => (getItemById(a)?.buyPrice ?? 0) - (getItemById(b)?.buyPrice ?? 0));
   return picked;
 }
@@ -767,71 +329,38 @@ export interface ManualSkirmishMemberTemplate {
   equippedMoveId: string;
 }
 
-/**
- * 100% manually balanced Feral Raider encounter squads (zero PokéAPI formulas; strictly enemy-only lines).
- */
 export const FERAL_SKIRMISH_SQUADS_BY_TIER: ReadonlyArray<{
   maxRecommendedLevel: number;
   goldBounty: number;
   members: ReadonlyArray<ManualSkirmishMemberTemplate>;
 }> = [
   {
-    maxRecommendedLevel: 3,
-    goldBounty: 350,
+    maxRecommendedLevel: 9,
+    goldBounty: 450,
     members: [
       {
         speciesId: 'zigzagoon_galar',
         nickname: 'Feral Outrider',
-        level: 2,
-        stats: { hp: 15, atk: 5, def: 4, spa: 3, spd: 4, spe: 7, mov: 5 },
+        level: 9,
+        stats: { hp: 20, atk: 8, def: 6, spa: 4, spd: 6, spe: 9, mov: 5 },
         moveIds: ['tackle'],
         equippedMoveId: 'tackle',
       },
       {
         speciesId: 'seedot',
         nickname: 'Feral Forager',
-        level: 2,
-        stats: { hp: 15, atk: 5, def: 5, spa: 4, spd: 5, spe: 5, mov: 5 },
+        level: 9,
+        stats: { hp: 20, atk: 8, def: 7, spa: 6, spd: 7, spe: 6, mov: 5 },
         moveIds: ['tackle'],
         equippedMoveId: 'tackle',
       },
       {
         speciesId: 'impidimp',
         nickname: 'Feral Hexer',
-        level: 2,
-        stats: { hp: 14, atk: 5, def: 3, spa: 6, spd: 4, spe: 6, mov: 5 },
+        level: 9,
+        stats: { hp: 19, atk: 7, def: 5, spa: 8, spd: 6, spe: 8, mov: 5 },
         moveIds: ['assurance', 'snarl'],
         equippedMoveId: 'snarl',
-      },
-    ],
-  },
-  {
-    maxRecommendedLevel: 6,
-    goldBounty: 450,
-    members: [
-      {
-        speciesId: 'sandile',
-        nickname: 'Feral Dune Stalker',
-        level: 4,
-        stats: { hp: 18, atk: 7, def: 5, spa: 4, spd: 4, spe: 6, mov: 5 },
-        moveIds: ['bite'],
-        equippedMoveId: 'bite',
-      },
-      {
-        speciesId: 'venipede',
-        nickname: 'Feral Bristleback',
-        level: 4,
-        stats: { hp: 17, atk: 6, def: 6, spa: 4, spd: 5, spe: 6, mov: 5 },
-        moveIds: ['poison_sting', 'bug_bite'],
-        equippedMoveId: 'bug_bite',
-      },
-      {
-        speciesId: 'gothita',
-        nickname: 'Feral Channeler',
-        level: 4,
-        stats: { hp: 16, atk: 4, def: 5, spa: 7, spd: 7, spe: 5, mov: 5 },
-        moveIds: ['confusion'],
-        equippedMoveId: 'confusion',
       },
     ],
   },
@@ -842,32 +371,32 @@ export const FERAL_SKIRMISH_SQUADS_BY_TIER: ReadonlyArray<{
       {
         speciesId: 'pawniard',
         nickname: 'Feral Vanguard',
-        level: 7,
-        stats: { hp: 21, atk: 8, def: 7, spa: 4, spd: 5, spe: 6, mov: 5 },
+        level: 10,
+        stats: { hp: 23, atk: 10, def: 9, spa: 5, spd: 6, spe: 8, mov: 5 },
         moveIds: ['metal_claw', 'assurance'],
         equippedMoveId: 'metal_claw',
       },
       {
         speciesId: 'rookidee',
-        nickname: 'Feral Sky Harrier',
-        level: 7,
-        stats: { hp: 19, atk: 7, def: 5, spa: 4, spd: 5, spe: 8, mov: 6 },
+        nickname: 'Feral Harrier',
+        level: 10,
+        stats: { hp: 21, atk: 8, def: 6, spa: 5, spd: 6, spe: 10, mov: 6 },
         moveIds: ['peck'],
         equippedMoveId: 'peck',
       },
       {
         speciesId: 'aron',
         nickname: 'Feral Cragbreaker',
-        level: 7,
-        stats: { hp: 23, atk: 8, def: 9, spa: 4, spd: 5, spe: 4, mov: 4 },
+        level: 10,
+        stats: { hp: 25, atk: 9, def: 11, spa: 5, spd: 6, spe: 5, mov: 4 },
         moveIds: ['metal_claw', 'rock_tomb'],
         equippedMoveId: 'metal_claw',
       },
       {
         speciesId: 'gothita',
-        nickname: 'Feral Mindweaver',
-        level: 7,
-        stats: { hp: 18, atk: 4, def: 6, spa: 9, spd: 8, spe: 6, mov: 5 },
+        nickname: 'Feral Channeler',
+        level: 10,
+        stats: { hp: 20, atk: 5, def: 7, spa: 10, spd: 9, spe: 7, mov: 5 },
         moveIds: ['confusion', 'psybeam'],
         equippedMoveId: 'psybeam',
       },
@@ -922,7 +451,8 @@ export function buildSkirmishBattlePayload(
   const customMap: DungeonMapDefinition = {
     ...baseMap,
     id: `skirmish_${node.id}`,
-    name: `${node.name} — Feral Skirmish`,
+    name: `${node.name} — Skirmish`,
+    objectiveType: 'rout',
     enemySpawns: enemyOverrides.map((e) => ({
       x: e.x,
       y: e.y,

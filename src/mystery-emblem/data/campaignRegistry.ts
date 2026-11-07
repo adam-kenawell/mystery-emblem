@@ -1,14 +1,12 @@
 /**
- * Mystery Emblem — Modular Campaign & 5-Dungeon Demo Registry
+ * Mystery Emblem — 5-Dungeon Demo Campaign Registry
  *
- * Central data-driven configuration for multi-chapter campaigns (starting with the 5-Dungeon Demo
- * and directly reusable across the 25 Main Chapters + 6 Paralogues):
+ * Data-driven configuration for the 5-Dungeon Demo:
  * - Per-chapter Battle Objectives (`'rout'` vs `'defeat_boss'`)
  * - Manual enemy & Boss spawns (`isBoss`, `stationary`, `droppableItemId`, `aiMode`)
- * - Scheduled Dungeon Stairs reinforcement waves (blocked when any unit stands on the Stairs tile)
- * - Quiz-seeded pre-battle unit recruitments (scaled to the campaign's join level)
- * - Authentic PMD portrait Intro & Outro dialogue cutscenes (with Chancellor Serperior `'0497'`,
- *   Master Merchant Kecleon `'0352'`, Lord, Partner, Healer, and chapter recruits)
+ * - Scheduled Dungeon Stairs reinforcement waves (blocked when a unit stands on the Stairs tile)
+ * - Quiz-seeded pre-battle unit recruitments
+ * - Concise PMD portrait Intro & Outro dialogue cutscenes
  */
 
 import type { DialogueLine, DialogueScript, DialogueSpeakerRef } from '../ui/DialogueOverlay';
@@ -17,14 +15,17 @@ import type {
   ConvoyEntry,
   DungeonMapDefinition,
   KecleonShopType,
+  ManualEnemyBattleSpawn,
   QuizRecruitSeeds,
   SaveData,
 } from '../types/schemas';
-import { getEffectiveChapterMap, hasChapterMapOverride } from './chapterMapRegistry';
+import {
+  cloneDungeonMap,
+  getEffectiveChapterMap,
+  hasChapterMapOverride,
+} from './chapterMapRegistry';
 import { getSpeciesById } from './index';
 import { KECLEON_PMD_ASSET_ID } from './overworldMapData';
-import type { ManualEnemyBattleSpawn } from './playableBattleMap';
-import { cloneDungeonMap } from './testDungeonMap';
 
 /** Chancellor Serperior PMDCollab / SpriteCollab National Dex asset ID */
 export const CHANCELLOR_SERPERIOR_PMD_ASSET_ID = '0497';
@@ -91,7 +92,7 @@ const KECLEON_SPEAKER: DialogueSpeakerRef = {
   kind: 'npc',
   pmdAssetId: KECLEON_PMD_ASSET_ID,
   speciesName: 'Kecleon',
-  nickname: 'Master Merchant Kecleon',
+  nickname: 'Kecleon',
 };
 
 function findRecruitSpeaker(
@@ -126,33 +127,29 @@ function attachMapMetadata(
     deploymentCap: number;
     objectiveType: BattleObjectiveType;
     enemies: ReadonlyArray<ManualEnemyBattleSpawn>;
+    preserveCustomEnemies?: boolean;
   }
 ): DungeonMapDefinition {
   const cloned = cloneDungeonMap(baseMap);
   cloned.name = opts.name;
   cloned.deploymentCap = opts.deploymentCap;
   cloned.objectiveType = opts.objectiveType;
-  cloned.enemySpawns = opts.enemies.map((e) => ({
-    x: e.x,
-    y: e.y,
-    speciesId: e.speciesId,
-    level: e.level,
-    nickname: e.nickname,
-    heldItemId: e.heldItemId ?? null,
-    isBoss: e.isBoss,
-    stationary: e.stationary,
-    droppableItemId: e.droppableItemId ?? null,
-    aiMode: e.aiMode,
-  }));
+  if (!opts.preserveCustomEnemies) {
+    cloned.enemySpawns = opts.enemies.map((e) => ({
+      x: e.x,
+      y: e.y,
+      speciesId: e.speciesId,
+      level: e.level,
+      nickname: e.nickname,
+      heldItemId: e.heldItemId ?? null,
+      isBoss: e.isBoss,
+      stationary: e.stationary,
+      droppableItemId: e.droppableItemId ?? null,
+      aiMode: e.aiMode,
+    }));
+  }
   return cloned;
 }
-
-// ============================================================================
-// 1. DUNGEON 1 — Beach Cave (`prologue`)
-//    - Objective: Rout All Enemies (`'rout'`)
-//    - Item Drop: Treasure Raider Impidimp drops `evolution_stone`
-//    - Level 9 start -> Level 10 level-up + Evolution Stone ready!
-// ============================================================================
 
 const DUNGEON_1_ENEMIES: ReadonlyArray<ManualEnemyBattleSpawn> = [
   {
@@ -187,13 +184,6 @@ const DUNGEON_1_ENEMIES: ReadonlyArray<ManualEnemyBattleSpawn> = [
     aiMode: 'wait_until_in_range',
   },
 ];
-
-// ============================================================================
-// 2. DUNGEON 2 — Drenched Bluff (`chapter_01`)
-//    - Pre-battle Recruits: Q2 Bug & Flying Duo (Lv. 9)
-//    - Objective: Defeat Enemy Leader (`'defeat_boss'`)
-//    - Stationary Boss: Captain Aron (`isBoss: true, stationary: true`)
-// ============================================================================
 
 const DUNGEON_2_ENEMIES: ReadonlyArray<ManualEnemyBattleSpawn> = [
   {
@@ -240,13 +230,6 @@ const DUNGEON_2_ENEMIES: ReadonlyArray<ManualEnemyBattleSpawn> = [
     aiMode: 'stationary',
   },
 ];
-
-// ============================================================================
-// 3. DUNGEON 3 — Mt. Bristle (`chapter_02`)
-//    - Pre-battle Recruits: Q3 Ghost & Psychic Duo (Lv. 9)
-//    - Objective: Rout All Enemies (`'rout'`)
-//    - Dungeon Stairs Reinforcements on Turn 2 & Turn 3 (blockable by standing on Stairs!)
-// ============================================================================
 
 const DUNGEON_3_ENEMIES: ReadonlyArray<ManualEnemyBattleSpawn> = [
   {
@@ -333,12 +316,6 @@ const DUNGEON_3_REINFORCEMENTS: ReadonlyArray<ReinforcementWaveDefinition> = [
   },
 ];
 
-// ============================================================================
-// 4. DUNGEON 4 — Waterfall Cave (`chapter_03`)
-//    - Objective: Rout All Enemies (`'rout'`)
-//    - Unlocks & spawns a guaranteed Kecleon Shop on clear!
-// ============================================================================
-
 const DUNGEON_4_ENEMIES: ReadonlyArray<ManualEnemyBattleSpawn> = [
   {
     id: 'd4_enemy_0',
@@ -402,12 +379,6 @@ const DUNGEON_4_REINFORCEMENTS: ReadonlyArray<ReinforcementWaveDefinition> = [
     },
   },
 ];
-
-// ============================================================================
-// 5. DUNGEON 5 — Apple Woods (`chapter_04` — Demo Finale)
-//    - Pre-battle Recruit: Q4 Electric Solo (Lv. 9)
-//    - Objective: Defeat Boss Commander Nuzleaf (`'defeat_boss'`)
-// ============================================================================
 
 const DUNGEON_5_ENEMIES: ReadonlyArray<ManualEnemyBattleSpawn> = [
   {
@@ -485,17 +456,13 @@ const DUNGEON_5_REINFORCEMENTS: ReadonlyArray<ReinforcementWaveDefinition> = [
   },
 ];
 
-// ============================================================================
-// Exported 5-Dungeon Demo Campaign Chapters
-// ============================================================================
-
 export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
   {
     nodeId: 'prologue',
     levelId: 'prologue',
     dungeonNumber: 1,
-    title: 'Dungeon 1 — Beach Cave',
-    subtitle: 'Awakening on the Commonwealth Coast',
+    title: 'Beach Cave',
+    subtitle: 'Dungeon 1',
     objectiveType: 'rout',
     objectiveLabel: 'Rout All Enemies',
     recommendedLevel: 9,
@@ -504,64 +471,53 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     reinforcements: [],
     buildMap: () =>
       attachMapMetadata(getEffectiveChapterMap('prologue'), {
-        name: 'Dungeon 1 — Beach Cave',
+        name: 'Beach Cave',
         deploymentCap: 3,
         objectiveType: 'rout',
         enemies: DUNGEON_1_ENEMIES,
+        preserveCustomEnemies: hasChapterMapOverride('prologue'),
       }),
     buildIntroScript: () => ({
       id: 'demo_d1_intro',
-      title: 'Dungeon 1 — Beach Cave',
+      title: 'Beach Cave',
       bgm: 'calm_cutscene',
       lines: [
         {
           speaker: { kind: 'partner' },
           side: 'right',
           emotion: 'Worried',
-          text: 'Wake up, {lord}! The tide carried you right into Beach Cave—thank goodness {healer} and I found you!',
-        },
-        {
-          speaker: { kind: 'lord' },
-          side: 'left',
-          emotion: 'Surprised',
-          text: 'My head is spinning... Wait—do you hear steel boots echoing deeper inside the cavern?',
+          text: 'Wake up, {lord}! The tide carried you into Beach Cave—{healer} and I just found you.',
         },
         {
           speaker: { kind: 'healer' },
           side: 'right',
           emotion: 'Determined',
-          text: 'Ironscale Empire scouts! One of their Treasure Raiders is clutching a glowing Evolution Stone stolen from the shrine!',
+          text: 'Ironscale scouts ahead! One raider stole an Evolution Stone from the shrine!',
         },
         {
           speaker: { kind: 'lord' },
           side: 'left',
           emotion: 'Determined',
-          text: 'Stay close to my Dragon Aura, {partner} and {healer}. Let’s rout every scout here and reclaim that Evolution Stone!',
+          text: 'Stay near my Dragon Aura, {partner} and {healer}. Rout the scouts and reclaim that Stone!',
         },
       ],
     }),
     buildOutroScript: () => ({
       id: 'demo_d1_outro',
-      title: 'Beach Cave Secured',
+      title: 'Beach Cave',
       bgm: 'calm_cutscene',
       lines: [
         {
           speaker: { kind: 'partner' },
           side: 'right',
           emotion: 'Happy',
-          text: 'We drove them back, {lord}! And anyone who reaches Level 10 can promote with an Evolution Stone right away!',
-        },
-        {
-          speaker: SERPERIOR_SPEAKER,
-          side: 'right',
-          emotion: 'Normal',
-          text: 'Well fought, young Dragon Lord. I am Chancellor Serperior of the Verdant Commonwealth.',
+          text: 'We drove them off! Anyone at Level 10 can promote with an Evolution Stone!',
         },
         {
           speaker: SERPERIOR_SPEAKER,
           side: 'right',
           emotion: 'Determined',
-          text: 'Imperial Captain Aron has fortified Drenched Bluff just north of here. March across the World Map and break his blockade!',
+          text: 'Well fought, {lord}. I am Chancellor Serperior—march north to Drenched Bluff and break Captain Aron’s blockade!',
         },
       ],
     }),
@@ -570,8 +526,8 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     nodeId: 'chapter_01',
     levelId: 'chapter_01',
     dungeonNumber: 2,
-    title: 'Dungeon 2 — Drenched Bluff',
-    subtitle: 'Break Captain Aron’s Coastal Blockade',
+    title: 'Drenched Bluff',
+    subtitle: 'Dungeon 2',
     objectiveType: 'defeat_boss',
     objectiveLabel: 'Defeat Boss: Captain Aron',
     recommendedLevel: 9,
@@ -583,14 +539,15 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
       joinLevel: DEMO_STARTING_LEVEL,
       scaleStatsToLevel: true,
       fallbackSpeciesIds: ['caterpie', 'pidgey'],
-      introBanner: 'Two Commonwealth scouts volunteer to join your march up Drenched Bluff!',
+      introBanner: 'New allies joined your squad!',
     },
     buildMap: () =>
       attachMapMetadata(getEffectiveChapterMap('chapter_01'), {
-        name: 'Dungeon 2 — Drenched Bluff',
+        name: 'Drenched Bluff',
         deploymentCap: 5,
         objectiveType: 'defeat_boss',
         enemies: DUNGEON_2_ENEMIES,
+        preserveCustomEnemies: hasChapterMapOverride('chapter_01'),
       }),
     buildIntroScript: (save) => {
       const bugId = save?.campaign.quizSeeds.q2BugFlying[0] ?? 'caterpie';
@@ -600,44 +557,38 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
           speaker: findRecruitSpeaker(save, flyId),
           side: 'right',
           emotion: 'Determined',
-          text: 'Reporting from the ridge, {lord}! Captain Aron has anchored himself atop the eastern bluff and refuses to budge an inch!',
+          text: '{lord}! Captain Aron has anchored himself atop the eastern bluff and won’t budge.',
         },
         {
           speaker: findRecruitSpeaker(save, bugId),
           side: 'right',
           emotion: 'Normal',
-          text: 'Because Aron won’t leave his post, his Danger Area only reaches right around his foothold—and toppling him scatters the whole garrison!',
+          text: 'Topple Aron and his entire garrison scatters!',
         },
         {
           speaker: { kind: 'lord' },
           side: 'left',
           emotion: 'Determined',
-          text: 'Understood! Watch their attack ranges—enemies will hold position until we step in range. Target Captain Aron to claim victory!',
+          text: 'Check their attack ranges and strike Captain Aron down!',
         },
       ];
       return {
         id: 'demo_d2_intro',
-        title: 'Dungeon 2 — Drenched Bluff',
+        title: 'Drenched Bluff',
         bgm: 'drenched_bluff',
         lines,
       };
     },
     buildOutroScript: () => ({
       id: 'demo_d2_outro',
-      title: 'Drenched Bluff Cleared',
+      title: 'Drenched Bluff',
       bgm: 'calm_cutscene',
       lines: [
         {
           speaker: { kind: 'partner' },
           side: 'right',
           emotion: 'Happy',
-          text: 'Captain Aron’s shield line collapsed the moment he fell! The road toward Mt. Bristle is open!',
-        },
-        {
-          speaker: { kind: 'lord' },
-          side: 'left',
-          emotion: 'Normal',
-          text: 'Look toward the northern peaks, {partner}—smoke signals from the Highland Watchtower. Let’s move out!',
+          text: 'Aron’s line collapsed! Smoke signals on Mt. Bristle—let’s move out!',
         },
       ],
     }),
@@ -646,10 +597,10 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     nodeId: 'chapter_02',
     levelId: 'chapter_02',
     dungeonNumber: 3,
-    title: 'Dungeon 3 — Mt. Bristle',
-    subtitle: 'Ambush from the Dungeon Stairs',
+    title: 'Mt. Bristle',
+    subtitle: 'Dungeon 3',
     objectiveType: 'rout',
-    objectiveLabel: 'Rout All Enemies (Watch the Stairs!)',
+    objectiveLabel: 'Rout All Enemies',
     recommendedLevel: 10,
     deploymentCap: 6,
     enemySpawns: DUNGEON_3_ENEMIES,
@@ -659,25 +610,23 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
       joinLevel: DEMO_STARTING_LEVEL,
       scaleStatsToLevel: true,
       fallbackSpeciesIds: ['duskull', 'abra'],
-      introBanner: 'Mystic sentries from Mt. Bristle pledge their aid against the Ironscale ambush!',
+      introBanner: 'New allies joined your squad!',
     },
     buildMap: () => {
       const base = getEffectiveChapterMap('chapter_02');
       const map = attachMapMetadata(base, {
-        name: 'Dungeon 3 — Mt. Bristle',
+        name: 'Mt. Bristle',
         deploymentCap: 6,
         objectiveType: 'rout',
         enemies: DUNGEON_3_ENEMIES,
+        preserveCustomEnemies: hasChapterMapOverride('chapter_02'),
       });
-      if (!hasChapterMapOverride('chapter_02')) {
-        // Place a northern-pass Dungeon Stairs tile at (7, 2) alongside (18, 2) and (18, 8)
-        if (map.tiles[2]?.[7]) {
-          map.tiles[2][7] = {
-            terrainType: 'stairs',
-            tilesetId: '110',
-            chunkIndex: 59,
-          };
-        }
+      if (!hasChapterMapOverride('chapter_02') && map.tiles[2]?.[7]) {
+        map.tiles[2][7] = {
+          terrainType: 'stairs',
+          tilesetId: '110',
+          chunkIndex: 59,
+        };
       }
       return map;
     },
@@ -686,46 +635,34 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
       const psyId = save?.campaign.quizSeeds.q3GhostPsychic[1] ?? 'abra';
       return {
         id: 'demo_d3_intro',
-        title: 'Dungeon 3 — Mt. Bristle',
+        title: 'Mt. Bristle',
         bgm: 'mt_bristle',
         lines: [
           {
             speaker: findRecruitSpeaker(save, ghostId),
             side: 'right',
             emotion: 'Worried',
-            text: 'Careful on the crags, {lord}... Ironscale reserves are climbing up through the Dungeon Stairs tunnels!',
+            text: 'Careful, {lord}—Ironscale reserves are climbing the Dungeon Stairs!',
           },
           {
             speaker: findRecruitSpeaker(save, psyId),
             side: 'right',
             emotion: 'Determined',
-            text: 'Reinforcements emerge from the Stairs starting on Turn 2—unless one of our allies stands directly on a Stairs tile to seal it!',
-          },
-          {
-            speaker: { kind: 'lord' },
-            side: 'left',
-            emotion: 'Determined',
-            text: 'Great intel! Either seal the northern Stairs early or rally together to crush the reinforcements and rout the peak!',
+            text: 'Stand directly on a Stairs tile to block reinforcements from emerging!',
           },
         ],
       };
     },
     buildOutroScript: () => ({
       id: 'demo_d3_outro',
-      title: 'Mt. Bristle Secured',
+      title: 'Mt. Bristle',
       bgm: 'calm_cutscene',
       lines: [
-        {
-          speaker: { kind: 'healer' },
-          side: 'right',
-          emotion: 'Happy',
-          text: 'Every tunnel on Mt. Bristle is secure! Look below—the trail winds straight down to Waterfall Cave.',
-        },
         {
           speaker: { kind: 'partner' },
           side: 'right',
           emotion: 'Surprised',
-          text: 'Wait—isn’t Master Merchant Kecleon’s caravan trapped behind Waterfall Cave? Let’s hurry!',
+          text: 'Mt. Bristle is clear! Wait—Kecleon’s caravan is trapped in Waterfall Cave!',
         },
       ],
     }),
@@ -734,8 +671,8 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     nodeId: 'chapter_03',
     levelId: 'chapter_03',
     dungeonNumber: 4,
-    title: 'Dungeon 4 — Waterfall Cave',
-    subtitle: 'Rescue the Caravan Beneath the Falls',
+    title: 'Waterfall Cave',
+    subtitle: 'Dungeon 4',
     objectiveType: 'rout',
     objectiveLabel: 'Rout All Enemies',
     recommendedLevel: 11,
@@ -748,46 +685,47 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     },
     buildMap: () =>
       attachMapMetadata(getEffectiveChapterMap('chapter_03'), {
-        name: 'Dungeon 4 — Waterfall Cave',
+        name: 'Waterfall Cave',
         deploymentCap: 6,
         objectiveType: 'rout',
         enemies: DUNGEON_4_ENEMIES,
+        preserveCustomEnemies: hasChapterMapOverride('chapter_03'),
       }),
     buildIntroScript: () => ({
       id: 'demo_d4_intro',
-      title: 'Dungeon 4 — Waterfall Cave',
+      title: 'Waterfall Cave',
       bgm: 'waterfall_cave',
       lines: [
         {
           speaker: KECLEON_SPEAKER,
           side: 'right',
           emotion: 'Worried',
-          text: 'Help! An armored Lairon warden has our merchant wagons pinned behind the subterranean falls!',
+          text: 'Help! An armored Lairon has our wagons pinned behind the falls!',
         },
         {
           speaker: { kind: 'lord' },
           side: 'left',
           emotion: 'Determined',
-          text: 'Hold tight, Master Kecleon! Water-types and fliers can cross the underground river cleanly—let’s rout that garrison!',
+          text: 'Hold fast, Kecleon! Fliers and Water-types can cross the river—rout them!',
         },
       ],
     }),
     buildOutroScript: () => ({
       id: 'demo_d4_outro',
-      title: 'Kecleon Caravan Rescued!',
+      title: 'Waterfall Cave',
       bgm: 'kecleon_shop',
       lines: [
         {
           speaker: KECLEON_SPEAKER,
           side: 'right',
           emotion: 'Happy',
-          text: 'Splendid! Our caravan is saved! I’ve pitched a Kecleon Shop right here on the Overworld map—stock up anytime before Apple Woods!',
+          text: 'Saved! My shop is open on the World Map—stock up before Apple Woods!',
         },
         {
           speaker: SERPERIOR_SPEAKER,
           side: 'right',
           emotion: 'Determined',
-          text: '{lord}, Commander Nuzleaf has gathered the last Imperial strike force inside Apple Woods. One final push will secure the Commonwealth!',
+          text: 'Commander Nuzleaf holds Apple Woods ahead. One last victory frees the Commonwealth!',
         },
       ],
     }),
@@ -796,8 +734,8 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     nodeId: 'chapter_04',
     levelId: 'chapter_04',
     dungeonNumber: 5,
-    title: 'Dungeon 5 — Apple Woods',
-    subtitle: 'Demo Finale — Showdown in the Canopy',
+    title: 'Apple Woods',
+    subtitle: 'Dungeon 5 · Finale',
     objectiveType: 'defeat_boss',
     objectiveLabel: 'Defeat Boss: Commander Nuzleaf',
     recommendedLevel: 12,
@@ -809,67 +747,56 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
       joinLevel: DEMO_STARTING_LEVEL,
       scaleStatsToLevel: true,
       fallbackSpeciesIds: ['shinx'],
-      introBanner: 'A lightning-quick tracker steps out of Apple Woods to join your vanguard!',
+      introBanner: 'A new ally joined your squad!',
     },
     clearRewardItems: [{ itemId: 'evolution_stone', quantity: 1 }],
     isDemoFinale: true,
     buildMap: () =>
       attachMapMetadata(getEffectiveChapterMap('chapter_04'), {
-        name: 'Dungeon 5 — Apple Woods (Finale)',
+        name: 'Apple Woods',
         deploymentCap: 7,
         objectiveType: 'defeat_boss',
         enemies: DUNGEON_5_ENEMIES,
+        preserveCustomEnemies: hasChapterMapOverride('chapter_04'),
       }),
     buildIntroScript: (save) => {
       const elecId = save?.campaign.quizSeeds.q4Electric[0] ?? 'shinx';
       return {
         id: 'demo_d5_intro',
-        title: 'Dungeon 5 — Apple Woods',
+        title: 'Apple Woods',
         bgm: 'apple_woods',
         lines: [
           {
             speaker: findRecruitSpeaker(save, elecId),
             side: 'right',
             emotion: 'Determined',
-            text: 'You must be {lord}! Commander Nuzleaf is marshaling evolved Corvisquire and Morgrem captains deep inside Apple Woods!',
+            text: '{lord}! Commander Nuzleaf’s captains hold the orchard ahead.',
           },
           {
             speaker: { kind: 'partner' },
             side: 'right',
             emotion: 'Determined',
-            text: 'Look at the glowing Wonder Tiles in the clearing—standing on them restores HP at the start of our phase!',
-          },
-          {
-            speaker: { kind: 'lord' },
-            side: 'left',
-            emotion: 'Determined',
-            text: 'Everyone, give it everything we’ve learned! Defeat Commander Nuzleaf and free the Verdant Commonwealth!',
+            text: 'Use the glowing Wonder Tiles to heal each turn—let’s defeat Nuzleaf!',
           },
         ],
       };
     },
     buildOutroScript: () => ({
       id: 'demo_d5_outro',
-      title: 'Verdant Commonwealth Liberated!',
+      title: 'Victory!',
       bgm: 'victory_fanfare',
       lines: [
-        {
-          speaker: { kind: 'partner' },
-          side: 'right',
-          emotion: 'Happy',
-          text: 'We did it, {lord}! Commander Nuzleaf is retreating across the border—Apple Woods and the Commonwealth are safe!',
-        },
         {
           speaker: SERPERIOR_SPEAKER,
           side: 'right',
           emotion: 'Happy',
-          text: 'Magnificent, {lord}! Your squad’s bond has proven that Emperor Kingambit’s legions are not invincible.',
+          text: 'Magnificent, {lord}! Nuzleaf is retreating—the Verdant Commonwealth is safe!',
         },
         {
           speaker: { kind: 'lord' },
           side: 'left',
           emotion: 'Happy',
-          text: 'Thank you for playing the Mystery Emblem 5-Dungeon Demo! New Game+ Custom Roster Selection is now unlocked, and your save remains active on the World Map!',
+          text: 'Thanks for playing the Mystery Emblem Demo! New Game+ Custom Roster is now unlocked!',
         },
       ],
     }),

@@ -479,3 +479,29 @@ export interface CustomMapOverrideEntry {
   map: DungeonMapDefinition;
   updatedAt: number;
 }
+
+
+export interface ManualEnemyBattleSpawn {
+  id: string;
+  x: number;
+  y: number;
+  speciesId: string;
+  nickname: string;
+  level: number;
+  /** Manually tuned stat block (if omitted, scaled cleanly from manual registry `baseStats` + `growthRates`) */
+  stats?: StatBlockSeven;
+  moveIds?: string[];
+  equippedMoveId?: string;
+  heldItemId?: string | null;
+  isBoss?: boolean;
+  stationary?: boolean;
+  droppableItemId?: string | null;
+  aiMode?: EnemyAiMode;
+}
+
+export interface PrepDeploymentSlot {
+  slotIndex: number;
+  x: number;
+  y: number;
+  unitInstanceId: string | null;
+}

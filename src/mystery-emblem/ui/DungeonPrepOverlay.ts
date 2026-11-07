@@ -1,22 +1,16 @@
 /**
  * Mystery Emblem — Dungeon Prep Phase Overlay (`DungeonPrepOverlay`)
  *
- * Implements the Fire Emblem-inspired Pre-Battle Dungeon Prep sequence (Step 6):
- * 1. **Manage Units**: View all recruited Pokémon, toggle which units enter the dungeon (enforcing
- *    mandatory Dragon Lord deployment and the map's deployment cap), equip up to 4 active moves +
- *    designate the single `[E]` Enemy Phase counter move, edit nicknames, teach TMs, and inspect
- *    stats, growth rates, Personal Skill (ability), elemental typing, traversal class, and level/EXP.
- * 2. **Manage Items**: View all items acquired across the campaign (Convoy stock + items currently
- *    equipped on roster units) and equip/replace/transfer/unequip them. Enforces the strict
- *    **1 Item Slot per Unit** rule (1 Held Gear/Berry, OR 1 Healing/Status item, OR 1 X-Item, OR 1 Stone/Gem).
- * 3. **View Map**: Minimizes the Prep Hub to reveal the upcoming dungeon battlefield, enemy units,
- *    and blue starting tiles so the player can inspect terrain/foes and swap starting positions
- *    strictly among valid blue deployment tiles.
- * 4. **Enter Dungeon**: Opens a confirmation pop-up ("Are you ready to enter?") before ending Prep
- *    and transitioning into Turn 1 Player Phase.
+ * Implements the streamlined Pre-Battle Dungeon Prep sequence (Step 6):
+ * 1. **Manage Units**: Toggle deployed Pokémon (enforcing mandatory Dragon Lord deployment and map cap),
+ *    equip up to 4 active moves + designate the single `[E]` Enemy Phase counter move, rename, teach TMs,
+ *    evolve, and inspect stats, Personal Skill, typing, and traversal class.
+ * 2. **Manage Items**: Equip/replace/transfer/unequip items enforcing **1 Item Slot per Unit**.
+ * 3. **View Map**: Inspect terrain/foes, toggle Danger Area, and swap starting positions on blue tiles.
+ * 4. **Fight!**: Immediately transitions into Turn 1 Player Phase.
  *
  * Strictly obeys Rule 2 (Unified Pointer Events ONLY — zero keyboard listeners, >= 44x44px targets)
- * and Rule 3 (Authentic PMD: Explorers of Sky window skin & pixelated sprites/portraits).
+ * and Rule 3 (Authentic PMD: Explorers of Sky window skin & pixelated portraits).
  */
 
 import type { AudioManager } from '../audio/AudioManager';
@@ -27,7 +21,6 @@ import {
   getPersonalSkillById,
   getSpeciesById,
 } from '../data/index';
-import type { PrepDeploymentSlot } from '../data/playableBattleMap';
 import { getUnitEquippedItemId, type SaveStateManager } from '../state/SaveStateManager';
 import type {
   DungeonMapDefinition,
@@ -35,16 +28,12 @@ import type {
   ItemDefinition,
   MoveDefinition,
   OwnedPokemonInstance,
+  PrepDeploymentSlot,
 } from '../types/schemas';
-import { PmdPortraitView, PmdSpriteActor } from './PmdSpriteCanvas';
+import { PmdPortraitView } from './PmdSpriteCanvas';
 import { bindPointerTap } from './pointerControls';
 
-export type PrepSubMode =
-  | 'hub'
-  | 'manage_units'
-  | 'manage_items'
-  | 'view_map'
-  | 'confirm_enter';
+export type PrepSubMode = 'hub' | 'manage_units' | 'manage_items' | 'view_map';
 
 export type ItemFilterTab = 'all' | 'held' | 'healing' | 'x_item' | 'special';
 
@@ -61,6 +50,7 @@ export interface DungeonPrepOverlayOptions {
   getSelectedSwapSlotIndex: () => number | null;
   onToggleDeployUnit: (instanceId: string) => { ok: boolean; message: string };
   onRosterOrLoadoutMutated: () => void;
+  onRequestRenameUnit?: (instanceId: string) => Promise<void> | void;
   onEnterViewMap: () => void;
   onExitViewMap: () => void;
   onToggleGlobalDanger: () => void;
@@ -81,7 +71,7 @@ function formatItemCategoryLabel(category: ItemCategory): string {
     case 'held_gear':
       return 'Held Gear';
     case 'held_berry':
-      return 'Held Berry';
+      return 'Berry';
     case 'consumable':
       return 'Healing';
     case 'promotion':
@@ -99,7 +89,7 @@ function formatMoveCategoryBadge(mv: MoveDefinition): string {
   if (mv.category === 'Physical') return 'Phys · R1';
   if (mv.category === 'Special') return 'Spec · R2';
   const rText = mv.range[0] === mv.range[1] ? `R${mv.range[0]}` : `R${mv.range[0]}-${mv.range[1]}`;
-  return `Heal/Sup · ${rText}`;
+  return `Support · ${rText}`;
 }
 
 export class DungeonPrepOverlay {
@@ -108,20 +98,16 @@ export class DungeonPrepOverlay {
   private readonly hubBackdropEl: HTMLElement;
   private readonly unitsBackdropEl: HTMLElement;
   private readonly itemsBackdropEl: HTMLElement;
-  private readonly confirmBackdropEl: HTMLElement;
-  private readonly renameBackdropEl: HTMLElement;
   private readonly mapHudEl: HTMLElement;
   private readonly mapReturnBtnEl: HTMLButtonElement;
   private readonly mapHintPillEl: HTMLElement;
   private readonly mapDangerBtnEl: HTMLButtonElement;
 
   private readonly unitPortraitView: PmdPortraitView;
-  private unitSpriteActor: PmdSpriteActor | null = null;
 
   private readonly abortController = new AbortController();
   private visible = false;
   private subMode: PrepSubMode = 'hub';
-  private renameOpen = false;
 
   private selectedUnitInstanceId: string | null = null;
   private pendingMoveToSwapIn: string | null = null;
@@ -142,36 +128,29 @@ export class DungeonPrepOverlay {
       testId: 'prep-unit-portrait',
     });
 
-    // 1. Main Dungeon Prep Hub (4 Core Options)
+    // 1. Clean 4-Row Dungeon Prep Hub
     this.hubBackdropEl = document.createElement('div');
     this.hubBackdropEl.className = 'pmd-battle-modal-backdrop pmd-prep-backdrop';
     this.hubBackdropEl.dataset.testid = 'dungeon-prep-hub';
     this.hubBackdropEl.innerHTML = `
       <div class="pmd-window pmd-window--gold pmd-prep-hub-dialog" role="dialog" aria-modal="true" aria-labelledby="prep-hub-title">
         <div class="pmd-prep-hub-header">
-          <span class="pmd-battle-kicker">PRE-BATTLE PREPARATIONS</span>
           <h2 id="prep-hub-title" class="pmd-panel-title" data-prep-map-name>DUNGEON PREP</h2>
-          <p class="pmd-panel-sub" data-prep-objectives>Select your squad, equip moves &amp; items, or inspect the map before entering.</p>
+          <p class="pmd-panel-sub" data-prep-objectives></p>
         </div>
-
-        <div class="pmd-prep-squad-strip" data-testid="prep-hub-squad-strip"></div>
 
         <div class="pmd-prep-menu-grid pmd-menu-list" role="group" aria-label="Dungeon Prep Options">
           <button type="button" class="pmd-btn pmd-menu-row pmd-prep-option-btn" data-testid="prep-btn-manage-units">
             <span class="pmd-prep-opt-title">Manage Units</span>
-            <span class="pmd-prep-opt-sub" data-prep-units-sub>Squad, Moves, Stats &amp; Ability</span>
           </button>
           <button type="button" class="pmd-btn pmd-menu-row pmd-prep-option-btn" data-testid="prep-btn-manage-items">
             <span class="pmd-prep-opt-title">Manage Items</span>
-            <span class="pmd-prep-opt-sub" data-prep-items-sub>1 Item Slot per Unit</span>
           </button>
           <button type="button" class="pmd-btn pmd-menu-row pmd-prep-option-btn" data-testid="prep-btn-view-map">
             <span class="pmd-prep-opt-title">View Map</span>
-            <span class="pmd-prep-opt-sub">Inspect Foes &amp; Swap Start Tiles</span>
           </button>
           <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row pmd-prep-option-btn is-enter-cta" data-testid="prep-btn-enter-dungeon">
-            <span class="pmd-prep-opt-title">Enter Dungeon</span>
-            <span class="pmd-prep-opt-sub">Begin Battle Phase</span>
+            <span class="pmd-prep-opt-title">Fight!</span>
           </button>
         </div>
       </div>
@@ -186,15 +165,15 @@ export class DungeonPrepOverlay {
       <div class="pmd-window pmd-prep-modal-dialog pmd-prep-units-dialog" role="dialog" aria-modal="true" aria-label="Manage Units">
         <div class="pmd-prep-modal-topbar">
           <div>
-            <h3 class="pmd-panel-title">MANAGE UNITS</h3>
-            <p class="pmd-panel-sub" data-testid="prep-deploy-counter">Entering Dungeon: 3 / 3</p>
+            <h3 class="pmd-panel-title">UNITS</h3>
+            <p class="pmd-panel-sub" data-testid="prep-deploy-counter">Deployed: 3 / 3</p>
           </div>
           <button type="button" class="pmd-btn pmd-chip-btn" data-testid="prep-units-close-btn">Done</button>
         </div>
 
         <div class="pmd-prep-units-body">
           <div class="pmd-prep-roster-pane">
-            <span class="pmd-preset-label">Recruited Pokémon</span>
+            <span class="pmd-preset-label">Roster</span>
             <div class="pmd-prep-roster-list pmd-menu-list" data-testid="prep-roster-list"></div>
           </div>
 
@@ -202,7 +181,6 @@ export class DungeonPrepOverlay {
             <div class="pmd-prep-unit-hero">
               <div class="pmd-prep-unit-avatars">
                 <div class="pmd-forecast-portrait-slot pmd-prep-portrait-box" data-prep-portrait-slot></div>
-                <div class="pmd-prep-sprite-box" data-prep-sprite-slot></div>
               </div>
               <div class="pmd-prep-unit-title-col">
                 <div class="pmd-prep-name-row">
@@ -217,30 +195,30 @@ export class DungeonPrepOverlay {
             <div class="pmd-prep-ability-card" data-testid="prep-unit-ability"></div>
 
             <div class="pmd-prep-item-shortcut-row">
-              <div class="pmd-prep-item-shortcut-info" data-testid="prep-unit-item-summary">Item Slot: Empty</div>
+              <div class="pmd-prep-item-shortcut-info" data-testid="prep-unit-item-summary">Item: Empty</div>
               <button type="button" class="pmd-btn pmd-chip-btn" data-testid="prep-unit-open-items-btn">Equip Item</button>
             </div>
 
             <div class="pmd-prep-item-shortcut-row" data-prep-promo-wrap hidden></div>
 
             <div class="pmd-prep-stats-section">
-              <span class="pmd-preset-label">Stats &amp; Growth Rates</span>
+              <span class="pmd-preset-label">Stats</span>
               <div class="pmd-prep-stats-grid" data-testid="prep-unit-stats"></div>
             </div>
 
             <div class="pmd-prep-moves-section">
               <div class="pmd-devtools-row-between">
-                <span class="pmd-preset-label" data-prep-active-moves-heading>Active Moves (0 / 4) — Tap [E] for Enemy Phase Counter</span>
+                <span class="pmd-preset-label" data-prep-active-moves-heading>Moves (0 / 4)</span>
               </div>
               <div class="pmd-prep-move-list" data-testid="prep-active-moves"></div>
 
               <div data-prep-unlocked-wrap>
-                <span class="pmd-preset-label" data-prep-unlocked-heading>Unlocked Move Pool</span>
+                <span class="pmd-preset-label" data-prep-unlocked-heading>Learned Moves</span>
                 <div class="pmd-prep-move-list" data-testid="prep-unlocked-moves"></div>
               </div>
 
               <div data-prep-tm-wrap hidden>
-                <span class="pmd-preset-label">Compatible TMs in Bag</span>
+                <span class="pmd-preset-label">TMs</span>
                 <div class="pmd-inline-btns" data-testid="prep-compatible-tms"></div>
               </div>
             </div>
@@ -263,14 +241,13 @@ export class DungeonPrepOverlay {
       <div class="pmd-window pmd-prep-modal-dialog pmd-prep-items-dialog" role="dialog" aria-modal="true" aria-label="Manage Items">
         <div class="pmd-prep-modal-topbar">
           <div>
-            <h3 class="pmd-panel-title">MANAGE ITEMS</h3>
-            <p class="pmd-panel-sub">1 Item Slot per Pokémon — Held Gear, Berry, Healing, or X-Item</p>
+            <h3 class="pmd-panel-title">ITEMS</h3>
+            <p class="pmd-panel-sub">1 Item per Unit</p>
           </div>
           <button type="button" class="pmd-btn pmd-chip-btn" data-testid="prep-items-close-btn">Done</button>
         </div>
 
         <div class="pmd-prep-items-unit-bar">
-          <span class="pmd-preset-label">Select Unit to Equip:</span>
           <div class="pmd-prep-unit-pills" data-testid="prep-items-unit-list"></div>
         </div>
 
@@ -281,7 +258,7 @@ export class DungeonPrepOverlay {
           <button type="button" class="pmd-btn pmd-chip-btn" data-item-filter="held" data-testid="prep-item-filter-held">Held</button>
           <button type="button" class="pmd-btn pmd-chip-btn" data-item-filter="healing" data-testid="prep-item-filter-healing">Healing</button>
           <button type="button" class="pmd-btn pmd-chip-btn" data-item-filter="x_item" data-testid="prep-item-filter-x">X-Items</button>
-          <button type="button" class="pmd-btn pmd-chip-btn" data-item-filter="special" data-testid="prep-item-filter-special">TMs / Other</button>
+          <button type="button" class="pmd-btn pmd-chip-btn" data-item-filter="special" data-testid="prep-item-filter-special">TMs / Vitamins</button>
         </div>
 
         <div class="pmd-prep-items-list" data-testid="prep-acquired-items-list"></div>
@@ -300,13 +277,13 @@ export class DungeonPrepOverlay {
     this.mapReturnBtnEl.type = 'button';
     this.mapReturnBtnEl.className = 'pmd-btn pmd-btn-primary pmd-battle-hud-btn';
     this.mapReturnBtnEl.dataset.testid = 'prep-return-btn';
-    this.mapReturnBtnEl.textContent = 'Return to Prep';
+    this.mapReturnBtnEl.textContent = 'Prep';
 
     this.mapHintPillEl = document.createElement('span');
     this.mapHintPillEl.className =
       'pmd-window pmd-window--compact pmd-window--translucent pmd-battle-pill pmd-prep-map-pill';
     this.mapHintPillEl.dataset.testid = 'prep-map-status-pill';
-    this.mapHintPillEl.textContent = 'Tap 2 blue tiles to swap units';
+    this.mapHintPillEl.textContent = 'Tap 2 blue tiles to swap';
 
     this.mapDangerBtnEl = document.createElement('button');
     this.mapDangerBtnEl.type = 'button';
@@ -316,56 +293,11 @@ export class DungeonPrepOverlay {
 
     this.mapHudEl.append(this.mapReturnBtnEl, this.mapHintPillEl, this.mapDangerBtnEl);
 
-    // 5. Enter Dungeon Confirmation Pop-up
-    this.confirmBackdropEl = document.createElement('div');
-    this.confirmBackdropEl.className = 'pmd-battle-modal-backdrop pmd-prep-backdrop';
-    this.confirmBackdropEl.dataset.testid = 'prep-confirm-enter-modal';
-    this.confirmBackdropEl.hidden = true;
-    this.confirmBackdropEl.innerHTML = `
-      <div class="pmd-window pmd-window--gold pmd-battle-outcome-dialog pmd-prep-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="prep-confirm-title">
-        <span class="pmd-battle-kicker">READY TO DEPART</span>
-        <h3 id="prep-confirm-title" class="pmd-panel-title">ENTER DUNGEON?</h3>
-        <p class="pmd-panel-sub" data-confirm-sub>Are you ready to end Dungeon Prep and begin the battle?</p>
-        <p class="pmd-subcard-text" data-confirm-party></p>
-        <div class="pmd-battle-outcome-actions">
-          <button type="button" class="pmd-btn pmd-btn-primary" data-testid="prep-confirm-yes-btn">Enter Dungeon</button>
-          <button type="button" class="pmd-btn" data-testid="prep-confirm-cancel-btn">Cancel</button>
-        </div>
-      </div>
-    `;
-
-    // 6. Inline PMD Nickname Modal (Pointer-driven, zero keyboard listeners!)
-    this.renameBackdropEl = document.createElement('div');
-    this.renameBackdropEl.className = 'pmd-battle-modal-backdrop pmd-prep-backdrop';
-    this.renameBackdropEl.dataset.testid = 'prep-rename-modal';
-    this.renameBackdropEl.hidden = true;
-    this.renameBackdropEl.innerHTML = `
-      <div class="pmd-window pmd-window--gold pmd-battle-outcome-dialog pmd-prep-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="prep-rename-title">
-        <h3 id="prep-rename-title" class="pmd-panel-title">RENAME POKÉMON</h3>
-        <p class="pmd-panel-sub" data-prep-rename-sub></p>
-        <input
-          type="text"
-          maxlength="16"
-          class="pmd-select pmd-prep-text-input"
-          data-testid="prep-rename-input"
-          placeholder="Enter nickname (max 16 chars)"
-          autocomplete="off"
-        />
-        <div class="pmd-battle-outcome-actions">
-          <button type="button" class="pmd-btn pmd-btn-primary" data-testid="prep-rename-save-btn">Confirm</button>
-          <button type="button" class="pmd-btn" data-testid="prep-rename-default-btn">Default</button>
-          <button type="button" class="pmd-btn" data-testid="prep-rename-cancel-btn">Cancel</button>
-        </div>
-      </div>
-    `;
-
     this.rootEl.append(
       this.hubBackdropEl,
       this.unitsBackdropEl,
       this.itemsBackdropEl,
-      this.mapHudEl,
-      this.confirmBackdropEl,
-      this.renameBackdropEl
+      this.mapHudEl
     );
     this.opts.parentEl.appendChild(this.rootEl);
 
@@ -382,13 +314,12 @@ export class DungeonPrepOverlay {
 
   public hasActiveSubLayer(): boolean {
     if (!this.visible) return false;
-    return this.renameOpen || this.subMode !== 'hub';
+    return this.subMode !== 'hub';
   }
 
   public show(): void {
     this.visible = true;
     this.subMode = 'hub';
-    this.renameOpen = false;
     this.pendingMoveToSwapIn = null;
     this.unitsStatusMsg = '';
     this.itemsStatusMsg = '';
@@ -400,21 +331,16 @@ export class DungeonPrepOverlay {
 
   public hide(): void {
     this.visible = false;
-    this.renameOpen = false;
     this.pendingMoveToSwapIn = null;
     this.rootEl.hidden = true;
     this.hubBackdropEl.hidden = true;
     this.unitsBackdropEl.hidden = true;
     this.itemsBackdropEl.hidden = true;
     this.mapHudEl.hidden = true;
-    this.confirmBackdropEl.hidden = true;
-    this.renameBackdropEl.hidden = true;
   }
 
   public destroy(): void {
     this.abortController.abort();
-    this.unitSpriteActor?.destroy();
-    this.unitSpriteActor = null;
     this.rootEl.remove();
   }
 
@@ -425,25 +351,11 @@ export class DungeonPrepOverlay {
   public handleBack(): boolean {
     if (!this.visible) return false;
 
-    if (this.renameOpen) {
-      this.opts.audioManager.playSfx('cancel');
-      this.renameOpen = false;
-      this.renameBackdropEl.hidden = true;
-      this.opts.onSubLayerChanged();
-      return true;
-    }
-
     if (this.pendingMoveToSwapIn) {
       this.opts.audioManager.playSfx('cancel');
       this.pendingMoveToSwapIn = null;
       this.unitsStatusMsg = 'Move swap cancelled.';
       this.renderManageUnits();
-      return true;
-    }
-
-    if (this.subMode === 'confirm_enter') {
-      this.opts.audioManager.playSfx('cancel');
-      this.setSubMode('hub');
       return true;
     }
 
@@ -476,7 +388,7 @@ export class DungeonPrepOverlay {
       const unit = save?.roster.find((u) => u.instanceId === slot?.unitInstanceId);
       this.mapHintPillEl.textContent = unit
         ? `Swap ${unit.nickname}: tap blue tile`
-        : 'Tap blue starting tile';
+        : 'Tap blue tile';
     } else {
       this.mapHintPillEl.textContent = 'Tap 2 blue tiles to swap';
     }
@@ -490,16 +402,10 @@ export class DungeonPrepOverlay {
       this.renderManageUnits();
     } else if (this.subMode === 'manage_items') {
       this.renderManageItems();
-    } else if (this.subMode === 'confirm_enter') {
-      this.renderConfirmModal();
     } else if (this.subMode === 'view_map') {
       this.syncMapHudState();
     }
   }
-
-  // ==========================================================================
-  // Internal State & Event Wiring
-  // ==========================================================================
 
   private setSubMode(next: PrepSubMode): void {
     this.subMode = next;
@@ -514,8 +420,6 @@ export class DungeonPrepOverlay {
     this.unitsBackdropEl.hidden = this.subMode !== 'manage_units';
     this.itemsBackdropEl.hidden = this.subMode !== 'manage_items';
     this.mapHudEl.hidden = this.subMode !== 'view_map';
-    this.confirmBackdropEl.hidden = this.subMode !== 'confirm_enter';
-    this.renameBackdropEl.hidden = !this.renameOpen;
   }
 
   private ensureSelectedUnit(): void {
@@ -591,7 +495,7 @@ export class DungeonPrepOverlay {
       this.hubBackdropEl.querySelector<HTMLElement>('[data-testid="prep-btn-enter-dungeon"]'),
       () => {
         this.opts.audioManager.playSfx('select');
-        this.setSubMode('confirm_enter');
+        this.opts.onConfirmEnterDungeon();
       },
       { signal }
     );
@@ -609,7 +513,13 @@ export class DungeonPrepOverlay {
     bindPointerTap(
       this.unitsBackdropEl.querySelector<HTMLElement>('[data-testid="prep-unit-rename-btn"]'),
       () => {
-        this.openRenameModal();
+        if (!this.selectedUnitInstanceId || !this.opts.onRequestRenameUnit) return;
+        this.opts.audioManager.playSfx('select');
+        const targetId = this.selectedUnitInstanceId;
+        void Promise.resolve(this.opts.onRequestRenameUnit(targetId)).then(() => {
+          this.opts.onRosterOrLoadoutMutated();
+          this.refreshAll();
+        });
       },
       { signal }
     );
@@ -668,101 +578,26 @@ export class DungeonPrepOverlay {
       },
       { signal }
     );
-
-    // Enter Dungeon Confirmation Controls
-    bindPointerTap(
-      this.confirmBackdropEl.querySelector<HTMLElement>('[data-testid="prep-confirm-yes-btn"]'),
-      () => {
-        this.opts.onConfirmEnterDungeon();
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      this.confirmBackdropEl.querySelector<HTMLElement>('[data-testid="prep-confirm-cancel-btn"]'),
-      () => {
-        this.opts.audioManager.playSfx('cancel');
-        this.setSubMode('hub');
-      },
-      { signal }
-    );
-
-    // Rename Modal Controls
-    bindPointerTap(
-      this.renameBackdropEl.querySelector<HTMLElement>('[data-testid="prep-rename-save-btn"]'),
-      () => this.commitRename(false),
-      { signal }
-    );
-    bindPointerTap(
-      this.renameBackdropEl.querySelector<HTMLElement>('[data-testid="prep-rename-default-btn"]'),
-      () => this.commitRename(true),
-      { signal }
-    );
-    bindPointerTap(
-      this.renameBackdropEl.querySelector<HTMLElement>('[data-testid="prep-rename-cancel-btn"]'),
-      () => {
-        this.opts.audioManager.playSfx('cancel');
-        this.renameOpen = false;
-        this.renameBackdropEl.hidden = true;
-        this.opts.onSubLayerChanged();
-      },
-      { signal }
-    );
   }
 
   // ==========================================================================
-  // Renderers: Hub, Manage Units, Manage Items, Confirm & Rename
+  // Renderers: Hub, Manage Units, Manage Items
   // ==========================================================================
 
   private renderHub(): void {
     const map = this.opts.getMap();
-    const save = this.opts.getSaveManager().getSave();
-    const roster = save?.roster ?? [];
     const deployed = this.getDeployedUnitsOrdered();
     const cap = this.opts.getDeploymentCap();
     const enemyCount = this.opts.getEnemyCount();
-    const lord = roster.find((u) => u.isLord) ?? deployed[0]?.unit;
 
     const mapNameEl = this.hubBackdropEl.querySelector('[data-prep-map-name]');
     const objEl = this.hubBackdropEl.querySelector('[data-prep-objectives]');
-    const unitsSubEl = this.hubBackdropEl.querySelector('[data-prep-units-sub]');
-    const itemsSubEl = this.hubBackdropEl.querySelector('[data-prep-items-sub]');
-    const stripEl = this.hubBackdropEl.querySelector<HTMLElement>(
-      '[data-testid="prep-hub-squad-strip"]'
-    );
 
     if (mapNameEl) mapNameEl.textContent = map.name;
     if (objEl) {
-      const defeatCondition = lord ? `${lord.nickname} Faints` : 'Squad Wiped Out';
       const customObj = this.opts.getObjectiveLabel?.();
-      const victoryLabel = customObj ?? `Defeat All Enemies (${enemyCount})`;
-      objEl.textContent = `Squad: ${deployed.length}/${cap} · Victory: ${victoryLabel} · Defeat: ${defeatCondition}`;
-    }
-    if (unitsSubEl) {
-      unitsSubEl.textContent = `${deployed.length}/${cap} Deployed (${roster.length} Recruited)`;
-    }
-    if (itemsSubEl && save) {
-      const bagTotal = save.convoy.reduce((acc, c) => acc + c.quantity, 0);
-      const equippedCount = save.roster.filter((u) => getUnitEquippedItemId(u) !== null).length;
-      itemsSubEl.textContent = `${bagTotal} in Bag · ${equippedCount} Equipped`;
-    }
-
-    if (stripEl) {
-      stripEl.innerHTML = deployed
-        .map(({ slot, unit }) => {
-          const sp = getSpeciesById(unit.speciesId);
-          const eqMove = unit.equippedMoveId ? getMoveById(unit.equippedMoveId) : undefined;
-          const eqItemId = getUnitEquippedItemId(unit);
-          const eqItem = eqItemId ? getItemById(eqItemId) : undefined;
-          return `
-            <div class="pmd-prep-squad-chip">
-              <strong class="pmd-prep-chip-name">${escapeHtml(unit.nickname)}${unit.isLord ? ' ★' : ''}</strong>
-              <span class="pmd-prep-chip-meta">${escapeHtml(sp?.name ?? unit.speciesId)} Lv.${unit.level} · (${slot.x},${slot.y})</span>
-              <span class="pmd-prep-chip-loadout">[E] ${escapeHtml(eqMove?.name ?? 'None')}${eqItem ? ` · ${escapeHtml(eqItem.name)}` : ''}</span>
-            </div>
-          `;
-        })
-        .join('');
+      const victoryLabel = customObj ?? `Rout All Enemies (${enemyCount})`;
+      objEl.textContent = `${victoryLabel} · ${deployed.length}/${cap} Deployed`;
     }
   }
 
@@ -777,7 +612,7 @@ export class DungeonPrepOverlay {
 
     const counterEl = this.unitsBackdropEl.querySelector('[data-testid="prep-deploy-counter"]');
     if (counterEl) {
-      counterEl.textContent = `Entering Dungeon: ${deployedCount} / ${cap} Units (${save.roster.length} Recruited)`;
+      counterEl.textContent = `${deployedCount} / ${cap} Deployed`;
     }
 
     // 1. Roster List
@@ -790,9 +625,6 @@ export class DungeonPrepOverlay {
         const sp = getSpeciesById(unit.speciesId);
         const isSelected = unit.instanceId === this.selectedUnitInstanceId;
         const isDeployed = this.isUnitDeployed(unit.instanceId);
-        const slot = this.opts
-          .getDeploymentSlots()
-          .find((s) => s.unitInstanceId === unit.instanceId);
         const itemId = getUnitEquippedItemId(unit);
         const item = itemId ? getItemById(itemId) : undefined;
 
@@ -808,7 +640,7 @@ export class DungeonPrepOverlay {
             <strong>${escapeHtml(unit.nickname)}${unit.isLord ? ' ★' : ''}</strong>
             <span class="pmd-prep-r-lv">Lv.${unit.level}</span>
           </span>
-          <span class="pmd-prep-r-sub">${escapeHtml(sp?.name ?? unit.speciesId)} · ${(sp?.types ?? []).join('/')}${slot ? ` · (${slot.x},${slot.y})` : ''}${item ? ` · ${escapeHtml(item.name)}` : ''}</span>
+          <span class="pmd-prep-r-sub">${escapeHtml((sp?.types ?? []).join('/'))}${item ? ` · ${escapeHtml(item.name)}` : ''}</span>
         `;
         bindPointerTap(selectBtn, () => {
           this.opts.audioManager.playSfx('select');
@@ -827,7 +659,7 @@ export class DungeonPrepOverlay {
           deployBtn.disabled = true;
         } else if (isDeployed) {
           deployBtn.className = 'pmd-btn pmd-chip-btn is-active pmd-prep-deploy-btn';
-          deployBtn.textContent = '✓ Entering';
+          deployBtn.textContent = '✓ In';
           bindPointerTap(deployBtn, () => {
             const res = this.opts.onToggleDeployUnit(unit.instanceId);
             this.opts.audioManager.playSfx(res.ok ? 'select' : 'cancel');
@@ -839,7 +671,7 @@ export class DungeonPrepOverlay {
         } else {
           const capFull = deployedCount >= cap;
           deployBtn.className = 'pmd-btn pmd-chip-btn pmd-prep-deploy-btn';
-          deployBtn.textContent = capFull ? 'Cap Full' : '+ Deploy';
+          deployBtn.textContent = capFull ? 'Full' : '+ Deploy';
           deployBtn.disabled = capFull;
           bindPointerTap(deployBtn, () => {
             const res = this.opts.onToggleDeployUnit(unit.instanceId);
@@ -868,23 +700,6 @@ export class DungeonPrepOverlay {
       mirrorHorizontal: false,
     });
 
-    const spriteSlotEl = this.unitsBackdropEl.querySelector<HTMLElement>('[data-prep-sprite-slot]');
-    if (spriteSlotEl) {
-      if (!this.unitSpriteActor) {
-        this.unitSpriteActor = new PmdSpriteActor({
-          speciesIdOrAssetId: sp.id,
-          scale: 1.5,
-          initialAction: 'Idle',
-          initialDirection: 0,
-          testId: 'prep-unit-sprite',
-        });
-        spriteSlotEl.appendChild(this.unitSpriteActor.canvas);
-        void this.unitSpriteActor.ready();
-      } else {
-        void this.unitSpriteActor.setSpecies(sp.id);
-      }
-    }
-
     const nickEl = this.unitsBackdropEl.querySelector('[data-testid="prep-detail-nickname"]');
     if (nickEl) {
       nickEl.textContent = `${selected.nickname}${selected.isLord ? ' ★' : ''}`;
@@ -892,12 +707,11 @@ export class DungeonPrepOverlay {
 
     const metaEl = this.unitsBackdropEl.querySelector('[data-testid="prep-detail-meta"]');
     if (metaEl) {
-      const deployState = selected.isLord
-        ? 'Leader (Locked)'
-        : this.isUnitDeployed(selected.instanceId)
-          ? 'Entering Dungeon'
-          : 'On Standby';
-      metaEl.textContent = `${sp.name} · Stage ${sp.stage} · Lv. ${selected.level} (EXP ${selected.exp}/100) · ${deployState}`;
+      const speciesPrefix =
+        selected.nickname.trim().toLowerCase() !== sp.name.trim().toLowerCase()
+          ? `${sp.name} · `
+          : '';
+      metaEl.textContent = `${speciesPrefix}Lv. ${selected.level} (EXP ${selected.exp}/100)`;
     }
 
     const badgesEl = this.unitsBackdropEl.querySelector<HTMLElement>(
@@ -917,8 +731,7 @@ export class DungeonPrepOverlay {
     );
     if (abilityEl) {
       abilityEl.innerHTML = `
-        <span class="pmd-prep-ability-title">Ability: <strong>${escapeHtml(skill?.name ?? sp.personalSkillId)}</strong></span>
-        <span class="pmd-prep-ability-desc">${escapeHtml(skill?.description ?? '—')}</span>
+        <span class="pmd-prep-ability-title"><strong>${escapeHtml(skill?.name ?? sp.personalSkillId)}</strong> — ${escapeHtml(skill?.description ?? '—')}</span>
       `;
     }
 
@@ -933,88 +746,83 @@ export class DungeonPrepOverlay {
     );
     if (itemSumEl) {
       itemSumEl.innerHTML = eqItem
-        ? `Item Slot: <strong>${escapeHtml(eqItem.name)}</strong> <span class="pmd-prep-cat-tag">${escapeHtml(formatItemCategoryLabel(eqItem.category))}</span>`
-        : 'Item Slot: <strong>Empty</strong> (1 item max)';
+        ? `Item: <strong>${escapeHtml(eqItem.name)}</strong>`
+        : 'Item: <strong>Empty</strong>';
     }
     if (itemBtnEl) {
-      itemBtnEl.textContent = eqItem ? 'Change Item' : 'Equip Item';
+      itemBtnEl.textContent = eqItem ? 'Change' : 'Equip';
     }
 
-    // Evolution Stone / Evolution Gem Promotion Row
+    // Evolution Stone / Evolution Gem Promotion Row (hidden unless stone/gem exists)
     const promoWrapEl = this.unitsBackdropEl.querySelector<HTMLElement>('[data-prep-promo-wrap]');
     if (promoWrapEl) {
       promoWrapEl.innerHTML = '';
       const branches = sp.evolutions ?? [];
-      if (branches.length === 0) {
+      const availableBranches = branches.filter((b) => {
+        const inBag = save.convoy.some((c) => c.itemId === b.requiredItemId && c.quantity > 0);
+        const onUnit = selected.consumableItemId === b.requiredItemId;
+        return inBag || onUnit;
+      });
+      if (availableBranches.length === 0) {
         promoWrapEl.hidden = true;
       } else {
-        const availableBranches = branches.filter((b) => {
-          const inBag = save.convoy.some((c) => c.itemId === b.requiredItemId && c.quantity > 0);
-          const onUnit = selected.consumableItemId === b.requiredItemId;
-          return inBag || onUnit;
-        });
-        if (availableBranches.length === 0) {
-          promoWrapEl.hidden = true;
+        promoWrapEl.hidden = false;
+        const eligibleNow = availableBranches.filter((b) => selected.level >= b.minLevel);
+        if (eligibleNow.length === 0) {
+          const firstB = availableBranches[0]!;
+          const reqItem = getItemById(firstB.requiredItemId)?.name ?? firstB.requiredItemId;
+          promoWrapEl.innerHTML = `<div class="pmd-prep-item-shortcut-info" style="color:#ffd878;">Evolve at <strong>Lv. ${firstB.minLevel}</strong> (${escapeHtml(reqItem)})</div>`;
         } else {
-          promoWrapEl.hidden = false;
-          const eligibleNow = availableBranches.filter((b) => selected.level >= b.minLevel);
-          if (eligibleNow.length === 0) {
-            const firstB = availableBranches[0]!;
-            const reqItem = getItemById(firstB.requiredItemId)?.name ?? firstB.requiredItemId;
-            promoWrapEl.innerHTML = `<div class="pmd-prep-item-shortcut-info" style="color:#ffd878;">Promotion: Reach <strong>Lv. ${firstB.minLevel}</strong> to use ${escapeHtml(reqItem)}</div>`;
-          } else {
-            const infoSpan = document.createElement('div');
-            infoSpan.className = 'pmd-prep-item-shortcut-info';
-            infoSpan.innerHTML = `<strong style="color:#98f8b8;">★ Promotion Ready!</strong>`;
-            const btnsWrap = document.createElement('div');
-            btnsWrap.className = 'pmd-inline-btns';
-            for (const branch of eligibleNow) {
-              const targetSp = getSpeciesById(branch.targetSpeciesId);
-              const evoBtn = document.createElement('button');
-              evoBtn.type = 'button';
-              evoBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
-              evoBtn.dataset.testid = `prep-evolve-btn-${branch.targetSpeciesId}`;
-              evoBtn.textContent = `Evolve → ${targetSp?.name ?? branch.targetSpeciesId}`;
-              bindPointerTap(evoBtn, () => {
-                try {
-                  const promoted = mgr.useEvolutionItemOnUnit(
-                    selected.instanceId,
-                    branch.requiredItemId,
-                    branch.targetSpeciesId
-                  );
-                  this.opts.audioManager.playSfx('heal');
-                  this.unitsStatusMsg = `★ ${promoted.nickname} evolved into ${getSpeciesById(promoted.speciesId)?.name ?? promoted.speciesId}!`;
-                  this.opts.onRosterOrLoadoutMutated();
-                  this.renderManageUnits();
-                  this.renderHub();
-                } catch (err) {
-                  this.opts.audioManager.playSfx('cancel');
-                  this.unitsStatusMsg = err instanceof Error ? err.message : 'Promotion failed.';
-                  this.renderManageUnits();
-                }
-              });
-              btnsWrap.appendChild(evoBtn);
-            }
-            promoWrapEl.append(infoSpan, btnsWrap);
+          const infoSpan = document.createElement('div');
+          infoSpan.className = 'pmd-prep-item-shortcut-info';
+          infoSpan.innerHTML = `<strong style="color:#98f8b8;">★ Ready to Evolve</strong>`;
+          const btnsWrap = document.createElement('div');
+          btnsWrap.className = 'pmd-inline-btns';
+          for (const branch of eligibleNow) {
+            const targetSp = getSpeciesById(branch.targetSpeciesId);
+            const evoBtn = document.createElement('button');
+            evoBtn.type = 'button';
+            evoBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
+            evoBtn.dataset.testid = `prep-evolve-btn-${branch.targetSpeciesId}`;
+            evoBtn.textContent = `Evolve → ${targetSp?.name ?? branch.targetSpeciesId}`;
+            bindPointerTap(evoBtn, () => {
+              try {
+                const promoted = mgr.useEvolutionItemOnUnit(
+                  selected.instanceId,
+                  branch.requiredItemId,
+                  branch.targetSpeciesId
+                );
+                this.opts.audioManager.playSfx('heal');
+                this.unitsStatusMsg = `★ ${promoted.nickname} evolved into ${getSpeciesById(promoted.speciesId)?.name ?? promoted.speciesId}!`;
+                this.opts.onRosterOrLoadoutMutated();
+                this.renderManageUnits();
+                this.renderHub();
+              } catch (err) {
+                this.opts.audioManager.playSfx('cancel');
+                this.unitsStatusMsg = err instanceof Error ? err.message : 'Promotion failed.';
+                this.renderManageUnits();
+              }
+            });
+            btnsWrap.appendChild(evoBtn);
           }
+          promoWrapEl.append(infoSpan, btnsWrap);
         }
       }
     }
 
-    // 7 Stats + Growth Rates
+    // 7 Stats (Clean numbers — no % Grw clutter)
     const statsEl = this.unitsBackdropEl.querySelector<HTMLElement>(
       '[data-testid="prep-unit-stats"]'
     );
     if (statsEl) {
       const st = selected.currentStats;
-      const gr = sp.growthRates;
-      const statCells: Array<{ label: string; val: number; growth?: number }> = [
-        { label: 'HP', val: st.hp, growth: gr.hp },
-        { label: 'ATK', val: st.atk, growth: gr.atk },
-        { label: 'DEF', val: st.def, growth: gr.def },
-        { label: 'SPA', val: st.spa, growth: gr.spa },
-        { label: 'SPD', val: st.spd, growth: gr.spd },
-        { label: 'SPE', val: st.spe, growth: gr.spe },
+      const statCells: Array<{ label: string; val: number }> = [
+        { label: 'HP', val: st.hp },
+        { label: 'ATK', val: st.atk },
+        { label: 'DEF', val: st.def },
+        { label: 'SPA', val: st.spa },
+        { label: 'SPD', val: st.spd },
+        { label: 'SPE', val: st.spe },
         { label: 'MOV', val: st.mov },
       ];
       statsEl.innerHTML = statCells
@@ -1023,7 +831,6 @@ export class DungeonPrepOverlay {
           <div class="pmd-prep-stat-box">
             <span class="pmd-prep-stat-lbl">${c.label}</span>
             <strong class="pmd-prep-stat-val">${c.val}</strong>
-            <span class="pmd-prep-stat-gr">${c.growth !== undefined ? `${c.growth}% Grw` : sp.traversalClass}</span>
           </div>
         `
         )
@@ -1034,8 +841,8 @@ export class DungeonPrepOverlay {
     const activeHeading = this.unitsBackdropEl.querySelector('[data-prep-active-moves-heading]');
     if (activeHeading) {
       activeHeading.textContent = this.pendingMoveToSwapIn
-        ? `Choose an Active Move to Replace with ${getMoveById(this.pendingMoveToSwapIn)?.name ?? this.pendingMoveToSwapIn}:`
-        : `Active Moves (${selected.activeMoveIds.length} / 4) — Single [E] Counter`;
+        ? `Replace a move with ${getMoveById(this.pendingMoveToSwapIn)?.name ?? this.pendingMoveToSwapIn}:`
+        : `Moves (${selected.activeMoveIds.length} / 4) · [E] Counter`;
     }
 
     const activeListEl = this.unitsBackdropEl.querySelector<HTMLElement>(
@@ -1061,7 +868,7 @@ export class DungeonPrepOverlay {
             <strong>${isEquipped ? '[E] ' : ''}${escapeHtml(mv.name)}</strong>
             <span class="pmd-prep-cat-tag">${escapeHtml(mv.type)} · ${escapeHtml(formatMoveCategoryBadge(mv))}</span>
           </div>
-          <span class="pmd-prep-move-stats">${isOffensive ? `Mt ${mv.mt} · Hit ${mv.hit}% · Crit ${mv.crit}% · ` : ''}PP ${maxPp} — ${escapeHtml(mv.description)}</span>
+          <span class="pmd-prep-move-stats">${isOffensive ? `Mt ${mv.mt} · Hit ${mv.hit}% · Crit ${mv.crit}% · ` : ''}PP ${maxPp}</span>
         `;
 
         const btnsDiv = document.createElement('div');
@@ -1081,7 +888,7 @@ export class DungeonPrepOverlay {
             mgr.setActiveMoves(selected.instanceId, nextActive);
             this.pendingMoveToSwapIn = null;
             this.opts.audioManager.playSfx('select');
-            this.unitsStatusMsg = `Equipped ${getMoveById(swapTargetMoveId)?.name ?? swapTargetMoveId} in place of ${mv.name}.`;
+            this.unitsStatusMsg = `Equipped ${getMoveById(swapTargetMoveId)?.name ?? swapTargetMoveId}.`;
             this.opts.onRosterOrLoadoutMutated();
             this.renderManageUnits();
           });
@@ -1092,12 +899,12 @@ export class DungeonPrepOverlay {
             eqBtn.type = 'button';
             eqBtn.className = `pmd-btn pmd-chip-btn${isEquipped ? ' is-active' : ''}`;
             eqBtn.dataset.testid = `prep-move-equip-counter-${mv.id}`;
-            eqBtn.textContent = isEquipped ? '[E] Counter' : 'Set [E]';
+            eqBtn.textContent = isEquipped ? '[E]' : 'Set [E]';
             bindPointerTap(eqBtn, () => {
               if (isEquipped) return;
               mgr.setEquippedMove(selected.instanceId, mv.id);
               this.opts.audioManager.playSfx('select');
-              this.unitsStatusMsg = `${selected.nickname} set [E] ${mv.name} (Range ${mv.range[0]}) for Enemy Phase counters.`;
+              this.unitsStatusMsg = `[E] ${mv.name} set for Enemy Phase.`;
               this.opts.onRosterOrLoadoutMutated();
               this.renderManageUnits();
             });
@@ -1160,18 +967,18 @@ export class DungeonPrepOverlay {
           addBtn.type = 'button';
           addBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
           addBtn.dataset.testid = `prep-move-add-${mv.id}`;
-          addBtn.textContent = selected.activeMoveIds.length < 4 ? 'Equip' : 'Swap In';
+          addBtn.textContent = selected.activeMoveIds.length < 4 ? 'Equip' : 'Swap';
           bindPointerTap(addBtn, () => {
             if (selected.activeMoveIds.length < 4) {
               mgr.setActiveMoves(selected.instanceId, [...selected.activeMoveIds, mv.id]);
               this.opts.audioManager.playSfx('select');
-              this.unitsStatusMsg = `Equipped ${mv.name} onto ${selected.nickname}!`;
+              this.unitsStatusMsg = `Equipped ${mv.name}.`;
               this.opts.onRosterOrLoadoutMutated();
               this.renderManageUnits();
             } else {
               this.opts.audioManager.playSfx('select');
               this.pendingMoveToSwapIn = mv.id;
-              this.unitsStatusMsg = `Select one of ${selected.nickname}'s 4 active moves above to replace with ${mv.name}.`;
+              this.unitsStatusMsg = `Tap an active move above to replace with ${mv.name}.`;
               this.renderManageUnits();
             }
           });
@@ -1212,7 +1019,7 @@ export class DungeonPrepOverlay {
           bindPointerTap(btn, () => {
             mgr.teachTmMove(selected.instanceId, item.id);
             this.opts.audioManager.playSfx('heal');
-            this.unitsStatusMsg = `${selected.nickname} permanently learned ${getMoveById(item.effect.teachesMoveId!)?.name ?? item.name}!`;
+            this.unitsStatusMsg = `${selected.nickname} learned ${getMoveById(item.effect.teachesMoveId!)?.name ?? item.name}!`;
             this.opts.onRosterOrLoadoutMutated();
             this.renderManageUnits();
           });
@@ -1279,7 +1086,7 @@ export class DungeonPrepOverlay {
       if (currentItem) {
         infoDiv.innerHTML = `
           <div class="pmd-prep-move-title-line">
-            <strong>${escapeHtml(selectedUnit.nickname)}'s Item Slot (1/1): ${escapeHtml(currentItem.name)}</strong>
+            <strong>${escapeHtml(selectedUnit.nickname)}: ${escapeHtml(currentItem.name)}</strong>
             <span class="pmd-prep-cat-tag">${escapeHtml(formatItemCategoryLabel(currentItem.category))}</span>
           </div>
           <span class="pmd-prep-move-stats">${escapeHtml(currentItem.description)}</span>
@@ -1292,7 +1099,7 @@ export class DungeonPrepOverlay {
         bindPointerTap(unequipBtn, () => {
           mgr.equipItemToUnit(selectedUnit.instanceId, null);
           this.opts.audioManager.playSfx('cancel');
-          this.itemsStatusMsg = `Returned ${currentItem.name} from ${selectedUnit.nickname} to Bag.`;
+          this.itemsStatusMsg = `Returned ${currentItem.name} to Bag.`;
           this.opts.onRosterOrLoadoutMutated();
           this.renderManageItems();
         });
@@ -1300,9 +1107,8 @@ export class DungeonPrepOverlay {
       } else {
         infoDiv.innerHTML = `
           <div class="pmd-prep-move-title-line">
-            <strong>${escapeHtml(selectedUnit.nickname)}'s Item Slot (0/1): Empty</strong>
+            <strong>${escapeHtml(selectedUnit.nickname)}: Empty</strong>
           </div>
-          <span class="pmd-prep-move-stats">Select any Held Item, Berry, Healing Item, or X-Item below to equip into ${escapeHtml(selectedUnit.nickname)}'s single item slot.</span>
         `;
         slotCardEl.appendChild(infoDiv);
       }
@@ -1369,7 +1175,7 @@ export class DungeonPrepOverlay {
       if (acquiredItems.length === 0) {
         const emptyEl = document.createElement('p');
         emptyEl.className = 'pmd-subcard-text';
-        emptyEl.textContent = 'No acquired items in this category yet.';
+        emptyEl.textContent = 'No items in this category.';
         itemsListEl.appendChild(emptyEl);
       } else {
         for (const { item, bagQty, holders } of acquiredItems) {
@@ -1378,9 +1184,7 @@ export class DungeonPrepOverlay {
           row.dataset.testid = `prep-item-row-${item.id}`;
 
           const holderSummary =
-            holders.length > 0
-              ? ` · Equipped: ${holders.map((h) => h.nickname).join(', ')}`
-              : '';
+            holders.length > 0 ? ` · ${holders.map((h) => h.nickname).join(', ')}` : '';
 
           const infoDiv = document.createElement('div');
           infoDiv.className = 'pmd-prep-move-info';
@@ -1388,7 +1192,7 @@ export class DungeonPrepOverlay {
             <div class="pmd-prep-move-title-line">
               <strong>${escapeHtml(item.name)}</strong>
               <span class="pmd-prep-cat-tag">${escapeHtml(formatItemCategoryLabel(item.category))}</span>
-              <span class="pmd-prep-stock-tag">Bag: ${bagQty}${escapeHtml(holderSummary)}</span>
+              <span class="pmd-prep-stock-tag">×${bagQty}${escapeHtml(holderSummary)}</span>
             </div>
             <span class="pmd-prep-move-stats">${escapeHtml(item.description)}</span>
           `;
@@ -1404,7 +1208,7 @@ export class DungeonPrepOverlay {
               bindPointerTap(actionBtn, () => {
                 mgr.equipItemToUnit(selectedUnit.instanceId, null);
                 this.opts.audioManager.playSfx('cancel');
-                this.itemsStatusMsg = `Unequipped ${item.name} from ${selectedUnit.nickname}.`;
+                this.itemsStatusMsg = `Unequipped ${item.name}.`;
                 this.opts.onRosterOrLoadoutMutated();
                 this.renderManageItems();
               });
@@ -1412,12 +1216,9 @@ export class DungeonPrepOverlay {
               actionBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
               actionBtn.textContent = currentItem ? 'Replace' : 'Equip';
               bindPointerTap(actionBtn, () => {
-                const prevName = currentItem?.name;
                 mgr.equipItemToUnit(selectedUnit.instanceId, item.id);
                 this.opts.audioManager.playSfx('select');
-                this.itemsStatusMsg = prevName
-                  ? `Equipped ${item.name} on ${selectedUnit.nickname} (returned ${prevName} to Bag).`
-                  : `Equipped ${item.name} on ${selectedUnit.nickname}.`;
+                this.itemsStatusMsg = `Equipped ${item.name} on ${selectedUnit.nickname}.`;
                 this.opts.onRosterOrLoadoutMutated();
                 this.renderManageItems();
               });
@@ -1428,12 +1229,9 @@ export class DungeonPrepOverlay {
               actionBtn.disabled = !otherHolder;
               if (otherHolder) {
                 bindPointerTap(actionBtn, () => {
-                  const prevName = currentItem?.name;
                   mgr.equipItemToUnit(selectedUnit.instanceId, item.id, otherHolder.instanceId);
                   this.opts.audioManager.playSfx('select');
-                  this.itemsStatusMsg = prevName
-                    ? `Moved ${item.name} from ${otherHolder.nickname} to ${selectedUnit.nickname} (returned ${prevName} to Bag).`
-                    : `Moved ${item.name} from ${otherHolder.nickname} to ${selectedUnit.nickname}.`;
+                  this.itemsStatusMsg = `Moved ${item.name} to ${selectedUnit.nickname}.`;
                   this.opts.onRosterOrLoadoutMutated();
                   this.renderManageItems();
                 });
@@ -1527,70 +1325,5 @@ export class DungeonPrepOverlay {
       statusEl.hidden = !this.itemsStatusMsg;
       statusEl.textContent = this.itemsStatusMsg;
     }
-  }
-
-  private renderConfirmModal(): void {
-    const deployed = this.getDeployedUnitsOrdered();
-    const cap = this.opts.getDeploymentCap();
-    const subEl = this.confirmBackdropEl.querySelector('[data-confirm-sub]');
-    const partyEl = this.confirmBackdropEl.querySelector('[data-confirm-party]');
-
-    if (subEl) {
-      subEl.textContent = `Are you ready to enter ${this.opts.getMap().name} with ${deployed.length}/${cap} Pokémon?`;
-    }
-    if (partyEl) {
-      partyEl.textContent = deployed
-        .map(({ slot, unit }) => {
-          const eqItemId = getUnitEquippedItemId(unit);
-          const eqItem = eqItemId ? getItemById(eqItemId) : undefined;
-          return `${unit.nickname} (${slot.x},${slot.y})${eqItem ? ` [${eqItem.name}]` : ''}`;
-        })
-        .join(' · ');
-    }
-  }
-
-  private openRenameModal(): void {
-    const save = this.opts.getSaveManager().getSave();
-    const unit = save?.roster.find((u) => u.instanceId === this.selectedUnitInstanceId);
-    if (!unit) return;
-    const sp = getSpeciesById(unit.speciesId);
-
-    this.opts.audioManager.playSfx('select');
-    const subEl = this.renameBackdropEl.querySelector('[data-prep-rename-sub]');
-    const inputEl = this.renameBackdropEl.querySelector<HTMLInputElement>(
-      '[data-testid="prep-rename-input"]'
-    );
-    if (subEl) {
-      subEl.textContent = `${sp?.name ?? unit.speciesId} · Lv. ${unit.level}`;
-    }
-    if (inputEl) {
-      inputEl.value = unit.nickname;
-    }
-    this.renameOpen = true;
-    this.renameBackdropEl.hidden = false;
-    this.opts.onSubLayerChanged();
-  }
-
-  private commitRename(useDefaultSpeciesName: boolean): void {
-    const mgr = this.opts.getSaveManager();
-    const save = mgr.getSave();
-    const unit = save?.roster.find((u) => u.instanceId === this.selectedUnitInstanceId);
-    if (!unit) return;
-    const sp = getSpeciesById(unit.speciesId);
-    const inputEl = this.renameBackdropEl.querySelector<HTMLInputElement>(
-      '[data-testid="prep-rename-input"]'
-    );
-    const nextName = useDefaultSpeciesName
-      ? (sp?.name ?? unit.speciesId)
-      : (inputEl?.value ?? unit.nickname);
-
-    const updated = mgr.renamePokemon(unit.instanceId, nextName);
-    this.opts.audioManager.playSfx('select');
-    this.renameOpen = false;
-    this.renameBackdropEl.hidden = true;
-    this.unitsStatusMsg = `Updated nickname to ${updated.nickname}.`;
-    this.opts.onRosterOrLoadoutMutated();
-    this.refreshAll();
-    this.opts.onSubLayerChanged();
   }
 }

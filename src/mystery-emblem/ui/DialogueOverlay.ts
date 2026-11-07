@@ -1,12 +1,11 @@
 /**
- * Portrait Dialogue Engine (`DIALOGUE_OVERLAY`) — Step 2 + Audio Cues
+ * Portrait Dialogue Engine (`DIALOGUE_OVERLAY`)
  *
  * Authentic Pokémon Mystery Dungeon: Explorers of Sky cutscene & conversation engine:
- * - Left & Right double-bordered character portrait slots (`image-rendering: pixelated`)
- * - Dynamic custom nickname + species name resolution from `SaveStateManager`
+ * - Left & Right character portrait slots (`image-rendering: pixelated`)
+ * - Dynamic custom nickname resolution (species badge shown only when nicknamed)
  * - Per-line facial expression swapping across all 8 PMD emotions
  * - Per-script & per-line PMD BGM crossfading + subtle UI/typewriter chimes via `AudioManager`
- * - Automatic live portrait & species-name updates when a unit's evolution stage changes
  * - 100% Unified Pointer Event driven (click/tap to reveal/advance, Skip & Back controls; zero keyboard listeners)
  */
 
@@ -82,15 +81,11 @@ export class DialogueOverlay {
   private readonly stageEl: HTMLElement;
   private readonly leftSlotEl: HTMLElement;
   private readonly rightSlotEl: HTMLElement;
-  private readonly leftEmotionEl: HTMLElement;
-  private readonly rightEmotionEl: HTMLElement;
   private readonly leftPortrait: PmdPortraitView;
   private readonly rightPortrait: PmdPortraitView;
   private readonly boxEl: HTMLElement;
   private readonly nicknameEl: HTMLElement;
   private readonly speciesBadgeEl: HTMLElement;
-  private readonly bgmBadgeEl: HTMLElement;
-  private readonly progressEl: HTMLElement;
   private readonly skipBtn: HTMLButtonElement;
   private readonly textEl: HTMLElement;
   private readonly advanceBtn: HTMLButtonElement;
@@ -98,7 +93,6 @@ export class DialogueOverlay {
   private readonly saveManager: SaveStateManager;
   private readonly audioManager: AudioManager;
   private unsubscribeSave: (() => void) | null = null;
-  private unsubscribeAudio: (() => void) | null = null;
   private readonly uiAbort = new AbortController();
 
   private activeScript: DialogueScript | null = null;
@@ -138,7 +132,6 @@ export class DialogueOverlay {
     this.stageEl = document.createElement('div');
     this.stageEl.className = 'pmd-dialogue-stage';
 
-    // Left Portrait Frame
     this.leftSlotEl = createPmdWindow({
       variant: 'compact-translucent',
       className: 'pmd-dialogue-portrait-slot pmd-dialogue-portrait-slot--left',
@@ -146,12 +139,8 @@ export class DialogueOverlay {
     });
     this.leftSlotEl.hidden = true;
     this.leftPortrait = new PmdPortraitView({ testId: 'dialogue-portrait-left-canvas' });
-    this.leftEmotionEl = document.createElement('span');
-    this.leftEmotionEl.className = 'pmd-dialogue-emotion-pill';
-    this.leftEmotionEl.dataset.testid = 'dialogue-emotion-left';
-    this.leftSlotEl.append(this.leftPortrait.canvas, this.leftEmotionEl);
+    this.leftSlotEl.appendChild(this.leftPortrait.canvas);
 
-    // Right Portrait Frame (horizontally mirrored inward toward center)
     this.rightSlotEl = createPmdWindow({
       variant: 'compact-translucent',
       className: 'pmd-dialogue-portrait-slot pmd-dialogue-portrait-slot--right',
@@ -159,12 +148,8 @@ export class DialogueOverlay {
     });
     this.rightSlotEl.hidden = true;
     this.rightPortrait = new PmdPortraitView({ testId: 'dialogue-portrait-right-canvas' });
-    this.rightEmotionEl = document.createElement('span');
-    this.rightEmotionEl.className = 'pmd-dialogue-emotion-pill';
-    this.rightEmotionEl.dataset.testid = 'dialogue-emotion-right';
-    this.rightSlotEl.append(this.rightPortrait.canvas, this.rightEmotionEl);
+    this.rightSlotEl.appendChild(this.rightPortrait.canvas);
 
-    // Main PMD Dialogue Window
     this.boxEl = createPmdWindow({
       variant: 'translucent',
       className: 'pmd-dialogue-box',
@@ -190,15 +175,6 @@ export class DialogueOverlay {
     const controlsGroup = document.createElement('div');
     controlsGroup.className = 'pmd-dialogue-controls';
 
-    this.bgmBadgeEl = document.createElement('span');
-    this.bgmBadgeEl.className = 'pmd-dialogue-bgm-badge';
-    this.bgmBadgeEl.dataset.testid = 'dialogue-bgm-badge';
-    this.bgmBadgeEl.hidden = true;
-
-    this.progressEl = document.createElement('span');
-    this.progressEl.className = 'pmd-dialogue-progress';
-    this.progressEl.dataset.testid = 'dialogue-progress';
-
     this.skipBtn = createPmdButton({
       label: 'Skip',
       className: 'pmd-dialogue-skip-btn',
@@ -211,7 +187,7 @@ export class DialogueOverlay {
       tapOptions: { signal: this.uiAbort.signal, stopPropagation: true },
     });
 
-    controlsGroup.append(this.bgmBadgeEl, this.progressEl, this.skipBtn);
+    controlsGroup.appendChild(this.skipBtn);
     headerEl.append(speakerGroup, controlsGroup);
 
     const bodyEl = document.createElement('div');
@@ -239,7 +215,6 @@ export class DialogueOverlay {
     this.rootEl.appendChild(this.stageEl);
     mountParent.appendChild(this.rootEl);
 
-    // Tapping anywhere on the dialogue window or portrait frames advances the conversation
     bindPointerTap(this.boxEl, () => this.handleAdvanceTap(), {
       signal: this.uiAbort.signal,
       stopPropagation: true,
@@ -253,7 +228,6 @@ export class DialogueOverlay {
       stopPropagation: true,
     });
 
-    // Tapping backdrop outside the stage also advances cleanly on touch/mouse
     bindPointerTap(
       this.rootEl,
       (ev) => {
@@ -264,7 +238,6 @@ export class DialogueOverlay {
       { signal: this.uiAbort.signal }
     );
 
-    // PC Right-Click or Mobile Long-Press on overlay closes/cancels back cleanly
     bindBackGestureSurface(
       this.rootEl,
       () => {
@@ -274,22 +247,9 @@ export class DialogueOverlay {
       { signal: this.uiAbort.signal }
     );
 
-    // Reactively stay in sync whenever SaveStateManager updates nicknames or evolution stages!
     this.unsubscribeSave = this.saveManager.subscribe(() => {
       if (this.isOpen()) {
         void this.renderCurrentLine({ preserveTypewriterProgress: true });
-      }
-    });
-
-    this.unsubscribeAudio = this.audioManager.subscribe((snap) => {
-      if (snap.currentTrack && !snap.settings.muted) {
-        this.bgmBadgeEl.textContent = `♪ ${snap.currentTrack.title}`;
-        this.bgmBadgeEl.dataset.trackId = snap.currentTrack.id;
-        this.bgmBadgeEl.hidden = false;
-      } else {
-        this.bgmBadgeEl.textContent = '';
-        this.bgmBadgeEl.dataset.trackId = '';
-        this.bgmBadgeEl.hidden = true;
       }
     });
   }
@@ -310,7 +270,6 @@ export class DialogueOverlay {
       return 'completed';
     }
 
-    // Cancel any prior script cleanly before starting the new one
     if (this.finishResolver) {
       this.clearTypewriter();
       const prevResolve = this.finishResolver;
@@ -385,10 +344,6 @@ export class DialogueOverlay {
     if (this.unsubscribeSave) {
       this.unsubscribeSave();
       this.unsubscribeSave = null;
-    }
-    if (this.unsubscribeAudio) {
-      this.unsubscribeAudio();
-      this.unsubscribeAudio = null;
     }
     this.rootEl.remove();
   }
@@ -481,7 +436,6 @@ export class DialogueOverlay {
   private handleAdvanceTap(): void {
     if (!this.activeScript) return;
 
-    // First tap during active typewriter instantly finishes revealing the current line
     if (this.typewriterTimer !== null && this.revealedChars < this.fullLineText.length) {
       this.clearTypewriter();
       this.revealedChars = this.fullLineText.length;
@@ -544,10 +498,11 @@ export class DialogueOverlay {
 
     const activeIdentity = this.resolveSpeaker(line.speaker, save);
 
-    // Update Speaker Nameplate (both Custom Nickname and Current Species Name)
     this.nicknameEl.textContent = activeIdentity.nickname;
     this.speciesBadgeEl.textContent = activeIdentity.speciesName;
-    this.progressEl.textContent = `${this.currentLineIndex + 1} / ${this.activeScript.lines.length}`;
+    this.speciesBadgeEl.hidden =
+      activeIdentity.nickname.trim().toLowerCase() ===
+      activeIdentity.speciesName.trim().toLowerCase();
 
     const formattedText = this.interpolateDialogueText(line.text, activeIdentity, save);
 
@@ -570,7 +525,6 @@ export class DialogueOverlay {
         }, this.typewriterMsPerChar);
       }
     } else {
-      // Live reactive update (e.g., unit renamed or evolved while line is displayed)
       const wasComplete = this.typewriterTimer === null || this.revealedChars >= this.fullLineText.length;
       this.fullLineText = formattedText;
       if (wasComplete) {
@@ -581,7 +535,6 @@ export class DialogueOverlay {
 
     this.syncAdvanceButtonLabel();
 
-    // Update Left & Right Portrait Frames concurrently
     const portraitTasks: Promise<unknown>[] = [];
 
     if (this.activeSides.left) {
@@ -590,7 +543,6 @@ export class DialogueOverlay {
       this.leftSlotEl.hidden = false;
       this.leftSlotEl.classList.toggle('is-speaking', line.side === 'left');
       this.leftSlotEl.classList.toggle('is-listening', line.side !== 'left');
-      this.leftEmotionEl.textContent = leftState.emotion;
       portraitTasks.push(
         this.leftPortrait.setPortrait({
           speciesIdOrAssetId: leftId.speciesId ?? leftId.pmdAssetId,
@@ -608,7 +560,6 @@ export class DialogueOverlay {
       this.rightSlotEl.hidden = false;
       this.rightSlotEl.classList.toggle('is-speaking', line.side === 'right');
       this.rightSlotEl.classList.toggle('is-listening', line.side !== 'right');
-      this.rightEmotionEl.textContent = rightState.emotion;
       portraitTasks.push(
         this.rightPortrait.setPortrait({
           speciesIdOrAssetId: rightId.speciesId ?? rightId.pmdAssetId,

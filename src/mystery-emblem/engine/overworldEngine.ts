@@ -1,9 +1,5 @@
 /**
- * Mystery Emblem — Overworld Traversal, Pathfinding & Event Spawner Engine (Step 4)
- *
- * Pure, deterministic engine backing both:
- * 1. The Admin Dev Tools Overworld Sandbox (`sandboxMode: true`), and
- * 2. The upcoming Campaign / Demo Overworld (`OverworldScene`).
+ * Mystery Emblem — Overworld Traversal, Pathfinding & Event Spawner Engine
  *
  * Handles:
  * - Multi-waypoint road Dijkstra pathfinding across unlocked continent nodes
@@ -15,7 +11,7 @@
 import { directionFromDelta, type PmdDirection } from '../assets/pmdAssetLoader';
 import {
   ALL_KECLEON_SHOP_TYPES,
-  DEFAULT_OVERWORLD_GRAPH,
+  DEMO_OVERWORLD_GRAPH,
   buildKecleonShopInventory,
   getOverworldNodeById,
   type OverworldEdgeDefinition,
@@ -76,11 +72,8 @@ export function cloneOverworldNodesMap(
   return out;
 }
 
-/**
- * Builds fresh Prologue-start node states for a new Demo or Story campaign.
- */
 export function createPrologueOverworldNodes(
-  graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+  graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
 ): Record<string, OverworldNodeState> {
   const nodes: Record<string, OverworldNodeState> = {};
   for (const def of graph.nodes) {
@@ -95,103 +88,32 @@ export function createPrologueOverworldNodes(
   return nodes;
 }
 
-/**
- * Builds a rich, immediately interactive multi-node Overworld state for Dev Tools Sandbox testing:
- * - Unlocks and clears `prologue`, `chapter_01`, `chapter_02`, `chapter_03`, `paralogue_01`, `paralogue_02`
- * - Unlocks `chapter_04` (`Apple Woods`) as the active next story chapter
- * - Pre-spawns a Kecleon TM Shop on `paralogue_02` (`Oran Forest`) and a Feral Skirmish on `chapter_02` (`Mt. Bristle`)
- */
-export function createSandboxOverworldNodes(
-  graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH,
-  rng: () => number = Math.random,
-  nowTimestamp = Date.now()
-): Record<string, OverworldNodeState> {
-  const clearedSet = new Set<string>([
-    'prologue',
-    'chapter_01',
-    'chapter_02',
-    'chapter_03',
-    'paralogue_01',
-    'paralogue_02',
-  ]);
-  const unlockedSet = new Set<string>([...clearedSet, 'chapter_04', graph.startNodeId]);
-
-  const nodes: Record<string, OverworldNodeState> = {};
-  for (const def of graph.nodes) {
-    const isCleared = clearedSet.has(def.id);
-    const isUnlocked = unlockedSet.has(def.id) || Boolean(def.initiallyUnlocked);
-    nodes[def.id] = {
-      nodeId: def.id,
-      unlocked: isUnlocked,
-      cleared: isCleared,
-      activeSkirmish: null,
-      activeKecleonShop: null,
-    };
-  }
-
-  for (const def of graph.nodes) {
-    if (nodes[def.id]?.cleared) {
-      for (const nextId of def.unlocksNodeIdsOnClear) {
-        if (nodes[nextId]) {
-          nodes[nextId]!.unlocked = true;
-        }
-      }
-    }
-  }
-
-  // Seed an active Kecleon TM Shop on Oran Forest (`paralogue_02`)
-  const shopHostId = nodes['paralogue_02'] ? 'paralogue_02' : graph.startNodeId;
-  if (nodes[shopHostId]) {
-    const stock = buildKecleonShopInventory('tm_shop', rng);
-    // Ensure `tm05_aerial_ace` (compatible with Dratini) is always stocked in Sandbox preset
-    if (!stock.includes('tm05_aerial_ace')) {
-      stock[0] = 'tm05_aerial_ace';
-    }
-    nodes[shopHostId]!.activeKecleonShop = {
-      shopType: 'tm_shop',
-      inventoryItemIds: stock,
-    };
-  }
-
-  // Seed an active Feral Skirmish on Mt. Bristle (`chapter_02`)
-  const skirmishHostDef =
-    getOverworldNodeById('chapter_02', graph) ?? getOverworldNodeById(graph.startNodeId, graph);
-  if (skirmishHostDef && nodes[skirmishHostDef.id]) {
-    nodes[skirmishHostDef.id]!.activeSkirmish = {
-      spawnedAtTimestamp: nowTimestamp,
-      recommendedLevel: skirmishHostDef.recommendedLevel,
-      tilesetId: skirmishHostDef.tilesetId,
-    };
-  }
-
-  return nodes;
-}
-
-/**
- * Unlocks every node in `graph` so developers can test full-continent routes across all kingdoms.
- */
 export function createUnlockedAllOverworldNodes(
-  graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+  graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH,
+  existingNodes?: Record<string, OverworldNodeState>
 ): Record<string, OverworldNodeState> {
   const nodes: Record<string, OverworldNodeState> = {};
   for (const def of graph.nodes) {
+    const prev = existingNodes?.[def.id];
     nodes[def.id] = {
       nodeId: def.id,
       unlocked: true,
-      cleared: def.act === 1,
-      activeSkirmish: null,
-      activeKecleonShop: null,
+      cleared: Boolean(prev?.cleared),
+      activeSkirmish: prev?.activeSkirmish ? { ...prev.activeSkirmish } : null,
+      activeKecleonShop: prev?.activeKecleonShop
+        ? {
+            shopType: prev.activeKecleonShop.shopType,
+            inventoryItemIds: [...prev.activeKecleonShop.inventoryItemIds],
+          }
+        : null,
     };
   }
   return nodes;
 }
 
-/**
- * Reconciles `save.overworld` against `graph` without clobbering existing node progress, shops, or skirmishes.
- */
 export function ensureOverworldGraphState(
   save: Pick<SaveData, 'overworld' | 'campaign'>,
-  graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH
+  graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
 ): {
   currentNodeId: string;
   nodes: Record<string, OverworldNodeState>;
@@ -200,6 +122,15 @@ export function ensureOverworldGraphState(
   const completedSet = new Set(save.campaign.completedChapterIds ?? []);
   const nextNodes = cloneOverworldNodesMap(save.overworld?.nodes ?? {});
   let mutated = false;
+
+  // Prune any obsolete legacy node IDs not in the active graph
+  const validNodeIds = new Set(graph.nodes.map((n) => n.id));
+  for (const existingKey of Object.keys(nextNodes)) {
+    if (!validNodeIds.has(existingKey)) {
+      delete nextNodes[existingKey];
+      mutated = true;
+    }
+  }
 
   for (const def of graph.nodes) {
     const existing = nextNodes[def.id];
@@ -228,7 +159,6 @@ export function ensureOverworldGraphState(
     }
   }
 
-  // Propagate downstream unlocks for any cleared nodes
   for (const def of graph.nodes) {
     if (nextNodes[def.id]?.cleared) {
       for (const targetId of def.unlocksNodeIdsOnClear) {
@@ -256,10 +186,6 @@ export function ensureOverworldGraphState(
   return { currentNodeId, nodes: nextNodes, mutated };
 }
 
-// ============================================================================
-// Polyline Geometry & Multi-Waypoint Road Pathfinding
-// ============================================================================
-
 export function getEdgePointsOrdered(
   edge: OverworldEdgeDefinition,
   fromNode: OverworldNodeDefinition,
@@ -284,10 +210,6 @@ export function computePolylineLength(points: ReadonlyArray<OverworldPoint>): nu
   return total;
 }
 
-/**
- * Finds the shortest unlocked road path between `fromNodeId` and `toNodeId` along `graph.edges`,
- * stitching intermediate `waypoints` across every traversed edge.
- */
 export function findOverworldRoute(
   graph: OverworldGraphDefinition,
   nodeStates: Record<string, OverworldNodeState>,
@@ -428,9 +350,6 @@ export function findOverworldRoute(
   };
 }
 
-/**
- * Samples `(x, y)` and 8-directional PMD facing at `distancePx` along a multi-waypoint polyline.
- */
 export function samplePolylineAtDistance(
   points: ReadonlyArray<OverworldPoint>,
   distancePx: number,
@@ -513,10 +432,6 @@ export function samplePolylineAtDistance(
   };
 }
 
-// ============================================================================
-// Kecleon Shop & Feral Skirmish Spawners (Spec 1.2 & Step 4)
-// ============================================================================
-
 export function buildKecleonShopState(
   shopType?: KecleonShopType,
   rng: () => number = Math.random
@@ -567,16 +482,9 @@ export interface PostBattleSpawnResult {
   spawnedShopType: KecleonShopType | null;
 }
 
-/**
- * Awakening-style post-chapter Overworld event spawner:
- * - Low random chance (`skirmishChance`, default `0.35`) to spawn a Feral Skirmish on a cleared node
- *   (capped at `maxActiveSkirmishes`, default `2`; clears immediately on victory to prevent infinite grinding).
- * - When `kecleonShopsUnlocked` is true (unlocked by Paralogue 2 Oran Forest), rolls a random
- *   Kecleon merchant caravan (`tm_shop`, `held_shop`, `healing_shop`, or `x_item_shop`) on a cleared node.
- */
 export function rollPostBattleOverworldSpawns(
   nodes: Record<string, OverworldNodeState>,
-  graph: OverworldGraphDefinition = DEFAULT_OVERWORLD_GRAPH,
+  graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH,
   options: PostBattleSpawnOptions
 ): PostBattleSpawnResult {
   const rng = options.rng ?? Math.random;
@@ -592,7 +500,6 @@ export function rollPostBattleOverworldSpawns(
 
   const clearedDefs = graph.nodes.filter((def) => nodes[def.id]?.unlocked && nodes[def.id]?.cleared);
 
-  // 1. Occasional Feral Skirmish Spawner
   const activeSkirmishCount = clearedDefs.filter((def) => Boolean(nodes[def.id]?.activeSkirmish)).length;
   if (activeSkirmishCount < maxActiveSkirmishes && clearedDefs.length > 0 && rng() < skirmishChance) {
     const preferred = clearedDefs.filter(
@@ -612,7 +519,6 @@ export function rollPostBattleOverworldSpawns(
     }
   }
 
-  // 2. Random Kecleon Shop Spawner (once Paralogue 2 is cleared or unlocked in Sandbox)
   if (options.kecleonShopsUnlocked && clearedDefs.length > 0) {
     const activeShopCount = clearedDefs.filter((def) => Boolean(nodes[def.id]?.activeKecleonShop)).length;
     if (activeShopCount < maxActiveShops && rng() < shopChance) {

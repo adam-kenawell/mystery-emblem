@@ -32,6 +32,7 @@ import {
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
 import {
   CHAPTER_LEVEL_CATALOG,
+  cloneDungeonMap,
   exportChapterMapJson,
   getChapterCatalogEntry,
   getDefaultChapterMap,
@@ -40,10 +41,8 @@ import {
   resetChapterMapOverride,
   saveChapterMapOverride,
   validateDungeonMapDefinition,
-  type ChapterLevelGroup,
 } from '../data/chapterMapRegistry';
 import { POKEMON_SPECIES_LIST, getSpeciesById } from '../data/index';
-import { cloneDungeonMap } from '../data/testDungeonMap';
 import { TERRAIN_METADATA } from '../engine/terrainAndPathfinding';
 import type { SaveStateManager } from '../state/SaveStateManager';
 import {
@@ -89,16 +88,6 @@ const BIOME_BRUSH_PRESETS: ReadonlyArray<BiomeBrushPreset> = [
   { id: 'barrier', label: 'Barrier', terrainType: 'barrier', tilesetId: '080', chunkIndex: 15 },
   { id: 'stairs', label: 'Stairs', terrainType: 'stairs', tilesetId: '110', chunkIndex: 59 },
   { id: 'wonder', label: 'Wonder Tile', terrainType: 'wonder_tile', tilesetId: '142', chunkIndex: 59 },
-];
-
-const GROUP_FILTERS: ReadonlyArray<{ id: 'all' | ChapterLevelGroup; label: string }> = [
-  { id: 'all', label: 'All (34)' },
-  { id: 'test', label: 'Test' },
-  { id: 'act1', label: 'Act 1' },
-  { id: 'act2', label: 'Act 2' },
-  { id: 'act3', label: 'Act 3' },
-  { id: 'act4', label: 'Act 4' },
-  { id: 'paralogue', label: 'Paralogues' },
 ];
 
 export interface ChapterMapEditorSnapshot {
@@ -167,7 +156,6 @@ export class ChapterMapEditorScene {
 
   // Collapsible Map Editor Drawer
   private readonly drawerEl: HTMLElement;
-  private readonly levelGroupRowEl: HTMLElement;
   private readonly levelSelectEl: HTMLSelectElement;
   private readonly statusBadgeEl: HTMLElement;
   private readonly enemyConfigBoxEl: HTMLElement;
@@ -200,9 +188,8 @@ export class ChapterMapEditorScene {
   private jsonModalOpen = false;
   private previousBgmId: string | null = null;
 
-  private activeGroupFilter: 'all' | ChapterLevelGroup = 'all';
-  private activeLevelId = 'drenched_bluff_vanguard';
-  private map: DungeonMapDefinition = getEffectiveChapterMap('drenched_bluff_vanguard');
+  private activeLevelId = 'prologue';
+  private map: DungeonMapDefinition = getEffectiveChapterMap('prologue');
   private undoStack: DungeonMapDefinition[] = [];
   private dirty = false;
 
@@ -336,11 +323,10 @@ export class ChapterMapEditorScene {
 
       <div class="pmd-battle-sandbox-section">
         <div class="pmd-devtools-row-between">
-          <span class="pmd-preset-label">1. Select Level / Chapter</span>
+          <span class="pmd-preset-label">1. Select Demo Dungeon</span>
           <span class="pmd-editor-status-pill" data-testid="editor-status-badge">DEFAULT</span>
         </div>
-        <div class="pmd-inline-btns" data-editor-group-filters></div>
-        <select class="pmd-select" data-testid="editor-level-select" aria-label="Select Level or Chapter"></select>
+        <select class="pmd-select" data-testid="editor-level-select" aria-label="Select Demo Dungeon"></select>
         <div class="pmd-inline-btns">
           <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="editor-save-btn">Save to Game</button>
           <button type="button" class="pmd-btn pmd-chip-btn" data-testid="editor-save-play-btn">Save &amp; Play</button>
@@ -415,7 +401,6 @@ export class ChapterMapEditorScene {
       </div>
     `;
 
-    this.levelGroupRowEl = this.drawerEl.querySelector<HTMLElement>('[data-editor-group-filters]')!;
     this.levelSelectEl = this.drawerEl.querySelector<HTMLSelectElement>(
       '[data-testid="editor-level-select"]'
     )!;
@@ -527,7 +512,7 @@ export class ChapterMapEditorScene {
     return this.jsonModalOpen || this.systemMenuOpen || this.drawerOpen;
   }
 
-  public async open(levelId = 'drenched_bluff_vanguard', options?: { startDrawerOpen?: boolean }): Promise<void> {
+  public async open(levelId = 'prologue', options?: { startDrawerOpen?: boolean }): Promise<void> {
     if (!this.openState) {
       this.previousBgmId = this.audioManager.getCurrentTrackId();
     }
@@ -543,7 +528,7 @@ export class ChapterMapEditorScene {
     this.viewportEl.classList.add('is-battle-active');
 
     this.syncViewportDimensions();
-    await this.selectLevel(levelId, { resetGroupFilter: true, recenterCamera: true });
+    await this.selectLevel(levelId, { recenterCamera: true });
 
     this.startLoop();
     this.onLayerStateChanged();
@@ -617,14 +602,11 @@ export class ChapterMapEditorScene {
 
   public async selectLevel(
     levelId: string,
-    opts?: { resetGroupFilter?: boolean; recenterCamera?: boolean }
+    opts?: { recenterCamera?: boolean }
   ): Promise<void> {
     const entry = getChapterCatalogEntry(levelId) ?? CHAPTER_LEVEL_CATALOG[0]!;
     this.activeLevelId = entry.id;
-    if (opts?.resetGroupFilter) {
-      this.activeGroupFilter = 'all';
-      this.renderLevelSelectOptions();
-    }
+    this.renderLevelSelectOptions();
     this.levelSelectEl.value = this.activeLevelId;
 
     this.map = getEffectiveChapterMap(this.activeLevelId);
@@ -843,41 +825,6 @@ export class ChapterMapEditorScene {
   // ==========================================================================
 
   private populateStaticControls(): void {
-    // 1. Group Filter Chips
-    this.levelGroupRowEl.innerHTML = '';
-    for (const grp of GROUP_FILTERS) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = `pmd-btn pmd-chip-btn${grp.id === this.activeGroupFilter ? ' is-active' : ''}`;
-      btn.dataset.groupFilter = grp.id;
-      btn.dataset.testid = `editor-group-${grp.id}`;
-      btn.textContent = grp.label;
-      bindPointerTap(
-        btn,
-        () => {
-          this.audioManager.playSfx('select');
-          this.activeGroupFilter = grp.id;
-          this.renderLevelSelectOptions();
-          const firstMatch = CHAPTER_LEVEL_CATALOG.find(
-            (c) => grp.id === 'all' || c.group === grp.id
-          );
-          if (
-            firstMatch &&
-            !CHAPTER_LEVEL_CATALOG.some(
-              (c) =>
-                c.id === this.activeLevelId && (grp.id === 'all' || c.group === grp.id)
-            )
-          ) {
-            void this.selectLevel(firstMatch.id, { resetGroupFilter: false, recenterCamera: true });
-          } else {
-            this.syncUiControls();
-          }
-        },
-        { signal: this.abortController.signal }
-      );
-      this.levelGroupRowEl.appendChild(btn);
-    }
-
     this.renderLevelSelectOptions();
 
     // 2. Enemy Species Select (Rule 5: strictly non-playable enemy/shared species)
@@ -964,9 +911,6 @@ export class ChapterMapEditorScene {
   private renderLevelSelectOptions(): void {
     this.levelSelectEl.innerHTML = '';
     for (const item of CHAPTER_LEVEL_CATALOG) {
-      if (this.activeGroupFilter !== 'all' && item.group !== this.activeGroupFilter) {
-        continue;
-      }
       const opt = document.createElement('option');
       opt.value = item.id;
       const customizedSuffix = hasChapterMapOverride(item.id) ? ' ★ [Custom]' : '';
@@ -976,10 +920,6 @@ export class ChapterMapEditorScene {
     if ([...this.levelSelectEl.options].some((o) => o.value === this.activeLevelId)) {
       this.levelSelectEl.value = this.activeLevelId;
     }
-
-    this.levelGroupRowEl.querySelectorAll<HTMLElement>('[data-group-filter]').forEach((btn) => {
-      btn.classList.toggle('is-active', btn.dataset.groupFilter === this.activeGroupFilter);
-    });
   }
 
   private bindPointerInteractions(): void {
@@ -1066,7 +1006,6 @@ export class ChapterMapEditorScene {
       () => {
         this.audioManager.playSfx('select');
         void this.selectLevel(this.levelSelectEl.value, {
-          resetGroupFilter: false,
           recenterCamera: true,
         });
       },
