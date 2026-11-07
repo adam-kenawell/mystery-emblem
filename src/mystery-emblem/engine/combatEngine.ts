@@ -358,6 +358,82 @@ export function getUnitEffectiveCombatStats(
   return { atk, def, spa, spd, spe, hitBonus, critBonus };
 }
 
+export interface UnitPopupCombatSummary {
+  might: number | null;
+  mightCategory: 'Physical' | 'Special' | null;
+  effectiveDef: number;
+  effectiveSpd: number;
+  terrainDefBonus: number;
+  terrainSpdBonus: number;
+  terrainAvoidBonus: number;
+}
+
+/**
+ * Computes concise, pre-calculated Might and Terrain-adjusted Defense/SpD for a unit's
+ * floating Dungeon Hover Popup (`Effective Atk/SpA + [E] Move Mt + flat item/status mods`).
+ */
+export function computeUnitPopupStats(
+  map: DungeonMapDefinition,
+  unit: BattleUnitState
+): UnitPopupCombatSummary {
+  const eff = getUnitEffectiveCombatStats(unit);
+  const terrain = getMapTerrainAt(map, unit.x, unit.y) ?? 'floor';
+  const terrainBonuses = getTerrainBonuses(terrain, unit);
+
+  const effectiveDef = eff.def + terrainBonuses.defBonus;
+  const effectiveSpd = eff.spd + terrainBonuses.spdBonus;
+
+  let might: number | null = null;
+  let mightCategory: 'Physical' | 'Special' | null = null;
+
+  if (unit.equippedMoveId) {
+    const slot = unit.activeMoves.find((s) => s.id === unit.equippedMoveId);
+    const move = slot?.move ?? getMoveById(unit.equippedMoveId);
+    if (move && isOffensiveMove(move)) {
+      const isPhysical = move.category === 'Physical';
+      mightCategory = isPhysical ? 'Physical' : 'Special';
+
+      let effectiveOffensiveStat = isPhysical ? eff.atk : eff.spa;
+      if (isPhysical && unit.status === 'BRN') {
+        effectiveOffensiveStat = Math.floor(effectiveOffensiveStat * 0.5);
+      } else if (!isPhysical && unit.status === 'FRZ') {
+        effectiveOffensiveStat = Math.floor(effectiveOffensiveStat * 0.5);
+      }
+
+      let itemFlatDamageBonus = 0;
+      if (unit.heldItemId) {
+        const held = getItemById(unit.heldItemId);
+        if (held) {
+          const itemEff = held.effect;
+          if (isPhysical && itemEff.physicalDamageBonus) {
+            itemFlatDamageBonus += itemEff.physicalDamageBonus;
+          }
+          if (!isPhysical && itemEff.specialDamageBonus) {
+            itemFlatDamageBonus += itemEff.specialDamageBonus;
+          }
+          if (itemEff.flatDamageBonus) {
+            if (!itemEff.boostedType || itemEff.boostedType === move.type) {
+              itemFlatDamageBonus += itemEff.flatDamageBonus;
+            }
+          }
+        }
+      }
+
+      might = effectiveOffensiveStat + move.mt + itemFlatDamageBonus;
+    }
+  }
+
+  return {
+    might,
+    mightCategory,
+    effectiveDef,
+    effectiveSpd,
+    terrainDefBonus: terrainBonuses.defBonus,
+    terrainSpdBonus: terrainBonuses.spdBonus,
+    terrainAvoidBonus: terrainBonuses.avoidBonus,
+  };
+}
+
 function buildSideForecast(
   actor: BattleUnitState,
   target: BattleUnitState,

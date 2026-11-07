@@ -31,6 +31,7 @@ import type {
   PrepDeploymentSlot,
 } from '../types/schemas';
 import { PmdPortraitView } from './PmdSpriteCanvas';
+import { createMiniSpeciesPortrait, createUnitPortraitCell } from './PmdUnitPortraitGrid';
 import { bindPointerTap } from './pointerControls';
 
 export type PrepSubMode = 'hub' | 'manage_units' | 'manage_items' | 'view_map';
@@ -174,7 +175,7 @@ export class DungeonPrepOverlay {
         <div class="pmd-prep-units-body">
           <div class="pmd-prep-roster-pane">
             <span class="pmd-preset-label">Roster</span>
-            <div class="pmd-prep-roster-list pmd-menu-list" data-testid="prep-roster-list"></div>
+            <div class="pmd-unit-portrait-grid pmd-prep-portrait-grid" data-testid="prep-roster-list"></div>
           </div>
 
           <div class="pmd-prep-inspector-pane" data-testid="prep-unit-detail">
@@ -185,7 +186,10 @@ export class DungeonPrepOverlay {
               <div class="pmd-prep-unit-title-col">
                 <div class="pmd-prep-name-row">
                   <strong class="pmd-prep-unit-big-name" data-testid="prep-detail-nickname">—</strong>
-                  <button type="button" class="pmd-btn pmd-chip-btn" data-testid="prep-unit-rename-btn">Rename</button>
+                  <div class="pmd-inline-btns">
+                    <span data-prep-deploy-slot></span>
+                    <button type="button" class="pmd-btn pmd-chip-btn" data-testid="prep-unit-rename-btn">Rename</button>
+                  </div>
                 </div>
                 <span class="pmd-prep-unit-meta-line" data-testid="prep-detail-meta">—</span>
                 <div class="pmd-prep-badges-row" data-testid="prep-unit-types"></div>
@@ -248,7 +252,7 @@ export class DungeonPrepOverlay {
         </div>
 
         <div class="pmd-prep-items-unit-bar">
-          <div class="pmd-prep-unit-pills" data-testid="prep-items-unit-list"></div>
+          <div class="pmd-unit-portrait-grid pmd-prep-items-portrait-grid" data-testid="prep-items-unit-list"></div>
         </div>
 
         <div class="pmd-prep-slot-banner" data-testid="prep-unit-item-slot-card"></div>
@@ -615,76 +619,37 @@ export class DungeonPrepOverlay {
       counterEl.textContent = `${deployedCount} / ${cap} Deployed`;
     }
 
-    // 1. Roster List
+    // 1. Portrait-Only Roster Grid (zero unit names or levels in grid)
     const listEl = this.unitsBackdropEl.querySelector<HTMLElement>(
       '[data-testid="prep-roster-list"]'
     );
     if (listEl) {
       listEl.innerHTML = '';
       for (const unit of save.roster) {
-        const sp = getSpeciesById(unit.speciesId);
         const isSelected = unit.instanceId === this.selectedUnitInstanceId;
         const isDeployed = this.isUnitDeployed(unit.instanceId);
         const itemId = getUnitEquippedItemId(unit);
-        const item = itemId ? getItemById(itemId) : undefined;
 
-        const row = document.createElement('div');
-        row.className = `pmd-prep-roster-row${isSelected ? ' is-selected' : ''}${isDeployed ? ' is-deployed' : ''}`;
-
-        const selectBtn = document.createElement('button');
-        selectBtn.type = 'button';
-        selectBtn.className = `pmd-btn pmd-menu-row pmd-prep-roster-select-btn${isSelected ? ' is-selected' : ''}`;
-        selectBtn.dataset.testid = `prep-unit-row-${unit.instanceId}`;
-        selectBtn.innerHTML = `
-          <span class="pmd-prep-r-top">
-            <strong>${escapeHtml(unit.nickname)}${unit.isLord ? ' ★' : ''}</strong>
-            <span class="pmd-prep-r-lv">Lv.${unit.level}</span>
-          </span>
-          <span class="pmd-prep-r-sub">${escapeHtml((sp?.types ?? []).join('/'))}${item ? ` · ${escapeHtml(item.name)}` : ''}</span>
-        `;
-        bindPointerTap(selectBtn, () => {
-          this.opts.audioManager.playSfx('select');
-          this.selectedUnitInstanceId = unit.instanceId;
-          this.pendingMoveToSwapIn = null;
-          this.unitsStatusMsg = '';
-          this.renderManageUnits();
+        const buttonEl = createUnitPortraitCell({
+          speciesIdOrAssetId: unit.speciesId,
+          ariaLabel: unit.nickname,
+          isSelected,
+          isLord: unit.isLord,
+          isDeployed,
+          isBenched: !isDeployed,
+          hasItem: Boolean(itemId),
+          testId: `prep-unit-row-${unit.instanceId}`,
+          portraitTestId: `prep-unit-portrait-cell-${unit.instanceId}`,
+          signal: this.abortController.signal,
+          onSelect: () => {
+            this.opts.audioManager.playSfx('select');
+            this.selectedUnitInstanceId = unit.instanceId;
+            this.pendingMoveToSwapIn = null;
+            this.unitsStatusMsg = '';
+            this.renderManageUnits();
+          },
         });
-
-        const deployBtn = document.createElement('button');
-        deployBtn.type = 'button';
-        deployBtn.dataset.testid = `prep-unit-deploy-btn-${unit.instanceId}`;
-        if (unit.isLord) {
-          deployBtn.className = 'pmd-btn pmd-chip-btn is-active pmd-prep-deploy-btn';
-          deployBtn.textContent = '★ Locked';
-          deployBtn.disabled = true;
-        } else if (isDeployed) {
-          deployBtn.className = 'pmd-btn pmd-chip-btn is-active pmd-prep-deploy-btn';
-          deployBtn.textContent = '✓ In';
-          bindPointerTap(deployBtn, () => {
-            const res = this.opts.onToggleDeployUnit(unit.instanceId);
-            this.opts.audioManager.playSfx(res.ok ? 'select' : 'cancel');
-            this.unitsStatusMsg = res.message;
-            this.selectedUnitInstanceId = unit.instanceId;
-            this.renderManageUnits();
-            this.renderHub();
-          });
-        } else {
-          const capFull = deployedCount >= cap;
-          deployBtn.className = 'pmd-btn pmd-chip-btn pmd-prep-deploy-btn';
-          deployBtn.textContent = capFull ? 'Full' : '+ Deploy';
-          deployBtn.disabled = capFull;
-          bindPointerTap(deployBtn, () => {
-            const res = this.opts.onToggleDeployUnit(unit.instanceId);
-            this.opts.audioManager.playSfx(res.ok ? 'select' : 'cancel');
-            this.unitsStatusMsg = res.message;
-            this.selectedUnitInstanceId = unit.instanceId;
-            this.renderManageUnits();
-            this.renderHub();
-          });
-        }
-
-        row.append(selectBtn, deployBtn);
-        listEl.appendChild(row);
+        listEl.appendChild(buttonEl);
       }
     }
 
@@ -703,6 +668,52 @@ export class DungeonPrepOverlay {
     const nickEl = this.unitsBackdropEl.querySelector('[data-testid="prep-detail-nickname"]');
     if (nickEl) {
       nickEl.textContent = `${selected.nickname}${selected.isLord ? ' ★' : ''}`;
+    }
+
+    // Selected Unit Header Deploy / Standby Toggle Button
+    const deploySlotEl = this.unitsBackdropEl.querySelector<HTMLElement>('[data-prep-deploy-slot]');
+    if (deploySlotEl) {
+      deploySlotEl.innerHTML = '';
+      const isSelectedDeployed = this.isUnitDeployed(selected.instanceId);
+      const deployBtn = document.createElement('button');
+      deployBtn.type = 'button';
+      deployBtn.dataset.testid = `prep-unit-deploy-btn-${selected.instanceId}`;
+      if (selected.isLord) {
+        deployBtn.className = 'pmd-btn pmd-chip-btn is-active pmd-prep-deploy-btn';
+        deployBtn.textContent = '★ Locked';
+        deployBtn.disabled = true;
+      } else if (isSelectedDeployed) {
+        deployBtn.className = 'pmd-btn pmd-chip-btn is-active pmd-prep-deploy-btn';
+        deployBtn.textContent = 'Standby';
+        bindPointerTap(
+          deployBtn,
+          () => {
+            const res = this.opts.onToggleDeployUnit(selected.instanceId);
+            this.opts.audioManager.playSfx(res.ok ? 'select' : 'cancel');
+            this.unitsStatusMsg = res.message;
+            this.renderManageUnits();
+            this.renderHub();
+          },
+          { signal: this.abortController.signal }
+        );
+      } else {
+        const capFull = deployedCount >= cap;
+        deployBtn.className = `pmd-btn pmd-chip-btn pmd-prep-deploy-btn${capFull ? '' : ' pmd-btn-primary'}`;
+        deployBtn.textContent = capFull ? 'Full' : '+ Deploy';
+        deployBtn.disabled = capFull;
+        bindPointerTap(
+          deployBtn,
+          () => {
+            const res = this.opts.onToggleDeployUnit(selected.instanceId);
+            this.opts.audioManager.playSfx(res.ok ? 'select' : 'cancel');
+            this.unitsStatusMsg = res.message;
+            this.renderManageUnits();
+            this.renderHub();
+          },
+          { signal: this.abortController.signal }
+        );
+      }
+      deploySlotEl.appendChild(deployBtn);
     }
 
     const metaEl = this.unitsBackdropEl.querySelector('[data-testid="prep-detail-meta"]');
@@ -1047,7 +1058,7 @@ export class DungeonPrepOverlay {
     if (!selectedUnit) return;
     const selectedSp = getSpeciesById(selectedUnit.speciesId);
 
-    // 1. Unit Selector Strip
+    // 1. Portrait-Only Unit Selector Grid
     const unitBarEl = this.itemsBackdropEl.querySelector<HTMLElement>(
       '[data-testid="prep-items-unit-list"]'
     );
@@ -1055,21 +1066,27 @@ export class DungeonPrepOverlay {
       unitBarEl.innerHTML = '';
       for (const u of save.roster) {
         const uItemId = getUnitEquippedItemId(u);
-        const uItem = uItemId ? getItemById(uItemId) : undefined;
         const isSel = u.instanceId === selectedUnit.instanceId;
         const isDep = this.isUnitDeployed(u.instanceId);
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `pmd-btn pmd-chip-btn pmd-prep-item-unit-pill${isSel ? ' is-active' : ''}`;
-        btn.dataset.testid = `prep-items-unit-${u.instanceId}`;
-        btn.textContent = `${u.nickname}${u.isLord ? ' ★' : isDep ? ' ✓' : ''} · ${uItem ? uItem.name : 'Empty'}`;
-        bindPointerTap(btn, () => {
-          this.opts.audioManager.playSfx('select');
-          this.selectedUnitInstanceId = u.instanceId;
-          this.itemsStatusMsg = '';
-          this.renderManageItems();
+        const buttonEl = createUnitPortraitCell({
+          speciesIdOrAssetId: u.speciesId,
+          ariaLabel: u.nickname,
+          isSelected: isSel,
+          isLord: u.isLord,
+          isDeployed: isDep,
+          isBenched: !isDep,
+          hasItem: Boolean(uItemId),
+          testId: `prep-items-unit-${u.instanceId}`,
+          portraitTestId: `prep-items-portrait-${u.instanceId}`,
+          signal: this.abortController.signal,
+          onSelect: () => {
+            this.opts.audioManager.playSfx('select');
+            this.selectedUnitInstanceId = u.instanceId;
+            this.itemsStatusMsg = '';
+            this.renderManageItems();
+          },
         });
-        unitBarEl.appendChild(btn);
+        unitBarEl.appendChild(buttonEl);
       }
     }
 
@@ -1183,19 +1200,33 @@ export class DungeonPrepOverlay {
           row.className = `pmd-prep-item-row${currentItemId === item.id ? ' is-equipped' : ''}`;
           row.dataset.testid = `prep-item-row-${item.id}`;
 
-          const holderSummary =
-            holders.length > 0 ? ` · ${holders.map((h) => h.nickname).join(', ')}` : '';
-
           const infoDiv = document.createElement('div');
           infoDiv.className = 'pmd-prep-move-info';
           infoDiv.innerHTML = `
             <div class="pmd-prep-move-title-line">
               <strong>${escapeHtml(item.name)}</strong>
               <span class="pmd-prep-cat-tag">${escapeHtml(formatItemCategoryLabel(item.category))}</span>
-              <span class="pmd-prep-stock-tag">×${bagQty}${escapeHtml(holderSummary)}</span>
+              <span class="pmd-prep-stock-tag">×${bagQty}</span>
+              <span class="pmd-item-holders-inline" data-item-holders></span>
             </div>
             <span class="pmd-prep-move-stats">${escapeHtml(item.description)}</span>
           `;
+          const holdersContainer = infoDiv.querySelector<HTMLElement>('[data-item-holders]');
+          if (holdersContainer) {
+            if (holders.length === 0) {
+              holdersContainer.hidden = true;
+            } else {
+              for (const h of holders) {
+                holdersContainer.appendChild(
+                  createMiniSpeciesPortrait(h.speciesId, {
+                    title: h.nickname,
+                    sizePx: 22,
+                    testId: `prep-item-holder-${item.id}-${h.instanceId}`,
+                  })
+                );
+              }
+            }
+          }
 
           const actionBtn = document.createElement('button');
           actionBtn.type = 'button';
@@ -1224,10 +1255,18 @@ export class DungeonPrepOverlay {
               });
             } else {
               const otherHolder = holders.find((h) => h.instanceId !== selectedUnit.instanceId);
-              actionBtn.className = 'pmd-btn pmd-chip-btn';
-              actionBtn.textContent = otherHolder ? `Take (${otherHolder.nickname})` : 'Equip';
+              actionBtn.className = 'pmd-btn pmd-chip-btn pmd-portrait-action-btn';
               actionBtn.disabled = !otherHolder;
               if (otherHolder) {
+                actionBtn.appendChild(
+                  createMiniSpeciesPortrait(otherHolder.speciesId, {
+                    title: otherHolder.nickname,
+                    sizePx: 20,
+                  })
+                );
+                const takeLbl = document.createElement('span');
+                takeLbl.textContent = 'Take';
+                actionBtn.appendChild(takeLbl);
                 bindPointerTap(actionBtn, () => {
                   mgr.equipItemToUnit(selectedUnit.instanceId, item.id, otherHolder.instanceId);
                   this.opts.audioManager.playSfx('select');
@@ -1235,6 +1274,8 @@ export class DungeonPrepOverlay {
                   this.opts.onRosterOrLoadoutMutated();
                   this.renderManageItems();
                 });
+              } else {
+                actionBtn.textContent = 'Equip';
               }
             }
           } else if (item.category === 'tm' && item.effect.teachesMoveId) {

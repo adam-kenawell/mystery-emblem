@@ -57,6 +57,10 @@ import type {
 } from '../types/schemas';
 import { PmdPortraitView } from '../ui/PmdSpriteCanvas';
 import {
+  createMiniSpeciesPortrait,
+  createUnitPortraitCell,
+} from '../ui/PmdUnitPortraitGrid';
+import {
   MAP_OVERSCROLL_NATIVE_PX,
   MultiTouchPinchTracker,
   OVERWORLD_SCALE_BOUNDS,
@@ -1560,40 +1564,57 @@ export class OverworldScene {
       if (!item || item.buyPrice === null) continue;
       const canAfford = save.gold >= item.buyPrice;
 
-      let compatNote = '';
-      if (item.category === 'tm') {
-        const compatibleUnits = save.roster
-          .filter((u) => {
-            const sp = getSpeciesById(u.speciesId);
-            const mvId = item.effect.teachesMoveId;
-            return (
-              sp &&
-              sp.compatibleTmIds.includes(item.id) &&
-              (!mvId || !u.unlockedMoveIds.includes(mvId))
-            );
-          })
-          .map((u) => u.nickname);
-        compatNote =
-          compatibleUnits.length > 0
-            ? `Fits: ${compatibleUnits.join(', ')}`
-            : 'Fits: None in party';
-      }
-
       const card = document.createElement('div');
       card.className = 'pmd-kecleon-item-card';
       card.innerHTML = `
-        <div>
+        <div data-kecleon-item-meta>
           <div class="pmd-kecleon-item-top">
             <strong class="pmd-kecleon-item-name">${item.name}</strong>
             <span class="pmd-kecleon-item-price">${item.buyPrice}G</span>
           </div>
           <p class="pmd-kecleon-item-desc">${item.description}</p>
-          ${compatNote ? `<p class="pmd-kecleon-item-desc" style="color:#90ffbe;margin-top:0.2rem;">${compatNote}</p>` : ''}
         </div>
         <button type="button" class="pmd-btn pmd-btn-primary" data-testid="kecleon-buy-${item.id}" ${canAfford ? '' : 'disabled'}>
           ${canAfford ? `Buy (${item.buyPrice}G)` : `${item.buyPrice}G`}
         </button>
       `;
+
+      if (item.category === 'tm') {
+        const compatibleUnits = save.roster.filter((u) => {
+          const sp = getSpeciesById(u.speciesId);
+          const mvId = item.effect.teachesMoveId;
+          return (
+            sp &&
+            sp.compatibleTmIds.includes(item.id) &&
+            (!mvId || !u.unlockedMoveIds.includes(mvId))
+          );
+        });
+        const fitsRow = document.createElement('div');
+        fitsRow.className = 'pmd-kecleon-tm-fits';
+        fitsRow.dataset.testid = `kecleon-tm-fits-${item.id}`;
+        const fitsLbl = document.createElement('span');
+        fitsLbl.className = 'pmd-kecleon-fits-lbl';
+        fitsLbl.textContent = 'Fits:';
+        fitsRow.appendChild(fitsLbl);
+
+        if (compatibleUnits.length > 0) {
+          for (const u of compatibleUnits) {
+            fitsRow.appendChild(
+              createMiniSpeciesPortrait(u.speciesId, {
+                title: u.nickname,
+                testId: `kecleon-tm-fit-${item.id}-${u.instanceId}`,
+                sizePx: 24,
+              })
+            );
+          }
+        } else {
+          const noneSpan = document.createElement('span');
+          noneSpan.className = 'pmd-kecleon-fits-none';
+          noneSpan.textContent = 'None';
+          fitsRow.appendChild(noneSpan);
+        }
+        card.querySelector('[data-kecleon-item-meta]')?.appendChild(fitsRow);
+      }
 
       const buyBtn = card.querySelector<HTMLButtonElement>(`[data-testid="kecleon-buy-${item.id}"]`);
       bindPointerTap(buyBtn, () => {
@@ -1679,25 +1700,24 @@ export class OverworldScene {
     grid.className = 'pmd-overworld-roster-grid';
 
     const listCol = document.createElement('div');
-    listCol.className = 'pmd-overworld-unit-list pmd-menu-list';
+    listCol.className = 'pmd-overworld-unit-list pmd-unit-portrait-grid';
+    listCol.dataset.testid = 'overworld-roster-grid';
 
     for (const u of save.roster) {
-      const sp = getSpeciesById(u.speciesId);
-      const showSpecies =
-        sp && u.nickname.trim().toLowerCase() !== sp.name.trim().toLowerCase();
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = `pmd-btn pmd-menu-row pmd-overworld-unit-btn${u.instanceId === this.selectedUnitInstanceId ? ' is-active' : ''}`;
-      btn.dataset.testid = `overworld-roster-unit-${u.instanceId}`;
-      btn.innerHTML = `
-        <span><strong>${u.nickname}</strong>${u.isLord ? ' ★' : ''}${showSpecies ? `<br/><small style="color:#a8e0f8;">${sp.name}</small>` : ''}</span>
-        <span style="font-size:12px;color:#a8e0f8;">Lv.${u.level}</span>
-      `;
-      bindPointerTap(btn, () => {
-        this.audioManager.playSfx('select');
-        this.selectedUnitInstanceId = u.instanceId;
-        this.menuFeedbackMessage = '';
-        this.renderSystemMenuBody();
+      const btn = createUnitPortraitCell({
+        speciesIdOrAssetId: u.speciesId,
+        ariaLabel: u.nickname,
+        testId: `overworld-roster-unit-${u.instanceId}`,
+        portraitTestId: `overworld-roster-portrait-${u.instanceId}`,
+        isSelected: u.instanceId === this.selectedUnitInstanceId,
+        isLord: u.isLord,
+        hasItem: Boolean(getUnitEquippedItemId(u)),
+        onSelect: () => {
+          this.audioManager.playSfx('select');
+          this.selectedUnitInstanceId = u.instanceId;
+          this.menuFeedbackMessage = '';
+          this.renderSystemMenuBody();
+        },
       });
       listCol.appendChild(btn);
     }
@@ -2026,21 +2046,53 @@ export class OverworldScene {
       save.roster.find((u) => u.instanceId === this.selectedUnitInstanceId) ?? save.roster[0];
 
     const unitBar = document.createElement('div');
-    unitBar.className = 'pmd-inline-btns';
-    unitBar.style.marginBottom = '0.45rem';
+    unitBar.className = 'pmd-unit-portrait-grid pmd-overworld-items-unit-grid';
+    unitBar.dataset.testid = 'overworld-items-unit-grid';
     for (const u of save.roster) {
-      const uItemId = getUnitEquippedItemId(u);
-      const uItem = uItemId ? getItemById(uItemId) : undefined;
-      const pill = document.createElement('button');
-      pill.type = 'button';
-      pill.className = `pmd-btn pmd-chip-btn${u.instanceId === targetUnit?.instanceId ? ' is-active' : ''}`;
-      pill.textContent = `${u.nickname} · ${uItem ? uItem.name : 'Empty'}`;
-      bindPointerTap(pill, () => {
-        this.audioManager.playSfx('select');
-        this.selectedUnitInstanceId = u.instanceId;
-        this.renderSystemMenuBody();
+      const cell = createUnitPortraitCell({
+        speciesIdOrAssetId: u.speciesId,
+        ariaLabel: u.nickname,
+        testId: `overworld-items-unit-${u.instanceId}`,
+        portraitTestId: `overworld-items-portrait-${u.instanceId}`,
+        isSelected: u.instanceId === targetUnit?.instanceId,
+        isLord: u.isLord,
+        hasItem: Boolean(getUnitEquippedItemId(u)),
+        onSelect: () => {
+          this.audioManager.playSfx('select');
+          this.selectedUnitInstanceId = u.instanceId;
+          this.renderSystemMenuBody();
+        },
       });
-      unitBar.appendChild(pill);
+      unitBar.appendChild(cell);
+    }
+
+    const slotBanner = document.createElement('div');
+    slotBanner.className = 'pmd-prep-slot-banner';
+    slotBanner.dataset.testid = 'overworld-items-slot-card';
+    slotBanner.style.marginBottom = '0.45rem';
+    if (targetUnit) {
+      const currentItemId = getUnitEquippedItemId(targetUnit);
+      const currentItem = currentItemId ? getItemById(currentItemId) : undefined;
+      const infoDiv = document.createElement('div');
+      infoDiv.className = 'pmd-prep-slot-info';
+      infoDiv.innerHTML = currentItem
+        ? `<div class="pmd-prep-move-title-line"><strong>${targetUnit.nickname}: ${currentItem.name}</strong></div><span class="pmd-prep-move-stats">${currentItem.description}</span>`
+        : `<div class="pmd-prep-move-title-line"><strong>${targetUnit.nickname}: Empty</strong></div>`;
+      slotBanner.appendChild(infoDiv);
+      if (currentItem) {
+        const unequipBtn = document.createElement('button');
+        unequipBtn.type = 'button';
+        unequipBtn.className = 'pmd-btn pmd-chip-btn';
+        unequipBtn.dataset.testid = 'overworld-items-unequip-btn';
+        unequipBtn.textContent = 'Unequip';
+        bindPointerTap(unequipBtn, () => {
+          this.audioManager.playSfx('cancel');
+          this.saveManager.equipItemToUnit(targetUnit.instanceId, null);
+          this.setMenuFeedback(`Returned ${currentItem.name} to Bag.`);
+          this.renderSystemMenuBody();
+        });
+        slotBanner.appendChild(unequipBtn);
+      }
     }
 
     const box = document.createElement('div');
@@ -2050,6 +2102,7 @@ export class OverworldScene {
     if (save.convoy.length === 0) {
       box.innerHTML += `<span style="font-size:0.72rem;color:#b8dcff;">Bag is empty.</span>`;
     } else {
+      const targetItemId = targetUnit ? getUnitEquippedItemId(targetUnit) : null;
       for (const entry of save.convoy) {
         if (entry.quantity <= 0) continue;
         const item = getItemById(entry.itemId);
@@ -2063,24 +2116,34 @@ export class OverworldScene {
             <strong>${item.name} ×${entry.quantity}</strong>
             <span>${item.description}</span>
           </div>
-          ${
-            equippable && targetUnit
-              ? `<button type="button" class="pmd-btn pmd-chip-btn" data-equip-convoy="${item.id}">Give to ${targetUnit.nickname}</button>`
-              : ''
-          }
         `;
-        bindPointerTap(row.querySelector<HTMLElement>(`[data-equip-convoy="${item.id}"]`), () => {
-          if (!targetUnit) return;
-          this.audioManager.playSfx('select');
-          this.saveManager.equipItemToUnit(targetUnit.instanceId, item.id);
-          this.setMenuFeedback(`Equipped ${item.name} on ${targetUnit.nickname}.`);
-          this.renderSystemMenuBody();
-        });
+        if (equippable && targetUnit) {
+          const giveBtn = document.createElement('button');
+          giveBtn.type = 'button';
+          giveBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn pmd-portrait-action-btn';
+          giveBtn.dataset.equipConvoy = item.id;
+          giveBtn.appendChild(
+            createMiniSpeciesPortrait(targetUnit.speciesId, {
+              title: targetUnit.nickname,
+              sizePx: 20,
+            })
+          );
+          const lbl = document.createElement('span');
+          lbl.textContent = targetItemId ? 'Replace' : 'Equip';
+          giveBtn.appendChild(lbl);
+          bindPointerTap(giveBtn, () => {
+            this.audioManager.playSfx('select');
+            this.saveManager.equipItemToUnit(targetUnit.instanceId, item.id);
+            this.setMenuFeedback(`Equipped ${item.name} on ${targetUnit.nickname}.`);
+            this.renderSystemMenuBody();
+          });
+          row.appendChild(giveBtn);
+        }
         box.appendChild(row);
       }
     }
 
-    this.menuPanelBodyEl.append(unitBar, box);
+    this.menuPanelBodyEl.append(unitBar, slotBanner, box);
   }
 
   private renderSystemTab(save: SaveData): void {

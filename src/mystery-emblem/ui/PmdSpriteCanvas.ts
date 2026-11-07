@@ -405,6 +405,8 @@ export class PmdPortraitView {
 
   public async setPortrait(params: SetPortraitParams): Promise<LoadedPortraitAsset | null> {
     const token = ++this.loadToken;
+    this.canvas.dataset.emotion = params.emotion;
+    this.canvas.dataset.requestedEmotion = params.emotion;
     const asset = await loadSpeciesPortrait(params.speciesIdOrAssetId, params.emotion);
     if (token !== this.loadToken) return null;
 
@@ -415,6 +417,7 @@ export class PmdPortraitView {
 
     this.canvas.dataset.speciesId = asset.speciesId ?? '';
     this.canvas.dataset.pmdAssetId = asset.pmdAssetId;
+    this.canvas.dataset.emotion = asset.requestedEmotion;
     this.canvas.dataset.requestedEmotion = asset.requestedEmotion;
     this.canvas.dataset.resolvedEmotion = asset.resolvedEmotion;
     this.canvas.dataset.mirrored = String(this.mirrored);

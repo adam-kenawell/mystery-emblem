@@ -2631,3 +2631,600 @@ input[type='radio']:not(:disabled) {
     height: 40px !important;
   }
 }
+
+/* ==========================================================================
+   PORTRAIT-FIRST UNIT SELECTORS, MINI PORTRAITS, DUNGEON TILE BOX,
+   CHARACTER HOVER POPUPS & FIRE EMBLEM INTERLOCKING 'L' FORECAST
+   ========================================================================== */
+
+/* 1. Reusable Unit Portrait Grid & Mini Portrait Tags (`PmdUnitPortraitGrid.ts`) */
+.pmd-unit-portrait-grid,
+.pmd-prep-roster-list.pmd-unit-portrait-grid,
+.pmd-overworld-unit-list.pmd-unit-portrait-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  background: var(--pmd-fill-well);
+  border: 2px solid var(--pmd-divider-subtle);
+}
+
+.pmd-unit-portrait-cell {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  min-height: 52px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #081018;
+}
+
+.pmd-unit-portrait-cell canvas {
+  width: 40px !important;
+  height: 40px !important;
+  display: block;
+}
+
+.pmd-unit-portrait-cell.is-selected,
+.pmd-unit-portrait-cell.is-hovered,
+.pmd-unit-portrait-cell:hover:not(:disabled) {
+  border-image-source: var(--pmd-frame-mini-active);
+}
+
+.pmd-unit-portrait-cell.is-benched:not(.is-selected):not(.is-hovered) {
+  opacity: 0.52;
+  filter: saturate(0.75);
+}
+
+.pmd-portrait-pip {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 2px;
+  font-size: 10px;
+  line-height: 13px;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #081018;
+  border: 1px solid var(--pmd-text-white);
+  color: var(--pmd-text-white);
+  text-shadow: none;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.pmd-portrait-pip.is-lord {
+  border-color: var(--pmd-text-yellow);
+  color: var(--pmd-text-yellow);
+}
+
+.pmd-portrait-pip.is-deployed {
+  border-color: var(--pmd-text-green);
+  color: var(--pmd-text-green);
+}
+
+.pmd-portrait-pip.is-item {
+  top: -4px;
+  right: -4px;
+  bottom: auto;
+  font-size: 9px;
+  border-color: var(--pmd-border-outer);
+  color: var(--pmd-text-cyan);
+}
+
+.pmd-mini-portrait-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #081018;
+  border: 1px solid var(--pmd-text-white);
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.pmd-portrait-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.pmd-kecleon-tm-fits,
+.pmd-item-holders-inline {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pmd-kecleon-tm-fits {
+  margin-top: 2px;
+}
+
+.pmd-kecleon-tm-none {
+  font-size: 12px;
+  color: var(--pmd-text-danger);
+}
+
+/* 2. Dungeon Bottom-Left Compact Tile Display (`[data-testid="dungeon-tile-display"]`) */
+.pmd-dungeon-tile-box {
+  position: absolute;
+  left: 0.65rem;
+  bottom: 0.55rem;
+  z-index: 62;
+  pointer-events: none;
+  max-width: min(272px, calc(100% - 1.3rem));
+  padding: 4px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pmd-tile-box-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.pmd-tile-box-name {
+  font-size: 13px;
+  color: var(--pmd-text-yellow);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pmd-tile-box-chips {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pmd-tile-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 5px;
+  font-size: 11px;
+  background: rgba(8, 16, 28, 0.8);
+  border: 1px solid var(--pmd-divider-subtle);
+  color: var(--pmd-text-cyan);
+  text-shadow: 1px 1px 0 #000000;
+  white-space: nowrap;
+}
+
+.pmd-tile-chip.is-special {
+  border-color: var(--pmd-text-green);
+  color: var(--pmd-text-green);
+}
+
+.pmd-tile-box-notice {
+  font-size: 11px;
+  color: var(--pmd-text-yellow);
+  border-top: 1px solid var(--pmd-divider-subtle);
+  padding-top: 2px;
+  text-shadow: 1px 1px 0 #000000;
+}
+
+/* 3. Dungeon Floating Character Hover Popup (`[data-testid="dungeon-unit-popup"]`) */
+.pmd-unit-hover-popup {
+  position: absolute;
+  z-index: 71;
+  pointer-events: none;
+  width: 206px;
+  max-width: calc(100% - 16px);
+  border-width: 8px 12px;
+  padding: 5px 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pmd-unit-hover-popup.is-player {
+  border-image-source: var(--pmd-frame-solid);
+}
+
+.pmd-unit-hover-popup.is-enemy {
+  border-image-source: var(--pmd-frame-danger);
+}
+
+.pmd-unit-popup-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.pmd-unit-popup-portrait-slot {
+  position: relative;
+  overflow: visible;
+}
+
+.pmd-unit-popup-role-pip {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  padding: 0 3px;
+  font-size: 9px;
+  line-height: 12px;
+  font-weight: bold;
+  background: #081018;
+  border: 1px solid var(--pmd-text-yellow);
+  color: var(--pmd-text-yellow);
+  text-shadow: none;
+  z-index: 2;
+}
+
+.pmd-unit-hover-popup.is-enemy .pmd-unit-popup-role-pip {
+  border-color: var(--pmd-text-danger);
+  color: var(--pmd-text-danger);
+}
+
+.pmd-unit-popup-vitals {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pmd-unit-popup-hp-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.pmd-unit-popup-lbl {
+  font-size: 10px;
+  color: var(--pmd-text-cyan);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.pmd-unit-popup-status {
+  padding: 0 4px;
+  font-size: 10px;
+  background: #481828;
+  border: 1px solid var(--pmd-text-orange);
+  color: var(--pmd-text-yellow);
+  text-shadow: none;
+}
+
+.pmd-unit-popup-hp-bar {
+  height: 8px;
+}
+
+.pmd-unit-popup-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.pmd-unit-popup-stat {
+  background: rgba(8, 14, 24, 0.56);
+  border: 1px solid rgba(248, 248, 248, 0.28);
+  padding: 1px 3px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px;
+}
+
+.pmd-unit-popup-stat em {
+  font-style: normal;
+  font-size: 9px;
+  color: var(--pmd-text-cyan);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.pmd-unit-popup-stat strong {
+  font-size: 11px;
+  color: var(--pmd-text-yellow);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.pmd-unit-popup-moves {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: rgba(8, 14, 24, 0.46);
+  border: 1px solid rgba(248, 248, 248, 0.28);
+  padding: 2px 5px;
+}
+
+.pmd-unit-popup-move {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  font-size: 11px;
+  color: rgba(248, 248, 248, 0.85);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.pmd-unit-popup-move span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pmd-unit-popup-move.is-equipped {
+  color: var(--pmd-text-green);
+  font-weight: bold;
+}
+
+.pmd-unit-popup-move em {
+  font-style: normal;
+  font-size: 10px;
+  color: var(--pmd-text-cyan);
+  flex-shrink: 0;
+}
+
+.pmd-unit-popup-item {
+  font-size: 11px;
+  color: var(--pmd-text-yellow);
+  padding: 2px 5px;
+  background: rgba(8, 14, 24, 0.46);
+  border: 1px solid rgba(248, 216, 56, 0.45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 1px 1px 0 #000000;
+}
+
+/* 4. Fire Emblem Interlocking L-Shape Attack / Heal Preview (`.pmd-fe-forecast-frame`) */
+.pmd-battle-forecast-dialog.pmd-fe-forecast-frame {
+  max-width: 540px;
+  padding: 6px 8px;
+  gap: 6px;
+}
+
+.pmd-fe-targets-bar {
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--pmd-divider-subtle);
+}
+
+.pmd-fe-l-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+  align-items: stretch;
+}
+
+/* Left Vertical Stem of the Blue 'L' (merges seamlessly with `.pmd-fe-player-foot`) */
+.pmd-fe-player-stem {
+  background: transparent;
+  padding: 4px 8px 8px 2px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* Top-Right Inset Red Enemy Rectangle (or Emerald Ally Box in Heal Mode) */
+.pmd-fe-enemy-box {
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 5px;
+  min-width: 0;
+}
+
+.pmd-fe-enemy-box.is-defender {
+  background: #3b1526;
+  border: 3px solid #f06880;
+  box-shadow: inset 0 0 0 2px #881030;
+}
+
+.pmd-fe-enemy-box.is-ally-heal {
+  background: #143c2c;
+  border: 3px solid var(--pmd-text-green);
+  box-shadow: inset 0 0 0 2px #0c281c;
+}
+
+.pmd-fe-enemy-hp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.pmd-fe-hp-num {
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--pmd-text-white);
+  text-shadow: 1px 1px 0 #000000;
+  white-space: nowrap;
+}
+
+.pmd-fe-stats-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.pmd-fe-stem-move-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* Full-Width Bottom Horizontal Foot of the Blue 'L' */
+.pmd-fe-player-foot {
+  grid-column: 1 / -1;
+  background: transparent;
+  padding: 6px 2px 2px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.pmd-fe-move-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+  background: var(--pmd-fill-well-deep);
+  border: 2px solid #78b8f8;
+  padding: 0 4px;
+}
+
+.pmd-btn.pmd-menu-row.pmd-fe-move-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 8px 6px 22px;
+}
+
+.pmd-fe-move-row-name {
+  font-size: 13px;
+  font-weight: bold;
+  color: var(--pmd-text-green);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pmd-btn.pmd-menu-row.pmd-fe-move-row.is-active .pmd-fe-move-row-name,
+.pmd-btn.pmd-menu-row.pmd-fe-move-row:hover:not(:disabled) .pmd-fe-move-row-name {
+  color: var(--pmd-text-yellow);
+}
+
+.pmd-fe-move-row-meta {
+  font-size: 11px;
+  color: var(--pmd-text-cyan);
+  text-shadow: 1px 1px 0 #000000;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pmd-fe-player-foot .pmd-forecast-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 6px;
+  min-width: 112px;
+}
+
+/* Mobile Portrait (`390x844`): keep literal 2-column 'L' geometry & >= 44x44px touch targets */
+@media (max-width: 600px) {
+  .pmd-dungeon-tile-box {
+    left: 0.45rem;
+    bottom: 0.45rem;
+    max-width: min(236px, calc(100% - 0.9rem));
+    padding: 3px 6px;
+  }
+
+  .pmd-unit-hover-popup {
+    width: 192px;
+    padding: 4px 6px;
+  }
+
+  .pmd-battle-forecast-dialog.pmd-fe-forecast-frame {
+    padding: 4px 6px;
+    gap: 4px;
+  }
+
+  .pmd-fe-player-stem {
+    padding: 3px 5px 6px 2px;
+    gap: 4px;
+  }
+
+  .pmd-fe-enemy-box {
+    padding: 4px 5px;
+    gap: 4px;
+  }
+
+  .pmd-fe-player-foot {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 6px 0 0;
+    gap: 6px;
+  }
+
+  .pmd-fe-player-foot .pmd-forecast-actions {
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .pmd-fe-player-foot .pmd-forecast-actions .pmd-btn {
+    flex: 1;
+  }
+}
+
+/* Short Mobile Landscape (`844x390`): ultra-compact zero-clip 'L' & >= 44x44px buttons */
+@media (max-height: 500px) {
+  .pmd-unit-portrait-cell {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    min-height: 48px;
+  }
+
+  .pmd-dungeon-tile-box {
+    left: 0.5rem;
+    bottom: 0.35rem;
+    padding: 2px 6px;
+    gap: 2px;
+  }
+
+  .pmd-unit-hover-popup {
+    width: 196px;
+    border-width: 6px 10px;
+    padding: 4px 6px;
+    gap: 3px;
+  }
+
+  .pmd-battle-forecast-dialog.pmd-fe-forecast-frame {
+    max-width: 680px;
+    border-width: 8px 12px;
+    padding: 4px 6px;
+    gap: 4px;
+  }
+
+  .pmd-fe-player-stem {
+    padding: 2px 6px 4px 2px;
+    gap: 3px;
+  }
+
+  .pmd-fe-enemy-box {
+    padding: 3px 6px;
+    gap: 3px;
+  }
+
+  .pmd-fe-player-foot {
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 4px 2px 0;
+    gap: 6px;
+  }
+
+  .pmd-fe-move-list:has(> :nth-child(3)) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 8px;
+  }
+
+  .pmd-fe-player-foot .pmd-forecast-actions {
+    flex-direction: row;
+    flex-wrap: nowrap;
+  }
+}

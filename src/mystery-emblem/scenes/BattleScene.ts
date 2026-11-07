@@ -45,7 +45,7 @@ import {
   hasChapterMapOverride,
   subscribeChapterMapChanges,
 } from '../data/chapterMapRegistry';
-import { getItemById, getMoveById, getPersonalSkillById } from '../data/index';
+import { getItemById, getMoveById } from '../data/index';
 import {
   buildBattleUnitsFromPrepDeployment,
   buildSingleEnemyBattleUnit,
@@ -57,6 +57,7 @@ import {
 import {
   computeCombatForecast,
   computeHealForecast,
+  computeUnitPopupStats,
   findBestAttackPlanForTarget,
   findBestHealPlanForAlly,
   findBestStopTileForOffensiveMove,
@@ -88,6 +89,7 @@ import {
   getEffectiveMovementPoints,
   getMapTerrainAt,
   getTerrainBonuses,
+  getTerrainMoveCost,
   isInMapBounds,
   parseCoordKey,
   type AStarPathStep,
@@ -106,6 +108,7 @@ import type {
 } from '../types/schemas';
 import { DungeonPrepOverlay, type PrepSubMode } from '../ui/DungeonPrepOverlay';
 import { PmdPortraitView } from '../ui/PmdSpriteCanvas';
+import { createMiniSpeciesPortrait } from '../ui/PmdUnitPortraitGrid';
 import {
   MAP_DEFAULT_SCALE,
   MAP_OVERSCROLL_NATIVE_PX,
@@ -275,13 +278,15 @@ export class BattleScene {
   private readonly tintScratchCanvas: HTMLCanvasElement;
   private readonly tintScratchCtx: CanvasRenderingContext2D;
 
-  // Top HUD & Toast
+  // Top HUD, Bottom-Left Tile Display & Floating Character Hover Popup
   private readonly topHudBarEl: HTMLElement;
   private readonly turnBadgeEl: HTMLElement;
   private readonly dangerBtnEl: HTMLButtonElement;
   private readonly endPhaseBtnEl: HTMLButtonElement;
   private readonly phaseBannerEl: HTMLElement;
   private readonly infoStripEl: HTMLElement;
+  private readonly unitPopupEl: HTMLElement;
+  private readonly unitPopupPortraitView: PmdPortraitView;
 
   // Floating Command Menu (`Attack` / `Heal` / `Item` / `Wait` / `Cancel`)
   private readonly actionMenuEl: HTMLElement;
@@ -347,6 +352,9 @@ export class BattleScene {
   private selectedUnitId: string | null = null;
   private inspectedTile: { x: number; y: number } = { x: 3, y: 5 };
   private hoveredTile: { x: number; y: number } | null = null;
+  private touchInspectedUnitId: string | null = null;
+  private renderedPopupSpeciesKey = '';
+  private prepMapStatusNotice: string | null = null;
   private previewPath: AStarPathStep[] | null = null;
   private currentRange: MovementRangeResult | null = null;
 
@@ -472,10 +480,46 @@ export class BattleScene {
     this.phaseBannerEl.dataset.testid = 'dungeon-phase-banner';
     this.phaseBannerEl.hidden = true;
 
-    // 4. Bottom Terrain & Unit Info Strip
+    // 4. Bottom-Left Compact Tile Display + Floating Character Hover Popup
     this.infoStripEl = document.createElement('div');
-    this.infoStripEl.className = 'pmd-window pmd-window--translucent pmd-battle-info-strip';
-    this.infoStripEl.dataset.testid = 'dungeon-info-strip';
+    this.infoStripEl.className =
+      'pmd-window pmd-window--compact pmd-window--translucent pmd-dungeon-tile-box';
+    this.infoStripEl.dataset.testid = 'dungeon-tile-display';
+
+    this.unitPopupPortraitView = new PmdPortraitView({
+      pixelScale: 1,
+      testId: 'unit-popup-portrait',
+    });
+    this.unitPopupEl = document.createElement('div');
+    this.unitPopupEl.className = 'pmd-window pmd-unit-hover-popup is-player';
+    this.unitPopupEl.dataset.testid = 'dungeon-unit-popup';
+    this.unitPopupEl.hidden = true;
+    this.unitPopupEl.innerHTML = `
+      <div class="pmd-unit-popup-top">
+        <div class="pmd-forecast-portrait-slot pmd-unit-popup-portrait-slot" data-popup-portrait-slot>
+          <span class="pmd-unit-popup-role-pip" data-popup-role-pip hidden></span>
+        </div>
+        <div class="pmd-unit-popup-vitals">
+          <div class="pmd-unit-popup-hp-row">
+            <span class="pmd-unit-popup-lbl">HP</span>
+            <strong data-testid="unit-popup-hp">20/20</strong>
+            <span class="pmd-unit-popup-status" data-popup-status hidden></span>
+          </div>
+          <div class="pmd-forecast-hp-bar-track pmd-unit-popup-hp-bar">
+            <div class="pmd-forecast-hp-bar-fill" data-popup-hp-fill></div>
+          </div>
+          <div class="pmd-unit-popup-stats-row">
+            <span class="pmd-unit-popup-stat"><em>MGT</em><strong data-testid="unit-popup-might">—</strong></span>
+            <span class="pmd-unit-popup-stat"><em>DEF</em><strong data-testid="unit-popup-def">0</strong></span>
+            <span class="pmd-unit-popup-stat"><em>SPD</em><strong data-testid="unit-popup-spd">0</strong></span>
+          </div>
+        </div>
+      </div>
+      <div class="pmd-unit-popup-moves" data-testid="unit-popup-moves"></div>
+      <div class="pmd-unit-popup-item" data-testid="unit-popup-item" hidden></div>
+    `;
+    const popupSlot = this.unitPopupEl.querySelector('[data-popup-portrait-slot]');
+    popupSlot?.insertBefore(this.unitPopupPortraitView.canvas, popupSlot.firstChild);
 
     // 5. Floating Command Menu (`Attack` / `Heal` / `Item` / `Wait` / `Cancel`)
     this.actionMenuEl = document.createElement('div');
@@ -496,7 +540,7 @@ export class BattleScene {
     this.cmdWaitBtnEl = this.actionMenuEl.querySelector('[data-testid="dungeon-cmd-wait"]')!;
     this.cmdCancelBtnEl = this.actionMenuEl.querySelector('[data-testid="dungeon-cmd-cancel"]')!;
 
-    // 6. Fire Emblem Combat Forecast Modal
+    // 6. Fire Emblem Interlocking L-Shape Attack / Heal Preview Modal
     this.attackerPortraitView = new PmdPortraitView({
       pixelScale: 1,
       testId: 'forecast-attacker-portrait',
@@ -511,45 +555,33 @@ export class BattleScene {
     this.forecastModalBackdropEl.dataset.testid = 'battle-forecast-modal';
     this.forecastModalBackdropEl.hidden = true;
     this.forecastModalBackdropEl.innerHTML = `
-      <div class="pmd-window pmd-window--gold pmd-battle-forecast-dialog" role="dialog" aria-modal="true" aria-label="Combat Forecast">
-        <div class="pmd-forecast-header">
-          <div>
-            <h3 class="pmd-panel-title" data-forecast-title>COMBAT FORECAST</h3>
-            <p class="pmd-panel-sub" data-forecast-subtitle>Range 1 · Physical</p>
-          </div>
-          <span class="pmd-forecast-eff-badge" data-testid="forecast-effectiveness-badge">Neutral (1x)</span>
-        </div>
-
-        <div class="pmd-forecast-selector-row" data-forecast-targets-wrap hidden>
-          <span class="pmd-preset-label">Target:</span>
+      <div class="pmd-window pmd-battle-forecast-dialog pmd-fe-forecast-frame" role="dialog" aria-modal="true" aria-label="Combat Forecast">
+        <span class="pmd-sr-only" data-forecast-title>COMBAT FORECAST</span>
+        <div class="pmd-fe-targets-bar" data-forecast-targets-wrap hidden>
           <div class="pmd-inline-btns" data-forecast-targets></div>
         </div>
 
-        <div class="pmd-forecast-selector-row">
-          <span class="pmd-preset-label">Move:</span>
-          <div class="pmd-inline-btns" data-forecast-moves></div>
-        </div>
-
-        <div class="pmd-forecast-versus-grid">
-          <!-- Attacker / Healer Card (Blue) -->
-          <div class="pmd-forecast-side is-attacker" data-testid="forecast-attacker-card">
+        <div class="pmd-fe-l-grid">
+          <!-- Player Stem of the Blue 'L' (Top-Left) -->
+          <div class="pmd-fe-player-stem" data-testid="forecast-attacker-card">
             <div class="pmd-forecast-unit-head">
               <div class="pmd-forecast-portrait-slot" data-attacker-portrait-slot></div>
               <div class="pmd-forecast-unit-id">
                 <strong class="pmd-forecast-unit-name" data-testid="forecast-attacker-name">—</strong>
-                <span class="pmd-forecast-unit-meta" data-attacker-meta>—</span>
-                <span class="pmd-forecast-move-line" data-testid="forecast-attacker-weapon">—</span>
+                <div class="pmd-fe-stem-move-line">
+                  <span class="pmd-forecast-move-line" data-testid="forecast-attacker-weapon">—</span>
+                  <span class="pmd-forecast-eff-badge" data-testid="forecast-effectiveness-badge" hidden>1x</span>
+                </div>
               </div>
+            </div>
+            <div class="pmd-fe-enemy-hp-row">
+              <span class="pmd-fe-hp-num" data-testid="forecast-attacker-hp">—</span>
             </div>
             <div class="pmd-forecast-hp-bar-track">
               <div class="pmd-forecast-hp-bar-ghost" data-attacker-hp-cur-bar></div>
               <div class="pmd-forecast-hp-bar-fill" data-attacker-hp-proj-bar></div>
             </div>
-            <div class="pmd-forecast-stats-grid">
-              <div class="pmd-forecast-stat">
-                <span>HP</span>
-                <strong data-testid="forecast-attacker-hp">—</strong>
-              </div>
+            <div class="pmd-fe-stats-strip">
               <div class="pmd-forecast-stat">
                 <span data-atk-stat2-label>DMG</span>
                 <strong data-testid="forecast-attacker-dmg">—</strong>
@@ -559,31 +591,30 @@ export class BattleScene {
                 <strong data-testid="forecast-attacker-hit">—</strong>
               </div>
               <div class="pmd-forecast-stat">
-                <span data-atk-stat4-label>CRIT</span>
+                <span data-atk-stat4-label>CRT</span>
                 <strong data-testid="forecast-attacker-crit">—</strong>
               </div>
             </div>
           </div>
 
-          <!-- Defender / Heal Target Card -->
-          <div class="pmd-forecast-side is-defender" data-testid="forecast-defender-card">
+          <!-- Top-Right Red Enemy Box (or Green Ally Box in Heal Mode) -->
+          <div class="pmd-fe-enemy-box is-defender" data-testid="forecast-defender-card">
             <div class="pmd-forecast-unit-head">
               <div class="pmd-forecast-portrait-slot" data-defender-portrait-slot></div>
               <div class="pmd-forecast-unit-id">
                 <strong class="pmd-forecast-unit-name" data-testid="forecast-defender-name">—</strong>
-                <span class="pmd-forecast-unit-meta" data-defender-meta>—</span>
                 <span class="pmd-forecast-move-line" data-testid="forecast-defender-weapon">—</span>
+                <span class="pmd-forecast-unit-meta" data-defender-meta hidden></span>
               </div>
+            </div>
+            <div class="pmd-fe-enemy-hp-row">
+              <span class="pmd-fe-hp-num" data-testid="forecast-defender-hp">—</span>
             </div>
             <div class="pmd-forecast-hp-bar-track">
               <div class="pmd-forecast-hp-bar-ghost" data-defender-hp-cur-bar></div>
               <div class="pmd-forecast-hp-bar-fill is-enemy" data-defender-hp-proj-bar></div>
             </div>
-            <div class="pmd-forecast-stats-grid">
-              <div class="pmd-forecast-stat">
-                <span>HP</span>
-                <strong data-testid="forecast-defender-hp">—</strong>
-              </div>
+            <div class="pmd-fe-stats-strip">
               <div class="pmd-forecast-stat">
                 <span data-def-stat2-label>DMG</span>
                 <strong data-testid="forecast-defender-dmg">—</strong>
@@ -593,16 +624,20 @@ export class BattleScene {
                 <strong data-testid="forecast-defender-hit">—</strong>
               </div>
               <div class="pmd-forecast-stat">
-                <span data-def-stat4-label>CRIT</span>
+                <span data-def-stat4-label>CRT</span>
                 <strong data-testid="forecast-defender-crit">—</strong>
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="pmd-forecast-actions">
-          <button type="button" class="pmd-btn pmd-btn-primary" data-testid="forecast-attack-btn">Attack!</button>
-          <button type="button" class="pmd-btn" data-testid="forecast-cancel-btn">Cancel</button>
+          <!-- Full-Width Bottom Foot of the Blue 'L' (Dungeon Menu-Style Move List + Actions) -->
+          <div class="pmd-fe-player-foot">
+            <div class="pmd-fe-move-list pmd-menu-list" data-testid="forecast-move-list" data-forecast-moves></div>
+            <div class="pmd-forecast-actions">
+              <button type="button" class="pmd-btn pmd-btn-primary" data-testid="forecast-attack-btn">Attack!</button>
+              <button type="button" class="pmd-btn" data-testid="forecast-cancel-btn">Cancel</button>
+            </div>
+          </div>
         </div>
       </div>
     `;
@@ -714,6 +749,7 @@ export class BattleScene {
       this.topHudBarEl,
       this.phaseBannerEl,
       this.infoStripEl,
+      this.unitPopupEl,
       this.actionMenuEl,
       this.forecastModalBackdropEl,
       this.levelUpModalBackdropEl,
@@ -739,19 +775,25 @@ export class BattleScene {
       onRequestRenameUnit: (instanceId) => this.onRequestRenameUnit?.(instanceId),
       onEnterViewMap: () => {
         this.prepSwapSlotIndex = null;
+        this.prepMapStatusNotice = null;
+        this.touchInspectedUnitId = null;
         this.syncPrepChromeVisibility();
         this.updateInfoStrip();
         this.renderFrame(performance.now());
       },
       onExitViewMap: () => {
         this.prepSwapSlotIndex = null;
+        this.prepMapStatusNotice = null;
+        this.touchInspectedUnitId = null;
         this.syncPrepChromeVisibility();
+        this.updateInfoStrip();
         this.renderFrame(performance.now());
       },
       onToggleGlobalDanger: () => this.toggleGlobalDangerArea(),
       onConfirmEnterDungeon: () => this.confirmEnterDungeonFromPrep(),
       onSubLayerChanged: () => {
         this.syncPrepChromeVisibility();
+        this.updateInfoStrip();
         this.onLayerStateChanged();
       },
     });
@@ -962,6 +1004,7 @@ export class BattleScene {
     if (this.phase === 'dungeon_prep') {
       if (this.prepSwapSlotIndex !== null) {
         this.prepSwapSlotIndex = null;
+        this.prepMapStatusNotice = null;
         this.audioManager.playSfx('cancel');
         this.prepOverlay.syncMapHudState();
         this.updateInfoStrip();
@@ -1320,6 +1363,7 @@ export class BattleScene {
     this.victoryModalBackdropEl.hidden = true;
     this.defeatModalBackdropEl.hidden = true;
     this.actionMenuEl.hidden = true;
+    this.unitPopupEl.hidden = true;
     this.phaseBannerEl.hidden = true;
     this.systemMenuOpen = false;
   }
@@ -1329,9 +1373,16 @@ export class BattleScene {
       this.topHudBarEl.hidden = true;
       const inViewMap = this.prepOverlay.isOpen() && this.prepOverlay.getSubMode() === 'view_map';
       this.infoStripEl.hidden = !inViewMap;
+      if (!inViewMap) {
+        this.unitPopupEl.hidden = true;
+      }
+    } else if (this.phase === 'victory' || this.phase === 'defeat') {
+      this.topHudBarEl.hidden = true;
+      this.infoStripEl.hidden = true;
+      this.unitPopupEl.hidden = true;
     } else {
       this.topHudBarEl.hidden = false;
-      this.infoStripEl.hidden = false;
+      this.infoStripEl.hidden = this.interactionState === 'combat_forecast';
     }
   }
 
@@ -1543,6 +1594,7 @@ export class BattleScene {
 
   private clearSelection(): void {
     this.selectedUnitId = null;
+    this.touchInspectedUnitId = null;
     this.uncommittedOrigin = null;
     this.originRangeSnapshot = null;
     this.currentRange = null;
@@ -1557,6 +1609,7 @@ export class BattleScene {
     if (this.phase === 'player_phase') {
       this.interactionState = 'idle';
     }
+    this.syncPrepChromeVisibility();
   }
 
   private recomputeSelectedUnitRange(): void {
@@ -1802,7 +1855,11 @@ export class BattleScene {
         longPressTriggered = false;
         clearLongPress();
 
-        if (e.pointerType !== 'mouse') {
+        if (e.pointerType === 'mouse') {
+          this.touchInspectedUnitId = null;
+          this.updateHoveredTile(this.clientPointToTile(e.clientX, e.clientY));
+        } else {
+          this.hoveredTile = null;
           longPressTimer = window.setTimeout(() => {
             if (
               !isDraggingCamera &&
@@ -1810,7 +1867,25 @@ export class BattleScene {
               !this.pinchTracker.isMultiTouchSession()
             ) {
               longPressTriggered = true;
-              this.handleMenuOrBack();
+              const lpTile = this.clientPointToTile(downClientX, downClientY);
+              const lpUnit = lpTile
+                ? this.getLivingUnits().find((u) => u.x === lpTile.x && u.y === lpTile.y)
+                : undefined;
+              if (
+                lpUnit &&
+                lpTile &&
+                this.canInteractWithMapViewport() &&
+                this.interactionState !== 'action_menu' &&
+                this.interactionState !== 'combat_forecast'
+              ) {
+                this.inspectedTile = { x: lpTile.x, y: lpTile.y };
+                this.touchInspectedUnitId = lpUnit.id;
+                this.audioManager.playSfx('select');
+                this.updateInfoStrip();
+                this.renderFrame(performance.now());
+              } else {
+                this.handleMenuOrBack();
+              }
             }
           }, LONG_PRESS_MS);
         }
@@ -1871,7 +1946,18 @@ export class BattleScene {
           if (this.interactionState === 'action_menu') {
             this.positionFloatingActionMenu();
           }
+          this.positionActiveUnitHoverPopup();
           this.renderFrame(performance.now());
+        }
+      },
+      { signal }
+    );
+
+    this.canvasStageEl.addEventListener(
+      'pointerleave',
+      (e: PointerEvent) => {
+        if (e.pointerType === 'mouse' && activePointerId === null) {
+          this.updateHoveredTile(null);
         }
       },
       { signal }
@@ -1932,6 +2018,7 @@ export class BattleScene {
         if (this.interactionState === 'action_menu') {
           this.positionFloatingActionMenu();
         }
+        this.positionActiveUnitHoverPopup();
         this.renderFrame(performance.now());
       });
       this.resizeObserver.observe(this.canvasStageEl);
@@ -1946,6 +2033,10 @@ export class BattleScene {
       return;
     }
     this.hoveredTile = tile;
+    this.touchInspectedUnitId = null;
+    if (this.prepSwapSlotIndex === null) {
+      this.prepMapStatusNotice = null;
+    }
 
     if (
       this.phase === 'player_phase' &&
@@ -1989,6 +2080,8 @@ export class BattleScene {
         this.previewPath = null;
       }
     }
+
+    this.updateInfoStrip();
   }
 
   // ==========================================================================
@@ -2053,6 +2146,7 @@ export class BattleScene {
     this.inspectedTile = { x: tx, y: ty };
     const livingUnits = this.getLivingUnits();
     const occupant = livingUnits.find((u) => u.x === tx && u.y === ty);
+    this.touchInspectedUnitId = this.hoveredTile === null && occupant ? occupant.id : null;
 
     // 1. IDLE STATE
     if (this.interactionState === 'idle') {
@@ -2222,8 +2316,9 @@ export class BattleScene {
    */
   private handlePrepViewMapTileTap(tx: number, ty: number): void {
     this.inspectedTile = { x: tx, y: ty };
+    const livingOcc = this.getLivingUnits().find((u) => u.x === tx && u.y === ty);
+    this.touchInspectedUnitId = this.hoveredTile === null && livingOcc ? livingOcc.id : null;
     const clickedSlot = this.deploymentSlots.find((s) => s.x === tx && s.y === ty) ?? null;
-    const activeSave = this.getActivePrepSaveManager().getSave();
 
     if (this.prepSwapSlotIndex === null) {
       if (clickedSlot && clickedSlot.unitInstanceId) {
@@ -2231,12 +2326,8 @@ export class BattleScene {
         this.selectionPulseStartMs = performance.now();
         this.audioManager.playSfx('select');
         this.prepOverlay.syncMapHudState();
-        const selectedOwned = activeSave?.roster.find(
-          (u) => u.instanceId === clickedSlot.unitInstanceId
-        );
-        this.infoStripEl.textContent = selectedOwned
-          ? `Selected ${selectedOwned.nickname} — tap another blue tile to swap.`
-          : 'Selected starting tile — tap another blue tile to swap.';
+        this.prepMapStatusNotice = 'Tap another blue tile to swap.';
+        this.updateInfoStrip();
         this.onLayerStateChanged();
         this.renderFrame(performance.now());
         return;
@@ -2244,11 +2335,13 @@ export class BattleScene {
 
       if (clickedSlot) {
         this.audioManager.playSfx('dialogue_advance');
-        this.infoStripEl.textContent = 'Open starting tile — tap a deployed unit first.';
+        this.prepMapStatusNotice = 'Open blue tile — tap a unit first.';
+        this.updateInfoStrip();
         this.renderFrame(performance.now());
         return;
       }
 
+      this.prepMapStatusNotice = null;
       const tappedEnemy = this.getLivingEnemies().find((e) => e.x === tx && e.y === ty);
       if (tappedEnemy) {
         this.audioManager.playSfx('select');
@@ -2264,13 +2357,16 @@ export class BattleScene {
     const sourceSlot = this.deploymentSlots.find((s) => s.slotIndex === this.prepSwapSlotIndex);
     if (!sourceSlot) {
       this.prepSwapSlotIndex = null;
+      this.prepMapStatusNotice = null;
       this.prepOverlay.syncMapHudState();
+      this.updateInfoStrip();
       this.onLayerStateChanged();
       return;
     }
 
     if (clickedSlot && clickedSlot.slotIndex === sourceSlot.slotIndex) {
       this.prepSwapSlotIndex = null;
+      this.prepMapStatusNotice = null;
       this.audioManager.playSfx('cancel');
       this.prepOverlay.syncMapHudState();
       this.updateInfoStrip();
@@ -2284,23 +2380,14 @@ export class BattleScene {
       sourceSlot.unitInstanceId = clickedSlot.unitInstanceId;
       clickedSlot.unitInstanceId = tempUnitId;
       this.prepSwapSlotIndex = null;
+      this.prepMapStatusNotice = 'Positions swapped.';
       this.audioManager.playSfx('select');
       this.rebuildPrepBattleUnits();
       this.prepOverlay.refreshAll();
-
-      const unitAtDest = activeSave?.roster.find(
-        (u) => u.instanceId === clickedSlot.unitInstanceId
-      );
-      const unitAtSource = activeSave?.roster.find(
-        (u) => u.instanceId === sourceSlot.unitInstanceId
-      );
-      if (unitAtDest && unitAtSource) {
-        this.infoStripEl.textContent = `Swapped ${unitAtDest.nickname} and ${unitAtSource.nickname}.`;
-      } else if (unitAtDest) {
-        this.infoStripEl.textContent = `Moved ${unitAtDest.nickname}.`;
-      } else {
-        this.updateInfoStrip();
-      }
+      const postRebuildOcc = this.getLivingUnits().find((u) => u.x === tx && u.y === ty);
+      this.touchInspectedUnitId =
+        this.hoveredTile === null && postRebuildOcc ? postRebuildOcc.id : null;
+      this.updateInfoStrip();
       this.onLayerStateChanged();
       this.renderFrame(performance.now());
       return;
@@ -2310,13 +2397,15 @@ export class BattleScene {
     this.prepSwapSlotIndex = null;
     this.audioManager.playSfx('cancel');
     this.prepOverlay.syncMapHudState();
-    this.infoStripEl.textContent = 'Units can only swap among blue starting tiles.';
+    this.prepMapStatusNotice = 'Only blue starting tiles can swap.';
+    this.updateInfoStrip();
     this.onLayerStateChanged();
     this.renderFrame(performance.now());
   }
 
   private selectPlayerUnit(unit: BattleUnitState): void {
     this.selectedUnitId = unit.id;
+    this.touchInspectedUnitId = this.hoveredTile === null ? unit.id : null;
     this.interactionState = 'unit_selected';
     this.selectionPulseStartMs = performance.now();
     this.inspectedTile = { x: unit.x, y: unit.y };
@@ -2335,6 +2424,7 @@ export class BattleScene {
     onComplete: () => void
   ): void {
     this.interactionState = 'walking';
+    this.touchInspectedUnitId = null;
     unit.action = 'Walk';
     unit.frameIndex = 0;
     this.activeWalk = {
@@ -2347,6 +2437,7 @@ export class BattleScene {
       onComplete,
     };
     this.syncHudControls();
+    this.updateInfoStrip();
     this.onLayerStateChanged();
   }
 
@@ -2654,12 +2745,14 @@ export class BattleScene {
 
     if (unit) {
       this.interactionState = 'unit_selected';
+      this.touchInspectedUnitId = this.hoveredTile === null ? unit.id : null;
       this.selectionPulseStartMs = performance.now();
       this.recomputeSelectedUnitRange();
       this.previewPath = [{ x: unit.x, y: unit.y, cumulativeCost: 0 }];
     } else {
       this.interactionState = 'idle';
     }
+    this.syncPrepChromeVisibility();
     this.syncHudControls();
     this.updateInfoStrip();
     this.onLayerStateChanged();
@@ -2667,7 +2760,7 @@ export class BattleScene {
   }
 
   // ==========================================================================
-  // Fire Emblem Combat & Heal Forecast Modals
+  // Fire Emblem Interlocking L-Shape Combat & Heal Forecast Modals
   // ==========================================================================
 
   private openCombatForecastModal(targetEnemyId: string, moveId: string): void {
@@ -2690,7 +2783,9 @@ export class BattleScene {
 
     this.refreshCombatForecastModalDom();
     this.forecastModalBackdropEl.hidden = false;
+    this.syncPrepChromeVisibility();
     this.syncHudControls();
+    this.updateInfoStrip();
     this.onLayerStateChanged();
     this.renderFrame(performance.now());
   }
@@ -2715,9 +2810,108 @@ export class BattleScene {
 
     this.refreshHealForecastModalDom();
     this.forecastModalBackdropEl.hidden = false;
+    this.syncPrepChromeVisibility();
     this.syncHudControls();
+    this.updateInfoStrip();
     this.onLayerStateChanged();
     this.renderFrame(performance.now());
+  }
+
+  private getValidForecastMoves(): BattleMoveSlot[] {
+    if (this.forecastMode === 'heal') {
+      const healer = this.getSelectedUnit();
+      const target = this.units.find(
+        (u) => u.id === this.forecastTargetId && !u.defeated && u.currentHp > 0
+      );
+      if (!healer || !target) return [];
+      const dist =
+        target.id === healer.id ? 0 : manhattanDistance(healer.x, healer.y, target.x, target.y);
+      return getHealingMovesForTargetAtDistance(healer, target, dist);
+    }
+
+    const attacker = this.getSelectedUnit();
+    const defender = this.units.find(
+      (u) => u.id === this.forecastTargetId && !u.defeated && u.currentHp > 0
+    );
+    if (!attacker || !defender) return [];
+
+    const canRepositionAcrossRange =
+      this.forecastReturnMode === 'unit_selected' &&
+      this.originRangeSnapshot !== null &&
+      this.uncommittedOrigin !== null &&
+      this.uncommittedOrigin.unitId === attacker.id;
+
+    if (canRepositionAcrossRange && this.originRangeSnapshot) {
+      return getOffensiveMovesReachableForTarget(
+        attacker,
+        defender,
+        this.originRangeSnapshot.reachableTiles
+      );
+    }
+    const distNow = manhattanDistance(attacker.x, attacker.y, defender.x, defender.y);
+    return getOffensiveMovesAtDistance(attacker, distNow);
+  }
+
+  private renderForecastMoveList(
+    actor: BattleUnitState,
+    validMoves: ReadonlyArray<BattleMoveSlot>,
+    selectedMoveId: string
+  ): void {
+    const movesListEl = this.forecastModalBackdropEl.querySelector<HTMLElement>(
+      '[data-forecast-moves]'
+    );
+    if (!movesListEl) return;
+    movesListEl.innerHTML = '';
+
+    const validIds = new Set(validMoves.map((m) => m.id));
+    for (const slot of actor.activeMoves) {
+      const isUsable = validIds.has(slot.id);
+      const isSelected = slot.id === selectedMoveId;
+      const isEqCounter =
+        slot.id === actor.equippedMoveId && slot.move.category !== 'Support';
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = `pmd-btn pmd-menu-row pmd-fe-move-row${isSelected ? ' is-active is-selected' : ''}`;
+      btn.dataset.testid = `forecast-move-row-${slot.id}`;
+      btn.disabled = !isUsable;
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'pmd-fe-move-row-name';
+      nameSpan.textContent = `${isEqCounter ? '[E] ' : ''}${slot.move.name}`;
+
+      const metaSpan = document.createElement('span');
+      metaSpan.className = 'pmd-fe-move-row-meta';
+      const rangeText =
+        slot.range[0] === 0 && slot.range[1] === 0
+          ? 'Self'
+          : slot.range[0] === slot.range[1]
+            ? `R${slot.range[0]}`
+            : `R${slot.range[0]}-${slot.range[1]}`;
+      metaSpan.textContent = `${rangeText} · ${slot.ppRemaining}/${slot.maxPp} PP`;
+
+      btn.append(nameSpan, metaSpan);
+
+      if (isUsable) {
+        bindPointerTap(
+          btn,
+          () => {
+            if (this.forecastMoveId === slot.id) return;
+            this.forecastMoveId = slot.id;
+            this.audioManager.playSfx('select');
+            if (this.forecastMode === 'heal') {
+              this.refreshHealForecastModalDom();
+            } else {
+              this.refreshCombatForecastModalDom();
+            }
+            this.renderFrame(performance.now());
+          },
+          { signal: this.abortController.signal }
+        );
+      }
+
+      movesListEl.appendChild(btn);
+    }
   }
 
   private refreshCombatForecastModalDom(): void {
@@ -2733,17 +2927,7 @@ export class BattleScene {
       this.uncommittedOrigin !== null &&
       this.uncommittedOrigin.unitId === attacker.id;
 
-    let validMoves: BattleMoveSlot[];
-    if (canRepositionAcrossRange && this.originRangeSnapshot) {
-      validMoves = getOffensiveMovesReachableForTarget(
-        attacker,
-        defender,
-        this.originRangeSnapshot.reachableTiles
-      );
-    } else {
-      const distNow = manhattanDistance(attacker.x, attacker.y, defender.x, defender.y);
-      validMoves = getOffensiveMovesAtDistance(attacker, distNow);
-    }
+    const validMoves = this.getValidForecastMoves();
     if (validMoves.length === 0) return;
 
     if (!this.forecastMoveId || !validMoves.some((m) => m.id === this.forecastMoveId)) {
@@ -2795,11 +2979,13 @@ export class BattleScene {
     const defCardEl = this.forecastModalBackdropEl.querySelector<HTMLElement>(
       '[data-testid="forecast-defender-card"]'
     );
-    if (defCardEl) defCardEl.className = 'pmd-forecast-side is-defender';
+    if (defCardEl) defCardEl.className = 'pmd-fe-enemy-box is-defender';
     const confirmBtnEl = this.forecastModalBackdropEl.querySelector<HTMLElement>(
       '[data-testid="forecast-attack-btn"]'
     );
     if (confirmBtnEl) confirmBtnEl.textContent = 'Attack!';
+
+    this.renderForecastMoveList(attacker, validMoves, chosenSlot.id);
 
     const setStatLabel = (sel: string, txt: string) => {
       const el = this.forecastModalBackdropEl.querySelector(sel);
@@ -2807,36 +2993,32 @@ export class BattleScene {
     };
     setStatLabel('[data-atk-stat2-label]', 'DMG');
     setStatLabel('[data-atk-stat3-label]', 'HIT');
-    setStatLabel('[data-atk-stat4-label]', 'CRIT');
+    setStatLabel('[data-atk-stat4-label]', 'CRT');
     setStatLabel('[data-def-stat2-label]', 'DMG');
     setStatLabel('[data-def-stat3-label]', 'HIT');
-    setStatLabel('[data-def-stat4-label]', 'CRIT');
+    setStatLabel('[data-def-stat4-label]', 'CRT');
 
-    // Load pixelated portraits asynchronously
+    // Portraits: swap to hurt ('Pain') ONLY when standard non-crit projected HP <= 0
     void this.attackerPortraitView.setPortrait({
       speciesIdOrAssetId: attacker.speciesId,
-      emotion: 'Determined',
+      emotion: forecast.projectedAttackerHp <= 0 ? 'Pain' : 'Normal',
       mirrorHorizontal: false,
     });
     void this.defenderPortraitView.setPortrait({
       speciesIdOrAssetId: defender.speciesId,
-      emotion: 'Angry',
+      emotion: forecast.projectedDefenderHp <= 0 ? 'Pain' : 'Normal',
       mirrorHorizontal: true,
     });
 
-    // Header & Effectiveness Badge
-    const subEl = this.forecastModalBackdropEl.querySelector('[data-forecast-subtitle]');
+    // Selected Move Effectiveness Badge
     const effBadgeEl = this.forecastModalBackdropEl.querySelector<HTMLElement>(
       '[data-testid="forecast-effectiveness-badge"]'
     );
     const atkSide = forecast.attackerSide;
-    if (subEl) {
-      subEl.textContent = `R${forecast.distance} · ${atkSide.move.category} · ${atkSide.move.type}`;
-    }
     if (effBadgeEl) {
       effBadgeEl.className = 'pmd-forecast-eff-badge';
       if (atkSide.typeMultiplier === 1 && !atkSide.hasStab) {
-        effBadgeEl.textContent = 'Neutral (1x)';
+        effBadgeEl.textContent = '1x';
         effBadgeEl.hidden = true;
       } else if (atkSide.typeMultiplier === 1 && atkSide.hasStab) {
         effBadgeEl.textContent = 'STAB 1.25x';
@@ -2864,9 +3046,12 @@ export class BattleScene {
         for (const entry of allTargets) {
           const btn = document.createElement('button');
           btn.type = 'button';
-          btn.className = `pmd-btn pmd-chip-btn${entry.enemy.id === defender.id ? ' is-active' : ''}`;
+          btn.className = `pmd-btn pmd-chip-btn pmd-portrait-action-btn${entry.enemy.id === defender.id ? ' is-active' : ''}`;
           btn.dataset.testid = `forecast-target-${entry.enemy.id}`;
-          btn.textContent = `${entry.enemy.nickname} (HP ${entry.enemy.currentHp})`;
+          btn.appendChild(createMiniSpeciesPortrait(entry.enemy.speciesId, { sizePx: 20 }));
+          const hpSpan = document.createElement('span');
+          hpSpan.textContent = `HP ${entry.enemy.currentHp}`;
+          btn.appendChild(hpSpan);
           bindPointerTap(
             btn,
             () => {
@@ -2888,38 +3073,10 @@ export class BattleScene {
       }
     }
 
-    // Move selector pills
-    const movesRow = this.forecastModalBackdropEl.querySelector<HTMLElement>(
-      '[data-forecast-moves]'
-    );
-    if (movesRow) {
-      movesRow.innerHTML = '';
-      for (const slot of validMoves) {
-        const isSelected = slot.id === this.forecastMoveId;
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `pmd-btn pmd-chip-btn${isSelected ? ' is-active' : ''}`;
-        btn.dataset.testid = `forecast-move-${slot.id}`;
-        btn.textContent = `${slot.move.name} · R${slot.range[0]} · ${slot.ppRemaining} PP`;
-        bindPointerTap(
-          btn,
-          () => {
-            this.audioManager.playSfx('select');
-            this.forecastMoveId = slot.id;
-            this.refreshCombatForecastModalDom();
-            this.renderFrame(performance.now());
-          },
-          { signal: this.abortController.signal }
-        );
-        movesRow.appendChild(btn);
-      }
-    }
-
-    // Attacker Card
+    // Player Stem & Selected Move Name
     const atkNameEl = this.forecastModalBackdropEl.querySelector(
       '[data-testid="forecast-attacker-name"]'
     );
-    const atkMetaEl = this.forecastModalBackdropEl.querySelector('[data-attacker-meta]');
     const atkWpnEl = this.forecastModalBackdropEl.querySelector(
       '[data-testid="forecast-attacker-weapon"]'
     );
@@ -2942,16 +3099,11 @@ export class BattleScene {
       '[data-attacker-hp-proj-bar]'
     );
 
-    const atkTerrainMeta = TERRAIN_METADATA[forecast.attackerTerrain];
     if (atkNameEl) {
       atkNameEl.textContent = `${attacker.nickname}${attacker.isLord ? ' ★' : ''}`;
     }
-    if (atkMetaEl) {
-      const spPrefix = attacker.nickname === attacker.speciesName ? '' : `${attacker.speciesName} `;
-      atkMetaEl.textContent = `${spPrefix}Lv.${attacker.level} · ${atkTerrainMeta.label}`;
-    }
     if (atkWpnEl) {
-      atkWpnEl.textContent = `[E] ${atkSide.move.name} (Mt ${atkSide.move.mt})`;
+      atkWpnEl.textContent = atkSide.move.name;
     }
     if (atkHpEl) {
       atkHpEl.textContent = `${attacker.currentHp} → ${forecast.projectedAttackerHp}`;
@@ -2970,11 +3122,13 @@ export class BattleScene {
       atkProjBar.style.width = `${Math.round((forecast.projectedAttackerHp / attacker.maxHp) * 100)}%`;
     }
 
-    // Defender Card
+    // Enemy Top-Right Box
     const defNameEl = this.forecastModalBackdropEl.querySelector(
       '[data-testid="forecast-defender-name"]'
     );
-    const defMetaEl = this.forecastModalBackdropEl.querySelector('[data-defender-meta]');
+    const defMetaEl = this.forecastModalBackdropEl.querySelector<HTMLElement>(
+      '[data-defender-meta]'
+    );
     const defWpnEl = this.forecastModalBackdropEl.querySelector(
       '[data-testid="forecast-defender-weapon"]'
     );
@@ -2997,7 +3151,6 @@ export class BattleScene {
       '[data-defender-hp-proj-bar]'
     );
 
-    const defTerrainMeta = TERRAIN_METADATA[forecast.defenderTerrain];
     if (defNameEl) {
       const bossTag = defender.isBoss ? ' [BOSS]' : '';
       defNameEl.textContent = `${defender.nickname}${bossTag}`;
@@ -3009,9 +3162,13 @@ export class BattleScene {
         const dropItem = getItemById(defender.droppableItemId);
         if (dropItem) extraTags.push(`Drops: ${dropItem.name}`);
       }
-      const tagSuffix = extraTags.length > 0 ? ` · ${extraTags.join(' · ')}` : '';
-      const spPrefix = defender.nickname === defender.speciesName ? '' : `${defender.speciesName} `;
-      defMetaEl.textContent = `${spPrefix}Lv.${defender.level} · ${defTerrainMeta.label}${tagSuffix}`;
+      if (extraTags.length > 0) {
+        defMetaEl.textContent = extraTags.join(' · ');
+        defMetaEl.hidden = false;
+      } else {
+        defMetaEl.textContent = '';
+        defMetaEl.hidden = true;
+      }
     }
     if (defHpEl) {
       defHpEl.textContent =
@@ -3022,7 +3179,7 @@ export class BattleScene {
 
     if (forecast.defenderCanCounter && forecast.defenderSide) {
       const ds = forecast.defenderSide;
-      if (defWpnEl) defWpnEl.textContent = `[E] ${ds.move.name} (Mt ${ds.move.mt})`;
+      if (defWpnEl) defWpnEl.textContent = `[E] ${ds.move.name}`;
       if (defDmgEl) defDmgEl.textContent = ds.strikes === 2 ? `${ds.damage} ×2` : `${ds.damage}`;
       if (defHitEl) defHitEl.textContent = `${ds.hitRate}%`;
       if (defCritEl) defCritEl.textContent = `${ds.critRate}%`;
@@ -3052,9 +3209,7 @@ export class BattleScene {
     if (!healer || !target) return;
 
     const allHealTargets = this.getHealableTargetsFromCurrentTile(healer);
-    const dist =
-      target.id === healer.id ? 0 : manhattanDistance(healer.x, healer.y, target.x, target.y);
-    const validMoves = getHealingMovesForTargetAtDistance(healer, target, dist);
+    const validMoves = this.getValidForecastMoves();
     if (validMoves.length === 0) return;
 
     if (!this.forecastMoveId || !validMoves.some((m) => m.id === this.forecastMoveId)) {
@@ -3072,11 +3227,13 @@ export class BattleScene {
     const defCardEl = this.forecastModalBackdropEl.querySelector<HTMLElement>(
       '[data-testid="forecast-defender-card"]'
     );
-    if (defCardEl) defCardEl.className = 'pmd-forecast-side is-ally-heal';
+    if (defCardEl) defCardEl.className = 'pmd-fe-enemy-box is-ally-heal';
     const confirmBtnEl = this.forecastModalBackdropEl.querySelector<HTMLElement>(
       '[data-testid="forecast-attack-btn"]'
     );
     if (confirmBtnEl) confirmBtnEl.textContent = 'Heal!';
+
+    this.renderForecastMoveList(healer, validMoves, activeSlot.id);
 
     const setStatLabel = (sel: string, txt: string) => {
       const el = this.forecastModalBackdropEl.querySelector(sel);
@@ -3100,14 +3257,9 @@ export class BattleScene {
       mirrorHorizontal: true,
     });
 
-    const subEl = this.forecastModalBackdropEl.querySelector('[data-forecast-subtitle]');
     const effBadgeEl = this.forecastModalBackdropEl.querySelector<HTMLElement>(
       '[data-testid="forecast-effectiveness-badge"]'
     );
-    if (subEl) {
-      const rangeDesc = healForecast.distance === 0 ? 'Self' : `R${healForecast.distance}`;
-      subEl.textContent = `${rangeDesc} · ${healForecast.move.category} · ${healForecast.move.type}`;
-    }
     if (effBadgeEl) {
       effBadgeEl.textContent = `+${healForecast.actualHeal} HP`;
       effBadgeEl.className = 'pmd-forecast-eff-badge is-super';
@@ -3128,10 +3280,12 @@ export class BattleScene {
         for (const entry of allHealTargets) {
           const btn = document.createElement('button');
           btn.type = 'button';
-          btn.className = `pmd-btn pmd-chip-btn${entry.ally.id === target.id ? ' is-active' : ''}`;
+          btn.className = `pmd-btn pmd-chip-btn pmd-portrait-action-btn${entry.ally.id === target.id ? ' is-active' : ''}`;
           btn.dataset.testid = `forecast-target-${entry.ally.id}`;
-          const suffix = entry.ally.id === healer.id ? ' [Self]' : '';
-          btn.textContent = `${entry.ally.nickname}${suffix} (HP ${entry.ally.currentHp}/${entry.ally.maxHp})`;
+          btn.appendChild(createMiniSpeciesPortrait(entry.ally.speciesId, { sizePx: 20 }));
+          const hpSpan = document.createElement('span');
+          hpSpan.textContent = `${entry.ally.currentHp}/${entry.ally.maxHp}`;
+          btn.appendChild(hpSpan);
           bindPointerTap(
             btn,
             () => {
@@ -3155,37 +3309,10 @@ export class BattleScene {
       }
     }
 
-    // Move selector pills
-    const movesRow = this.forecastModalBackdropEl.querySelector<HTMLElement>(
-      '[data-forecast-moves]'
-    );
-    if (movesRow) {
-      movesRow.innerHTML = '';
-      for (const slot of validMoves) {
-        const isSelected = slot.id === this.forecastMoveId;
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `pmd-btn pmd-chip-btn${isSelected ? ' is-active' : ''}`;
-        btn.dataset.testid = `forecast-move-${slot.id}`;
-        btn.textContent = `${slot.move.name} · R${slot.range[0]} · ${slot.ppRemaining} PP`;
-        bindPointerTap(
-          btn,
-          () => {
-            this.audioManager.playSfx('select');
-            this.forecastMoveId = slot.id;
-            this.refreshHealForecastModalDom();
-          },
-          { signal: this.abortController.signal }
-        );
-        movesRow.appendChild(btn);
-      }
-    }
-
-    // Left Card (Healer)
+    // Left Stem (Healer)
     const atkNameEl = this.forecastModalBackdropEl.querySelector(
       '[data-testid="forecast-attacker-name"]'
     );
-    const atkMetaEl = this.forecastModalBackdropEl.querySelector('[data-attacker-meta]');
     const atkWpnEl = this.forecastModalBackdropEl.querySelector(
       '[data-testid="forecast-attacker-weapon"]'
     );
@@ -3208,18 +3335,13 @@ export class BattleScene {
       '[data-attacker-hp-proj-bar]'
     );
 
-    const healerTerrainMeta = TERRAIN_METADATA[healForecast.healerTerrain];
     const healerProjectedHp =
       target.id === healer.id ? healForecast.projectedTargetHp : healer.currentHp;
     if (atkNameEl) {
       atkNameEl.textContent = `${healer.nickname}${healer.isLord ? ' ★' : ''}`;
     }
-    if (atkMetaEl) {
-      const spPrefix = healer.nickname === healer.speciesName ? '' : `${healer.speciesName} `;
-      atkMetaEl.textContent = `${spPrefix}Lv.${healer.level} · ${healerTerrainMeta.label}`;
-    }
     if (atkWpnEl) {
-      atkWpnEl.textContent = `${healForecast.move.name} (PP ${healForecast.ppBefore} → ${healForecast.ppAfter})`;
+      atkWpnEl.textContent = healForecast.move.name;
     }
     if (atkHpEl) {
       atkHpEl.textContent =
@@ -3238,11 +3360,13 @@ export class BattleScene {
       atkProjBar.style.width = `${Math.round((healerProjectedHp / healer.maxHp) * 100)}%`;
     }
 
-    // Right Card (Heal Target)
+    // Top-Right Box (Heal Target)
     const defNameEl = this.forecastModalBackdropEl.querySelector(
       '[data-testid="forecast-defender-name"]'
     );
-    const defMetaEl = this.forecastModalBackdropEl.querySelector('[data-defender-meta]');
+    const defMetaEl = this.forecastModalBackdropEl.querySelector<HTMLElement>(
+      '[data-defender-meta]'
+    );
     const defWpnEl = this.forecastModalBackdropEl.querySelector(
       '[data-testid="forecast-defender-weapon"]'
     );
@@ -3265,16 +3389,15 @@ export class BattleScene {
       '[data-defender-hp-proj-bar]'
     );
 
-    const targetTerrainMeta = TERRAIN_METADATA[healForecast.targetTerrain];
     if (defNameEl) {
       defNameEl.textContent = `${target.nickname}${target.isLord ? ' ★' : ''}`;
     }
     if (defMetaEl) {
-      const spPrefix = target.nickname === target.speciesName ? '' : `${target.speciesName} `;
-      defMetaEl.textContent = `${spPrefix}Lv.${target.level} · ${targetTerrainMeta.label}`;
+      defMetaEl.textContent = '';
+      defMetaEl.hidden = true;
     }
     if (defWpnEl) {
-      defWpnEl.textContent = `Recovers +${healForecast.actualHeal} HP (${Math.round((healForecast.projectedTargetHp / target.maxHp) * 100)}% Max)`;
+      defWpnEl.textContent = `+${healForecast.actualHeal} HP`;
     }
     if (defHpEl) {
       defHpEl.textContent = `${target.currentHp} → ${healForecast.projectedTargetHp}`;
@@ -3305,6 +3428,7 @@ export class BattleScene {
       if (selected) {
         this.audioManager.playSfx('cancel');
         this.openFloatingCommandMenu(selected);
+        this.syncPrepChromeVisibility();
         return;
       }
     }
@@ -3340,7 +3464,9 @@ export class BattleScene {
     this.currentRange = null;
     this.previewPath = null;
     this.interactionState = 'combat_animating';
+    this.syncPrepChromeVisibility();
     this.syncHudControls();
+    this.updateInfoStrip();
     this.onLayerStateChanged();
 
     await this.playCombatExchangeAsync(attacker, defender, forecast, runGen);
@@ -3392,7 +3518,9 @@ export class BattleScene {
     this.currentRange = null;
     this.previewPath = null;
     this.interactionState = 'combat_animating';
+    this.syncPrepChromeVisibility();
     this.syncHudControls();
+    this.updateInfoStrip();
     this.onLayerStateChanged();
 
     await this.playHealActionAsync(healer, target, healForecast, runGen);
@@ -4200,6 +4328,9 @@ export class BattleScene {
 
   private toggleGlobalDangerArea(): void {
     this.globalDangerEnabled = !this.globalDangerEnabled;
+    if (this.globalDangerEnabled && !this.selectedUnitId) {
+      this.selectionPulseStartMs = performance.now();
+    }
     this.audioManager.playSfx('select');
     this.recomputeDangerArea();
     this.renderFrame(performance.now());
@@ -4210,6 +4341,9 @@ export class BattleScene {
       this.trackedEnemyIds.delete(enemyId);
     } else {
       this.trackedEnemyIds.add(enemyId);
+      if (!this.selectedUnitId) {
+        this.selectionPulseStartMs = performance.now();
+      }
     }
     this.recomputeDangerArea();
   }
@@ -4246,6 +4380,7 @@ export class BattleScene {
     this.syncSystemAudioButton();
     this.syncHudControls();
     this.systemMenuBackdropEl.hidden = false;
+    this.updateInfoStrip();
     this.audioManager.playSfx('select');
     this.onLayerStateChanged();
   }
@@ -4253,6 +4388,7 @@ export class BattleScene {
   private closeSystemMenu(): void {
     this.systemMenuOpen = false;
     this.systemMenuBackdropEl.hidden = true;
+    this.updateInfoStrip();
     this.onLayerStateChanged();
   }
 
@@ -4271,54 +4407,232 @@ export class BattleScene {
     );
   }
 
+  private escapeHudHtml(raw: string): string {
+    return raw
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   private updateInfoStrip(): void {
-    const { x, y } = this.inspectedTile;
-    const terrain = getMapTerrainAt(this.map, x, y) ?? 'floor';
+    const cursor = this.hoveredTile ?? this.inspectedTile;
+    const terrain = getMapTerrainAt(this.map, cursor.x, cursor.y) ?? 'floor';
     const meta = TERRAIN_METADATA[terrain];
-    const occupant = this.getLivingUnits().find((u) => u.x === x && u.y === y);
+    const occupant = this.getLivingUnits().find((u) => u.x === cursor.x && u.y === cursor.y);
     const contextUnit = this.getSelectedUnit() ?? occupant;
+    const unitForTerrain = contextUnit ?? {
+      traversalClass: 'Grounded' as const,
+      types: [] as const,
+      heldItemId: null,
+    };
 
-    const parts: string[] = [meta.label];
+    const cost = getTerrainMoveCost(terrain, unitForTerrain);
+    const bonuses = getTerrainBonuses(terrain, unitForTerrain);
 
-    if (contextUnit) {
-      const bonuses = getTerrainBonuses(terrain, contextUnit);
-      const eqMove = contextUnit.equippedMoveId
-        ? getMoveById(contextUnit.equippedMoveId)
-        : undefined;
-      const skill = getPersonalSkillById(contextUnit.personalSkillId);
-      const eqItemId = contextUnit.heldItemId ?? contextUnit.consumableItemId ?? null;
-      const item = eqItemId ? getItemById(eqItemId) : undefined;
-      const effMov = getEffectiveMovementPoints(contextUnit);
-
-      const roleBadge = contextUnit.isLord
-        ? ' [LORD]'
-        : contextUnit.isBoss
-          ? ' [BOSS]'
-          : '';
-      const spPrefix =
-        contextUnit.nickname === contextUnit.speciesName ? '' : `${contextUnit.speciesName} `;
-      parts.push(
-        `${contextUnit.nickname}${roleBadge} (${spPrefix}Lv.${contextUnit.level} · HP ${contextUnit.currentHp}/${contextUnit.maxHp} · Mov ${effMov}${contextUnit.stationary ? ' · Immovable' : ''})`
-      );
-      if (bonuses.defBonus || bonuses.avoidBonus) {
-        parts.push(`+${bonuses.defBonus} Def/SpD, +${bonuses.avoidBonus}% Avo`);
-      }
-      if (eqMove) {
-        parts.push(`[E] ${eqMove.name} (R${eqMove.range[0]})`);
-      }
-      if (contextUnit.droppableItemId) {
-        const dropItem = getItemById(contextUnit.droppableItemId);
-        parts.push(`Drops: ${dropItem?.name ?? contextUnit.droppableItemId}`);
-      } else if (item) {
-        parts.push(`Item: ${item.name}`);
-      } else if (skill) {
-        parts.push(`Ability: ${skill.name}`);
-      }
+    let movChip: string;
+    if (cost !== null) {
+      movChip = `Mov ${cost}`;
+    } else if (!contextUnit) {
+      if (terrain === 'water') movChip = 'Water/Fly';
+      else if (terrain === 'lava') movChip = 'Fire/Fly';
+      else if (terrain === 'void' || terrain === 'barrier') movChip = 'Lev Only';
+      else movChip = 'Mov —';
     } else {
-      parts.push(meta.summary);
+      movChip = 'Mov —';
     }
 
-    this.infoStripEl.textContent = parts.join(' · ');
+    const defChip = `Def +${bonuses.defBonus}`;
+    const avoChip = `Avo +${bonuses.avoidBonus}%`;
+    const specialChip =
+      terrain === 'wonder_tile' ? '+20% HP' : terrain === 'stairs' ? 'Stairs' : null;
+
+    this.infoStripEl.dataset.terrain = terrain;
+    this.infoStripEl.innerHTML = `
+      <div class="pmd-tile-box-head">
+        <strong class="pmd-tile-box-name" data-testid="dungeon-tile-name">${this.escapeHudHtml(meta.label)}</strong>
+        ${specialChip ? `<span class="pmd-tile-chip is-special">${this.escapeHudHtml(specialChip)}</span>` : ''}
+      </div>
+      <div class="pmd-tile-box-chips">
+        <span class="pmd-tile-chip" data-testid="dungeon-tile-mov">${this.escapeHudHtml(movChip)}</span>
+        <span class="pmd-tile-chip" data-testid="dungeon-tile-def">${this.escapeHudHtml(defChip)}</span>
+        <span class="pmd-tile-chip" data-testid="dungeon-tile-avo">${this.escapeHudHtml(avoChip)}</span>
+      </div>
+      ${this.prepMapStatusNotice ? `<div class="pmd-tile-box-notice" data-testid="dungeon-tile-notice">${this.escapeHudHtml(this.prepMapStatusNotice)}</div>` : ''}
+    `;
+
+    this.updateUnitHoverPopup();
+  }
+
+  private getPopupTargetUnit(): BattleUnitState | null {
+    if (!this.canInteractWithMapViewport()) {
+      return null;
+    }
+    const inViewMap =
+      this.phase === 'dungeon_prep' &&
+      this.prepOverlay.isOpen() &&
+      this.prepOverlay.getSubMode() === 'view_map';
+    if (this.phase !== 'player_phase' && !inViewMap) {
+      return null;
+    }
+    if (this.interactionState !== 'idle' && this.interactionState !== 'unit_selected') {
+      return null;
+    }
+
+    if (this.hoveredTile !== null) {
+      const { x, y } = this.hoveredTile;
+      return this.getLivingUnits().find((u) => u.x === x && u.y === y) ?? null;
+    }
+    if (this.touchInspectedUnitId !== null) {
+      return this.getLivingUnits().find((u) => u.id === this.touchInspectedUnitId) ?? null;
+    }
+    return null;
+  }
+
+  private updateUnitHoverPopup(): void {
+    const unit = this.getPopupTargetUnit();
+    if (!unit) {
+      this.unitPopupEl.hidden = true;
+      return;
+    }
+
+    const isEnemy = unit.faction === 'enemy';
+    this.unitPopupEl.className = `pmd-window pmd-unit-hover-popup ${isEnemy ? 'is-enemy' : 'is-player'}`;
+    this.unitPopupEl.dataset.unitId = unit.id;
+    this.unitPopupEl.dataset.faction = unit.faction;
+
+    const speciesKey = `${unit.speciesId}:${isEnemy ? 'e' : 'p'}`;
+    if (this.renderedPopupSpeciesKey !== speciesKey) {
+      this.renderedPopupSpeciesKey = speciesKey;
+      void this.unitPopupPortraitView.setPortrait({
+        speciesIdOrAssetId: unit.speciesId,
+        emotion: 'Normal',
+        mirrorHorizontal: isEnemy,
+      });
+    }
+
+    const rolePipEl = this.unitPopupEl.querySelector<HTMLElement>('[data-popup-role-pip]');
+    if (rolePipEl) {
+      if (unit.isLord) {
+        rolePipEl.textContent = '★';
+        rolePipEl.hidden = false;
+      } else if (unit.isBoss) {
+        rolePipEl.textContent = 'BOSS';
+        rolePipEl.hidden = false;
+      } else {
+        rolePipEl.hidden = true;
+      }
+    }
+
+    const statusEl = this.unitPopupEl.querySelector<HTMLElement>('[data-popup-status]');
+    if (statusEl) {
+      if (unit.status) {
+        statusEl.textContent = unit.status;
+        statusEl.hidden = false;
+      } else {
+        statusEl.hidden = true;
+      }
+    }
+
+    const hpTextEl = this.unitPopupEl.querySelector('[data-testid="unit-popup-hp"]');
+    if (hpTextEl) {
+      hpTextEl.textContent = `${unit.currentHp}/${unit.maxHp}`;
+    }
+    const hpFillEl = this.unitPopupEl.querySelector<HTMLElement>('[data-popup-hp-fill]');
+    if (hpFillEl) {
+      hpFillEl.className = `pmd-forecast-hp-bar-fill${isEnemy ? ' is-enemy' : ''}`;
+      hpFillEl.style.width = `${Math.max(0, Math.min(100, Math.round((unit.currentHp / unit.maxHp) * 100)))}%`;
+    }
+
+    const summary = computeUnitPopupStats(this.map, unit);
+    const mightEl = this.unitPopupEl.querySelector('[data-testid="unit-popup-might"]');
+    const defEl = this.unitPopupEl.querySelector('[data-testid="unit-popup-def"]');
+    const spdEl = this.unitPopupEl.querySelector('[data-testid="unit-popup-spd"]');
+    if (mightEl) mightEl.textContent = summary.might !== null ? String(summary.might) : '—';
+    if (defEl) defEl.textContent = String(summary.effectiveDef);
+    if (spdEl) spdEl.textContent = String(summary.effectiveSpd);
+
+    const movesWrap = this.unitPopupEl.querySelector<HTMLElement>(
+      '[data-testid="unit-popup-moves"]'
+    );
+    if (movesWrap) {
+      movesWrap.innerHTML = unit.activeMoves
+        .map((slot) => {
+          const isEq = slot.id === unit.equippedMoveId && slot.move.category !== 'Support';
+          return `<div class="pmd-unit-popup-move${isEq ? ' is-equipped' : ''}"><span>${isEq ? '[E] ' : ''}${this.escapeHudHtml(slot.move.name)}</span><em>R${slot.range[0]}</em></div>`;
+        })
+        .join('');
+    }
+
+    const itemEl = this.unitPopupEl.querySelector<HTMLElement>(
+      '[data-testid="unit-popup-item"]'
+    );
+    if (itemEl) {
+      const itemLabels: string[] = [];
+      if (unit.droppableItemId) {
+        const dropItem = getItemById(unit.droppableItemId);
+        itemLabels.push(`Drops: ${dropItem?.name ?? unit.droppableItemId}`);
+      } else {
+        if (unit.heldItemId) {
+          const held = getItemById(unit.heldItemId);
+          if (held) itemLabels.push(held.name);
+        }
+        if (unit.consumableItemId) {
+          const cons = getItemById(unit.consumableItemId);
+          if (cons) itemLabels.push(cons.name);
+        }
+      }
+      if (itemLabels.length > 0) {
+        itemEl.textContent = itemLabels.join(' · ');
+        itemEl.hidden = false;
+      } else {
+        itemEl.textContent = '';
+        itemEl.hidden = true;
+      }
+    }
+
+    this.unitPopupEl.hidden = false;
+    this.positionUnitHoverPopup(unit);
+  }
+
+  private positionActiveUnitHoverPopup(): void {
+    if (this.unitPopupEl.hidden) return;
+    const unit = this.getPopupTargetUnit();
+    if (!unit) {
+      this.unitPopupEl.hidden = true;
+      return;
+    }
+    this.positionUnitHoverPopup(unit);
+  }
+
+  private positionUnitHoverPopup(unit: BattleUnitState): void {
+    const stageW = this.canvasStageEl.clientWidth || 640;
+    const stageH = this.canvasStageEl.clientHeight || 480;
+    const canvasOffsetX = (stageW - this.bufferWidth * this.displayScale) / 2;
+    const canvasOffsetY = (stageH - this.bufferHeight * this.displayScale) / 2;
+    const tileDisplayPx = PMD_TILE_NATIVE_PX * this.displayScale;
+    const unitScreenX =
+      canvasOffsetX + (unit.x * PMD_TILE_NATIVE_PX - this.cameraX) * this.displayScale;
+    const unitScreenY =
+      canvasOffsetY + (unit.y * PMD_TILE_NATIVE_PX - this.cameraY) * this.displayScale;
+
+    const popupW = Math.min(206, Math.max(168, stageW - 16));
+    const popupH = this.unitPopupEl.offsetHeight || 152;
+
+    let left = unitScreenX + tileDisplayPx + 10;
+    if (left + popupW > stageW - 8) {
+      left = unitScreenX - popupW - 10;
+    }
+    left = Math.max(8, Math.min(stageW - popupW - 8, left));
+
+    const minTop = stageW <= 720 && stageH > 500 ? 58 : 54;
+    const overlapsBottomLeftTileBox = left < 276;
+    const bottomReserve = overlapsBottomLeftTileBox ? 68 : 10;
+    const maxTop = Math.max(minTop, stageH - popupH - bottomReserve);
+    const top = Math.max(minTop, Math.min(maxTop, unitScreenY - 12));
+
+    this.unitPopupEl.style.left = `${Math.round(left)}px`;
+    this.unitPopupEl.style.top = `${Math.round(top)}px`;
   }
 
   // ==========================================================================
@@ -4396,6 +4710,7 @@ export class BattleScene {
     if (this.interactionState === 'action_menu') {
       this.positionFloatingActionMenu();
     }
+    this.positionActiveUnitHoverPopup();
   }
 
   private getMaxCameraBounds(): MapCameraBounds {
@@ -4585,16 +4900,17 @@ export class BattleScene {
 
     const visibleBounds = { startCol, endCol, startRow, endRow };
 
-    // 2. Render Static Enemy Danger Area Overlay
+    // 2. Render Pulsating Enemy Danger Area Overlay (Crimson-Magenta — synchronized flash, distinct from Player's Scarlet-Red Attack Border)
     if (this.currentDanger.combinedDangerTiles.size > 0) {
+      const dangerPulse = this.getSelectionRangePulse(now);
       this.drawConnectedRangeZone(
         ctx,
         this.currentDanger.combinedDangerTiles,
         this.currentDanger.combinedDangerTiles,
         {
-          fillRgba: 'rgba(188, 68, 248, 0.10)',
-          outerBorderRgba: 'rgba(216, 120, 255, 0.88)',
-          innerGlowRgba: 'rgba(188, 76, 248, 0.28)',
+          fillRgba: lerpRgba([196, 28, 128, 0.2], [255, 112, 196, 0.42], dangerPulse),
+          outerBorderRgba: lerpRgba([236, 72, 172, 0.9], [255, 204, 236, 1.0], dangerPulse),
+          innerGlowRgba: lerpRgba([216, 48, 148, 0.34], [255, 152, 214, 0.66], dangerPulse),
         },
         visibleBounds
       );
@@ -4605,9 +4921,9 @@ export class BattleScene {
           this.currentDanger.individualDangerTiles,
           this.currentDanger.individualDangerTiles,
           {
-            fillRgba: 'rgba(248, 64, 148, 0.12)',
-            outerBorderRgba: 'rgba(255, 128, 196, 0.95)',
-            innerGlowRgba: 'rgba(248, 76, 156, 0.32)',
+            fillRgba: lerpRgba([228, 36, 116, 0.24], [255, 136, 192, 0.46], dangerPulse),
+            outerBorderRgba: lerpRgba([252, 88, 160, 0.94], [255, 220, 238, 1.0], dangerPulse),
+            innerGlowRgba: lerpRgba([240, 56, 136, 0.38], [255, 172, 212, 0.7], dangerPulse),
           },
           visibleBounds
         );
