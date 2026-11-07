@@ -71,11 +71,12 @@ const canonicalUrl = Astro.url.href;
           <span>Log In</span>
         </button>
 
-        <!-- In-Development Gate Screen (Visible by default when logged out or not on ALLOWED_PREVIEW_EMAILS) -->
+        <!-- In-Development Gate Screen (Hidden by default while public Demo is live; active if DEV_PREVIEW_GATE_ENABLED is true) -->
         <section
           id="pmd-under-dev-screen"
           class="pmd-window pmd-title-card"
           data-testid="under-dev-screen"
+          hidden
         >
           <span class="pmd-dev-badge">IN DEVELOPMENT</span>
           <h1 class="pmd-title">MYSTERY EMBLEM</h1>
@@ -85,8 +86,8 @@ const canonicalUrl = Astro.url.href;
           <p id="pmd-under-dev-status" class="pmd-status" aria-live="polite" hidden></p>
         </section>
 
-        <!-- Authentic PMD: Explorers of Sky Title Window (Shown only to authorized preview accounts) -->
-        <section id="pmd-title-screen" class="pmd-window pmd-title-card" hidden>
+        <!-- Authentic PMD: Explorers of Sky Title Window -->
+        <section id="pmd-title-screen" class="pmd-window pmd-title-card">
           <h1 class="pmd-title">MYSTERY EMBLEM</h1>
           <p class="pmd-subtitle">Echoes of the Dragon Lineage</p>
 
@@ -123,22 +124,39 @@ const canonicalUrl = Astro.url.href;
           <div class="pmd-campaign-options" role="group" aria-label="Campaign Menu Options">
             <button
               type="button"
-              id="btn-enter-dungeon"
+              id="btn-campaign-demo"
               class="pmd-btn pmd-btn-primary pmd-campaign-option-btn"
-              data-testid="btn-enter-dungeon"
+              data-testid="btn-campaign-demo"
             >
-              <span class="pmd-campaign-option-title">Drenched Bluff</span>
-              <span class="pmd-campaign-option-sub">Single Test Dungeon</span>
+              <span class="pmd-campaign-option-title" id="btn-campaign-demo-title">5-Dungeon Demo</span>
+              <span class="pmd-campaign-option-sub" id="btn-campaign-demo-sub">
+                Quiz · 5 Dungeons · World Map · Cutscenes
+              </span>
             </button>
 
             <button
               type="button"
-              id="btn-campaign-demo"
+              id="btn-campaign-demo-new"
               class="pmd-btn pmd-campaign-option-btn"
-              data-testid="btn-campaign-demo"
+              data-testid="btn-campaign-demo-new"
+              hidden
             >
-              <span class="pmd-campaign-option-title">Demo</span>
-              <span class="pmd-campaign-option-sub">Coming Soon</span>
+              <span class="pmd-campaign-option-title" id="btn-campaign-demo-new-title">
+                New Demo Run
+              </span>
+              <span class="pmd-campaign-option-sub" id="btn-campaign-demo-new-sub">
+                Start Fresh Personality Quiz (Lv. 9)
+              </span>
+            </button>
+
+            <button
+              type="button"
+              id="btn-enter-dungeon"
+              class="pmd-btn pmd-campaign-option-btn"
+              data-testid="btn-enter-dungeon"
+            >
+              <span class="pmd-campaign-option-title">Drenched Bluff</span>
+              <span class="pmd-campaign-option-sub">Single Test Dungeon</span>
             </button>
           </div>
 
@@ -669,6 +687,26 @@ const canonicalUrl = Astro.url.href;
   } from '../mystery-emblem/engine/combatEngine';
   import { chooseEnemyAction } from '../mystery-emblem/engine/enemyAi';
   import {
+    awardBattleUnitExp,
+    computeCombatExpGain,
+    computeSupportHealExpGain,
+    getEligibleEvolutionBranches,
+    promoteBattleUnitMidBattle,
+  } from '../mystery-emblem/engine/progressionEngine';
+  import {
+    DEMO_CAMPAIGN_CHAPTERS,
+    DEMO_INITIAL_CONVOY,
+    DEMO_STARTING_LEVEL,
+    getDemoChapterByNodeId,
+    type CampaignChapterConfig,
+  } from '../mystery-emblem/data/campaignRegistry';
+  import {
+    DRAGON_LORD_OPTIONS,
+    PERSONALITY_QUIZ_QUESTIONS,
+    evaluatePersonalityQuiz,
+    getStarterPartnerOptions,
+  } from '../mystery-emblem/data/quizData';
+  import {
     CHAPTER_LEVEL_CATALOG,
     exportChapterMapJson,
     getDefaultChapterMap,
@@ -685,9 +723,11 @@ const canonicalUrl = Astro.url.href;
   import { OverworldScene } from '../mystery-emblem/scenes/OverworldScene';
   import {
     DEFAULT_OVERWORLD_GRAPH,
+    DEMO_OVERWORLD_GRAPH,
     buildKecleonShopInventory,
     buildSkirmishBattlePayload,
     getOverworldGraph,
+    type OverworldGraphDefinition,
   } from '../mystery-emblem/data/overworldMapData';
   import {
     findOverworldRoute,
@@ -706,6 +746,7 @@ const canonicalUrl = Astro.url.href;
   } from '../mystery-emblem/state/SaveStateManager';
   import { DevToolsHarness } from '../mystery-emblem/ui/DevToolsHarness';
   import { DialogueOverlay } from '../mystery-emblem/ui/DialogueOverlay';
+  import { QuizScene, RecruitNicknameOverlay } from '../mystery-emblem/ui/QuizScene';
   import { destroyAllPmdSpriteActors } from '../mystery-emblem/ui/PmdSpriteCanvas';
   import {
     BackStackController,
@@ -717,6 +758,8 @@ const canonicalUrl = Astro.url.href;
 
   let currentManager: SaveStateManager | null = null;
   let currentDialogueOverlay: DialogueOverlay | null = null;
+  let currentRecruitNicknameOverlay: RecruitNicknameOverlay | null = null;
+  let currentQuizScene: QuizScene | null = null;
   let currentDevToolsHarness: DevToolsHarness | null = null;
   let currentBattleScene: BattleScene | null = null;
   let currentTestDungeonScene: TestDungeonScene | null = null;
@@ -735,6 +778,10 @@ const canonicalUrl = Astro.url.href;
     currentMapEditorScene = null;
     currentOverworldScene?.destroy();
     currentOverworldScene = null;
+    currentQuizScene?.destroy();
+    currentQuizScene = null;
+    currentRecruitNicknameOverlay?.destroy();
+    currentRecruitNicknameOverlay = null;
     currentDevToolsHarness?.destroy();
     currentDevToolsHarness = null;
     currentDialogueOverlay?.destroy();
@@ -773,6 +820,9 @@ const canonicalUrl = Astro.url.href;
 
     const btnEnterDungeon = document.getElementById('btn-enter-dungeon');
     const btnCampaignDemo = document.getElementById('btn-campaign-demo');
+    const btnCampaignDemoSub = document.getElementById('btn-campaign-demo-sub');
+    const btnCampaignDemoNew = document.getElementById('btn-campaign-demo-new');
+    const btnCampaignDemoNewSub = document.getElementById('btn-campaign-demo-new-sub');
 
     const devToolsSyncDiagnostics = document.getElementById('devtools-sync-diagnostics');
     const auditBanner = document.getElementById('registry-audit-banner');
@@ -791,6 +841,17 @@ const canonicalUrl = Astro.url.href;
     let battleReturnTarget: 'campaign' | 'devtools' | 'overworld' | 'title' = 'campaign';
     let overworldScene: OverworldScene | null = null;
     let overworldReturnTarget: 'devtools' | 'campaign' | 'suppress' = 'devtools';
+    let activeOverworldSession: {
+      sandboxMode: boolean;
+      returnTo: 'devtools' | 'campaign';
+      graph: OverworldGraphDefinition;
+    } = {
+      sandboxMode: true,
+      returnTo: 'devtools',
+      graph: DEFAULT_OVERWORLD_GRAPH,
+    };
+    let pendingDemoOutroChapter: CampaignChapterConfig | null = null;
+    let demoLaunchInProgress = false;
     let testDungeonScene: TestDungeonScene | null = null;
     let mapEditorScene: ChapterMapEditorScene | null = null;
 
@@ -872,6 +933,24 @@ const canonicalUrl = Astro.url.href;
       : null;
     currentDialogueOverlay = dialogueOverlay;
 
+    const recruitNicknameOverlay = viewportEl
+      ? new RecruitNicknameOverlay(viewportEl, manager, {
+          audioManager,
+          onStateChange: () => backStack.syncButtonLabel(),
+        })
+      : null;
+    currentRecruitNicknameOverlay = recruitNicknameOverlay;
+
+    const quizScene =
+      viewportEl && recruitNicknameOverlay
+        ? new QuizScene(viewportEl, manager, recruitNicknameOverlay, {
+            audioManager,
+            onCancel: () => openCampaignMenu(),
+            onStateChange: () => backStack.syncButtonLabel(),
+          })
+        : null;
+    currentQuizScene = quizScene;
+
     async function openBattleScene(
       source: 'campaign' | 'devtools' = 'campaign',
       levelId = 'drenched_bluff_vanguard'
@@ -901,13 +980,17 @@ const canonicalUrl = Astro.url.href;
       preset?: 'sandbox' | 'prologue' | 'all';
       sandboxMode?: boolean;
       returnTo?: 'devtools' | 'campaign';
+      graph?: OverworldGraphDefinition;
       preservePosition?: boolean;
     }): Promise<void> {
       const sandboxMode = opts?.sandboxMode ?? true;
       if (!overworldScene || !isPreviewAuthorized()) return;
       if (sandboxMode && !isAdminSignedIn()) return;
 
-      overworldReturnTarget = opts?.returnTo ?? (sandboxMode ? 'devtools' : 'campaign');
+      const returnTo = opts?.returnTo ?? (sandboxMode ? 'devtools' : 'campaign');
+      const graph = opts?.graph ?? (sandboxMode ? DEFAULT_OVERWORLD_GRAPH : DEMO_OVERWORLD_GRAPH);
+      overworldReturnTarget = returnTo;
+      activeOverworldSession = { sandboxMode, returnTo, graph };
 
       if (opts?.preset) {
         if (!manager.getSave()) {
@@ -921,11 +1004,11 @@ const canonicalUrl = Astro.url.href;
           });
         }
         if (opts.preset === 'sandbox') {
-          manager.applyOverworldSandboxPreset();
+          manager.applyOverworldSandboxPreset(graph);
         } else if (opts.preset === 'prologue') {
-          manager.resetOverworldToPrologue();
+          manager.resetOverworldToPrologue(graph);
         } else if (opts.preset === 'all') {
-          manager.unlockAllOverworldNodes();
+          manager.unlockAllOverworldNodes(graph);
         }
       }
 
@@ -935,10 +1018,141 @@ const canonicalUrl = Astro.url.href;
       if (devToolsModal) devToolsModal.hidden = true;
       await overworldScene.open({
         sandboxMode,
+        graph,
         preservePosition: opts?.preservePosition,
         skipDefaultSandboxSeed: Boolean(opts?.preset || opts?.preservePosition),
       });
       backStack.syncButtonLabel();
+
+      if (pendingDemoOutroChapter) {
+        const outroChapter = pendingDemoOutroChapter;
+        pendingDemoOutroChapter = null;
+        if (dialogueOverlay && !manager.hasSeenChapterCutscene('outro', outroChapter.nodeId)) {
+          await dialogueOverlay.playScript(outroChapter.buildOutroScript(manager.getSave()));
+          manager.markChapterCutsceneSeen('outro', outroChapter.nodeId);
+          if (overworldScene.isOpen()) {
+            audioManager.playBgm('exploration_theme', { fadeMs: 260 });
+          }
+          backStack.syncButtonLabel();
+        }
+      }
+    }
+
+    function openDemoQuizFlow(opts?: { skipNicknamePrompts?: boolean; forceNgPlus?: boolean }): void {
+      if (!quizScene || !isPreviewAuthorized()) return;
+      if (underDevScreen) underDevScreen.hidden = true;
+      if (titleScreen) titleScreen.hidden = true;
+      if (campaignMenu) campaignMenu.hidden = true;
+      if (devToolsModal) devToolsModal.hidden = true;
+      quizScene.open({
+        campaignMode: 'demo',
+        startingLevel: DEMO_STARTING_LEVEL,
+        scaleStatsToLevel: true,
+        initialConvoy: DEMO_INITIAL_CONVOY,
+        overworldGraph: DEMO_OVERWORLD_GRAPH,
+        skipNicknamePrompts: opts?.skipNicknamePrompts,
+        forceNgPlus: opts?.forceNgPlus,
+        onComplete: () => {
+          void openOverworldScene({
+            sandboxMode: false,
+            returnTo: 'campaign',
+            graph: DEMO_OVERWORLD_GRAPH,
+            preservePosition: false,
+          });
+        },
+      });
+      backStack.syncButtonLabel();
+    }
+
+    async function launchDemoChapterBattle(demoChapter: CampaignChapterConfig): Promise<void> {
+      if (!battleScene || demoLaunchInProgress) return;
+      demoLaunchInProgress = true;
+      try {
+        // 1. Pre-battle quiz-seeded unit recruitment (with Nickname prompt)
+        if (demoChapter.recruitment && !manager.hasRecruitedChapter(demoChapter.nodeId)) {
+          const saveSnap = manager.getSave();
+          const seededSpecies =
+            saveSnap?.campaign.quizSeeds?.[demoChapter.recruitment.seedKey] ?? [];
+          const targetSpeciesIds =
+            seededSpecies.length > 0
+              ? seededSpecies
+              : demoChapter.recruitment.fallbackSpeciesIds;
+          const newlyRecruited = [];
+          for (const spId of targetSpeciesIds) {
+            const sp = getSpeciesById(spId);
+            if (!sp) continue;
+            const alreadyOwned = manager.getSave()?.roster.some((u) => {
+              const uSp = getSpeciesById(u.speciesId);
+              return uSp?.lineId === sp.lineId;
+            });
+            if (alreadyOwned) continue;
+            const joined = manager.recruitPokemon({
+              speciesId: spId,
+              level: demoChapter.recruitment.joinLevel,
+              scaleStatsToLevel: demoChapter.recruitment.scaleStatsToLevel,
+            });
+            newlyRecruited.push(joined);
+          }
+          manager.markChapterRecruited(demoChapter.nodeId);
+          if (newlyRecruited.length > 0 && recruitNicknameOverlay) {
+            await recruitNicknameOverlay.promptRecruits(newlyRecruited, {
+              bannerText: demoChapter.recruitment.introBanner,
+            });
+          }
+        }
+
+        // 2. Pre-battle Intro Portrait Cutscene
+        if (dialogueOverlay && !manager.hasSeenChapterCutscene('intro', demoChapter.nodeId)) {
+          const introScript = demoChapter.buildIntroScript(manager.getSave());
+          await dialogueOverlay.playScript(introScript);
+          manager.markChapterCutsceneSeen('intro', demoChapter.nodeId);
+        }
+
+        // 3. Transition from Overworld into Dungeon Prep + Battle
+        overworldReturnTarget = 'suppress';
+        overworldScene?.close();
+        battleReturnTarget = 'overworld';
+        if (underDevScreen) underDevScreen.hidden = true;
+        if (titleScreen) titleScreen.hidden = true;
+        if (campaignMenu) campaignMenu.hidden = true;
+        if (devToolsModal) devToolsModal.hidden = true;
+
+        await battleScene.open({
+          levelId: demoChapter.levelId,
+          customMap: demoChapter.buildMap(),
+          enemyOverrides: demoChapter.enemySpawns,
+          objectiveType: demoChapter.objectiveType,
+          objectiveLabel: demoChapter.objectiveLabel,
+          reinforcements: demoChapter.reinforcements,
+          commitToSaveOnVictory: true,
+          clearRewardItems: demoChapter.clearRewardItems,
+          exitButtonLabel: 'Return to World Map',
+          hideReplayOnVictory: true,
+          onVictory: () => {
+            manager.completeOverworldChapter(demoChapter.nodeId, {
+              graph: DEMO_OVERWORLD_GRAPH,
+            });
+            if (demoChapter.guaranteesKecleonShopOnClear) {
+              manager.spawnOverworldKecleonShop(
+                demoChapter.guaranteesKecleonShopOnClear.nodeId,
+                demoChapter.guaranteesKecleonShopOnClear.shopType,
+                Math.random,
+                DEMO_OVERWORLD_GRAPH
+              );
+            }
+            if (demoChapter.isDemoFinale) {
+              manager.markDemoCompleted();
+              manager.setNewGamePlusUnlocked(true);
+            }
+            if (!manager.hasSeenChapterCutscene('outro', demoChapter.nodeId)) {
+              pendingDemoOutroChapter = demoChapter;
+            }
+          },
+        });
+        backStack.syncButtonLabel();
+      } finally {
+        demoLaunchInProgress = false;
+      }
     }
 
     async function openMapEditor(levelId = 'drenched_bluff_vanguard'): Promise<void> {
@@ -970,8 +1184,9 @@ const canonicalUrl = Astro.url.href;
             backStack.syncButtonLabel();
           } else if (battleReturnTarget === 'overworld') {
             void openOverworldScene({
-              sandboxMode: isAdminSignedIn(),
-              returnTo: isAdminSignedIn() ? 'devtools' : 'campaign',
+              sandboxMode: activeOverworldSession.sandboxMode,
+              returnTo: activeOverworldSession.returnTo,
+              graph: activeOverworldSession.graph,
               preservePosition: true,
             });
           } else if (battleReturnTarget === 'campaign') {
@@ -1061,6 +1276,12 @@ const canonicalUrl = Astro.url.href;
         onRequestRenameUnit: (instanceId) => openNicknameModal(instanceId),
         onLaunchChapterBattle: ({ nodeId, levelId }) => {
           if (!battleScene) return;
+          const isSandbox = overworldScene?.getSnapshot().sandboxMode ?? true;
+          const demoChapter = !isSandbox ? getDemoChapterByNodeId(nodeId) : undefined;
+          if (demoChapter) {
+            void launchDemoChapterBattle(demoChapter);
+            return;
+          }
           overworldReturnTarget = 'suppress';
           overworldScene?.close();
           battleReturnTarget = 'overworld';
@@ -1071,15 +1292,19 @@ const canonicalUrl = Astro.url.href;
           void battleScene
             .open({
               levelId,
+              commitToSaveOnVictory: !isSandbox,
               exitButtonLabel: 'Return to Overworld',
               onVictory: () => {
-                manager.completeOverworldChapter(nodeId);
+                manager.completeOverworldChapter(nodeId, {
+                  graph: activeOverworldSession.graph,
+                });
               },
             })
             .then(() => backStack.syncButtonLabel());
         },
         onLaunchSkirmishBattle: ({ nodeId, customMap, enemyOverrides, goldBounty }) => {
           if (!battleScene) return;
+          const isSandbox = overworldScene?.getSnapshot().sandboxMode ?? true;
           overworldReturnTarget = 'suppress';
           overworldScene?.close();
           battleReturnTarget = 'overworld';
@@ -1091,10 +1316,15 @@ const canonicalUrl = Astro.url.href;
             .open({
               customMap,
               enemyOverrides,
+              commitToSaveOnVictory: !isSandbox,
               exitButtonLabel: 'Return to Overworld',
               hideReplayOnVictory: true,
               onVictory: () => {
-                manager.clearOverworldSkirmish(nodeId, goldBounty);
+                manager.clearOverworldSkirmish(
+                  nodeId,
+                  goldBounty,
+                  activeOverworldSession.graph
+                );
               },
             })
             .then(() => backStack.syncButtonLabel());
@@ -1163,6 +1393,10 @@ const canonicalUrl = Astro.url.href;
       getRegistryValidationSummary,
       audioManager,
       dialogueOverlay,
+      recruitNicknameOverlay,
+      quizScene,
+      openDemoQuizFlow,
+      launchDemoChapterBattle,
       devToolsHarness: currentDevToolsHarness,
       battleScene,
       openBattleScene,
@@ -1172,6 +1406,20 @@ const canonicalUrl = Astro.url.href;
       overworldScene,
       openOverworldScene,
       DEFAULT_OVERWORLD_GRAPH,
+      DEMO_OVERWORLD_GRAPH,
+      DEMO_CAMPAIGN_CHAPTERS,
+      DEMO_STARTING_LEVEL,
+      DEMO_INITIAL_CONVOY,
+      getDemoChapterByNodeId,
+      DRAGON_LORD_OPTIONS,
+      PERSONALITY_QUIZ_QUESTIONS,
+      evaluatePersonalityQuiz,
+      getStarterPartnerOptions,
+      awardBattleUnitExp,
+      computeCombatExpGain,
+      computeSupportHealExpGain,
+      getEligibleEvolutionBranches,
+      promoteBattleUnitMidBattle,
       getOverworldGraph,
       buildKecleonShopInventory,
       buildSkirmishBattlePayload,
@@ -1272,6 +1520,9 @@ const canonicalUrl = Astro.url.href;
         mapEditorScene.close();
         return;
       }
+      if (quizScene?.isOpen()) {
+        quizScene.close();
+      }
       if (!devToolsModal.hidden) {
         showTitleScreen();
         return;
@@ -1316,9 +1567,19 @@ const canonicalUrl = Astro.url.href;
       onBack: () => overworldScene?.handleMenuOrBack(),
     });
     backStack.registerLayer({
+      id: 'quiz-scene',
+      isActive: () => Boolean(quizScene?.isOpen()),
+      onBack: () => quizScene?.handleBack(),
+    });
+    backStack.registerLayer({
       id: 'dialogue-overlay',
       isActive: () => Boolean(dialogueOverlay?.isOpen()),
       onBack: () => dialogueOverlay?.close('cancelled'),
+    });
+    backStack.registerLayer({
+      id: 'recruit-nickname-modal',
+      isActive: () => Boolean(recruitNicknameOverlay?.isOpen()),
+      onBack: () => recruitNicknameOverlay?.handleBack(),
     });
     backStack.registerLayer({
       id: 'nickname-modal',
@@ -1385,6 +1646,8 @@ const canonicalUrl = Astro.url.href;
           overworldScene.close();
         }
         if (dialogueOverlay?.isOpen()) dialogueOverlay.close('cancelled');
+        if (quizScene?.isOpen()) quizScene.close();
+        if (recruitNicknameOverlay?.isOpen()) recruitNicknameOverlay.handleBack();
         if (nicknameBackdrop && !nicknameBackdrop.hidden) {
           editingUnitId = null;
           nicknameBackdrop.hidden = true;
@@ -1426,12 +1689,36 @@ const canonicalUrl = Astro.url.href;
       const anyPanelOrSceneOpen =
         Boolean(campaignMenu && !campaignMenu.hidden) ||
         Boolean(devToolsModal && !devToolsModal.hidden) ||
+        Boolean(quizScene?.isOpen()) ||
+        Boolean(recruitNicknameOverlay?.isOpen()) ||
+        Boolean(dialogueOverlay?.isOpen()) ||
         Boolean(battleScene?.isOpen()) ||
         Boolean(testDungeonScene?.isOpen()) ||
         Boolean(mapEditorScene?.isOpen()) ||
         Boolean(overworldScene?.isOpen());
       if (!anyPanelOrSceneOpen && titleScreen) {
         titleScreen.hidden = false;
+      }
+
+      const isActiveDemoSave = Boolean(save && save.campaign.campaignMode === 'demo');
+      const ngPlusReady = manager.isNewGamePlusUnlocked();
+      if (btnCampaignDemoSub) {
+        if (isActiveDemoSave && save) {
+          const clearedCount = save.campaign.completedChapterIds.length;
+          const lordUnit = save.roster.find((u) => u.isLord) ?? save.roster[0];
+          const lordInfo = lordUnit ? `${lordUnit.nickname} Lv.${lordUnit.level}` : 'Squad';
+          btnCampaignDemoSub.textContent = `Continue World Map (${Math.min(5, clearedCount)}/5 Cleared · ${lordInfo})`;
+        } else {
+          btnCampaignDemoSub.textContent = 'Quiz · 5 Dungeons · World Map · Cutscenes';
+        }
+      }
+      if (btnCampaignDemoNew) {
+        btnCampaignDemoNew.hidden = !save && !ngPlusReady;
+      }
+      if (btnCampaignDemoNewSub) {
+        btnCampaignDemoNewSub.textContent = ngPlusReady
+          ? 'Personality Quiz or New Game+ Custom Roster (Lv. 9)'
+          : 'Start Fresh Personality Quiz (Lv. 9)';
       }
 
       // Strictly gate Top-Left Dev Tools button, modal & Test Dungeon / Map Editor to ADMIN_DEVTOOLS_EMAILS
@@ -1588,7 +1875,29 @@ const canonicalUrl = Astro.url.href;
       () => {
         if (!isPreviewAuthorized()) return;
         audioManager.playSfx('select');
-        setCampaignStatus('Demo mode is coming soon!');
+        setCampaignStatus('');
+        const currentSave = manager.getSave();
+        if (currentSave && currentSave.campaign.campaignMode === 'demo') {
+          void openOverworldScene({
+            sandboxMode: false,
+            returnTo: 'campaign',
+            graph: DEMO_OVERWORLD_GRAPH,
+            preservePosition: true,
+          });
+        } else {
+          openDemoQuizFlow();
+        }
+      },
+      { signal }
+    );
+
+    bindPointerTap(
+      btnCampaignDemoNew,
+      () => {
+        if (!isPreviewAuthorized()) return;
+        audioManager.playSfx('select');
+        setCampaignStatus('');
+        openDemoQuizFlow();
       },
       { signal }
     );

@@ -470,6 +470,172 @@ export const DEFAULT_OVERWORLD_GRAPH: OverworldGraphDefinition = {
 };
 
 /**
+ * Sequential 5-Dungeon Demo Overworld Graph (`prologue` -> `chapter_01` -> `chapter_02` -> `chapter_03` -> `chapter_04`).
+ * Reuses the exact Wonder Map landmark coordinates while tuning recommended levels to the Lv. 9–12 Demo curve
+ * and providing direct road edges between every consecutive Demo dungeon.
+ */
+export const DEMO_OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
+  {
+    id: 'prologue',
+    code: 'Dungeon 1',
+    name: 'Beach Cave',
+    kingdom: 'Verdant Commonwealth',
+    description:
+      'Coastal cavern where Ironscale scouts ambush your newly awakened squad. One raider carries a rare Evolution Stone!',
+    kind: 'story',
+    act: 1,
+    x: 208,
+    y: 194,
+    levelId: 'prologue',
+    tilesetId: '001',
+    recommendedLevel: 9,
+    skirmishScoutSpeciesId: 'zigzagoon_galar',
+    clearGoldReward: 650,
+    unlocksNodeIdsOnClear: ['chapter_01'],
+    initiallyUnlocked: true,
+  },
+  {
+    id: 'chapter_01',
+    code: 'Dungeon 2',
+    name: 'Drenched Bluff',
+    kingdom: 'Verdant Commonwealth',
+    description:
+      'Sea-sprayed bluffs held by Bastion Captain Aron. Victory Condition: Defeat the immovable Enemy Leader!',
+    kind: 'story',
+    act: 1,
+    x: 188,
+    y: 138,
+    levelId: 'chapter_01',
+    tilesetId: '003',
+    recommendedLevel: 9,
+    skirmishScoutSpeciesId: 'pawniard',
+    clearGoldReward: 750,
+    unlocksNodeIdsOnClear: ['chapter_02'],
+  },
+  {
+    id: 'chapter_02',
+    code: 'Dungeon 3',
+    name: 'Mt. Bristle',
+    kingdom: 'Verdant Commonwealth',
+    description:
+      'Highland crags riddled with Dungeon Stairs where Ironscale reinforcements climb into the fray—stand on Stairs to block them!',
+    kind: 'story',
+    act: 1,
+    x: 308,
+    y: 122,
+    levelId: 'chapter_02',
+    tilesetId: '014',
+    recommendedLevel: 10,
+    skirmishScoutSpeciesId: 'gothita',
+    clearGoldReward: 850,
+    unlocksNodeIdsOnClear: ['chapter_03'],
+  },
+  {
+    id: 'chapter_03',
+    code: 'Dungeon 4',
+    name: 'Waterfall Cave',
+    kingdom: 'Verdant Commonwealth',
+    description:
+      'Subterranean river stronghold. Clearing the falls rescues Master Merchant Kecleon’s caravan for pre-finale shopping!',
+    kind: 'story',
+    act: 1,
+    x: 244,
+    y: 152,
+    levelId: 'chapter_03',
+    tilesetId: '016',
+    recommendedLevel: 11,
+    skirmishScoutSpeciesId: 'zubat',
+    clearGoldReward: 950,
+    unlocksNodeIdsOnClear: ['chapter_04'],
+    unlocksKecleonShopsOnClear: true,
+  },
+  {
+    id: 'chapter_04',
+    code: 'Dungeon 5',
+    name: 'Apple Woods',
+    kingdom: 'Verdant Commonwealth',
+    description:
+      'Demo Finale! Wonder-Tile orchard fortified by Commander Nuzleaf’s shock vanguard. Defeat the Boss to secure the Commonwealth!',
+    kind: 'story',
+    act: 1,
+    x: 298,
+    y: 150,
+    levelId: 'chapter_04',
+    tilesetId: '042',
+    recommendedLevel: 12,
+    skirmishScoutSpeciesId: 'seedot',
+    clearGoldReward: 1200,
+    unlocksNodeIdsOnClear: [],
+  },
+];
+
+export const DEMO_OVERWORLD_EDGES: ReadonlyArray<OverworldEdgeDefinition> = [
+  {
+    id: 'demo_edge_d1_d2',
+    fromNodeId: 'prologue',
+    toNodeId: 'chapter_01',
+    waypoints: [
+      { x: 198, y: 178 },
+      { x: 190, y: 158 },
+    ],
+  },
+  {
+    id: 'demo_edge_d2_d3',
+    fromNodeId: 'chapter_01',
+    toNodeId: 'chapter_02',
+    waypoints: [
+      { x: 216, y: 126 },
+      { x: 256, y: 114 },
+      { x: 286, y: 118 },
+    ],
+  },
+  {
+    id: 'demo_edge_d3_d4',
+    fromNodeId: 'chapter_02',
+    toNodeId: 'chapter_03',
+    waypoints: [
+      { x: 288, y: 132 },
+      { x: 266, y: 142 },
+    ],
+  },
+  {
+    id: 'demo_edge_d2_d4',
+    fromNodeId: 'chapter_01',
+    toNodeId: 'chapter_03',
+    waypoints: [
+      { x: 206, y: 146 },
+      { x: 224, y: 154 },
+    ],
+  },
+  {
+    id: 'demo_edge_d4_d5',
+    fromNodeId: 'chapter_03',
+    toNodeId: 'chapter_04',
+    waypoints: [
+      { x: 264, y: 154 },
+      { x: 282, y: 152 },
+    ],
+  },
+  {
+    id: 'demo_edge_d3_d5',
+    fromNodeId: 'chapter_02',
+    toNodeId: 'chapter_04',
+    waypoints: [{ x: 304, y: 136 }],
+  },
+];
+
+export const DEMO_OVERWORLD_GRAPH: OverworldGraphDefinition = {
+  id: 'demo_5_dungeon_wonder_map',
+  name: '5-Dungeon Demo — Verdant Commonwealth',
+  imageUrl: OVERWORLD_MAP_IMAGE_URL,
+  imageWidth: OVERWORLD_MAP_NATIVE_WIDTH,
+  imageHeight: OVERWORLD_MAP_NATIVE_HEIGHT,
+  startNodeId: 'prologue',
+  nodes: DEMO_OVERWORLD_NODES,
+  edges: DEMO_OVERWORLD_EDGES,
+};
+
+/**
  * Demo-ready subgraph helper: allows future Demo mode to filter to Act 1 nodes (`maxAct = 1`)
  * or custom chapter subsets without duplicating coordinates or path waypoints.
  */
@@ -746,7 +912,7 @@ export function buildSkirmishBattlePayload(
       speciesId: tpl.speciesId,
       nickname: tpl.nickname,
       level: Math.max(tpl.level, skirmish.recommendedLevel),
-      stats: { ...tpl.stats },
+      stats: skirmish.recommendedLevel > tpl.level ? undefined : { ...tpl.stats },
       moveIds: [...tpl.moveIds],
       equippedMoveId: tpl.equippedMoveId,
       heldItemId: null,

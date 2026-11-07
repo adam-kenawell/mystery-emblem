@@ -209,6 +209,7 @@ export function cloneDungeonMap(map: DungeonMapDefinition): DungeonMapDefinition
     id: map.id,
     name: map.name,
     bgmCue: map.bgmCue,
+    objectiveType: map.objectiveType,
     deploymentCap: map.deploymentCap,
     width: map.width,
     height: map.height,

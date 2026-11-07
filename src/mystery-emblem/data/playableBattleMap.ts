@@ -13,11 +13,13 @@
 
 import { PMD_TILE_NATIVE_PX } from '../assets/tilesetLoader';
 import { isOffensiveMove, type BattleMoveSlot, type BattleUnitState } from '../engine/combatEngine';
+import { computeManualScaledStatsForJoinLevel } from '../engine/progressionEngine';
 import { InMemoryCloudSyncAdapter } from '../state/firebaseSync';
 import { SaveStateManager, type StorageLike } from '../state/SaveStateManager';
 import type {
   DungeonMapDefinition,
   DungeonMapTileCell,
+  EnemyAiMode,
   OwnedPokemonInstance,
   SaveData,
   StatBlockSeven,
@@ -102,11 +104,15 @@ export interface ManualEnemyBattleSpawn {
   speciesId: string;
   nickname: string;
   level: number;
-  /** Manually tuned skirmish stat block (Rule 1: 100% human-editable manual balance) */
-  stats: StatBlockSeven;
+  /** Manually tuned skirmish stat block (if omitted, scaled cleanly from manual registry `baseStats` + `growthRates`) */
+  stats?: StatBlockSeven;
   moveIds?: string[];
   equippedMoveId?: string;
   heldItemId?: string | null;
+  isBoss?: boolean;
+  stationary?: boolean;
+  droppableItemId?: string | null;
+  aiMode?: EnemyAiMode;
 }
 
 export const DEFAULT_VANGUARD_ENEMY_SPAWNS: ReadonlyArray<ManualEnemyBattleSpawn> = [
@@ -246,10 +252,14 @@ export function resolveEnemySpawnsForMap(
         speciesId: spawn.speciesId,
         nickname: spawn.nickname || vanguardPreset.nickname,
         level: spawn.level,
-        stats: { ...vanguardPreset.stats },
+        stats: vanguardPreset.stats ? { ...vanguardPreset.stats } : undefined,
         moveIds: vanguardPreset.moveIds ? [...vanguardPreset.moveIds] : undefined,
         equippedMoveId: vanguardPreset.equippedMoveId,
         heldItemId: spawn.heldItemId ?? vanguardPreset.heldItemId ?? null,
+        isBoss: spawn.isBoss,
+        stationary: spawn.stationary,
+        droppableItemId: spawn.droppableItemId ?? null,
+        aiMode: spawn.aiMode,
       };
     }
 
@@ -261,8 +271,12 @@ export function resolveEnemySpawnsForMap(
       speciesId: sp.id,
       nickname: spawn.nickname || sp.name,
       level: spawn.level,
-      stats: { ...sp.baseStats },
+      stats: computeManualScaledStatsForJoinLevel(sp, spawn.level),
       heldItemId: spawn.heldItemId ?? null,
+      isBoss: spawn.isBoss,
+      stationary: spawn.stationary,
+      droppableItemId: spawn.droppableItemId ?? null,
+      aiMode: spawn.aiMode,
     };
   });
 }
@@ -444,61 +458,76 @@ export function createDefaultDrenchedBluffPrepManager(minSquadSize = 5): SaveSta
   return mgr;
 }
 
+export function buildSingleEnemyBattleUnit(
+  eSpawn: ManualEnemyBattleSpawn,
+  slotIndex: number,
+  now: number = typeof performance !== 'undefined' ? performance.now() : 0
+): BattleUnitState | null {
+  const sp = getSpeciesById(eSpawn.speciesId);
+  if (!sp) return null;
+  const rawMoveIds =
+    eSpawn.moveIds && eSpawn.moveIds.length > 0
+      ? eSpawn.moveIds
+      : sp.learnset
+          .filter((l) => l.level <= Math.max(eSpawn.level, sp.defaultJoinLevel))
+          .map((l) => l.moveId)
+          .slice(-4);
+  const moveSlots = buildMoveSlots(rawMoveIds);
+  const equippedMoveId = resolveDefaultEquippedMove(moveSlots, eSpawn.equippedMoveId);
+  const stats: StatBlockSeven = eSpawn.stats
+    ? { ...eSpawn.stats }
+    : computeManualScaledStatsForJoinLevel(sp, eSpawn.level);
+
+  return {
+    id: eSpawn.id || `enemy_${slotIndex}`,
+    slotIndex,
+    faction: 'enemy',
+    isLord: false,
+    isBoss: Boolean(eSpawn.isBoss),
+    stationary: Boolean(eSpawn.stationary),
+    aiMode: eSpawn.stationary ? 'stationary' : (eSpawn.aiMode ?? 'wait_until_in_range'),
+    droppableItemId: eSpawn.droppableItemId ?? null,
+    speciesId: sp.id,
+    speciesName: sp.name,
+    nickname: eSpawn.nickname || sp.name,
+    level: eSpawn.level,
+    x: eSpawn.x,
+    y: eSpawn.y,
+    mov: stats.mov,
+    maxHp: stats.hp,
+    currentHp: stats.hp,
+    stats,
+    traversalClass: sp.traversalClass,
+    types: sp.types,
+    personalSkillId: sp.personalSkillId,
+    heldItemId: eSpawn.heldItemId ?? null,
+    consumableItemId: null,
+    status: null,
+    statusTurns: 0,
+    tempBattleBoosts: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, crit: 0 },
+    activeMoves: moveSlots,
+    equippedMoveId,
+    waited: false,
+    defeated: false,
+    direction: 6, // West
+    action: 'Idle',
+    frameIndex: 0,
+    nextFrameAt: now + 140,
+    renderWorldX: eSpawn.x * PMD_TILE_NATIVE_PX,
+    renderWorldY: eSpawn.y * PMD_TILE_NATIVE_PX,
+    hitFlashUntilMs: 0,
+    koDissolveProgress: 0,
+  };
+}
+
 function buildEnemyBattleUnits(
   enemyOverrides: ReadonlyArray<ManualEnemyBattleSpawn>,
   now: number
 ): BattleUnitState[] {
   const out: BattleUnitState[] = [];
   enemyOverrides.forEach((eSpawn, idx) => {
-    const sp = getSpeciesById(eSpawn.speciesId);
-    if (!sp) return;
-    const rawMoveIds =
-      eSpawn.moveIds && eSpawn.moveIds.length > 0
-        ? eSpawn.moveIds
-        : sp.learnset
-            .filter((l) => l.level <= Math.max(eSpawn.level, sp.defaultJoinLevel))
-            .map((l) => l.moveId)
-            .slice(-4);
-    const moveSlots = buildMoveSlots(rawMoveIds);
-    const equippedMoveId = resolveDefaultEquippedMove(moveSlots, eSpawn.equippedMoveId);
-    const stats: StatBlockSeven = { ...eSpawn.stats };
-
-    out.push({
-      id: eSpawn.id || `enemy_${idx}`,
-      slotIndex: idx,
-      faction: 'enemy',
-      isLord: false,
-      speciesId: sp.id,
-      speciesName: sp.name,
-      nickname: eSpawn.nickname || sp.name,
-      level: eSpawn.level,
-      x: eSpawn.x,
-      y: eSpawn.y,
-      mov: stats.mov,
-      maxHp: stats.hp,
-      currentHp: stats.hp,
-      stats,
-      traversalClass: sp.traversalClass,
-      types: sp.types,
-      personalSkillId: sp.personalSkillId,
-      heldItemId: eSpawn.heldItemId ?? null,
-      consumableItemId: null,
-      status: null,
-      statusTurns: 0,
-      tempBattleBoosts: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, crit: 0 },
-      activeMoves: moveSlots,
-      equippedMoveId,
-      waited: false,
-      defeated: false,
-      direction: 6, // West
-      action: 'Idle',
-      frameIndex: 0,
-      nextFrameAt: now + 140,
-      renderWorldX: eSpawn.x * PMD_TILE_NATIVE_PX,
-      renderWorldY: eSpawn.y * PMD_TILE_NATIVE_PX,
-      hitFlashUntilMs: 0,
-      koDissolveProgress: 0,
-    });
+    const built = buildSingleEnemyBattleUnit(eSpawn, idx, now);
+    if (built) out.push(built);
   });
   return out;
 }
@@ -542,6 +571,8 @@ export function buildBattleUnitsFromPrepDeployment(
       speciesName: sp.name,
       nickname: owned.nickname || sp.name,
       level: owned.level,
+      exp: owned.exp,
+      unlockedMoveIds: [...owned.unlockedMoveIds],
       x: slot.x,
       y: slot.y,
       mov: stats.mov,
@@ -760,55 +791,7 @@ export function buildInitialBattleUnits(
     });
   }
 
-  enemyOverrides.forEach((eSpawn, idx) => {
-    const sp = getSpeciesById(eSpawn.speciesId);
-    if (!sp) return;
-    const rawMoveIds =
-      eSpawn.moveIds && eSpawn.moveIds.length > 0
-        ? eSpawn.moveIds
-        : sp.learnset
-            .filter((l) => l.level <= Math.max(eSpawn.level, sp.defaultJoinLevel))
-            .map((l) => l.moveId)
-            .slice(-4);
-    const moveSlots = buildMoveSlots(rawMoveIds);
-    const equippedMoveId = resolveDefaultEquippedMove(moveSlots, eSpawn.equippedMoveId);
-    const stats: StatBlockSeven = { ...eSpawn.stats };
-
-    units.push({
-      id: eSpawn.id || `enemy_${idx}`,
-      slotIndex: idx,
-      faction: 'enemy',
-      isLord: false,
-      speciesId: sp.id,
-      speciesName: sp.name,
-      nickname: eSpawn.nickname || sp.name,
-      level: eSpawn.level,
-      x: eSpawn.x,
-      y: eSpawn.y,
-      mov: stats.mov,
-      maxHp: stats.hp,
-      currentHp: stats.hp,
-      stats,
-      traversalClass: sp.traversalClass,
-      types: sp.types,
-      personalSkillId: sp.personalSkillId,
-      heldItemId: eSpawn.heldItemId ?? null,
-      consumableItemId: null,
-      status: null,
-      activeMoves: moveSlots,
-      equippedMoveId,
-      waited: false,
-      defeated: false,
-      direction: 6, // West
-      action: 'Idle',
-      frameIndex: 0,
-      nextFrameAt: now + 140,
-      renderWorldX: eSpawn.x * PMD_TILE_NATIVE_PX,
-      renderWorldY: eSpawn.y * PMD_TILE_NATIVE_PX,
-      hitFlashUntilMs: 0,
-      koDissolveProgress: 0,
-    });
-  });
+  units.push(...buildEnemyBattleUnits(enemyOverrides, now));
 
   return units;
 }

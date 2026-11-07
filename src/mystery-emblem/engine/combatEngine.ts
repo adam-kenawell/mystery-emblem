@@ -199,10 +199,14 @@ export interface BattleUnitState extends PathfindingUnitContext {
   /** Links back to `OwnedPokemonInstance.instanceId` in `SaveStateManager` when deployed from roster */
   rosterInstanceId?: string;
   isLord: boolean;
+  isBoss?: boolean;
+  droppableItemId?: string | null;
   speciesId: string;
   speciesName: string;
   nickname: string;
   level: number;
+  exp?: number;
+  unlockedMoveIds?: string[];
   maxHp: number;
   currentHp: number;
   stats: StatBlockSeven;

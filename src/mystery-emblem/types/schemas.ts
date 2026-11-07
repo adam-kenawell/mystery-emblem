@@ -363,6 +363,8 @@ export interface OverworldNodeState {
   activeKecleonShop: KecleonShopSpawnState | null;
 }
 
+export type CampaignMode = 'demo' | 'main';
+
 export interface CampaignState {
   currentChapterId: string;
   lordInstanceId: string | null;
@@ -370,6 +372,11 @@ export interface CampaignState {
   quizSeeds: QuizRecruitSeeds;
   kecleonShopsUnlocked: boolean;
   completedChapterIds: string[];
+  campaignMode?: CampaignMode;
+  recruitedChapterIds?: string[];
+  seenIntroChapterIds?: string[];
+  seenOutroChapterIds?: string[];
+  demoCompleted?: boolean;
 }
 
 export const CURRENT_SAVE_SCHEMA_VERSION = 1 as const;
@@ -431,6 +438,10 @@ export interface DungeonMapTileCell {
   chunkIndex: number;
 }
 
+export type EnemyAiMode = 'wait_until_in_range' | 'stationary' | 'aggressive';
+
+export type BattleObjectiveType = 'rout' | 'defeat_boss';
+
 export interface DungeonUnitSpawn {
   x: number;
   y: number;
@@ -438,12 +449,22 @@ export interface DungeonUnitSpawn {
   level: number;
   nickname?: string;
   heldItemId?: string | null;
+  /** Marks Enemy Leader / Boss for `defeat_boss` objective and Boss UI badge */
+  isBoss?: boolean;
+  /** If true, this unit will never move from its tile (`mov = 0` in Danger Area & AI) */
+  stationary?: boolean;
+  /** Item ID awarded to the player's Convoy upon defeating this enemy */
+  droppableItemId?: string | null;
+  /** AI movement behavior (defaults to `'wait_until_in_range'`) */
+  aiMode?: EnemyAiMode;
 }
 
 export interface DungeonMapDefinition {
   id: string;
   name: string;
   bgmCue?: string;
+  /** Victory objective for this dungeon (defaults to `'rout'`) */
+  objectiveType?: BattleObjectiveType;
   /** Maximum number of player units allowed to enter the dungeon (defaults to `playerSpawns.length`) */
   deploymentCap?: number;
   width: number;

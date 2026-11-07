@@ -13,7 +13,7 @@
  * - Change `DEV_PREVIEW_GATE_ENABLED` to `false`.
  */
 
-export const DEV_PREVIEW_GATE_ENABLED = true;
+export const DEV_PREVIEW_GATE_ENABLED = false;
 
 /**
  * Google account emails allowed past the "In Development" screen to access the site.
@@ -41,7 +41,13 @@ export function hasPreviewSiteAccess(
   email: string | null | undefined,
   extraAllowedEmails?: ReadonlyArray<string>
 ): boolean {
-  if (!DEV_PREVIEW_GATE_ENABLED) {
+  const forceGate =
+    typeof globalThis !== 'undefined' &&
+    Boolean(
+      (globalThis as unknown as { __MYSTERY_EMBLEM_TEST_FORCE_PREVIEW_GATE__?: boolean })
+        .__MYSTERY_EMBLEM_TEST_FORCE_PREVIEW_GATE__
+    );
+  if (!DEV_PREVIEW_GATE_ENABLED && !forceGate) {
     return true;
   }
   const normalized = normalizeEmail(email);

@@ -1165,6 +1165,10 @@ export function validateDungeonMapDefinition(
         level: Math.max(1, Math.min(40, Math.floor(Number(sp?.level ?? 1)))),
         nickname: sp?.nickname ? String(sp.nickname).slice(0, 22) : def.name,
         heldItemId: sp?.heldItemId ?? null,
+        ...(sp?.isBoss ? { isBoss: true } : {}),
+        ...(sp?.stationary ? { stationary: true } : {}),
+        ...(sp?.droppableItemId ? { droppableItemId: String(sp.droppableItemId) } : {}),
+        ...(sp?.aiMode ? { aiMode: sp.aiMode } : {}),
       });
     }
   }
@@ -1187,6 +1191,9 @@ export function validateDungeonMapDefinition(
       id: resolvedId,
       name: String(raw.name || catalogMeta?.label || resolvedId),
       bgmCue: raw.bgmCue ? String(raw.bgmCue) : catalogMeta?.bgmCue,
+      ...(raw.objectiveType === 'defeat_boss' || raw.objectiveType === 'rout'
+        ? { objectiveType: raw.objectiveType }
+        : {}),
       deploymentCap,
       width,
       height,

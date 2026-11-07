@@ -63,8 +63,8 @@ The LLM agent must implement *Mystery Emblem* in the following 10 sequential ste
   * Build the reusable **Nickname Modal** that prompts the player to name each newly recruited Pokémon (and can be reopened anytime from the Units menu).
   * Build `NG_PLUS_SELECT_SCENE` (available when `newGamePlusUnlocked` is true), replacing the quiz with a manual selection screen for the Dragon Lord, Partner, Q1 Healer, and all Q2–Q9 chapter recruit slots.
 * **Step 3 Verification Checklist:**
-  * [ ] Confirm completing the quiz initializes the Prologue squad (Dragon Lord, Partner, and Q1 Healer Friend), prompts for nicknames on all three, and stores the exact Q2–Q9 recruit seeds in the save state.
-  * [ ] Confirm toggling `newGamePlusUnlocked` enables the New Game Plus manual roster picker and correctly populates all chosen recruits.
+  * [x] Confirm completing the quiz initializes the Prologue squad (Dragon Lord, Partner, and Q1 Healer Friend), prompts for nicknames on all three, and stores the exact Q2–Q9 recruit seeds in the save state.
+  * [x] Confirm toggling `newGamePlusUnlocked` enables the New Game Plus manual roster picker and correctly populates all chosen recruits.
 
 ### Step 4: Fire Emblem Awakening Overworld Map, Kecleon Shops & Skirmish Spawner
 

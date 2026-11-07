@@ -20,6 +20,7 @@
 import { getItemById } from '../data/index';
 import type {
   DungeonMapDefinition,
+  EnemyAiMode,
   MoveTargetType,
   PokemonType,
   StatusCondition,
@@ -42,6 +43,9 @@ export interface PathfindingUnitContext {
   y: number;
   /** Base or stage-configured Mov stat from manual balance registry */
   mov: number;
+  /** If true, unit is anchored to `(x, y)` with `0` movement in pathfinding & Danger Area */
+  stationary?: boolean;
+  aiMode?: EnemyAiMode;
   traversalClass: TraversalClass;
   types: ReadonlyArray<PokemonType>;
   heldItemId: string | null;
@@ -149,6 +153,9 @@ export function hasHeavyDutyBootsEffect(heldItemId: string | null | undefined): 
 }
 
 export function getEffectiveMovementPoints(unit: PathfindingUnitContext): number {
+  if (unit.stationary || unit.aiMode === 'stationary') {
+    return 0;
+  }
   let mov = unit.mov;
   if (unit.heldItemId) {
     const item = getItemById(unit.heldItemId);

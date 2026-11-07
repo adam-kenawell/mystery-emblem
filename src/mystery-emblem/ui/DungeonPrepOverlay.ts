@@ -54,6 +54,7 @@ export interface DungeonPrepOverlayOptions {
   getSaveManager: () => SaveStateManager;
   getMap: () => DungeonMapDefinition;
   getEnemyCount: () => number;
+  getObjectiveLabel?: () => string;
   getDeploymentSlots: () => ReadonlyArray<PrepDeploymentSlot>;
   getDeploymentCap: () => number;
   getGlobalDangerEnabled: () => boolean;
@@ -219,6 +220,8 @@ export class DungeonPrepOverlay {
               <div class="pmd-prep-item-shortcut-info" data-testid="prep-unit-item-summary">Item Slot: Empty</div>
               <button type="button" class="pmd-btn pmd-chip-btn" data-testid="prep-unit-open-items-btn">Equip Item</button>
             </div>
+
+            <div class="pmd-prep-item-shortcut-row" data-prep-promo-wrap hidden></div>
 
             <div class="pmd-prep-stats-section">
               <span class="pmd-preset-label">Stats &amp; Growth Rates</span>
@@ -730,7 +733,9 @@ export class DungeonPrepOverlay {
     if (mapNameEl) mapNameEl.textContent = map.name;
     if (objEl) {
       const defeatCondition = lord ? `${lord.nickname} Faints` : 'Squad Wiped Out';
-      objEl.textContent = `Squad: ${deployed.length}/${cap} · Victory: Defeat All Enemies (${enemyCount}) · Defeat: ${defeatCondition}`;
+      const customObj = this.opts.getObjectiveLabel?.();
+      const victoryLabel = customObj ?? `Defeat All Enemies (${enemyCount})`;
+      objEl.textContent = `Squad: ${deployed.length}/${cap} · Victory: ${victoryLabel} · Defeat: ${defeatCondition}`;
     }
     if (unitsSubEl) {
       unitsSubEl.textContent = `${deployed.length}/${cap} Deployed (${roster.length} Recruited)`;
@@ -932,6 +937,67 @@ export class DungeonPrepOverlay {
     }
     if (itemBtnEl) {
       itemBtnEl.textContent = eqItem ? 'Change Item' : 'Equip Item';
+    }
+
+    // Evolution Stone / Evolution Gem Promotion Row
+    const promoWrapEl = this.unitsBackdropEl.querySelector<HTMLElement>('[data-prep-promo-wrap]');
+    if (promoWrapEl) {
+      promoWrapEl.innerHTML = '';
+      const branches = sp.evolutions ?? [];
+      if (branches.length === 0) {
+        promoWrapEl.hidden = true;
+      } else {
+        const availableBranches = branches.filter((b) => {
+          const inBag = save.convoy.some((c) => c.itemId === b.requiredItemId && c.quantity > 0);
+          const onUnit = selected.consumableItemId === b.requiredItemId;
+          return inBag || onUnit;
+        });
+        if (availableBranches.length === 0) {
+          promoWrapEl.hidden = true;
+        } else {
+          promoWrapEl.hidden = false;
+          const eligibleNow = availableBranches.filter((b) => selected.level >= b.minLevel);
+          if (eligibleNow.length === 0) {
+            const firstB = availableBranches[0]!;
+            const reqItem = getItemById(firstB.requiredItemId)?.name ?? firstB.requiredItemId;
+            promoWrapEl.innerHTML = `<div class="pmd-prep-item-shortcut-info" style="color:#ffd878;">Promotion: Reach <strong>Lv. ${firstB.minLevel}</strong> to use ${escapeHtml(reqItem)}</div>`;
+          } else {
+            const infoSpan = document.createElement('div');
+            infoSpan.className = 'pmd-prep-item-shortcut-info';
+            infoSpan.innerHTML = `<strong style="color:#98f8b8;">★ Promotion Ready!</strong>`;
+            const btnsWrap = document.createElement('div');
+            btnsWrap.className = 'pmd-inline-btns';
+            for (const branch of eligibleNow) {
+              const targetSp = getSpeciesById(branch.targetSpeciesId);
+              const evoBtn = document.createElement('button');
+              evoBtn.type = 'button';
+              evoBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
+              evoBtn.dataset.testid = `prep-evolve-btn-${branch.targetSpeciesId}`;
+              evoBtn.textContent = `Evolve → ${targetSp?.name ?? branch.targetSpeciesId}`;
+              bindPointerTap(evoBtn, () => {
+                try {
+                  const promoted = mgr.useEvolutionItemOnUnit(
+                    selected.instanceId,
+                    branch.requiredItemId,
+                    branch.targetSpeciesId
+                  );
+                  this.opts.audioManager.playSfx('heal');
+                  this.unitsStatusMsg = `★ ${promoted.nickname} evolved into ${getSpeciesById(promoted.speciesId)?.name ?? promoted.speciesId}!`;
+                  this.opts.onRosterOrLoadoutMutated();
+                  this.renderManageUnits();
+                  this.renderHub();
+                } catch (err) {
+                  this.opts.audioManager.playSfx('cancel');
+                  this.unitsStatusMsg = err instanceof Error ? err.message : 'Promotion failed.';
+                  this.renderManageUnits();
+                }
+              });
+              btnsWrap.appendChild(evoBtn);
+            }
+            promoWrapEl.append(infoSpan, btnsWrap);
+          }
+        }
+      }
     }
 
     // 7 Stats + Growth Rates
@@ -1406,7 +1472,48 @@ export class DungeonPrepOverlay {
             }
           }
 
-          row.append(infoDiv, actionBtn);
+          const actionsWrap = document.createElement('div');
+          actionsWrap.className = 'pmd-prep-move-actions';
+          actionsWrap.appendChild(actionBtn);
+
+          if (
+            (item.id === 'evolution_stone' || item.id === 'evolution_gem') &&
+            (bagQty > 0 || currentItemId === item.id) &&
+            selectedSp
+          ) {
+            const eligibleBranches = selectedSp.evolutions.filter(
+              (b) => b.requiredItemId === item.id && selectedUnit.level >= b.minLevel
+            );
+            for (const branch of eligibleBranches) {
+              const targetSp = getSpeciesById(branch.targetSpeciesId);
+              const usePromoBtn = document.createElement('button');
+              usePromoBtn.type = 'button';
+              usePromoBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
+              usePromoBtn.dataset.testid = `prep-item-use-promo-${branch.targetSpeciesId}`;
+              usePromoBtn.textContent = `Evolve → ${targetSp?.name ?? branch.targetSpeciesId}`;
+              bindPointerTap(usePromoBtn, () => {
+                try {
+                  const promoted = mgr.useEvolutionItemOnUnit(
+                    selectedUnit.instanceId,
+                    branch.requiredItemId,
+                    branch.targetSpeciesId
+                  );
+                  this.opts.audioManager.playSfx('heal');
+                  this.itemsStatusMsg = `★ ${promoted.nickname} evolved into ${getSpeciesById(promoted.speciesId)?.name ?? promoted.speciesId}!`;
+                  this.opts.onRosterOrLoadoutMutated();
+                  this.renderManageItems();
+                  this.renderHub();
+                } catch (err) {
+                  this.opts.audioManager.playSfx('cancel');
+                  this.itemsStatusMsg = err instanceof Error ? err.message : 'Promotion failed.';
+                  this.renderManageItems();
+                }
+              });
+              actionsWrap.appendChild(usePromoBtn);
+            }
+          }
+
+          row.append(infoDiv, actionsWrap);
           itemsListEl.appendChild(row);
         }
       }

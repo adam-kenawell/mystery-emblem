@@ -207,8 +207,27 @@ export function chooseEnemyAction(
   }
 
   // --------------------------------------------------------------------------
-  // 2. No player unit in immediate attack range -> Terrain-Aware Pursuit
+  // 2. No player unit in immediate attack range:
+  //    - Default `'wait_until_in_range'` (and `'stationary'`): hold position until
+  //      a player unit enters this enemy's movement + attack range.
+  //    - Optional `'aggressive'` mode: terrain-aware pursuit across the map.
   // --------------------------------------------------------------------------
+  const effectiveAiMode =
+    enemy.stationary || enemy.aiMode === 'stationary'
+      ? 'stationary'
+      : (enemy.aiMode ?? 'wait_until_in_range');
+
+  if (effectiveAiMode !== 'aggressive') {
+    return {
+      kind: 'wait',
+      enemyId: enemy.id,
+      stopX: enemy.x,
+      stopY: enemy.y,
+      path: stayPath,
+      attack: null,
+    };
+  }
+
   const pursuitTile = pickBestPursuitTile(
     map,
     enemy,

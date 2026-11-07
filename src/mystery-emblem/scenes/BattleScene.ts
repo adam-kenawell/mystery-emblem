@@ -38,6 +38,7 @@ import {
   type LoadedTilesetSheet,
 } from '../assets/tilesetLoader';
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
+import type { ReinforcementWaveDefinition } from '../data/campaignRegistry';
 import {
   getEffectiveChapterMap,
   hasChapterMapOverride,
@@ -47,6 +48,7 @@ import { getItemById, getMoveById, getPersonalSkillById } from '../data/index';
 import {
   DEFAULT_VANGUARD_ENEMY_SPAWNS,
   buildBattleUnitsFromPrepDeployment,
+  buildSingleEnemyBattleUnit,
   createDefaultDrenchedBluffPrepManager,
   createInitialPrepDeploymentSlots,
   createPlayableVanguardBattleMap,
@@ -74,6 +76,14 @@ import {
 } from '../engine/combatEngine';
 import { chooseEnemyAction } from '../engine/enemyAi';
 import {
+  awardBattleUnitExp,
+  computeCombatExpGain,
+  computeSupportHealExpGain,
+  getEligibleEvolutionBranches,
+  promoteBattleUnitMidBattle,
+  type LevelUpResult,
+} from '../engine/progressionEngine';
+import {
   TERRAIN_METADATA,
   computeEnemyDangerArea,
   computeUnitMovementAndAttackRange,
@@ -89,7 +99,13 @@ import {
   type MovementRangeResult,
 } from '../engine/terrainAndPathfinding';
 import type { SaveStateManager } from '../state/SaveStateManager';
-import type { DungeonMapDefinition, PokemonType, TraversalClass } from '../types/schemas';
+import type {
+  BattleObjectiveType,
+  ConvoyEntry,
+  DungeonMapDefinition,
+  PokemonType,
+  TraversalClass,
+} from '../types/schemas';
 import { DungeonPrepOverlay, type PrepSubMode } from '../ui/DungeonPrepOverlay';
 import { PmdPortraitView } from '../ui/PmdSpriteCanvas';
 import { bindPointerTap } from '../ui/pointerControls';
@@ -160,6 +176,8 @@ export interface BattleSceneOptions {
 export interface BattleSceneSnapshot {
   isOpen: boolean;
   phase: BattlePhase;
+  objectiveType: BattleObjectiveType;
+  objectiveLabel: string;
   prepSubMode: PrepSubMode | null;
   deploymentSlots: PrepDeploymentSlot[];
   prepSwapSlotIndex: number | null;
@@ -170,6 +188,11 @@ export interface BattleSceneSnapshot {
   forecastTargetId: string | null;
   forecastMoveId: string | null;
   systemMenuOpen: boolean;
+  levelUpModalOpen: boolean;
+  levelUpHistory: LevelUpResult[];
+  collectedDrops: string[];
+  spawnedReinforcementIds: string[];
+  blockedReinforcementIds: string[];
   globalDangerEnabled: boolean;
   trackedEnemyIds: string[];
   fastMode: boolean;
@@ -195,10 +218,15 @@ export interface BattleSceneSnapshot {
     rosterInstanceId: string | null;
     faction: 'player' | 'enemy';
     isLord: boolean;
+    isBoss: boolean;
+    stationary: boolean;
+    droppableItemId: string | null;
+    aiMode: string;
     speciesId: string;
     speciesName: string;
     nickname: string;
     level: number;
+    exp: number;
     x: number;
     y: number;
     currentHp: number;
@@ -250,11 +278,13 @@ export class BattleScene {
   private readonly cmdWaitBtnEl: HTMLButtonElement;
   private readonly cmdCancelBtnEl: HTMLButtonElement;
 
-  // Modals: Dungeon Prep Overlay, Combat Forecast, System Menu, Victory, Defeat
+  // Modals: Dungeon Prep Overlay, Combat Forecast, Level-Up, System Menu, Victory, Defeat
   private readonly prepOverlay: DungeonPrepOverlay;
   private readonly forecastModalBackdropEl: HTMLElement;
   private readonly attackerPortraitView: PmdPortraitView;
   private readonly defenderPortraitView: PmdPortraitView;
+  private readonly levelUpModalBackdropEl: HTMLElement;
+  private readonly levelUpPortraitView: PmdPortraitView;
   private readonly systemMenuBackdropEl: HTMLElement;
   private readonly systemDangerBtnEl: HTMLButtonElement;
   private readonly systemEndPhaseBtnEl: HTMLButtonElement;
@@ -273,6 +303,19 @@ export class BattleScene {
   private activeLevelId = 'drenched_bluff_vanguard';
   private explicitCustomMap: DungeonMapDefinition | null = null;
   private explicitEnemyOverrides: ReadonlyArray<ManualEnemyBattleSpawn> | undefined = undefined;
+  private explicitObjectiveType: BattleObjectiveType | undefined = undefined;
+  private explicitObjectiveLabel: string | undefined = undefined;
+  private objectiveType: BattleObjectiveType = 'rout';
+  private objectiveLabel = 'Rout All Enemies';
+  private reinforcements: ReadonlyArray<ReinforcementWaveDefinition> = [];
+  private spawnedReinforcementIds = new Set<string>();
+  private blockedReinforcementIds = new Set<string>();
+  private collectedDrops: string[] = [];
+  private commitToSaveOnVictory = false;
+  private clearRewardItems: ReadonlyArray<ConvoyEntry> = [];
+  private pauseOnLevelUpInFastMode = false;
+  private levelUpHistory: LevelUpResult[] = [];
+  private levelUpResolver: (() => void) | null = null;
   private currentOnVictory: (() => void) | undefined = undefined;
   private victoryCallbackFired = false;
   private map: DungeonMapDefinition = createPlayableVanguardBattleMap();
@@ -609,6 +652,37 @@ export class BattleScene {
       </div>
     `;
 
+    // 10b. Fire Emblem-Style Level-Up Growth Modal
+    this.levelUpPortraitView = new PmdPortraitView({
+      pixelScale: 1,
+      testId: 'levelup-portrait',
+    });
+    this.levelUpModalBackdropEl = document.createElement('div');
+    this.levelUpModalBackdropEl.className = 'pmd-battle-modal-backdrop';
+    this.levelUpModalBackdropEl.dataset.testid = 'battle-levelup-modal';
+    this.levelUpModalBackdropEl.hidden = true;
+    this.levelUpModalBackdropEl.style.zIndex = '94';
+    this.levelUpModalBackdropEl.innerHTML = `
+      <div class="pmd-window pmd-window--gold pmd-battle-outcome-dialog" role="dialog" aria-modal="true" aria-label="Level Up" style="width:min(420px, 94vw);">
+        <span class="pmd-battle-kicker is-victory">LEVEL UP!</span>
+        <div class="pmd-forecast-unit-head" style="justify-content:center; margin:0.35rem 0 0.5rem;">
+          <div class="pmd-forecast-portrait-slot" data-levelup-portrait-slot></div>
+          <div class="pmd-forecast-unit-id" style="text-align:left;">
+            <strong class="pmd-forecast-unit-name" data-testid="levelup-unit-title">—</strong>
+            <span class="pmd-forecast-unit-meta" data-testid="levelup-level-line">Lv. 9 → Lv. 10</span>
+          </div>
+        </div>
+        <div class="pmd-prep-stats-grid" data-testid="levelup-stats-grid" style="margin-bottom:0.5rem;"></div>
+        <p class="pmd-subcard-text" data-testid="levelup-extra-notes" style="color:#98f8b8; margin:0.25rem 0 0.5rem;" hidden></p>
+        <div class="pmd-battle-outcome-actions">
+          <button type="button" class="pmd-btn pmd-btn-primary" data-testid="levelup-continue-btn" style="min-height:44px;">Continue</button>
+        </div>
+      </div>
+    `;
+    this.levelUpModalBackdropEl
+      .querySelector('[data-levelup-portrait-slot]')
+      ?.appendChild(this.levelUpPortraitView.canvas);
+
     this.rootEl.append(
       this.canvasStageEl,
       this.topHudBarEl,
@@ -616,6 +690,7 @@ export class BattleScene {
       this.infoStripEl,
       this.actionMenuEl,
       this.forecastModalBackdropEl,
+      this.levelUpModalBackdropEl,
       this.systemMenuBackdropEl,
       this.victoryModalBackdropEl,
       this.defeatModalBackdropEl
@@ -628,6 +703,7 @@ export class BattleScene {
       getSaveManager: () => this.getActivePrepSaveManager(),
       getMap: () => this.map,
       getEnemyCount: () => this.getLivingEnemies().length,
+      getObjectiveLabel: () => this.objectiveLabel,
       getDeploymentSlots: () => this.deploymentSlots,
       getDeploymentCap: () => getMapDeploymentCap(this.map),
       getGlobalDangerEnabled: () => this.globalDangerEnabled,
@@ -685,6 +761,7 @@ export class BattleScene {
 
   public hasActiveSubLayer(): boolean {
     if (!this.openState) return false;
+    if (!this.levelUpModalBackdropEl.hidden) return true;
     if (this.systemMenuOpen) return true;
     if (this.phase === 'dungeon_prep') {
       return this.prepSwapSlotIndex !== null || this.prepOverlay.hasActiveSubLayer();
@@ -700,6 +777,12 @@ export class BattleScene {
     levelId?: string;
     customMap?: DungeonMapDefinition;
     enemyOverrides?: ReadonlyArray<ManualEnemyBattleSpawn>;
+    objectiveType?: BattleObjectiveType;
+    objectiveLabel?: string;
+    reinforcements?: ReadonlyArray<ReinforcementWaveDefinition>;
+    commitToSaveOnVictory?: boolean;
+    clearRewardItems?: ReadonlyArray<ConvoyEntry>;
+    pauseOnLevelUpInFastMode?: boolean;
     onVictory?: () => void;
     exitButtonLabel?: string;
     hideReplayOnVictory?: boolean;
@@ -709,6 +792,12 @@ export class BattleScene {
       options?.levelId?.trim() || options?.customMap?.id || 'drenched_bluff_vanguard';
     this.explicitCustomMap = options?.customMap ? cloneDungeonMap(options.customMap) : null;
     this.explicitEnemyOverrides = options?.enemyOverrides;
+    this.explicitObjectiveType = options?.objectiveType;
+    this.explicitObjectiveLabel = options?.objectiveLabel;
+    this.reinforcements = options?.reinforcements ?? [];
+    this.commitToSaveOnVictory = Boolean(options?.commitToSaveOnVictory);
+    this.clearRewardItems = options?.clearRewardItems ?? [];
+    this.pauseOnLevelUpInFastMode = Boolean(options?.pauseOnLevelUpInFastMode);
     this.currentOnVictory = options?.onVictory;
     this.victoryCallbackFired = false;
 
@@ -744,6 +833,10 @@ export class BattleScene {
     } else {
       this.map = getEffectiveChapterMap(this.activeLevelId);
     }
+    this.objectiveType = this.explicitObjectiveType ?? this.map.objectiveType ?? 'rout';
+    this.objectiveLabel =
+      this.explicitObjectiveLabel ??
+      (this.objectiveType === 'defeat_boss' ? 'Defeat the Enemy Leader' : 'Rout All Enemies');
     this.enemySpawnDefs = resolveEnemySpawnsForMap(this.map, this.explicitEnemyOverrides);
 
     if (this.saveManager.getSave() === null) {
@@ -822,6 +915,11 @@ export class BattleScene {
   public handleMenuOrBack(): void {
     if (!this.openState) return;
 
+    if (!this.levelUpModalBackdropEl.hidden) {
+      this.dismissLevelUpModal();
+      return;
+    }
+
     if (this.systemMenuOpen) {
       this.audioManager.playSfx('cancel');
       this.closeSystemMenu();
@@ -892,6 +990,10 @@ export class BattleScene {
     } else {
       this.map = getEffectiveChapterMap(this.activeLevelId);
     }
+    this.objectiveType = this.explicitObjectiveType ?? this.map.objectiveType ?? 'rout';
+    this.objectiveLabel =
+      this.explicitObjectiveLabel ??
+      (this.objectiveType === 'defeat_boss' ? 'Defeat the Enemy Leader' : 'Rout All Enemies');
     this.enemySpawnDefs = resolveEnemySpawnsForMap(this.map, this.explicitEnemyOverrides);
     await this.setupFreshBattleState();
     const lord = this.getLordUnit() ?? this.units[0];
@@ -910,6 +1012,10 @@ export class BattleScene {
 
   public setFastMode(enabled: boolean): void {
     this.fastMode = Boolean(enabled);
+  }
+
+  public setPauseOnLevelUpInFastMode(enabled: boolean): void {
+    this.pauseOnLevelUpInFastMode = Boolean(enabled);
   }
 
   public setRng(rngFn: (() => number) | null): void {
@@ -998,6 +1104,8 @@ export class BattleScene {
     return {
       isOpen: this.openState,
       phase: this.phase,
+      objectiveType: this.objectiveType,
+      objectiveLabel: this.objectiveLabel,
       prepSubMode: this.phase === 'dungeon_prep' && this.prepOverlay.isOpen() ? this.prepOverlay.getSubMode() : null,
       deploymentSlots: this.deploymentSlots.map((s) => ({ ...s })),
       prepSwapSlotIndex: this.prepSwapSlotIndex,
@@ -1008,6 +1116,17 @@ export class BattleScene {
       forecastTargetId: this.forecastTargetId,
       forecastMoveId: this.forecastMoveId,
       systemMenuOpen: this.systemMenuOpen,
+      levelUpModalOpen: !this.levelUpModalBackdropEl.hidden,
+      levelUpHistory: this.levelUpHistory.map((h) => ({
+        ...h,
+        statGains: { ...h.statGains },
+        statsBefore: { ...h.statsBefore },
+        statsAfter: { ...h.statsAfter },
+        newlyLearnedMoveIds: [...h.newlyLearnedMoveIds],
+      })),
+      collectedDrops: [...this.collectedDrops],
+      spawnedReinforcementIds: [...this.spawnedReinforcementIds],
+      blockedReinforcementIds: [...this.blockedReinforcementIds],
       globalDangerEnabled: this.globalDangerEnabled,
       trackedEnemyIds: [...this.trackedEnemyIds],
       fastMode: this.fastMode,
@@ -1033,10 +1152,15 @@ export class BattleScene {
         rosterInstanceId: u.rosterInstanceId ?? null,
         faction: u.faction,
         isLord: u.isLord,
+        isBoss: Boolean(u.isBoss),
+        stationary: Boolean(u.stationary),
+        droppableItemId: u.droppableItemId ?? null,
+        aiMode: u.aiMode ?? (u.stationary ? 'stationary' : 'wait_until_in_range'),
         speciesId: u.speciesId,
         speciesName: u.speciesName,
         nickname: u.nickname,
         level: u.level,
+        exp: u.exp ?? 0,
         x: u.x,
         y: u.y,
         currentHp: u.currentHp,
@@ -1076,6 +1200,12 @@ export class BattleScene {
   private hideAllModals(): void {
     this.prepOverlay.hide();
     this.forecastModalBackdropEl.hidden = true;
+    this.levelUpModalBackdropEl.hidden = true;
+    if (this.levelUpResolver) {
+      const resolve = this.levelUpResolver;
+      this.levelUpResolver = null;
+      resolve();
+    }
     this.systemMenuBackdropEl.hidden = true;
     this.victoryModalBackdropEl.hidden = true;
     this.defeatModalBackdropEl.hidden = true;
@@ -1163,6 +1293,10 @@ export class BattleScene {
     this.activeStrikeVfx = null;
     this.floatingTexts.length = 0;
     this.trackedEnemyIds.clear();
+    this.spawnedReinforcementIds.clear();
+    this.blockedReinforcementIds.clear();
+    this.collectedDrops = [];
+    this.levelUpHistory = [];
     this.prepSwapSlotIndex = null;
     this.clearSelection();
 
@@ -1172,6 +1306,7 @@ export class BattleScene {
     this.interactionState = 'idle';
     this.selectionPulseStartMs = performance.now();
 
+    this.enemySpawnDefs = resolveEnemySpawnsForMap(this.map, this.explicitEnemyOverrides);
     const activeSave = this.getActivePrepSaveManager().getSave()!;
     this.deploymentSlots = createInitialPrepDeploymentSlots(this.map, activeSave.roster);
     this.units = buildBattleUnitsFromPrepDeployment(
@@ -1447,6 +1582,16 @@ export class BattleScene {
       () => {
         this.audioManager.playSfx('select');
         this.close();
+      },
+      { signal }
+    );
+    bindPointerTap(
+      this.levelUpModalBackdropEl.querySelector<HTMLElement>(
+        '[data-testid="levelup-continue-btn"]'
+      ),
+      () => {
+        this.audioManager.playSfx('select');
+        this.dismissLevelUpModal();
       },
       { signal }
     );
@@ -2046,6 +2191,9 @@ export class BattleScene {
     if (item.category === 'x_item') {
       return true;
     }
+    if (item.category === 'promotion') {
+      return getEligibleEvolutionBranches(unit.speciesId, unit.level, item.id).length > 0;
+    }
     if (item.category === 'consumable') {
       const canHeal =
         Boolean(item.effect.healFlat || item.effect.healFull) && unit.currentHp < unit.maxHp;
@@ -2065,9 +2213,16 @@ export class BattleScene {
 
     const targets = this.getAttackableEnemiesFromCurrentTile(unit);
     const healTargets = this.getHealableTargetsFromCurrentTile(unit);
+    const canUseItem = this.canUseUnitEquippedConsumable(unit);
     this.cmdAttackBtnEl.hidden = targets.length === 0;
     this.cmdHealBtnEl.hidden = healTargets.length === 0;
-    this.cmdItemBtnEl.hidden = !this.canUseUnitEquippedConsumable(unit);
+    this.cmdItemBtnEl.hidden = !canUseItem;
+    if (canUseItem && unit.consumableItemId) {
+      const heldItem = getItemById(unit.consumableItemId);
+      this.cmdItemBtnEl.textContent = heldItem?.category === 'promotion' ? 'Evolve!' : 'Item';
+    } else {
+      this.cmdItemBtnEl.textContent = 'Item';
+    }
 
     if (targets.length > 0) {
       const target = targets[0]!.enemy;
@@ -2125,6 +2280,7 @@ export class BattleScene {
 
     const runGen = this.battleRunGen;
     let calloutText = item.name;
+    let needsSpriteReloadSpeciesId: string | null = null;
 
     if (item.category === 'x_item') {
       if (!unit.tempBattleBoosts) {
@@ -2162,6 +2318,16 @@ export class BattleScene {
         unit.statusTurns = 0;
       }
       calloutText = healed > 0 ? `+${healed} HP` : 'CURED!';
+    } else if (
+      item.category === 'promotion' &&
+      (item.id === 'evolution_stone' || item.id === 'evolution_gem')
+    ) {
+      const promo = promoteBattleUnitMidBattle(unit, item.id);
+      if (!this.spriteBundles.has(unit.speciesId)) {
+        needsSpriteReloadSpeciesId = unit.speciesId;
+      }
+      calloutText = `EVOLVED → ${promo.newSpeciesName}!`;
+      this.showPhaseBanner(`${unit.nickname} evolved into ${promo.newSpeciesName}!`);
     }
 
     unit.consumableItemId = null;
@@ -2170,14 +2336,28 @@ export class BattleScene {
     unit.renderWorldX = unit.x * PMD_TILE_NATIVE_PX;
     unit.renderWorldY = unit.y * PMD_TILE_NATIVE_PX;
 
-    this.audioManager.playSfx('heal');
-    this.spawnFloatingText(unit.x, unit.y, calloutText, '#68f8a8');
+    this.audioManager.playSfx(item.category === 'promotion' ? 'victory_fanfare' : 'heal');
+    this.spawnFloatingText(
+      unit.x,
+      unit.y,
+      calloutText,
+      item.category === 'promotion' ? '#ffd860' : '#68f8a8',
+      item.category === 'promotion' ? 1150 : 820
+    );
     this.clearSelection();
     this.recomputeDangerArea();
     this.syncHudControls();
     this.updateInfoStrip();
     this.onLayerStateChanged();
     this.renderFrame(performance.now());
+
+    if (needsSpriteReloadSpeciesId) {
+      const bundle = await loadSpeciesSpriteBundle(needsSpriteReloadSpeciesId);
+      this.spriteBundles.set(needsSpriteReloadSpeciesId, bundle);
+      if (this.openState) {
+        this.renderFrame(performance.now());
+      }
+    }
 
     if (this.areAllLivingPlayersWaited()) {
       await this.waitBattleMs(200);
@@ -2600,9 +2780,19 @@ export class BattleScene {
     );
 
     const defTerrainMeta = TERRAIN_METADATA[forecast.defenderTerrain];
-    if (defNameEl) defNameEl.textContent = defender.nickname;
+    if (defNameEl) {
+      const bossTag = defender.isBoss ? ' [BOSS]' : '';
+      defNameEl.textContent = `${defender.nickname}${bossTag}`;
+    }
     if (defMetaEl) {
-      defMetaEl.textContent = `${defender.speciesName} Lv.${defender.level} · ${defTerrainMeta.label}`;
+      const extraTags: string[] = [];
+      if (defender.stationary) extraTags.push('Immovable');
+      if (defender.droppableItemId) {
+        const dropItem = getItemById(defender.droppableItemId);
+        if (dropItem) extraTags.push(`Drops: ${dropItem.name}`);
+      }
+      const tagSuffix = extraTags.length > 0 ? ` · ${extraTags.join(' · ')}` : '';
+      defMetaEl.textContent = `${defender.speciesName} Lv.${defender.level} · ${defTerrainMeta.label}${tagSuffix}`;
     }
     if (defHpEl) {
       defHpEl.textContent =
@@ -3073,6 +3263,163 @@ export class BattleScene {
 
     this.activeStrikeVfx = null;
     healer.action = 'Idle';
+
+    if (healer.faction === 'player' && !healer.defeated && healer.currentHp > 0) {
+      const enemies = this.units.filter((u) => u.faction === 'enemy');
+      const chapterLv =
+        enemies.length > 0
+          ? Math.max(1, Math.round(enemies.reduce((s, e) => s + e.level, 0) / enemies.length))
+          : healer.level;
+      const healExp = computeSupportHealExpGain(healer.level, chapterLv);
+      await this.grantExpAndHandleLevelUps(healer, healExp, runGen);
+    }
+  }
+
+  private dismissLevelUpModal(): void {
+    if (this.levelUpModalBackdropEl.hidden && !this.levelUpResolver) return;
+    this.levelUpModalBackdropEl.hidden = true;
+    const resolver = this.levelUpResolver;
+    this.levelUpResolver = null;
+    this.onLayerStateChanged();
+    this.renderFrame(performance.now());
+    resolver?.();
+  }
+
+  private presentLevelUpModalAsync(
+    unit: BattleUnitState,
+    roll: LevelUpResult,
+    runGen: number
+  ): Promise<void> {
+    if (!this.openState || runGen !== this.battleRunGen) {
+      return Promise.resolve();
+    }
+
+    const titleEl = this.levelUpModalBackdropEl.querySelector('[data-testid="levelup-unit-title"]');
+    const levelLineEl = this.levelUpModalBackdropEl.querySelector(
+      '[data-testid="levelup-level-line"]'
+    );
+    const statsGridEl = this.levelUpModalBackdropEl.querySelector<HTMLElement>(
+      '[data-testid="levelup-stats-grid"]'
+    );
+    const extraNotesEl = this.levelUpModalBackdropEl.querySelector<HTMLElement>(
+      '[data-testid="levelup-extra-notes"]'
+    );
+
+    if (titleEl) {
+      titleEl.textContent = `${unit.nickname} (${roll.speciesName})`;
+    }
+    if (levelLineEl) {
+      levelLineEl.textContent = `Lv. ${roll.previousLevel} → Lv. ${roll.newLevel}`;
+    }
+
+    void this.levelUpPortraitView.setPortrait({
+      speciesIdOrAssetId: unit.speciesId,
+      emotion: 'Happy',
+      mirrorHorizontal: false,
+    });
+
+    if (statsGridEl) {
+      statsGridEl.innerHTML = '';
+      const statDefs: ReadonlyArray<{
+        key: 'hp' | 'atk' | 'def' | 'spa' | 'spd' | 'spe';
+        label: string;
+      }> = [
+        { key: 'hp', label: 'HP' },
+        { key: 'atk', label: 'ATK' },
+        { key: 'def', label: 'DEF' },
+        { key: 'spa', label: 'SPA' },
+        { key: 'spd', label: 'SPD' },
+        { key: 'spe', label: 'SPE' },
+      ];
+      for (const sd of statDefs) {
+        const gain = roll.statGains[sd.key];
+        const cell = document.createElement('div');
+        cell.className = 'pmd-prep-stat-cell';
+        cell.dataset.testid = `levelup-stat-${sd.key}`;
+        if (gain > 0) {
+          cell.style.borderColor = '#f8d048';
+        }
+        const valText =
+          gain > 0 ? `${roll.statsAfter[sd.key]} (+${gain})` : `${roll.statsAfter[sd.key]}`;
+        cell.innerHTML = `<span>${sd.label}</span><strong style="${gain > 0 ? 'color:#ffe066;' : ''}">${valText}</strong>`;
+        statsGridEl.appendChild(cell);
+      }
+      const movCell = document.createElement('div');
+      movCell.className = 'pmd-prep-stat-cell';
+      movCell.dataset.testid = 'levelup-stat-mov';
+      movCell.innerHTML = `<span>MOV</span><strong>${roll.statsAfter.mov}</strong>`;
+      statsGridEl.appendChild(movCell);
+    }
+
+    if (extraNotesEl) {
+      const notes: string[] = [];
+      if (roll.newlyLearnedMoveIds.length > 0) {
+        const moveNames = roll.newlyLearnedMoveIds
+          .map((mId) => getMoveById(mId)?.name ?? mId)
+          .join(', ');
+        notes.push(`Learned ${moveNames}!`);
+      }
+      if (roll.canPromoteWithStoneNow) {
+        notes.push(`★ Evolution Stone Ready at Lv. ${roll.newLevel}!`);
+      }
+      if (notes.length > 0) {
+        extraNotesEl.textContent = notes.join(' · ');
+        extraNotesEl.hidden = false;
+      } else {
+        extraNotesEl.textContent = '';
+        extraNotesEl.hidden = true;
+      }
+    }
+
+    this.levelUpModalBackdropEl.hidden = false;
+    this.onLayerStateChanged();
+    this.renderFrame(performance.now());
+
+    return new Promise<void>((resolve) => {
+      this.levelUpResolver = resolve;
+      if (this.fastMode && !this.pauseOnLevelUpInFastMode) {
+        window.setTimeout(() => {
+          if (this.levelUpResolver === resolve) {
+            this.dismissLevelUpModal();
+          }
+        }, 45);
+      }
+    });
+  }
+
+  private async grantExpAndHandleLevelUps(
+    unit: BattleUnitState,
+    expGain: number,
+    runGen: number
+  ): Promise<void> {
+    if (
+      !this.openState ||
+      runGen !== this.battleRunGen ||
+      unit.faction !== 'player' ||
+      unit.defeated ||
+      unit.currentHp <= 0 ||
+      expGain <= 0
+    ) {
+      return;
+    }
+
+    const rng = this.customRng ?? Math.random;
+    const { expAdded, levelUps } = awardBattleUnitExp(unit, expGain, rng);
+    if (expAdded <= 0) return;
+
+    this.spawnFloatingText(unit.x, unit.y, `+${expAdded} EXP`, '#7ce8ff', 900);
+    this.updateInfoStrip();
+    await this.waitBattleMs(220);
+    if (!this.openState || runGen !== this.battleRunGen) return;
+
+    for (const lv of levelUps) {
+      this.levelUpHistory.push(lv);
+      this.audioManager.playSfx('victory_fanfare');
+      this.spawnFloatingText(unit.x, unit.y, `LEVEL UP! Lv.${lv.newLevel}`, '#ffe066', 1100);
+      await this.presentLevelUpModalAsync(unit, lv, runGen);
+      if (!this.openState || runGen !== this.battleRunGen) return;
+      this.updateInfoStrip();
+    }
   }
 
   // ==========================================================================
@@ -3250,6 +3597,15 @@ export class BattleScene {
       if (strike.targetDefeated) {
         this.audioManager.playSfx('unit_ko');
         this.spawnFloatingText(target.x, target.y, 'DEFEATED!', '#ffb060', 950);
+        if (target.faction === 'enemy' && target.droppableItemId) {
+          const dropId = target.droppableItemId;
+          target.droppableItemId = null;
+          this.collectedDrops.push(dropId);
+          const dropDef = getItemById(dropId);
+          const dropName = dropDef?.name ?? dropId;
+          this.audioManager.playSfx('heal');
+          this.spawnFloatingText(target.x, Math.max(0, target.y - 1), `Got ${dropName}!`, '#ffd860', 1200);
+        }
         const koSteps = 6;
         for (let s = 1; s <= koSteps; s++) {
           if (!this.openState || runGen !== this.battleRunGen) return;
@@ -3265,6 +3621,33 @@ export class BattleScene {
     }
 
     this.activeStrikeVfx = null;
+
+    // Award Combat EXP to the surviving player participant (on either Player Phase or Enemy Phase counter!)
+    const playerUnit =
+      attacker.faction === 'player' ? attacker : defender.faction === 'player' ? defender : null;
+    const enemyUnit =
+      attacker.faction === 'enemy' ? attacker : defender.faction === 'enemy' ? defender : null;
+
+    if (
+      playerUnit &&
+      enemyUnit &&
+      !playerUnit.defeated &&
+      playerUnit.currentHp > 0 &&
+      outcome.strikes.some((s) => s.actorId === playerUnit.id)
+    ) {
+      const playerStrikes = outcome.strikes.filter((s) => s.actorId === playerUnit.id);
+      const landedHit = playerStrikes.some((s) => s.didHit);
+      const dealtDamage = playerStrikes.some((s) => s.didHit && s.damageDealt > 0);
+      const defeatedEnemy = enemyUnit.defeated || enemyUnit.currentHp <= 0;
+      const expGain = computeCombatExpGain({
+        playerLevel: playerUnit.level,
+        enemyLevel: enemyUnit.level,
+        landedHit,
+        dealtDamage,
+        defeatedEnemy,
+      });
+      await this.grantExpAndHandleLevelUps(playerUnit, expGain, runGen);
+    }
   }
 
   private playWalkPathAsync(
@@ -3383,6 +3766,10 @@ export class BattleScene {
       unit.action = 'Idle';
     }
 
+    // Scheduled Dungeon Stairs Reinforcements (blocked if any living unit occupies the Stairs tile)
+    await this.processTurnReinforcements(runGen);
+    if (!this.openState || runGen !== this.battleRunGen) return;
+
     // Start-of-Player-Phase Wonder Tile 20% Max HP Healing
     for (const pu of this.getLivingPlayers()) {
       const terrain = getMapTerrainAt(this.map, pu.x, pu.y);
@@ -3411,12 +3798,82 @@ export class BattleScene {
     this.renderFrame(performance.now());
   }
 
+  private async processTurnReinforcements(runGen: number): Promise<void> {
+    if (this.reinforcements.length === 0) return;
+    const dueWaves = this.reinforcements.filter(
+      (w) =>
+        w.turnNumber === this.turnNumber &&
+        !this.spawnedReinforcementIds.has(w.id) &&
+        !this.blockedReinforcementIds.has(w.id)
+    );
+    if (dueWaves.length === 0) return;
+
+    for (const wave of dueWaves) {
+      if (!this.openState || runGen !== this.battleRunGen) return;
+      const occupant = this.getLivingUnits().find(
+        (u) => u.x === wave.stairsX && u.y === wave.stairsY
+      );
+      if (occupant) {
+        this.blockedReinforcementIds.add(wave.id);
+        this.audioManager.playSfx('select');
+        this.spawnFloatingText(
+          wave.stairsX,
+          wave.stairsY,
+          'STAIRS BLOCKED!',
+          '#88f8b8',
+          1050
+        );
+        await this.waitBattleMs(200);
+        continue;
+      }
+
+      const spawnDef: ManualEnemyBattleSpawn = {
+        ...wave.enemy,
+        id: wave.enemy.id || wave.id,
+        x: wave.stairsX,
+        y: wave.stairsY,
+      };
+      const newEnemy = buildSingleEnemyBattleUnit(
+        spawnDef,
+        this.units.length,
+        performance.now()
+      );
+      if (!this.spriteBundles.has(newEnemy.speciesId)) {
+        const bundle = await loadSpeciesSpriteBundle(newEnemy.speciesId);
+        this.spriteBundles.set(newEnemy.speciesId, bundle);
+      }
+      this.units.push(newEnemy);
+      this.spawnedReinforcementIds.add(wave.id);
+      this.ensureTilePairVisible(newEnemy.x, newEnemy.y, newEnemy.x, newEnemy.y);
+      this.audioManager.playSfx('phase_change');
+      this.spawnFloatingText(
+        newEnemy.x,
+        newEnemy.y,
+        `REINFORCEMENT!`,
+        '#ff8090',
+        1050
+      );
+      this.renderFrame(performance.now());
+      await this.waitBattleMs(260);
+    }
+  }
+
   private checkAndTriggerMatchEnd(): boolean {
     if (this.isLordDefeated()) {
       this.triggerDefeatModal();
       return true;
     }
-    if (this.getLivingEnemies().length === 0) {
+    const livingEnemies = this.getLivingEnemies();
+    if (this.objectiveType === 'defeat_boss') {
+      const hasAnyBossConfigured = this.units.some((u) => u.faction === 'enemy' && u.isBoss);
+      const livingBosses = livingEnemies.filter((u) => u.isBoss);
+      if (livingEnemies.length === 0 || (hasAnyBossConfigured && livingBosses.length === 0)) {
+        this.triggerVictoryModal();
+        return true;
+      }
+      return false;
+    }
+    if (livingEnemies.length === 0) {
       this.triggerVictoryModal();
       return true;
     }
@@ -3429,6 +3886,33 @@ export class BattleScene {
     this.interactionState = 'idle';
     this.phaseBannerEl.hidden = true;
 
+    if (!this.victoryCallbackFired) {
+      this.victoryCallbackFired = true;
+      if (this.commitToSaveOnVictory && this.saveManager.getSave() !== null) {
+        const deployedSync = this.units
+          .filter((u) => u.faction === 'player' && u.rosterInstanceId)
+          .map((u) => ({
+            instanceId: u.rosterInstanceId!,
+            speciesId: u.speciesId,
+            nickname: u.nickname,
+            level: u.level,
+            exp: u.exp ?? 0,
+            currentStats: { ...u.stats },
+            unlockedMoveIds: [...(u.unlockedMoveIds ?? u.activeMoves.map((m) => m.id))],
+            activeMoveIds: u.activeMoves.map((m) => m.id),
+            equippedMoveId: u.equippedMoveId,
+            heldItemId: u.heldItemId,
+            consumableItemId: u.consumableItemId,
+          }));
+        this.saveManager.commitBattleResults({
+          deployedUnits: deployedSync,
+          droppedItemIds: this.collectedDrops,
+          clearRewardItems: this.clearRewardItems,
+        });
+      }
+      this.currentOnVictory?.();
+    }
+
     const subEl = this.victoryModalBackdropEl.querySelector('[data-victory-sub]');
     const summaryEl = this.victoryModalBackdropEl.querySelector('[data-victory-summary]');
     if (subEl) {
@@ -3436,16 +3920,22 @@ export class BattleScene {
     }
     if (summaryEl) {
       const survivors = this.getLivingPlayers()
-        .map((p) => `${p.nickname} (HP ${p.currentHp}/${p.maxHp})`)
+        .map((p) => `${p.nickname} Lv.${p.level} (HP ${p.currentHp}/${p.maxHp})`)
         .join(' · ');
-      summaryEl.textContent = `Surviving Party: ${survivors}`;
+      const lootNames: string[] = [];
+      for (const dropId of this.collectedDrops) {
+        lootNames.push(getItemById(dropId)?.name ?? dropId);
+      }
+      for (const rew of this.clearRewardItems) {
+        const nm = getItemById(rew.itemId)?.name ?? rew.itemId;
+        lootNames.push(rew.quantity > 1 ? `${nm} ×${rew.quantity}` : nm);
+      }
+      const lootSuffix =
+        lootNames.length > 0 ? ` · Acquired: ${lootNames.join(', ')}!` : '';
+      summaryEl.textContent = `Surviving Party: ${survivors}${lootSuffix}`;
     }
 
     this.victoryModalBackdropEl.hidden = false;
-    if (!this.victoryCallbackFired) {
-      this.victoryCallbackFired = true;
-      this.currentOnVictory?.();
-    }
     this.audioManager.playSfx('victory_fanfare');
     this.audioManager.playBgm('job_clear', { fadeMs: 180, loop: false, restart: true });
     this.syncHudControls();
@@ -3573,14 +4063,24 @@ export class BattleScene {
       const item = eqItemId ? getItemById(eqItemId) : undefined;
       const effMov = getEffectiveMovementPoints(contextUnit);
 
+      const roleBadge = contextUnit.isLord
+        ? ' [LORD]'
+        : contextUnit.isBoss
+          ? ' [BOSS]'
+          : '';
+      const expSuffix =
+        contextUnit.faction === 'player' ? ` · EXP ${contextUnit.exp ?? 0}/100` : '';
       parts.push(
-        `${contextUnit.nickname}${contextUnit.isLord ? ' [LORD]' : ''} (${contextUnit.speciesName} Lv.${contextUnit.level} · HP ${contextUnit.currentHp}/${contextUnit.maxHp} · Mov ${effMov})`,
+        `${contextUnit.nickname}${roleBadge} (${contextUnit.speciesName} Lv.${contextUnit.level}${expSuffix} · HP ${contextUnit.currentHp}/${contextUnit.maxHp} · Mov ${effMov}${contextUnit.stationary ? ' [Immovable]' : ''})`,
         bonusText
       );
       if (eqMove) {
         parts.push(`[E] ${eqMove.name} (R${eqMove.range[0]})`);
       }
-      if (item) {
+      if (contextUnit.droppableItemId) {
+        const dropItem = getItemById(contextUnit.droppableItemId);
+        parts.push(`Drops: ${dropItem?.name ?? contextUnit.droppableItemId}`);
+      } else if (item) {
         parts.push(`Item: ${item.name}`);
       } else if (skill) {
         parts.push(`Ability: ${skill.name}`);
@@ -4096,6 +4596,27 @@ export class BattleScene {
           ctx.fillRect(cx + 1, cy + 1, 1, 2);
           ctx.fillRect(cx + 3, cy + 1, 1, 2);
           ctx.fillRect(cx + 5, cy + 1, 1, 2);
+        } else if (unit.isBoss) {
+          // Crisp crimson boss crown pip at top-left of tile
+          const cx = Math.round(tileScreenX + 1);
+          const cy = Math.round(tileScreenY + 1);
+          ctx.fillStyle = '#081020';
+          ctx.fillRect(cx, cy, 7, 5);
+          ctx.fillStyle = '#ff5468';
+          ctx.fillRect(cx + 1, cy + 3, 5, 1);
+          ctx.fillRect(cx + 1, cy + 1, 1, 2);
+          ctx.fillRect(cx + 3, cy + 1, 1, 2);
+          ctx.fillRect(cx + 5, cy + 1, 1, 2);
+        }
+
+        if (unit.droppableItemId) {
+          // Gold treasure pouch pip at top-right of tile
+          const dx = Math.round(tileScreenX + PMD_TILE_NATIVE_PX - 6);
+          const dy = Math.round(tileScreenY + 1);
+          ctx.fillStyle = '#081020';
+          ctx.fillRect(dx, dy, 5, 5);
+          ctx.fillStyle = '#ffd860';
+          ctx.fillRect(dx + 1, dy + 1, 3, 3);
         }
       }
 

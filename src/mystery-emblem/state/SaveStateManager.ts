@@ -22,8 +22,11 @@ import {
   rollPostBattleOverworldSpawns,
   type PostBattleSpawnResult,
 } from '../engine/overworldEngine';
+import { computeManualScaledStatsForJoinLevel } from '../engine/progressionEngine';
 import {
   CURRENT_SAVE_SCHEMA_VERSION,
+  type CampaignMode,
+  type ConvoyEntry,
   type EvolutionBranch,
   type ItemDefinition,
   type KecleonShopType,
@@ -31,6 +34,7 @@ import {
   type PokemonSpeciesDefinition,
   type QuizRecruitSeeds,
   type SaveData,
+  type StatBlockSeven,
   type SupportLevel,
   type SupportPairProgress,
 } from '../types/schemas';
@@ -219,6 +223,8 @@ export interface CreatePokemonOptions {
   speciesId: string;
   nickname?: string;
   level?: number;
+  /** When true and `level > defaultJoinLevel`, scales manual `baseStats` via manual `growthRates` */
+  scaleStatsToLevel?: boolean;
   isLord?: boolean;
   heldItemId?: string | null;
   consumableItemId?: string | null;
@@ -265,6 +271,10 @@ export function createPokemonInstance(opts: CreatePokemonOptions): OwnedPokemonI
     );
   }
 
+  const initialStats: StatBlockSeven = opts.scaleStatsToLevel
+    ? computeManualScaledStatsForJoinLevel(sp, level)
+    : { ...sp.baseStats };
+
   return {
     instanceId: generateId('unit'),
     speciesId: sp.id,
@@ -272,7 +282,7 @@ export function createPokemonInstance(opts: CreatePokemonOptions): OwnedPokemonI
     isLord: Boolean(opts.isLord),
     level,
     exp: 0,
-    currentStats: { ...sp.baseStats },
+    currentStats: initialStats,
     bonusPpByMoveId: {},
     unlockedMoveIds,
     activeMoveIds,
@@ -302,8 +312,34 @@ export interface NewCampaignConfig {
   healerSpeciesId: string;
   healerNickname?: string;
   quizSeeds?: QuizRecruitSeeds;
+  newGamePlusUnlocked?: boolean;
+  startingLevel?: number;
+  scaleStatsToLevel?: boolean;
+  campaignMode?: CampaignMode;
+  initialConvoy?: ReadonlyArray<ConvoyEntry>;
   startingGold?: number;
   currentChapterId?: string;
+}
+
+export interface BattleUnitSaveSyncEntry {
+  instanceId: string;
+  speciesId: string;
+  nickname: string;
+  level: number;
+  exp: number;
+  currentStats: StatBlockSeven;
+  unlockedMoveIds: string[];
+  activeMoveIds: string[];
+  equippedMoveId: string | null;
+  heldItemId: string | null;
+  consumableItemId: string | null;
+}
+
+export interface CommitBattleResultsPayload {
+  deployedUnits: ReadonlyArray<BattleUnitSaveSyncEntry>;
+  droppedItemIds?: ReadonlyArray<string>;
+  clearRewardItems?: ReadonlyArray<ConvoyEntry>;
+  bonusGold?: number;
 }
 
 export class SaveStateManager {
@@ -381,6 +417,10 @@ export class SaveStateManager {
     }
   }
 
+  public unlockNewGamePlus(): void {
+    this.setNewGamePlusUnlocked(true);
+  }
+
   public setNewGamePlusUnlocked(unlocked: boolean): void {
     this.storage.setItem(META_STORAGE_KEY, JSON.stringify({ newGamePlusUnlocked: unlocked }));
     if (this.currentSave) {
@@ -392,23 +432,29 @@ export class SaveStateManager {
   }
 
   public createNewCampaignSave(cfg: NewCampaignConfig): SaveData {
+    const startLv = Math.max(1, Math.min(40, Math.floor(cfg.startingLevel ?? 1)));
+    const scaleStats = Boolean(cfg.scaleStatsToLevel ?? startLv > 1);
+
     const lord = createPokemonInstance({
       speciesId: cfg.lordSpeciesId,
       nickname: cfg.lordNickname,
-      level: 1,
+      level: startLv,
+      scaleStatsToLevel: scaleStats,
       isLord: true,
       consumableItemId: 'potion',
     });
     const partner = createPokemonInstance({
       speciesId: cfg.partnerSpeciesId,
       nickname: cfg.partnerNickname,
-      level: 1,
+      level: startLv,
+      scaleStatsToLevel: scaleStats,
       heldItemId: 'oran_berry',
     });
     const healer = createPokemonInstance({
       speciesId: cfg.healerSpeciesId,
       nickname: cfg.healerNickname,
-      level: 1,
+      level: startLv,
+      scaleStatsToLevel: scaleStats,
     });
 
     const seeds: QuizRecruitSeeds = cfg.quizSeeds
@@ -419,12 +465,19 @@ export class SaveStateManager {
         };
 
     const initialChapterId = cfg.currentChapterId?.trim() || 'prologue';
+    const defaultConvoy: ConvoyEntry[] = [
+      { itemId: 'potion', quantity: 3 },
+      { itemId: 'full_heal', quantity: 1 },
+      { itemId: 'oran_berry', quantity: 2 },
+      { itemId: 'muscle_band', quantity: 1 },
+      { itemId: 'x_attack', quantity: 1 },
+    ];
 
     const save: SaveData = {
       schemaVersion: CURRENT_SAVE_SCHEMA_VERSION,
       saveId: generateId('campaign'),
       lastUpdated: Date.now(),
-      newGamePlusUnlocked: this.isNewGamePlusUnlocked(),
+      newGamePlusUnlocked: Boolean(cfg.newGamePlusUnlocked || this.isNewGamePlusUnlocked()),
       gold: cfg.startingGold ?? 1500,
       campaign: {
         currentChapterId: initialChapterId,
@@ -433,15 +486,15 @@ export class SaveStateManager {
         quizSeeds: seeds,
         kecleonShopsUnlocked: false,
         completedChapterIds: [],
+        ...(cfg.campaignMode ? { campaignMode: cfg.campaignMode } : {}),
+        recruitedChapterIds: [],
+        seenIntroChapterIds: [],
+        seenOutroChapterIds: [],
       },
       roster: [lord, partner, healer],
-      convoy: [
-        { itemId: 'potion', quantity: 3 },
-        { itemId: 'full_heal', quantity: 1 },
-        { itemId: 'oran_berry', quantity: 2 },
-        { itemId: 'muscle_band', quantity: 1 },
-        { itemId: 'x_attack', quantity: 1 },
-      ],
+      convoy: cfg.initialConvoy
+        ? cfg.initialConvoy.map((c) => ({ itemId: c.itemId, quantity: c.quantity }))
+        : defaultConvoy,
       supports: {},
       overworld: {
         currentNodeId: initialChapterId,
@@ -841,6 +894,151 @@ export class SaveStateManager {
   public addGold(amount: number): SaveData {
     const save = this.requireActiveSave();
     save.gold = Math.max(0, Math.floor(save.gold + amount));
+    this.commitSave(save);
+    return this.getSave()!;
+  }
+
+  /**
+   * Atomically commits post-battle unit EXP, level-ups, mid-battle evolutions, consumed items,
+   * newly unlocked moves, and defeated-enemy item drops to `localStorage` + Cloud Firestore.
+   */
+  public commitBattleResults(payload: CommitBattleResultsPayload): SaveData {
+    const save = this.requireActiveSave();
+    const byId = new Map(save.roster.map((u) => [u.instanceId, u]));
+
+    for (const syncUnit of payload.deployedUnits) {
+      const owned = byId.get(syncUnit.instanceId);
+      if (!owned) continue;
+      const sp = SPECIES_MAP.get(syncUnit.speciesId);
+      if (!sp || sp.faction === 'enemy') continue;
+
+      owned.speciesId = sp.id;
+      owned.nickname = sanitizeNickname(syncUnit.nickname, sp.name);
+      owned.level = Math.max(1, Math.min(40, Math.floor(syncUnit.level)));
+      owned.exp = owned.level >= 40 ? 0 : Math.max(0, Math.min(99, Math.floor(syncUnit.exp)));
+      owned.currentStats = { ...syncUnit.currentStats };
+
+      for (const mId of syncUnit.unlockedMoveIds) {
+        if (MOVE_MAP.has(mId) && !owned.unlockedMoveIds.includes(mId)) {
+          owned.unlockedMoveIds.push(mId);
+        }
+      }
+
+      const validActive = syncUnit.activeMoveIds
+        .filter((mId) => MOVE_MAP.has(mId) && owned.unlockedMoveIds.includes(mId))
+        .slice(0, 4);
+      if (validActive.length > 0) {
+        owned.activeMoveIds = validActive;
+      }
+
+      if (
+        syncUnit.equippedMoveId &&
+        owned.activeMoveIds.includes(syncUnit.equippedMoveId) &&
+        (MOVE_MAP.get(syncUnit.equippedMoveId)?.category === 'Physical' ||
+          MOVE_MAP.get(syncUnit.equippedMoveId)?.category === 'Special')
+      ) {
+        owned.equippedMoveId = syncUnit.equippedMoveId;
+      } else {
+        const firstOff = owned.activeMoveIds.find((mId) => {
+          const mv = MOVE_MAP.get(mId);
+          return mv && (mv.category === 'Physical' || mv.category === 'Special');
+        });
+        owned.equippedMoveId = firstOff ?? null;
+      }
+
+      // Enforce 1-item-slot invariant (consumed berries/potions/stones become null)
+      if (syncUnit.heldItemId && ITEM_MAP.get(syncUnit.heldItemId)?.equipSlot === 'held') {
+        owned.heldItemId = syncUnit.heldItemId;
+        owned.consumableItemId = null;
+      } else if (
+        syncUnit.consumableItemId &&
+        ITEM_MAP.get(syncUnit.consumableItemId)?.equipSlot === 'consumable'
+      ) {
+        owned.consumableItemId = syncUnit.consumableItemId;
+        owned.heldItemId = null;
+      } else {
+        owned.heldItemId = null;
+        owned.consumableItemId = null;
+      }
+    }
+
+    if (payload.droppedItemIds) {
+      for (const itemId of payload.droppedItemIds) {
+        if (ITEM_MAP.has(itemId)) {
+          returnItemToConvoyList(save.convoy, itemId);
+        }
+      }
+    }
+
+    if (payload.clearRewardItems) {
+      for (const reward of payload.clearRewardItems) {
+        if (ITEM_MAP.has(reward.itemId) && reward.quantity > 0) {
+          for (let i = 0; i < reward.quantity; i++) {
+            returnItemToConvoyList(save.convoy, reward.itemId);
+          }
+        }
+      }
+    }
+
+    if (payload.bonusGold && payload.bonusGold > 0) {
+      save.gold = Math.max(0, Math.floor(save.gold + payload.bonusGold));
+    }
+
+    this.commitSave(save);
+    return this.getSave()!;
+  }
+
+  public hasRecruitedChapter(chapterId: string): boolean {
+    const save = this.currentSave;
+    if (!save) return false;
+    return Boolean(save.campaign.recruitedChapterIds?.includes(chapterId));
+  }
+
+  public markChapterRecruited(chapterId: string): SaveData {
+    const save = this.requireActiveSave();
+    if (!Array.isArray(save.campaign.recruitedChapterIds)) {
+      save.campaign.recruitedChapterIds = [];
+    }
+    if (!save.campaign.recruitedChapterIds.includes(chapterId)) {
+      save.campaign.recruitedChapterIds.push(chapterId);
+      this.commitSave(save);
+    }
+    return this.getSave()!;
+  }
+
+  public hasSeenChapterCutscene(kind: 'intro' | 'outro', chapterId: string): boolean {
+    const save = this.currentSave;
+    if (!save) return false;
+    const list =
+      kind === 'intro' ? save.campaign.seenIntroChapterIds : save.campaign.seenOutroChapterIds;
+    return Boolean(list?.includes(chapterId));
+  }
+
+  public markChapterCutsceneSeen(kind: 'intro' | 'outro', chapterId: string): SaveData {
+    const save = this.requireActiveSave();
+    if (kind === 'intro') {
+      if (!Array.isArray(save.campaign.seenIntroChapterIds)) {
+        save.campaign.seenIntroChapterIds = [];
+      }
+      if (!save.campaign.seenIntroChapterIds.includes(chapterId)) {
+        save.campaign.seenIntroChapterIds.push(chapterId);
+        this.commitSave(save);
+      }
+    } else {
+      if (!Array.isArray(save.campaign.seenOutroChapterIds)) {
+        save.campaign.seenOutroChapterIds = [];
+      }
+      if (!save.campaign.seenOutroChapterIds.includes(chapterId)) {
+        save.campaign.seenOutroChapterIds.push(chapterId);
+        this.commitSave(save);
+      }
+    }
+    return this.getSave()!;
+  }
+
+  public markDemoCompleted(): SaveData {
+    const save = this.requireActiveSave();
+    save.campaign.demoCompleted = true;
     this.commitSave(save);
     return this.getSave()!;
   }
