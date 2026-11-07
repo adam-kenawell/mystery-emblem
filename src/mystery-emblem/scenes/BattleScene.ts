@@ -107,6 +107,7 @@ import type {
   TraversalClass,
 } from '../types/schemas';
 import { DungeonPrepOverlay, type PrepSubMode } from '../ui/DungeonPrepOverlay';
+import { createMiniItemIcon } from '../ui/PmdItemIconGrid';
 import { PmdPortraitView } from '../ui/PmdSpriteCanvas';
 import { createMiniSpeciesPortrait } from '../ui/PmdUnitPortraitGrid';
 import {
@@ -2514,7 +2515,18 @@ export class BattleScene {
     this.cmdItemBtnEl.hidden = !canUseItem;
     if (canUseItem && unit.consumableItemId) {
       const heldItem = getItemById(unit.consumableItemId);
-      this.cmdItemBtnEl.textContent = heldItem?.category === 'promotion' ? 'Evolve!' : 'Item';
+      const labelText = heldItem?.category === 'promotion' ? 'Evolve!' : 'Item';
+      this.cmdItemBtnEl.innerHTML = '';
+      this.cmdItemBtnEl.appendChild(
+        createMiniItemIcon(unit.consumableItemId, {
+          sizePx: 16,
+          cropped: true,
+          decorative: true,
+        })
+      );
+      const lblSpan = document.createElement('span');
+      lblSpan.textContent = labelText;
+      this.cmdItemBtnEl.appendChild(lblSpan);
     } else {
       this.cmdItemBtnEl.textContent = 'Item';
     }
@@ -3156,19 +3168,33 @@ export class BattleScene {
       defNameEl.textContent = `${defender.nickname}${bossTag}`;
     }
     if (defMetaEl) {
-      const extraTags: string[] = [];
-      if (defender.stationary) extraTags.push('Immovable');
-      if (defender.droppableItemId) {
-        const dropItem = getItemById(defender.droppableItemId);
-        if (dropItem) extraTags.push(`Drops: ${dropItem.name}`);
+      defMetaEl.innerHTML = '';
+      let hasMeta = false;
+      if (defender.stationary) {
+        const immSpan = document.createElement('span');
+        immSpan.textContent = 'Immovable';
+        defMetaEl.appendChild(immSpan);
+        hasMeta = true;
       }
-      if (extraTags.length > 0) {
-        defMetaEl.textContent = extraTags.join(' · ');
-        defMetaEl.hidden = false;
-      } else {
-        defMetaEl.textContent = '';
-        defMetaEl.hidden = true;
+      if (defender.droppableItemId && getItemById(defender.droppableItemId)) {
+        if (hasMeta) {
+          const sep = document.createElement('span');
+          sep.textContent = ' · ';
+          defMetaEl.appendChild(sep);
+        }
+        const dropChip = document.createElement('span');
+        dropChip.className = 'pmd-hud-drop-chip';
+        dropChip.dataset.testid = 'forecast-defender-drop-chip';
+        const dropLbl = document.createElement('span');
+        dropLbl.textContent = 'DROP';
+        dropChip.append(
+          dropLbl,
+          createMiniItemIcon(defender.droppableItemId, { sizePx: 16, cropped: true })
+        );
+        defMetaEl.appendChild(dropChip);
+        hasMeta = true;
       }
+      defMetaEl.hidden = !hasMeta;
     }
     if (defHpEl) {
       defHpEl.textContent =
@@ -4270,19 +4296,33 @@ export class BattleScene {
       subEl.textContent = `${this.map.name} · Turn ${this.turnNumber}`;
     }
     if (summaryEl) {
-      const lootNames: string[] = [];
+      const qtyByItemId = new Map<string, number>();
       for (const dropId of this.collectedDrops) {
-        lootNames.push(getItemById(dropId)?.name ?? dropId);
+        qtyByItemId.set(dropId, (qtyByItemId.get(dropId) ?? 0) + 1);
       }
       for (const rew of this.clearRewardItems) {
-        const nm = getItemById(rew.itemId)?.name ?? rew.itemId;
-        lootNames.push(rew.quantity > 1 ? `${nm} ×${rew.quantity}` : nm);
+        if (rew.quantity > 0) {
+          qtyByItemId.set(rew.itemId, (qtyByItemId.get(rew.itemId) ?? 0) + rew.quantity);
+        }
       }
-      if (lootNames.length > 0) {
-        summaryEl.textContent = `Acquired: ${lootNames.join(', ')}`;
+      summaryEl.innerHTML = '';
+      if (qtyByItemId.size > 0) {
+        const row = document.createElement('span');
+        row.className = 'pmd-inline-item-row';
+        const lbl = document.createElement('span');
+        lbl.textContent = 'Acquired:';
+        row.appendChild(lbl);
+        for (const [itemId, qty] of qtyByItemId.entries()) {
+          row.appendChild(
+            createMiniItemIcon(itemId, {
+              sizePx: 22,
+              quantityBadge: qty > 1 ? qty : undefined,
+            })
+          );
+        }
+        summaryEl.appendChild(row);
         summaryEl.hidden = false;
       } else {
-        summaryEl.textContent = '';
         summaryEl.hidden = true;
       }
     }
@@ -4568,26 +4608,41 @@ export class BattleScene {
       '[data-testid="unit-popup-item"]'
     );
     if (itemEl) {
-      const itemLabels: string[] = [];
-      if (unit.droppableItemId) {
-        const dropItem = getItemById(unit.droppableItemId);
-        itemLabels.push(`Drops: ${dropItem?.name ?? unit.droppableItemId}`);
-      } else {
-        if (unit.heldItemId) {
-          const held = getItemById(unit.heldItemId);
-          if (held) itemLabels.push(held.name);
-        }
-        if (unit.consumableItemId) {
-          const cons = getItemById(unit.consumableItemId);
-          if (cons) itemLabels.push(cons.name);
-        }
-      }
-      if (itemLabels.length > 0) {
-        itemEl.textContent = itemLabels.join(' · ');
-        itemEl.hidden = false;
-      } else {
-        itemEl.textContent = '';
+      const hasHeld = Boolean(unit.heldItemId && getItemById(unit.heldItemId));
+      const hasCons = Boolean(unit.consumableItemId && getItemById(unit.consumableItemId));
+      const hasDrop = Boolean(unit.droppableItemId && getItemById(unit.droppableItemId));
+      const itemKey = `${hasHeld ? unit.heldItemId : ''}|${hasCons ? unit.consumableItemId : ''}|${hasDrop ? unit.droppableItemId : ''}`;
+      if (!hasHeld && !hasCons && !hasDrop) {
+        itemEl.dataset.itemKey = '';
+        itemEl.innerHTML = '';
         itemEl.hidden = true;
+      } else {
+        if (itemEl.dataset.itemKey !== itemKey) {
+          itemEl.dataset.itemKey = itemKey;
+          itemEl.innerHTML = '';
+          if (hasHeld && unit.heldItemId) {
+            itemEl.appendChild(
+              createMiniItemIcon(unit.heldItemId, { sizePx: 18, cropped: true })
+            );
+          }
+          if (hasCons && unit.consumableItemId) {
+            itemEl.appendChild(
+              createMiniItemIcon(unit.consumableItemId, { sizePx: 18, cropped: true })
+            );
+          }
+          if (hasDrop && unit.droppableItemId) {
+            const dropChip = document.createElement('span');
+            dropChip.className = 'pmd-hud-drop-chip';
+            const dropLbl = document.createElement('span');
+            dropLbl.textContent = 'DROP';
+            dropChip.append(
+              dropLbl,
+              createMiniItemIcon(unit.droppableItemId, { sizePx: 16, cropped: true })
+            );
+            itemEl.appendChild(dropChip);
+          }
+        }
+        itemEl.hidden = false;
       }
     }
 

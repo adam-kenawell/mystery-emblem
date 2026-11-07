@@ -9,6 +9,8 @@
  */
 
 import type { PmdPortraitEmotion } from '../assets/pmdAssetLoader';
+import { getItemById } from '../data/index';
+import { createMiniItemIcon } from './PmdItemIconGrid';
 import { PmdPortraitView } from './PmdSpriteCanvas';
 import { bindPointerTap } from './pointerControls';
 
@@ -22,6 +24,7 @@ export interface CreateUnitPortraitCellOptions {
   isDeployed?: boolean;
   isBenched?: boolean;
   hasItem?: boolean;
+  equippedItemId?: string | null;
   onSelect: () => void;
   signal?: AbortSignal;
 }
@@ -70,7 +73,21 @@ export function createUnitPortraitCell(
     btn.appendChild(pip);
   }
 
-  if (options.hasItem) {
+  if (options.equippedItemId) {
+    const itemDef = getItemById(options.equippedItemId);
+    const itemPip = document.createElement('span');
+    itemPip.className = 'pmd-portrait-pip is-item has-icon';
+    itemPip.dataset.itemId = options.equippedItemId;
+    itemPip.title = itemDef?.name ?? options.equippedItemId;
+    itemPip.setAttribute('aria-hidden', 'true');
+    const mini = createMiniItemIcon(options.equippedItemId, {
+      sizePx: 14,
+      cropped: true,
+      decorative: true,
+    });
+    itemPip.appendChild(mini);
+    btn.appendChild(itemPip);
+  } else if (options.hasItem) {
     const itemDot = document.createElement('span');
     itemDot.className = 'pmd-portrait-pip is-item';
     itemDot.setAttribute('aria-hidden', 'true');

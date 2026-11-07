@@ -25,6 +25,12 @@ export interface DetailedAnimData {
 export const SPRITE_BASE = 'https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/sprite';
 export const PORTRAIT_BASE =
   'https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/portrait';
+export const ITEM_SPRITE_BASE =
+  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items';
+
+export function itemSpriteUrl(iconSlug: string): string {
+  return `${ITEM_SPRITE_BASE}/${encodeURIComponent(iconSlug.trim())}.png`;
+}
 
 export function normalizeAssetPath(pokemonIdOrPath: number | string): string {
   if (typeof pokemonIdOrPath === 'number') {

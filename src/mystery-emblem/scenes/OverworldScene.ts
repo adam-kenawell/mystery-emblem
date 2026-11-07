@@ -49,12 +49,17 @@ import {
 } from '../state/SaveStateManager';
 import type {
   DungeonMapDefinition,
+  ItemDefinition,
   KecleonShopType,
   ManualEnemyBattleSpawn,
   OverworldNodeState,
   OwnedPokemonInstance,
   SaveData,
 } from '../types/schemas';
+import {
+  createItemIconCell,
+  createMiniItemIcon,
+} from '../ui/PmdItemIconGrid';
 import { PmdPortraitView } from '../ui/PmdSpriteCanvas';
 import {
   createMiniSpeciesPortrait,
@@ -316,6 +321,10 @@ export class OverworldScene {
   private systemMenuOpen = false;
   private activeMenuTab: OverworldMenuTab = 'units';
   private selectedUnitInstanceId: string | null = null;
+  private selectedShopItemId: string | null = null;
+  private selectedConvoyItemId: string | null = null;
+  private selectedUnitVitaminId: string | null = null;
+  private selectedUnitTmId: string | null = null;
   private pendingSystemConfirm: 'new_game' | 'delete_save' | null = null;
   private menuFeedbackMessage = '';
   private kecleonStatusMessage = '';
@@ -1559,84 +1568,139 @@ export class OverworldScene {
     this.kecleonSpeechNameEl.textContent = 'Kecleon';
     this.kecleonSpeechTextEl.textContent = meta.greeting;
 
+    const shopItems: ItemDefinition[] = [];
     for (const itemId of shop.inventoryItemIds) {
       const item = getItemById(itemId);
-      if (!item || item.buyPrice === null) continue;
-      const canAfford = save.gold >= item.buyPrice;
-
-      const card = document.createElement('div');
-      card.className = 'pmd-kecleon-item-card';
-      card.innerHTML = `
-        <div data-kecleon-item-meta>
-          <div class="pmd-kecleon-item-top">
-            <strong class="pmd-kecleon-item-name">${item.name}</strong>
-            <span class="pmd-kecleon-item-price">${item.buyPrice}G</span>
-          </div>
-          <p class="pmd-kecleon-item-desc">${item.description}</p>
-        </div>
-        <button type="button" class="pmd-btn pmd-btn-primary" data-testid="kecleon-buy-${item.id}" ${canAfford ? '' : 'disabled'}>
-          ${canAfford ? `Buy (${item.buyPrice}G)` : `${item.buyPrice}G`}
-        </button>
-      `;
-
-      if (item.category === 'tm') {
-        const compatibleUnits = save.roster.filter((u) => {
-          const sp = getSpeciesById(u.speciesId);
-          const mvId = item.effect.teachesMoveId;
-          return (
-            sp &&
-            sp.compatibleTmIds.includes(item.id) &&
-            (!mvId || !u.unlockedMoveIds.includes(mvId))
-          );
-        });
-        const fitsRow = document.createElement('div');
-        fitsRow.className = 'pmd-kecleon-tm-fits';
-        fitsRow.dataset.testid = `kecleon-tm-fits-${item.id}`;
-        const fitsLbl = document.createElement('span');
-        fitsLbl.className = 'pmd-kecleon-fits-lbl';
-        fitsLbl.textContent = 'Fits:';
-        fitsRow.appendChild(fitsLbl);
-
-        if (compatibleUnits.length > 0) {
-          for (const u of compatibleUnits) {
-            fitsRow.appendChild(
-              createMiniSpeciesPortrait(u.speciesId, {
-                title: u.nickname,
-                testId: `kecleon-tm-fit-${item.id}-${u.instanceId}`,
-                sizePx: 24,
-              })
-            );
-          }
-        } else {
-          const noneSpan = document.createElement('span');
-          noneSpan.className = 'pmd-kecleon-fits-none';
-          noneSpan.textContent = 'None';
-          fitsRow.appendChild(noneSpan);
-        }
-        card.querySelector('[data-kecleon-item-meta]')?.appendChild(fitsRow);
+      if (item && item.buyPrice !== null) {
+        shopItems.push(item);
       }
-
-      const buyBtn = card.querySelector<HTMLButtonElement>(`[data-testid="kecleon-buy-${item.id}"]`);
-      bindPointerTap(buyBtn, () => {
-        try {
-          const outcome = this.saveManager.buyKecleonShopItem(
-            reconciled.currentNodeId,
-            item.id,
-            this.graph
-          );
-          this.audioManager.playSfx('heal');
-          this.kecleonStatusMessage = `Bought ${outcome.item.name} (${outcome.save.gold}G left).`;
-          this.renderKecleonShopContents();
-        } catch (err) {
-          this.audioManager.playSfx('cancel');
-          this.kecleonStatusMessage =
-            err instanceof Error ? err.message : 'Purchase failed.';
-          this.renderKecleonShopContents();
-        }
-      });
-
-      this.kecleonShelfEl.appendChild(card);
     }
+
+    if (shopItems.length === 0) {
+      this.kecleonTitleEl.textContent = 'KECLEON SHOP — SOLD OUT';
+      this.kecleonSpeechNameEl.textContent = 'Kecleon';
+      this.kecleonSpeechTextEl.textContent = 'Sold out! Safe travels!';
+      return;
+    }
+
+    if (!this.selectedShopItemId || !shopItems.some((it) => it.id === this.selectedShopItemId)) {
+      this.selectedShopItemId = shopItems[0]!.id;
+    }
+    const selectedItem =
+      shopItems.find((it) => it.id === this.selectedShopItemId) ?? shopItems[0]!;
+
+    const gridEl = document.createElement('div');
+    gridEl.className = 'pmd-item-icon-grid';
+    gridEl.dataset.testid = 'kecleon-item-grid';
+    for (const item of shopItems) {
+      gridEl.appendChild(
+        createItemIconCell({
+          itemId: item.id,
+          testId: `kecleon-item-cell-${item.id}`,
+          isSelected: item.id === selectedItem.id,
+          priceGold: item.buyPrice ?? undefined,
+          isDepleted: save.gold < (item.buyPrice ?? 0),
+          onSelect: () => {
+            this.audioManager.playSfx('select');
+            this.selectedShopItemId = item.id;
+            this.renderKecleonShopContents();
+          },
+        })
+      );
+    }
+
+    const canAfford = save.gold >= (selectedItem.buyPrice ?? 0);
+    const bannerEl = document.createElement('div');
+    bannerEl.className = 'pmd-item-inspector-banner';
+    bannerEl.dataset.testid = 'kecleon-inspector-banner';
+
+    const mainEl = document.createElement('div');
+    mainEl.className = 'pmd-item-inspector-main';
+    mainEl.appendChild(createMiniItemIcon(selectedItem.id, { sizePx: 28, decorative: true }));
+
+    const copyEl = document.createElement('div');
+    copyEl.className = 'pmd-item-inspector-copy';
+    const headEl = document.createElement('div');
+    headEl.className = 'pmd-item-inspector-head';
+    const nameEl = document.createElement('strong');
+    nameEl.className = 'pmd-item-inspector-name';
+    nameEl.textContent = selectedItem.name;
+    const priceEl = document.createElement('span');
+    priceEl.className = 'pmd-kecleon-item-price';
+    priceEl.textContent = `${selectedItem.buyPrice}G`;
+    headEl.append(nameEl, priceEl);
+
+    const descEl = document.createElement('span');
+    descEl.className = 'pmd-item-inspector-desc';
+    descEl.textContent = selectedItem.description;
+    copyEl.append(headEl, descEl);
+
+    if (selectedItem.category === 'tm') {
+      const compatibleUnits = save.roster.filter((u) => {
+        const sp = getSpeciesById(u.speciesId);
+        const mvId = selectedItem.effect.teachesMoveId;
+        return (
+          sp &&
+          sp.compatibleTmIds.includes(selectedItem.id) &&
+          (!mvId || !u.unlockedMoveIds.includes(mvId))
+        );
+      });
+      const fitsRow = document.createElement('div');
+      fitsRow.className = 'pmd-kecleon-tm-fits';
+      fitsRow.dataset.testid = `kecleon-tm-fits-${selectedItem.id}`;
+      const fitsLbl = document.createElement('span');
+      fitsLbl.className = 'pmd-kecleon-fits-lbl';
+      fitsLbl.textContent = 'Fits:';
+      fitsRow.appendChild(fitsLbl);
+
+      if (compatibleUnits.length > 0) {
+        for (const u of compatibleUnits) {
+          fitsRow.appendChild(
+            createMiniSpeciesPortrait(u.speciesId, {
+              title: u.nickname,
+              testId: `kecleon-tm-fit-${selectedItem.id}-${u.instanceId}`,
+              sizePx: 24,
+            })
+          );
+        }
+      } else {
+        const noneSpan = document.createElement('span');
+        noneSpan.className = 'pmd-kecleon-fits-none';
+        noneSpan.textContent = 'None';
+        fitsRow.appendChild(noneSpan);
+      }
+      copyEl.appendChild(fitsRow);
+    }
+
+    mainEl.appendChild(copyEl);
+
+    const buyBtn = document.createElement('button');
+    buyBtn.type = 'button';
+    buyBtn.className = 'pmd-btn pmd-btn-primary';
+    buyBtn.dataset.testid = `kecleon-buy-${selectedItem.id}`;
+    buyBtn.disabled = !canAfford;
+    buyBtn.textContent = canAfford ? `Buy (${selectedItem.buyPrice}G)` : `${selectedItem.buyPrice}G`;
+
+    bindPointerTap(buyBtn, () => {
+      try {
+        const outcome = this.saveManager.buyKecleonShopItem(
+          reconciled.currentNodeId,
+          selectedItem.id,
+          this.graph
+        );
+        this.audioManager.playSfx('heal');
+        this.kecleonStatusMessage = `Bought ${outcome.item.name} (${outcome.save.gold}G left).`;
+        this.renderKecleonShopContents();
+      } catch (err) {
+        this.audioManager.playSfx('cancel');
+        this.kecleonStatusMessage =
+          err instanceof Error ? err.message : 'Purchase failed.';
+        this.renderKecleonShopContents();
+      }
+    });
+
+    bannerEl.append(mainEl, buyBtn);
+    this.kecleonShelfEl.append(gridEl, bannerEl);
   }
 
   // ==========================================================================
@@ -1704,6 +1768,7 @@ export class OverworldScene {
     listCol.dataset.testid = 'overworld-roster-grid';
 
     for (const u of save.roster) {
+      const uItemId = getUnitEquippedItemId(u);
       const btn = createUnitPortraitCell({
         speciesIdOrAssetId: u.speciesId,
         ariaLabel: u.nickname,
@@ -1711,7 +1776,8 @@ export class OverworldScene {
         portraitTestId: `overworld-roster-portrait-${u.instanceId}`,
         isSelected: u.instanceId === this.selectedUnitInstanceId,
         isLord: u.isLord,
-        hasItem: Boolean(getUnitEquippedItemId(u)),
+        hasItem: Boolean(uItemId),
+        equippedItemId: uItemId,
         onSelect: () => {
           this.audioManager.playSfx('select');
           this.selectedUnitInstanceId = u.instanceId;
@@ -1793,7 +1859,7 @@ export class OverworldScene {
         statStrip.appendChild(cell);
       }
 
-      // Concise Ability + Item Box
+      // Concise Ability + Icon-First Item Box
       const gearBox = document.createElement('div');
       gearBox.className = 'pmd-overworld-subbox';
       gearBox.innerHTML = `
@@ -1803,23 +1869,42 @@ export class OverworldScene {
             <span>${skill?.description ?? ''}</span>
           </div>
         </div>
-        <div class="pmd-overworld-action-row">
-          <div class="pmd-overworld-action-meta">
-            <strong data-testid="overworld-unit-equipped-item">Item: ${equippedItem ? equippedItem.name : 'Empty'}</strong>
-            ${equippedItem ? `<span>${equippedItem.description}</span>` : ''}
-          </div>
-          ${equippedItem ? '<button type="button" class="pmd-btn pmd-chip-btn" data-testid="overworld-unequip-item-btn">Unequip</button>' : ''}
-        </div>
       `;
-      bindPointerTap(
-        gearBox.querySelector<HTMLElement>('[data-testid="overworld-unequip-item-btn"]'),
-        () => {
+      const itemActionRow = document.createElement('div');
+      itemActionRow.className = 'pmd-overworld-action-row';
+      const itemMeta = document.createElement('div');
+      itemMeta.className = 'pmd-overworld-action-meta';
+      itemMeta.dataset.testid = 'overworld-unit-equipped-item';
+      if (equippedItem) {
+        const iconRow = document.createElement('div');
+        iconRow.className = 'pmd-inline-item-row';
+        iconRow.appendChild(createMiniItemIcon(equippedItem.id, { sizePx: 22 }));
+        const descSpan = document.createElement('span');
+        descSpan.textContent = equippedItem.description;
+        iconRow.appendChild(descSpan);
+        itemMeta.appendChild(iconRow);
+      } else {
+        const emptyStrong = document.createElement('strong');
+        emptyStrong.textContent = 'Item: Empty';
+        itemMeta.appendChild(emptyStrong);
+      }
+      itemActionRow.appendChild(itemMeta);
+
+      if (equippedItem) {
+        const unequipBtn = document.createElement('button');
+        unequipBtn.type = 'button';
+        unequipBtn.className = 'pmd-btn pmd-chip-btn';
+        unequipBtn.dataset.testid = 'overworld-unequip-item-btn';
+        unequipBtn.textContent = 'Unequip';
+        bindPointerTap(unequipBtn, () => {
           this.audioManager.playSfx('cancel');
           this.saveManager.equipItemToUnit(selected.instanceId, null);
-          this.setMenuFeedback(`Returned ${equippedItem?.name ?? 'item'} to Bag.`);
+          this.setMenuFeedback(`Returned ${equippedItem.name} to Bag.`);
           this.renderSystemMenuBody();
-        }
-      );
+        });
+        itemActionRow.appendChild(unequipBtn);
+      }
+      gearBox.appendChild(itemActionRow);
 
       detailCol.append(headerRow, statStrip, gearBox);
 
@@ -1835,136 +1920,224 @@ export class OverworldScene {
         promoBox.innerHTML = `<p class="pmd-overworld-subbox-title">Evolution</p>`;
         for (const branch of ownedBranches) {
           const targetSp = getSpeciesById(branch.targetSpeciesId);
-          const reqItem = getItemById(branch.requiredItemId);
           const meetsLevel = selected.level >= branch.minLevel;
           const row = document.createElement('div');
           row.className = 'pmd-overworld-action-row';
-          row.innerHTML = `
-            <div class="pmd-overworld-action-meta">
-              <strong>Evolve → ${targetSp?.name ?? branch.targetSpeciesId}</strong>
-              <span>Lv. ${branch.minLevel}+ · ${reqItem?.name ?? branch.requiredItemId}</span>
-            </div>
-            <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="overworld-promote-${branch.targetSpeciesId}" ${meetsLevel ? '' : 'disabled'}>
-              Evolve
-            </button>
-          `;
-          bindPointerTap(
-            row.querySelector<HTMLElement>(
-              `[data-testid="overworld-promote-${branch.targetSpeciesId}"]`
-            ),
-            () => {
-              try {
-                this.saveManager.useEvolutionItemOnUnit(
-                  selected.instanceId,
-                  branch.requiredItemId,
-                  branch.targetSpeciesId
-                );
-                this.audioManager.playSfx('victory_fanfare');
-                this.preloadActiveSprites();
-                this.setMenuFeedback(
-                  `${selected.nickname} evolved into ${targetSp?.name ?? branch.targetSpeciesId}!`
-                );
-                this.renderSystemMenuBody();
-              } catch (err) {
-                this.audioManager.playSfx('cancel');
-                this.setMenuFeedback(err instanceof Error ? err.message : 'Cannot evolve yet.');
-              }
+          const metaDiv = document.createElement('div');
+          metaDiv.className = 'pmd-overworld-action-meta';
+          const titleStrong = document.createElement('strong');
+          titleStrong.textContent = `Evolve → ${targetSp?.name ?? branch.targetSpeciesId}`;
+          const reqRow = document.createElement('div');
+          reqRow.className = 'pmd-inline-item-row';
+          reqRow.appendChild(createMiniItemIcon(branch.requiredItemId, { sizePx: 20 }));
+          const lvlSpan = document.createElement('span');
+          lvlSpan.textContent = `Lv. ${branch.minLevel}+`;
+          reqRow.appendChild(lvlSpan);
+          metaDiv.append(titleStrong, reqRow);
+
+          const evoBtn = document.createElement('button');
+          evoBtn.type = 'button';
+          evoBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
+          evoBtn.dataset.testid = `overworld-promote-${branch.targetSpeciesId}`;
+          evoBtn.disabled = !meetsLevel;
+          evoBtn.textContent = 'Evolve';
+          bindPointerTap(evoBtn, () => {
+            try {
+              this.saveManager.useEvolutionItemOnUnit(
+                selected.instanceId,
+                branch.requiredItemId,
+                branch.targetSpeciesId
+              );
+              this.audioManager.playSfx('victory_fanfare');
+              this.preloadActiveSprites();
+              this.setMenuFeedback(
+                `${selected.nickname} evolved into ${targetSp?.name ?? branch.targetSpeciesId}!`
+              );
+              this.renderSystemMenuBody();
+            } catch (err) {
+              this.audioManager.playSfx('cancel');
+              this.setMenuFeedback(err instanceof Error ? err.message : 'Cannot evolve yet.');
             }
-          );
+          });
+          row.append(metaDiv, evoBtn);
           promoBox.appendChild(row);
         }
         detailCol.appendChild(promoBox);
       }
 
-      // Conditional Stat Vitamins Box (only when Vitamins exist in Bag)
+      // Conditional Stat Vitamins Box (compact icon strip + inline inspector banner)
       const vitaminsInBag = save.convoy.filter(
         (c) => c.quantity > 0 && getItemById(c.itemId)?.category === 'vitamin'
       );
       if (vitaminsInBag.length > 0) {
+        if (
+          !this.selectedUnitVitaminId ||
+          !vitaminsInBag.some((v) => v.itemId === this.selectedUnitVitaminId)
+        ) {
+          this.selectedUnitVitaminId = vitaminsInBag[0]!.itemId;
+        }
+        const selVitSlot =
+          vitaminsInBag.find((v) => v.itemId === this.selectedUnitVitaminId) ?? vitaminsInBag[0]!;
+        const selVitItem = getItemById(selVitSlot.itemId)!;
+
         const vitaminBox = document.createElement('div');
         vitaminBox.className = 'pmd-overworld-subbox';
         vitaminBox.innerHTML = `<p class="pmd-overworld-subbox-title">Vitamins</p>`;
+
+        const vitStrip = document.createElement('div');
+        vitStrip.className = 'pmd-item-icon-grid is-strip';
+        vitStrip.dataset.testid = 'overworld-unit-vitamins-grid';
         for (const slot of vitaminsInBag) {
-          const item = getItemById(slot.itemId)!;
-          const row = document.createElement('div');
-          row.className = 'pmd-overworld-action-row';
-          row.innerHTML = `
-            <div class="pmd-overworld-action-meta">
-              <strong>${item.name} ×${slot.quantity}</strong>
-              <span>${item.description}</span>
-            </div>
-            <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="overworld-use-vitamin-${item.id}">Use</button>
-          `;
-          bindPointerTap(
-            row.querySelector<HTMLElement>(`[data-testid="overworld-use-vitamin-${item.id}"]`),
-            () => {
-              try {
-                this.saveManager.useVitaminOnUnit(selected.instanceId, item.id);
-                this.audioManager.playSfx('heal');
-                this.setMenuFeedback(`Used ${item.name} on ${selected.nickname}!`);
+          vitStrip.appendChild(
+            createItemIconCell({
+              itemId: slot.itemId,
+              testId: `overworld-vitamin-cell-${slot.itemId}`,
+              quantity: slot.quantity,
+              isSelected: slot.itemId === selVitItem.id,
+              onSelect: () => {
+                this.audioManager.playSfx('select');
+                this.selectedUnitVitaminId = slot.itemId;
                 this.renderSystemMenuBody();
-              } catch (err) {
-                this.audioManager.playSfx('cancel');
-                this.setMenuFeedback(err instanceof Error ? err.message : 'Could not use Vitamin.');
-              }
-            }
+              },
+            })
           );
-          vitaminBox.appendChild(row);
         }
+
+        const vitBanner = document.createElement('div');
+        vitBanner.className = 'pmd-item-inspector-banner';
+        vitBanner.style.marginTop = '6px';
+        const vitMain = document.createElement('div');
+        vitMain.className = 'pmd-item-inspector-main';
+        vitMain.appendChild(createMiniItemIcon(selVitItem.id, { sizePx: 24, decorative: true }));
+        const vitCopy = document.createElement('div');
+        vitCopy.className = 'pmd-item-inspector-copy';
+        vitCopy.innerHTML = `
+          <div class="pmd-item-inspector-head"><strong class="pmd-item-inspector-name">${selVitItem.name} ×${selVitSlot.quantity}</strong></div>
+          <span class="pmd-item-inspector-desc">${selVitItem.description}</span>
+        `;
+        vitMain.appendChild(vitCopy);
+
+        const useBtn = document.createElement('button');
+        useBtn.type = 'button';
+        useBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
+        useBtn.dataset.testid = `overworld-use-vitamin-${selVitItem.id}`;
+        useBtn.textContent = 'Use';
+        bindPointerTap(useBtn, () => {
+          try {
+            this.saveManager.useVitaminOnUnit(selected.instanceId, selVitItem.id);
+            this.audioManager.playSfx('heal');
+            this.setMenuFeedback(`Used ${selVitItem.name} on ${selected.nickname}!`);
+            this.renderSystemMenuBody();
+          } catch (err) {
+            this.audioManager.playSfx('cancel');
+            this.setMenuFeedback(err instanceof Error ? err.message : 'Could not use Vitamin.');
+          }
+        });
+
+        vitBanner.append(vitMain, useBtn);
+        vitaminBox.append(vitStrip, vitBanner);
         detailCol.appendChild(vitaminBox);
       }
 
-      // Conditional Technical Machines Box (only when TMs exist in Bag)
+      // Conditional Technical Machines Box (compact icon strip + inline inspector banner)
       const tmsInBag = save.convoy.filter(
         (c) => c.quantity > 0 && getItemById(c.itemId)?.category === 'tm'
       );
       if (tmsInBag.length > 0) {
+        if (
+          !this.selectedUnitTmId ||
+          !tmsInBag.some((t) => t.itemId === this.selectedUnitTmId)
+        ) {
+          const firstTeachable = tmsInBag.find((slot) => {
+            const it = getItemById(slot.itemId);
+            const mvId = it?.effect.teachesMoveId;
+            return Boolean(
+              it &&
+                sp?.compatibleTmIds.includes(it.id) &&
+                mvId &&
+                !selected.unlockedMoveIds.includes(mvId)
+            );
+          });
+          this.selectedUnitTmId = (firstTeachable ?? tmsInBag[0]!).itemId;
+        }
+        const selTmSlot =
+          tmsInBag.find((t) => t.itemId === this.selectedUnitTmId) ?? tmsInBag[0]!;
+        const selTmItem = getItemById(selTmSlot.itemId)!;
+        const selMoveId = selTmItem.effect.teachesMoveId ?? '';
+        const selMove = getMoveById(selMoveId);
+        const selCompatible = Boolean(sp?.compatibleTmIds.includes(selTmItem.id));
+        const selAlreadyKnown = Boolean(selMoveId && selected.unlockedMoveIds.includes(selMoveId));
+        const selCanTeach = selCompatible && !selAlreadyKnown;
+
         const tmBox = document.createElement('div');
         tmBox.className = 'pmd-overworld-subbox';
         tmBox.innerHTML = `<p class="pmd-overworld-subbox-title">TMs</p>`;
-        for (const slot of tmsInBag) {
-          const item = getItemById(slot.itemId)!;
-          const moveId = item.effect.teachesMoveId ?? '';
-          const move = getMoveById(moveId);
-          const compatible = Boolean(sp?.compatibleTmIds.includes(item.id));
-          const alreadyKnown = Boolean(moveId && selected.unlockedMoveIds.includes(moveId));
-          const canTeach = compatible && !alreadyKnown;
 
-          const row = document.createElement('div');
-          row.className = 'pmd-overworld-action-row';
-          row.innerHTML = `
-            <div class="pmd-overworld-action-meta">
-              <strong>${item.name} ×${slot.quantity}</strong>
-              <span>${
-                alreadyKnown
-                  ? 'Already known'
-                  : compatible
-                    ? `Teaches ${move?.name ?? moveId}`
-                    : 'Incompatible'
-              }</span>
-            </div>
-            <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="overworld-teach-tm-${item.id}" ${canTeach ? '' : 'disabled'}>
-              ${alreadyKnown ? 'Known' : compatible ? 'Teach' : 'Incompatible'}
-            </button>
-          `;
-          bindPointerTap(
-            row.querySelector<HTMLElement>(`[data-testid="overworld-teach-tm-${item.id}"]`),
-            () => {
-              try {
-                this.saveManager.teachTmMove(selected.instanceId, item.id);
-                this.audioManager.playSfx('heal');
-                this.setMenuFeedback(
-                  `${selected.nickname} learned ${move?.name ?? item.name}!`
-                );
+        const tmStrip = document.createElement('div');
+        tmStrip.className = 'pmd-item-icon-grid is-strip';
+        tmStrip.dataset.testid = 'overworld-unit-tms-grid';
+        for (const slot of tmsInBag) {
+          const it = getItemById(slot.itemId)!;
+          const mvId = it.effect.teachesMoveId ?? '';
+          const compat = Boolean(sp?.compatibleTmIds.includes(it.id));
+          const known = Boolean(mvId && selected.unlockedMoveIds.includes(mvId));
+          tmStrip.appendChild(
+            createItemIconCell({
+              itemId: it.id,
+              testId: `overworld-tm-cell-${it.id}`,
+              quantity: slot.quantity,
+              isSelected: it.id === selTmItem.id,
+              isDepleted: !(compat && !known),
+              onSelect: () => {
+                this.audioManager.playSfx('select');
+                this.selectedUnitTmId = it.id;
                 this.renderSystemMenuBody();
-              } catch (err) {
-                this.audioManager.playSfx('cancel');
-                this.setMenuFeedback(err instanceof Error ? err.message : 'Could not teach TM.');
-              }
-            }
+              },
+            })
           );
-          tmBox.appendChild(row);
         }
+
+        const tmBanner = document.createElement('div');
+        tmBanner.className = 'pmd-item-inspector-banner';
+        tmBanner.style.marginTop = '6px';
+        const tmMain = document.createElement('div');
+        tmMain.className = 'pmd-item-inspector-main';
+        tmMain.appendChild(createMiniItemIcon(selTmItem.id, { sizePx: 24, decorative: true }));
+        const tmCopy = document.createElement('div');
+        tmCopy.className = 'pmd-item-inspector-copy';
+        const statusNote = selAlreadyKnown
+          ? 'Already known'
+          : selCompatible
+            ? `Teaches ${selMove?.name ?? selMoveId}`
+            : 'Incompatible';
+        tmCopy.innerHTML = `
+          <div class="pmd-item-inspector-head"><strong class="pmd-item-inspector-name">${selTmItem.name} ×${selTmSlot.quantity}</strong></div>
+          <span class="pmd-item-inspector-desc">${statusNote}</span>
+        `;
+        tmMain.appendChild(tmCopy);
+
+        const teachBtn = document.createElement('button');
+        teachBtn.type = 'button';
+        teachBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
+        teachBtn.dataset.testid = `overworld-teach-tm-${selTmItem.id}`;
+        teachBtn.disabled = !selCanTeach;
+        teachBtn.textContent = selAlreadyKnown ? 'Known' : selCompatible ? 'Teach' : 'Incompatible';
+        bindPointerTap(teachBtn, () => {
+          try {
+            this.saveManager.teachTmMove(selected.instanceId, selTmItem.id);
+            this.audioManager.playSfx('heal');
+            this.setMenuFeedback(
+              `${selected.nickname} learned ${selMove?.name ?? selTmItem.name}!`
+            );
+            this.renderSystemMenuBody();
+          } catch (err) {
+            this.audioManager.playSfx('cancel');
+            this.setMenuFeedback(err instanceof Error ? err.message : 'Could not teach TM.');
+          }
+        });
+
+        tmBanner.append(tmMain, teachBtn);
+        tmBox.append(tmStrip, tmBanner);
         detailCol.appendChild(tmBox);
       }
 
@@ -2049,6 +2222,7 @@ export class OverworldScene {
     unitBar.className = 'pmd-unit-portrait-grid pmd-overworld-items-unit-grid';
     unitBar.dataset.testid = 'overworld-items-unit-grid';
     for (const u of save.roster) {
+      const uItemId = getUnitEquippedItemId(u);
       const cell = createUnitPortraitCell({
         speciesIdOrAssetId: u.speciesId,
         ariaLabel: u.nickname,
@@ -2056,7 +2230,8 @@ export class OverworldScene {
         portraitTestId: `overworld-items-portrait-${u.instanceId}`,
         isSelected: u.instanceId === targetUnit?.instanceId,
         isLord: u.isLord,
-        hasItem: Boolean(getUnitEquippedItemId(u)),
+        hasItem: Boolean(uItemId),
+        equippedItemId: uItemId,
         onSelect: () => {
           this.audioManager.playSfx('select');
           this.selectedUnitInstanceId = u.instanceId;
@@ -2075,9 +2250,26 @@ export class OverworldScene {
       const currentItem = currentItemId ? getItemById(currentItemId) : undefined;
       const infoDiv = document.createElement('div');
       infoDiv.className = 'pmd-prep-slot-info';
-      infoDiv.innerHTML = currentItem
-        ? `<div class="pmd-prep-move-title-line"><strong>${targetUnit.nickname}: ${currentItem.name}</strong></div><span class="pmd-prep-move-stats">${currentItem.description}</span>`
-        : `<div class="pmd-prep-move-title-line"><strong>${targetUnit.nickname}: Empty</strong></div>`;
+      const titleLine = document.createElement('div');
+      titleLine.className = 'pmd-inline-item-row';
+      const nickStrong = document.createElement('strong');
+      nickStrong.textContent = currentItem ? `${targetUnit.nickname}:` : `${targetUnit.nickname}: Empty`;
+      titleLine.appendChild(nickStrong);
+      if (currentItem) {
+        titleLine.appendChild(
+          createMiniItemIcon(currentItem.id, {
+            sizePx: 22,
+            testId: 'overworld-items-slot-icon',
+          })
+        );
+      }
+      infoDiv.appendChild(titleLine);
+      if (currentItem) {
+        const descSpan = document.createElement('span');
+        descSpan.className = 'pmd-prep-move-stats';
+        descSpan.textContent = currentItem.description;
+        infoDiv.appendChild(descSpan);
+      }
       slotBanner.appendChild(infoDiv);
       if (currentItem) {
         const unequipBtn = document.createElement('button');
@@ -2099,48 +2291,95 @@ export class OverworldScene {
     box.className = 'pmd-overworld-subbox';
     box.innerHTML = `<p class="pmd-overworld-subbox-title">Bag (${save.gold}G)</p>`;
 
-    if (save.convoy.length === 0) {
+    const validBagEntries: Array<{ item: ItemDefinition; quantity: number }> = [];
+    for (const entry of save.convoy) {
+      if (entry.quantity <= 0) continue;
+      const item = getItemById(entry.itemId);
+      if (item) {
+        validBagEntries.push({ item, quantity: entry.quantity });
+      }
+    }
+
+    if (validBagEntries.length === 0) {
       box.innerHTML += `<span style="font-size:0.72rem;color:#b8dcff;">Bag is empty.</span>`;
     } else {
       const targetItemId = targetUnit ? getUnitEquippedItemId(targetUnit) : null;
-      for (const entry of save.convoy) {
-        if (entry.quantity <= 0) continue;
-        const item = getItemById(entry.itemId);
-        if (!item) continue;
-        const equippable = item.equipSlot === 'held' || item.equipSlot === 'consumable';
-        const row = document.createElement('div');
-        row.className = 'pmd-overworld-action-row';
-        row.dataset.testid = `overworld-convoy-row-${item.id}`;
-        row.innerHTML = `
-          <div class="pmd-overworld-action-meta">
-            <strong>${item.name} ×${entry.quantity}</strong>
-            <span>${item.description}</span>
-          </div>
-        `;
-        if (equippable && targetUnit) {
-          const giveBtn = document.createElement('button');
-          giveBtn.type = 'button';
-          giveBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn pmd-portrait-action-btn';
-          giveBtn.dataset.equipConvoy = item.id;
-          giveBtn.appendChild(
-            createMiniSpeciesPortrait(targetUnit.speciesId, {
-              title: targetUnit.nickname,
-              sizePx: 20,
-            })
-          );
-          const lbl = document.createElement('span');
-          lbl.textContent = targetItemId ? 'Replace' : 'Equip';
-          giveBtn.appendChild(lbl);
-          bindPointerTap(giveBtn, () => {
-            this.audioManager.playSfx('select');
-            this.saveManager.equipItemToUnit(targetUnit.instanceId, item.id);
-            this.setMenuFeedback(`Equipped ${item.name} on ${targetUnit.nickname}.`);
-            this.renderSystemMenuBody();
-          });
-          row.appendChild(giveBtn);
-        }
-        box.appendChild(row);
+      if (
+        !this.selectedConvoyItemId ||
+        !validBagEntries.some((e) => e.item.id === this.selectedConvoyItemId)
+      ) {
+        this.selectedConvoyItemId =
+          targetItemId && validBagEntries.some((e) => e.item.id === targetItemId)
+            ? targetItemId
+            : validBagEntries[0]!.item.id;
       }
+      const selBag =
+        validBagEntries.find((e) => e.item.id === this.selectedConvoyItemId) ?? validBagEntries[0]!;
+      const selItem = selBag.item;
+
+      const bagGrid = document.createElement('div');
+      bagGrid.className = 'pmd-item-icon-grid';
+      bagGrid.dataset.testid = 'overworld-convoy-grid';
+      for (const entry of validBagEntries) {
+        bagGrid.appendChild(
+          createItemIconCell({
+            itemId: entry.item.id,
+            testId: `overworld-convoy-cell-${entry.item.id}`,
+            quantity: entry.quantity,
+            isSelected: entry.item.id === selItem.id,
+            isEquippedOnSelected: targetItemId === entry.item.id,
+            onSelect: () => {
+              this.audioManager.playSfx('select');
+              this.selectedConvoyItemId = entry.item.id;
+              this.renderSystemMenuBody();
+            },
+          })
+        );
+      }
+
+      const bagBanner = document.createElement('div');
+      bagBanner.className = 'pmd-item-inspector-banner';
+      bagBanner.dataset.testid = 'overworld-convoy-inspector';
+      bagBanner.style.marginTop = '6px';
+
+      const bagMain = document.createElement('div');
+      bagMain.className = 'pmd-item-inspector-main';
+      bagMain.appendChild(createMiniItemIcon(selItem.id, { sizePx: 26, decorative: true }));
+      const bagCopy = document.createElement('div');
+      bagCopy.className = 'pmd-item-inspector-copy';
+      bagCopy.innerHTML = `
+        <div class="pmd-item-inspector-head"><strong class="pmd-item-inspector-name">${selItem.name} ×${selBag.quantity}</strong></div>
+        <span class="pmd-item-inspector-desc">${selItem.description}</span>
+      `;
+      bagMain.appendChild(bagCopy);
+      bagBanner.appendChild(bagMain);
+
+      const equippable = selItem.equipSlot === 'held' || selItem.equipSlot === 'consumable';
+      if (equippable && targetUnit) {
+        const giveBtn = document.createElement('button');
+        giveBtn.type = 'button';
+        giveBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn pmd-portrait-action-btn';
+        giveBtn.dataset.equipConvoy = selItem.id;
+        giveBtn.dataset.testid = `overworld-convoy-equip-btn-${selItem.id}`;
+        giveBtn.appendChild(
+          createMiniSpeciesPortrait(targetUnit.speciesId, {
+            title: targetUnit.nickname,
+            sizePx: 20,
+          })
+        );
+        const lbl = document.createElement('span');
+        lbl.textContent = targetItemId ? 'Replace' : 'Equip';
+        giveBtn.appendChild(lbl);
+        bindPointerTap(giveBtn, () => {
+          this.audioManager.playSfx('select');
+          this.saveManager.equipItemToUnit(targetUnit.instanceId, selItem.id);
+          this.setMenuFeedback(`Equipped ${selItem.name} on ${targetUnit.nickname}.`);
+          this.renderSystemMenuBody();
+        });
+        bagBanner.appendChild(giveBtn);
+      }
+
+      box.append(bagGrid, bagBanner);
     }
 
     this.menuPanelBodyEl.append(unitBar, slotBanner, box);

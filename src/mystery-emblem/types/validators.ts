@@ -297,6 +297,13 @@ export function validateAllRegistries(
     }
     itemMap.set(item.id, item);
 
+    if (
+      typeof item.iconSlug !== 'string' ||
+      !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(item.iconSlug)
+    ) {
+      errors.push(`Item "${item.id}" has invalid or missing iconSlug "${String(item.iconSlug)}".`);
+    }
+
     if (!VALID_ITEM_CATEGORY_SET.has(item.category)) {
       errors.push(`Item "${item.id}" has invalid category "${item.category}".`);
     }

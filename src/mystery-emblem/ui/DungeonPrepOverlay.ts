@@ -30,6 +30,7 @@ import type {
   OwnedPokemonInstance,
   PrepDeploymentSlot,
 } from '../types/schemas';
+import { createItemIconCell, createMiniItemIcon } from './PmdItemIconGrid';
 import { PmdPortraitView } from './PmdSpriteCanvas';
 import { createMiniSpeciesPortrait, createUnitPortraitCell } from './PmdUnitPortraitGrid';
 import { bindPointerTap } from './pointerControls';
@@ -111,6 +112,8 @@ export class DungeonPrepOverlay {
   private subMode: PrepSubMode = 'hub';
 
   private selectedUnitInstanceId: string | null = null;
+  private selectedPrepItemId: string | null = null;
+  private selectedPrepUnitTmId: string | null = null;
   private pendingMoveToSwapIn: string | null = null;
   private itemFilter: ItemFilterTab = 'all';
   private unitsStatusMsg = '';
@@ -638,6 +641,7 @@ export class DungeonPrepOverlay {
           isDeployed,
           isBenched: !isDeployed,
           hasItem: Boolean(itemId),
+          equippedItemId: itemId,
           testId: `prep-unit-row-${unit.instanceId}`,
           portraitTestId: `prep-unit-portrait-cell-${unit.instanceId}`,
           signal: this.abortController.signal,
@@ -746,7 +750,7 @@ export class DungeonPrepOverlay {
       `;
     }
 
-    // 1-Slot Item Summary
+    // 1-Slot Item Summary (icon-only when equipped)
     const eqItemId = getUnitEquippedItemId(selected);
     const eqItem = eqItemId ? getItemById(eqItemId) : undefined;
     const itemSumEl = this.unitsBackdropEl.querySelector<HTMLElement>(
@@ -756,9 +760,17 @@ export class DungeonPrepOverlay {
       '[data-testid="prep-unit-open-items-btn"]'
     );
     if (itemSumEl) {
-      itemSumEl.innerHTML = eqItem
-        ? `Item: <strong>${escapeHtml(eqItem.name)}</strong>`
-        : 'Item: <strong>Empty</strong>';
+      itemSumEl.innerHTML = '';
+      if (eqItem) {
+        const wrap = document.createElement('span');
+        wrap.className = 'pmd-inline-item-row';
+        const lbl = document.createElement('span');
+        lbl.textContent = 'Item:';
+        wrap.append(lbl, createMiniItemIcon(eqItem.id, { sizePx: 20 }));
+        itemSumEl.appendChild(wrap);
+      } else {
+        itemSumEl.innerHTML = 'Item: <strong>Empty</strong>';
+      }
     }
     if (itemBtnEl) {
       itemBtnEl.textContent = eqItem ? 'Change' : 'Equip';
@@ -781,8 +793,14 @@ export class DungeonPrepOverlay {
         const eligibleNow = availableBranches.filter((b) => selected.level >= b.minLevel);
         if (eligibleNow.length === 0) {
           const firstB = availableBranches[0]!;
-          const reqItem = getItemById(firstB.requiredItemId)?.name ?? firstB.requiredItemId;
-          promoWrapEl.innerHTML = `<div class="pmd-prep-item-shortcut-info" style="color:#ffd878;">Evolve at <strong>Lv. ${firstB.minLevel}</strong> (${escapeHtml(reqItem)})</div>`;
+          const noticeDiv = document.createElement('div');
+          noticeDiv.className = 'pmd-prep-item-shortcut-info pmd-inline-item-row';
+          noticeDiv.style.color = '#ffd878';
+          noticeDiv.appendChild(createMiniItemIcon(firstB.requiredItemId, { sizePx: 20 }));
+          const lvlTxt = document.createElement('span');
+          lvlTxt.innerHTML = `Evolve at <strong>Lv. ${firstB.minLevel}</strong>`;
+          noticeDiv.appendChild(lvlTxt);
+          promoWrapEl.appendChild(noticeDiv);
         } else {
           const infoSpan = document.createElement('div');
           infoSpan.className = 'pmd-prep-item-shortcut-info';
@@ -1020,22 +1038,66 @@ export class DungeonPrepOverlay {
         tmWrap.hidden = true;
       } else {
         tmWrap.hidden = false;
-        for (const entry of compatibleStockTms) {
-          const item = getItemById(entry.itemId)!;
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'pmd-btn pmd-chip-btn';
-          btn.dataset.testid = `prep-teach-tm-${item.id}`;
-          btn.textContent = `Teach ${item.name} (×${entry.quantity})`;
-          bindPointerTap(btn, () => {
-            mgr.teachTmMove(selected.instanceId, item.id);
-            this.opts.audioManager.playSfx('heal');
-            this.unitsStatusMsg = `${selected.nickname} learned ${getMoveById(item.effect.teachesMoveId!)?.name ?? item.name}!`;
-            this.opts.onRosterOrLoadoutMutated();
-            this.renderManageUnits();
-          });
-          tmListEl.appendChild(btn);
+        tmListEl.className = 'pmd-prep-items-list';
+        if (
+          !this.selectedPrepUnitTmId ||
+          !compatibleStockTms.some((e) => e.itemId === this.selectedPrepUnitTmId)
+        ) {
+          this.selectedPrepUnitTmId = compatibleStockTms[0]!.itemId;
         }
+        const selTmEntry =
+          compatibleStockTms.find((e) => e.itemId === this.selectedPrepUnitTmId) ??
+          compatibleStockTms[0]!;
+        const selTmItem = getItemById(selTmEntry.itemId)!;
+        const selMove = getMoveById(selTmItem.effect.teachesMoveId ?? '');
+
+        const tmStrip = document.createElement('div');
+        tmStrip.className = 'pmd-item-icon-grid is-strip';
+        for (const entry of compatibleStockTms) {
+          tmStrip.appendChild(
+            createItemIconCell({
+              itemId: entry.itemId,
+              testId: `prep-tm-cell-${entry.itemId}`,
+              quantity: entry.quantity,
+              isSelected: entry.itemId === selTmItem.id,
+              signal: this.abortController.signal,
+              onSelect: () => {
+                this.opts.audioManager.playSfx('select');
+                this.selectedPrepUnitTmId = entry.itemId;
+                this.renderManageUnits();
+              },
+            })
+          );
+        }
+
+        const tmBanner = document.createElement('div');
+        tmBanner.className = 'pmd-item-inspector-banner';
+        const tmMain = document.createElement('div');
+        tmMain.className = 'pmd-item-inspector-main';
+        tmMain.appendChild(createMiniItemIcon(selTmItem.id, { sizePx: 24, decorative: true }));
+        const tmCopy = document.createElement('div');
+        tmCopy.className = 'pmd-item-inspector-copy';
+        tmCopy.innerHTML = `
+          <div class="pmd-item-inspector-head"><strong class="pmd-item-inspector-name">${escapeHtml(selTmItem.name)} ×${selTmEntry.quantity}</strong></div>
+          <span class="pmd-item-inspector-desc">${escapeHtml(selMove ? `Teaches ${selMove.name} (${selMove.type} · ${formatMoveCategoryBadge(selMove)})` : selTmItem.description)}</span>
+        `;
+        tmMain.appendChild(tmCopy);
+
+        const teachBtn = document.createElement('button');
+        teachBtn.type = 'button';
+        teachBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
+        teachBtn.dataset.testid = `prep-teach-tm-${selTmItem.id}`;
+        teachBtn.textContent = 'Teach';
+        bindPointerTap(teachBtn, () => {
+          mgr.teachTmMove(selected.instanceId, selTmItem.id);
+          this.opts.audioManager.playSfx('heal');
+          this.unitsStatusMsg = `${selected.nickname} learned ${selMove?.name ?? selTmItem.name}!`;
+          this.opts.onRosterOrLoadoutMutated();
+          this.renderManageUnits();
+        });
+
+        tmBanner.append(tmMain, teachBtn);
+        tmListEl.append(tmStrip, tmBanner);
       }
     }
 
@@ -1076,6 +1138,7 @@ export class DungeonPrepOverlay {
           isDeployed: isDep,
           isBenched: !isDep,
           hasItem: Boolean(uItemId),
+          equippedItemId: uItemId,
           testId: `prep-items-unit-${u.instanceId}`,
           portraitTestId: `prep-items-portrait-${u.instanceId}`,
           signal: this.abortController.signal,
@@ -1090,7 +1153,7 @@ export class DungeonPrepOverlay {
       }
     }
 
-    // 2. Selected Unit 1-Item-Slot Card
+    // 2. Selected Unit 1-Item-Slot Card (icon-only badge + effect, zero item text name)
     const slotCardEl = this.itemsBackdropEl.querySelector<HTMLElement>(
       '[data-testid="prep-unit-item-slot-card"]'
     );
@@ -1101,13 +1164,24 @@ export class DungeonPrepOverlay {
       const infoDiv = document.createElement('div');
       infoDiv.className = 'pmd-prep-slot-info';
       if (currentItem) {
-        infoDiv.innerHTML = `
-          <div class="pmd-prep-move-title-line">
-            <strong>${escapeHtml(selectedUnit.nickname)}: ${escapeHtml(currentItem.name)}</strong>
-            <span class="pmd-prep-cat-tag">${escapeHtml(formatItemCategoryLabel(currentItem.category))}</span>
-          </div>
-          <span class="pmd-prep-move-stats">${escapeHtml(currentItem.description)}</span>
-        `;
+        const titleLine = document.createElement('div');
+        titleLine.className = 'pmd-inline-item-row';
+        const nickStrong = document.createElement('strong');
+        nickStrong.textContent = `${selectedUnit.nickname}:`;
+        const iconBadge = createMiniItemIcon(currentItem.id, {
+          sizePx: 22,
+          testId: 'prep-unit-slot-item-icon',
+        });
+        const catTag = document.createElement('span');
+        catTag.className = 'pmd-prep-cat-tag';
+        catTag.textContent = formatItemCategoryLabel(currentItem.category);
+        titleLine.append(nickStrong, iconBadge, catTag);
+
+        const descSpan = document.createElement('span');
+        descSpan.className = 'pmd-prep-move-stats';
+        descSpan.textContent = currentItem.description;
+        infoDiv.append(titleLine, descSpan);
+
         const unequipBtn = document.createElement('button');
         unequipBtn.type = 'button';
         unequipBtn.className = 'pmd-btn pmd-chip-btn';
@@ -1195,167 +1269,209 @@ export class DungeonPrepOverlay {
         emptyEl.textContent = 'No items in this category.';
         itemsListEl.appendChild(emptyEl);
       } else {
-        for (const { item, bagQty, holders } of acquiredItems) {
-          const row = document.createElement('div');
-          row.className = `pmd-prep-item-row${currentItemId === item.id ? ' is-equipped' : ''}`;
-          row.dataset.testid = `prep-item-row-${item.id}`;
-
-          const infoDiv = document.createElement('div');
-          infoDiv.className = 'pmd-prep-move-info';
-          infoDiv.innerHTML = `
-            <div class="pmd-prep-move-title-line">
-              <strong>${escapeHtml(item.name)}</strong>
-              <span class="pmd-prep-cat-tag">${escapeHtml(formatItemCategoryLabel(item.category))}</span>
-              <span class="pmd-prep-stock-tag">×${bagQty}</span>
-              <span class="pmd-item-holders-inline" data-item-holders></span>
-            </div>
-            <span class="pmd-prep-move-stats">${escapeHtml(item.description)}</span>
-          `;
-          const holdersContainer = infoDiv.querySelector<HTMLElement>('[data-item-holders]');
-          if (holdersContainer) {
-            if (holders.length === 0) {
-              holdersContainer.hidden = true;
-            } else {
-              for (const h of holders) {
-                holdersContainer.appendChild(
-                  createMiniSpeciesPortrait(h.speciesId, {
-                    title: h.nickname,
-                    sizePx: 22,
-                    testId: `prep-item-holder-${item.id}-${h.instanceId}`,
-                  })
-                );
-              }
-            }
-          }
-
-          const actionBtn = document.createElement('button');
-          actionBtn.type = 'button';
-          actionBtn.dataset.testid = `prep-item-equip-btn-${item.id}`;
-
-          if (item.equipSlot === 'held' || item.equipSlot === 'consumable') {
-            if (currentItemId === item.id) {
-              actionBtn.className = 'pmd-btn pmd-chip-btn is-active';
-              actionBtn.textContent = 'Unequip';
-              bindPointerTap(actionBtn, () => {
-                mgr.equipItemToUnit(selectedUnit.instanceId, null);
-                this.opts.audioManager.playSfx('cancel');
-                this.itemsStatusMsg = `Unequipped ${item.name}.`;
-                this.opts.onRosterOrLoadoutMutated();
-                this.renderManageItems();
-              });
-            } else if (bagQty > 0) {
-              actionBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
-              actionBtn.textContent = currentItem ? 'Replace' : 'Equip';
-              bindPointerTap(actionBtn, () => {
-                mgr.equipItemToUnit(selectedUnit.instanceId, item.id);
-                this.opts.audioManager.playSfx('select');
-                this.itemsStatusMsg = `Equipped ${item.name} on ${selectedUnit.nickname}.`;
-                this.opts.onRosterOrLoadoutMutated();
-                this.renderManageItems();
-              });
-            } else {
-              const otherHolder = holders.find((h) => h.instanceId !== selectedUnit.instanceId);
-              actionBtn.className = 'pmd-btn pmd-chip-btn pmd-portrait-action-btn';
-              actionBtn.disabled = !otherHolder;
-              if (otherHolder) {
-                actionBtn.appendChild(
-                  createMiniSpeciesPortrait(otherHolder.speciesId, {
-                    title: otherHolder.nickname,
-                    sizePx: 20,
-                  })
-                );
-                const takeLbl = document.createElement('span');
-                takeLbl.textContent = 'Take';
-                actionBtn.appendChild(takeLbl);
-                bindPointerTap(actionBtn, () => {
-                  mgr.equipItemToUnit(selectedUnit.instanceId, item.id, otherHolder.instanceId);
-                  this.opts.audioManager.playSfx('select');
-                  this.itemsStatusMsg = `Moved ${item.name} to ${selectedUnit.nickname}.`;
-                  this.opts.onRosterOrLoadoutMutated();
-                  this.renderManageItems();
-                });
-              } else {
-                actionBtn.textContent = 'Equip';
-              }
-            }
-          } else if (item.category === 'tm' && item.effect.teachesMoveId) {
-            const alreadyKnows = selectedUnit.unlockedMoveIds.includes(item.effect.teachesMoveId);
-            const compatible = Boolean(selectedSp?.compatibleTmIds.includes(item.id));
-            actionBtn.className = 'pmd-btn pmd-chip-btn';
-            actionBtn.textContent = alreadyKnows
-              ? 'Known'
-              : compatible
-                ? 'Teach'
-                : 'Incompatible';
-            actionBtn.disabled = alreadyKnows || !compatible || bagQty < 1;
-            if (!actionBtn.disabled) {
-              bindPointerTap(actionBtn, () => {
-                mgr.teachTmMove(selectedUnit.instanceId, item.id);
-                this.opts.audioManager.playSfx('heal');
-                this.itemsStatusMsg = `Taught ${item.name} to ${selectedUnit.nickname}!`;
-                this.opts.onRosterOrLoadoutMutated();
-                this.renderManageItems();
-              });
-            }
-          } else if (item.category === 'vitamin') {
-            actionBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
-            actionBtn.textContent = 'Use';
-            actionBtn.disabled = bagQty < 1;
-            if (!actionBtn.disabled) {
-              bindPointerTap(actionBtn, () => {
-                mgr.useVitaminOnUnit(selectedUnit.instanceId, item.id);
-                this.opts.audioManager.playSfx('heal');
-                this.itemsStatusMsg = `Used ${item.name} on ${selectedUnit.nickname}!`;
-                this.opts.onRosterOrLoadoutMutated();
-                this.renderManageItems();
-              });
-            }
-          }
-
-          const actionsWrap = document.createElement('div');
-          actionsWrap.className = 'pmd-prep-move-actions';
-          actionsWrap.appendChild(actionBtn);
-
-          if (
-            (item.id === 'evolution_stone' || item.id === 'evolution_gem') &&
-            (bagQty > 0 || currentItemId === item.id) &&
-            selectedSp
-          ) {
-            const eligibleBranches = selectedSp.evolutions.filter(
-              (b) => b.requiredItemId === item.id && selectedUnit.level >= b.minLevel
-            );
-            for (const branch of eligibleBranches) {
-              const targetSp = getSpeciesById(branch.targetSpeciesId);
-              const usePromoBtn = document.createElement('button');
-              usePromoBtn.type = 'button';
-              usePromoBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
-              usePromoBtn.dataset.testid = `prep-item-use-promo-${branch.targetSpeciesId}`;
-              usePromoBtn.textContent = `Evolve → ${targetSp?.name ?? branch.targetSpeciesId}`;
-              bindPointerTap(usePromoBtn, () => {
-                try {
-                  const promoted = mgr.useEvolutionItemOnUnit(
-                    selectedUnit.instanceId,
-                    branch.requiredItemId,
-                    branch.targetSpeciesId
-                  );
-                  this.opts.audioManager.playSfx('heal');
-                  this.itemsStatusMsg = `★ ${promoted.nickname} evolved into ${getSpeciesById(promoted.speciesId)?.name ?? promoted.speciesId}!`;
-                  this.opts.onRosterOrLoadoutMutated();
-                  this.renderManageItems();
-                  this.renderHub();
-                } catch (err) {
-                  this.opts.audioManager.playSfx('cancel');
-                  this.itemsStatusMsg = err instanceof Error ? err.message : 'Promotion failed.';
-                  this.renderManageItems();
-                }
-              });
-              actionsWrap.appendChild(usePromoBtn);
-            }
-          }
-
-          row.append(infoDiv, actionsWrap);
-          itemsListEl.appendChild(row);
+        if (
+          !this.selectedPrepItemId ||
+          !acquiredItems.some((e) => e.item.id === this.selectedPrepItemId)
+        ) {
+          this.selectedPrepItemId =
+            currentItemId && acquiredItems.some((e) => e.item.id === currentItemId)
+              ? currentItemId
+              : acquiredItems[0]!.item.id;
         }
+        const selectedEntry =
+          acquiredItems.find((e) => e.item.id === this.selectedPrepItemId) ?? acquiredItems[0]!;
+
+        const gridEl = document.createElement('div');
+        gridEl.className = 'pmd-item-icon-grid';
+        gridEl.dataset.testid = 'prep-acquired-items-grid';
+        for (const entry of acquiredItems) {
+          const isEqOnSel = currentItemId === entry.item.id;
+          const isHeldOther = entry.holders.some((h) => h.instanceId !== selectedUnit.instanceId);
+          gridEl.appendChild(
+            createItemIconCell({
+              itemId: entry.item.id,
+              testId: `prep-item-cell-${entry.item.id}`,
+              quantity: entry.bagQty,
+              showZeroQuantity: true,
+              isSelected: entry.item.id === selectedEntry.item.id,
+              isEquippedOnSelected: isEqOnSel,
+              isHeldByOther: !isEqOnSel && isHeldOther,
+              isDepleted: entry.bagQty === 0 && !isEqOnSel,
+              signal: this.abortController.signal,
+              onSelect: () => {
+                this.opts.audioManager.playSfx('select');
+                this.selectedPrepItemId = entry.item.id;
+                this.renderManageItems();
+              },
+            })
+          );
+        }
+
+        const { item, bagQty, holders } = selectedEntry;
+        const inspectorEl = document.createElement('div');
+        inspectorEl.className = 'pmd-item-inspector-banner';
+        inspectorEl.dataset.testid = 'prep-item-inspector';
+
+        const mainEl = document.createElement('div');
+        mainEl.className = 'pmd-item-inspector-main';
+        mainEl.appendChild(createMiniItemIcon(item.id, { sizePx: 28, decorative: true }));
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'pmd-item-inspector-copy';
+        infoDiv.innerHTML = `
+          <div class="pmd-item-inspector-head">
+            <strong class="pmd-item-inspector-name">${escapeHtml(item.name)}</strong>
+            <span class="pmd-prep-cat-tag">${escapeHtml(formatItemCategoryLabel(item.category))}</span>
+            <span class="pmd-prep-stock-tag">×${bagQty}</span>
+            <span class="pmd-item-holders-inline" data-item-holders></span>
+          </div>
+          <span class="pmd-item-inspector-desc">${escapeHtml(item.description)}</span>
+        `;
+        const holdersContainer = infoDiv.querySelector<HTMLElement>('[data-item-holders]');
+        if (holdersContainer) {
+          if (holders.length === 0) {
+            holdersContainer.hidden = true;
+          } else {
+            for (const h of holders) {
+              holdersContainer.appendChild(
+                createMiniSpeciesPortrait(h.speciesId, {
+                  title: h.nickname,
+                  sizePx: 22,
+                  testId: `prep-item-holder-${item.id}-${h.instanceId}`,
+                })
+              );
+            }
+          }
+        }
+        mainEl.appendChild(infoDiv);
+
+        const actionBtn = document.createElement('button');
+        actionBtn.type = 'button';
+        actionBtn.dataset.testid = `prep-item-equip-btn-${item.id}`;
+
+        if (item.equipSlot === 'held' || item.equipSlot === 'consumable') {
+          if (currentItemId === item.id) {
+            actionBtn.className = 'pmd-btn pmd-chip-btn is-active';
+            actionBtn.textContent = 'Unequip';
+            bindPointerTap(actionBtn, () => {
+              mgr.equipItemToUnit(selectedUnit.instanceId, null);
+              this.opts.audioManager.playSfx('cancel');
+              this.itemsStatusMsg = `Unequipped ${item.name}.`;
+              this.opts.onRosterOrLoadoutMutated();
+              this.renderManageItems();
+            });
+          } else if (bagQty > 0) {
+            actionBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
+            actionBtn.textContent = currentItem ? 'Replace' : 'Equip';
+            bindPointerTap(actionBtn, () => {
+              mgr.equipItemToUnit(selectedUnit.instanceId, item.id);
+              this.opts.audioManager.playSfx('select');
+              this.itemsStatusMsg = `Equipped ${item.name} on ${selectedUnit.nickname}.`;
+              this.opts.onRosterOrLoadoutMutated();
+              this.renderManageItems();
+            });
+          } else {
+            const otherHolder = holders.find((h) => h.instanceId !== selectedUnit.instanceId);
+            actionBtn.className = 'pmd-btn pmd-chip-btn pmd-portrait-action-btn';
+            actionBtn.disabled = !otherHolder;
+            if (otherHolder) {
+              actionBtn.appendChild(
+                createMiniSpeciesPortrait(otherHolder.speciesId, {
+                  title: otherHolder.nickname,
+                  sizePx: 20,
+                })
+              );
+              const takeLbl = document.createElement('span');
+              takeLbl.textContent = 'Take';
+              actionBtn.appendChild(takeLbl);
+              bindPointerTap(actionBtn, () => {
+                mgr.equipItemToUnit(selectedUnit.instanceId, item.id, otherHolder.instanceId);
+                this.opts.audioManager.playSfx('select');
+                this.itemsStatusMsg = `Moved ${item.name} to ${selectedUnit.nickname}.`;
+                this.opts.onRosterOrLoadoutMutated();
+                this.renderManageItems();
+              });
+            } else {
+              actionBtn.textContent = 'Equip';
+            }
+          }
+        } else if (item.category === 'tm' && item.effect.teachesMoveId) {
+          const alreadyKnows = selectedUnit.unlockedMoveIds.includes(item.effect.teachesMoveId);
+          const compatible = Boolean(selectedSp?.compatibleTmIds.includes(item.id));
+          actionBtn.className = 'pmd-btn pmd-chip-btn';
+          actionBtn.textContent = alreadyKnows
+            ? 'Known'
+            : compatible
+              ? 'Teach'
+              : 'Incompatible';
+          actionBtn.disabled = alreadyKnows || !compatible || bagQty < 1;
+          if (!actionBtn.disabled) {
+            bindPointerTap(actionBtn, () => {
+              mgr.teachTmMove(selectedUnit.instanceId, item.id);
+              this.opts.audioManager.playSfx('heal');
+              this.itemsStatusMsg = `Taught ${item.name} to ${selectedUnit.nickname}!`;
+              this.opts.onRosterOrLoadoutMutated();
+              this.renderManageItems();
+            });
+          }
+        } else if (item.category === 'vitamin') {
+          actionBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
+          actionBtn.textContent = 'Use';
+          actionBtn.disabled = bagQty < 1;
+          if (!actionBtn.disabled) {
+            bindPointerTap(actionBtn, () => {
+              mgr.useVitaminOnUnit(selectedUnit.instanceId, item.id);
+              this.opts.audioManager.playSfx('heal');
+              this.itemsStatusMsg = `Used ${item.name} on ${selectedUnit.nickname}!`;
+              this.opts.onRosterOrLoadoutMutated();
+              this.renderManageItems();
+            });
+          }
+        }
+
+        const actionsWrap = document.createElement('div');
+        actionsWrap.className = 'pmd-prep-move-actions';
+        actionsWrap.appendChild(actionBtn);
+
+        if (
+          (item.id === 'evolution_stone' || item.id === 'evolution_gem') &&
+          (bagQty > 0 || currentItemId === item.id) &&
+          selectedSp
+        ) {
+          const eligibleBranches = selectedSp.evolutions.filter(
+            (b) => b.requiredItemId === item.id && selectedUnit.level >= b.minLevel
+          );
+          for (const branch of eligibleBranches) {
+            const targetSp = getSpeciesById(branch.targetSpeciesId);
+            const usePromoBtn = document.createElement('button');
+            usePromoBtn.type = 'button';
+            usePromoBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
+            usePromoBtn.dataset.testid = `prep-item-use-promo-${branch.targetSpeciesId}`;
+            usePromoBtn.textContent = `Evolve → ${targetSp?.name ?? branch.targetSpeciesId}`;
+            bindPointerTap(usePromoBtn, () => {
+              try {
+                const promoted = mgr.useEvolutionItemOnUnit(
+                  selectedUnit.instanceId,
+                  branch.requiredItemId,
+                  branch.targetSpeciesId
+                );
+                this.opts.audioManager.playSfx('heal');
+                this.itemsStatusMsg = `★ ${promoted.nickname} evolved into ${getSpeciesById(promoted.speciesId)?.name ?? promoted.speciesId}!`;
+                this.opts.onRosterOrLoadoutMutated();
+                this.renderManageItems();
+                this.renderHub();
+              } catch (err) {
+                this.opts.audioManager.playSfx('cancel');
+                this.itemsStatusMsg = err instanceof Error ? err.message : 'Promotion failed.';
+                this.renderManageItems();
+              }
+            });
+            actionsWrap.appendChild(usePromoBtn);
+          }
+        }
+
+        inspectorEl.append(mainEl, actionsWrap);
+        itemsListEl.append(gridEl, inspectorEl);
       }
     }
 

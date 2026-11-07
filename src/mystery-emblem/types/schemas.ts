@@ -214,6 +214,8 @@ export interface ItemEffectPayload {
 export interface ItemDefinition {
   id: string;
   name: string;
+  /** PokeAPI item sprite filename stem (e.g. "leftovers", "tm-fire", "dawn-stone") */
+  iconSlug: string;
   category: ItemCategory;
   equipSlot: ItemEquipSlot;
   /** True if consumed upon use/trigger (Berries, Potions, Stones/Gems, X-Items, Vitamins, TMs) */
