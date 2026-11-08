@@ -404,6 +404,8 @@ export interface CampaignState {
   completedChapterIds: string[];
   campaignMode?: CampaignMode;
   tutorialPreferences?: TutorialFamiliarityPreferences;
+  seenTutorialIds?: string[];
+  unlockedTutorialIds?: string[];
   recruitedChapterIds?: string[];
   seenIntroChapterIds?: string[];
   seenOutroChapterIds?: string[];

@@ -195,6 +195,14 @@ const canonicalUrl = Astro.url.href;
     resolveTutorialDetailLevel,
   } from '../mystery-emblem/data/quizData';
   import {
+    TUTORIAL_CATEGORY_LABELS,
+    TUTORIAL_CATEGORY_ORDER,
+    TUTORIAL_TOPICS,
+    detectDynamicMapTerrainTutorialIds,
+    getTutorialTopicById,
+    resolveSlidesForTutorialTopic,
+  } from '../mystery-emblem/data/tutorialRegistry';
+  import {
     CHAPTER_LEVEL_CATALOG,
     exportChapterMapJson,
     getDefaultChapterMap,
@@ -231,6 +239,7 @@ const canonicalUrl = Astro.url.href;
   import { DevToolsHarness } from '../mystery-emblem/ui/DevToolsHarness';
   import { DialogueOverlay } from '../mystery-emblem/ui/DialogueOverlay';
   import { QuizScene, RecruitNicknameOverlay } from '../mystery-emblem/ui/QuizScene';
+  import { TutorialOverlay } from '../mystery-emblem/ui/TutorialOverlay';
   import {
     PmdPortraitView,
     PmdSpriteActor,
@@ -247,6 +256,7 @@ const canonicalUrl = Astro.url.href;
   let currentManager: SaveStateManager | null = null;
   let currentDialogueOverlay: DialogueOverlay | null = null;
   let currentRecruitNicknameOverlay: RecruitNicknameOverlay | null = null;
+  let currentTutorialOverlay: TutorialOverlay | null = null;
   let currentQuizScene: QuizScene | null = null;
   let currentDevToolsHarness: DevToolsHarness | null = null;
   let currentBattleScene: BattleScene | null = null;
@@ -267,6 +277,8 @@ const canonicalUrl = Astro.url.href;
     currentQuizScene = null;
     currentRecruitNicknameOverlay?.destroy();
     currentRecruitNicknameOverlay = null;
+    currentTutorialOverlay?.destroy();
+    currentTutorialOverlay = null;
     currentDevToolsHarness?.destroy();
     currentDevToolsHarness = null;
     currentDialogueOverlay?.destroy();
@@ -446,6 +458,16 @@ const canonicalUrl = Astro.url.href;
       : null;
     currentRecruitNicknameOverlay = recruitNicknameOverlay;
 
+    const tutorialOverlay = viewportEl
+      ? new TutorialOverlay({
+          parent: viewportEl,
+          saveManager: manager,
+          audioManager,
+          onLayerStateChanged: () => backStack.syncButtonLabel(),
+        })
+      : null;
+    currentTutorialOverlay = tutorialOverlay;
+
     const quizScene =
       viewportEl && recruitNicknameOverlay
         ? new QuizScene(viewportEl, manager, recruitNicknameOverlay, {
@@ -457,6 +479,7 @@ const canonicalUrl = Astro.url.href;
     currentQuizScene = quizScene;
 
     function showTitleScreen(): void {
+      tutorialOverlay?.closeAll(null);
       if (devToolsBackdrop) devToolsBackdrop.hidden = true;
       if (titleScreen) titleScreen.hidden = false;
       backStack.syncButtonLabel();
@@ -515,6 +538,7 @@ const canonicalUrl = Astro.url.href;
 
     function openDemoQuizFlow(opts?: { skipNicknamePrompts?: boolean }): void {
       if (!quizScene) return;
+      tutorialOverlay?.closeAll(null);
       if (overworldScene?.isOpen()) {
         overworldReturnTarget = 'suppress';
         overworldScene.close();
@@ -642,6 +666,7 @@ const canonicalUrl = Astro.url.href;
 
     async function openMapEditor(levelId = 'prologue'): Promise<void> {
       if (!mapEditorScene || !isAdminSignedIn()) return;
+      tutorialOverlay?.closeAll(null);
       if (overworldScene?.isOpen()) {
         overworldReturnTarget = 'suppress';
         overworldScene.close();
@@ -674,6 +699,7 @@ const canonicalUrl = Astro.url.href;
         viewportEl,
         saveManager: manager,
         audioManager,
+        tutorialOverlay: tutorialOverlay ?? undefined,
         onRequestRenameUnit: (instanceId) =>
           promptRenameUnit(instanceId, battleScene?.getPrepSaveManager()),
         onExit: (destination = 'default') => {
@@ -733,6 +759,7 @@ const canonicalUrl = Astro.url.href;
         viewportEl,
         saveManager: manager,
         audioManager,
+        tutorialOverlay: tutorialOverlay ?? undefined,
         onExit: () => {
           if (overworldReturnTarget === 'suppress') {
             return;
@@ -856,6 +883,7 @@ const canonicalUrl = Astro.url.href;
       audioManager,
       dialogueOverlay,
       recruitNicknameOverlay,
+      tutorialOverlay,
       quizScene,
       openDemoQuizFlow,
       launchDemoChapterBattle,
@@ -876,6 +904,12 @@ const canonicalUrl = Astro.url.href;
       PERSONALITY_QUIZ_QUESTIONS,
       buildTutorialFamiliarityPreferences,
       resolveTutorialDetailLevel,
+      TUTORIAL_TOPICS,
+      TUTORIAL_CATEGORY_LABELS,
+      TUTORIAL_CATEGORY_ORDER,
+      getTutorialTopicById,
+      resolveSlidesForTutorialTopic,
+      detectDynamicMapTerrainTutorialIds,
       evaluatePersonalityQuiz,
       getStarterPartnerOptions,
       awardBattleUnitExp,
@@ -969,6 +1003,11 @@ const canonicalUrl = Astro.url.href;
       id: 'recruit-nickname-modal',
       isActive: () => Boolean(recruitNicknameOverlay?.isOpen()),
       onBack: () => recruitNicknameOverlay?.handleBack(),
+    });
+    backStack.registerLayer({
+      id: 'tutorial-overlay',
+      isActive: () => Boolean(tutorialOverlay?.isOpen()),
+      onBack: () => tutorialOverlay?.handleBack(),
     });
 
     function renderAll(): void {

@@ -47,6 +47,7 @@ import {
   subscribeChapterMapChanges,
 } from '../data/chapterMapRegistry';
 import { getItemById, getMoveById } from '../data/index';
+import { detectDynamicMapTerrainTutorialIds } from '../data/tutorialRegistry';
 import {
   buildBattleUnitsFromPrepDeployment,
   buildSingleEnemyBattleUnit,
@@ -109,6 +110,7 @@ import type {
   TraversalClass,
 } from '../types/schemas';
 import { DungeonPrepOverlay, type PrepSubMode } from '../ui/DungeonPrepOverlay';
+import type { TutorialOverlay } from '../ui/TutorialOverlay';
 import { createMiniItemIcon } from '../ui/PmdItemIconGrid';
 import { PmdPortraitView } from '../ui/PmdSpriteCanvas';
 import { createMiniSpeciesPortrait } from '../ui/PmdUnitPortraitGrid';
@@ -195,6 +197,7 @@ export interface BattleSceneOptions {
   viewportEl: HTMLElement;
   saveManager: SaveStateManager;
   audioManager?: AudioManager;
+  tutorialOverlay?: TutorialOverlay;
   onExit: (destination?: BattleExitDestination) => void;
   onLayerStateChanged: () => void;
   onRequestRenameUnit?: (instanceId: string) => Promise<void> | void;
@@ -284,6 +287,7 @@ export class BattleScene {
   private readonly viewportEl: HTMLElement;
   private readonly saveManager: SaveStateManager;
   private readonly audioManager: AudioManager;
+  private readonly tutorialOverlay?: TutorialOverlay;
   private readonly onExitCallback: (destination?: BattleExitDestination) => void;
   private readonly onLayerStateChanged: () => void;
   private readonly onRequestRenameUnit?: (instanceId: string) => Promise<void> | void;
@@ -454,6 +458,7 @@ export class BattleScene {
     this.viewportEl = options.viewportEl;
     this.saveManager = options.saveManager;
     this.audioManager = options.audioManager ?? getAudioManager();
+    this.tutorialOverlay = options.tutorialOverlay;
     this.onExitCallback = options.onExit;
     this.onLayerStateChanged = options.onLayerStateChanged;
     this.onRequestRenameUnit = options.onRequestRenameUnit;
@@ -862,6 +867,13 @@ export class BattleScene {
         this.updateInfoStrip();
         this.onLayerStateChanged();
       },
+      onSubModeEntered: (subMode) => {
+        if (subMode === 'manage_units') {
+          void this.triggerTutorial('prep_units_and_moves');
+        } else if (subMode === 'manage_items') {
+          void this.triggerTutorial('prep_items_and_convoy');
+        }
+      },
     });
 
     this.viewportEl.appendChild(this.rootEl);
@@ -1017,6 +1029,7 @@ export class BattleScene {
       this.syncPrepChromeVisibility();
       this.onLayerStateChanged();
       this.renderFrame(performance.now());
+      this.triggerPrepHubTutorials();
     }
   }
 
@@ -1590,6 +1603,7 @@ export class BattleScene {
     this.updateInfoStrip();
     if (opts?.showPrepOverlay !== false) {
       this.prepOverlay.show();
+      this.triggerPrepHubTutorials();
     }
     this.syncPrepChromeVisibility();
   }
@@ -2803,6 +2817,13 @@ export class BattleScene {
       }
     }
 
+    if (item.category === 'promotion') {
+      await this.triggerTutorial('levelup_and_evolution');
+    } else {
+      await this.triggerTutorial('ch1_healing_and_items');
+    }
+    if (!this.openState || runGen !== this.battleRunGen) return;
+
     if (this.areAllLivingPlayersWaited()) {
       await this.waitBattleMs(200);
       if (!this.openState || runGen !== this.battleRunGen || this.phase !== 'player_phase') {
@@ -2932,6 +2953,7 @@ export class BattleScene {
     this.updateInfoStrip();
     this.onLayerStateChanged();
     this.renderFrame(performance.now());
+    void this.triggerTutorial('ch1_first_combat_forecast');
   }
 
   private openHealForecastModal(targetAllyId: string, moveId: string): void {
@@ -2959,6 +2981,7 @@ export class BattleScene {
     this.updateInfoStrip();
     this.onLayerStateChanged();
     this.renderFrame(performance.now());
+    void this.triggerTutorial('ch1_healing_and_items');
   }
 
   private getValidForecastMoves(): BattleMoveSlot[] {
@@ -3931,6 +3954,10 @@ export class BattleScene {
       if (!this.openState || runGen !== this.battleRunGen) return;
       this.updateInfoStrip();
     }
+
+    if (levelUps.length > 0) {
+      await this.triggerTutorial('levelup_and_evolution');
+    }
   }
 
   // ==========================================================================
@@ -4327,7 +4354,16 @@ export class BattleScene {
     this.renderFrame(performance.now());
 
     this.audioManager.playSfx('phase_change');
-    void this.playPhaseTransitionAsync('player', runGen);
+    void this.playPhaseTransitionAsync('player', runGen).then(() => {
+      if (
+        this.openState &&
+        runGen === this.battleRunGen &&
+        this.phase === 'player_phase' &&
+        this.getLivingPlayers().some((u) => u.currentHp < u.maxHp)
+      ) {
+        void this.triggerTutorial('ch1_healing_and_items');
+      }
+    });
   }
 
   private async processTurnReinforcements(runGen: number): Promise<void> {
@@ -4832,6 +4868,25 @@ export class BattleScene {
         this.audioManager.playSfx('select');
       });
 
+      if (this.tutorialOverlay) {
+        const settingsListEl = this.fieldSubmodalCardEl.querySelector<HTMLElement>(
+          '.pmd-dungeon-settings-list'
+        );
+        if (settingsListEl) {
+          const dividerEl = document.createElement('div');
+          dividerEl.style.borderTop = '1px solid rgba(168, 192, 224, 0.35)';
+          dividerEl.style.paddingTop = '6px';
+          dividerEl.appendChild(
+            this.tutorialOverlay.renderTutorialSettingsControl({
+              onOpenCompendium: () => {
+                this.closeSystemMenu();
+              },
+            })
+          );
+          settingsListEl.appendChild(dividerEl);
+        }
+      }
+
       bindPointerTap(
         this.fieldSubmodalCardEl.querySelector<HTMLElement>(
           '[data-testid="battle-settings-done-btn"]'
@@ -4921,6 +4976,84 @@ export class BattleScene {
     }
     this.audioManager.playSfx('phase_change');
     await this.playPhaseTransitionAsync('player', runGen);
+    if (!this.openState || runGen !== this.battleRunGen || this.phase !== 'player_phase') {
+      return;
+    }
+    await this.triggerTurn1BattleTutorials(runGen);
+  }
+
+  private triggerTutorial(topicId: string): Promise<boolean> {
+    if (!this.tutorialOverlay || !this.openState || this.cutsceneInProgress) {
+      return Promise.resolve(false);
+    }
+    return this.tutorialOverlay.presentTopicIfNeeded(topicId, {
+      sceneFastMode: this.fastMode,
+    });
+  }
+
+  private triggerPrepHubTutorials(): void {
+    if (!this.tutorialOverlay || !this.openState || this.phase !== 'dungeon_prep') {
+      return;
+    }
+    const save = this.saveManager.getSave();
+    if (!save) return;
+
+    if (this.activeLevelId === 'prologue') {
+      void this.triggerTutorial('ch1_prep_ready');
+      return;
+    }
+
+    void this.triggerTutorial('prep_units_and_moves');
+
+    const cap = getMapDeploymentCap(this.map);
+    if (save.roster.length > cap || this.activeLevelId === 'chapter_04') {
+      void this.triggerTutorial('ch5_deployment_cap_and_mobile_boss');
+    }
+
+    const hasConvoyStone = save.convoy.some(
+      (c) => c.itemId === 'evolution_stone' && c.quantity > 0
+    );
+    const hasConvoyGem = save.convoy.some(
+      (c) => c.itemId === 'evolution_gem' && c.quantity > 0
+    );
+    const anyCanPromoteNow = save.roster.some((u) => {
+      const branches = getEligibleEvolutionBranches(u.speciesId, u.level);
+      return branches.some(
+        (b) =>
+          u.consumableItemId === b.requiredItemId ||
+          (b.requiredItemId === 'evolution_stone' && hasConvoyStone) ||
+          (b.requiredItemId === 'evolution_gem' && hasConvoyGem)
+      );
+    });
+    if (anyCanPromoteNow) {
+      void this.triggerTutorial('levelup_and_evolution');
+    }
+  }
+
+  private async triggerTurn1BattleTutorials(runGen: number): Promise<void> {
+    if (!this.tutorialOverlay || !this.openState || runGen !== this.battleRunGen) {
+      return;
+    }
+
+    if (this.activeLevelId === 'prologue') {
+      await this.triggerTutorial('ch1_turn1_controls_phases');
+    } else if (this.activeLevelId === 'chapter_01') {
+      await this.triggerTutorial('ch2_boss_and_traversal');
+    } else if (this.activeLevelId === 'chapter_02') {
+      await this.triggerTutorial('ch3_stairs_reinforcements');
+    } else if (this.activeLevelId === 'chapter_03') {
+      await this.triggerTutorial('ch4_vitamins');
+    } else if (this.activeLevelId === 'chapter_04') {
+      await this.triggerTutorial('ch5_deployment_cap_and_mobile_boss');
+    }
+
+    const dynamicTerrainTopics = detectDynamicMapTerrainTutorialIds(this.map);
+    for (const terrainTopicId of dynamicTerrainTopics) {
+      if (!this.openState || runGen !== this.battleRunGen || this.phase !== 'player_phase') {
+        return;
+      }
+      await this.triggerTutorial(terrainTopicId);
+    }
   }
 
   private presentBeginBattleCardAsync(runGen: number): Promise<void> {
@@ -5226,7 +5359,7 @@ export class BattleScene {
   // ==========================================================================
 
   private canInteractWithMapViewport(): boolean {
-    if (!this.openState || this.systemMenuOpen || !this.levelUpModalBackdropEl.hidden) {
+    if (!this.openState || this.systemMenuOpen || !this.levelUpModalBackdropEl.hidden || Boolean(this.tutorialOverlay?.isOpen())) {
       return false;
     }
     if (this.phase === 'dungeon_prep') {

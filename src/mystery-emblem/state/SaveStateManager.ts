@@ -35,9 +35,11 @@ import {
   type PokemonSpeciesDefinition,
   type QuizRecruitSeeds,
   type SaveData,
+  type SeriesFamiliarityLevel,
   type StatBlockSeven,
   type SupportLevel,
   type SupportPairProgress,
+  type TutorialDetailLevel,
   type TutorialFamiliarityPreferences,
 } from '../types/schemas';
 import { validateSaveData } from '../types/validators';
@@ -517,6 +519,8 @@ export class SaveStateManager {
         ...(cfg.tutorialPreferences
           ? { tutorialPreferences: { ...cfg.tutorialPreferences } }
           : {}),
+        seenTutorialIds: [],
+        unlockedTutorialIds: [],
         recruitedChapterIds: [],
         seenIntroChapterIds: [],
         seenOutroChapterIds: [],
@@ -1083,6 +1087,124 @@ export class SaveStateManager {
   public markDemoCompleted(): SaveData {
     const save = this.requireActiveSave();
     save.campaign.demoCompleted = true;
+    this.commitSave(save);
+    return this.getSave()!;
+  }
+
+  public getTutorialPreferences(): TutorialFamiliarityPreferences {
+    const tp = this.currentSave?.campaign.tutorialPreferences;
+    if (tp) {
+      return { ...tp };
+    }
+    return {
+      pokemonFamiliarity: 'somewhat_familiar',
+      fireEmblemFamiliarity: 'somewhat_familiar',
+      pokemonTutorialDetail: 'brief',
+      fireEmblemTutorialDetail: 'brief',
+    };
+  }
+
+  public setTutorialDetailLevel(
+    subject: 'pokemon' | 'fire_emblem',
+    detail: TutorialDetailLevel
+  ): SaveData {
+    const save = this.requireActiveSave();
+    const familiarityByDetail: Record<TutorialDetailLevel, SeriesFamiliarityLevel> = {
+      none: 'very_familiar',
+      brief: 'somewhat_familiar',
+      detailed: 'beginner',
+    };
+    const current = this.getTutorialPreferences();
+    if (subject === 'pokemon') {
+      current.pokemonTutorialDetail = detail;
+      current.pokemonFamiliarity = familiarityByDetail[detail];
+    } else {
+      current.fireEmblemTutorialDetail = detail;
+      current.fireEmblemFamiliarity = familiarityByDetail[detail];
+    }
+    save.campaign.tutorialPreferences = current;
+    this.commitSave(save);
+    return this.getSave()!;
+  }
+
+  public hasSeenTutorial(topicId: string): boolean {
+    const save = this.currentSave;
+    if (!save) return false;
+    return Boolean(save.campaign.seenTutorialIds?.includes(topicId));
+  }
+
+  public hasUnlockedTutorial(topicId: string): boolean {
+    const save = this.currentSave;
+    if (!save) return false;
+    return Boolean(
+      save.campaign.unlockedTutorialIds?.includes(topicId) ||
+        save.campaign.seenTutorialIds?.includes(topicId)
+    );
+  }
+
+  public getUnlockedTutorialIds(): string[] {
+    const save = this.currentSave;
+    if (!save) return [];
+    const combined = new Set<string>([
+      ...(save.campaign.unlockedTutorialIds ?? []),
+      ...(save.campaign.seenTutorialIds ?? []),
+    ]);
+    return [...combined];
+  }
+
+  public getSeenTutorialIds(): string[] {
+    const save = this.currentSave;
+    if (!save) return [];
+    return [...(save.campaign.seenTutorialIds ?? [])];
+  }
+
+  public unlockTutorial(topicId: string): SaveData {
+    const save = this.requireActiveSave();
+    const trimmed = topicId.trim();
+    if (!trimmed) {
+      return this.getSave()!;
+    }
+    if (!Array.isArray(save.campaign.unlockedTutorialIds)) {
+      save.campaign.unlockedTutorialIds = [];
+    }
+    if (!save.campaign.unlockedTutorialIds.includes(trimmed)) {
+      save.campaign.unlockedTutorialIds.push(trimmed);
+      this.commitSave(save);
+    }
+    return this.getSave()!;
+  }
+
+  public markTutorialSeen(topicId: string): SaveData {
+    const save = this.requireActiveSave();
+    const trimmed = topicId.trim();
+    if (!trimmed) {
+      return this.getSave()!;
+    }
+    if (!Array.isArray(save.campaign.unlockedTutorialIds)) {
+      save.campaign.unlockedTutorialIds = [];
+    }
+    if (!Array.isArray(save.campaign.seenTutorialIds)) {
+      save.campaign.seenTutorialIds = [];
+    }
+    let mutated = false;
+    if (!save.campaign.unlockedTutorialIds.includes(trimmed)) {
+      save.campaign.unlockedTutorialIds.push(trimmed);
+      mutated = true;
+    }
+    if (!save.campaign.seenTutorialIds.includes(trimmed)) {
+      save.campaign.seenTutorialIds.push(trimmed);
+      mutated = true;
+    }
+    if (mutated) {
+      this.commitSave(save);
+    }
+    return this.getSave()!;
+  }
+
+  public resetTutorialsProgress(): SaveData {
+    const save = this.requireActiveSave();
+    save.campaign.seenTutorialIds = [];
+    save.campaign.unlockedTutorialIds = [];
     this.commitSave(save);
     return this.getSave()!;
   }

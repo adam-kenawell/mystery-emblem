@@ -662,27 +662,47 @@ export function validateSaveData(
   }
   if (!data.campaign || typeof data.campaign !== 'object') {
     errors.push('Save payload missing campaign state.');
-  } else if (data.campaign.tutorialPreferences !== undefined) {
-    const tp = data.campaign.tutorialPreferences;
-    if (!tp || typeof tp !== 'object') {
-      errors.push('Save payload campaign.tutorialPreferences must be an object when present.');
-    } else {
-      if (!VALID_SERIES_FAMILIARITY_SET.has(tp.pokemonFamiliarity)) {
-        errors.push(`Invalid tutorialPreferences.pokemonFamiliarity: "${String(tp.pokemonFamiliarity)}".`);
+  } else {
+    if (data.campaign.tutorialPreferences !== undefined) {
+      const tp = data.campaign.tutorialPreferences;
+      if (!tp || typeof tp !== 'object') {
+        errors.push('Save payload campaign.tutorialPreferences must be an object when present.');
+      } else {
+        if (!VALID_SERIES_FAMILIARITY_SET.has(tp.pokemonFamiliarity)) {
+          errors.push(`Invalid tutorialPreferences.pokemonFamiliarity: "${String(tp.pokemonFamiliarity)}".`);
+        }
+        if (!VALID_SERIES_FAMILIARITY_SET.has(tp.fireEmblemFamiliarity)) {
+          errors.push(
+            `Invalid tutorialPreferences.fireEmblemFamiliarity: "${String(tp.fireEmblemFamiliarity)}".`
+          );
+        }
+        if (!VALID_TUTORIAL_DETAIL_SET.has(tp.pokemonTutorialDetail)) {
+          errors.push(
+            `Invalid tutorialPreferences.pokemonTutorialDetail: "${String(tp.pokemonTutorialDetail)}".`
+          );
+        }
+        if (!VALID_TUTORIAL_DETAIL_SET.has(tp.fireEmblemTutorialDetail)) {
+          errors.push(
+            `Invalid tutorialPreferences.fireEmblemTutorialDetail: "${String(tp.fireEmblemTutorialDetail)}".`
+          );
+        }
       }
-      if (!VALID_SERIES_FAMILIARITY_SET.has(tp.fireEmblemFamiliarity)) {
-        errors.push(
-          `Invalid tutorialPreferences.fireEmblemFamiliarity: "${String(tp.fireEmblemFamiliarity)}".`
-        );
+    }
+    if (data.campaign.seenTutorialIds !== undefined) {
+      if (
+        !Array.isArray(data.campaign.seenTutorialIds) ||
+        data.campaign.seenTutorialIds.some((id) => typeof id !== 'string' || id.trim().length === 0)
+      ) {
+        errors.push('Save payload campaign.seenTutorialIds must be an array of non-empty strings when present.');
       }
-      if (!VALID_TUTORIAL_DETAIL_SET.has(tp.pokemonTutorialDetail)) {
+    }
+    if (data.campaign.unlockedTutorialIds !== undefined) {
+      if (
+        !Array.isArray(data.campaign.unlockedTutorialIds) ||
+        data.campaign.unlockedTutorialIds.some((id) => typeof id !== 'string' || id.trim().length === 0)
+      ) {
         errors.push(
-          `Invalid tutorialPreferences.pokemonTutorialDetail: "${String(tp.pokemonTutorialDetail)}".`
-        );
-      }
-      if (!VALID_TUTORIAL_DETAIL_SET.has(tp.fireEmblemTutorialDetail)) {
-        errors.push(
-          `Invalid tutorialPreferences.fireEmblemTutorialDetail: "${String(tp.fireEmblemTutorialDetail)}".`
+          'Save payload campaign.unlockedTutorialIds must be an array of non-empty strings when present.'
         );
       }
     }

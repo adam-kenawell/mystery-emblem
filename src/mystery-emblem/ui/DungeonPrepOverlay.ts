@@ -60,6 +60,7 @@ export interface DungeonPrepOverlayOptions {
   onToggleGlobalDanger: () => void;
   onConfirmEnterDungeon: () => void;
   onSubLayerChanged: () => void;
+  onSubModeEntered?: (subMode: PrepSubMode) => void;
 }
 
 function escapeHtml(raw: string): string {
@@ -422,6 +423,7 @@ export class DungeonPrepOverlay {
     this.syncVisibility();
     this.refreshAll();
     this.opts.onSubLayerChanged();
+    this.opts.onSubModeEntered?.(next);
   }
 
   private syncVisibility(): void {

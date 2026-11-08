@@ -44,6 +44,7 @@ import {
   samplePolylineAtDistance,
   type OverworldRouteResult,
 } from '../engine/overworldEngine';
+import { getEligibleEvolutionBranches } from '../engine/progressionEngine';
 import {
   formatCampaignChapterLabel,
   getUnitEquippedItemId,
@@ -77,6 +78,7 @@ import {
   type MapCameraBounds,
 } from '../ui/mapZoomController';
 import { bindPointerTap } from '../ui/pointerControls';
+import type { TutorialOverlay } from '../ui/TutorialOverlay';
 import {
   createColoredTypeSpan,
   renderColoredTypeHtml,
@@ -103,6 +105,7 @@ export interface OverworldSceneOptions {
   viewportEl: HTMLElement;
   saveManager: SaveStateManager;
   audioManager?: AudioManager;
+  tutorialOverlay?: TutorialOverlay;
   graph?: OverworldGraphDefinition;
   onExit: () => void;
   onRequestNewGame?: () => void;
@@ -285,6 +288,7 @@ export class OverworldScene {
   private readonly viewportEl: HTMLElement;
   private readonly saveManager: SaveStateManager;
   private readonly audioManager: AudioManager;
+  private readonly tutorialOverlay?: TutorialOverlay;
   private graph: OverworldGraphDefinition;
   private readonly onExitCallback: () => void;
   private readonly onRequestNewGame?: () => void;
@@ -396,6 +400,7 @@ export class OverworldScene {
     this.viewportEl = options.viewportEl;
     this.saveManager = options.saveManager;
     this.audioManager = options.audioManager ?? getAudioManager();
+    this.tutorialOverlay = options.tutorialOverlay;
     this.graph = options.graph ?? DEMO_OVERWORLD_GRAPH;
     this.onExitCallback = options.onExit;
     this.onRequestNewGame = options.onRequestNewGame;
@@ -661,6 +666,51 @@ export class OverworldScene {
     this.startLoop();
     this.onLayerStateChanged();
     this.renderFrame();
+    this.triggerOverworldArrivalTutorials();
+  }
+
+  private triggerTutorial(topicId: string): Promise<boolean> {
+    if (!this.tutorialOverlay || !this.openState) {
+      return Promise.resolve(false);
+    }
+    return this.tutorialOverlay.presentTopicIfNeeded(topicId, {
+      sceneFastMode: this.fastMode,
+    });
+  }
+
+  private triggerOverworldArrivalTutorials(): void {
+    if (!this.tutorialOverlay || !this.openState) return;
+    const save = this.saveManager.getSave();
+    if (!save) return;
+
+    void this.triggerTutorial('overworld_and_skirmishes');
+
+    if (save.campaign.kecleonShopsUnlocked) {
+      void this.triggerTutorial('kecleon_shops_and_tms');
+    }
+
+    if (save.convoy.some((c) => c.quantity > 0 && getItemById(c.itemId)?.category === 'vitamin')) {
+      void this.triggerTutorial('ch4_vitamins');
+    }
+
+    const hasConvoyStone = save.convoy.some(
+      (c) => c.itemId === 'evolution_stone' && c.quantity > 0
+    );
+    const hasConvoyGem = save.convoy.some(
+      (c) => c.itemId === 'evolution_gem' && c.quantity > 0
+    );
+    const anyCanPromoteNow = save.roster.some((u) => {
+      const branches = getEligibleEvolutionBranches(u.speciesId, u.level);
+      return branches.some(
+        (b) =>
+          u.consumableItemId === b.requiredItemId ||
+          (b.requiredItemId === 'evolution_stone' && hasConvoyStone) ||
+          (b.requiredItemId === 'evolution_gem' && hasConvoyGem)
+      );
+    });
+    if (anyCanPromoteNow) {
+      void this.triggerTutorial('levelup_and_evolution');
+    }
   }
 
   public close(): void {
@@ -1138,7 +1188,12 @@ export class OverworldScene {
   }
 
   private canInteractWithMapCanvas(): boolean {
-    return this.openState && !this.kecleonShopOpen && !this.systemMenuOpen;
+    return (
+      this.openState &&
+      !this.kecleonShopOpen &&
+      !this.systemMenuOpen &&
+      !this.tutorialOverlay?.isOpen()
+    );
   }
 
   private ensurePointComfortableInCamera(mapX: number, mapY: number): void {
@@ -1563,6 +1618,7 @@ export class OverworldScene {
     this.audioManager.playSfx('select');
     this.audioManager.playBgm('kecleon_shop', { fadeMs: 220 });
     this.onLayerStateChanged();
+    void this.triggerTutorial('kecleon_shops_and_tms');
   }
 
   private closeKecleonShop(): void {
@@ -1786,6 +1842,7 @@ export class OverworldScene {
       this.renderUnitsRosterTab(save);
     } else if (this.activeMenuTab === 'convoy') {
       this.renderConvoyTab(save);
+      void this.triggerTutorial('prep_items_and_convoy');
     } else {
       this.renderSystemTab(save);
     }
@@ -2626,6 +2683,25 @@ export class OverworldScene {
         this.pendingSystemConfirm = null;
         this.renderSystemMenuBody();
       });
+    }
+
+    if (this.tutorialOverlay) {
+      const tutorialsBox = document.createElement('div');
+      tutorialsBox.className = 'pmd-overworld-subbox';
+      tutorialsBox.style.marginTop = '0.5rem';
+      const tutTitle = document.createElement('p');
+      tutTitle.className = 'pmd-overworld-subbox-title';
+      tutTitle.textContent = 'Tutorials & Guide';
+      tutorialsBox.appendChild(tutTitle);
+      tutorialsBox.appendChild(
+        this.tutorialOverlay.renderTutorialSettingsControl({
+          onAfterChange: () => {
+            this.setMenuFeedback('Updated tutorial preferences.');
+          },
+        })
+      );
+      this.menuPanelBodyEl.append(audioBox, tutorialsBox, saveBox, actionsBox);
+      return;
     }
 
     this.menuPanelBodyEl.append(audioBox, saveBox, actionsBox);
