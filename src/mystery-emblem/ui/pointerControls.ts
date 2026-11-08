@@ -149,6 +149,11 @@ export interface BackStackOptions {
    * (e.g., showing `[G] Log In` / `[G] Log Out` on the Title Screen, or `Menu` inside a dungeon).
    */
   syncIdleButton?: (cornerBtn: HTMLButtonElement) => void;
+  /**
+   * Optional predicate that hides the top-right corner button altogether even while sub-layers
+   * are active (e.g., during active dungeon gameplay where menus/forecasts use in-view controls).
+   */
+  shouldHideCornerButton?: () => boolean;
 }
 
 /**
@@ -160,6 +165,7 @@ export class BackStackController {
   private readonly cornerBtn: HTMLButtonElement | null;
   private readonly onOpenRootMenu: () => void;
   private readonly syncIdleButton?: (cornerBtn: HTMLButtonElement) => void;
+  private readonly shouldHideCornerButton?: () => boolean;
 
   constructor(
     cornerBtn: HTMLButtonElement | null,
@@ -169,6 +175,7 @@ export class BackStackController {
     this.cornerBtn = cornerBtn;
     this.onOpenRootMenu = onOpenRootMenu;
     this.syncIdleButton = options?.syncIdleButton;
+    this.shouldHideCornerButton = options?.shouldHideCornerButton;
   }
 
   public registerLayer(entry: BackLayerEntry): void {
@@ -186,6 +193,11 @@ export class BackStackController {
 
   public syncButtonLabel(): void {
     if (!this.cornerBtn) return;
+    if (this.shouldHideCornerButton?.()) {
+      this.cornerBtn.hidden = true;
+      this.cornerBtn.dataset.cornerMode = 'hidden';
+      return;
+    }
     const isSubLayerOpen = this.hasActiveLayer();
     if (isSubLayerOpen) {
       this.cornerBtn.hidden = false;

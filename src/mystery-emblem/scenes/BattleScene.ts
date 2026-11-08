@@ -4655,7 +4655,8 @@ export class BattleScene {
       }
       left = Math.max(EDGE_PAD, Math.min(Math.max(EDGE_PAD, stageW - menuW - EDGE_PAD), left));
 
-      const overlapsTopRightCornerBtn = left + menuW > stageW - 136;
+      const overlapsTopRightCornerBtn =
+        this.phase === 'dungeon_prep' && left + menuW > stageW - 136;
       const overlapsTopLeftCornerBtn = left < 148;
       const minTop =
         overlapsTopRightCornerBtn || overlapsTopLeftCornerBtn

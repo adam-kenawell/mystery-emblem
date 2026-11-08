@@ -366,6 +366,13 @@ const canonicalUrl = Astro.url.href;
         }
       },
       {
+        shouldHideCornerButton: () =>
+          Boolean(
+            battleScene?.isOpen() &&
+              battleScene.getSnapshot().phase !== 'dungeon_prep' &&
+              !isDevToolsOpen() &&
+              !recruitNicknameOverlay?.isOpen()
+          ),
         syncIdleButton: (btn) => {
           if (battleScene?.isOpen()) {
             if (battleScene.getSnapshot().phase === 'dungeon_prep') {
