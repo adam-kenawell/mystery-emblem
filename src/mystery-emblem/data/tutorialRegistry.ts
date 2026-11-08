@@ -1,25 +1,15 @@
 /**
- * Mystery Emblem — Familiarity-Tailored Progressive Tutorial Registry (`tutorialRegistry.ts`)
+ * Mystery Emblem — Wimpod Interactive Advisor & Tutorial Registry (`tutorialRegistry.ts`)
  *
- * Modular slide architecture combining:
- * - `'fusion'`: Mystery Emblem-unique hybrid rules & HUD controls (ALWAYS shown as concise 1-card
- *   callouts, even when both Pokémon and Fire Emblem familiarity are set to `'none'` / "Very familiar").
- * - `'pokemon'`: Tailored to `pokemonTutorialDetail` (`'none'` skipped, `'brief'` 1-card refresher,
- *   `'detailed'` beginner-friendly breakdown with concrete examples).
- * - `'fire_emblem'`: Tailored to `fireEmblemTutorialDetail` (`'none'` skipped, `'brief'` 1-card refresher,
- *   `'detailed'` step-by-step tactical breakdown).
+ * Replaces static textbook tutorial cards with short, comedic, interactive coaching led by
+ * Wimpod (`0767`)—the scaredy-cat 4th member of the starting party (`Lord`, `Piplup`, `Flabébé`,
+ * `Wimpod`) who refuses to fight and instead studied every tactical rule out of pure survival instinct!
  *
- * Strictly covers only live, active gameplay mechanics.
+ * Strictly data-driven (Rule 1) and covers only live gameplay mechanics.
  */
 
-import type {
-  DungeonMapDefinition,
-  PokemonType,
-  TutorialDetailLevel,
-  TutorialFamiliarityPreferences,
-} from '../types/schemas';
-
-export type TutorialDomain = 'fusion' | 'pokemon' | 'fire_emblem';
+import type { PmdPortraitEmotion } from '../assets/pmdAssetLoader';
+import type { DungeonMapDefinition, PokemonType } from '../types/schemas';
 
 export type TutorialCompendiumCategory =
   | 'controls_fusion'
@@ -28,10 +18,10 @@ export type TutorialCompendiumCategory =
   | 'world_progression';
 
 export const TUTORIAL_CATEGORY_LABELS: Readonly<Record<TutorialCompendiumCategory, string>> = {
-  controls_fusion: 'Controls & Mystery Emblem Rules',
+  controls_fusion: 'Survival Basics & Controls',
   combat_tactics: 'Combat, Ranges & Terrain',
-  prep_pokemon: 'Squad Prep, Moves & Items',
-  world_progression: 'World Map, Promotions & Shops',
+  prep_pokemon: 'Battle Prep, Moves & Items',
+  world_progression: 'World Map, Evolutions & Shops',
 };
 
 export const TUTORIAL_CATEGORY_ORDER: ReadonlyArray<TutorialCompendiumCategory> = [
@@ -41,11 +31,41 @@ export const TUTORIAL_CATEGORY_ORDER: ReadonlyArray<TutorialCompendiumCategory> 
   'world_progression',
 ];
 
-export const TUTORIAL_DOMAIN_BADGES: Readonly<Record<TutorialDomain, string>> = {
-  fusion: 'Mystery Emblem Core',
-  pokemon: 'Pokémon Tip',
-  fire_emblem: 'Tactical Tip',
-};
+export type TutorialActionTriggerId =
+  | 'battle_open_field_menu'
+  | 'battle_toggle_danger_area'
+  | 'battle_select_lord'
+  | 'battle_move_to_blue_tile'
+  | 'battle_confirm_wait'
+  | 'battle_open_attack_forecast'
+  | 'battle_confirm_attack'
+  | 'battle_inspect_heal_or_item'
+  | 'overworld_open_menu'
+  | 'prep_open_manage_units'
+  | 'prep_close_manage_units'
+  | 'prep_open_view_map'
+  | 'prep_swap_or_finish_view_map';
+
+export type TutorialBattleTileFilter =
+  | 'empty_floor'
+  | 'lord_unit'
+  | 'reachable_move'
+  | 'attackable_enemy'
+  | 'wounded_or_healer'
+  | 'prep_swap_slots';
+
+export type TutorialSpotlightTarget =
+  | { kind: 'none' }
+  | {
+      kind: 'dom';
+      selector: string;
+      preferredDock?: 'top' | 'bottom';
+    }
+  | {
+      kind: 'battle_tiles';
+      tileFilter: TutorialBattleTileFilter;
+      fallbackDomSelector?: string;
+    };
 
 export interface TutorialVisualChip {
   kind: 'badge' | 'type' | 'item' | 'species';
@@ -56,22 +76,17 @@ export interface TutorialVisualChip {
   tone?: 'gold' | 'green' | 'cyan' | 'danger';
 }
 
-export interface TutorialSlideContent {
-  heading: string;
-  bullets: ReadonlyArray<string>;
-  callout?: string;
-  chips?: ReadonlyArray<TutorialVisualChip>;
-}
-
-export interface TutorialSlideSpec {
+export interface WimpodTutorialBeat {
   id: string;
-  domain: TutorialDomain;
-  /** Shown regardless of familiarity (used for `'fusion'` mechanics & custom HUD controls) */
-  always?: TutorialSlideContent | ReadonlyArray<TutorialSlideContent>;
-  /** Concise 1-card refresher when series detail is `'brief'` ("Somewhat familiar") */
-  brief?: TutorialSlideContent | ReadonlyArray<TutorialSlideContent>;
-  /** Friendly, example-rich cards when series detail is `'detailed'` (Beginner) */
-  detailed?: TutorialSlideContent | ReadonlyArray<TutorialSlideContent>;
+  emotion: PmdPortraitEmotion;
+  /** Supports `{lord}`, `{partner}`, `{healer}`, `{advisor}` custom nickname interpolation */
+  dialogue: string;
+  /** Concise prompt displayed in Wimpod's action pill during hands-on steps */
+  actionHint?: string;
+  /** When set during live play, Wimpod's coach bar stays non-blocking and awaits this action */
+  awaitAction?: TutorialActionTriggerId;
+  spotlight?: TutorialSpotlightTarget;
+  chips?: ReadonlyArray<TutorialVisualChip>;
 }
 
 export interface TutorialTopicDefinition {
@@ -79,929 +94,507 @@ export interface TutorialTopicDefinition {
   title: string;
   category: TutorialCompendiumCategory;
   summary: string;
-  /** If true, popup only shows if at least one series tutorial detail !== `'none'` */
-  skipPopupWhenBothVeryFamiliar?: boolean;
-  slides: ReadonlyArray<TutorialSlideSpec>;
-}
-
-export interface ResolvedTutorialSlide extends TutorialSlideContent {
-  specId: string;
-  domain: TutorialDomain;
-  domainLabel: string;
-}
-
-function toSlideArray(
-  entry?: TutorialSlideContent | ReadonlyArray<TutorialSlideContent>
-): ReadonlyArray<TutorialSlideContent> {
-  if (!entry) return [];
-  return Array.isArray(entry)
-    ? (entry as ReadonlyArray<TutorialSlideContent>)
-    : [entry as TutorialSlideContent];
+  beats: ReadonlyArray<WimpodTutorialBeat>;
 }
 
 export const TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinition> = [
   // ============================================================================
-  // 2. Chapter 1 (`Western Beach`) — Turn 1 Controls, Field Menu & Phases
+  // 1. Chapter 1 (`Western Beach`) Turn 1 — Hands-On Movement, Danger Area & Wait
   // ============================================================================
   {
     id: 'ch1_turn1_controls_phases',
-    title: 'Dungeon Controls & Turn Phases',
+    title: 'Danger Area, Moving & Turn Phases',
     category: 'controls_fusion',
-    summary: 'Camera panning, the empty-tile Field Menu, grid highlights, and defeat rules.',
-    slides: [
+    summary: 'Checking enemy reach from empty floor tiles, moving your squad, and protecting your ★ Lord.',
+    beats: [
       {
-        id: 'ch1_controls_fusion',
-        domain: 'fusion',
-        always: {
-          heading: 'Camera & Empty-Tile Field Menu',
-          chips: [
-            { kind: 'badge', label: 'Tap Empty Tile -> Menu', tone: 'gold' },
-            { kind: 'badge', label: 'Danger Area', tone: 'danger' },
-          ],
-          bullets: [
-            'Drag anywhere on the dungeon map to pan the camera, and pinch or scroll-wheel to zoom.',
-            'Hover (PC) or tap any Pokémon to view its stats, moves, and item in the bottom-left HUD.',
-            'Tap any empty floor tile (or right-click / long-press) to open the Field Menu for Danger Area, End Phase, Objective, and Settings!',
-          ],
-          callout: 'Tip: Toggle Danger Area from the Field Menu to highlight every tile enemies can strike.',
-        },
+        id: 'ch1_step1_empty_tile',
+        emotion: 'Teary-Eyed',
+        dialogue:
+          'EEP! Raiders ahead! Rule #1 of not getting squished: check how far their claws reach! Drag to pan the map anytime, and tap a glowing empty floor tile to open the Field Menu!',
+        actionHint: 'Tap any highlighted empty floor tile',
+        awaitAction: 'battle_open_field_menu',
+        spotlight: { kind: 'battle_tiles', tileFilter: 'empty_floor' },
+        chips: [{ kind: 'badge', label: 'Empty Tile -> Field Menu', tone: 'gold' }],
       },
       {
-        id: 'ch1_phases_fe',
-        domain: 'fire_emblem',
-        brief: {
-          heading: 'Phases, Highlights & Casual Retreats',
-          chips: [
-            { kind: 'badge', label: 'Blue: Move', tone: 'cyan' },
-            { kind: 'badge', label: 'Red: Attack', tone: 'danger' },
-            { kind: 'badge', label: '★ Lord KO = Defeat', tone: 'gold' },
-          ],
-          bullets: [
-            'Command each ally once during Player Phase (Blue = movement, Red = attack, Green = heal), then enemies act on Enemy Phase.',
-            'If your Dragon Lord (★) hits 0 HP, it is Game Over! Other allies who faint retreat from the current dungeon and return healthy next battle.',
-          ],
-        },
-        detailed: [
-          {
-            heading: 'How Turn-Based Battles Work',
-            chips: [
-              { kind: 'badge', label: 'Player Phase', tone: 'cyan' },
-              { kind: 'badge', label: 'Enemy Phase', tone: 'danger' },
-            ],
-            bullets: [
-              'Battles alternate between Player Phase (all of your Pokémon act) and Enemy Phase (all enemy Pokémon move and attack).',
-              'Tap one of your Pokémon to reveal Blue tiles (where it can walk), Red tiles (where its attacks reach), and Green tiles (healing range).',
-              'Tap a Blue tile to move and choose Wait—or tap an enemy inside your Red range to preview an attack!',
-            ],
-            callout: 'Once every ally has acted (or you pick End Phase from an empty tile), Enemy Phase begins.',
-          },
-          {
-            heading: 'Protecting Your Dragon Lord (★)',
-            chips: [
-              { kind: 'badge', label: '★ Dragon Lord', tone: 'gold' },
-              { kind: 'badge', label: 'Allies Recover Post-Battle', tone: 'green' },
-            ],
-            bullets: [
-              'Your quiz-chosen Dragon Lord is marked with a gold ★ star. If your Dragon Lord falls to 0 HP, the battle is lost!',
-              'If another teammate faints, they retreat for the rest of this dungeon, but recover at full HP once you win.',
-            ],
-            callout: 'Keep an eye on enemy reach so multiple foes cannot gang up on a wounded hero.',
-          },
+        id: 'ch1_step2_danger_area',
+        emotion: 'Shouting',
+        dialogue:
+          'Now tap Danger Area! Being a lifelong coward means I memorized every predator’s exact attack reach!',
+        actionHint: 'Tap Danger Area in the Field Menu',
+        awaitAction: 'battle_toggle_danger_area',
+        spotlight: { kind: 'dom', selector: '[data-testid="battle-field-danger"]' },
+        chips: [{ kind: 'badge', label: 'Danger Area', tone: 'danger' }],
+      },
+      {
+        id: 'ch1_step3_select_lord',
+        emotion: 'Worried',
+        dialogue:
+          'See that crimson zone? Enemies can strike there on Enemy Phase! Now tap {lord} (★)—if {lord} hits 0 HP it’s Game Over, while other fainted pals just retreat until next battle!',
+        actionHint: 'Tap {lord} (★) on the beach',
+        awaitAction: 'battle_select_lord',
+        spotlight: { kind: 'battle_tiles', tileFilter: 'lord_unit' },
+        chips: [
+          { kind: 'badge', label: '★ Lord 0 HP = Defeat', tone: 'gold' },
+          { kind: 'badge', label: 'Allies Recover Post-Battle', tone: 'green' },
         ],
+      },
+      {
+        id: 'ch1_step4_move_blue',
+        emotion: 'Surprised',
+        dialogue:
+          'Blue tiles show where {lord} can walk, Red shows attack reach, and the bottom-left cards show stats & terrain! Tap any Blue tile to step forward!',
+        actionHint: 'Tap any Blue movement tile',
+        awaitAction: 'battle_move_to_blue_tile',
+        spotlight: { kind: 'battle_tiles', tileFilter: 'reachable_move' },
+        chips: [
+          { kind: 'badge', label: 'Blue: Move', tone: 'cyan' },
+          { kind: 'badge', label: 'Red: Attack', tone: 'danger' },
+        ],
+      },
+      {
+        id: 'ch1_step5_wait',
+        emotion: 'Happy',
+        dialogue:
+          'Looking Way Braver Than Me! Tap Wait to finish {lord}’s move—once all three of you act (or pick End Phase), Enemy Phase begins! I’ll cheer quietly from behind my boulder!',
+        actionHint: 'Tap Wait in the command menu',
+        awaitAction: 'battle_confirm_wait',
+        spotlight: { kind: 'dom', selector: '[data-testid="dungeon-cmd-wait"]' },
       },
     ],
   },
 
   // ============================================================================
-  // 3. First Combat Forecast Opened — R1/R2, [E] Counter, Types & Forecast Math
+  // 2. First Combat Opportunity / Forecast — R1/R2, Single [E] Counter & Math
   // ============================================================================
   {
     id: 'ch1_first_combat_forecast',
     title: 'Combat Forecast, Ranges & [E] Counters',
     category: 'combat_tactics',
-    summary: 'Physical (R1) vs Special (R2), single [E] counter-attacks, type matchups, and x2 doubling.',
-    slides: [
+    summary: 'Physical (R1) vs Special (R2), the single [E] counter-attack rule, STAB, and +5 Spe doubling.',
+    beats: [
       {
-        id: 'combat_ranges_equipped_fusion',
-        domain: 'fusion',
-        always: {
-          heading: 'R1 vs R2 & Single [E] Counter Rule',
-          chips: [
-            { kind: 'badge', label: 'Physical = R1', tone: 'gold' },
-            { kind: 'badge', label: 'Special = R2', tone: 'cyan' },
-            { kind: 'badge', label: '[E] Equipped', tone: 'green' },
-          ],
-          bullets: [
-            'Physical moves strike at Range 1 (adjacent tiles). Special moves strike at Range 2 (exactly 2 tiles away, including diagonals of 1+1).',
-            'When attacked on Enemy Phase, a unit can ONLY counter-attack with its single [E] Equipped move—and only if its range matches the attacker!',
-            'Choosing a Physical (R1) or Special (R2) move in this forecast automatically sets it as that unit’s [E] move.',
-          ],
-          callout: 'Attack a Range-1 foe from 2 tiles away with a Special move (like Bubble) for a free uncountered hit!',
+        id: 'combat_step1_open_forecast',
+        emotion: 'Stunned',
+        dialogue:
+          'WAH! An enemy is inside your Red attack range! Don’t swing blind—tap that enemy (or Attack) to inspect the Combat Forecast first!',
+        actionHint: 'Tap the highlighted enemy in Red range',
+        awaitAction: 'battle_open_attack_forecast',
+        spotlight: {
+          kind: 'battle_tiles',
+          tileFilter: 'attackable_enemy',
+          fallbackDomSelector: '[data-testid="dungeon-cmd-attack"]',
         },
       },
       {
-        id: 'combat_types_pokemon',
-        domain: 'pokemon',
-        brief: {
-          heading: 'Type Multipliers, STAB & Stat Split',
-          chips: [
-            { kind: 'type', pokemonType: 'Water' },
-            { kind: 'type', pokemonType: 'Fire' },
-            { kind: 'type', pokemonType: 'Dragon' },
-            { kind: 'badge', label: '1.25x STAB', tone: 'green' },
-          ],
-          bullets: [
-            'Matchups scale tactical damage cleanly: 1.25x Super Effective (1.5x double-weak), 0.75x Resisted (0.5x double-resist), or 0x Immune.',
-            'Using a move matching the user’s own type grants 1.25x STAB. Physical moves check Atk vs Def; Special moves check SpA vs SpD; PP resets after each dungeon.',
-          ],
-        },
-        detailed: [
-          {
-            heading: 'Elemental Types & Bonus Damage',
-            chips: [
-              { kind: 'type', pokemonType: 'Water' },
-              { kind: 'type', pokemonType: 'Fairy' },
-              { kind: 'type', pokemonType: 'Dark' },
-              { kind: 'badge', label: '1.25x STAB', tone: 'green' },
-            ],
-            bullets: [
-              'Every Pokémon and move has an elemental Type. Hitting an enemy’s weakness boosts damage (1.25x or 1.5x), while resisted types deal less (0.75x, 0.5x, or 0x).',
-              'For example, Fairy moves hit Dark-type foes like Poochyena for super-effective damage!',
-              'Same-Type Attack Bonus (STAB): when a Water-type like Piplup uses a Water move, its power gets a built-in 1.25x boost.',
-            ],
-          },
-          {
-            heading: 'Physical vs Special Stats & PP',
-            chips: [
-              { kind: 'badge', label: 'Atk vs Def (R1)', tone: 'gold' },
-              { kind: 'badge', label: 'SpA vs SpD (R2)', tone: 'cyan' },
-            ],
-            bullets: [
-              'Physical moves (R1) compare your Attack (Atk) against the foe’s Defense (Def).',
-              'Special moves (R2) compare your Special Attack (SpA) against the foe’s Special Defense (SpD)—great for cracking high-Def armored foes!',
-              'Each move has Power Points (PP) showing how many times it can be used during this battle (restored automatically afterward).',
-            ],
-          },
+        id: 'combat_step2_equipped_rule',
+        emotion: 'Determined',
+        dialogue:
+          'Survival Secret #1: Physical moves hit Range 1 (adjacent) and Special moves hit Range 2! Foes ONLY counter-attack if their single [E] move matches your range—so snipe melee brutes from 2 tiles away for a free hit!',
+        chips: [
+          { kind: 'badge', label: 'Physical = R1', tone: 'gold' },
+          { kind: 'badge', label: 'Special = R2', tone: 'cyan' },
+          { kind: 'badge', label: '[E] Counter Rule', tone: 'green' },
         ],
       },
       {
-        id: 'combat_forecast_fe',
-        domain: 'fire_emblem',
-        brief: {
-          heading: 'Reading Forecast Math, x2 Speed & Drops',
-          chips: [
-            { kind: 'badge', label: '+5 Spe = x2', tone: 'gold' },
-            { kind: 'badge', label: 'Crit = 2x Dmg', tone: 'danger' },
-            { kind: 'item', itemId: 'potion', label: 'DROP' },
-          ],
-          bullets: [
-            'The forecast shows exact Dmg, Hit %, Crit % (2x total damage), and projected HP before you commit.',
-            'Outspeeding a foe by +5 Speed or more triggers a follow-up strike (x2). Defeating foes with a DROP icon sends their item to your Convoy!',
-          ],
+        id: 'combat_step3_confirm_attack',
+        emotion: 'Teary-Eyed',
+        dialogue:
+          'Weaknesses & same-type STAB boost damage (1.25x), and +5 Speed strikes twice (x2)! Pick a move on the left bar, then tap Attack! ...Tell me when the scary noise is over!',
+        actionHint: 'Tap Attack! to strike',
+        awaitAction: 'battle_confirm_attack',
+        spotlight: {
+          kind: 'dom',
+          selector: '[data-testid="forecast-attack-btn"]',
+          preferredDock: 'top',
         },
-        detailed: {
-          heading: 'Reading the Combat Forecast',
-          chips: [
-            { kind: 'badge', label: 'Dmg · Hit % · Crit %', tone: 'cyan' },
-            { kind: 'badge', label: '+5 Spe = x2', tone: 'gold' },
-            { kind: 'item', itemId: 'potion', label: 'DROP' },
-          ],
-          bullets: [
-            'Dmg is damage per hit, Hit % is accuracy, and Crit % is your chance to deal 2x damage.',
-            'If a Pokémon’s Speed (Spe) is at least 5 higher than its opponent’s, it attacks twice (shown as x2)!',
-            'Tap different moves on the left bar to compare outcomes—and defeat enemies carrying a DROP icon to claim their treasure.',
-          ],
-          callout: 'When an enemy’s portrait winces in Pain, your attack is projected to knock them out!',
-        },
+        chips: [
+          { kind: 'badge', label: '1.25x STAB / Weak', tone: 'green' },
+          { kind: 'badge', label: '+5 Spe = x2', tone: 'gold' },
+        ],
       },
     ],
   },
 
   // ============================================================================
-  // 4. First Damaged Ally / First Heal or Item Action — 1-Item Slot & Support
+  // 3. First Wounded Ally / First Heal or Item — 1-Item Slot & Support Moves
   // ============================================================================
   {
     id: 'ch1_healing_and_items',
     title: 'Healing Allies & The 1-Item Slot',
     category: 'prep_pokemon',
-    summary: 'Passive Held Berries/Gear vs manual Consumables, plus Support/Heal moves.',
-    slides: [
+    summary: 'Auto-trigger Berries vs manual Potions in your 1 Item Slot, plus R1–2 Support healing.',
+    beats: [
       {
-        id: 'items_single_slot_fusion',
-        domain: 'fusion',
-        always: {
-          heading: '1-Item Slot: Passive Gear vs Active Items',
-          chips: [
-            { kind: 'item', itemId: 'oran_berry', label: 'Oran Berry (Auto)' },
-            { kind: 'item', itemId: 'potion', label: 'Potion (Manual)' },
-            { kind: 'item', itemId: 'x_attack', label: 'X Attack' },
-          ],
-          bullets: [
-            'Each Pokémon carries 1 item into battle—either a Passive Held Item OR an Active Consumable.',
-            'Held Gear & Berries (like Piplup’s Oran Berry) trigger automatically during combat without spending your turn.',
-            'Active Consumables (like Potions, Full Heals, or X-Items) are used manually by selecting Item from the unit’s command menu.',
-          ],
-          callout: 'Check the top-right item pip on unit portraits to see who is carrying an item!',
-        },
+        id: 'heal_step1_item_slot_rule',
+        emotion: 'Crying',
+        dialogue:
+          'SOMEBODY TOOK A HIT! NOBODY PANIC—OKAY I’M PANICKING! Each Pokémon has 1 Item Slot: Held Berries (like {partner}’s Oran Berry) trigger automatically, while Potions are used manually via Item!',
+        chips: [
+          { kind: 'item', itemId: 'oran_berry', label: 'Oran Berry (Auto)' },
+          { kind: 'item', itemId: 'potion', label: 'Potion (Manual)' },
+        ],
       },
       {
-        id: 'healing_moves_pokemon',
-        domain: 'pokemon',
-        brief: {
-          heading: 'Support / Heal Moves',
-          chips: [
-            { kind: 'species', speciesId: 'flabebe', label: 'Flabébé' },
-            { kind: 'badge', label: 'Life Dew (R1-2)', tone: 'green' },
-          ],
-          bullets: [
-            'Support/Heal moves like Flabébé’s Life Dew restore ally HP using move PP instead of consuming Potions.',
-            'Healing moves never overwrite your offensive [E] Equipped move, so your healer can still counter-attack with its offensive spell!',
-          ],
-        },
-        detailed: {
-          heading: 'Restoring HP with Support Moves',
-          chips: [
-            { kind: 'species', speciesId: 'flabebe', label: 'Flabébé' },
-            { kind: 'badge', label: 'Green = Heal Range', tone: 'green' },
-          ],
-          bullets: [
-            'Some Pokémon—like Flabébé—know dedicated healing moves such as Life Dew that restore an ally’s HP from 1–2 tiles away.',
-            'Select Flabébé, move within Green range of a wounded teammate, and tap that teammate (or Heal) to patch them up without spending any items!',
-          ],
-        },
-      },
-      {
-        id: 'healer_positioning_fe',
-        domain: 'fire_emblem',
-        brief: {
-          heading: 'Healer EXP & Safe Positioning',
-          chips: [
-            { kind: 'badge', label: 'Heal Grants EXP', tone: 'gold' },
-            { kind: 'badge', label: 'Avoid Danger Area', tone: 'danger' },
-          ],
-          bullets: [
-            'Casting Support/Heal moves awards combat EXP so dedicated healers level up right alongside attackers.',
-            'Keep squishier healers outside the purple-red Enemy Danger Area while healing frontliners from Range 2!',
-          ],
-        },
-        detailed: {
-          heading: 'Keeping Healers Safe Behind the Frontline',
-          chips: [
-            { kind: 'badge', label: 'Heal Grants EXP', tone: 'gold' },
-            { kind: 'badge', label: 'Range 2 Safety', tone: 'cyan' },
-          ],
-          bullets: [
-            'Support Pokémon earn EXP every time they heal a wounded teammate, helping them level up without taking risky melee fights.',
-            'Because healers tend to have lower physical Defense, stand behind your sturdy frontliners and heal from 2 tiles away!',
-          ],
-        },
+        id: 'heal_step2_heal_pulse',
+        emotion: 'Worried',
+        dialogue:
+          'Even better, {healer}’s Heal Pulse heals allies from 1–2 tiles away (Green tiles) AND awards EXP without spending items! Tap your highlighted teammate to check their Green heal range or Item!',
+        actionHint: 'Tap the highlighted ally to inspect Heal / Item',
+        awaitAction: 'battle_inspect_heal_or_item',
+        spotlight: { kind: 'battle_tiles', tileFilter: 'wounded_or_healer' },
+        chips: [
+          { kind: 'species', speciesId: 'flabebe', label: 'Heal Pulse (R1-2)' },
+          { kind: 'badge', label: 'Heal Grants EXP', tone: 'gold' },
+        ],
       },
     ],
   },
 
   // ============================================================================
-  // 5. Dynamic First Level-Up / Lv. 10 Stone — Growths & Manual Promotions
+  // 4. First Level-Up / Lv. 10 Stone — Growths & Manual Evolution Promotions
   // ============================================================================
   {
     id: 'levelup_and_evolution',
     title: 'Level-Ups & Evolution Stone Promotions',
     category: 'world_progression',
-    summary: '100 EXP level-ups, stat growth rolls, and manual Lv. 10+ Evolution Stone promotion.',
-    slides: [
+    summary: '100 EXP level-ups, bespoke stat growths, and manual Lv. 10+ Evolution Stone promotion.',
+    beats: [
       {
-        id: 'manual_evolution_fusion',
-        domain: 'fusion',
-        always: {
-          heading: 'Manual Evolution Promotions (Lv. 10+)',
-          chips: [
-            { kind: 'item', itemId: 'evolution_stone', label: 'Evolution Stone (Lv. 10+)' },
-            { kind: 'item', itemId: 'evolution_gem', label: 'Evolution Gem (Lv. 20+)' },
-          ],
-          bullets: [
-            'Pokémon in Mystery Emblem do NOT evolve automatically upon leveling up!',
-            'Once a Stage-1 ally reaches Level 10+, promote them manually with an Evolution Stone (from Overworld Units, Chapter Prep, or mid-battle Evolve! if holding one).',
-            'Promotions grant instant stat bonuses while keeping your continuous Level (1–40)—no level reset!',
-          ],
-          callout: 'You receive your first Evolution Stone early, so check who hits Lv. 10 first!',
-        },
+        id: 'evo_beat1_exp',
+        emotion: 'Surprised',
+        dialogue:
+          'Whoa, stronger already?! Every 100 EXP rolls that Pokémon’s personal stat growths (and lower-level pals earn catch-up EXP faster—not that I’m volunteering!).',
+        chips: [{ kind: 'badge', label: '100 EXP = +1 Lv', tone: 'gold' }],
       },
       {
-        id: 'evolution_learnsets_pokemon',
-        domain: 'pokemon',
-        brief: {
-          heading: '3-Stage Lines & Level-Up Moves',
-          chips: [
-            { kind: 'badge', label: 'Stage 1 -> 2 -> 3', tone: 'gold' },
-            { kind: 'badge', label: 'Learnset Unlocks', tone: 'green' },
-          ],
-          bullets: [
-            'Most allies progress Stage 1 -> Stage 2 (Lv. 10+ Evolution Stone) -> Stage 3 (Lv. 20+ Evolution Gem), preserving custom nicknames.',
-            'Leveling up and evolving unlocks stronger moves in a Pokémon’s move pool (auto-equipped if < 4 moves, or swappable in Units/Prep).',
-          ],
-        },
-        detailed: {
-          heading: 'Evolving & Unlocking Stronger Moves',
-          chips: [
-            { kind: 'species', speciesId: 'piplup', label: 'Piplup' },
-            { kind: 'item', itemId: 'evolution_stone', label: 'Lv. 10+ Stone' },
-          ],
-          bullets: [
-            'As Pokémon grow stronger, they can transform into more powerful evolved forms with higher stats and movement!',
-            'Leveling up also teaches brand-new attacks. If your Pokémon already has 4 active moves, new moves are saved safely in its Move Pool so you can swap them in anytime.',
-          ],
-        },
-      },
-      {
-        id: 'exp_growths_fe',
-        domain: 'fire_emblem',
-        brief: {
-          heading: '100 EXP Curve & Percentage Growths',
-          chips: [
-            { kind: 'badge', label: '100 EXP = Lv Up', tone: 'gold' },
-            { kind: 'badge', label: 'Rubber-Band EXP', tone: 'cyan' },
-          ],
-          bullets: [
-            'Every 100 EXP triggers a Level-Up rolling each unit’s bespoke HP/Atk/Def/SpA/SpD/Spe growth percentages.',
-            'EXP scales by level difference: lower-level allies catch up rapidly, while over-leveled units earn reduced EXP from weaker foes.',
-          ],
-        },
-        detailed: {
-          heading: 'How EXP & Stat Growths Work',
-          chips: [
-            { kind: 'badge', label: '100 EXP = +1 Level', tone: 'gold' },
-          ],
-          bullets: [
-            'Dealing damage, defeating foes, and healing teammates all award Experience Points (EXP). Every 100 EXP raises that Pokémon’s Level by 1!',
-            'Each species has unique strengths—a speedy striker gains Speed often, while a guardian gains HP and Defense—and sharing knockouts keeps your whole squad balanced.',
-          ],
-        },
+        id: 'evo_beat2_manual_stone',
+        emotion: 'Happy',
+        dialogue:
+          'Important twist: nobody evolves automatically! At Level 10+, use an Evolution Stone manually (in Units, Chapter Prep, or mid-battle Evolve! if held) for instant bonus stats while keeping your continuous Level 1–40!',
+        chips: [
+          { kind: 'item', itemId: 'evolution_stone', label: 'Lv. 10+ Stone' },
+          { kind: 'item', itemId: 'evolution_gem', label: 'Lv. 20+ Gem' },
+        ],
       },
     ],
   },
 
   // ============================================================================
-  // 6. Post-Ch. 1 Overworld Arrival — World Map, Party Menu & Anti-Grind
+  // 5. Post-Ch. 1 Overworld Arrival — World Map, Top-Right Menu & Skirmishes
   // ============================================================================
   {
     id: 'overworld_and_skirmishes',
     title: 'The World Map & Party Menu',
     category: 'world_progression',
-    summary: 'Road travel across kingdoms, Units/Items/System menu, and Feral Skirmishes.',
-    slides: [
+    summary: 'Traveling kingdom roads, managing Units/Items/System, and optional Feral Skirmishes.',
+    beats: [
       {
-        id: 'overworld_menu_fusion',
-        domain: 'fusion',
-        always: {
-          heading: 'World Map Travel & Top-Right Menu',
-          chips: [
-            { kind: 'badge', label: 'Menu: Units · Items · System', tone: 'gold' },
-            { kind: 'item', itemId: 'evolution_stone', label: 'Promote in Units' },
-          ],
-          bullets: [
-            'Tap any unlocked World Map node to travel along kingdom roads, then tap your current story landmark to launch the next chapter.',
-            'Open Menu (top-right, or right-click / long-press) anytime to manage Moves, equip Convoy items, rename allies, or use Evolution Stones!',
-            'Cleared story chapters stay peaceful and cannot be replayed infinitely, keeping campaign progression tight.',
-          ],
-          callout: 'You can adjust Tutorial Detail or re-read unlocked tips anytime under Menu -> System!',
+        id: 'ow_step1_open_menu',
+        emotion: 'Happy',
+        dialogue:
+          'Fresh air! Sunshine! Zero claws swinging at my face! Tap unlocked nodes to travel the World Map—first, tap Menu in the top-right corner so we check our squad!',
+        actionHint: 'Tap Menu in the top-right corner',
+        awaitAction: 'overworld_open_menu',
+        spotlight: {
+          kind: 'dom',
+          selector: '#pmd-corner-menu-btn',
+          preferredDock: 'bottom',
         },
+        chips: [{ kind: 'badge', label: 'Tap Nodes to Travel', tone: 'cyan' }],
       },
       {
-        id: 'skirmishes_fe',
-        domain: 'fire_emblem',
-        brief: {
-          heading: 'Occasional Feral Skirmishes',
-          chips: [
-            { kind: 'badge', label: 'Bonus Skirmish', tone: 'danger' },
-          ],
-          bullets: [
-            'After clearing chapters, a Feral Skirmish may occasionally appear on a cleared road node.',
-            'Skirmishes offer optional bonus EXP and Gold for under-leveled recruits, and clear immediately once defeated.',
-          ],
-        },
-        detailed: {
-          heading: 'Optional Skirmish Battles',
-          chips: [
-            { kind: 'badge', label: 'Feral Skirmish = Bonus EXP & Gold', tone: 'danger' },
-          ],
-          bullets: [
-            'Occasionally, wild feral Pokémon will appear on a previously cleared map location as an optional Skirmish.',
-            'Travel back to that node if you want extra EXP and Gold before the next story chapter—once cleared, the road returns to normal!',
-          ],
-        },
+        id: 'ow_step2_tour_tabs',
+        emotion: 'Normal',
+        dialogue:
+          'In Units & Items, swap moves, rename pals, equip Convoy gear, or use Evolution Stones at Lv. 10+! Cleared chapters can’t be farmed infinitely, though occasional Feral Skirmishes pop up—and System has Ask Wimpod anytime!',
+        chips: [
+          { kind: 'badge', label: 'Units · Items · System', tone: 'gold' },
+          { kind: 'badge', label: 'Bonus Feral Skirmishes', tone: 'danger' },
+        ],
       },
     ],
   },
 
   // ============================================================================
-  // 7. Chapter 2 Prep / First Manage Units — 4-Move Loadouts, [E] & View Map
+  // 6. Chapter 2 (`Verdant Bluff`) Prep — Manage Units [E] & View Map Swap
   // ============================================================================
   {
     id: 'prep_units_and_moves',
-    title: 'Chapter Prep, Loadouts & Positioning',
+    title: 'Chapter Prep, [E] Loadouts & Positioning',
     category: 'prep_pokemon',
-    summary: 'Selecting 4 active moves, setting your [E] counter move, and swapping blue tiles.',
-    slides: [
+    summary: 'Configuring 4-move loadouts, setting your [E] counter move, and swapping starting tiles.',
+    beats: [
       {
-        id: 'prep_loadout_fusion',
-        domain: 'fusion',
-        always: {
-          heading: 'Welcome to Battle Prep!',
-          chips: [
-            { kind: 'badge', label: 'Up to 4 Moves', tone: 'green' },
-            { kind: 'badge', label: '[E] Counter Move', tone: 'gold' },
-          ],
-          bullets: [
-            'Starting in Chapter 2, Battle Prep lets you Manage Units, Manage Items, View Map, and launch Fight! before Turn 1.',
-            'In Manage Units, toggle up to 4 unlocked moves into each Pokémon’s active battle loadout.',
-            'Tap [E] next to any offensive move to choose whether that unit counters adjacent melee foes (Physical R1) or ranged casters (Special R2) during Enemy Phase!',
-          ],
-          callout: 'Check your new recruits’ moves and [E] counter range before every battle.',
-        },
+        id: 'prep_step1_open_units',
+        emotion: 'Happy',
+        dialogue:
+          'Ooh, Chapter Prep—planning BEFORE danger starts is my love language! First, tap Manage Units so we inspect our new recruits’ moves!',
+        actionHint: 'Tap Manage Units',
+        awaitAction: 'prep_open_manage_units',
+        spotlight: { kind: 'dom', selector: '[data-testid="prep-btn-manage-units"]' },
       },
       {
-        id: 'prep_pool_pokemon',
-        domain: 'pokemon',
-        brief: {
-          heading: 'Unlocked Move Pool & Nicknames',
-          chips: [
-            { kind: 'badge', label: 'Rename Anytime', tone: 'cyan' },
-          ],
-          bullets: [
-            'Moves learned by level-up or TM stay permanently in a Pokémon’s Unlocked Move Pool so you can swap coverage per chapter.',
-            'Tap the Rename pencil in Manage Units (or Overworld Units) whenever you want to give an ally a custom nickname!',
-          ],
+        id: 'prep_step2_check_equipped',
+        emotion: 'Determined',
+        dialogue:
+          'Each fighter brings up to 4 unlocked moves, and tapping [E] picks the ONE move they counter with on Enemy Phase (R1 Physical vs R2 Special)! Check your squad, then tap Done!',
+        actionHint: 'Check moves / [E], then tap Done',
+        awaitAction: 'prep_close_manage_units',
+        spotlight: {
+          kind: 'dom',
+          selector: '[data-testid="prep-units-close-btn"]',
+          preferredDock: 'bottom',
         },
-        detailed: {
-          heading: 'Swapping Moves & Naming Allies',
-          chips: [
-            { kind: 'badge', label: 'Permanent Move Pool', tone: 'green' },
-            { kind: 'badge', label: 'Custom Nickname', tone: 'gold' },
-          ],
-          bullets: [
-            'Even though a Pokémon brings at most 4 moves into a dungeon, it never permanently forgets unlocked moves—swap them freely between battles!',
-            'You can also personalize any teammate’s nickname using the Rename button in Manage Units.',
-          ],
-        },
+        chips: [
+          { kind: 'badge', label: '4 Active Moves', tone: 'green' },
+          { kind: 'badge', label: '[E] Counter Move', tone: 'gold' },
+        ],
       },
       {
-        id: 'prep_viewmap_fe',
-        domain: 'fire_emblem',
-        brief: {
-          heading: 'View Map & Blue-Tile Position Swaps',
-          chips: [
-            { kind: 'badge', label: 'View Map', tone: 'cyan' },
-            { kind: 'badge', label: 'Tap 2 Blue Tiles = Swap', tone: 'gold' },
-          ],
-          bullets: [
-            'Tap View Map in Chapter Prep to scout enemy stats, droppable items, and terrain before Turn 1.',
-            'Tap any two glowing Blue starting tiles while in View Map to swap where your deployed allies begin!',
-          ],
+        id: 'prep_step3_open_view_map',
+        emotion: 'Worried',
+        dialogue:
+          'Never march into an ambush blind! Tap View Map next so we scout enemy positions and rearrange our starting formation!',
+        actionHint: 'Tap View Map',
+        awaitAction: 'prep_open_view_map',
+        spotlight: { kind: 'dom', selector: '[data-testid="prep-btn-view-map"]' },
+      },
+      {
+        id: 'prep_step4_swap_blue_tiles',
+        emotion: 'Happy',
+        dialogue:
+          'Tap any two glowing Blue tiles to swap where teammates start (great for putting fliers or {partner} near rivers!), or tap Prep up top when you’re ready to hit Fight!',
+        actionHint: 'Swap 2 Blue tiles (or tap Prep)',
+        awaitAction: 'prep_swap_or_finish_view_map',
+        spotlight: {
+          kind: 'battle_tiles',
+          tileFilter: 'prep_swap_slots',
+          fallbackDomSelector: '[data-testid="prep-return-btn"]',
         },
-        detailed: {
-          heading: 'Scouting & Rearranging Starting Spots',
-          chips: [
-            { kind: 'badge', label: 'View Map', tone: 'cyan' },
-            { kind: 'badge', label: 'Tap 2 Blue Tiles', tone: 'gold' },
-          ],
-          bullets: [
-            'Choose View Map before fighting to look over the entire dungeon, see what types of enemies wait ahead, and plan your route.',
-            'Want a sturdy defender in front or a flier near a river? Simply tap two Blue starting squares to swap those teammates’ starting spots!',
-          ],
-        },
+        chips: [{ kind: 'badge', label: 'Tap 2 Blue Tiles = Swap', tone: 'cyan' }],
       },
     ],
   },
 
   // ============================================================================
-  // 8. First Manage Items (or Ch. 2 Prep) — Shared Convoy & Item Categories
+  // 7. First Manage Items / Convoy — Shared Bag & Item Categories
   // ============================================================================
   {
     id: 'prep_items_and_convoy',
-    title: 'The Shared Convoy & Item Categories',
+    title: 'Shared Convoy & Gear vs Consumables',
     category: 'prep_pokemon',
-    summary: 'Swapping items cleanly between your shared Convoy bag and unit slots.',
-    slides: [
+    summary: 'Swapping Held Gear, Berries, Potions, Stones, and X-Items via your shared Convoy.',
+    beats: [
       {
-        id: 'convoy_swap_fusion',
-        domain: 'fusion',
-        always: {
-          heading: 'Shared Convoy & Instant Slot Swapping',
-          chips: [
-            { kind: 'item', itemId: 'muscle_band', label: 'Held Gear' },
-            { kind: 'item', itemId: 'oran_berry', label: 'Berry' },
-            { kind: 'item', itemId: 'potion', label: 'Consumable' },
-          ],
-          bullets: [
-            'All unequipped rewards, purchases, and enemy drops live in your shared Convoy.',
-            'In Manage Items, select a Pokémon and tap any Convoy item to equip it—any item they were previously holding automatically returns to the Convoy!',
-          ],
-        },
-      },
-      {
-        id: 'item_categories_pokemon',
-        domain: 'pokemon',
-        brief: {
-          heading: 'Held Gear vs Consumables, Stones & X-Items',
-          chips: [
-            { kind: 'item', itemId: 'muscle_band', label: 'Muscle Band' },
-            { kind: 'item', itemId: 'x_attack', label: 'X Attack' },
-          ],
-          bullets: [
-            'Held Gear (like Muscle Band) grants permanent passive combat bonuses without being consumed; Berries auto-trigger once when needed.',
-            'Potions heal HP, Evolution Stones promote Lv. 10+ units, and X-Items grant a +3 stat boost (or +20% Crit) for the rest of the dungeon.',
-          ],
-        },
-        detailed: {
-          heading: 'Choosing What Each Teammate Carries',
-          chips: [
-            { kind: 'item', itemId: 'muscle_band', label: '+2 Physical Dmg' },
-            { kind: 'item', itemId: 'oran_berry', label: 'Auto-Heal' },
-            { kind: 'item', itemId: 'x_attack', label: '1-Battle Boost' },
-          ],
-          bullets: [
-            'Passive Gear (like Muscle Band) powers up every attack automatically and never runs out.',
-            'Berries trigger on their own in a pinch, while Potions and X-Items are activated manually during battle to heal or power up for a tough boss.',
-          ],
-        },
+        id: 'convoy_beat1',
+        emotion: 'Happy',
+        dialogue:
+          'I guard the shared Convoy bag! Select any teammate and tap an item to equip their 1 slot (old items return safely to the bag). Held Gear boosts every fight, Berries auto-heal, and X-Items buff a stat for the whole dungeon!',
+        chips: [
+          { kind: 'item', itemId: 'muscle_band', label: 'Held Gear' },
+          { kind: 'item', itemId: 'x_attack', label: 'X-Item (+3 Stat)' },
+        ],
       },
     ],
   },
 
   // ============================================================================
-  // 9. Chapter 2 (`Verdant Bluff`) Turn 1 — Boss Objective & Water/Flying Traversal
+  // 8. Chapter 2 (`Verdant Bluff`) Turn 1 — Stationary Boss & River Crossing
   // ============================================================================
   {
     id: 'ch2_boss_and_traversal',
     title: 'Boss Battles & Water / Flying Traversal',
     category: 'combat_tactics',
-    summary: 'Defeat Boss objective, stationary 0-Mov bosses, and crossing rivers.',
-    slides: [
+    summary: 'Winning Defeat Boss maps, 0-Mov stationary bosses, and crossing rivers.',
+    beats: [
       {
-        id: 'water_flying_traversal_fusion',
-        domain: 'fusion',
-        always: {
-          heading: 'Crossing Rivers: Flying & Water-Types',
-          chips: [
-            { kind: 'type', pokemonType: 'Flying' },
-            { kind: 'type', pokemonType: 'Water' },
-            { kind: 'badge', label: '1 Mov Across Water', tone: 'cyan' },
-          ],
-          bullets: [
-            'Most Grounded Pokémon cannot step into Water tiles—check the bottom-left Tile Info card anytime to inspect terrain!',
-            'Flying allies soar across Water and rough terrain for just 1 Mov (receiving 0 terrain cover bonuses).',
-            'Grounded Water-types (like Piplup) can ALSO wade across Water at 1 Mov while gaining +10% Avoid!',
-          ],
-          callout: 'Flank across the bluff’s stream with Piplup and your Flying recruit!',
-        },
+        id: 'ch2_beat1_water_flying',
+        emotion: 'Surprised',
+        dialogue:
+          'Heads up—most Grounded Pokémon can’t cross Water! Flying allies soar over rivers at 1 Mov (0 terrain cover), and Water-types like {partner} wade right across at 1 Mov WITH +10% Avoid!',
+        chips: [
+          { kind: 'type', pokemonType: 'Flying' },
+          { kind: 'type', pokemonType: 'Water' },
+          { kind: 'badge', label: '1 Mov Across Water', tone: 'cyan' },
+        ],
       },
       {
-        id: 'defeat_boss_stationary_fe',
-        domain: 'fire_emblem',
-        brief: {
-          heading: 'Defeat Boss & Stationary Leaders (0 Mov)',
-          chips: [
-            { kind: 'badge', label: 'Objective: Defeat Boss', tone: 'gold' },
-            { kind: 'badge', label: '0 Mov Stationary', tone: 'danger' },
-          ],
-          bullets: [
-            'In Defeat Boss chapters, victory triggers immediately upon knocking out the enemy BOSS (Captain Aron).',
-            'Stationary bosses have 0 Mov—they never leave their post, so check their equipped [E] range and claim any side-path DROPs before finishing them!',
-          ],
-        },
-        detailed: {
-          heading: 'Winning a "Defeat Boss" Chapter',
-          chips: [
-            { kind: 'badge', label: 'BOSS Badge', tone: 'danger' },
-            { kind: 'badge', label: '0 Mov = Holds Post', tone: 'cyan' },
-          ],
-          bullets: [
-            'Check the chapter objective in the Field Menu: here at Verdant Bluff, you win the moment you defeat Captain Aron (marked BOSS)!',
-            'Captain Aron is Stationary (0 Mov), meaning he stays anchored on his tile and only strikes units within his weapon range.',
-            'If other enemies carry valuable DROP items, defeat them first before landing the final blow on the boss!',
-          ],
-        },
+        id: 'ch2_beat2_stationary_boss',
+        emotion: 'Happy',
+        dialogue:
+          'This is a Defeat Boss battle: KO Captain Aron (marked BOSS) and we win instantly! He’s Stationary (0 Mov), so snag any side-path DROP items before finishing him off!',
+        chips: [
+          { kind: 'badge', label: 'Defeat Boss = Instant Win', tone: 'gold' },
+          { kind: 'badge', label: '0 Mov Stationary', tone: 'danger' },
+        ],
       },
     ],
   },
 
   // ============================================================================
-  // 10. Chapter 3 (`Cleft Mountain`) Turn 1 — Dungeon Stairs & Reinforcements
+  // 9. Chapter 3 (`Cleft Mountain`) Turn 1 — Sealing Dungeon Stairs
   // ============================================================================
   {
     id: 'ch3_stairs_reinforcements',
     title: 'Dungeon Stairs & Enemy Reinforcements',
     category: 'combat_tactics',
     summary: 'Standing directly on Stairs tiles to block incoming enemy reinforcement waves.',
-    slides: [
+    beats: [
       {
-        id: 'stairs_seal_fusion',
-        domain: 'fusion',
-        always: {
-          heading: 'Sealing Dungeon Stairs',
-          chips: [
-            { kind: 'badge', label: 'Stairs: +1 Def/SpD · +10% Avo', tone: 'cyan' },
-            { kind: 'badge', label: 'Stand On Stairs = Block Spawns', tone: 'gold' },
-          ],
-          bullets: [
-            'Enemy reinforcements climb up from Dungeon Stairs tiles on scheduled turns!',
-            'Standing any unit directly on a Stairs tile completely blocks reinforcements from spawning there ("STAIRS BLOCKED!") while granting +1 Def/SpD and +10% Avoid.',
-          ],
-          callout: 'Park a sturdy ally on exposed Stairs to shut down ambushes from behind!',
-        },
-      },
-      {
-        id: 'reinforcement_pacing_fe',
-        domain: 'fire_emblem',
-        brief: {
-          heading: 'Managing Reinforcement Waves',
-          chips: [
-            { kind: 'badge', label: 'Plug or Push Forward', tone: 'green' },
-          ],
-          bullets: [
-            'On Rout maps with Stairs, either occupy nearby Stairs before waves arrive or keep squishier backliners clear of open stairwells.',
-          ],
-        },
-        detailed: {
-          heading: 'Staying Ready for Reinforcements',
-          chips: [
-            { kind: 'badge', label: 'Watch Open Stairs', tone: 'danger' },
-          ],
-          bullets: [
-            'Don’t leave wounded healers right beside an unoccupied Stairs tile when ending your turn!',
-            'Either station a tough teammate right on top of the Stairs to seal it, or form a defensive wall a couple of tiles back.',
-          ],
-        },
+        id: 'ch3_beat1_stairs',
+        emotion: 'Shouting',
+        dialogue:
+          'Enemy reinforcements climb up from Dungeon Stairs on later turns! Park any teammate directly ON a Stairs tile to completely block spawns ("STAIRS BLOCKED!") while getting +1 Def/SpD and +10% Avoid!',
+        chips: [
+          { kind: 'badge', label: 'Stand On Stairs = Block Spawns', tone: 'gold' },
+          { kind: 'badge', label: '+1 Def/SpD · +10% Avo', tone: 'cyan' },
+        ],
       },
     ],
   },
 
   // ============================================================================
-  // 11. Chapter 4 (`River Shrine`) Turn 1 — Permanent Stat Vitamins & Drops
+  // 10. Chapter 4 (`River Shrine`) Turn 1 — Permanent Stat Vitamins & Drops
   // ============================================================================
   {
     id: 'ch4_vitamins',
     title: 'Permanent Stat Vitamins & Rare Drops',
     category: 'world_progression',
-    summary: 'Claiming rare enemy drops like Protein for permanent stat upgrades.',
-    slides: [
+    summary: 'Defeating DROP-carrying foes and using Vitamins for permanent campaign stat boosts.',
+    beats: [
       {
-        id: 'vitamins_pokemon',
-        domain: 'pokemon',
-        brief: {
-          heading: 'Permanent Stat Vitamins',
-          chips: [
-            { kind: 'item', itemId: 'protein', label: 'Protein (+Atk)' },
-            { kind: 'item', itemId: 'calcium', label: 'Calcium (+SpA)' },
-          ],
-          bullets: [
-            'Vitamins (HP Up, Protein, Iron, Calcium, Zinc, Carbos) permanently increase a Pokémon’s stat when used from Overworld Menu -> Units or Items.',
-          ],
-          callout: 'Unlike X-Items (1-battle boosts), Vitamin stat gains last for the entire campaign!',
-        },
-        detailed: {
-          heading: 'Boosting Stats Permanently with Vitamins',
-          chips: [
-            { kind: 'item', itemId: 'protein', label: 'Protein' },
-            { kind: 'item', itemId: 'hp_up', label: 'HP Up' },
-          ],
-          bullets: [
-            'Special treasures called Vitamins permanently raise one of a Pokémon’s core stats for the rest of your adventure!',
-            'Once you earn a Vitamin (like Protein in River Shrine), open Menu -> Units or Items on the World Map to power up your favorite teammate.',
-          ],
-        },
-      },
-      {
-        id: 'securing_drops_fe',
-        domain: 'fire_emblem',
-        brief: {
-          heading: 'Securing Rare Enemy Drops',
-          chips: [
-            { kind: 'item', itemId: 'protein', label: 'DROP' },
-          ],
-          bullets: [
-            'Inspect enemy commanders on Turn 1—defeating foes marked with a DROP icon automatically sends their treasure to your Convoy!',
-          ],
-        },
-        detailed: {
-          heading: 'Spotting Treasure-Carrying Enemies',
-          chips: [
-            { kind: 'item', itemId: 'protein', label: 'DROP Icon' },
-          ],
-          bullets: [
-            'Tap enemy leaders to check their Character Info card—if you see a DROP item badge, knocking out that foe rewards you with that item!',
-          ],
-        },
+        id: 'ch4_beat1_vitamins',
+        emotion: 'Surprised',
+        dialogue:
+          'Ooh, shiny loot! Defeating enemies marked with a DROP icon sends their treasure straight to our Convoy—and Vitamins (like Protein) permanently raise a Pokémon’s stat for the whole campaign when used on the World Map!',
+        chips: [
+          { kind: 'item', itemId: 'protein', label: 'Permanent +Stat' },
+          { kind: 'badge', label: 'KO Enemy w/ DROP', tone: 'gold' },
+        ],
       },
     ],
   },
 
   // ============================================================================
-  // 12. Post-Ch. 4 Overworld — Kecleon Shops & Single-Use TMs
+  // 11. Post-Ch. 4 Overworld / First Shop — Kecleon Stalls & Single-Use TMs
   // ============================================================================
   {
     id: 'kecleon_shops_and_tms',
     title: 'Kecleon Shops & Teaching TMs',
     category: 'world_progression',
-    summary: 'Visiting rotating World Map merchant stalls for TMs, Gear, Stones, and X-Items.',
-    slides: [
+    summary: 'Browsing 4 rotating World Map Kecleon stalls and teaching permanent TM moves.',
+    beats: [
       {
-        id: 'kecleon_stalls_fusion',
-        domain: 'fusion',
-        always: {
-          heading: '4 Rotating Kecleon Merchant Stalls',
-          chips: [
-            { kind: 'species', speciesId: '0352', label: 'Kecleon' },
-            { kind: 'item', itemId: 'tm13_scald', label: 'TMs' },
-            { kind: 'item', itemId: 'evolution_stone', label: 'Stones & Gear' },
-          ],
-          bullets: [
-            'Rescuing Kecleon unlocks traveling merchant stalls across cleared World Map nodes!',
-            'Each Kecleon hosts 1 of 4 specialty stalls: TM Stall, Held Gear, Apothecary (Potions & Evolution Stones), or X-Item Tactical Stall.',
-            'Travel onto a node with a Kecleon sprite and tap Kecleon Shop to browse its current stock.',
-          ],
-        },
+        id: 'shop_beat1_stalls',
+        emotion: 'Happy',
+        dialogue:
+          'Kecleon’s traveling merchants now visit cleared World Map nodes with 4 rotating stalls: TMs, Held Gear, Apothecary (Potions & Stones!), and X-Items! Walk onto a Kecleon node to shop!',
+        chips: [
+          { kind: 'species', speciesId: '0352', label: 'Kecleon Shop' },
+          { kind: 'item', itemId: 'evolution_stone', label: 'Stones & Gear' },
+        ],
       },
       {
-        id: 'tms_pokemon',
-        domain: 'pokemon',
-        brief: {
-          heading: 'Single-Use TMs & Compatibility',
-          chips: [
-            { kind: 'item', itemId: 'tm09_thunderbolt', label: 'Single-Use TM' },
-          ],
-          bullets: [
-            'Technical Machines (TMs) are single-use scrolls used from Overworld Menu -> Items (or Units) to permanently add a move to a compatible ally’s Move Pool.',
-          ],
-        },
-        detailed: {
-          heading: 'Teaching New Moves with TMs',
-          chips: [
-            { kind: 'item', itemId: 'tm09_thunderbolt', label: 'TM Scroll' },
-            { kind: 'badge', label: 'Permanent Unlock', tone: 'green' },
-          ],
-          bullets: [
-            'Technical Machines (TMs) let you teach powerful new attacks—like Thunderbolt, Ice Beam, or Scald—to compatible Pokémon!',
-            'Each TM item is consumed after teaching it to one Pokémon, permanently unlocking that move in their Move Pool.',
-          ],
-        },
+        id: 'shop_beat2_tms',
+        emotion: 'Normal',
+        dialogue:
+          'TMs are single-use scrolls used from Overworld Menu -> Items or Units—once taught, that move stays permanently unlocked in that Pokémon’s Move Pool forever!',
+        chips: [{ kind: 'item', itemId: 'tm13_scald', label: 'Permanent Move Unlock' }],
       },
     ],
   },
 
   // ============================================================================
-  // 13. Chapter 5 (`Berry Orchards`) Prep — Deployment Cap & Mobile Bosses
+  // 12. Chapter 5 (`Berry Orchards`) — Deployment Cap & Mobile Bosses
   // ============================================================================
   {
     id: 'ch5_deployment_cap_and_mobile_boss',
-    title: 'Deployment Caps & Aggressive Bosses',
+    title: 'Deployment Caps & Mobile Bosses',
     category: 'combat_tactics',
-    summary: 'Choosing your active strike team and baiting mobile enemy commanders.',
-    slides: [
+    summary: 'Rotating your active strike team and baiting mobile enemy commanders.',
+    beats: [
       {
-        id: 'deployment_cap_mobile_boss_fe',
-        domain: 'fusion',
-        always: {
-          heading: 'Deployment Cap & Mobile Boss Range',
-          chips: [
-            { kind: 'badge', label: '6 / 6 Deployed', tone: 'gold' },
-            { kind: 'species', speciesId: '0633', label: 'Commander Deino' },
-          ],
-          bullets: [
-            'Your roster now exceeds this dungeon’s Deployment Cap! In Manage Units, toggle ✓ Deployed vs Standby to choose who enters battle (your ★ Dragon Lord is always deployed).',
-            'Unlike stationary captains, mobile bosses like Commander Deino have full movement and will charge the moment any ally enters their attack range!',
-          ],
-          callout: 'Toggle Danger Area and bait mobile bosses with a high-Def/SpD tank rather than rushing in!',
-        },
+        id: 'ch5_beat1_cap',
+        emotion: 'Worried',
+        dialogue:
+          'Our squad outnumbers this dungeon’s Deployment Cap! Toggle ✓ Deployed vs Standby in Manage Units ({lord} ★ is always in), and move Held Gear off benched pals onto today’s fighters!',
+        chips: [{ kind: 'badge', label: 'Rotate Standby Gear', tone: 'gold' }],
       },
       {
-        id: 'bench_rotation_fe',
-        domain: 'fire_emblem',
-        brief: {
-          heading: 'Rotating Standby Gear & Coverage',
-          chips: [
-            { kind: 'badge', label: 'Swap Gear Freely', tone: 'cyan' },
-          ],
-          bullets: [
-            'Remember to transfer Held Gear or Consumables off Standby allies in Manage Items so your deployed squad goes in at full strength.',
-          ],
-        },
-        detailed: {
-          heading: 'Picking the Best Team for the Map',
-          chips: [
-            { kind: 'type', pokemonType: 'Fairy' },
-            { kind: 'type', pokemonType: 'Dragon' },
-          ],
-          bullets: [
-            'Check View Map first to see which enemy types guard the battlefield—for example, Fairy and Ice moves shine against Dragon- and Dark-type foes!',
-            'Before tapping Fight!, move any Held Items from benched Standby allies onto the heroes fighting today.',
-          ],
-        },
+        id: 'ch5_beat2_mobile_boss',
+        emotion: 'Teary-Eyed',
+        dialogue:
+          'And watch out—Commander Deino is NOT stationary! Mobile bosses have full Mov and will charge the instant anyone enters their Danger Area, so bait him carefully with a sturdy tank!',
+        chips: [{ kind: 'species', speciesId: '0633', label: 'Mobile Boss Charges!' }],
       },
     ],
   },
 
   // ============================================================================
-  // 14. Dynamic Terrain — Trees / Foliage & Mountain Crags
+  // 13. Dynamic Terrain — Trees / Foliage & Mountain Crags
   // ============================================================================
   {
     id: 'terrain_cover_woods_crags',
-    title: 'Defensive Terrain: Trees & Mountains',
+    title: 'Defensive Cover: Trees & Mountains',
     category: 'combat_tactics',
-    summary: 'Trading extra Movement cost for Defense, Special Defense, and Avoid cover.',
-    slides: [
+    summary: 'Using Trees and Mountains for Defense, Special Defense, and Avoid bonuses.',
+    beats: [
       {
-        id: 'woods_crags_fusion',
-        domain: 'fusion',
-        always: {
-          heading: 'Cover Bonuses vs Airborne Traversal',
-          chips: [
-            { kind: 'badge', label: 'Trees: +1 Def/SpD · +15% Avo', tone: 'green' },
-            { kind: 'badge', label: 'Mountain: +2 Def/SpD · +20% Avo', tone: 'gold' },
-            { kind: 'item', itemId: 'heavy_duty_boots', label: 'Heavy-Duty Boots' },
-          ],
-          bullets: [
-            'Grounded units spend extra Movement in Trees (2 Mov) and Mountains (3 Mov; 2 Mov for Rock/Ground/Fighting) in exchange for strong Def, SpD, and Avoid bonuses!',
-            'Flying and Levitate units glide over both for 1 Mov, but gain 0 cover bonuses. Grounded holders of Heavy-Duty Boots pay 1 Mov AND keep full cover!',
-          ],
-        },
-      },
-      {
-        id: 'cover_baiting_fe',
-        domain: 'fire_emblem',
-        brief: {
-          heading: 'Baiting Enemies from Cover',
-          chips: [
-            { kind: 'badge', label: 'End Turn in Cover', tone: 'cyan' },
-          ],
-          bullets: [
-            'Stationing a frontliner on Trees or Mountain at the edge of Enemy Danger Area cuts incoming damage and boosts dodge chance during Enemy Phase.',
-          ],
-        },
-        detailed: {
-          heading: 'Using Terrain to Win Tough Exchanges',
-          chips: [
-            { kind: 'badge', label: 'Check Bottom-Left Tile Card', tone: 'cyan' },
-          ],
-          bullets: [
-            'Instead of standing on open floor, end your turn on Trees or Mountain tiles whenever enemies are about to attack you—and try to lure enemies OFF cover before striking them!',
-          ],
-        },
+        id: 'terrain_woods_beat1',
+        emotion: 'Happy',
+        dialogue:
+          'Hiding in bushes actually works! Grounded units pay extra Mov in Trees (+1 Def/SpD, +15% Avo) and Mountains (+2 Def/SpD, +20% Avo) for huge cover—while Flying/Levitate glide over at 1 Mov with 0 cover (and Heavy-Duty Boots get both)!',
+        chips: [
+          { kind: 'badge', label: 'Trees: +1 Def/SpD · +15% Avo', tone: 'green' },
+          { kind: 'badge', label: 'Mountain: +2 Def/SpD · +20% Avo', tone: 'gold' },
+        ],
       },
     ],
   },
 
   // ============================================================================
-  // 15. Dynamic Terrain — PMD Wonder Tiles
+  // 14. Dynamic Terrain — PMD Wonder Tiles
   // ============================================================================
   {
     id: 'terrain_wonder_tiles',
     title: 'PMD Wonder Tiles',
     category: 'combat_tactics',
-    summary: 'Fortified sanctuary tiles that boost defenses, heal HP each turn, and cleanse debuffs.',
-    slides: [
+    summary: 'Sanctuary tiles granting +2 Def/SpD, +20% Avoid, 20% HP regen, and debuff cleansing.',
+    beats: [
       {
-        id: 'wonder_tile_fusion',
-        domain: 'fusion',
-        always: {
-          heading: 'Sanctuary of the Dungeon: Wonder Tiles',
-          chips: [
-            { kind: 'badge', label: '+2 Def/SpD · +20% Avo (All)', tone: 'gold' },
-            { kind: 'badge', label: '20% HP Heal + Cleanse', tone: 'green' },
-          ],
-          bullets: [
-            'Standing on a glowing PMD Wonder Tile grants +2 Def, +2 SpD, and +20% Avoid—even to Flying and Levitate Pokémon!',
-            'At the start of your Phase, units standing on a Wonder Tile automatically recover 20% Max HP and clear temporary stat debuffs.',
-          ],
-          callout: 'Note: Enemies benefit from Wonder Tiles too—dislodge or lure them off!',
-        },
+        id: 'terrain_wonder_beat1',
+        emotion: 'Surprised',
+        dialogue:
+          'A glowing PMD Wonder Tile! Standing on it grants +2 Def/SpD and +20% Avoid (even to Fliers!), heals 20% HP each turn, and clears debuffs—just lure enemies OFF it so they don’t hog my dream hiding spot!',
+        chips: [
+          { kind: 'badge', label: '+2 Def/SpD · +20% Avo', tone: 'gold' },
+          { kind: 'badge', label: '20% Heal + Cleanse', tone: 'green' },
+        ],
       },
     ],
   },
 
   // ============================================================================
-  // 16. Dynamic Terrain — Lava, Void Chasms & Low Barriers
+  // 15. Dynamic Terrain — Lava, Void Chasms & Low Barriers
   // ============================================================================
   {
     id: 'terrain_hazards_lava_void',
     title: 'Lava, Chasms & Levitate Shortcuts',
     category: 'combat_tactics',
-    summary: 'Which traversal classes can cross molten Lava, deep Void Chasms, and Low Barriers.',
-    slides: [
+    summary: 'Crossing Lava with Fire/Flying/Levitate, and Void Chasms or Barriers exclusively with Levitate.',
+    beats: [
       {
-        id: 'hazards_levitate_fusion',
-        domain: 'fusion',
-        always: {
-          heading: 'Lava, Deep Chasms & Levitate Mastery',
-          chips: [
-            { kind: 'type', pokemonType: 'Fire' },
-            { kind: 'badge', label: 'Flying: Crosses Lava', tone: 'cyan' },
-            { kind: 'badge', label: 'Levitate: Crosses Void & Barriers', tone: 'gold' },
-          ],
-          bullets: [
-            'Lava / Magma can be crossed at 1 Mov by Fire-types (+10% Avoid), Flying units, and Levitate units.',
-            'Void / Chasms and Low Barriers block both Grounded AND Flying units—ONLY Pokémon with the Levitate traversal class can float across them (1 Mov)!',
-          ],
-        },
+        id: 'terrain_hazards_beat1',
+        emotion: 'Dizzy',
+        dialogue:
+          'YIKES, don’t look down! Fire-types (+10% Avo), Flying, and Levitate cross Lava at 1 Mov—but deep Void Chasms and Low Barriers block even Fliers! ONLY Levitate Pokémon can float across them!',
+        chips: [
+          { kind: 'type', pokemonType: 'Fire' },
+          { kind: 'badge', label: 'Levitate Only: Void & Barriers', tone: 'gold' },
+        ],
       },
     ],
   },
@@ -1015,81 +608,9 @@ export function getTutorialTopicById(topicId: string): TutorialTopicDefinition |
   return TUTORIAL_TOPIC_MAP.get(topicId);
 }
 
-export interface ResolveTutorialSlidesOptions {
-  /**
-   * When true (player opened the topic intentionally from the Tutorials / Guide compendium),
-   * series slides whose preference is `'none'` fall back to `'brief'` so veterans can still
-   * look up any unlocked mechanic on demand.
-   */
-  compendiumFullView?: boolean;
-}
-
-export function resolveSlidesForTutorialTopic(
-  topicId: string,
-  prefs: TutorialFamiliarityPreferences,
-  options?: ResolveTutorialSlidesOptions
-): ResolvedTutorialSlide[] {
-  const topic = TUTORIAL_TOPIC_MAP.get(topicId);
-  if (!topic) return [];
-
-  const compendiumFullView = Boolean(options?.compendiumFullView);
-
-  if (
-    !compendiumFullView &&
-    topic.skipPopupWhenBothVeryFamiliar &&
-    prefs.pokemonTutorialDetail === 'none' &&
-    prefs.fireEmblemTutorialDetail === 'none'
-  ) {
-    return [];
-  }
-
-  const pickDetailSlides = (
-    spec: TutorialSlideSpec,
-    detail: TutorialDetailLevel
-  ): ReadonlyArray<TutorialSlideContent> => {
-    const effectiveDetail: TutorialDetailLevel =
-      detail === 'none' && compendiumFullView ? 'brief' : detail;
-
-    if (effectiveDetail === 'none') {
-      return [];
-    }
-    if (effectiveDetail === 'detailed') {
-      const detailedList = toSlideArray(spec.detailed);
-      return detailedList.length > 0 ? detailedList : toSlideArray(spec.brief);
-    }
-    const briefList = toSlideArray(spec.brief);
-    return briefList.length > 0 ? briefList : toSlideArray(spec.detailed);
-  };
-
-  const resolved: ResolvedTutorialSlide[] = [];
-
-  for (const spec of topic.slides) {
-    let contents: ReadonlyArray<TutorialSlideContent> = [];
-    if (spec.domain === 'fusion') {
-      contents = toSlideArray(spec.always);
-    } else if (spec.domain === 'pokemon') {
-      contents = pickDetailSlides(spec, prefs.pokemonTutorialDetail);
-    } else if (spec.domain === 'fire_emblem') {
-      contents = pickDetailSlides(spec, prefs.fireEmblemTutorialDetail);
-    }
-
-    for (const content of contents) {
-      resolved.push({
-        ...content,
-        specId: spec.id,
-        domain: spec.domain,
-        domainLabel: TUTORIAL_DOMAIN_BADGES[spec.domain],
-      });
-    }
-  }
-
-  return resolved;
-}
-
 /**
  * Dynamically detects special dungeon terrain tutorials that apply to `map` so custom maps and
- * later chapters introduce Trees/Mountains, Wonder Tiles, and Lava/Void/Barriers the very first
- * time the player encounters them.
+ * chapters introduce Trees/Mountains, Wonder Tiles, and Lava/Void/Barriers the first time encountered.
  */
 export function detectDynamicMapTerrainTutorialIds(map: DungeonMapDefinition): string[] {
   let hasCover = false;
@@ -1099,7 +620,8 @@ export function detectDynamicMapTerrainTutorialIds(map: DungeonMapDefinition): s
   for (const row of map.tiles) {
     if (!Array.isArray(row)) continue;
     for (const cell of row) {
-      const t = cell?.terrain;
+      const rawCell = cell as { terrain?: string; terrainType?: string } | undefined;
+      const t = rawCell?.terrain ?? rawCell?.terrainType;
       if (t === 'trees' || t === 'mountain') {
         hasCover = true;
       } else if (t === 'wonder_tile') {

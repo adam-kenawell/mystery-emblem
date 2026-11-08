@@ -4027,37 +4027,131 @@ input[type='radio']:not(:disabled) {
 }
 
 /* ==========================================================================
-   TUTORIAL_OVERLAY — Contextual PMD Tutorial Cards & Guide Compendium
+   TUTORIAL_OVERLAY — Wimpod Interactive Coach Bar, Spotlight & Ask Wimpod
    Scales cleanly with zero clipping across 1920x1080, 390x844, and 844x390
    ========================================================================== */
+
+@keyframes pmd-tutorial-spotlight-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 0 2px #050a14,
+      0 0 12px rgba(248, 248, 88, 0.8),
+      inset 0 0 6px rgba(248, 248, 88, 0.3);
+  }
+  50% {
+    transform: scale(1.025);
+    box-shadow:
+      0 0 0 2px #050a14,
+      0 0 20px rgba(248, 248, 88, 1),
+      inset 0 0 10px rgba(248, 248, 88, 0.5);
+  }
+}
+
+@keyframes pmd-wimpod-prompt-pulse {
+  0%,
+  100% {
+    border-color: var(--pmd-text-yellow);
+    background: rgba(248, 248, 88, 0.12);
+  }
+  50% {
+    border-color: #ffffff;
+    background: rgba(248, 248, 88, 0.24);
+  }
+}
+
+@keyframes pmd-wimpod-nudge-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
 
 .pmd-tutorial-backdrop {
   position: fixed;
   inset: 0;
   z-index: 98;
-  background: rgba(4, 10, 20, 0.56);
+  background: rgba(4, 10, 20, 0.4);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 0.85rem;
+  padding: 0.65rem;
   user-select: none;
   touch-action: manipulation;
+  box-sizing: border-box;
+}
+
+.pmd-tutorial-backdrop[data-coach-dock='bottom'] {
+  align-items: flex-end;
+}
+
+.pmd-tutorial-backdrop.is-interactive-passthrough {
+  background: transparent;
+  pointer-events: none;
+}
+
+.pmd-tutorial-backdrop.is-compendium-mode {
+  background: rgba(4, 10, 20, 0.58);
+  align-items: center;
+  pointer-events: auto;
 }
 
 .pmd-tutorial-backdrop[hidden] {
   display: none !important;
 }
 
+.pmd-tutorial-dom-spotlight {
+  position: fixed;
+  z-index: 99;
+  pointer-events: none;
+  border-radius: 6px;
+  border: 3px solid #f8f858;
+  box-shadow:
+    0 0 0 2px #050a14,
+    0 0 14px rgba(248, 248, 88, 0.85),
+    inset 0 0 8px rgba(248, 248, 88, 0.35);
+  animation: pmd-tutorial-spotlight-pulse 1.15s ease-in-out infinite;
+  box-sizing: border-box;
+}
+
+.pmd-tutorial-dom-spotlight[hidden] {
+  display: none !important;
+}
+
 .pmd-tutorial-card,
 .pmd-tutorial-compendium {
-  width: min(540px, 100%);
-  max-height: calc(100dvh - 1.7rem);
+  width: min(620px, 100%);
+  max-height: calc(100dvh - 1.3rem);
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 8px 12px;
   box-sizing: border-box;
   overflow: hidden;
+  pointer-events: auto;
+}
+
+.pmd-wimpod-coach-bar {
+  width: min(640px, 100%);
+  padding: 7px 11px;
+  gap: 6px;
+}
+
+.pmd-wimpod-coach-bar.is-nudged {
+  animation: pmd-wimpod-nudge-shake 0.38s ease;
 }
 
 .pmd-tutorial-compendium {
@@ -4067,6 +4161,104 @@ input[type='radio']:not(:disabled) {
 .pmd-tutorial-card[hidden],
 .pmd-tutorial-compendium[hidden] {
   display: none !important;
+}
+
+.pmd-wimpod-coach-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+
+.pmd-wimpod-portrait-slot {
+  width: 64px;
+  height: 64px;
+  flex: 0 0 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pmd-fill-well-deep);
+  border: 2px solid var(--pmd-border-mid);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pmd-wimpod-portrait-slot canvas,
+.pmd-wimpod-compendium-portrait canvas {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  image-rendering: pixelated;
+}
+
+.pmd-wimpod-coach-main {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.pmd-wimpod-coach-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pmd-wimpod-speaker-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pmd-wimpod-speaker-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--pmd-text-yellow);
+  line-height: 1.15;
+}
+
+.pmd-wimpod-speech-text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.38;
+  color: var(--pmd-text-white);
+  min-height: 2.5em;
+}
+
+.pmd-wimpod-bottom-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.pmd-wimpod-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.pmd-wimpod-action-prompt {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  min-height: 30px;
+  border-radius: 4px;
+  background: rgba(248, 248, 88, 0.14);
+  border: 1px solid var(--pmd-text-yellow);
+  color: var(--pmd-text-yellow);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  animation: pmd-wimpod-prompt-pulse 1.4s ease-in-out infinite;
 }
 
 .pmd-tutorial-header {
@@ -4079,10 +4271,37 @@ input[type='radio']:not(:disabled) {
   flex-shrink: 0;
 }
 
+.pmd-wimpod-compendium-hero {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.pmd-wimpod-compendium-portrait {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pmd-fill-well-deep);
+  border: 2px solid var(--pmd-border-mid);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pmd-wimpod-compendium-quote {
+  font-size: 11.5px;
+  line-height: 1.3;
+  color: var(--pmd-text-cyan);
+}
+
 .pmd-tutorial-title-col {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 
@@ -4099,8 +4318,7 @@ input[type='radio']:not(:disabled) {
   padding: 2px 7px;
   border-radius: 3px;
   font-size: 11px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.03em;
   background: var(--pmd-fill-well-deep);
   border: 1px solid var(--pmd-border-mid);
   color: var(--pmd-text-cyan);
@@ -4109,16 +4327,6 @@ input[type='radio']:not(:disabled) {
 .pmd-tutorial-domain-pill.is-fusion {
   border-color: var(--pmd-text-gold);
   color: var(--pmd-text-yellow);
-}
-
-.pmd-tutorial-domain-pill.is-pokemon {
-  border-color: #58e868;
-  color: var(--pmd-text-green);
-}
-
-.pmd-tutorial-domain-pill.is-fire_emblem {
-  border-color: #78b8ff;
-  color: #a8e0f8;
 }
 
 .pmd-tutorial-step-badge {
@@ -4140,7 +4348,7 @@ input[type='radio']:not(:disabled) {
 }
 
 .pmd-tutorial-skip-btn {
-  min-width: 64px;
+  min-width: 60px;
   min-height: 44px;
   padding: 4px 10px;
   font-size: 12px;
@@ -4158,30 +4366,27 @@ input[type='radio']:not(:disabled) {
   padding-right: 2px;
 }
 
-.pmd-tutorial-subheading {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--pmd-text-cyan);
-  line-height: 1.3;
-}
-
 .pmd-tutorial-chips {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
+}
+
+.pmd-tutorial-chips:empty {
+  display: none;
 }
 
 .pmd-tutorial-chip {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 3px 8px;
-  min-height: 28px;
+  padding: 2px 7px;
+  min-height: 26px;
   border-radius: 4px;
   background: var(--pmd-fill-well-deep);
   border: 1px solid var(--pmd-divider-subtle);
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--pmd-text-white);
 }
 
@@ -4205,55 +4410,20 @@ input[type='radio']:not(:disabled) {
   color: var(--pmd-text-danger);
 }
 
-.pmd-tutorial-bullets {
-  margin: 0;
-  padding-left: 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 13px;
-  line-height: 1.42;
-  color: var(--pmd-text-white);
-}
-
-.pmd-tutorial-bullets li::marker {
-  color: var(--pmd-text-yellow);
-}
-
-.pmd-tutorial-callout {
-  padding: 6px 9px;
-  border-radius: 4px;
-  background: var(--pmd-fill-well-deep);
-  border-left: 3px solid var(--pmd-text-green);
-  font-size: 12px;
-  line-height: 1.35;
-  color: var(--pmd-text-green);
-}
-
-.pmd-tutorial-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding-top: 6px;
-  border-top: 2px solid var(--pmd-divider-subtle);
-  flex-shrink: 0;
-}
-
-.pmd-tutorial-footer-hint {
-  font-size: 11px;
-  color: var(--pmd-text-cyan);
-  opacity: 0.9;
-}
-
 .pmd-tutorial-nav-btn {
-  min-width: 96px;
+  min-width: 88px;
   min-height: 44px;
-  padding: 6px 14px;
+  padding: 5px 12px;
   font-size: 13px;
 }
 
-/* Progressive Guide Compendium */
+.pmd-tutorial-nav-btn.is-compact {
+  min-width: 78px;
+  min-height: 44px;
+  padding: 4px 11px;
+}
+
+/* Ask Wimpod — Survival Notes Compendium */
 .pmd-tutorial-empty-note {
   margin: 8px 0;
   font-size: 13px;
@@ -4304,7 +4474,7 @@ input[type='radio']:not(:disabled) {
   color: var(--pmd-text-cyan);
 }
 
-/* Reusable Tutorial Settings Control (Overworld System + Dungeon Settings) */
+/* Reusable Wimpod Tutorial Settings Control (Overworld System + Dungeon Settings) */
 .pmd-tutorial-settings-block {
   display: flex;
   flex-direction: column;
@@ -4335,7 +4505,7 @@ input[type='radio']:not(:disabled) {
 .pmd-tutorial-pref-chip {
   min-width: 58px;
   min-height: 44px;
-  padding: 4px 8px;
+  padding: 4px 10px;
   font-size: 12px;
 }
 
@@ -4367,64 +4537,95 @@ input[type='radio']:not(:disabled) {
 
 @media (max-width: 600px) {
   .pmd-tutorial-backdrop {
-    padding: 0.55rem;
+    padding: 0.45rem;
   }
 
   .pmd-tutorial-card,
   .pmd-tutorial-compendium {
-    padding: 7px 9px;
-    max-height: calc(100dvh - 1.1rem);
+    padding: 6px 8px;
+    max-height: calc(100dvh - 0.9rem);
+  }
+
+  .pmd-wimpod-coach-row {
+    gap: 8px;
+  }
+
+  .pmd-wimpod-portrait-slot {
+    width: 54px;
+    height: 54px;
+    flex: 0 0 54px;
+  }
+
+  .pmd-wimpod-speech-text {
+    font-size: 12.5px;
+    line-height: 1.34;
+    min-height: 2.2em;
+  }
+
+  .pmd-wimpod-action-prompt {
+    font-size: 11.5px;
+    padding: 3px 8px;
   }
 
   .pmd-tutorial-title {
     font-size: 15px;
   }
-
-  .pmd-tutorial-bullets {
-    font-size: 12.5px;
-    gap: 5px;
-  }
 }
 
 @media (max-height: 500px) {
   .pmd-tutorial-backdrop {
-    padding: 0.35rem 0.65rem;
+    padding: 0.25rem 0.55rem;
   }
 
   .pmd-tutorial-card,
   .pmd-tutorial-compendium {
-    width: min(620px, 100%);
-    max-height: calc(100dvh - 0.7rem);
-    border-width: 8px 12px;
-    padding: 5px 10px;
-    gap: 5px;
+    width: min(680px, 100%);
+    max-height: calc(100dvh - 0.5rem);
+    border-width: 6px 10px;
+    padding: 4px 8px;
+    gap: 4px;
+  }
+
+  .pmd-wimpod-coach-row {
+    gap: 8px;
+  }
+
+  .pmd-wimpod-portrait-slot {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+  }
+
+  .pmd-wimpod-coach-main {
+    gap: 3px;
+  }
+
+  .pmd-wimpod-speech-text {
+    font-size: 12px;
+    line-height: 1.28;
+    min-height: 0;
+  }
+
+  .pmd-wimpod-coach-bar[data-interactive='true'] .pmd-tutorial-chips {
+    display: none;
+  }
+
+  .pmd-wimpod-action-prompt {
+    font-size: 11.5px;
+    min-height: 26px;
+    padding: 2px 8px;
   }
 
   .pmd-tutorial-header {
     padding-bottom: 4px;
   }
 
+  .pmd-wimpod-compendium-quote {
+    display: none;
+  }
+
   .pmd-tutorial-title {
     font-size: 14px;
-  }
-
-  .pmd-tutorial-subheading {
-    font-size: 13px;
-  }
-
-  .pmd-tutorial-bullets {
-    font-size: 12px;
-    line-height: 1.34;
-    gap: 4px;
-  }
-
-  .pmd-tutorial-callout {
-    padding: 4px 8px;
-    font-size: 11.5px;
-  }
-
-  .pmd-tutorial-footer {
-    padding-top: 4px;
   }
 }
 

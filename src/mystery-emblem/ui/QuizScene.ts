@@ -29,10 +29,8 @@ import {
 import {
   DEFAULT_QUIZ_BACKDROP_CSS,
   DRAGON_LORD_OPTIONS,
-  FAMILIARITY_QUIZ_QUESTIONS,
   MYSTICAL_QUIZ_WAVE_PALETTE,
   PERSONALITY_QUIZ_QUESTIONS,
-  buildTutorialFamiliarityPreferences,
   evaluatePersonalityQuiz,
   getDragonLordTraitInfo,
   type AuraWavePalette,
@@ -47,8 +45,6 @@ import type {
   OwnedPokemonInstance,
   QuizRecruitSeeds,
   SaveData,
-  SeriesFamiliarityLevel,
-  TutorialFamiliarityPreferences,
 } from '../types/schemas';
 import { PmdPortraitView } from './PmdSpriteCanvas';
 import { bindBackGestureSurface, bindPointerTap } from './pointerControls';
@@ -404,8 +400,7 @@ export type QuizSceneStep = 'welcome' | 'questions' | 'lord_reveal';
 export type QuizRevealBeat = 0 | 1 | 2 | 3 | 4;
 
 const DEFAULT_TYPEWRITER_MS_PER_CHAR = 20;
-const TOTAL_QUIZ_QUESTION_COUNT =
-  PERSONALITY_QUIZ_QUESTIONS.length + FAMILIARITY_QUIZ_QUESTIONS.length;
+const TOTAL_QUIZ_QUESTION_COUNT = PERSONALITY_QUIZ_QUESTIONS.length;
 
 export interface OpenQuizSceneOptions {
   campaignMode?: CampaignMode;
@@ -435,12 +430,11 @@ export interface QuizSceneSnapshot {
   questionIndex: number;
   totalQuestionCount: number;
   answers: QuizOptionKey[];
-  pokemonFamiliarity: SeriesFamiliarityLevel;
-  fireEmblemFamiliarity: SeriesFamiliarityLevel;
-  tutorialPreferences: TutorialFamiliarityPreferences;
+  tutorialsEnabled: boolean;
   selectedLordSpeciesId: DragonLordSpeciesId;
   selectedPartnerSpeciesId: 'piplup';
   selectedHealerSpeciesId: 'flabebe';
+  selectedAdvisorSpeciesId: 'wimpod';
   flabebeFlowerColor: FlabebeFlowerColor;
 }
 
@@ -463,8 +457,6 @@ export class QuizScene {
   private questionIndex = 0;
   private questionOptionsRevealed = false;
   private answers: QuizOptionKey[] = [];
-  private pokemonFamiliarity: SeriesFamiliarityLevel = 'somewhat_familiar';
-  private fireEmblemFamiliarity: SeriesFamiliarityLevel = 'somewhat_familiar';
   private selectedLordSpeciesId: DragonLordSpeciesId = 'axew';
   private computedQuizSeeds: QuizRecruitSeeds | null = null;
 
@@ -685,8 +677,6 @@ export class QuizScene {
     this.questionIndex = 0;
     this.questionOptionsRevealed = false;
     this.answers = [];
-    this.pokemonFamiliarity = 'somewhat_familiar';
-    this.fireEmblemFamiliarity = 'somewhat_familiar';
     this.selectedLordSpeciesId = DRAGON_LORD_OPTIONS[0]?.speciesId ?? 'axew';
     this.computedQuizSeeds = null;
 
@@ -785,15 +775,11 @@ export class QuizScene {
       questionIndex: this.questionIndex,
       totalQuestionCount: TOTAL_QUIZ_QUESTION_COUNT,
       answers: [...this.answers],
-      pokemonFamiliarity: this.pokemonFamiliarity,
-      fireEmblemFamiliarity: this.fireEmblemFamiliarity,
-      tutorialPreferences: buildTutorialFamiliarityPreferences(
-        this.pokemonFamiliarity,
-        this.fireEmblemFamiliarity
-      ),
+      tutorialsEnabled: true,
       selectedLordSpeciesId: this.selectedLordSpeciesId,
       selectedPartnerSpeciesId: 'piplup',
       selectedHealerSpeciesId: 'flabebe',
+      selectedAdvisorSpeciesId: 'wimpod',
       flabebeFlowerColor: lordMeta.flabebeFlowerColor,
     };
   }
@@ -1281,30 +1267,13 @@ export class QuizScene {
     options: ReadonlyArray<{ id: QuizOptionKey; text: string }>;
     onSelectOption: (optId: QuizOptionKey) => void;
   } {
-    if (this.questionIndex < PERSONALITY_QUIZ_QUESTIONS.length) {
-      const q =
-        PERSONALITY_QUIZ_QUESTIONS[this.questionIndex] ?? PERSONALITY_QUIZ_QUESTIONS[0]!;
-      return {
-        prompt: q.prompt,
-        options: q.options.map((o) => ({ id: o.id, text: o.text })),
-        onSelectOption: (optId) => {
-          this.answers[this.questionIndex] = optId;
-        },
-      };
-    }
-
-    const famIdx = this.questionIndex - PERSONALITY_QUIZ_QUESTIONS.length;
-    const fq = FAMILIARITY_QUIZ_QUESTIONS[famIdx] ?? FAMILIARITY_QUIZ_QUESTIONS[0]!;
+    const q =
+      PERSONALITY_QUIZ_QUESTIONS[this.questionIndex] ?? PERSONALITY_QUIZ_QUESTIONS[0]!;
     return {
-      prompt: fq.prompt,
-      options: fq.options.map((o) => ({ id: o.id, text: o.text })),
+      prompt: q.prompt,
+      options: q.options.map((o) => ({ id: o.id, text: o.text })),
       onSelectOption: (optId) => {
-        const chosen = fq.options.find((o) => o.id === optId) ?? fq.options[0]!;
-        if (fq.subject === 'pokemon') {
-          this.pokemonFamiliarity = chosen.familiarity;
-        } else {
-          this.fireEmblemFamiliarity = chosen.familiarity;
-        }
+        this.answers[this.questionIndex] = optId;
       },
     };
   }
@@ -1538,17 +1507,13 @@ export class QuizScene {
     const scaleStatsToLevel = this.activeOptions.scaleStatsToLevel ?? true;
     const initialConvoy = this.activeOptions.initialConvoy ?? DEMO_INITIAL_CONVOY;
     const graph = this.activeOptions.overworldGraph ?? DEMO_OVERWORLD_GRAPH;
-    const tutorialPreferences = buildTutorialFamiliarityPreferences(
-      this.pokemonFamiliarity,
-      this.fireEmblemFamiliarity
-    );
 
     let created = this.saveManager.createNewCampaignSave({
       lordSpeciesId,
       partnerSpeciesId: 'piplup',
       healerSpeciesId: 'flabebe',
       quizSeeds,
-      tutorialPreferences,
+      tutorialsEnabled: true,
       newGamePlusUnlocked: false,
       startingLevel,
       scaleStatsToLevel,

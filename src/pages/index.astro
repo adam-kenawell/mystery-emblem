@@ -200,7 +200,6 @@ const canonicalUrl = Astro.url.href;
     TUTORIAL_TOPICS,
     detectDynamicMapTerrainTutorialIds,
     getTutorialTopicById,
-    resolveSlidesForTutorialTopic,
   } from '../mystery-emblem/data/tutorialRegistry';
   import {
     CHAPTER_LEVEL_CATALOG,
@@ -909,7 +908,6 @@ const canonicalUrl = Astro.url.href;
       TUTORIAL_CATEGORY_LABELS,
       TUTORIAL_CATEGORY_ORDER,
       getTutorialTopicById,
-      resolveSlidesForTutorialTopic,
       detectDynamicMapTerrainTutorialIds,
       evaluatePersonalityQuiz,
       getStarterPartnerOptions,
@@ -1007,7 +1005,7 @@ const canonicalUrl = Astro.url.href;
     });
     backStack.registerLayer({
       id: 'tutorial-overlay',
-      isActive: () => Boolean(tutorialOverlay?.isOpen()),
+      isActive: () => Boolean(tutorialOverlay?.isBlockingSceneInput()),
       onBack: () => tutorialOverlay?.handleBack(),
     });
 

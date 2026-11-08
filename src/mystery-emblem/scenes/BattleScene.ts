@@ -47,7 +47,11 @@ import {
   subscribeChapterMapChanges,
 } from '../data/chapterMapRegistry';
 import { getItemById, getMoveById } from '../data/index';
-import { detectDynamicMapTerrainTutorialIds } from '../data/tutorialRegistry';
+import {
+  detectDynamicMapTerrainTutorialIds,
+  type TutorialActionTriggerId,
+  type TutorialBattleTileFilter,
+} from '../data/tutorialRegistry';
 import {
   buildBattleUnitsFromPrepDeployment,
   buildSingleEnemyBattleUnit,
@@ -834,6 +838,7 @@ export class BattleScene {
     this.prepOverlay = new DungeonPrepOverlay({
       parentEl: this.rootEl,
       audioManager: this.audioManager,
+      getTutorialOverlay: () => this.tutorialOverlay,
       getSaveManager: () => this.getActivePrepSaveManager(),
       getMap: () => this.map,
       getEnemyCount: () => this.getLivingEnemies().length,
@@ -1003,6 +1008,7 @@ export class BattleScene {
     this.pinchTracker.reset();
     this.rootEl.hidden = false;
     this.viewportEl.classList.add('is-battle-active');
+    this.registerTutorialAvailabilityProvider();
 
     await this.setupFreshBattleState({
       showPrepOverlay: !this.cutsceneInProgress && !this.skipPrepPhase,
@@ -1109,6 +1115,23 @@ export class BattleScene {
     if (!this.levelUpModalBackdropEl.hidden) {
       this.dismissLevelUpModal();
       return;
+    }
+
+    const expectedTutorialAction = this.getExpectedTutorialAction();
+    if (expectedTutorialAction) {
+      const allowPrepBack =
+        this.phase === 'dungeon_prep' &&
+        (expectedTutorialAction === 'prep_close_manage_units' ||
+          expectedTutorialAction === 'prep_swap_or_finish_view_map');
+      const allowFieldMenuOpen =
+        expectedTutorialAction === 'battle_open_field_menu' &&
+        this.phase === 'player_phase' &&
+        this.interactionState === 'idle' &&
+        !this.systemMenuOpen;
+      if (!allowPrepBack && !allowFieldMenuOpen) {
+        this.tutorialOverlay?.nudgeActiveStep();
+        return;
+      }
     }
 
     if (this.systemMenuOpen) {
@@ -1354,6 +1377,257 @@ export class BattleScene {
       clientX: rect.left + localCssX,
       clientY: rect.top + localCssY,
     };
+  }
+
+  public getTutorialSpotlightTileCoords(): Array<{ x: number; y: number }> {
+    const filter = this.tutorialOverlay?.getActiveTileFilter() ?? null;
+    if (!filter || !this.openState) return [];
+    return this.resolveTutorialSpotlightTiles(filter);
+  }
+
+  private getExpectedTutorialAction(): TutorialActionTriggerId | null {
+    return this.tutorialOverlay?.getExpectedAction() ?? null;
+  }
+
+  private getAttackableEnemiesForSelectedState(): BattleUnitState[] {
+    const selected = this.getSelectedUnit();
+    if (!selected) return [];
+    if (this.interactionState === 'action_menu') {
+      return this.getAttackableEnemiesFromCurrentTile(selected).map((entry) => entry.enemy);
+    }
+    if (this.interactionState === 'unit_selected' && this.currentRange) {
+      const livingUnits = this.getLivingUnits();
+      return this.getLivingEnemies().filter(
+        (enemy) =>
+          findBestAttackPlanForTarget(
+            this.map,
+            selected,
+            enemy,
+            this.currentRange!.reachableTiles,
+            livingUnits
+          ) !== null
+      );
+    }
+    return [];
+  }
+
+  private getHealOrConsumableTutorialUnits(): BattleUnitState[] {
+    const unwaitedPlayers = this.getLivingPlayers().filter((u) => !u.waited);
+    const healersOrPotionHolders = unwaitedPlayers.filter((u) => {
+      const hasSupportHeal = u.activeMoves.some(
+        (slot) => slot.move.category === 'Support/Heal' && slot.ppRemaining > 0
+      );
+      if (hasSupportHeal) return true;
+      if (u.consumableItemId) {
+        const item = getItemById(u.consumableItemId);
+        return item?.category === 'consumable';
+      }
+      return false;
+    });
+    return healersOrPotionHolders;
+  }
+
+  private resolveTutorialSpotlightTiles(
+    filter: TutorialBattleTileFilter
+  ): Array<{ x: number; y: number }> {
+    if (filter === 'prep_swap_slots') {
+      if (this.phase !== 'dungeon_prep' || this.prepOverlay.getSubMode() !== 'view_map') {
+        return [];
+      }
+      return this.deploymentSlots.map((slot) => ({ x: slot.x, y: slot.y }));
+    }
+
+    if (this.phase !== 'player_phase') return [];
+
+    if (filter === 'lord_unit') {
+      const lord = this.getLordUnit();
+      if (!lord || lord.defeated || lord.currentHp <= 0) return [];
+      return [{ x: lord.x, y: lord.y }];
+    }
+
+    if (filter === 'empty_floor') {
+      const living = this.getLivingUnits();
+      const occupied = new Set(living.map((u) => coordKey(u.x, u.y)));
+      const anchor = this.getLordUnit() ?? this.getLivingPlayers()[0];
+      const nearTiles: Array<{ x: number; y: number }> = [];
+      const fallbackTiles: Array<{ x: number; y: number }> = [];
+
+      for (let y = 0; y < this.map.height; y++) {
+        const row = this.map.tiles[y];
+        if (!row) continue;
+        for (let x = 0; x < this.map.width; x++) {
+          const cell = row[x];
+          if (!cell || cell.terrainType !== 'floor') continue;
+          if (occupied.has(coordKey(x, y))) continue;
+          fallbackTiles.push({ x, y });
+          if (anchor) {
+            const dist = manhattanDistance(anchor.x, anchor.y, x, y);
+            if (dist >= 1 && dist <= 2) {
+              nearTiles.push({ x, y });
+            }
+          }
+        }
+      }
+      return nearTiles.length > 0 ? nearTiles : fallbackTiles.slice(0, 8);
+    }
+
+    if (filter === 'reachable_move') {
+      const selected = this.getSelectedUnit();
+      if (!selected || !this.currentRange || this.interactionState !== 'unit_selected') {
+        return [];
+      }
+      const occupied = new Set(
+        this.getLivingUnits()
+          .filter((u) => u.id !== selected.id)
+          .map((u) => coordKey(u.x, u.y))
+      );
+      const nonOrigin: Array<{ x: number; y: number }> = [];
+      for (const key of this.currentRange.reachableTiles.keys()) {
+        if (occupied.has(key)) continue;
+        const pt = parseCoordKey(key);
+        if (pt.x !== selected.x || pt.y !== selected.y) {
+          nonOrigin.push(pt);
+        }
+      }
+      return nonOrigin.length > 0 ? nonOrigin : [{ x: selected.x, y: selected.y }];
+    }
+
+    if (filter === 'attackable_enemy') {
+      return this.getAttackableEnemiesForSelectedState().map((e) => ({ x: e.x, y: e.y }));
+    }
+
+    if (filter === 'wounded_or_healer') {
+      return this.getHealOrConsumableTutorialUnits().map((u) => ({ x: u.x, y: u.y }));
+    }
+
+    return [];
+  }
+
+  private registerTutorialAvailabilityProvider(): void {
+    if (!this.tutorialOverlay) return;
+    this.tutorialOverlay.setActionAvailabilityProvider({
+      isActionAlreadyDone: (action) => {
+        if (!this.openState) return false;
+        switch (action) {
+          case 'battle_open_field_menu':
+            return (
+              this.phase === 'player_phase' &&
+              this.systemMenuOpen &&
+              this.systemMenuSubView === 'root'
+            );
+          case 'battle_toggle_danger_area':
+            return this.phase === 'player_phase' && this.globalDangerEnabled;
+          case 'battle_select_lord':
+            return (
+              this.phase === 'player_phase' &&
+              this.interactionState === 'unit_selected' &&
+              this.getSelectedUnit()?.id === this.getLordUnit()?.id
+            );
+          case 'battle_move_to_blue_tile':
+            return this.phase === 'player_phase' && this.interactionState === 'action_menu';
+          case 'battle_open_attack_forecast':
+            return (
+              this.phase === 'player_phase' &&
+              this.interactionState === 'combat_forecast' &&
+              this.forecastMode === 'attack' &&
+              !this.forecastModalBackdropEl.hidden
+            );
+          case 'prep_open_manage_units':
+            return (
+              this.phase === 'dungeon_prep' &&
+              this.prepOverlay.isOpen() &&
+              this.prepOverlay.getSubMode() === 'manage_units'
+            );
+          case 'prep_open_view_map':
+            return (
+              this.phase === 'dungeon_prep' &&
+              this.prepOverlay.isOpen() &&
+              this.prepOverlay.getSubMode() === 'view_map'
+            );
+          default:
+            return false;
+        }
+      },
+      canPerformActionNow: (action) => {
+        if (!this.openState) return false;
+        switch (action) {
+          case 'battle_open_field_menu':
+            return (
+              this.phase === 'player_phase' &&
+              this.interactionState === 'idle' &&
+              !this.systemMenuOpen
+            );
+          case 'battle_toggle_danger_area':
+            return (
+              this.phase === 'player_phase' &&
+              this.systemMenuOpen &&
+              this.systemMenuSubView === 'root'
+            );
+          case 'battle_select_lord': {
+            const lord = this.getLordUnit();
+            return (
+              this.phase === 'player_phase' &&
+              !this.systemMenuOpen &&
+              Boolean(lord && !lord.defeated && lord.currentHp > 0 && !lord.waited)
+            );
+          }
+          case 'battle_move_to_blue_tile':
+            return (
+              this.phase === 'player_phase' &&
+              this.interactionState === 'unit_selected' &&
+              Boolean(this.currentRange && this.currentRange.reachableTiles.size > 0)
+            );
+          case 'battle_confirm_wait':
+            return (
+              this.phase === 'player_phase' &&
+              this.interactionState === 'action_menu' &&
+              !this.actionMenuEl.hidden
+            );
+          case 'battle_open_attack_forecast':
+            return (
+              this.phase === 'player_phase' &&
+              (this.interactionState === 'unit_selected' ||
+                this.interactionState === 'action_menu') &&
+              this.getAttackableEnemiesForSelectedState().length > 0
+            );
+          case 'battle_confirm_attack':
+            return (
+              this.phase === 'player_phase' &&
+              this.interactionState === 'combat_forecast' &&
+              this.forecastMode === 'attack' &&
+              !this.forecastModalBackdropEl.hidden
+            );
+          case 'battle_inspect_heal_or_item':
+            return (
+              this.phase === 'player_phase' &&
+              this.interactionState === 'idle' &&
+              !this.systemMenuOpen &&
+              this.getHealOrConsumableTutorialUnits().length > 0
+            );
+          case 'prep_open_manage_units':
+          case 'prep_open_view_map':
+            return (
+              this.phase === 'dungeon_prep' &&
+              this.prepOverlay.isOpen() &&
+              this.prepOverlay.getSubMode() === 'hub'
+            );
+          case 'prep_close_manage_units':
+            return (
+              this.phase === 'dungeon_prep' &&
+              this.prepOverlay.isOpen() &&
+              this.prepOverlay.getSubMode() === 'manage_units'
+            );
+          case 'prep_swap_or_finish_view_map':
+            return (
+              this.phase === 'dungeon_prep' &&
+              this.prepOverlay.isOpen() &&
+              this.prepOverlay.getSubMode() === 'view_map'
+            );
+          default:
+            return false;
+        }
+      },
+    });
   }
 
   public getUnits(): ReadonlyArray<BattleUnitState> {
@@ -1796,11 +2070,63 @@ export class BattleScene {
     );
 
     // Floating Command Menu Buttons
-    bindPointerTap(this.cmdAttackBtnEl, () => this.openForecastFromCommandMenu(), { signal });
-    bindPointerTap(this.cmdHealBtnEl, () => this.openHealForecastFromCommandMenu(), { signal });
-    bindPointerTap(this.cmdItemBtnEl, () => void this.useEquippedBattleConsumable(), { signal });
-    bindPointerTap(this.cmdWaitBtnEl, () => void this.confirmUnitWait(), { signal });
-    bindPointerTap(this.cmdCancelBtnEl, () => this.cancelUncommittedMove(), { signal });
+    bindPointerTap(
+      this.cmdAttackBtnEl,
+      () => {
+        const expected = this.getExpectedTutorialAction();
+        if (expected && expected !== 'battle_open_attack_forecast') {
+          this.tutorialOverlay?.nudgeActiveStep();
+          return;
+        }
+        this.openForecastFromCommandMenu();
+      },
+      { signal }
+    );
+    bindPointerTap(
+      this.cmdHealBtnEl,
+      () => {
+        if (this.getExpectedTutorialAction()) {
+          this.tutorialOverlay?.nudgeActiveStep();
+          return;
+        }
+        this.openHealForecastFromCommandMenu();
+      },
+      { signal }
+    );
+    bindPointerTap(
+      this.cmdItemBtnEl,
+      () => {
+        if (this.getExpectedTutorialAction()) {
+          this.tutorialOverlay?.nudgeActiveStep();
+          return;
+        }
+        void this.useEquippedBattleConsumable();
+      },
+      { signal }
+    );
+    bindPointerTap(
+      this.cmdWaitBtnEl,
+      () => {
+        const expected = this.getExpectedTutorialAction();
+        if (expected && expected !== 'battle_confirm_wait') {
+          this.tutorialOverlay?.nudgeActiveStep();
+          return;
+        }
+        void this.confirmUnitWait();
+      },
+      { signal }
+    );
+    bindPointerTap(
+      this.cmdCancelBtnEl,
+      () => {
+        if (this.getExpectedTutorialAction()) {
+          this.tutorialOverlay?.nudgeActiveStep();
+          return;
+        }
+        this.cancelUncommittedMove();
+      },
+      { signal }
+    );
 
     // Combat / Heal Forecast Modal Buttons
     bindPointerTap(
@@ -1814,7 +2140,13 @@ export class BattleScene {
       this.forecastModalBackdropEl.querySelector<HTMLElement>(
         '[data-testid="forecast-cancel-btn"]'
       ),
-      () => this.cancelCombatForecast(),
+      () => {
+        if (this.getExpectedTutorialAction() === 'battle_confirm_attack') {
+          this.tutorialOverlay?.nudgeActiveStep();
+          return;
+        }
+        this.cancelCombatForecast();
+      },
       { signal }
     );
 
@@ -1826,6 +2158,10 @@ export class BattleScene {
         if (e.pointerType === 'mouse' && e.button !== 0) return;
         e.preventDefault();
         e.stopPropagation();
+        if (this.getExpectedTutorialAction() === 'battle_toggle_danger_area') {
+          this.tutorialOverlay?.nudgeActiveStep();
+          return;
+        }
         this.audioManager.playSfx('cancel');
         if (this.systemMenuSubView !== 'root') {
           this.setSystemMenuSubView('root');
@@ -1848,14 +2184,25 @@ export class BattleScene {
     bindPointerTap(
       this.fieldDangerBtnEl,
       () => {
+        const expected = this.getExpectedTutorialAction();
+        if (expected && expected !== 'battle_toggle_danger_area') {
+          this.tutorialOverlay?.nudgeActiveStep();
+          return;
+        }
         this.toggleGlobalDangerArea();
         this.closeSystemMenu();
+        this.tutorialOverlay?.notifyActionCompleted('battle_toggle_danger_area');
+        this.renderFrame(performance.now());
       },
       { signal }
     );
     bindPointerTap(
       this.fieldEndPhaseBtnEl,
       () => {
+        if (this.getExpectedTutorialAction()) {
+          this.tutorialOverlay?.nudgeActiveStep();
+          return;
+        }
         this.closeSystemMenu();
         void this.requestManualEndPhase();
       },
@@ -1864,6 +2211,10 @@ export class BattleScene {
     bindPointerTap(
       this.fieldObjectiveBtnEl,
       () => {
+        if (this.getExpectedTutorialAction()) {
+          this.tutorialOverlay?.nudgeActiveStep();
+          return;
+        }
         this.audioManager.playSfx('select');
         this.setSystemMenuSubView('objective');
       },
@@ -1872,6 +2223,10 @@ export class BattleScene {
     bindPointerTap(
       this.fieldSettingsBtnEl,
       () => {
+        if (this.getExpectedTutorialAction()) {
+          this.tutorialOverlay?.nudgeActiveStep();
+          return;
+        }
         this.audioManager.playSfx('select');
         this.setSystemMenuSubView('settings');
       },
@@ -1880,6 +2235,10 @@ export class BattleScene {
     bindPointerTap(
       this.fieldOverworldBtnEl,
       () => {
+        if (this.getExpectedTutorialAction()) {
+          this.tutorialOverlay?.nudgeActiveStep();
+          return;
+        }
         this.audioManager.playSfx('select');
         this.setSystemMenuSubView('confirm_overworld');
       },
@@ -1888,6 +2247,10 @@ export class BattleScene {
     bindPointerTap(
       this.fieldTitleBtnEl,
       () => {
+        if (this.getExpectedTutorialAction()) {
+          this.tutorialOverlay?.nudgeActiveStep();
+          return;
+        }
         this.audioManager.playSfx('select');
         this.setSystemMenuSubView('confirm_title');
       },
@@ -2278,8 +2641,15 @@ export class BattleScene {
       return;
     }
 
+    const expectedTutorialAction = this.getExpectedTutorialAction();
+
     // While the floating Command Menu is open, tapping an in-range enemy or injured ally opens Forecast directly!
     if (this.interactionState === 'action_menu') {
+      if (expectedTutorialAction === 'battle_confirm_wait') {
+        this.tutorialOverlay?.nudgeActiveStep();
+        return;
+      }
+
       const selected = this.getSelectedUnit();
       const tappedEnemy = this.getLivingEnemies().find((e) => e.x === tx && e.y === ty);
       if (selected && tappedEnemy) {
@@ -2291,6 +2661,11 @@ export class BattleScene {
           this.openCombatForecastModal(tappedEnemy.id, validMoves[0]!.id);
           return;
         }
+      }
+
+      if (expectedTutorialAction === 'battle_open_attack_forecast') {
+        this.tutorialOverlay?.nudgeActiveStep();
+        return;
       }
 
       const tappedAlly = this.getLivingPlayers().find((p) => p.x === tx && p.y === ty);
@@ -2319,6 +2694,36 @@ export class BattleScene {
 
     // 1. IDLE STATE
     if (this.interactionState === 'idle') {
+      if (expectedTutorialAction === 'battle_open_field_menu') {
+        if (occupant) {
+          this.tutorialOverlay?.nudgeActiveStep();
+          return;
+        }
+        this.openSystemMenu('root', clientX, clientY);
+        this.renderFrame(performance.now());
+        return;
+      }
+
+      if (expectedTutorialAction === 'battle_select_lord') {
+        const lord = this.getLordUnit();
+        if (!occupant || occupant.id !== lord?.id || occupant.waited) {
+          this.tutorialOverlay?.nudgeActiveStep();
+          return;
+        }
+        this.selectPlayerUnit(occupant);
+        return;
+      }
+
+      if (expectedTutorialAction === 'battle_inspect_heal_or_item') {
+        const validIds = new Set(this.getHealOrConsumableTutorialUnits().map((u) => u.id));
+        if (!occupant || !validIds.has(occupant.id) || occupant.waited) {
+          this.tutorialOverlay?.nudgeActiveStep();
+          return;
+        }
+        this.selectPlayerUnit(occupant);
+        return;
+      }
+
       if (occupant && occupant.faction === 'player') {
         if (occupant.waited) {
           this.audioManager.playSfx('dialogue_advance');
@@ -2348,6 +2753,50 @@ export class BattleScene {
       if (!selected || !this.currentRange) {
         this.clearSelection();
         return;
+      }
+
+      if (expectedTutorialAction === 'battle_move_to_blue_tile') {
+        const targetKey = coordKey(tx, ty);
+        const hasNonOriginMove = this.resolveTutorialSpotlightTiles('reachable_move').some(
+          (pt) => pt.x !== selected.x || pt.y !== selected.y
+        );
+        const isOriginTap = tx === selected.x && ty === selected.y;
+        if (
+          occupant ||
+          !this.currentRange.reachableTiles.has(targetKey) ||
+          (hasNonOriginMove && isOriginTap)
+        ) {
+          this.tutorialOverlay?.nudgeActiveStep();
+          return;
+        }
+      } else if (expectedTutorialAction === 'battle_open_attack_forecast') {
+        if (occupant && occupant.faction === 'enemy') {
+          const plan = findBestAttackPlanForTarget(
+            this.map,
+            selected,
+            occupant,
+            this.currentRange.reachableTiles,
+            livingUnits
+          );
+          if (!plan) {
+            this.tutorialOverlay?.nudgeActiveStep();
+            return;
+          }
+        } else {
+          const targetKey = coordKey(tx, ty);
+          const canWalkToInRangeTile =
+            !occupant &&
+            this.currentRange.reachableTiles.has(targetKey) &&
+            this.getLivingEnemies().some(
+              (e) =>
+                getOffensiveMovesAtDistance(selected, manhattanDistance(tx, ty, e.x, e.y)).length >
+                0
+            );
+          if (!canWalkToInRangeTile) {
+            this.tutorialOverlay?.nudgeActiveStep();
+            return;
+          }
+        }
       }
 
       // 2a. Player tapped a living ENEMY -> route to optimal attack tile & open Combat Forecast!
@@ -2557,6 +3006,7 @@ export class BattleScene {
         this.hoveredTile === null && postRebuildOcc ? postRebuildOcc.id : null;
       this.updateInfoStrip();
       this.onLayerStateChanged();
+      this.tutorialOverlay?.notifyActionCompleted('prep_swap_or_finish_view_map');
       this.renderFrame(performance.now());
       return;
     }
@@ -2583,7 +3033,23 @@ export class BattleScene {
     this.syncHudControls();
     this.updateInfoStrip();
     this.onLayerStateChanged();
+
+    let satisfiedTutorialStep = false;
+    if (unit.id === this.getLordUnit()?.id) {
+      satisfiedTutorialStep =
+        Boolean(this.tutorialOverlay?.notifyActionCompleted('battle_select_lord')) ||
+        satisfiedTutorialStep;
+    }
+    if (this.getHealOrConsumableTutorialUnits().some((u) => u.id === unit.id)) {
+      satisfiedTutorialStep =
+        Boolean(this.tutorialOverlay?.notifyActionCompleted('battle_inspect_heal_or_item')) ||
+        satisfiedTutorialStep;
+    }
     this.renderFrame(performance.now());
+
+    if (!satisfiedTutorialStep && this.getAttackableEnemiesForSelectedState().length > 0) {
+      void this.triggerTutorial('ch1_first_combat_forecast');
+    }
   }
 
   private startInteractiveWalk(
@@ -2711,7 +3177,14 @@ export class BattleScene {
     this.syncHudControls();
     this.updateInfoStrip();
     this.onLayerStateChanged();
+    const completedMoveStep = Boolean(
+      this.tutorialOverlay?.notifyActionCompleted('battle_move_to_blue_tile')
+    );
     this.renderFrame(performance.now());
+
+    if (!completedMoveStep && targets.length > 0) {
+      void this.triggerTutorial('ch1_first_combat_forecast');
+    }
   }
 
   private positionFloatingActionMenu(): void {
@@ -2900,6 +3373,7 @@ export class BattleScene {
     this.syncHudControls();
     this.updateInfoStrip();
     this.onLayerStateChanged();
+    this.tutorialOverlay?.notifyActionCompleted('battle_confirm_wait');
     this.renderFrame(performance.now());
 
     if (this.areAllLivingPlayersWaited()) {
@@ -2974,6 +3448,7 @@ export class BattleScene {
     this.syncHudControls();
     this.updateInfoStrip();
     this.onLayerStateChanged();
+    this.tutorialOverlay?.notifyActionCompleted('battle_open_attack_forecast');
     this.renderFrame(performance.now());
     void this.triggerTutorial('ch1_first_combat_forecast');
   }
@@ -3665,6 +4140,7 @@ export class BattleScene {
     // Rule 4: Initiating combat with an offensive move marks it `[E]` Equipped for Enemy Phase!
     attacker.equippedMoveId = forecast.attackerSide.move.id;
 
+    this.tutorialOverlay?.notifyActionCompleted('battle_confirm_attack');
     this.audioManager.playSfx('select');
     this.forecastModalBackdropEl.hidden = true;
     this.actionMenuEl.hidden = true;
@@ -4674,6 +5150,9 @@ export class BattleScene {
     this.updateInfoStrip();
     this.audioManager.playSfx('select');
     this.onLayerStateChanged();
+    if (subView === 'root') {
+      this.tutorialOverlay?.notifyActionCompleted('battle_open_field_menu');
+    }
   }
 
   private closeSystemMenu(): void {
@@ -5381,7 +5860,12 @@ export class BattleScene {
   // ==========================================================================
 
   private canInteractWithMapViewport(): boolean {
-    if (!this.openState || this.systemMenuOpen || !this.levelUpModalBackdropEl.hidden || Boolean(this.tutorialOverlay?.isOpen())) {
+    if (
+      !this.openState ||
+      this.systemMenuOpen ||
+      !this.levelUpModalBackdropEl.hidden ||
+      Boolean(this.tutorialOverlay?.isBlockingSceneInput())
+    ) {
       return false;
     }
     if (this.phase === 'dungeon_prep') {
@@ -5802,6 +6286,29 @@ export class BattleScene {
       ctx.fillRect(cx, cy + PMD_TILE_NATIVE_PX - 5, 2, 5);
       ctx.fillRect(cx + PMD_TILE_NATIVE_PX - 5, cy + PMD_TILE_NATIVE_PX - 2, 5, 2);
       ctx.fillRect(cx + PMD_TILE_NATIVE_PX - 2, cy + PMD_TILE_NATIVE_PX - 5, 2, 5);
+    }
+
+    // 5b. Render Wimpod Interactive Tutorial Tile Spotlights (Golden Pulsing Pixel Frame)
+    const activeTutorialTileFilter = this.tutorialOverlay?.getActiveTileFilter() ?? null;
+    if (activeTutorialTileFilter) {
+      const spotTiles = this.resolveTutorialSpotlightTiles(activeTutorialTileFilter);
+      if (spotTiles.length > 0) {
+        const spotPulse = 0.5 - 0.5 * Math.cos(((now % 900) / 900) * Math.PI * 2);
+        ctx.save();
+        for (const pt of spotTiles) {
+          if (pt.x < startCol || pt.x > endCol || pt.y < startRow || pt.y > endRow) continue;
+          const sx = pt.x * PMD_TILE_NATIVE_PX - this.cameraX;
+          const sy = pt.y * PMD_TILE_NATIVE_PX - this.cameraY;
+          ctx.fillStyle = lerpRgba([248, 248, 88, 0.14], [255, 255, 160, 0.36], spotPulse);
+          ctx.fillRect(sx + 1, sy + 1, PMD_TILE_NATIVE_PX - 2, PMD_TILE_NATIVE_PX - 2);
+          ctx.strokeStyle = '#050a14';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(sx + 0.5, sy + 0.5, PMD_TILE_NATIVE_PX - 1, PMD_TILE_NATIVE_PX - 1);
+          ctx.strokeStyle = spotPulse > 0.5 ? '#ffffff' : '#f8f858';
+          ctx.strokeRect(sx + 1.5, sy + 1.5, PMD_TILE_NATIVE_PX - 3, PMD_TILE_NATIVE_PX - 3);
+        }
+        ctx.restore();
+      }
     }
 
     // 6. Render Units (Y-sorted & anchored via PMDCollab ground-shadow footline geometry)

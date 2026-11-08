@@ -10,6 +10,7 @@
  */
 
 import {
+  WIMPOD_PMD_ASSET_ID,
   resolveSpeciesAssetTarget,
   resolveUnitVisualAssetId,
   type PmdPortraitEmotion,
@@ -32,6 +33,7 @@ export type DialogueSpeakerRef =
   | { kind: 'lord'; fallbackSpeciesId?: string }
   | { kind: 'partner'; fallbackSpeciesId?: string }
   | { kind: 'healer'; fallbackSpeciesId?: string }
+  | { kind: 'advisor'; nickname?: string }
   | { kind: 'unit'; instanceId: string; fallbackSpeciesId?: string }
   | { kind: 'species'; speciesId: string; nickname?: string }
   | { kind: 'npc'; pmdAssetId: string; speciesName: string; nickname: string };
@@ -380,6 +382,15 @@ export class DialogueOverlay {
       return { fallbackSpeciesId: 'axew' };
     };
 
+    if (speaker.kind === 'advisor') {
+      return {
+        nickname: speaker.nickname?.trim() || 'Wimpod',
+        speciesName: 'Wimpod',
+        visualAssetId: WIMPOD_PMD_ASSET_ID,
+        pmdAssetId: WIMPOD_PMD_ASSET_ID,
+      };
+    }
+
     if (speaker.kind === 'npc') {
       return {
         nickname: speaker.nickname,
@@ -435,12 +446,14 @@ export class DialogueOverlay {
     const lordName = this.resolveSpeaker({ kind: 'lord' }, save).nickname;
     const partnerName = this.resolveSpeaker({ kind: 'partner' }, save).nickname;
     const healerName = this.resolveSpeaker({ kind: 'healer' }, save).nickname;
+    const advisorName = this.resolveSpeaker({ kind: 'advisor' }, save).nickname;
 
     return rawText
       .replace(/\{speaker\}/g, activeIdentity.nickname)
       .replace(/\{lord\}/g, lordName)
       .replace(/\{partner\}/g, partnerName)
-      .replace(/\{healer\}/g, healerName);
+      .replace(/\{healer\}/g, healerName)
+      .replace(/\{advisor\}/g, advisorName);
   }
 
   private handleAdvanceTap(): void {

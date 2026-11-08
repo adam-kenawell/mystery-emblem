@@ -617,6 +617,12 @@ export class OverworldScene {
 
     this.rootEl.hidden = false;
     this.viewportEl.classList.add('is-battle-active');
+    this.tutorialOverlay?.setActionAvailabilityProvider({
+      isActionAlreadyDone: (action) =>
+        action === 'overworld_open_menu' && this.openState && this.systemMenuOpen,
+      canPerformActionNow: (action) =>
+        action === 'overworld_open_menu' && this.openState && !this.kecleonShopOpen,
+    });
 
     this.unsubscribeSave?.();
     this.unsubscribeSave = this.saveManager.subscribe(() => {
@@ -1192,7 +1198,7 @@ export class OverworldScene {
       this.openState &&
       !this.kecleonShopOpen &&
       !this.systemMenuOpen &&
-      !this.tutorialOverlay?.isOpen()
+      !this.tutorialOverlay?.isBlockingSceneInput()
     );
   }
 
@@ -1449,6 +1455,10 @@ export class OverworldScene {
       const localY = e.clientY - rect.top;
       const tappedNode = this.hitTestNodeAtLocalCss(localX, localY);
       if (tappedNode) {
+        if (this.tutorialOverlay?.getExpectedAction()) {
+          this.tutorialOverlay.nudgeActiveStep();
+          return;
+        }
         void this.handleNodeTapped(tappedNode);
       }
     };
@@ -1460,6 +1470,10 @@ export class OverworldScene {
     bindPointerTap(
       this.btnEnterChapterEl,
       () => {
+        if (this.tutorialOverlay?.getExpectedAction()) {
+          this.tutorialOverlay.nudgeActiveStep();
+          return;
+        }
         if (this.activeTravel) return;
         this.launchCurrentChapterBattle();
       },
@@ -1469,6 +1483,10 @@ export class OverworldScene {
     bindPointerTap(
       this.btnFightSkirmishEl,
       () => {
+        if (this.tutorialOverlay?.getExpectedAction()) {
+          this.tutorialOverlay.nudgeActiveStep();
+          return;
+        }
         if (this.activeTravel) return;
         this.launchCurrentSkirmishBattle();
       },
@@ -1478,6 +1496,10 @@ export class OverworldScene {
     bindPointerTap(
       this.btnOpenShopEl,
       () => {
+        if (this.tutorialOverlay?.getExpectedAction()) {
+          this.tutorialOverlay.nudgeActiveStep();
+          return;
+        }
         if (this.activeTravel) return;
         this.openKecleonShop();
       },
@@ -1811,6 +1833,7 @@ export class OverworldScene {
     this.audioManager.playSfx('select');
     this.renderSystemMenuBody();
     this.onLayerStateChanged();
+    this.tutorialOverlay?.notifyActionCompleted('overworld_open_menu');
   }
 
   private closeSystemMenu(): void {

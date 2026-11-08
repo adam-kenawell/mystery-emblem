@@ -546,7 +546,7 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
           speaker: { kind: 'partner' },
           side: 'right',
           emotion: 'Worried',
-          text: 'Wake up, {lord}! The tide washed you onto Western Beach—{healer} and I found you with no memory of the storm.',
+          text: 'Wake up, {lord}! The tide washed you onto Western Beach—{healer}, Wimpod, and I found you with no memory of the storm.',
         },
         {
           speaker: { kind: 'healer' },
@@ -555,10 +555,16 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
           text: 'Shadow-crazed Feral Pokémon and Ironscale scouts are sweeping the shore! One raider stole an Evolution Stone from the shrine!',
         },
         {
+          speaker: { kind: 'advisor' },
+          side: 'right',
+          emotion: 'Teary-Eyed',
+          text: 'EEP! Claws! Sharp Metal-type claws! Look, I am a strictly non-combatant bug—I’ll coach you from behind this big safe rock where nobody can poke me!',
+        },
+        {
           speaker: { kind: 'lord' },
           side: 'left',
           emotion: 'Determined',
-          text: 'My memory is gone, {partner}, {healer}—but my Dragon Aura resonates with you both. Let’s rout them and reclaim that Stone!',
+          text: 'My memory is gone, {partner}, {healer}—but my Dragon Aura resonates with you all. Keep watch from cover, Wimpod; let’s rout them and reclaim that Stone!',
         },
       ],
     }),
@@ -578,6 +584,12 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
           side: 'right',
           emotion: 'Worried',
           text: 'Generations ago, Royal Tactician Gengar betrayed the Dragon Court and sundered the southeastern Abyss, whose miasma drives wild Pokémon Feral.',
+        },
+        {
+          speaker: { kind: 'advisor' },
+          side: 'left',
+          emotion: 'Stunned',
+          text: 'A cursed Abyss AND an invading Empire?! Fantastic! My shell is already sweating—tell me we at least get snacks on the march!',
         },
         {
           speaker: SERPERIOR_SPEAKER,
@@ -638,6 +650,12 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
           side: 'right',
           emotion: 'Angry',
           text: 'By Imperial decree, this coast stands under Ironscale martial law! None pass Verdant Bluff!',
+        },
+        {
+          speaker: { kind: 'advisor' },
+          side: 'left',
+          emotion: 'Happy',
+          text: 'Wait—he won’t budge an inch?! Zero movement! That means if we stay outside his reach until we’re ready, he literally cannot chase us! Best boss ever!',
         },
         {
           speaker: { kind: 'lord' },
@@ -720,6 +738,12 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
             side: 'right',
             emotion: 'Determined',
             text: 'Stand directly on a Stairs tile to seal enemy reinforcements below! Let me lend my mystic sight to your squad.',
+          },
+          {
+            speaker: { kind: 'advisor' },
+            side: 'left',
+            emotion: 'Shouting',
+            text: 'PLUG THE STAIRS! Put somebody big and sturdy right on top of them—and NO, before anyone looks at me, my shell does NOT count as a cork!',
           },
           {
             speaker: { kind: 'lord' },
@@ -811,6 +835,12 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
           text: 'Saved! My Kecleon Shops are now open along cleared World Map roads whenever you need TMs, gear, or Stones!',
         },
         {
+          speaker: { kind: 'advisor' },
+          side: 'left',
+          emotion: 'Happy',
+          text: 'Potions! Oran Berries! Life-saving emergency snacks! Thank goodness—watching you guys take hits takes years off my tiny bug lifespan!',
+        },
+        {
           speaker: MILOTIC_SPEAKER,
           side: 'right',
           emotion: 'Worried',
@@ -870,6 +900,12 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
             text: 'Another lost Dragon playing hero? Soft ideals let the Abyss fester—only Ironscale steel can subjugate a broken world!',
           },
           {
+            speaker: { kind: 'advisor' },
+            side: 'left',
+            emotion: 'Crying',
+            text: 'Uhh, {lord}?! Unlike Aron, Commander Deino’s legs definitely work—he’s going to charge the second anyone steps into his range! I’ll be behind THREE bushes!',
+          },
+          {
             speaker: { kind: 'lord' },
             side: 'left',
             emotion: 'Determined',
@@ -894,6 +930,12 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
           side: 'right',
           emotion: 'Happy',
           text: 'Berry Orchards stands free! Thanks to your squad, the Verdant Commonwealth can unite against both the Empire and the Abyss.',
+        },
+        {
+          speaker: { kind: 'advisor' },
+          side: 'left',
+          emotion: 'Happy',
+          text: 'WE LIVED! Nobody got flattened AND my survival notes actually worked! Maybe being a tactical coward is a superpower after all!',
         },
         {
           speaker: MILOTIC_SPEAKER,

@@ -403,6 +403,7 @@ export interface CampaignState {
   kecleonShopsUnlocked: boolean;
   completedChapterIds: string[];
   campaignMode?: CampaignMode;
+  tutorialsEnabled?: boolean;
   tutorialPreferences?: TutorialFamiliarityPreferences;
   seenTutorialIds?: string[];
   unlockedTutorialIds?: string[];

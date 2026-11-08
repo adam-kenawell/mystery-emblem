@@ -34,6 +34,7 @@ import type {
 import { createItemIconCell, createMiniItemIcon } from './PmdItemIconGrid';
 import { PmdPortraitView } from './PmdSpriteCanvas';
 import { createMiniSpeciesPortrait, createUnitPortraitCell } from './PmdUnitPortraitGrid';
+import type { TutorialOverlay } from './TutorialOverlay';
 import { bindPointerTap } from './pointerControls';
 import { getElementalTypeColor, renderColoredTypeHtml } from './typeColors';
 
@@ -44,6 +45,7 @@ export type ItemFilterTab = 'all' | 'held' | 'healing' | 'x_item' | 'special';
 export interface DungeonPrepOverlayOptions {
   parentEl: HTMLElement;
   audioManager: AudioManager;
+  getTutorialOverlay?: () => TutorialOverlay | undefined;
   getSaveManager: () => SaveStateManager;
   getMap: () => DungeonMapDefinition;
   getEnemyCount: () => number;
@@ -369,16 +371,31 @@ export class DungeonPrepOverlay {
       return true;
     }
 
-    if (this.subMode === 'manage_units' || this.subMode === 'manage_items') {
+    if (this.subMode === 'manage_units') {
+      const tutorial = this.opts.getTutorialOverlay?.();
+      const expected = tutorial?.getExpectedAction() ?? null;
+      if (expected && expected !== 'prep_close_manage_units') {
+        tutorial?.nudgeActiveStep();
+        return true;
+      }
+      this.opts.audioManager.playSfx('cancel');
+      this.setSubMode('hub');
+      tutorial?.notifyActionCompleted('prep_close_manage_units');
+      return true;
+    }
+
+    if (this.subMode === 'manage_items') {
       this.opts.audioManager.playSfx('cancel');
       this.setSubMode('hub');
       return true;
     }
 
     if (this.subMode === 'view_map') {
+      const tutorial = this.opts.getTutorialOverlay?.();
       this.opts.audioManager.playSfx('cancel');
       this.opts.onExitViewMap();
       this.setSubMode('hub');
+      tutorial?.notifyActionCompleted('prep_swap_or_finish_view_map');
       return true;
     }
 
@@ -475,9 +492,16 @@ export class DungeonPrepOverlay {
     bindPointerTap(
       this.hubBackdropEl.querySelector<HTMLElement>('[data-testid="prep-btn-manage-units"]'),
       () => {
+        const tutorial = this.opts.getTutorialOverlay?.();
+        const expected = tutorial?.getExpectedAction() ?? null;
+        if (expected && expected !== 'prep_open_manage_units') {
+          tutorial?.nudgeActiveStep();
+          return;
+        }
         this.opts.audioManager.playSfx('select');
         this.unitsStatusMsg = '';
         this.setSubMode('manage_units');
+        tutorial?.notifyActionCompleted('prep_open_manage_units');
       },
       { signal }
     );
@@ -485,6 +509,11 @@ export class DungeonPrepOverlay {
     bindPointerTap(
       this.hubBackdropEl.querySelector<HTMLElement>('[data-testid="prep-btn-manage-items"]'),
       () => {
+        const tutorial = this.opts.getTutorialOverlay?.();
+        if (tutorial?.getExpectedAction()) {
+          tutorial.nudgeActiveStep();
+          return;
+        }
         this.opts.audioManager.playSfx('select');
         this.itemsStatusMsg = '';
         this.setSubMode('manage_items');
@@ -495,9 +524,16 @@ export class DungeonPrepOverlay {
     bindPointerTap(
       this.hubBackdropEl.querySelector<HTMLElement>('[data-testid="prep-btn-view-map"]'),
       () => {
+        const tutorial = this.opts.getTutorialOverlay?.();
+        const expected = tutorial?.getExpectedAction() ?? null;
+        if (expected && expected !== 'prep_open_view_map') {
+          tutorial?.nudgeActiveStep();
+          return;
+        }
         this.opts.audioManager.playSfx('select');
         this.opts.onEnterViewMap();
         this.setSubMode('view_map');
+        tutorial?.notifyActionCompleted('prep_open_view_map');
       },
       { signal }
     );
@@ -505,6 +541,11 @@ export class DungeonPrepOverlay {
     bindPointerTap(
       this.hubBackdropEl.querySelector<HTMLElement>('[data-testid="prep-btn-enter-dungeon"]'),
       () => {
+        const tutorial = this.opts.getTutorialOverlay?.();
+        if (tutorial?.getExpectedAction()) {
+          tutorial.nudgeActiveStep();
+          return;
+        }
         this.opts.audioManager.playSfx('select');
         this.opts.onConfirmEnterDungeon();
       },
@@ -515,8 +556,15 @@ export class DungeonPrepOverlay {
     bindPointerTap(
       this.unitsBackdropEl.querySelector<HTMLElement>('[data-testid="prep-units-close-btn"]'),
       () => {
+        const tutorial = this.opts.getTutorialOverlay?.();
+        const expected = tutorial?.getExpectedAction() ?? null;
+        if (expected && expected !== 'prep_close_manage_units') {
+          tutorial?.nudgeActiveStep();
+          return;
+        }
         this.opts.audioManager.playSfx('cancel');
         this.setSubMode('hub');
+        tutorial?.notifyActionCompleted('prep_close_manage_units');
       },
       { signal }
     );
@@ -538,6 +586,11 @@ export class DungeonPrepOverlay {
     bindPointerTap(
       this.unitsBackdropEl.querySelector<HTMLElement>('[data-testid="prep-unit-open-items-btn"]'),
       () => {
+        const tutorial = this.opts.getTutorialOverlay?.();
+        if (tutorial?.getExpectedAction()) {
+          tutorial.nudgeActiveStep();
+          return;
+        }
         this.opts.audioManager.playSfx('select');
         this.itemsStatusMsg = '';
         this.setSubMode('manage_items');
@@ -574,9 +627,11 @@ export class DungeonPrepOverlay {
     bindPointerTap(
       this.mapReturnBtnEl,
       () => {
+        const tutorial = this.opts.getTutorialOverlay?.();
         this.opts.audioManager.playSfx('select');
         this.opts.onExitViewMap();
         this.setSubMode('hub');
+        tutorial?.notifyActionCompleted('prep_swap_or_finish_view_map');
       },
       { signal }
     );

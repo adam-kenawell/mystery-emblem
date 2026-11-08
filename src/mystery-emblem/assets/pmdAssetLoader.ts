@@ -60,6 +60,8 @@ export const PMD_DIRECTION_INFO: readonly PmdDirectionDescriptor[] = [
   { dir: 7, code: 'SW', label: 'Down-Left (SW)', dx: -1, dy: 1 },
 ];
 
+export const WIMPOD_PMD_ASSET_ID = '0767';
+
 export const PMD_PORTRAIT_EMOTIONS = [
   'Normal',
   'Happy',
@@ -71,7 +73,16 @@ export const PMD_PORTRAIT_EMOTIONS = [
   'Sad',
 ] as const;
 
-export type PmdPortraitEmotion = (typeof PMD_PORTRAIT_EMOTIONS)[number];
+export const PMD_EXTENDED_PORTRAIT_EMOTIONS = [
+  ...PMD_PORTRAIT_EMOTIONS,
+  'Teary-Eyed',
+  'Crying',
+  'Stunned',
+  'Dizzy',
+  'Shouting',
+] as const;
+
+export type PmdPortraitEmotion = (typeof PMD_EXTENDED_PORTRAIT_EMOTIONS)[number];
 
 export interface LoadedActionAnimation {
   canonicalAction: PmdSpriteAction;

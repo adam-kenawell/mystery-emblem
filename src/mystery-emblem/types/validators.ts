@@ -663,6 +663,12 @@ export function validateSaveData(
   if (!data.campaign || typeof data.campaign !== 'object') {
     errors.push('Save payload missing campaign state.');
   } else {
+    if (
+      data.campaign.tutorialsEnabled !== undefined &&
+      typeof data.campaign.tutorialsEnabled !== 'boolean'
+    ) {
+      errors.push('Save payload campaign.tutorialsEnabled must be a boolean when present.');
+    }
     if (data.campaign.tutorialPreferences !== undefined) {
       const tp = data.campaign.tutorialPreferences;
       if (!tp || typeof tp !== 'object') {

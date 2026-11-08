@@ -331,6 +331,7 @@ export interface NewCampaignConfig {
   healerSpeciesId?: string;
   healerNickname?: string;
   quizSeeds?: QuizRecruitSeeds;
+  tutorialsEnabled?: boolean;
   tutorialPreferences?: TutorialFamiliarityPreferences;
   newGamePlusUnlocked?: boolean;
   startingLevel?: number;
@@ -516,6 +517,9 @@ export class SaveStateManager {
         kecleonShopsUnlocked: false,
         completedChapterIds: [],
         ...(cfg.campaignMode ? { campaignMode: cfg.campaignMode } : {}),
+        ...(cfg.tutorialsEnabled !== undefined
+          ? { tutorialsEnabled: Boolean(cfg.tutorialsEnabled) }
+          : {}),
         ...(cfg.tutorialPreferences
           ? { tutorialPreferences: { ...cfg.tutorialPreferences } }
           : {}),
@@ -1087,6 +1091,26 @@ export class SaveStateManager {
   public markDemoCompleted(): SaveData {
     const save = this.requireActiveSave();
     save.campaign.demoCompleted = true;
+    this.commitSave(save);
+    return this.getSave()!;
+  }
+
+  public areTutorialsEnabled(): boolean {
+    const save = this.currentSave;
+    if (!save) return false;
+    if (typeof save.campaign.tutorialsEnabled === 'boolean') {
+      return save.campaign.tutorialsEnabled;
+    }
+    const tp = save.campaign.tutorialPreferences;
+    if (tp) {
+      return !(tp.pokemonTutorialDetail === 'none' && tp.fireEmblemTutorialDetail === 'none');
+    }
+    return false;
+  }
+
+  public setTutorialsEnabled(enabled: boolean): SaveData {
+    const save = this.requireActiveSave();
+    save.campaign.tutorialsEnabled = Boolean(enabled);
     this.commitSave(save);
     return this.getSave()!;
   }
