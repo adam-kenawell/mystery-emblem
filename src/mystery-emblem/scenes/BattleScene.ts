@@ -181,11 +181,20 @@ interface ActiveStrikeVfx {
   durationMs: number;
 }
 
+export type BattleExitDestination = 'default' | 'overworld' | 'title';
+
+export type BattleFieldMenuSubView =
+  | 'root'
+  | 'objective'
+  | 'settings'
+  | 'confirm_overworld'
+  | 'confirm_title';
+
 export interface BattleSceneOptions {
   viewportEl: HTMLElement;
   saveManager: SaveStateManager;
   audioManager?: AudioManager;
-  onExit: () => void;
+  onExit: (destination?: BattleExitDestination) => void;
   onLayerStateChanged: () => void;
   onRequestRenameUnit?: (instanceId: string) => Promise<void> | void;
 }
@@ -274,7 +283,7 @@ export class BattleScene {
   private readonly viewportEl: HTMLElement;
   private readonly saveManager: SaveStateManager;
   private readonly audioManager: AudioManager;
-  private readonly onExitCallback: () => void;
+  private readonly onExitCallback: (destination?: BattleExitDestination) => void;
   private readonly onLayerStateChanged: () => void;
   private readonly onRequestRenameUnit?: (instanceId: string) => Promise<void> | void;
 
@@ -285,12 +294,12 @@ export class BattleScene {
   private readonly tintScratchCanvas: HTMLCanvasElement;
   private readonly tintScratchCtx: CanvasRenderingContext2D;
 
-  // Top HUD, Bottom-Left Stacked Character Info + Tile Display
-  private readonly topHudBarEl: HTMLElement;
-  private readonly turnBadgeEl: HTMLElement;
-  private readonly dangerBtnEl: HTMLButtonElement;
-  private readonly endPhaseBtnEl: HTMLButtonElement;
+  // Toast Banner, Opening Card, Phase Transition & Bottom-Left Stacked Character + Tile Info Cards
   private readonly phaseBannerEl: HTMLElement;
+  private readonly beginBattleBackdropEl: HTMLElement;
+  private readonly beginBattleObjectiveEl: HTMLElement;
+  private readonly phaseTransitionEl: HTMLElement;
+  private readonly phaseTransitionTitleEl: HTMLElement;
   private readonly bottomLeftHudStackEl: HTMLElement;
   private readonly infoStripEl: HTMLElement;
   private readonly unitPopupEl: HTMLElement;
@@ -304,7 +313,7 @@ export class BattleScene {
   private readonly cmdWaitBtnEl: HTMLButtonElement;
   private readonly cmdCancelBtnEl: HTMLButtonElement;
 
-  // Modals: Dungeon Prep Overlay, Combat Forecast, Level-Up, System Menu, Victory, Defeat
+  // Modals: Dungeon Prep Overlay, Combat Forecast, Level-Up, Empty-Tile Field Menu, Victory, Defeat
   private readonly prepOverlay: DungeonPrepOverlay;
   private readonly forecastModalBackdropEl: HTMLElement;
   private readonly attackerPortraitView: PmdPortraitView;
@@ -312,9 +321,14 @@ export class BattleScene {
   private readonly levelUpModalBackdropEl: HTMLElement;
   private readonly levelUpPortraitView: PmdPortraitView;
   private readonly systemMenuBackdropEl: HTMLElement;
-  private readonly systemDangerBtnEl: HTMLButtonElement;
-  private readonly systemAudioBtnEl: HTMLButtonElement;
-  private readonly systemEndPhaseBtnEl: HTMLButtonElement;
+  private readonly fieldMenuCardEl: HTMLElement;
+  private readonly fieldDangerBtnEl: HTMLButtonElement;
+  private readonly fieldEndPhaseBtnEl: HTMLButtonElement;
+  private readonly fieldObjectiveBtnEl: HTMLButtonElement;
+  private readonly fieldSettingsBtnEl: HTMLButtonElement;
+  private readonly fieldOverworldBtnEl: HTMLButtonElement;
+  private readonly fieldTitleBtnEl: HTMLButtonElement;
+  private readonly fieldSubmodalCardEl: HTMLElement;
   private readonly victoryModalBackdropEl: HTMLElement;
   private readonly defeatModalBackdropEl: HTMLElement;
 
@@ -419,12 +433,18 @@ export class BattleScene {
   private readonly pinchTracker = new MultiTouchPinchTracker();
 
   private systemMenuOpen = false;
+  private systemMenuSubView: BattleFieldMenuSubView = 'root';
+  private lastFieldMenuAnchorClient: { x: number; y: number } | null = null;
   private fastMode = false;
   private customRng: (() => number) | null = null;
 
   private readonly tilesetSheets = new Map<string, LoadedTilesetSheet>();
   private readonly spriteBundles = new Map<string, LoadedSpriteBundle>();
   private phaseBannerTimer: number | null = null;
+  private beginBattleTimer: number | null = null;
+  private beginBattleResolver: (() => void) | null = null;
+  private phaseTransitionTimer: number | null = null;
+  private phaseTransitionResolver: (() => void) | null = null;
   private selectionPulseStartMs = 0;
 
   constructor(options: BattleSceneOptions) {
@@ -461,44 +481,53 @@ export class BattleScene {
     this.ctx.imageSmoothingEnabled = false;
     this.canvasStageEl.appendChild(this.canvas);
 
-    // 2. Top Tactical HUD Bar
-    this.topHudBarEl = document.createElement('div');
-    this.topHudBarEl.className = 'pmd-battle-hud-top';
-
-    this.turnBadgeEl = document.createElement('span');
-    this.turnBadgeEl.className =
-      'pmd-window pmd-window--compact pmd-window--translucent pmd-battle-pill';
-    this.turnBadgeEl.dataset.testid = 'battle-hud-turn';
-    this.turnBadgeEl.textContent = 'Turn 1 · Player';
-
-    this.dangerBtnEl = document.createElement('button');
-    this.dangerBtnEl.type = 'button';
-    this.dangerBtnEl.className = 'pmd-btn pmd-battle-hud-btn';
-    this.dangerBtnEl.dataset.testid = 'battle-hud-danger-btn';
-    this.dangerBtnEl.textContent = 'Danger: OFF';
-
-    this.endPhaseBtnEl = document.createElement('button');
-    this.endPhaseBtnEl.type = 'button';
-    this.endPhaseBtnEl.className = 'pmd-btn pmd-btn-primary pmd-battle-hud-btn';
-    this.endPhaseBtnEl.dataset.testid = 'battle-end-phase-btn';
-    this.endPhaseBtnEl.textContent = 'End Phase';
-
-    this.topHudBarEl.append(this.turnBadgeEl, this.dangerBtnEl, this.endPhaseBtnEl);
-
-    // 3. Phase Transition Toast Banner
+    // 2. Toast Banner, "Begin Battle!" Card & Dramatic Phase Transition Overlay
     this.phaseBannerEl = document.createElement('div');
     this.phaseBannerEl.className = 'pmd-window pmd-window--translucent pmd-battle-phase-banner';
     this.phaseBannerEl.dataset.testid = 'dungeon-phase-banner';
     this.phaseBannerEl.hidden = true;
 
-    // 4. Bottom-Left Stacked Character Hover/Tap Info Card + Compact Tile Display
+    this.beginBattleBackdropEl = document.createElement('div');
+    this.beginBattleBackdropEl.className = 'pmd-begin-battle-backdrop';
+    this.beginBattleBackdropEl.dataset.testid = 'dungeon-begin-battle-backdrop';
+    this.beginBattleBackdropEl.hidden = true;
+    this.beginBattleBackdropEl.innerHTML = `
+      <div class="pmd-window pmd-window--gold pmd-begin-battle-card" data-testid="dungeon-begin-battle-card" role="status" aria-live="polite">
+        <h2 class="pmd-begin-battle-title" data-testid="dungeon-begin-battle-title">Begin Battle!</h2>
+        <div class="pmd-begin-battle-obj-box">
+          <span class="pmd-begin-battle-obj-kicker">Victory Condition</span>
+          <strong class="pmd-begin-battle-obj-text" data-testid="dungeon-begin-battle-objective">Rout All Enemies</strong>
+        </div>
+      </div>
+    `;
+    this.beginBattleObjectiveEl = this.beginBattleBackdropEl.querySelector(
+      '[data-testid="dungeon-begin-battle-objective"]'
+    )!;
+
+    this.phaseTransitionEl = document.createElement('div');
+    this.phaseTransitionEl.className = 'pmd-phase-cine-overlay is-player';
+    this.phaseTransitionEl.dataset.testid = 'dungeon-phase-transition';
+    this.phaseTransitionEl.hidden = true;
+    this.phaseTransitionEl.innerHTML = `
+      <div class="pmd-phase-cine-veil pmd-phase-cine-veil--top"></div>
+      <div class="pmd-phase-cine-band">
+        <div class="pmd-phase-cine-mover">
+          <span class="pmd-phase-cine-title" data-testid="dungeon-phase-transition-title">PLAYER PHASE</span>
+        </div>
+      </div>
+      <div class="pmd-phase-cine-veil pmd-phase-cine-veil--bottom"></div>
+    `;
+    this.phaseTransitionTitleEl = this.phaseTransitionEl.querySelector(
+      '[data-testid="dungeon-phase-transition-title"]'
+    )!;
+
+    // 4. Bottom-Left Stacked Character Hover/Tap Info Card + Matched Solid Tile Info Card
     this.bottomLeftHudStackEl = document.createElement('div');
     this.bottomLeftHudStackEl.className = 'pmd-dungeon-hud-bottom-left';
     this.bottomLeftHudStackEl.dataset.testid = 'dungeon-bottom-left-hud';
 
     this.infoStripEl = document.createElement('div');
-    this.infoStripEl.className =
-      'pmd-window pmd-window--compact pmd-window--translucent pmd-dungeon-tile-box';
+    this.infoStripEl.className = 'pmd-window pmd-dungeon-tile-box';
     this.infoStripEl.dataset.testid = 'dungeon-tile-display';
 
     this.unitPopupPortraitView = new PmdPortraitView({
@@ -665,34 +694,44 @@ export class BattleScene {
       .querySelector('[data-defender-portrait-slot]')
       ?.appendChild(this.defenderPortraitView.canvas);
 
-    // 8. Battlefield System Menu Modal (Right-Click / Corner Menu)
+    // 8. Empty-Tile Dungeon Field Menu & Sub-Modals (`Objective` / `Settings` / `Exit Confirm`)
     this.systemMenuBackdropEl = document.createElement('div');
-    this.systemMenuBackdropEl.className = 'pmd-battle-modal-backdrop';
+    this.systemMenuBackdropEl.className = 'pmd-dungeon-field-backdrop';
     this.systemMenuBackdropEl.dataset.testid = 'dungeon-system-menu';
     this.systemMenuBackdropEl.hidden = true;
     this.systemMenuBackdropEl.innerHTML = `
-      <div class="pmd-window pmd-battle-system-dialog" role="dialog" aria-modal="true" aria-label="Battlefield Menu">
-        <h3 class="pmd-panel-title">BATTLE MENU</h3>
-        <p class="pmd-panel-sub" data-sys-sub>Turn 1 · Western Beach</p>
-        <div class="pmd-battle-system-actions pmd-menu-list">
-          <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-sys-danger">Danger Area: OFF</button>
-          <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-sys-audio">Audio: ON</button>
-          <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row" data-testid="battle-sys-end-phase">End Phase</button>
-          <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-sys-restart">Restart Match</button>
-          <button type="button" class="pmd-btn pmd-btn-danger pmd-menu-row" data-testid="battle-sys-exit">Return to Menu</button>
-          <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-sys-resume">Resume</button>
-        </div>
+      <div class="pmd-window pmd-dungeon-field-menu pmd-menu-list" data-testid="dungeon-field-menu" role="menu" aria-label="Dungeon Menu">
+        <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-field-danger">Danger Area: OFF</button>
+        <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row" data-testid="battle-field-end-phase">End Phase</button>
+        <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-field-objective">Objective</button>
+        <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-field-settings">Settings</button>
+        <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-field-overworld">Return to Overworld</button>
+        <button type="button" class="pmd-btn pmd-btn-danger pmd-menu-row" data-testid="battle-field-title">Return to Title Screen</button>
       </div>
+      <div class="pmd-window pmd-dungeon-submodal" data-field-submodal role="dialog" aria-modal="true" hidden></div>
     `;
-    this.systemDangerBtnEl = this.systemMenuBackdropEl.querySelector(
-      '[data-testid="battle-sys-danger"]'
+    this.fieldMenuCardEl = this.systemMenuBackdropEl.querySelector(
+      '[data-testid="dungeon-field-menu"]'
     )!;
-    this.systemAudioBtnEl = this.systemMenuBackdropEl.querySelector(
-      '[data-testid="battle-sys-audio"]'
+    this.fieldDangerBtnEl = this.systemMenuBackdropEl.querySelector(
+      '[data-testid="battle-field-danger"]'
     )!;
-    this.systemEndPhaseBtnEl = this.systemMenuBackdropEl.querySelector(
-      '[data-testid="battle-sys-end-phase"]'
+    this.fieldEndPhaseBtnEl = this.systemMenuBackdropEl.querySelector(
+      '[data-testid="battle-field-end-phase"]'
     )!;
+    this.fieldObjectiveBtnEl = this.systemMenuBackdropEl.querySelector(
+      '[data-testid="battle-field-objective"]'
+    )!;
+    this.fieldSettingsBtnEl = this.systemMenuBackdropEl.querySelector(
+      '[data-testid="battle-field-settings"]'
+    )!;
+    this.fieldOverworldBtnEl = this.systemMenuBackdropEl.querySelector(
+      '[data-testid="battle-field-overworld"]'
+    )!;
+    this.fieldTitleBtnEl = this.systemMenuBackdropEl.querySelector(
+      '[data-testid="battle-field-title"]'
+    )!;
+    this.fieldSubmodalCardEl = this.systemMenuBackdropEl.querySelector('[data-field-submodal]')!;
 
     // 9. `VICTORY!` Modal
     this.victoryModalBackdropEl = document.createElement('div');
@@ -763,10 +802,11 @@ export class BattleScene {
 
     this.rootEl.append(
       this.canvasStageEl,
-      this.topHudBarEl,
       this.phaseBannerEl,
       this.bottomLeftHudStackEl,
       this.actionMenuEl,
+      this.beginBattleBackdropEl,
+      this.phaseTransitionEl,
       this.forecastModalBackdropEl,
       this.levelUpModalBackdropEl,
       this.systemMenuBackdropEl,
@@ -910,12 +950,6 @@ export class BattleScene {
     if (defeatExitBtn) {
       defeatExitBtn.textContent = exitLabel;
     }
-    const sysExitBtn = this.systemMenuBackdropEl.querySelector<HTMLElement>(
-      '[data-testid="battle-sys-exit"]'
-    );
-    if (sysExitBtn) {
-      sysExitBtn.textContent = exitLabel;
-    }
 
     if (this.explicitCustomMap) {
       this.map = cloneDungeonMap(this.explicitCustomMap);
@@ -976,7 +1010,7 @@ export class BattleScene {
     }
   }
 
-  public close(): void {
+  public close(destination: BattleExitDestination = 'default'): void {
     if (!this.openState) return;
     this.battleRunGen += 1;
     this.openState = false;
@@ -999,7 +1033,7 @@ export class BattleScene {
     }
 
     this.onLayerStateChanged();
-    this.onExitCallback();
+    this.onExitCallback(destination);
   }
 
   public destroy(): void {
@@ -1009,6 +1043,7 @@ export class BattleScene {
       window.clearTimeout(this.phaseBannerTimer);
       this.phaseBannerTimer = null;
     }
+    this.clearOpeningAndPhaseAnimations();
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
     this.unsubscribeMapChanges?.();
@@ -1024,8 +1059,14 @@ export class BattleScene {
   /**
    * Unified Back / Right-Click / Long-Press / Corner Menu handler (Rule 2).
    */
-  public handleMenuOrBack(): void {
+  public handleMenuOrBack(clientX?: number, clientY?: number): void {
     if (!this.openState || this.cutsceneInProgress) return;
+
+    if (!this.beginBattleBackdropEl.hidden && !this.fastMode) {
+      this.audioManager.playSfx('select');
+      this.dismissBeginBattleCard();
+      return;
+    }
 
     if (!this.levelUpModalBackdropEl.hidden) {
       this.dismissLevelUpModal();
@@ -1034,7 +1075,11 @@ export class BattleScene {
 
     if (this.systemMenuOpen) {
       this.audioManager.playSfx('cancel');
-      this.closeSystemMenu();
+      if (this.systemMenuSubView !== 'root') {
+        this.setSystemMenuSubView('root');
+      } else {
+        this.closeSystemMenu();
+      }
       return;
     }
 
@@ -1059,7 +1104,7 @@ export class BattleScene {
         this.renderFrame(performance.now());
         return;
       }
-      this.openSystemMenu();
+      this.openSystemMenu('root', clientX, clientY);
       return;
     }
 
@@ -1091,7 +1136,7 @@ export class BattleScene {
       return;
     }
 
-    this.openSystemMenu();
+    this.openSystemMenu('root', clientX, clientY);
   }
 
   public async restartMatch(): Promise<void> {
@@ -1396,6 +1441,7 @@ export class BattleScene {
 
   private hideAllModals(): void {
     this.prepOverlay.hide();
+    this.clearOpeningAndPhaseAnimations();
     this.forecastModalBackdropEl.hidden = true;
     this.levelUpModalBackdropEl.hidden = true;
     if (this.levelUpResolver) {
@@ -1410,22 +1456,20 @@ export class BattleScene {
     this.unitPopupEl.hidden = true;
     this.phaseBannerEl.hidden = true;
     this.systemMenuOpen = false;
+    this.systemMenuSubView = 'root';
   }
 
   private syncPrepChromeVisibility(): void {
     if (this.phase === 'dungeon_prep') {
-      this.topHudBarEl.hidden = true;
       const inViewMap = this.prepOverlay.isOpen() && this.prepOverlay.getSubMode() === 'view_map';
       this.infoStripEl.hidden = !inViewMap;
       if (!inViewMap) {
         this.unitPopupEl.hidden = true;
       }
     } else if (this.phase === 'victory' || this.phase === 'defeat') {
-      this.topHudBarEl.hidden = true;
       this.infoStripEl.hidden = true;
       this.unitPopupEl.hidden = true;
     } else {
-      this.topHudBarEl.hidden = false;
       const hideHudCards = this.interactionState === 'combat_forecast';
       this.infoStripEl.hidden = hideHudCards;
       if (hideHudCards) {
@@ -1555,12 +1599,11 @@ export class BattleScene {
       this.centerCameraOnTile(lord.x, lord.y);
     }
 
-    this.audioManager.playSfx('phase_change');
-    this.showPhaseBanner(`PLAYER PHASE — TURN ${this.turnNumber}`);
     this.syncHudControls();
     this.updateInfoStrip();
     this.onLayerStateChanged();
     this.renderFrame(performance.now());
+    void this.playBattleOpeningSequence(this.battleRunGen);
   }
 
   private async preloadMapTilesets(): Promise<void> {
@@ -1680,21 +1723,10 @@ export class BattleScene {
   }
 
   private syncHudControls(): void {
-    const phaseLabel =
-      this.phase === 'enemy_phase'
-        ? 'Enemy'
-        : this.phase === 'victory'
-          ? 'Victory'
-          : this.phase === 'defeat'
-            ? 'Defeat'
-            : 'Player';
-    this.turnBadgeEl.textContent = `Turn ${this.turnNumber} · ${phaseLabel}`;
-
     const canEndPhase =
       this.phase === 'player_phase' &&
       (this.interactionState === 'idle' || this.interactionState === 'unit_selected');
-    this.endPhaseBtnEl.disabled = !canEndPhase;
-    this.systemEndPhaseBtnEl.disabled = !canEndPhase;
+    this.fieldEndPhaseBtnEl.disabled = !canEndPhase;
   }
 
   // ==========================================================================
@@ -1704,9 +1736,17 @@ export class BattleScene {
   private bindPointerInteractions(): void {
     const signal = this.abortController.signal;
 
-    // Top HUD Buttons
-    bindPointerTap(this.dangerBtnEl, () => this.toggleGlobalDangerArea(), { signal });
-    bindPointerTap(this.endPhaseBtnEl, () => void this.requestManualEndPhase(), { signal });
+    // "Begin Battle!" Card Tap-to-Skip
+    bindPointerTap(
+      this.beginBattleBackdropEl,
+      () => {
+        if (!this.beginBattleBackdropEl.hidden) {
+          this.audioManager.playSfx('select');
+          this.dismissBeginBattleCard();
+        }
+      },
+      { signal }
+    );
 
     // Floating Command Menu Buttons
     bindPointerTap(this.cmdAttackBtnEl, () => this.openForecastFromCommandMenu(), { signal });
@@ -1731,21 +1771,43 @@ export class BattleScene {
       { signal }
     );
 
-    // Battlefield System Menu Buttons
-    bindPointerTap(this.systemDangerBtnEl, () => this.toggleGlobalDangerArea(), { signal });
-    bindPointerTap(
-      this.systemAudioBtnEl,
-      () => {
-        const muted = this.audioManager.toggleMute();
-        if (!muted) {
-          this.audioManager.playSfx('select');
+    // Empty-Tile Dungeon Field Menu Backdrop Click-Outside & 6 Menu Buttons
+    this.systemMenuBackdropEl.addEventListener(
+      'pointerdown',
+      (e: PointerEvent) => {
+        if (e.target !== this.systemMenuBackdropEl) return;
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        this.audioManager.playSfx('cancel');
+        if (this.systemMenuSubView !== 'root') {
+          this.setSystemMenuSubView('root');
+        } else {
+          this.closeSystemMenu();
         }
-        this.syncSystemAudioButton();
+      },
+      { signal }
+    );
+    this.systemMenuBackdropEl.addEventListener(
+      'contextmenu',
+      (e: MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleMenuOrBack();
+      },
+      { signal }
+    );
+
+    bindPointerTap(
+      this.fieldDangerBtnEl,
+      () => {
+        this.toggleGlobalDangerArea();
+        this.closeSystemMenu();
       },
       { signal }
     );
     bindPointerTap(
-      this.systemEndPhaseBtnEl,
+      this.fieldEndPhaseBtnEl,
       () => {
         this.closeSystemMenu();
         void this.requestManualEndPhase();
@@ -1753,31 +1815,34 @@ export class BattleScene {
       { signal }
     );
     bindPointerTap(
-      this.systemMenuBackdropEl.querySelector<HTMLElement>(
-        '[data-testid="battle-sys-restart"]'
-      ),
+      this.fieldObjectiveBtnEl,
       () => {
-        this.closeSystemMenu();
-        void this.restartMatch();
+        this.audioManager.playSfx('select');
+        this.setSystemMenuSubView('objective');
       },
       { signal }
     );
     bindPointerTap(
-      this.systemMenuBackdropEl.querySelector<HTMLElement>('[data-testid="battle-sys-exit"]'),
+      this.fieldSettingsBtnEl,
       () => {
-        this.audioManager.playSfx('cancel');
-        this.closeSystemMenu();
-        this.close();
+        this.audioManager.playSfx('select');
+        this.setSystemMenuSubView('settings');
       },
       { signal }
     );
     bindPointerTap(
-      this.systemMenuBackdropEl.querySelector<HTMLElement>(
-        '[data-testid="battle-sys-resume"]'
-      ),
+      this.fieldOverworldBtnEl,
       () => {
-        this.audioManager.playSfx('cancel');
-        this.closeSystemMenu();
+        this.audioManager.playSfx('select');
+        this.setSystemMenuSubView('confirm_overworld');
+      },
+      { signal }
+    );
+    bindPointerTap(
+      this.fieldTitleBtnEl,
+      () => {
+        this.audioManager.playSfx('select');
+        this.setSystemMenuSubView('confirm_title');
       },
       { signal }
     );
@@ -1846,7 +1911,7 @@ export class BattleScene {
       (e: MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        this.handleMenuOrBack();
+        this.handleMenuOrBack(e.clientX, e.clientY);
       },
       { signal }
     );
@@ -1938,7 +2003,7 @@ export class BattleScene {
                 this.updateInfoStrip();
                 this.renderFrame(performance.now());
               } else {
-                this.handleMenuOrBack();
+                this.handleMenuOrBack(downClientX, downClientY);
               }
             }
           }, LONG_PRESS_MS);
@@ -2055,7 +2120,7 @@ export class BattleScene {
       if (commitTap && !wasDrag && !wasLongPress) {
         const tile = this.clientPointToTile(e.clientX, e.clientY);
         if (tile) {
-          this.handleTileTap(tile.x, tile.y);
+          this.handleTileTap(tile.x, tile.y, e.clientX, e.clientY);
         }
       }
     };
@@ -2071,6 +2136,9 @@ export class BattleScene {
         this.syncViewportDimensions();
         if (this.interactionState === 'action_menu') {
           this.positionFloatingActionMenu();
+        }
+        if (this.systemMenuOpen && this.systemMenuSubView === 'root') {
+          this.positionFieldMenuCard();
         }
         this.positionActiveUnitHoverPopup();
         this.renderFrame(performance.now());
@@ -2142,7 +2210,7 @@ export class BattleScene {
   // Player Phase Tile Tap, Direct-Attack Routing & Command Menu
   // ==========================================================================
 
-  private handleTileTap(tx: number, ty: number): void {
+  private handleTileTap(tx: number, ty: number, clientX?: number, clientY?: number): void {
     if (!isInMapBounds(this.map, tx, ty) || this.systemMenuOpen) return;
 
     if (this.phase === 'dungeon_prep') {
@@ -2222,8 +2290,7 @@ export class BattleScene {
         return;
       }
 
-      this.audioManager.playSfx('dialogue_advance');
-      this.updateInfoStrip();
+      this.openSystemMenu('root', clientX, clientY);
       this.renderFrame(performance.now());
       return;
     }
@@ -4128,6 +4195,7 @@ export class BattleScene {
     const runGen = this.battleRunGen;
     if (!this.openState || this.phase !== 'player_phase') return;
 
+    this.dismissBeginBattleCard();
     this.clearSelection();
     this.phase = 'enemy_phase';
     this.interactionState = 'enemy_acting';
@@ -4135,8 +4203,7 @@ export class BattleScene {
     this.onLayerStateChanged();
 
     this.audioManager.playSfx('phase_change');
-    this.showPhaseBanner(`ENEMY PHASE — TURN ${this.turnNumber}`);
-    await this.waitBattleMs(480);
+    await this.playPhaseTransitionAsync('enemy', runGen);
     if (!this.openState || runGen !== this.battleRunGen) return;
 
     const enemiesOrder = [...this.getLivingEnemies()];
@@ -4223,12 +4290,13 @@ export class BattleScene {
 
     this.phase = 'player_phase';
     this.interactionState = 'idle';
-    this.audioManager.playSfx('phase_change');
-    this.showPhaseBanner(`PLAYER PHASE — TURN ${this.turnNumber}`);
     this.syncHudControls();
     this.updateInfoStrip();
     this.onLayerStateChanged();
     this.renderFrame(performance.now());
+
+    this.audioManager.playSfx('phase_change');
+    void this.playPhaseTransitionAsync('player', runGen);
   }
 
   private async processTurnReinforcements(runGen: number): Promise<void> {
@@ -4315,6 +4383,7 @@ export class BattleScene {
   }
 
   private triggerVictoryModal(): void {
+    this.clearOpeningAndPhaseAnimations();
     this.clearSelection();
     this.phase = 'victory';
     this.interactionState = 'idle';
@@ -4425,10 +4494,12 @@ export class BattleScene {
   }
 
   private triggerDefeatModal(): void {
+    this.clearOpeningAndPhaseAnimations();
     this.clearSelection();
     this.phase = 'defeat';
     this.interactionState = 'idle';
     this.phaseBannerEl.hidden = true;
+    this.syncPrepChromeVisibility();
 
     const lord = this.getLordUnit();
     const subEl = this.defeatModalBackdropEl.querySelector('[data-defeat-sub]');
@@ -4482,33 +4553,35 @@ export class BattleScene {
       globalEnabled: this.globalDangerEnabled,
       trackedEnemyIds: this.trackedEnemyIds,
     });
-    this.dangerBtnEl.textContent = this.globalDangerEnabled ? 'Danger: ON' : 'Danger: OFF';
-    this.dangerBtnEl.classList.toggle('is-active', this.globalDangerEnabled);
-    this.systemDangerBtnEl.textContent = this.globalDangerEnabled
+    this.fieldDangerBtnEl.textContent = this.globalDangerEnabled
       ? 'Danger Area: ON'
       : 'Danger Area: OFF';
-    this.systemDangerBtnEl.classList.toggle('is-active', this.globalDangerEnabled);
+    this.fieldDangerBtnEl.classList.toggle('is-active', this.globalDangerEnabled);
     this.prepOverlay.syncMapHudState();
   }
 
-  private syncSystemAudioButton(): void {
-    const muted = this.audioManager.getSettings().muted;
-    this.systemAudioBtnEl.textContent = muted ? 'Audio: Muted' : 'Audio: ON';
-    this.systemAudioBtnEl.classList.toggle('is-active', !muted);
-  }
-
-  private openSystemMenu(): void {
+  private openSystemMenu(
+    subView: BattleFieldMenuSubView = 'root',
+    tapClientX?: number,
+    tapClientY?: number
+  ): void {
     this.systemMenuOpen = true;
-    const sub = this.systemMenuBackdropEl.querySelector('[data-sys-sub]');
-    if (sub) {
-      sub.textContent =
-        this.phase === 'dungeon_prep'
-          ? `Prep · ${this.map.name}`
-          : `Turn ${this.turnNumber} · ${this.map.name}`;
+    if (
+      typeof tapClientX === 'number' &&
+      Number.isFinite(tapClientX) &&
+      typeof tapClientY === 'number' &&
+      Number.isFinite(tapClientY)
+    ) {
+      this.lastFieldMenuAnchorClient = { x: tapClientX, y: tapClientY };
+    } else if (this.phase !== 'dungeon_prep') {
+      const pt = this.getTileClientCenter(this.inspectedTile.x, this.inspectedTile.y);
+      this.lastFieldMenuAnchorClient = { x: pt.clientX, y: pt.clientY };
+    } else {
+      this.lastFieldMenuAnchorClient = null;
     }
-    this.syncSystemAudioButton();
     this.syncHudControls();
     this.systemMenuBackdropEl.hidden = false;
+    this.setSystemMenuSubView(subView, { skipLayerNotify: true });
     this.updateInfoStrip();
     this.audioManager.playSfx('select');
     this.onLayerStateChanged();
@@ -4516,9 +4589,362 @@ export class BattleScene {
 
   private closeSystemMenu(): void {
     this.systemMenuOpen = false;
+    this.systemMenuSubView = 'root';
     this.systemMenuBackdropEl.hidden = true;
+    this.systemMenuBackdropEl.classList.remove('is-submodal');
+    this.fieldSubmodalCardEl.hidden = true;
+    this.fieldSubmodalCardEl.innerHTML = '';
     this.updateInfoStrip();
     this.onLayerStateChanged();
+  }
+
+  private positionFieldMenuCard(): void {
+    const stageRect = this.canvasStageEl.getBoundingClientRect();
+    const stageW = stageRect.width || this.canvasStageEl.clientWidth || 640;
+    const stageH = stageRect.height || this.canvasStageEl.clientHeight || 480;
+    const menuW = this.fieldMenuCardEl.offsetWidth || 228;
+    const menuH = this.fieldMenuCardEl.offsetHeight || 292;
+    const EDGE_PAD = 8;
+    const CURSOR_GAP_X = 12;
+    const CURSOR_OFFSET_Y = 14;
+
+    let left: number;
+    let top: number;
+
+    if (this.lastFieldMenuAnchorClient) {
+      const localX = this.lastFieldMenuAnchorClient.x - stageRect.left;
+      const localY = this.lastFieldMenuAnchorClient.y - stageRect.top;
+
+      left = localX + CURSOR_GAP_X;
+      if (left + menuW > stageW - EDGE_PAD) {
+        const flippedLeft = localX - menuW - CURSOR_GAP_X;
+        if (flippedLeft >= EDGE_PAD || localX > stageW / 2) {
+          left = flippedLeft;
+        }
+      }
+      left = Math.max(EDGE_PAD, Math.min(Math.max(EDGE_PAD, stageW - menuW - EDGE_PAD), left));
+
+      const overlapsTopRightCornerBtn = left + menuW > stageW - 136;
+      const overlapsTopLeftCornerBtn = left < 148;
+      const minTop =
+        overlapsTopRightCornerBtn || overlapsTopLeftCornerBtn
+          ? stageH <= 500
+            ? 56
+            : 64
+          : EDGE_PAD;
+      const maxTop = Math.max(EDGE_PAD, stageH - menuH - EDGE_PAD);
+      top = Math.max(Math.min(minTop, maxTop), Math.min(maxTop, localY - CURSOR_OFFSET_Y));
+    } else {
+      left = Math.max(EDGE_PAD, stageW - menuW - 12);
+      const maxTop = Math.max(EDGE_PAD, stageH - menuH - EDGE_PAD);
+      top = Math.min(stageH <= 500 ? 56 : 64, maxTop);
+    }
+
+    this.fieldMenuCardEl.style.left = `${Math.round(left)}px`;
+    this.fieldMenuCardEl.style.top = `${Math.round(top)}px`;
+  }
+
+  private setSystemMenuSubView(
+    subView: BattleFieldMenuSubView,
+    opts?: { skipLayerNotify?: boolean }
+  ): void {
+    this.systemMenuSubView = subView;
+    this.syncHudControls();
+
+    if (subView === 'root') {
+      this.systemMenuBackdropEl.classList.remove('is-submodal');
+      this.fieldMenuCardEl.hidden = false;
+      this.fieldSubmodalCardEl.hidden = true;
+      this.fieldSubmodalCardEl.removeAttribute('data-testid');
+      this.fieldSubmodalCardEl.innerHTML = '';
+      if (!this.systemMenuBackdropEl.hidden) {
+        this.positionFieldMenuCard();
+      }
+      if (!opts?.skipLayerNotify) {
+        this.onLayerStateChanged();
+      }
+      return;
+    }
+
+    this.systemMenuBackdropEl.classList.add('is-submodal');
+    this.fieldMenuCardEl.hidden = true;
+    this.fieldSubmodalCardEl.hidden = false;
+    this.renderFieldSubmodalContents(subView);
+    if (!opts?.skipLayerNotify) {
+      this.onLayerStateChanged();
+    }
+  }
+
+  private renderFieldSubmodalContents(
+    subView: Exclude<BattleFieldMenuSubView, 'root'>
+  ): void {
+    this.fieldSubmodalCardEl.innerHTML = '';
+
+    if (subView === 'objective') {
+      this.fieldSubmodalCardEl.dataset.testid = 'dungeon-objective-modal';
+      this.fieldSubmodalCardEl.setAttribute('aria-label', 'Battle Objective');
+      const lord = this.getLordUnit();
+      const livingAllies = this.getLivingPlayers();
+      const readyAllies = livingAllies.filter((u) => !u.waited).length;
+      const livingEnemies = this.getLivingEnemies();
+      const defeatText = lord
+        ? `${lord.nickname} falls in battle`
+        : 'Dragon Lord falls in battle';
+
+      this.fieldSubmodalCardEl.innerHTML = `
+        <h3 class="pmd-panel-title">OBJECTIVE</h3>
+        <p class="pmd-panel-sub" data-testid="dungeon-objective-turn">${this.escapeHudHtml(this.map.name)} · Turn ${this.turnNumber}</p>
+        <div class="pmd-dungeon-obj-grid">
+          <div class="pmd-dungeon-obj-cell is-wide">
+            <span>Victory Condition</span>
+            <strong data-testid="dungeon-objective-victory">${this.escapeHudHtml(this.objectiveLabel)}</strong>
+          </div>
+          <div class="pmd-dungeon-obj-cell is-wide">
+            <span>Defeat Condition</span>
+            <strong class="is-danger" data-testid="dungeon-objective-defeat">${this.escapeHudHtml(defeatText)}</strong>
+          </div>
+          <div class="pmd-dungeon-obj-cell">
+            <span>Allies Ready</span>
+            <strong>${readyAllies} / ${livingAllies.length}</strong>
+          </div>
+          <div class="pmd-dungeon-obj-cell">
+            <span>Enemies Left</span>
+            <strong>${livingEnemies.length}</strong>
+          </div>
+        </div>
+        <div class="pmd-battle-outcome-actions">
+          <button type="button" class="pmd-btn pmd-btn-primary" data-testid="battle-objective-close-btn">Close</button>
+        </div>
+      `;
+
+      bindPointerTap(
+        this.fieldSubmodalCardEl.querySelector<HTMLElement>(
+          '[data-testid="battle-objective-close-btn"]'
+        ),
+        () => {
+          this.audioManager.playSfx('cancel');
+          this.closeSystemMenu();
+        }
+      );
+      return;
+    }
+
+    if (subView === 'settings') {
+      this.fieldSubmodalCardEl.dataset.testid = 'dungeon-settings-modal';
+      this.fieldSubmodalCardEl.setAttribute('aria-label', 'Audio Settings');
+      const settings = this.audioManager.getSettings();
+      const bgmPct = Math.round(settings.bgmVolume * 100);
+      const sfxPct = Math.round(settings.sfxVolume * 100);
+
+      this.fieldSubmodalCardEl.innerHTML = `
+        <h3 class="pmd-panel-title">SETTINGS</h3>
+        <div class="pmd-dungeon-settings-list">
+          <button type="button" class="pmd-btn${settings.muted ? '' : ' is-active'}" data-testid="battle-settings-mute-btn">
+            ${settings.muted ? 'Audio: Muted' : 'Audio: ON'}
+          </button>
+          <div class="pmd-dungeon-slider-row">
+            <label for="battle-settings-bgm">Music</label>
+            <input id="battle-settings-bgm" type="range" min="0" max="100" value="${bgmPct}" data-testid="battle-settings-bgm-slider" />
+            <span class="pmd-dungeon-slider-val" data-testid="battle-settings-bgm-val">${bgmPct}%</span>
+          </div>
+          <div class="pmd-dungeon-slider-row">
+            <label for="battle-settings-sfx">SFX</label>
+            <input id="battle-settings-sfx" type="range" min="0" max="100" value="${sfxPct}" data-testid="battle-settings-sfx-slider" />
+            <span class="pmd-dungeon-slider-val" data-testid="battle-settings-sfx-val">${sfxPct}%</span>
+          </div>
+        </div>
+        <div class="pmd-battle-outcome-actions">
+          <button type="button" class="pmd-btn pmd-btn-primary" data-testid="battle-settings-done-btn">Done</button>
+        </div>
+      `;
+
+      const muteBtn = this.fieldSubmodalCardEl.querySelector<HTMLButtonElement>(
+        '[data-testid="battle-settings-mute-btn"]'
+      );
+      const bgmSlider = this.fieldSubmodalCardEl.querySelector<HTMLInputElement>(
+        '[data-testid="battle-settings-bgm-slider"]'
+      );
+      const bgmValEl = this.fieldSubmodalCardEl.querySelector<HTMLElement>(
+        '[data-testid="battle-settings-bgm-val"]'
+      );
+      const sfxSlider = this.fieldSubmodalCardEl.querySelector<HTMLInputElement>(
+        '[data-testid="battle-settings-sfx-slider"]'
+      );
+      const sfxValEl = this.fieldSubmodalCardEl.querySelector<HTMLElement>(
+        '[data-testid="battle-settings-sfx-val"]'
+      );
+
+      bindPointerTap(muteBtn, () => {
+        const nowMuted = this.audioManager.toggleMute();
+        if (!nowMuted) {
+          this.audioManager.playSfx('select');
+        }
+        if (muteBtn) {
+          muteBtn.textContent = nowMuted ? 'Audio: Muted' : 'Audio: ON';
+          muteBtn.classList.toggle('is-active', !nowMuted);
+        }
+      });
+
+      bgmSlider?.addEventListener('input', () => {
+        const pct = Math.max(0, Math.min(100, Math.round(Number(bgmSlider.value))));
+        this.audioManager.setBgmVolume(pct / 100);
+        if (bgmValEl) bgmValEl.textContent = `${pct}%`;
+      });
+
+      sfxSlider?.addEventListener('input', () => {
+        const pct = Math.max(0, Math.min(100, Math.round(Number(sfxSlider.value))));
+        this.audioManager.setSfxVolume(pct / 100);
+        if (sfxValEl) sfxValEl.textContent = `${pct}%`;
+      });
+      sfxSlider?.addEventListener('change', () => {
+        this.audioManager.playSfx('select');
+      });
+
+      bindPointerTap(
+        this.fieldSubmodalCardEl.querySelector<HTMLElement>(
+          '[data-testid="battle-settings-done-btn"]'
+        ),
+        () => {
+          this.audioManager.playSfx('select');
+          this.closeSystemMenu();
+        }
+      );
+      return;
+    }
+
+    const isOverworld = subView === 'confirm_overworld';
+    const destination: BattleExitDestination = isOverworld ? 'overworld' : 'title';
+    const titleText = isOverworld ? 'RETURN TO OVERWORLD?' : 'RETURN TO TITLE SCREEN?';
+    const confirmLabel = isOverworld ? 'Return to Overworld' : 'Return to Title Screen';
+
+    this.fieldSubmodalCardEl.dataset.testid = 'dungeon-exit-confirm-modal';
+    this.fieldSubmodalCardEl.setAttribute('aria-label', titleText);
+    this.fieldSubmodalCardEl.innerHTML = `
+      <h3 class="pmd-panel-title">${titleText}</h3>
+      <p class="pmd-subcard-text">Unsaved progress in this dungeon battle will be lost.</p>
+      <div class="pmd-battle-outcome-actions">
+        <button type="button" class="pmd-btn pmd-btn-danger" data-testid="battle-confirm-exit-btn">${confirmLabel}</button>
+        <button type="button" class="pmd-btn" data-testid="battle-cancel-exit-btn">Cancel</button>
+      </div>
+    `;
+
+    bindPointerTap(
+      this.fieldSubmodalCardEl.querySelector<HTMLElement>(
+        '[data-testid="battle-confirm-exit-btn"]'
+      ),
+      () => {
+        this.audioManager.playSfx('select');
+        this.closeSystemMenu();
+        this.close(destination);
+      }
+    );
+    bindPointerTap(
+      this.fieldSubmodalCardEl.querySelector<HTMLElement>(
+        '[data-testid="battle-cancel-exit-btn"]'
+      ),
+      () => {
+        this.audioManager.playSfx('cancel');
+        this.setSystemMenuSubView('root');
+      }
+    );
+  }
+
+  private clearOpeningAndPhaseAnimations(): void {
+    this.dismissBeginBattleCard();
+    this.cancelPhaseTransitionAnimation();
+  }
+
+  private dismissBeginBattleCard(): void {
+    if (this.beginBattleTimer !== null) {
+      window.clearTimeout(this.beginBattleTimer);
+      this.beginBattleTimer = null;
+    }
+    this.beginBattleBackdropEl.hidden = true;
+    this.beginBattleBackdropEl.classList.remove('is-fast-mode');
+    if (this.beginBattleResolver) {
+      const resolve = this.beginBattleResolver;
+      this.beginBattleResolver = null;
+      resolve();
+    }
+  }
+
+  private cancelPhaseTransitionAnimation(): void {
+    if (this.phaseTransitionTimer !== null) {
+      window.clearTimeout(this.phaseTransitionTimer);
+      this.phaseTransitionTimer = null;
+    }
+    this.phaseTransitionEl.hidden = true;
+    this.phaseTransitionEl.classList.remove('is-animating');
+    if (this.phaseTransitionResolver) {
+      const resolve = this.phaseTransitionResolver;
+      this.phaseTransitionResolver = null;
+      resolve();
+    }
+  }
+
+  private async playBattleOpeningSequence(runGen: number): Promise<void> {
+    await this.presentBeginBattleCardAsync(runGen);
+    if (!this.openState || runGen !== this.battleRunGen || this.phase !== 'player_phase') {
+      return;
+    }
+    this.audioManager.playSfx('phase_change');
+    await this.playPhaseTransitionAsync('player', runGen);
+  }
+
+  private presentBeginBattleCardAsync(runGen: number): Promise<void> {
+    this.dismissBeginBattleCard();
+    if (!this.openState || runGen !== this.battleRunGen || this.phase !== 'player_phase') {
+      return Promise.resolve();
+    }
+
+    this.beginBattleObjectiveEl.textContent = this.objectiveLabel;
+    this.beginBattleBackdropEl.classList.toggle('is-fast-mode', this.fastMode);
+    this.beginBattleBackdropEl.hidden = false;
+    this.audioManager.playSfx('select');
+
+    const holdMs = this.fastMode ? 55 : 1300;
+    return new Promise<void>((resolve) => {
+      this.beginBattleResolver = resolve;
+      this.beginBattleTimer = window.setTimeout(() => {
+        if (this.beginBattleResolver === resolve) {
+          this.dismissBeginBattleCard();
+        }
+      }, holdMs);
+    });
+  }
+
+  private playPhaseTransitionAsync(
+    faction: 'player' | 'enemy',
+    runGen = this.battleRunGen
+  ): Promise<void> {
+    this.cancelPhaseTransitionAnimation();
+    if (!this.openState || runGen !== this.battleRunGen) {
+      return Promise.resolve();
+    }
+
+    const durationMs = this.fastMode ? 110 : 1150;
+    this.phaseTransitionTitleEl.textContent =
+      faction === 'enemy' ? 'ENEMY PHASE' : 'PLAYER PHASE';
+    this.phaseTransitionEl.style.setProperty('--pmd-phase-dur', `${durationMs}ms`);
+    this.phaseTransitionEl.className = `pmd-phase-cine-overlay ${
+      faction === 'enemy' ? 'is-enemy' : 'is-player'
+    }`;
+    this.phaseTransitionEl.dataset.phaseFaction = faction;
+    this.phaseTransitionEl.hidden = false;
+    void this.phaseTransitionEl.offsetWidth;
+    this.phaseTransitionEl.classList.add('is-animating');
+
+    return new Promise<void>((resolve) => {
+      this.phaseTransitionResolver = resolve;
+      this.phaseTransitionTimer = window.setTimeout(() => {
+        this.phaseTransitionTimer = null;
+        this.phaseTransitionEl.hidden = true;
+        this.phaseTransitionEl.classList.remove('is-animating');
+        const done = this.phaseTransitionResolver;
+        this.phaseTransitionResolver = null;
+        done?.();
+      }, durationMs);
+    });
   }
 
   private showPhaseBanner(text: string): void {

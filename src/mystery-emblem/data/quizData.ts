@@ -5,11 +5,11 @@
  * - 5 Starting Stage-1 Dragon Lords (`axew`, `bagon`, `gible`, `dratini`, `goomy`),
  *   each bound 1-to-1 to Flabébé's flower color (`red`, `orange`, `yellow`, `blue`, `white`)
  *   and aura reveal background gradient.
- * - `Q1` (5 options): Pure Dragon Aura resonance question.
- * - `Q2` (3 options): Seeds `slot1Flying` (`pidgey` / `starly` / `pikipek`) for Dungeon 2 (`Verdant Bluff`).
- * - `Q3` (3 options): Seeds `slot2Psychic` (`abra` / `ralts` / `solosis`) for Dungeon 3 (`Cleft Mountain`).
- * - `Q4` (2 options): Seeds `slot3Electric` (`elekid` / `pawmi`) for Dungeon 5 (`Berry Orchards`).
- * - Balanced across all `5 × 3 × 3 × 2 = 90` answer combinations (`18 / 18 / 17 / 19 / 18`)
+ * - `Q1` (3 options): Seeds `slot1Flying` (`starly` / `pikipek` / `pidgey`) for Chapter 2 (`Verdant Bluff`).
+ * - `Q2` (3 options): Seeds `slot2Psychic` (`abra` / `ralts` / `solosis`) for Chapter 3 (`Cleft Mountain`).
+ * - `Q3` (2 options): Seeds `slot3Electric` (`elekid` / `pawmi`) for Chapter 5 (`Berry Orchards`).
+ * - `Q4` (2 options): Seeds `slot8Ice` (`vanillish` / `piloswine`) for Chapter 16 (`Ice Kingdom Shore`).
+ * - Balanced across all `3 × 3 × 2 × 2 = 36` answer combinations (`6 / 9 / 9 / 7 / 5`)
  *   with deterministic earliest-point tie-breaking.
  */
 
@@ -162,7 +162,7 @@ export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
   },
 ];
 
-export type QuizSeedKey = 'slot1Flying' | 'slot2Psychic' | 'slot3Electric';
+export type QuizSeedKey = 'slot1Flying' | 'slot2Psychic' | 'slot3Electric' | 'slot8Ice';
 export type QuizOptionKey = 'A' | 'B' | 'C' | 'D' | 'E';
 
 export interface QuizAnswerOption {
@@ -187,140 +187,119 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
   {
     id: 'q1',
     number: 1,
-    seedKey: null,
-    chapterSlotTitle: 'Dragon Aura',
-    prompt: 'Dark waves crash onto an unfamiliar shore as you wake with no memory. What do you do first?',
+    seedKey: 'slot1Flying',
+    chapterSlotTitle: 'Verdant Bluff Wing Scout',
+    prompt:
+      "You're out on a walk when you spot something shiny stuck high up in the branches of a tree! What do you do?",
     options: [
       {
         id: 'A',
-        text: 'Rise to your feet and scan the beach for anyone in danger.',
-        primaryLord: 'axew',
-        secondaryLord: 'goomy',
-        recruitSpeciesIds: [],
-        recruitLabel: 'Dragon Aura',
+        text: 'Start climbing right away! I can reach it!',
+        primaryLord: 'bagon',
+        secondaryLord: 'axew',
+        recruitSpeciesIds: ['starly'],
+        recruitLabel: 'Starly',
       },
       {
         id: 'B',
-        text: 'Climb the nearest dune to chart where the coastline leads.',
-        primaryLord: 'bagon',
-        secondaryLord: 'dratini',
-        recruitSpeciesIds: [],
-        recruitLabel: 'Dragon Aura',
+        text: 'Shake the trunk with all my might until it falls!',
+        primaryLord: 'gible',
+        secondaryLord: 'bagon',
+        recruitSpeciesIds: ['pikipek'],
+        recruitLabel: 'Pikipek',
       },
       {
         id: 'C',
-        text: 'Take a slow breath and check that the friends beside you are safe.',
-        primaryLord: 'goomy',
-        secondaryLord: 'gible',
-        recruitSpeciesIds: [],
-        recruitLabel: 'Dragon Aura',
-      },
-      {
-        id: 'D',
-        text: 'Listen quietly to the wind and tide to piece together what happened.',
+        text: 'Look around for a long stick or a safer way up.',
         primaryLord: 'dratini',
-        secondaryLord: 'axew',
-        recruitSpeciesIds: [],
-        recruitLabel: 'Dragon Aura',
-      },
-      {
-        id: 'E',
-        text: 'Shake off the sea spray and test your footing—no storm keeps you down!',
-        primaryLord: 'gible',
-        secondaryLord: 'axew',
-        recruitSpeciesIds: [],
-        recruitLabel: 'Dragon Aura',
+        secondaryLord: 'goomy',
+        recruitSpeciesIds: ['pidgey'],
+        recruitLabel: 'Pidgey',
       },
     ],
   },
   {
     id: 'q2',
     number: 2,
-    seedKey: 'slot1Flying',
-    chapterSlotTitle: 'Verdant Bluff Wing Scout',
-    prompt: 'An armored patrol blocks the cliffside road up Verdant Bluff. How do you scout ahead?',
-    options: [
-      {
-        id: 'A',
-        text: 'Follow the high sea breeze for a wide view of the whole ridge.',
-        primaryLord: 'bagon',
-        secondaryLord: 'goomy',
-        recruitSpeciesIds: ['pidgey'],
-        recruitLabel: 'Pidgey',
-      },
-      {
-        id: 'B',
-        text: 'Dart boldly between the canopy gusts to test their perimeter.',
-        primaryLord: 'goomy',
-        secondaryLord: 'dratini',
-        recruitSpeciesIds: ['starly'],
-        recruitLabel: 'Starly',
-      },
-      {
-        id: 'C',
-        text: 'Perch along the crags and listen closely for gaps in their march.',
-        primaryLord: 'gible',
-        secondaryLord: 'axew',
-        recruitSpeciesIds: ['pikipek'],
-        recruitLabel: 'Pikipek',
-      },
-    ],
-  },
-  {
-    id: 'q3',
-    number: 3,
     seedKey: 'slot2Psychic',
     chapterSlotTitle: 'Cleft Mountain Mystic',
-    prompt: 'Inside a ruined watchtower on Cleft Mountain, ancient runes begin to hum. Your instinct?',
+    prompt:
+      'Your friend proudly bakes a batch of cookies for you, but when you take a bite, they used salt instead of sugar! What do you say?',
     options: [
       {
         id: 'A',
-        text: 'Trace the geometric sigils to deduce how the mechanism works.',
+        text: '"Ack! Cough! That\'s pure salt!"',
         primaryLord: 'gible',
-        secondaryLord: 'goomy',
+        secondaryLord: 'axew',
         recruitSpeciesIds: ['abra'],
         recruitLabel: 'Abra',
       },
       {
         id: 'B',
-        text: 'Reach out with a calm heart to sense the emotion left behind.',
-        primaryLord: 'dratini',
-        secondaryLord: 'gible',
+        text: "Swallow it with a big smile so I don't hurt their feelings.",
+        primaryLord: 'goomy',
+        secondaryLord: 'dratini',
         recruitSpeciesIds: ['ralts'],
         recruitLabel: 'Ralts',
       },
       {
         id: 'C',
-        text: 'Focus your mind and study the resonance until its pattern clears.',
-        primaryLord: 'goomy',
-        secondaryLord: 'axew',
+        text: 'Quietly reach for a huge glass of water and change the subject.',
+        primaryLord: 'dratini',
+        secondaryLord: 'goomy',
         recruitSpeciesIds: ['solosis'],
         recruitLabel: 'Solosis',
       },
     ],
   },
   {
-    id: 'q4',
-    number: 4,
+    id: 'q3',
+    number: 3,
     seedKey: 'slot3Electric',
     chapterSlotTitle: 'Berry Orchards Vanguard',
-    prompt: 'Ironscale raiders corner townsfolk among the Berry Orchards! How do you break their line?',
+    prompt: "You're trying to open a stubborn jar lid, and it just won't budge! What do you do?",
     options: [
       {
         id: 'A',
-        text: 'Strike hard at their vanguard to force them back on their heels!',
-        primaryLord: 'bagon',
-        secondaryLord: 'dratini',
+        text: "Keep twisting with everything I've got! I refuse to lose to a jar!",
+        primaryLord: 'axew',
+        secondaryLord: 'gible',
         recruitSpeciesIds: ['elekid'],
         recruitLabel: 'Elekid',
       },
       {
         id: 'B',
-        text: 'Rush to the townsfolk’s side and rally everyone together!',
-        primaryLord: 'axew',
+        text: 'Tap the rim on the counter or hand it to a friend to try.',
+        primaryLord: 'bagon',
         secondaryLord: 'dratini',
         recruitSpeciesIds: ['pawmi'],
         recruitLabel: 'Pawmi',
+      },
+    ],
+  },
+  {
+    id: 'q4',
+    number: 4,
+    seedKey: 'slot8Ice',
+    chapterSlotTitle: 'Ice Kingdom Specialist',
+    prompt:
+      'You wake up on a freezing winter morning and realize you still have thirty minutes before you have to get up. What do you do?',
+    options: [
+      {
+        id: 'A',
+        text: 'Burrow right back under the blankets and stay cozy!',
+        primaryLord: 'goomy',
+        secondaryLord: 'bagon',
+        recruitSpeciesIds: ['vanillish'],
+        recruitLabel: 'Vanillish',
+      },
+      {
+        id: 'B',
+        text: 'Hop out of bed anyway! No sense wasting the morning!',
+        primaryLord: 'axew',
+        secondaryLord: 'gible',
+        recruitSpeciesIds: ['piloswine'],
+        recruitLabel: 'Piloswine',
       },
     ],
   },
@@ -462,6 +441,7 @@ export function evaluatePersonalityQuiz(
     slot1Flying: ['pidgey'],
     slot2Psychic: ['ralts'],
     slot3Electric: ['elekid'],
+    slot8Ice: ['vanillish'],
     q1Healer: ['flabebe'],
     q2BugFlying: ['pidgey', 'sewaddle'],
     q3GhostPsychic: ['ralts'],
@@ -470,7 +450,7 @@ export function evaluatePersonalityQuiz(
     q6WaterGrass: ['poliwag', 'bellsprout'],
     q7Fire: ['litwick'],
     q8SteelFairy: ['tinkatink', 'cleffa'],
-    q9IceArmored: ['mime_jr_galar', 'beldum'],
+    q9IceArmored: ['vanillish'],
   };
 
   let awardStep = 0;
@@ -505,6 +485,7 @@ export function evaluatePersonalityQuiz(
   seeds.q2BugFlying = [...(seeds.slot1Flying ?? ['pidgey']), 'sewaddle'];
   seeds.q3GhostPsychic = [...(seeds.slot2Psychic ?? ['ralts'])];
   seeds.q4Electric = [...(seeds.slot3Electric ?? ['elekid'])];
+  seeds.q9IceArmored = [...(seeds.slot8Ice ?? ['vanillish'])];
 
   let bestLord: DragonLordSpeciesId = 'axew';
   let bestScore = -1;

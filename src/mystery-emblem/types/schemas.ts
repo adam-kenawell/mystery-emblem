@@ -301,6 +301,7 @@ export interface QuizRecruitSeeds {
   slot1Flying?: string[];
   slot2Psychic?: string[];
   slot3Electric?: string[];
+  slot8Ice?: string[];
   q1Healer: string[];
   q2BugFlying: string[];
   q3GhostPsychic: string[];

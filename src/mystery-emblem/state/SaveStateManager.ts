@@ -309,6 +309,7 @@ export const DEFAULT_QUIZ_SEEDS: QuizRecruitSeeds = {
   slot1Flying: ['pidgey'],
   slot2Psychic: ['ralts'],
   slot3Electric: ['elekid'],
+  slot8Ice: ['vanillish'],
   q1Healer: ['flabebe'],
   q2BugFlying: ['pidgey', 'sewaddle'],
   q3GhostPsychic: ['ralts'],

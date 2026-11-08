@@ -7,12 +7,16 @@
  * - Automatic background-tab / mobile lock-screen pause & resume (`visibilitychange`)
  * - Built-in PMD: Explorers of Sky UI chime synthesizer (`select`, `cancel`, `dialogue_advance`, `typewriter_blip`)
  *   plus external SFX file playback support
- * - Persistent volume & mute preferences (`localStorage`: `mystery_emblem_audio_v1`)
+ * - Persistent volume & mute preferences (`localStorage`: `mystery_emblem_audio_v2`)
  */
 
 import { PMD_BGM_TRACKS, resolveBgmTrack, type PmdBgmTrack } from './audioTracks';
 
-export const AUDIO_SETTINGS_STORAGE_KEY = 'mystery_emblem_audio_v1';
+export const AUDIO_SETTINGS_STORAGE_KEY = 'mystery_emblem_audio_v2';
+const LEGACY_AUDIO_SETTINGS_STORAGE_KEY = 'mystery_emblem_audio_v1';
+
+export const DEFAULT_BGM_VOLUME = 0.25;
+export const DEFAULT_SFX_VOLUME = 0.9;
 
 export type PmdUiSfxId =
   | 'select'
@@ -59,8 +63,8 @@ function clamp01(val: number, fallback: number): number {
 export class AudioManager {
   private settings: AudioSettings = {
     muted: false,
-    bgmVolume: 0.65,
-    sfxVolume: 0.7,
+    bgmVolume: DEFAULT_BGM_VOLUME,
+    sfxVolume: DEFAULT_SFX_VOLUME,
   };
 
   private currentTrack: PmdBgmTrack | null = null;
@@ -74,6 +78,7 @@ export class AudioManager {
   private unlocked = false;
 
   private audioCtx: AudioContext | null = null;
+  private sfxCompressor: DynamicsCompressorNode | null = null;
   private lastBlipAt = 0;
 
   private readonly listeners = new Set<AudioListener>();
@@ -254,7 +259,7 @@ export class AudioManager {
     if (!ctx || ctx.state !== 'running') return;
 
     const now = ctx.currentTime;
-    const masterGain = this.settings.sfxVolume * 0.16;
+    const masterGain = this.settings.sfxVolume * 0.48;
 
     try {
       if (sfxId === 'select') {
@@ -266,7 +271,7 @@ export class AudioManager {
       } else if (sfxId === 'dialogue_advance') {
         this.scheduleTone(ctx, 'sine', 784, 1046, now, 0.055, masterGain * 0.72);
       } else if (sfxId === 'typewriter_blip') {
-        this.scheduleTone(ctx, 'triangle', 540, 560, now, 0.022, masterGain * 0.32);
+        this.scheduleTone(ctx, 'triangle', 540, 560, now, 0.022, masterGain * 0.24);
       } else if (sfxId === 'attack_hit') {
         this.scheduleTone(ctx, 'square', 220, 95, now, 0.085, masterGain * 1.15);
         this.scheduleTone(ctx, 'triangle', 420, 140, now, 0.06, masterGain * 0.9);
@@ -451,6 +456,16 @@ export class AudioManager {
       if (!Ctor) return null;
       try {
         this.audioCtx = new Ctor();
+        if (typeof this.audioCtx.createDynamicsCompressor === 'function') {
+          const comp = this.audioCtx.createDynamicsCompressor();
+          comp.threshold.setValueAtTime(-6, this.audioCtx.currentTime);
+          comp.knee.setValueAtTime(8, this.audioCtx.currentTime);
+          comp.ratio.setValueAtTime(6, this.audioCtx.currentTime);
+          comp.attack.setValueAtTime(0.002, this.audioCtx.currentTime);
+          comp.release.setValueAtTime(0.08, this.audioCtx.currentTime);
+          comp.connect(this.audioCtx.destination);
+          this.sfxCompressor = comp;
+        }
       } catch {
         return null;
       }
@@ -472,6 +487,7 @@ export class AudioManager {
   ): void {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
+    const safePeak = Math.max(0.0002, Math.min(0.92, peakGain));
     osc.type = type;
     osc.frequency.setValueAtTime(startFreq, startTime);
     if (endFreq !== startFreq) {
@@ -479,11 +495,11 @@ export class AudioManager {
     }
 
     gain.gain.setValueAtTime(0.0001, startTime);
-    gain.gain.linearRampToValueAtTime(peakGain, startTime + 0.006);
+    gain.gain.linearRampToValueAtTime(safePeak, startTime + 0.006);
     gain.gain.exponentialRampToValueAtTime(0.0001, startTime + durationSec);
 
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(this.sfxCompressor ?? ctx.destination);
     osc.start(startTime);
     osc.stop(startTime + durationSec + 0.01);
   }
@@ -529,16 +545,30 @@ export class AudioManager {
     if (typeof window === 'undefined') return;
     try {
       const raw = window.localStorage.getItem(AUDIO_SETTINGS_STORAGE_KEY);
-      if (!raw) return;
-      const parsed = JSON.parse(raw) as Partial<AudioSettings>;
-      if (typeof parsed.muted === 'boolean') {
-        this.settings.muted = parsed.muted;
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<AudioSettings>;
+        if (typeof parsed.muted === 'boolean') {
+          this.settings.muted = parsed.muted;
+        }
+        if (typeof parsed.bgmVolume === 'number') {
+          this.settings.bgmVolume = clamp01(parsed.bgmVolume, DEFAULT_BGM_VOLUME);
+        }
+        if (typeof parsed.sfxVolume === 'number') {
+          this.settings.sfxVolume = clamp01(parsed.sfxVolume, DEFAULT_SFX_VOLUME);
+        }
+        return;
       }
-      if (typeof parsed.bgmVolume === 'number') {
-        this.settings.bgmVolume = clamp01(parsed.bgmVolume, 0.65);
-      }
-      if (typeof parsed.sfxVolume === 'number') {
-        this.settings.sfxVolume = clamp01(parsed.sfxVolume, 0.7);
+
+      // Migrate legacy v1 mute state while resetting BGM/SFX sliders to the rebalanced v2 defaults
+      const legacyRaw = window.localStorage.getItem(LEGACY_AUDIO_SETTINGS_STORAGE_KEY);
+      if (legacyRaw) {
+        const legacyParsed = JSON.parse(legacyRaw) as Partial<AudioSettings>;
+        if (typeof legacyParsed.muted === 'boolean') {
+          this.settings.muted = legacyParsed.muted;
+        }
+        this.settings.bgmVolume = DEFAULT_BGM_VOLUME;
+        this.settings.sfxVolume = DEFAULT_SFX_VOLUME;
+        this.saveSettings();
       }
     } catch {
       // Ignore corrupt or unavailable localStorage

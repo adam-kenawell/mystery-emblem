@@ -188,6 +188,7 @@ export class BackStackController {
     if (!this.cornerBtn) return;
     const isSubLayerOpen = this.hasActiveLayer();
     if (isSubLayerOpen) {
+      this.cornerBtn.hidden = false;
       this.cornerBtn.textContent = 'Back';
       this.cornerBtn.dataset.cornerMode = 'back';
       this.cornerBtn.setAttribute('aria-label', 'Back or Close');
@@ -200,6 +201,7 @@ export class BackStackController {
       return;
     }
 
+    this.cornerBtn.hidden = false;
     this.cornerBtn.textContent = 'Menu';
     this.cornerBtn.dataset.cornerMode = 'menu';
     this.cornerBtn.setAttribute('aria-label', 'Open System Menu');

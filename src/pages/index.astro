@@ -367,11 +367,21 @@ const canonicalUrl = Astro.url.href;
       },
       {
         syncIdleButton: (btn) => {
-          if (
-            battleScene?.isOpen() ||
-            mapEditorScene?.isOpen() ||
-            overworldScene?.isOpen()
-          ) {
+          if (battleScene?.isOpen()) {
+            if (battleScene.getSnapshot().phase === 'dungeon_prep') {
+              btn.hidden = false;
+              btn.textContent = 'Menu';
+              btn.dataset.cornerMode = 'menu';
+              btn.setAttribute('aria-label', 'Open System Menu');
+              btn.removeAttribute('title');
+            } else {
+              btn.hidden = true;
+              btn.dataset.cornerMode = 'hidden';
+            }
+            return;
+          }
+          if (mapEditorScene?.isOpen() || overworldScene?.isOpen()) {
+            btn.hidden = false;
             btn.textContent = 'Menu';
             btn.dataset.cornerMode = 'menu';
             btn.setAttribute('aria-label', 'Open System Menu');
@@ -379,6 +389,7 @@ const canonicalUrl = Astro.url.href;
             return;
           }
 
+          btn.hidden = false;
           const sync = manager.getSyncStatus();
           if (sync.user) {
             const who = sync.user.email ?? sync.user.displayName ?? 'Google Account';
@@ -658,7 +669,15 @@ const canonicalUrl = Astro.url.href;
         audioManager,
         onRequestRenameUnit: (instanceId) =>
           promptRenameUnit(instanceId, battleScene?.getPrepSaveManager()),
-        onExit: () => {
+        onExit: (destination = 'default') => {
+          if (destination === 'overworld') {
+            void openOverworldScene({ preservePosition: true });
+            return;
+          }
+          if (destination === 'title') {
+            showTitleScreen();
+            return;
+          }
           if (battleReturnTarget === 'devtools' && isAdminSignedIn()) {
             if (manager.getSave()) {
               void openOverworldScene({ preservePosition: true }).then(() => {
