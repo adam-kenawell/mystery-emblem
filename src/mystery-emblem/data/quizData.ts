@@ -13,10 +13,31 @@
  *   with deterministic earliest-point tie-breaking.
  */
 
-import type { FlabebeFlowerColor, QuizRecruitSeeds } from '../types/schemas';
+import type {
+  FlabebeFlowerColor,
+  QuizRecruitSeeds,
+  SeriesFamiliarityLevel,
+  TutorialDetailLevel,
+  TutorialFamiliarityPreferences,
+} from '../types/schemas';
 import { getSpeciesById, getStage1SpeciesByCategory } from './index';
 
 export type DragonLordSpeciesId = 'axew' | 'bagon' | 'gible' | 'dratini' | 'goomy';
+
+export interface AuraWavePalette {
+  /** Saturated outer top/bottom color (`[R, G, B]`) */
+  outerRgb: readonly [number, number, number];
+  /** Luminous mid-wave arch crest color (`[R, G, B]`) */
+  midRgb: readonly [number, number, number];
+  /** Bright glowing center wave core color (`[R, G, B]`) */
+  coreRgb: readonly [number, number, number];
+}
+
+export const MYSTICAL_QUIZ_WAVE_PALETTE: AuraWavePalette = {
+  outerRgb: [86, 26, 172],
+  midRgb: [168, 102, 240],
+  coreRgb: [248, 242, 255],
+};
 
 export interface DragonLordTraitInfo {
   speciesId: DragonLordSpeciesId;
@@ -31,11 +52,12 @@ export interface DragonLordTraitInfo {
   flabebeFlowerColor: FlabebeFlowerColor;
   flabebeFlowerLabel: string;
   revealBackdropCss: string;
+  auraWavePalette: AuraWavePalette;
   accentBorderColor: string;
 }
 
 export const DEFAULT_QUIZ_BACKDROP_CSS =
-  'radial-gradient(circle at 50% 25%, rgba(28, 68, 128, 0.92), rgba(4, 10, 24, 0.97))';
+  'radial-gradient(circle at 50% 50%, rgba(168, 102, 240, 0.95), rgba(86, 26, 172, 0.99))';
 
 export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
   {
@@ -51,6 +73,11 @@ export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
     flabebeFlowerLabel: 'Red Aura',
     revealBackdropCss:
       'radial-gradient(circle at 50% 26%, rgba(196, 38, 52, 0.94), rgba(44, 8, 16, 0.98))',
+    auraWavePalette: {
+      outerRgb: [236, 4, 16],
+      midRgb: [248, 112, 124],
+      coreRgb: [255, 244, 246],
+    },
     accentBorderColor: '#ff6878',
   },
   {
@@ -66,6 +93,11 @@ export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
     flabebeFlowerLabel: 'Orange Aura',
     revealBackdropCss:
       'radial-gradient(circle at 50% 26%, rgba(216, 102, 24, 0.94), rgba(48, 18, 6, 0.98))',
+    auraWavePalette: {
+      outerRgb: [234, 90, 8],
+      midRgb: [252, 168, 84],
+      coreRgb: [255, 248, 238],
+    },
     accentBorderColor: '#ffa048',
   },
   {
@@ -81,6 +113,11 @@ export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
     flabebeFlowerLabel: 'Yellow Aura',
     revealBackdropCss:
       'radial-gradient(circle at 50% 26%, rgba(198, 164, 24, 0.94), rgba(46, 34, 6, 0.98))',
+    auraWavePalette: {
+      outerRgb: [218, 164, 6],
+      midRgb: [250, 218, 86],
+      coreRgb: [255, 253, 236],
+    },
     accentBorderColor: '#f8dc48',
   },
   {
@@ -96,6 +133,11 @@ export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
     flabebeFlowerLabel: 'Blue Aura',
     revealBackdropCss:
       'radial-gradient(circle at 50% 26%, rgba(36, 112, 214, 0.94), rgba(8, 20, 52, 0.98))',
+    auraWavePalette: {
+      outerRgb: [12, 102, 228],
+      midRgb: [98, 180, 252],
+      coreRgb: [242, 250, 255],
+    },
     accentBorderColor: '#58c8ff',
   },
   {
@@ -111,6 +153,11 @@ export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
     flabebeFlowerLabel: 'White Aura',
     revealBackdropCss:
       'radial-gradient(circle at 50% 26%, rgba(182, 196, 220, 0.92), rgba(28, 36, 54, 0.98))',
+    auraWavePalette: {
+      outerRgb: [142, 160, 194],
+      midRgb: [208, 220, 240],
+      coreRgb: [255, 255, 255],
+    },
     accentBorderColor: '#f0f4ff',
   },
 ];
@@ -281,6 +328,98 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
 
 export function getStarterPartnerOptions() {
   return getStage1SpeciesByCategory('starter_partner');
+}
+
+export interface FamiliarityQuizOption {
+  id: 'A' | 'B' | 'C';
+  text: string;
+  familiarity: SeriesFamiliarityLevel;
+  tutorialDetail: TutorialDetailLevel;
+}
+
+export interface FamiliarityQuizQuestionDefinition {
+  id: 'pokemon_familiarity' | 'fire_emblem_familiarity';
+  subject: 'pokemon' | 'fire_emblem';
+  prompt: string;
+  options: ReadonlyArray<FamiliarityQuizOption>;
+}
+
+export const FAMILIARITY_QUIZ_QUESTIONS: ReadonlyArray<FamiliarityQuizQuestionDefinition> = [
+  {
+    id: 'pokemon_familiarity',
+    subject: 'pokemon',
+    prompt: 'How familiar are you with Pokémon?',
+    options: [
+      {
+        id: 'A',
+        text: 'Very familiar',
+        familiarity: 'very_familiar',
+        tutorialDetail: 'none',
+      },
+      {
+        id: 'B',
+        text: 'Somewhat familiar',
+        familiarity: 'somewhat_familiar',
+        tutorialDetail: 'brief',
+      },
+      {
+        id: 'C',
+        text: 'I only know Pikachu 💀',
+        familiarity: 'beginner',
+        tutorialDetail: 'detailed',
+      },
+    ],
+  },
+  {
+    id: 'fire_emblem_familiarity',
+    subject: 'fire_emblem',
+    prompt: 'How familiar are you with Fire Emblem?',
+    options: [
+      {
+        id: 'A',
+        text: 'Very familiar',
+        familiarity: 'very_familiar',
+        tutorialDetail: 'none',
+      },
+      {
+        id: 'B',
+        text: 'Somewhat familiar',
+        familiarity: 'somewhat_familiar',
+        tutorialDetail: 'brief',
+      },
+      {
+        id: 'C',
+        text: "That's the name of that blue-haired guy from Smash, right?",
+        familiarity: 'beginner',
+        tutorialDetail: 'detailed',
+      },
+    ],
+  },
+];
+
+export function resolveTutorialDetailLevel(
+  familiarity: SeriesFamiliarityLevel
+): TutorialDetailLevel {
+  switch (familiarity) {
+    case 'very_familiar':
+      return 'none';
+    case 'somewhat_familiar':
+      return 'brief';
+    case 'beginner':
+      return 'detailed';
+  }
+}
+
+export function buildTutorialFamiliarityPreferences(
+  pokemonFamiliarity: SeriesFamiliarityLevel = 'somewhat_familiar',
+  fireEmblemFamiliarity: SeriesFamiliarityLevel = 'somewhat_familiar'
+): TutorialFamiliarityPreferences {
+  return {
+    pokemonFamiliarity,
+    fireEmblemFamiliarity,
+    pokemonTutorialDetail: resolveTutorialDetailLevel(pokemonFamiliarity),
+    fireEmblemTutorialDetail: resolveTutorialDetailLevel(fireEmblemFamiliarity),
+  };
 }
 
 export function getDragonLordTraitInfo(speciesId: string): DragonLordTraitInfo {

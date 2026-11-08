@@ -4,8 +4,10 @@ import {
   ITEM_CATEGORIES,
   MOVE_CATEGORIES,
   POKEMON_TYPES,
+  SERIES_FAMILIARITY_LEVELS,
   STATUS_CONDITIONS,
   TRAVERSAL_CLASSES,
+  TUTORIAL_DETAIL_LEVELS,
   type ItemDefinition,
   type MoveDefinition,
   type OwnedPokemonInstance,
@@ -45,6 +47,8 @@ const VALID_MOVE_CATEGORY_SET = new Set<string>(MOVE_CATEGORIES);
 const VALID_ITEM_CATEGORY_SET = new Set<string>(ITEM_CATEGORIES);
 const VALID_STATUS_SET = new Set<string>(STATUS_CONDITIONS);
 const VALID_FLABEBE_FLOWER_COLOR_SET = new Set<string>(FLABEBE_FLOWER_COLORS);
+const VALID_SERIES_FAMILIARITY_SET = new Set<string>(SERIES_FAMILIARITY_LEVELS);
+const VALID_TUTORIAL_DETAIL_SET = new Set<string>(TUTORIAL_DETAIL_LEVELS);
 
 const REQUIRED_DRAGON_LORDS = [
   'axew',
@@ -658,6 +662,30 @@ export function validateSaveData(
   }
   if (!data.campaign || typeof data.campaign !== 'object') {
     errors.push('Save payload missing campaign state.');
+  } else if (data.campaign.tutorialPreferences !== undefined) {
+    const tp = data.campaign.tutorialPreferences;
+    if (!tp || typeof tp !== 'object') {
+      errors.push('Save payload campaign.tutorialPreferences must be an object when present.');
+    } else {
+      if (!VALID_SERIES_FAMILIARITY_SET.has(tp.pokemonFamiliarity)) {
+        errors.push(`Invalid tutorialPreferences.pokemonFamiliarity: "${String(tp.pokemonFamiliarity)}".`);
+      }
+      if (!VALID_SERIES_FAMILIARITY_SET.has(tp.fireEmblemFamiliarity)) {
+        errors.push(
+          `Invalid tutorialPreferences.fireEmblemFamiliarity: "${String(tp.fireEmblemFamiliarity)}".`
+        );
+      }
+      if (!VALID_TUTORIAL_DETAIL_SET.has(tp.pokemonTutorialDetail)) {
+        errors.push(
+          `Invalid tutorialPreferences.pokemonTutorialDetail: "${String(tp.pokemonTutorialDetail)}".`
+        );
+      }
+      if (!VALID_TUTORIAL_DETAIL_SET.has(tp.fireEmblemTutorialDetail)) {
+        errors.push(
+          `Invalid tutorialPreferences.fireEmblemTutorialDetail: "${String(tp.fireEmblemTutorialDetail)}".`
+        );
+      }
+    }
   }
   if (!data.overworld || typeof data.overworld !== 'object') {
     errors.push('Save payload missing overworld state.');

@@ -375,6 +375,25 @@ export interface OverworldNodeState {
 
 export type CampaignMode = 'demo' | 'main';
 
+export const SERIES_FAMILIARITY_LEVELS = [
+  'very_familiar',
+  'somewhat_familiar',
+  'beginner',
+] as const;
+export type SeriesFamiliarityLevel = (typeof SERIES_FAMILIARITY_LEVELS)[number];
+
+export const TUTORIAL_DETAIL_LEVELS = ['none', 'brief', 'detailed'] as const;
+export type TutorialDetailLevel = (typeof TUTORIAL_DETAIL_LEVELS)[number];
+
+export interface TutorialFamiliarityPreferences {
+  pokemonFamiliarity: SeriesFamiliarityLevel;
+  fireEmblemFamiliarity: SeriesFamiliarityLevel;
+  /** 'very_familiar' -> 'none', 'somewhat_familiar' -> 'brief', 'beginner' -> 'detailed' */
+  pokemonTutorialDetail: TutorialDetailLevel;
+  /** 'very_familiar' -> 'none', 'somewhat_familiar' -> 'brief', 'beginner' -> 'detailed' */
+  fireEmblemTutorialDetail: TutorialDetailLevel;
+}
+
 export interface CampaignState {
   currentChapterId: string;
   lordInstanceId: string | null;
@@ -383,6 +402,7 @@ export interface CampaignState {
   kecleonShopsUnlocked: boolean;
   completedChapterIds: string[];
   campaignMode?: CampaignMode;
+  tutorialPreferences?: TutorialFamiliarityPreferences;
   recruitedChapterIds?: string[];
   seenIntroChapterIds?: string[];
   seenOutroChapterIds?: string[];

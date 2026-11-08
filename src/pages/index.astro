@@ -187,9 +187,12 @@ const canonicalUrl = Astro.url.href;
   } from '../mystery-emblem/data/campaignRegistry';
   import {
     DRAGON_LORD_OPTIONS,
+    FAMILIARITY_QUIZ_QUESTIONS,
     PERSONALITY_QUIZ_QUESTIONS,
+    buildTutorialFamiliarityPreferences,
     evaluatePersonalityQuiz,
     getStarterPartnerOptions,
+    resolveTutorialDetailLevel,
   } from '../mystery-emblem/data/quizData';
   import {
     CHAPTER_LEVEL_CATALOG,
@@ -843,7 +846,10 @@ const canonicalUrl = Astro.url.href;
       DEMO_INITIAL_CONVOY,
       getDemoChapterByNodeId,
       DRAGON_LORD_OPTIONS,
+      FAMILIARITY_QUIZ_QUESTIONS,
       PERSONALITY_QUIZ_QUESTIONS,
+      buildTutorialFamiliarityPreferences,
+      resolveTutorialDetailLevel,
       evaluatePersonalityQuiz,
       getStarterPartnerOptions,
       awardBattleUnitExp,

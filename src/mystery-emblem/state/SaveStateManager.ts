@@ -38,6 +38,7 @@ import {
   type StatBlockSeven,
   type SupportLevel,
   type SupportPairProgress,
+  type TutorialFamiliarityPreferences,
 } from '../types/schemas';
 import { validateSaveData } from '../types/validators';
 import {
@@ -327,6 +328,7 @@ export interface NewCampaignConfig {
   healerSpeciesId?: string;
   healerNickname?: string;
   quizSeeds?: QuizRecruitSeeds;
+  tutorialPreferences?: TutorialFamiliarityPreferences;
   newGamePlusUnlocked?: boolean;
   startingLevel?: number;
   scaleStatsToLevel?: boolean;
@@ -511,6 +513,9 @@ export class SaveStateManager {
         kecleonShopsUnlocked: false,
         completedChapterIds: [],
         ...(cfg.campaignMode ? { campaignMode: cfg.campaignMode } : {}),
+        ...(cfg.tutorialPreferences
+          ? { tutorialPreferences: { ...cfg.tutorialPreferences } }
+          : {}),
         recruitedChapterIds: [],
         seenIntroChapterIds: [],
         seenOutroChapterIds: [],
