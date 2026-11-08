@@ -102,6 +102,7 @@ export interface CampaignChapterConfig {
   objectiveLabel: string;
   recommendedLevel: number;
   deploymentCap: number;
+  skipPrepPhase?: boolean;
   buildMap: () => DungeonMapDefinition;
   enemySpawns: ReadonlyArray<ManualEnemyBattleSpawn>;
   reinforcements: ReadonlyArray<ReinforcementWaveDefinition>;
@@ -181,6 +182,7 @@ function attachMapMetadata(
   opts: {
     name: string;
     deploymentCap: number;
+  skipPrepPhase?: boolean;
     objectiveType: BattleObjectiveType;
     enemies: ReadonlyArray<ManualEnemyBattleSpawn>;
     preserveCustomEnemies?: boolean;
@@ -518,6 +520,7 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     nodeId: 'prologue',
     levelId: 'prologue',
     dungeonNumber: 1,
+    skipPrepPhase: true,
     title: 'Western Beach',
     subtitle: 'Chapter 1',
     objectiveType: 'rout',

@@ -361,6 +361,7 @@ export class BattleScene {
   private commitToSaveOnVictory = false;
   private clearRewardItems: ReadonlyArray<ConvoyEntry> = [];
   private pauseOnLevelUpInFastMode = false;
+  private skipPrepPhase = false;
   private levelUpHistory: LevelUpResult[] = [];
   private levelUpResolver: (() => void) | null = null;
   private cutsceneInProgress = false;
@@ -930,6 +931,7 @@ export class BattleScene {
     commitToSaveOnVictory?: boolean;
     clearRewardItems?: ReadonlyArray<ConvoyEntry>;
     pauseOnLevelUpInFastMode?: boolean;
+    skipPrepPhase?: boolean;
     onDungeonEnteredBeforePrep?: () => Promise<void>;
     onVictory?: () => void;
     onBeforeVictoryModal?: () => Promise<void>;
@@ -946,6 +948,7 @@ export class BattleScene {
     this.commitToSaveOnVictory = Boolean(options?.commitToSaveOnVictory);
     this.clearRewardItems = options?.clearRewardItems ?? [];
     this.pauseOnLevelUpInFastMode = Boolean(options?.pauseOnLevelUpInFastMode);
+    this.skipPrepPhase = Boolean(options?.skipPrepPhase);
     this.currentOnDungeonEnteredBeforePrep = options?.onDungeonEnteredBeforePrep;
     this.currentOnVictory = options?.onVictory;
     this.currentOnBeforeVictoryModal = options?.onBeforeVictoryModal;
@@ -1001,7 +1004,9 @@ export class BattleScene {
     this.rootEl.hidden = false;
     this.viewportEl.classList.add('is-battle-active');
 
-    await this.setupFreshBattleState({ showPrepOverlay: !this.cutsceneInProgress });
+    await this.setupFreshBattleState({
+      showPrepOverlay: !this.cutsceneInProgress && !this.skipPrepPhase,
+    });
     if (!this.openState || runGen !== this.battleRunGen) return;
 
     this.syncViewportDimensions();
@@ -1012,6 +1017,11 @@ export class BattleScene {
     this.startLoop();
     this.onLayerStateChanged();
     this.renderFrame(performance.now());
+
+    if (!this.currentOnDungeonEnteredBeforePrep && this.skipPrepPhase) {
+      this.confirmEnterDungeonFromPrep();
+      return;
+    }
 
     if (this.currentOnDungeonEnteredBeforePrep) {
       const introHook = this.currentOnDungeonEnteredBeforePrep;
@@ -1025,6 +1035,10 @@ export class BattleScene {
       }
       if (!this.openState || runGen !== this.battleRunGen) return;
       this.audioManager.playBgm(this.map.bgmCue || 'drenched_bluff', { fadeMs: 300 });
+      if (this.skipPrepPhase) {
+        this.confirmEnterDungeonFromPrep();
+        return;
+      }
       this.prepOverlay.show();
       this.syncPrepChromeVisibility();
       this.onLayerStateChanged();
@@ -1177,7 +1191,15 @@ export class BattleScene {
       this.explicitObjectiveLabel ??
       (this.objectiveType === 'defeat_boss' ? 'Defeat the Enemy Leader' : 'Rout All Enemies');
     this.enemySpawnDefs = resolveEnemySpawnsForMap(this.map, this.explicitEnemyOverrides);
-    await this.setupFreshBattleState();
+    await this.setupFreshBattleState({ showPrepOverlay: !this.skipPrepPhase });
+    if (this.skipPrepPhase) {
+      this.audioManager.playBgm(this.map.bgmCue || 'drenched_bluff', {
+        fadeMs: 250,
+        restart: true,
+      });
+      this.confirmEnterDungeonFromPrep();
+      return;
+    }
     const lord = this.getLordUnit() ?? this.units[0];
     this.centerCameraOnTile(lord?.x ?? 3, lord?.y ?? 5);
     this.audioManager.playBgm(this.map.bgmCue || 'drenched_bluff', {
@@ -4999,7 +5021,7 @@ export class BattleScene {
     if (!save) return;
 
     if (this.activeLevelId === 'prologue') {
-      void this.triggerTutorial('ch1_prep_ready');
+      void this.triggerTutorial('prep_units_and_moves');
       return;
     }
 

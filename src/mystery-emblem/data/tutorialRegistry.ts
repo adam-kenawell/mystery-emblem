@@ -101,50 +101,6 @@ function toSlideArray(
 
 export const TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinition> = [
   // ============================================================================
-  // 1. Chapter 1 (`Western Beach`) — Cold Open Prep Nudge
-  // ============================================================================
-  {
-    id: 'ch1_prep_ready',
-    title: 'Ready for Battle!',
-    category: 'prep_pokemon',
-    summary: 'Jumping straight into Chapter 1 from the Chapter Prep hub.',
-    skipPopupWhenBothVeryFamiliar: true,
-    slides: [
-      {
-        id: 'ch1_prep_nudge',
-        domain: 'fire_emblem',
-        brief: {
-          heading: 'Your Starting Trio Is Ready',
-          chips: [
-            { kind: 'species', speciesId: 'piplup', label: 'Piplup' },
-            { kind: 'species', speciesId: 'flabebe', label: 'Flabébé' },
-            { kind: 'badge', label: 'Fight!', tone: 'gold' },
-          ],
-          bullets: [
-            'Your Dragon Lord, Piplup, and Flabébé already have moves and starting items equipped.',
-            'Tap Fight! whenever you are ready to jump straight into Turn 1—we will cover custom loadouts in Chapter 2!',
-          ],
-          callout: 'Feel free to peek at View Map or Manage Units early if you are curious.',
-        },
-        detailed: {
-          heading: 'Welcome to Chapter Prep!',
-          chips: [
-            { kind: 'species', speciesId: 'piplup', label: 'Piplup' },
-            { kind: 'species', speciesId: 'flabebe', label: 'Flabébé' },
-            { kind: 'badge', label: 'Fight!', tone: 'gold' },
-          ],
-          bullets: [
-            'Before each dungeon battle, this Prep screen lets you organize your team and preview the map.',
-            'For your first battle on Western Beach, all 3 of your heroes are already geared up and positioned!',
-            'Tap Fight! at the bottom to start the battle right away—we will introduce team customization once new allies join.',
-          ],
-          callout: 'Tap Fight! to begin Turn 1 of Western Beach.',
-        },
-      },
-    ],
-  },
-
-  // ============================================================================
   // 2. Chapter 1 (`Western Beach`) — Turn 1 Controls, Field Menu & Phases
   // ============================================================================
   {
@@ -541,7 +497,7 @@ export const TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinition> = [
   // ============================================================================
   {
     id: 'prep_units_and_moves',
-    title: 'Customizing Loadouts & Starting Positions',
+    title: 'Chapter Prep, Loadouts & Positioning',
     category: 'prep_pokemon',
     summary: 'Selecting 4 active moves, setting your [E] counter move, and swapping blue tiles.',
     slides: [
@@ -549,12 +505,13 @@ export const TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinition> = [
         id: 'prep_loadout_fusion',
         domain: 'fusion',
         always: {
-          heading: '4-Move Loadout & Setting [E] Equipped',
+          heading: 'Welcome to Battle Prep!',
           chips: [
             { kind: 'badge', label: 'Up to 4 Moves', tone: 'green' },
             { kind: 'badge', label: '[E] Counter Move', tone: 'gold' },
           ],
           bullets: [
+            'Starting in Chapter 2, Battle Prep lets you Manage Units, Manage Items, View Map, and launch Fight! before Turn 1.',
             'In Manage Units, toggle up to 4 unlocked moves into each Pokémon’s active battle loadout.',
             'Tap [E] next to any offensive move to choose whether that unit counters adjacent melee foes (Physical R1) or ranged casters (Special R2) during Enemy Phase!',
           ],

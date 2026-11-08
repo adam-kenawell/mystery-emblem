@@ -4448,3 +4448,31 @@ input[type='radio']:not(:disabled) {
     padding: 6px 8px;
   }
 }
+
+/* Single-Column Battle Prep Options Stack (All Viewports: Desktop, Portrait & Landscape) */
+.pmd-prep-hub-dialog {
+  max-width: 420px;
+}
+
+.pmd-prep-menu-grid {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+@media (max-height: 500px) {
+  .pmd-prep-hub-dialog {
+    max-width: 420px;
+  }
+
+  .pmd-prep-menu-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 2px 6px;
+  }
+
+  .pmd-prep-option-btn {
+    min-height: 45px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+}
