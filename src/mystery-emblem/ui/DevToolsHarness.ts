@@ -156,7 +156,7 @@ export class DevToolsHarness {
       <header class="pmd-devtools-row-between">
         <div>
           <h2 class="pmd-panel-title">DEV TOOLS</h2>
-          <p class="pmd-panel-sub">Admin Cheats &amp; 5-Dungeon Map Editor</p>
+          <p class="pmd-panel-sub">Admin Cheats &amp; 5-Chapter Map Editor</p>
         </div>
         <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-close-btn">Close</button>
       </header>
@@ -231,7 +231,7 @@ export class DevToolsHarness {
           <h3 class="pmd-subcard-title">World Map &amp; Campaign</h3>
           <div class="pmd-inline-btns">
             <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-unlock-all-nodes">Unlock All 5</button>
-            <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-reset-d1">Reset to D1</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-reset-d1">Reset to Ch. 1</button>
             <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-clear-current-node">Clear Node</button>
             <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-spawn-skirmish">Spawn Skirmish</button>
           </div>
@@ -261,14 +261,14 @@ export class DevToolsHarness {
       <div class="pmd-tab-panel" data-devtab-panel="maps" hidden>
         <div class="pmd-subcard">
           <div class="pmd-devtools-row-between">
-            <h3 class="pmd-subcard-title">Demo Dungeon Maps (D1–D5)</h3>
+            <h3 class="pmd-subcard-title">Demo Chapter Maps (Ch. 1–Ch. 5)</h3>
             <span id="devtools-map-status-badge" class="pmd-editor-status-pill" data-testid="devtools-map-status-badge">DEFAULT</span>
           </div>
           <select
             id="devtools-map-level-select"
             class="pmd-select"
             data-testid="devtools-map-level-select"
-            aria-label="Select Demo Dungeon Map"
+            aria-label="Select Demo Chapter Map"
           ></select>
           <div class="pmd-devtools-map-preview-wrap">
             <canvas

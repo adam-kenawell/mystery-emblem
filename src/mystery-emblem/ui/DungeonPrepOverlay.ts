@@ -35,6 +35,7 @@ import { createItemIconCell, createMiniItemIcon } from './PmdItemIconGrid';
 import { PmdPortraitView } from './PmdSpriteCanvas';
 import { createMiniSpeciesPortrait, createUnitPortraitCell } from './PmdUnitPortraitGrid';
 import { bindPointerTap } from './pointerControls';
+import { getElementalTypeColor, renderColoredTypeHtml } from './typeColors';
 
 export type PrepSubMode = 'hub' | 'manage_units' | 'manage_items' | 'view_map';
 
@@ -140,11 +141,11 @@ export class DungeonPrepOverlay {
     this.hubBackdropEl.innerHTML = `
       <div class="pmd-window pmd-window--gold pmd-prep-hub-dialog" role="dialog" aria-modal="true" aria-labelledby="prep-hub-title">
         <div class="pmd-prep-hub-header">
-          <h2 id="prep-hub-title" class="pmd-panel-title" data-prep-map-name>DUNGEON PREP</h2>
+          <h2 id="prep-hub-title" class="pmd-panel-title" data-prep-map-name>CHAPTER PREP</h2>
           <p class="pmd-panel-sub" data-prep-objectives></p>
         </div>
 
-        <div class="pmd-prep-menu-grid pmd-menu-list" role="group" aria-label="Dungeon Prep Options">
+        <div class="pmd-prep-menu-grid pmd-menu-list" role="group" aria-label="Chapter Prep Options">
           <button type="button" class="pmd-btn pmd-menu-row pmd-prep-option-btn" data-testid="prep-btn-manage-units">
             <span class="pmd-prep-opt-title">Manage Units</span>
           </button>
@@ -735,7 +736,10 @@ export class DungeonPrepOverlay {
     );
     if (badgesEl) {
       const typeBadges = sp.types
-        .map((t) => `<span class="pmd-prep-type-pill">${escapeHtml(t)}</span>`)
+        .map((t) => {
+          const color = getElementalTypeColor(t);
+          return `<span class="pmd-prep-type-pill pmd-type-text" data-el-type="${escapeHtml(t)}" style="color:${color}; border-color:${color};">${escapeHtml(t)}</span>`;
+        })
         .join('');
       badgesEl.innerHTML = `${typeBadges}<span class="pmd-prep-traversal-pill" data-testid="prep-unit-traversal">${escapeHtml(sp.traversalClass)}</span>`;
     }
@@ -896,7 +900,7 @@ export class DungeonPrepOverlay {
         infoDiv.innerHTML = `
           <div class="pmd-prep-move-title-line">
             <strong>${isEquipped ? '[E] ' : ''}${escapeHtml(mv.name)}</strong>
-            <span class="pmd-prep-cat-tag">${escapeHtml(mv.type)} · ${escapeHtml(formatMoveCategoryBadge(mv))}</span>
+            <span class="pmd-prep-cat-tag">${renderColoredTypeHtml(mv.type)} · ${escapeHtml(formatMoveCategoryBadge(mv))}</span>
           </div>
           <span class="pmd-prep-move-stats">${isOffensive ? `Mt ${mv.mt} · Hit ${mv.hit}% · Crit ${mv.crit}% · ` : ''}PP ${maxPp}</span>
         `;
@@ -988,7 +992,7 @@ export class DungeonPrepOverlay {
             <div class="pmd-prep-move-info">
               <div class="pmd-prep-move-title-line">
                 <strong>${escapeHtml(mv.name)}</strong>
-                <span class="pmd-prep-cat-tag">${escapeHtml(mv.type)} · ${escapeHtml(formatMoveCategoryBadge(mv))}</span>
+                <span class="pmd-prep-cat-tag">${renderColoredTypeHtml(mv.type)} · ${escapeHtml(formatMoveCategoryBadge(mv))}</span>
               </div>
               <span class="pmd-prep-move-stats">${isOffensive ? `Mt ${mv.mt} · Hit ${mv.hit}% · ` : ''}PP ${mv.pp}</span>
             </div>
@@ -1078,9 +1082,12 @@ export class DungeonPrepOverlay {
         tmMain.appendChild(createMiniItemIcon(selTmItem.id, { sizePx: 24, decorative: true }));
         const tmCopy = document.createElement('div');
         tmCopy.className = 'pmd-item-inspector-copy';
+        const tmDescHtml = selMove
+          ? `Teaches ${escapeHtml(selMove.name)} (${renderColoredTypeHtml(selMove.type)} · ${escapeHtml(formatMoveCategoryBadge(selMove))})`
+          : escapeHtml(selTmItem.description);
         tmCopy.innerHTML = `
           <div class="pmd-item-inspector-head"><strong class="pmd-item-inspector-name">${escapeHtml(selTmItem.name)} ×${selTmEntry.quantity}</strong></div>
-          <span class="pmd-item-inspector-desc">${escapeHtml(selMove ? `Teaches ${selMove.name} (${selMove.type} · ${formatMoveCategoryBadge(selMove)})` : selTmItem.description)}</span>
+          <span class="pmd-item-inspector-desc">${tmDescHtml}</span>
         `;
         tmMain.appendChild(tmCopy);
 
@@ -1317,12 +1324,17 @@ export class DungeonPrepOverlay {
         mainEl.className = 'pmd-item-inspector-main';
         mainEl.appendChild(createMiniItemIcon(item.id, { sizePx: 28, decorative: true }));
 
+        const tmMove =
+          item.category === 'tm' && item.effect.teachesMoveId
+            ? getMoveById(item.effect.teachesMoveId)
+            : undefined;
         const infoDiv = document.createElement('div');
         infoDiv.className = 'pmd-item-inspector-copy';
         infoDiv.innerHTML = `
           <div class="pmd-item-inspector-head">
             <strong class="pmd-item-inspector-name">${escapeHtml(item.name)}</strong>
             <span class="pmd-prep-cat-tag">${escapeHtml(formatItemCategoryLabel(item.category))}</span>
+            ${tmMove ? `<span class="pmd-prep-cat-tag">${renderColoredTypeHtml(tmMove.type)}</span>` : ''}
             <span class="pmd-prep-stock-tag">×${bagQty}</span>
             <span class="pmd-item-holders-inline" data-item-holders></span>
           </div>

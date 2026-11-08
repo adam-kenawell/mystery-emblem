@@ -339,10 +339,10 @@ export class ChapterMapEditorScene {
 
       <div class="pmd-battle-sandbox-section">
         <div class="pmd-devtools-row-between">
-          <span class="pmd-preset-label">1. Select Demo Dungeon</span>
+          <span class="pmd-preset-label">1. Select Demo Chapter</span>
           <span class="pmd-editor-status-pill" data-testid="editor-status-badge">DEFAULT</span>
         </div>
-        <select class="pmd-select" data-testid="editor-level-select" aria-label="Select Demo Dungeon"></select>
+        <select class="pmd-select" data-testid="editor-level-select" aria-label="Select Demo Chapter"></select>
         <div class="pmd-inline-btns">
           <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="editor-save-btn">Save to Game</button>
           <button type="button" class="pmd-btn pmd-chip-btn" data-testid="editor-save-play-btn">Save &amp; Play</button>

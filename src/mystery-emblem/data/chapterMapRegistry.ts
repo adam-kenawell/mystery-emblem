@@ -1,12 +1,12 @@
 /**
  * Chapter & Level Map Catalog + Persistent Dev Tools Map Override Store
  *
- * Covers the 5 playable Demo Dungeons:
- * - `prologue`   — Dungeon 1: Western Beach
- * - `chapter_01` — Dungeon 2: Verdant Bluff
- * - `chapter_02` — Dungeon 3: Cleft Mountain
- * - `chapter_03` — Dungeon 4: River Shrine
- * - `chapter_04` — Dungeon 5: Berry Orchards
+ * Covers the 5 playable Demo Chapters:
+ * - `prologue`   — Chapter 1: Western Beach
+ * - `chapter_01` — Chapter 2: Verdant Bluff
+ * - `chapter_02` — Chapter 3: Cleft Mountain
+ * - `chapter_03` — Chapter 4: River Shrine
+ * - `chapter_04` — Chapter 5: Berry Orchards
  *
  * Persists customized maps immediately to `localStorage` (`mystery_emblem_map_overrides_v1`)
  * and syncs via `SaveData.customMaps` / `customMapsEnvelopeJson` to Cloud Firestore (`saves/{uid}`).
@@ -22,6 +22,11 @@ import {
   type TerrainType,
 } from '../types/schemas';
 import { getSpeciesById } from './index';
+import map1Raw from './maps/map1.json';
+import map2Raw from './maps/map2.json';
+import map3Raw from './maps/map3.json';
+import map4Raw from './maps/map4.json';
+import map5Raw from './maps/map5.json';
 
 export const MAP_OVERRIDES_STORAGE_KEY = 'mystery_emblem_map_overrides_v1';
 
@@ -65,460 +70,70 @@ export interface ChapterLevelCatalogEntry {
   defaultDeploymentCap: number;
 }
 
-interface GeneratedChapterSpec {
-  entry: ChapterLevelCatalogEntry;
-  objectiveType: 'rout' | 'defeat_boss';
-  wallTilesetId: string;
-  floorTilesetId: string;
-  altFloorTilesetId: string;
-  waterTilesetId?: string;
-  treeTilesetId?: string;
-  mountainTilesetId?: string;
-  ascii: ReadonlyArray<string>;
-  enemies: ReadonlyArray<DungeonUnitSpawn>;
-}
-
-const STANDARD_18X12_COASTAL: ReadonlyArray<string> = [
-  '##################',
-  '#....~~~..MM,,,,.#',
-  '#..T.~~~..MM,,,S.#',
-  '#....~~~...T,,,,.#',
-  '#..T.......,,,,,M#',
-  '#.....,.,,.,,,,,.#',
-  '#.....,.W,.,,,,,.#',
-  '#....T~~~...,,,,.#',
-  '#....~~~..TT,,,,.#',
-  '#..T.~~~...T...M.#',
-  '#................#',
-  '##################',
-];
-
-const MT_BRISTLE_20X12_LAYOUT: ReadonlyArray<string> = [
-  '####################',
-  '#...TT....~~...,,,,#',
-  '#.T....S..~~..T,,,S#',
-  '#....T....~~...,,,,#',
-  '#..T....W......,,,M#',
-  '#......,,,,...,,,,,#',
-  '#......,,,,W..,,,,,#',
-  '#..T....~~....T,,,,#',
-  '#.TT....~~...TT,,,S#',
-  '#.......~~.....,,,,#',
-  '#...T..........T...#',
-  '####################',
-];
-
-const APPLE_WOODS_20X12_LAYOUT: ReadonlyArray<string> = [
-  '####################',
-  '#...TT....~~...,,,,#',
-  '#.T....T..~~..T,,,S#',
-  '#....T....~~...,,,,#',
-  '#..T....W......,,,M#',
-  '#......,,,,...,,,,,#',
-  '#......,,,,W..,,,,,#',
-  '#..T....~~....T,,,,#',
-  '#.TT....~~...TT,,,S#',
-  '#.......~~.....,,,,#',
-  '#...T..........T...#',
-  '####################',
-];
-
-const DEFAULT_PLAYER_SPAWN_POOL: ReadonlyArray<{
-  x: number;
-  y: number;
-  speciesId: string;
-  nickname: string;
-}> = [
-  { x: 3, y: 5, speciesId: 'axew', nickname: 'Axew' },
-  { x: 3, y: 3, speciesId: 'piplup', nickname: 'Piplup' },
-  { x: 3, y: 7, speciesId: 'flabebe', nickname: 'Flabébé' },
-  { x: 2, y: 4, speciesId: 'pidgey', nickname: 'Pidgey' },
-  { x: 2, y: 6, speciesId: 'sewaddle', nickname: 'Sewaddle' },
-  { x: 2, y: 8, speciesId: 'ralts', nickname: 'Ralts' },
-  { x: 4, y: 4, speciesId: 'elekid', nickname: 'Elekid' },
-  { x: 4, y: 6, speciesId: 'starly', nickname: 'Starly' },
-];
-
-function makeCell(
-  terrainType: TerrainType,
-  tilesetId?: string,
-  chunkIndex?: number
-): DungeonMapTileCell {
-  const fallback = DEFAULT_TERRAIN_PALETTE[terrainType];
-  return {
-    terrainType,
-    tilesetId: normalizeTilesetId(tilesetId ?? fallback.tilesetId),
-    chunkIndex: chunkIndex ?? fallback.chunkIndex,
-  };
-}
-
-function buildGeneratedChapterMap(spec: GeneratedChapterSpec): DungeonMapDefinition {
-  const height = spec.ascii.length;
-  const width = spec.ascii[0]!.length;
-  const tiles: DungeonMapTileCell[][] = [];
-
-  for (let y = 0; y < height; y++) {
-    const rowStr = spec.ascii[y]!;
-    const row: DungeonMapTileCell[] = [];
-    for (let x = 0; x < width; x++) {
-      const ch = rowStr[x] ?? '.';
-      const parity = (x * 7 + y * 13) % 3;
-      switch (ch) {
-        case '#':
-          row.push(makeCell('wall', spec.wallTilesetId, parity === 0 ? 1 : 19));
-          break;
-        case '.':
-          row.push(makeCell('floor', spec.floorTilesetId, parity === 0 ? 27 : 59));
-          break;
-        case ',':
-          row.push(makeCell('floor', spec.altFloorTilesetId, parity === 1 ? 25 : 59));
-          break;
-        case 'T':
-          row.push(makeCell('trees', spec.treeTilesetId ?? '142', parity === 1 ? 10 : 1));
-          break;
-        case '~':
-          row.push(makeCell('water', spec.waterTilesetId ?? '142', 88));
-          break;
-        case 'M':
-          row.push(makeCell('mountain', spec.mountainTilesetId ?? '110', parity === 1 ? 36 : 1));
-          break;
-        case 'L':
-          row.push(makeCell('lava', '110', parity === 0 ? 98 : 106));
-          break;
-        case 'V':
-          row.push(makeCell('void', '061', parity === 0 ? 86 : 100));
-          break;
-        case 'B':
-          row.push(makeCell('barrier', '080', parity === 0 ? 15 : 26));
-          break;
-        case 'S':
-          row.push(makeCell('stairs', spec.altFloorTilesetId, 59));
-          break;
-        case 'W':
-          row.push(makeCell('wonder_tile', spec.floorTilesetId, 59));
-          break;
-        default:
-          row.push(makeCell('floor', spec.floorTilesetId, 59));
-          break;
-      }
-    }
-    tiles.push(row);
-  }
-
-  const cap = spec.entry.defaultDeploymentCap;
-  const playerSpawns: DungeonUnitSpawn[] = DEFAULT_PLAYER_SPAWN_POOL.slice(0, cap).map((s) => {
-    const safeX = Math.max(1, Math.min(width - 2, s.x));
-    const safeY = Math.max(1, Math.min(height - 2, s.y));
-    tiles[safeY]![safeX] = makeCell('floor', spec.floorTilesetId, 59);
-    return {
-      x: safeX,
-      y: safeY,
-      speciesId: s.speciesId,
-      level: 9,
-      nickname: s.nickname,
-      heldItemId: null,
-    };
-  });
-
-  const enemySpawns: DungeonUnitSpawn[] = spec.enemies.map((e) => {
-    const safeX = Math.max(1, Math.min(width - 2, e.x));
-    const safeY = Math.max(1, Math.min(height - 2, e.y));
-    if (tiles[safeY]![safeX]!.terrainType === 'wall') {
-      tiles[safeY]![safeX] = makeCell('floor', spec.altFloorTilesetId, 59);
-    }
-    return {
-      ...e,
-      x: safeX,
-      y: safeY,
-      heldItemId: e.heldItemId ?? null,
-    };
-  });
-
-  return {
-    id: spec.entry.id,
-    name: spec.entry.label,
-    bgmCue: spec.entry.bgmCue,
-    objectiveType: spec.objectiveType,
-    deploymentCap: cap,
-    width,
-    height,
-    tiles,
-    playerSpawns,
-    enemySpawns,
-  };
-}
-
-const DEMO_CHAPTER_SPECS: ReadonlyArray<GeneratedChapterSpec> = [
+export const CHAPTER_LEVEL_CATALOG: ReadonlyArray<ChapterLevelCatalogEntry> = [
   {
-    entry: {
-      id: 'prologue',
-      shortCode: 'D1',
-      label: 'Dungeon 1 — Western Beach',
-      biomeName: 'Western Beach',
-      primaryTilesetId: '001',
-      bgmCue: 'beach_cave',
-      defaultDeploymentCap: 3,
-    },
-    objectiveType: 'rout',
-    wallTilesetId: '001',
-    floorTilesetId: '001',
-    altFloorTilesetId: '108',
-    ascii: STANDARD_18X12_COASTAL,
-    enemies: [
-      {
-        x: 12,
-        y: 5,
-        speciesId: 'zigzagoon_galar',
-        level: 9,
-        nickname: 'Feral Outrider',
-        aiMode: 'wait_until_in_range',
-      },
-      {
-        x: 12,
-        y: 3,
-        speciesId: 'impidimp',
-        level: 10,
-        nickname: 'Shadow Raider',
-        droppableItemId: 'evolution_stone',
-        aiMode: 'wait_until_in_range',
-      },
-      {
-        x: 13,
-        y: 7,
-        speciesId: 'pawniard',
-        level: 10,
-        nickname: 'Ironscale Scout',
-        aiMode: 'wait_until_in_range',
-      },
-    ],
+    id: 'prologue',
+    shortCode: 'Ch. 1',
+    label: 'Chapter 1 — Western Beach',
+    biomeName: 'Western Beach',
+    primaryTilesetId: '002',
+    bgmCue: 'beach_cave',
+    defaultDeploymentCap: 3,
   },
   {
-    entry: {
-      id: 'chapter_01',
-      shortCode: 'D2',
-      label: 'Dungeon 2 — Verdant Bluff',
-      biomeName: 'Verdant Bluff',
-      primaryTilesetId: '003',
-      bgmCue: 'drenched_bluff',
-      defaultDeploymentCap: 5,
-    },
-    objectiveType: 'defeat_boss',
-    wallTilesetId: '003',
-    floorTilesetId: '003',
-    altFloorTilesetId: '142',
-    ascii: STANDARD_18X12_COASTAL,
-    enemies: [
-      {
-        x: 12,
-        y: 4,
-        speciesId: 'zigzagoon_galar',
-        level: 9,
-        nickname: 'Bluff Outrider',
-        aiMode: 'wait_until_in_range',
-      },
-      {
-        x: 11,
-        y: 7,
-        speciesId: 'impidimp',
-        level: 9,
-        nickname: 'Cliff Hexer',
-        aiMode: 'wait_until_in_range',
-      },
-      {
-        x: 13,
-        y: 3,
-        speciesId: 'rookidee',
-        level: 10,
-        nickname: 'Bluff Harrier',
-        aiMode: 'wait_until_in_range',
-      },
-      {
-        x: 15,
-        y: 5,
-        speciesId: 'aron',
-        level: 11,
-        nickname: 'Captain Aron',
-        isBoss: true,
-        stationary: true,
-        droppableItemId: 'oran_berry',
-        aiMode: 'stationary',
-      },
-    ],
+    id: 'chapter_01',
+    shortCode: 'Ch. 2',
+    label: 'Chapter 2 — Verdant Bluff',
+    biomeName: 'Verdant Bluff',
+    primaryTilesetId: '003',
+    bgmCue: 'drenched_bluff',
+    defaultDeploymentCap: 5,
   },
   {
-    entry: {
-      id: 'chapter_02',
-      shortCode: 'D3',
-      label: 'Dungeon 3 — Cleft Mountain',
-      biomeName: 'Cleft Mountain',
-      primaryTilesetId: '014',
-      bgmCue: 'mt_bristle',
-      defaultDeploymentCap: 6,
-    },
-    objectiveType: 'rout',
-    wallTilesetId: '014',
-    floorTilesetId: '014',
-    altFloorTilesetId: '110',
-    mountainTilesetId: '014',
-    ascii: MT_BRISTLE_20X12_LAYOUT,
-    enemies: [
-      {
-        x: 12,
-        y: 4,
-        speciesId: 'rolycoly',
-        level: 10,
-        nickname: 'Crag Sapper',
-        aiMode: 'wait_until_in_range',
-      },
-      {
-        x: 13,
-        y: 7,
-        speciesId: 'zubat',
-        level: 10,
-        nickname: 'Peak Flier',
-        aiMode: 'wait_until_in_range',
-      },
-      {
-        x: 16,
-        y: 5,
-        speciesId: 'gothita',
-        level: 11,
-        nickname: 'Hexer Gothita',
-        droppableItemId: 'super_potion',
-        aiMode: 'wait_until_in_range',
-      },
-    ],
+    id: 'chapter_02',
+    shortCode: 'Ch. 3',
+    label: 'Chapter 3 — Cleft Mountain',
+    biomeName: 'Cleft Mountain',
+    primaryTilesetId: '014',
+    bgmCue: 'mt_bristle',
+    defaultDeploymentCap: 6,
   },
   {
-    entry: {
-      id: 'chapter_03',
-      shortCode: 'D4',
-      label: 'Dungeon 4 — River Shrine',
-      biomeName: 'River Shrine',
-      primaryTilesetId: '016',
-      bgmCue: 'waterfall_cave',
-      defaultDeploymentCap: 6,
-    },
-    objectiveType: 'rout',
-    wallTilesetId: '016',
-    floorTilesetId: '016',
-    altFloorTilesetId: '075',
-    waterTilesetId: '075',
-    ascii: STANDARD_18X12_COASTAL,
-    enemies: [
-      {
-        x: 10,
-        y: 5,
-        speciesId: 'spheal',
-        level: 10,
-        nickname: 'Shrine Guard',
-        aiMode: 'wait_until_in_range',
-      },
-      {
-        x: 12,
-        y: 3,
-        speciesId: 'tynamo',
-        level: 10,
-        nickname: 'Current Spark',
-        aiMode: 'wait_until_in_range',
-      },
-      {
-        x: 13,
-        y: 7,
-        speciesId: 'croagunk',
-        level: 11,
-        nickname: 'Shrine Striker',
-        droppableItemId: 'protein',
-        aiMode: 'wait_until_in_range',
-      },
-      {
-        x: 15,
-        y: 5,
-        speciesId: 'lairon',
-        level: 11,
-        nickname: 'Ironclad Lairon',
-        droppableItemId: 'evolution_stone',
-        aiMode: 'wait_until_in_range',
-      },
-    ],
+    id: 'chapter_03',
+    shortCode: 'Ch. 4',
+    label: 'Chapter 4 — River Shrine',
+    biomeName: 'River Shrine',
+    primaryTilesetId: '016',
+    bgmCue: 'waterfall_cave',
+    defaultDeploymentCap: 6,
   },
   {
-    entry: {
-      id: 'chapter_04',
-      shortCode: 'D5',
-      label: 'Dungeon 5 — Berry Orchards',
-      biomeName: 'Berry Orchards',
-      primaryTilesetId: '042',
-      bgmCue: 'apple_woods',
-      defaultDeploymentCap: 7,
-    },
-    objectiveType: 'defeat_boss',
-    wallTilesetId: '042',
-    floorTilesetId: '042',
-    altFloorTilesetId: '142',
-    treeTilesetId: '142',
-    ascii: APPLE_WOODS_20X12_LAYOUT,
-    enemies: [
-      {
-        x: 12,
-        y: 3,
-        speciesId: 'linoone_galar',
-        level: 11,
-        nickname: 'Captain Linoone',
-        aiMode: 'wait_until_in_range',
-      },
-      {
-        x: 13,
-        y: 8,
-        speciesId: 'venipede',
-        level: 11,
-        nickname: 'Thicket Lancer',
-        droppableItemId: 'sitrus_berry',
-        aiMode: 'wait_until_in_range',
-      },
-      {
-        x: 15,
-        y: 4,
-        speciesId: 'corvisquire',
-        level: 11,
-        nickname: 'Canopy Harrier',
-        aiMode: 'wait_until_in_range',
-      },
-      {
-        x: 15,
-        y: 7,
-        speciesId: 'morgrem',
-        level: 11,
-        nickname: 'Captain Morgrem',
-        aiMode: 'wait_until_in_range',
-      },
-      {
-        x: 17,
-        y: 5,
-        speciesId: 'deino',
-        level: 12,
-        nickname: 'Commander Deino',
-        heldItemId: 'oran_berry',
-        isBoss: true,
-        stationary: false,
-        droppableItemId: 'carbos',
-        aiMode: 'wait_until_in_range',
-      },
-    ],
+    id: 'chapter_04',
+    shortCode: 'Ch. 5',
+    label: 'Chapter 5 — Berry Orchards',
+    biomeName: 'Berry Orchards',
+    primaryTilesetId: '042',
+    bgmCue: 'apple_woods',
+    defaultDeploymentCap: 6,
   },
 ];
 
-export const CHAPTER_LEVEL_CATALOG: ReadonlyArray<ChapterLevelCatalogEntry> =
-  DEMO_CHAPTER_SPECS.map((s) => s.entry);
+const DEFAULT_CHAPTER_MAPS: ReadonlyArray<DungeonMapDefinition> = [
+  map1Raw as unknown as DungeonMapDefinition,
+  map2Raw as unknown as DungeonMapDefinition,
+  map3Raw as unknown as DungeonMapDefinition,
+  map4Raw as unknown as DungeonMapDefinition,
+  map5Raw as unknown as DungeonMapDefinition,
+];
 
 const catalogById = new Map<string, ChapterLevelCatalogEntry>();
 for (const entry of CHAPTER_LEVEL_CATALOG) {
   catalogById.set(entry.id, entry);
 }
 
-const generatedSpecById = new Map<string, GeneratedChapterSpec>();
-for (const spec of DEMO_CHAPTER_SPECS) {
-  generatedSpecById.set(spec.entry.id, spec);
+const defaultMapById = new Map<string, DungeonMapDefinition>();
+for (const defMap of DEFAULT_CHAPTER_MAPS) {
+  defaultMapById.set(defMap.id, defMap);
 }
 
 export function getChapterCatalogEntry(levelId: string): ChapterLevelCatalogEntry | undefined {
@@ -526,8 +141,50 @@ export function getChapterCatalogEntry(levelId: string): ChapterLevelCatalogEntr
 }
 
 export function getDefaultChapterMap(levelId: string): DungeonMapDefinition {
-  const spec = generatedSpecById.get(levelId) ?? DEMO_CHAPTER_SPECS[0]!;
-  return buildGeneratedChapterMap(spec);
+  const base = defaultMapById.get(levelId) ?? DEFAULT_CHAPTER_MAPS[0]!;
+  return cloneDungeonMap(base);
+}
+
+const PROLOGUE_002_WALL_CHUNKS = new Set<number>([2, 3, 5, 21, 27, 37, 38, 39, 50]);
+
+/**
+ * Detects legacy map editor overrides where the brush terrainType accidentally remained `'water'`
+ * across the map or perimeter rock walls, freezing Grounded units in place.
+ */
+export function isCorruptedAllWaterOverride(map: DungeonMapDefinition): boolean {
+  const total = map.width * map.height;
+  if (total <= 0) return false;
+  let waterCount = 0;
+  let perimeterCount = 0;
+  let perimeterWaterWallChunkCount = 0;
+  for (let y = 0; y < map.height; y++) {
+    const row = map.tiles[y];
+    if (!row) continue;
+    for (let x = 0; x < map.width; x++) {
+      const cell = row[x];
+      if (!cell) continue;
+      if (cell.terrainType === 'water') {
+        waterCount += 1;
+      }
+      if (x === 0 || y === 0 || x === map.width - 1 || y === map.height - 1) {
+        perimeterCount += 1;
+        if (
+          cell.terrainType === 'water' &&
+          cell.tilesetId === '002' &&
+          PROLOGUE_002_WALL_CHUNKS.has(cell.chunkIndex)
+        ) {
+          perimeterWaterWallChunkCount += 1;
+        }
+      }
+    }
+  }
+  if (waterCount / total >= 0.7) {
+    return true;
+  }
+  if (perimeterCount > 0 && perimeterWaterWallChunkCount / perimeterCount >= 0.75) {
+    return true;
+  }
+  return false;
 }
 
 const VALID_TERRAIN_SET = new Set<string>(TERRAIN_TYPES);
@@ -751,6 +408,7 @@ class ChapterMapOverrideStore {
         this.resets.set(levelId, resetTs);
         if (resetTs > this.lastStamp) this.lastStamp = resetTs;
       }
+      let healedCorrupted = false;
       for (const [levelId, entry] of Object.entries(overrides)) {
         if (!entry || typeof entry !== 'object') continue;
         const ts =
@@ -761,6 +419,13 @@ class ChapterMapOverrideStore {
         if (resetTs >= ts) continue;
         const v = validateDungeonMapDefinition(entry.map, levelId);
         if (v.valid && v.map) {
+          if (isCorruptedAllWaterOverride(v.map)) {
+            const healTs = Math.max(ts + 1, Date.now());
+            this.resets.set(levelId, healTs);
+            if (healTs > this.lastStamp) this.lastStamp = healTs;
+            healedCorrupted = true;
+            continue;
+          }
           this.overrides.set(levelId, {
             map: v.map,
             updatedAt: ts,
@@ -768,6 +433,9 @@ class ChapterMapOverrideStore {
           this.resets.delete(levelId);
           if (ts > this.lastStamp) this.lastStamp = ts;
         }
+      }
+      if (healedCorrupted) {
+        this.persistToLocalStorage();
       }
     } catch {
       // Ignore malformed storage entries safely
@@ -945,19 +613,26 @@ class ChapterMapOverrideStore {
       const rawIncOv = incOverrides[levelId];
       let validIncMap: DungeonMapDefinition | null = null;
       let incOvTs = 0;
+      let incResetTs = incResets[levelId] ?? 0;
       if (rawIncOv && typeof rawIncOv === 'object') {
         const v = validateDungeonMapDefinition(rawIncOv.map, levelId);
         if (v.valid && v.map) {
-          validIncMap = v.map;
-          incOvTs =
+          const rawTs =
             typeof rawIncOv.updatedAt === 'number' &&
             Number.isFinite(rawIncOv.updatedAt) &&
             rawIncOv.updatedAt > 0
               ? rawIncOv.updatedAt
               : 1;
+          if (isCorruptedAllWaterOverride(v.map)) {
+            const healTs = Math.max(rawTs + 1, localStateTs + 1, Date.now());
+            incResetTs = Math.max(incResetTs, healTs);
+            cloudOutdated = true;
+          } else {
+            validIncMap = v.map;
+            incOvTs = rawTs;
+          }
         }
       }
-      const incResetTs = incResets[levelId] ?? 0;
       const incKind: 'override' | 'reset' | 'none' =
         incResetTs >= incOvTs && incResetTs > 0
           ? 'reset'

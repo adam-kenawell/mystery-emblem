@@ -422,11 +422,11 @@ const DUNGEON_4_REINFORCEMENTS: ReadonlyArray<ReinforcementWaveDefinition> = [
     id: 'd4_reinforce_t2_falls',
     turnNumber: 2,
     stairsX: 15,
-    stairsY: 2,
+    stairsY: 3,
     enemy: {
       id: 'd4_reinf_zubat',
       x: 15,
-      y: 2,
+      y: 3,
       speciesId: 'zubat',
       nickname: 'Shrine Diver',
       level: 10,
@@ -519,7 +519,7 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     levelId: 'prologue',
     dungeonNumber: 1,
     title: 'Western Beach',
-    subtitle: 'Dungeon 1',
+    subtitle: 'Chapter 1',
     objectiveType: 'rout',
     objectiveLabel: 'Rout All Enemies',
     recommendedLevel: 9,
@@ -590,7 +590,7 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     levelId: 'chapter_01',
     dungeonNumber: 2,
     title: 'Verdant Bluff',
-    subtitle: 'Dungeon 2',
+    subtitle: 'Chapter 2',
     objectiveType: 'defeat_boss',
     objectiveLabel: 'Defeat Boss: Captain Aron',
     recommendedLevel: 9,
@@ -675,7 +675,7 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     levelId: 'chapter_02',
     dungeonNumber: 3,
     title: 'Cleft Mountain',
-    subtitle: 'Dungeon 3',
+    subtitle: 'Chapter 3',
     objectiveType: 'rout',
     objectiveLabel: 'Rout All Enemies',
     recommendedLevel: 10,
@@ -688,24 +688,14 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
       scaleStatsToLevel: true,
       fallbackSpeciesIds: ['ralts'],
     },
-    buildMap: () => {
-      const base = getEffectiveChapterMap('chapter_02');
-      const map = attachMapMetadata(base, {
+    buildMap: () =>
+      attachMapMetadata(getEffectiveChapterMap('chapter_02'), {
         name: 'Cleft Mountain',
         deploymentCap: 6,
         objectiveType: 'rout',
         enemies: DUNGEON_3_ENEMIES,
         preserveCustomEnemies: hasChapterMapOverride('chapter_02'),
-      });
-      if (!hasChapterMapOverride('chapter_02') && map.tiles[2]?.[7]) {
-        map.tiles[2][7] = {
-          terrainType: 'stairs',
-          tilesetId: '110',
-          chunkIndex: 59,
-        };
-      }
-      return map;
-    },
+      }),
     buildIntroScript: (save) => {
       const psyId =
         save?.campaign.quizSeeds.slot2Psychic?.[0] ??
@@ -768,7 +758,7 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     levelId: 'chapter_03',
     dungeonNumber: 4,
     title: 'River Shrine',
-    subtitle: 'Dungeon 4',
+    subtitle: 'Chapter 4',
     objectiveType: 'rout',
     objectiveLabel: 'Rout All Enemies',
     recommendedLevel: 11,
@@ -831,11 +821,11 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     levelId: 'chapter_04',
     dungeonNumber: 5,
     title: 'Berry Orchards',
-    subtitle: 'Dungeon 5 · Finale',
+    subtitle: 'Chapter 5 · Finale',
     objectiveType: 'defeat_boss',
     objectiveLabel: 'Defeat Boss: Commander Deino',
     recommendedLevel: 12,
-    deploymentCap: 7,
+    deploymentCap: 6,
     enemySpawns: DUNGEON_5_ENEMIES,
     reinforcements: DUNGEON_5_REINFORCEMENTS,
     recruitment: {
@@ -849,7 +839,7 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     buildMap: () =>
       attachMapMetadata(getEffectiveChapterMap('chapter_04'), {
         name: 'Berry Orchards',
-        deploymentCap: 7,
+        deploymentCap: 6,
         objectiveType: 'defeat_boss',
         enemies: DUNGEON_5_ENEMIES,
         preserveCustomEnemies: hasChapterMapOverride('chapter_04'),

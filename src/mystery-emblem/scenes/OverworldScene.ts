@@ -45,6 +45,7 @@ import {
   type OverworldRouteResult,
 } from '../engine/overworldEngine';
 import {
+  formatCampaignChapterLabel,
   getUnitEquippedItemId,
   type SaveStateManager,
 } from '../state/SaveStateManager';
@@ -76,6 +77,19 @@ import {
   type MapCameraBounds,
 } from '../ui/mapZoomController';
 import { bindPointerTap } from '../ui/pointerControls';
+import {
+  createColoredTypeSpan,
+  renderColoredTypeHtml,
+  renderColoredTypesHtml,
+} from '../ui/typeColors';
+
+function escapeOwHtml(raw: string): string {
+  return raw
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
 const DRAG_THRESHOLD_PX = 8;
 const LONG_PRESS_MS = 520;
@@ -440,7 +454,7 @@ export class OverworldScene {
         </div>
       </div>
       <div class="pmd-overworld-dock-actions" data-dock-actions>
-        <button type="button" class="pmd-btn pmd-btn-primary" data-testid="overworld-enter-chapter-btn">Enter Dungeon</button>
+        <button type="button" class="pmd-btn pmd-btn-primary" data-testid="overworld-enter-chapter-btn">Enter Chapter</button>
         <button type="button" class="pmd-btn pmd-btn-danger" data-testid="overworld-fight-skirmish-btn" hidden>Skirmish</button>
         <button type="button" class="pmd-btn pmd-btn-primary" data-testid="overworld-open-shop-btn" hidden>Shop</button>
       </div>
@@ -560,6 +574,7 @@ export class OverworldScene {
   public async open(options?: {
     graph?: OverworldGraphDefinition;
     preservePosition?: boolean;
+    announceCurrentChapter?: boolean;
   }): Promise<void> {
     if (options?.graph) {
       this.graph = options.graph;
@@ -626,6 +641,22 @@ export class OverworldScene {
     }
 
     this.syncHudAndDock();
+    if (options?.announceCurrentChapter) {
+      const currentSave = this.saveManager.getSave();
+      if (currentSave) {
+        const chLabel = formatCampaignChapterLabel(currentSave.campaign.currentChapterId);
+        const rec = ensureOverworldGraphState(currentSave, this.graph);
+        const curNode =
+          this.graph.nodes.find((n) => n.levelId === currentSave.campaign.currentChapterId) ??
+          getOverworldNodeById(rec.currentNodeId, this.graph);
+        const bannerText = currentSave.campaign.demoCompleted
+          ? `${chLabel} — All Chapters Complete`
+          : curNode
+            ? `${chLabel} — ${curNode.name}`
+            : chLabel;
+        this.showToast(bannerText, this.fastMode ? 500 : 2800);
+      }
+    }
     this.audioManager.playBgm('exploration_theme', { fadeMs: 280 });
     this.startLoop();
     this.onLayerStateChanged();
@@ -1629,7 +1660,14 @@ export class OverworldScene {
     const priceEl = document.createElement('span');
     priceEl.className = 'pmd-kecleon-item-price';
     priceEl.textContent = `${selectedItem.buyPrice}G`;
-    headEl.append(nameEl, priceEl);
+    headEl.append(nameEl);
+    if (selectedItem.category === 'tm' && selectedItem.effect.teachesMoveId) {
+      const taughtMove = getMoveById(selectedItem.effect.teachesMoveId);
+      if (taughtMove) {
+        headEl.appendChild(createColoredTypeSpan(taughtMove.type, 'pmd-prep-cat-tag'));
+      }
+    }
+    headEl.appendChild(priceEl);
 
     const descEl = document.createElement('span');
     descEl.className = 'pmd-item-inspector-desc';
@@ -1809,8 +1847,8 @@ export class OverworldScene {
         <div class="pmd-forecast-unit-head">
           <div class="pmd-forecast-portrait-slot" data-ow-unit-portrait></div>
           <div class="pmd-forecast-unit-id">
-            <strong class="pmd-forecast-unit-name" data-testid="overworld-unit-detail-name">${selected.nickname}${selected.isLord ? ' ★' : ''}</strong>
-            <span class="pmd-forecast-unit-meta">${showSpeciesMeta}Lv. ${selected.level} · ${sp?.types.join('/') ?? ''} · ${sp?.traversalClass ?? 'Grounded'}</span>
+            <strong class="pmd-forecast-unit-name" data-testid="overworld-unit-detail-name">${escapeOwHtml(selected.nickname)}${selected.isLord ? ' ★' : ''}</strong>
+            <span class="pmd-forecast-unit-meta">${escapeOwHtml(showSpeciesMeta)}Lv. ${selected.level} · ${sp ? renderColoredTypesHtml(sp.types, '/') : ''} · ${escapeOwHtml(sp?.traversalClass ?? 'Grounded')}</span>
           </div>
         </div>
         <button type="button" class="pmd-btn pmd-chip-btn" data-testid="overworld-unit-rename-btn">Rename</button>
@@ -2106,14 +2144,14 @@ export class OverworldScene {
         tmMain.appendChild(createMiniItemIcon(selTmItem.id, { sizePx: 24, decorative: true }));
         const tmCopy = document.createElement('div');
         tmCopy.className = 'pmd-item-inspector-copy';
-        const statusNote = selAlreadyKnown
+        const statusNoteHtml = selAlreadyKnown
           ? 'Already known'
           : selCompatible
-            ? `Teaches ${selMove?.name ?? selMoveId}`
+            ? `Teaches ${escapeOwHtml(selMove?.name ?? selMoveId)}${selMove ? ` (${renderColoredTypeHtml(selMove.type)})` : ''}`
             : 'Incompatible';
         tmCopy.innerHTML = `
-          <div class="pmd-item-inspector-head"><strong class="pmd-item-inspector-name">${selTmItem.name} ×${selTmSlot.quantity}</strong></div>
-          <span class="pmd-item-inspector-desc">${statusNote}</span>
+          <div class="pmd-item-inspector-head"><strong class="pmd-item-inspector-name">${escapeOwHtml(selTmItem.name)} ×${selTmSlot.quantity}</strong></div>
+          <span class="pmd-item-inspector-desc">${statusNoteHtml}</span>
         `;
         tmMain.appendChild(tmCopy);
 
@@ -2157,8 +2195,8 @@ export class OverworldScene {
         row.dataset.testid = `overworld-unit-move-${mId}`;
         row.innerHTML = `
           <div class="pmd-overworld-action-meta">
-            <strong>${isEquipped ? '[E] ' : ''}${mv.name}</strong>
-            <span>${mv.type} · R${mv.range[0]} · ${canCounter ? `Mt ${mv.mt} · Hit ${mv.hit}% · ` : ''}PP ${mv.pp + (selected.bonusPpByMoveId[mId] ?? 0)}</span>
+            <strong>${isEquipped ? '[E] ' : ''}${escapeOwHtml(mv.name)}</strong>
+            <span>${renderColoredTypeHtml(mv.type)} · R${mv.range[0]} · ${canCounter ? `Mt ${mv.mt} · Hit ${mv.hit}% · ` : ''}PP ${mv.pp + (selected.bonusPpByMoveId[mId] ?? 0)}</span>
           </div>
           <div class="pmd-inline-btns">
             ${
@@ -2346,11 +2384,18 @@ export class OverworldScene {
       const bagMain = document.createElement('div');
       bagMain.className = 'pmd-item-inspector-main';
       bagMain.appendChild(createMiniItemIcon(selItem.id, { sizePx: 26, decorative: true }));
+      const selTmMove =
+        selItem.category === 'tm' && selItem.effect.teachesMoveId
+          ? getMoveById(selItem.effect.teachesMoveId)
+          : undefined;
       const bagCopy = document.createElement('div');
       bagCopy.className = 'pmd-item-inspector-copy';
       bagCopy.innerHTML = `
-        <div class="pmd-item-inspector-head"><strong class="pmd-item-inspector-name">${selItem.name} ×${selBag.quantity}</strong></div>
-        <span class="pmd-item-inspector-desc">${selItem.description}</span>
+        <div class="pmd-item-inspector-head">
+          <strong class="pmd-item-inspector-name">${escapeOwHtml(selItem.name)} ×${selBag.quantity}</strong>
+          ${selTmMove ? `<span class="pmd-prep-cat-tag">${renderColoredTypeHtml(selTmMove.type)}</span>` : ''}
+        </div>
+        <span class="pmd-item-inspector-desc">${escapeOwHtml(selItem.description)}</span>
       `;
       bagMain.appendChild(bagCopy);
       bagBanner.appendChild(bagMain);
@@ -2590,7 +2635,7 @@ export class OverworldScene {
   // HUD, Dock & Toast Updates
   // ==========================================================================
 
-  private showToast(text: string): void {
+  private showToast(text: string, customDurationMs?: number): void {
     if (this.toastTimer !== null) {
       window.clearTimeout(this.toastTimer);
     }
@@ -2601,7 +2646,7 @@ export class OverworldScene {
         this.toastEl.hidden = true;
         this.toastTimer = null;
       },
-      this.fastMode ? 350 : 1800
+      customDurationMs ?? (this.fastMode ? 350 : 1800)
     );
   }
 
@@ -2623,7 +2668,7 @@ export class OverworldScene {
 
     if (!nodeDef) return;
 
-    this.dockTitleEl.textContent = `${nodeDef.code} · ${nodeDef.name}`;
+    this.dockTitleEl.textContent = `(${nodeDef.code}) ${nodeDef.name}`;
 
     this.dockBadgesEl.innerHTML = '';
     if (nodeState?.cleared) {
@@ -2899,7 +2944,7 @@ export class OverworldScene {
       }
 
       if (isUnlocked) {
-        const label = `${def.code}: ${def.name}`;
+        const label = `(${def.code}) ${def.name}`;
         ctx.save();
         ctx.font = `bold ${scale >= 4 ? 13 : 11}px "Fusion Pixel 12px Proportional KR", sans-serif`;
         ctx.textAlign = 'center';

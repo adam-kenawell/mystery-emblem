@@ -21,7 +21,9 @@ export type DragonLordSpeciesId = 'axew' | 'bagon' | 'gible' | 'dratini' | 'goom
 export interface DragonLordTraitInfo {
   speciesId: DragonLordSpeciesId;
   name: string;
-  /** Used in `"You seem to be the ${personalityTitle} type!"` */
+  /** `'a'` or `'an'` for `"With that said, you must be... ${indefiniteArticle} ${name}!"` */
+  indefiniteArticle: 'a' | 'an';
+  /** Used in `"You appear to be... the ${personalityTitle} type!"` */
   personalityTitle: string;
   traitLabel: string;
   personalityDescription: string;
@@ -39,10 +41,11 @@ export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
   {
     speciesId: 'axew',
     name: 'Axew',
+    indefiniteArticle: 'an',
     personalityTitle: 'Brave',
     traitLabel: 'Brave & Steadfast',
     personalityDescription:
-      'When trouble strikes, you step forward first so no friend faces danger alone. Your earnest courage rallies everyone beside you to stand tall.',
+      'Have you noticed how you always step forward first when someone is in trouble? Even when the odds look overwhelming, you refuse to let a single friend face danger alone. Your earnest courage lights a fire in everyone standing beside you!',
     auraSummary: 'Steadfast vanguard whose crimson aura resonates with Red-Flower Flabébé.',
     flabebeFlowerColor: 'red',
     flabebeFlowerLabel: 'Red Aura',
@@ -53,10 +56,11 @@ export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
   {
     speciesId: 'bagon',
     name: 'Bagon',
+    indefiniteArticle: 'a',
     personalityTitle: 'Hardy',
     traitLabel: 'Hardy & Determined',
     personalityDescription:
-      'Once you set your sights on a distant horizon, no setback can shake your resolve. You turn every hard trial into momentum to soar higher.',
+      'Has anyone ever told you how unstoppable you become once your mind is made up? Setbacks that would discourage anyone else only make your resolve burn brighter. Eyes fixed on the horizon, you turn every hard trial into the strength to soar!',
     auraSummary: 'Relentless trailblazer whose amber aura resonates with Orange-Flower Flabébé.',
     flabebeFlowerColor: 'orange',
     flabebeFlowerLabel: 'Orange Aura',
@@ -67,10 +71,11 @@ export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
   {
     speciesId: 'gible',
     name: 'Gible',
+    indefiniteArticle: 'a',
     personalityTitle: 'Bold',
     traitLabel: 'Bold & Spirited',
     personalityDescription:
-      'Full of spark and fearless energy, you charge straight at obstacles with a grin. Your fiery spirit shatters tension when the odds look grim.',
+      'Has anyone ever mentioned that fearless grin you wear right when things look toughest? You charge headfirst into the unknown with boundless spark and zero hesitation. When tension freezes the room, your bold spirit shatters the doubt in an instant!',
     auraSummary: 'Hard-hitting frontliner whose golden aura resonates with Yellow-Flower Flabébé.',
     flabebeFlowerColor: 'yellow',
     flabebeFlowerLabel: 'Yellow Aura',
@@ -81,10 +86,11 @@ export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
   {
     speciesId: 'dratini',
     name: 'Dratini',
+    indefiniteArticle: 'a',
     personalityTitle: 'Calm',
     traitLabel: 'Calm & Perceptive',
     personalityDescription:
-      'Quietly observant and deeply empathetic, you notice what others overlook. Even in a raging storm, your composed presence steadies the whole team.',
+      'Has anyone ever told you how relaxed you look in the face of fear? Even when dark clouds gather and everyone else begins to panic, your composed heart never wavers. You listen closely, notice what others miss, and quietly steady every ally at your side!',
     auraSummary: 'Serene tactician whose azure aura resonates with Blue-Flower Flabébé.',
     flabebeFlowerColor: 'blue',
     flabebeFlowerLabel: 'Blue Aura',
@@ -95,10 +101,11 @@ export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
   {
     speciesId: 'goomy',
     name: 'Goomy',
+    indefiniteArticle: 'a',
     personalityTitle: 'Gentle',
     traitLabel: 'Gentle & Resilient',
     personalityDescription:
-      'Kind-hearted yet quietly unbreakable, you treasure the bonds between allies above all else. Beneath your gentle warmth lies astonishing endurance.',
+      'Has anyone ever told you how comforting it feels just to have you nearby? You treasure the bonds between friends above all else and meet a harsh world with genuine warmth. Yet beneath that gentle kindness lies a quiet resilience nothing can break!',
     auraSummary: 'Warm-hearted guardian whose luminous aura resonates with White-Flower Flabébé.',
     flabebeFlowerColor: 'white',
     flabebeFlowerLabel: 'White Aura',

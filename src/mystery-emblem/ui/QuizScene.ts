@@ -43,6 +43,15 @@ import type {
 } from '../types/schemas';
 import { PmdPortraitView } from './PmdSpriteCanvas';
 import { bindBackGestureSurface, bindPointerTap } from './pointerControls';
+import { renderColoredTypesHtml } from './typeColors';
+
+function escapeQuizHtml(raw: string): string {
+  return raw
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
 // ============================================================================
 // Manual Rename Modal (`RecruitNicknameOverlay`)
@@ -269,7 +278,7 @@ export class RecruitNicknameOverlay {
 
     this.stepBadgeEl.textContent = `${this.queueIndex + 1} / ${this.queue.length}`;
     this.speciesTitleEl.textContent = `${sp?.name ?? current.speciesId}${roleTag}`;
-    this.speciesMetaEl.textContent = `Lv. ${current.level} · ${sp?.types.join(' / ') ?? 'Normal'} · ${sp?.traversalClass ?? 'Grounded'}`;
+    this.speciesMetaEl.innerHTML = `Lv. ${current.level} · ${renderColoredTypesHtml(sp?.types ?? ['Normal'], ' / ')} · ${escapeQuizHtml(sp?.traversalClass ?? 'Grounded')}`;
     this.skillDescEl.textContent = skill && this.mode === 'recruit' ? `${skill.name}` : '';
     this.inputEl.value = current.nickname || sp?.name || current.speciesId;
 
@@ -333,6 +342,9 @@ export class RecruitNicknameOverlay {
 // ============================================================================
 
 export type QuizSceneStep = 'questions' | 'lord_reveal';
+export type QuizRevealBeat = 0 | 1 | 2 | 3 | 4;
+
+const DEFAULT_TYPEWRITER_MS_PER_CHAR = 20;
 
 export interface OpenQuizSceneOptions {
   campaignMode?: CampaignMode;
@@ -340,12 +352,17 @@ export interface OpenQuizSceneOptions {
   scaleStatsToLevel?: boolean;
   initialConvoy?: ReadonlyArray<ConvoyEntry>;
   overworldGraph?: OverworldGraphDefinition;
+  typewriterMsPerChar?: number;
   onComplete?: (save: SaveData) => void;
 }
 
 export interface QuizSceneSnapshot {
   isOpen: boolean;
   step: QuizSceneStep;
+  revealBeat: QuizRevealBeat;
+  isTyping: boolean;
+  displayedRevealText: string;
+  auraBackdropActive: boolean;
   questionIndex: number;
   answers: QuizOptionKey[];
   selectedLordSpeciesId: DragonLordSpeciesId;
@@ -367,11 +384,20 @@ export class QuizScene {
   private readonly abortController = new AbortController();
 
   private openState = false;
+  private fastMode = false;
   private step: QuizSceneStep = 'questions';
+  private revealBeat: QuizRevealBeat = 0;
   private questionIndex = 0;
   private answers: QuizOptionKey[] = [];
   private selectedLordSpeciesId: DragonLordSpeciesId = 'axew';
   private computedQuizSeeds: QuizRecruitSeeds | null = null;
+
+  private typewriterTimer: number | null = null;
+  private typewriterPrefix = '';
+  private typewriterRemaining = '';
+  private typewriterCharIndex = 0;
+  private activeRevealTextEl: HTMLElement | null = null;
+  private activeRevealPromptEl: HTMLElement | null = null;
 
   private activeOptions: OpenQuizSceneOptions = {};
   private lordPortraitView: PmdPortraitView | null = null;
@@ -456,12 +482,57 @@ export class QuizScene {
         line-height: 1.35;
         font-size: 14px;
       }
+      @keyframes pmdQuizPromptBlink {
+        0%, 100% { opacity: 1; transform: translateY(0); }
+        50% { opacity: 0.32; transform: translateY(2px); }
+      }
+      .pmd-quiz-dialogue-box {
+        background: #16344c;
+        border: 2px solid #a8c0e0;
+        padding: 12px 14px 10px;
+        cursor: var(--pmd-cursor-glove, pointer);
+        user-select: none;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .pmd-quiz-advance-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+        min-height: 18px;
+        font-size: 12px;
+        color: #f8f800;
+      }
+      .pmd-quiz-advance-row[hidden] {
+        display: flex !important;
+        visibility: hidden;
+      }
+      .pmd-quiz-advance-arrow {
+        display: inline-block;
+        animation: pmdQuizPromptBlink 900ms ease-in-out infinite;
+      }
     `;
     this.rootEl.appendChild(styleEl);
+
+    bindPointerTap(
+      this.rootEl,
+      () => {
+        if (this.step === 'lord_reveal') {
+          this.handleRevealAdvanceTap();
+        }
+      },
+      { signal: this.abortController.signal }
+    );
 
     bindBackGestureSurface(this.rootEl, () => this.handleBack(), {
       signal: this.abortController.signal,
     });
+  }
+
+  public setFastMode(enabled: boolean): void {
+    this.fastMode = Boolean(enabled);
   }
 
   public isOpen(): boolean {
@@ -469,9 +540,11 @@ export class QuizScene {
   }
 
   public open(options?: OpenQuizSceneOptions): void {
+    this.clearTypewriterTimer();
     this.activeOptions = options ?? {};
     this.openState = true;
     this.step = 'questions';
+    this.revealBeat = 0;
     this.questionIndex = 0;
     this.answers = [];
     this.selectedLordSpeciesId = DRAGON_LORD_OPTIONS[0]?.speciesId ?? 'axew';
@@ -486,6 +559,7 @@ export class QuizScene {
 
   public close(): void {
     if (!this.openState) return;
+    this.clearTypewriterTimer();
     this.openState = false;
     this.rootEl.hidden = true;
     this.rootEl.style.background = DEFAULT_QUIZ_BACKDROP_CSS;
@@ -496,9 +570,11 @@ export class QuizScene {
   public handleBack(): void {
     if (!this.isOpen()) return;
     this.audioManager.playSfx('cancel');
+    this.clearTypewriterTimer();
 
     if (this.step === 'lord_reveal') {
       this.step = 'questions';
+      this.revealBeat = 0;
       this.questionIndex = PERSONALITY_QUIZ_QUESTIONS.length - 1;
       this.answers = this.answers.slice(0, this.questionIndex);
       this.render();
@@ -518,9 +594,14 @@ export class QuizScene {
 
   public getSnapshot(): QuizSceneSnapshot {
     const lordMeta = getDragonLordTraitInfo(this.selectedLordSpeciesId);
+    const auraBackdropActive = this.step === 'lord_reveal' && this.revealBeat >= 3;
     return {
       isOpen: this.isOpen(),
       step: this.step,
+      revealBeat: this.revealBeat,
+      isTyping: this.typewriterTimer !== null,
+      displayedRevealText: this.activeRevealTextEl?.textContent ?? '',
+      auraBackdropActive,
       questionIndex: this.questionIndex,
       answers: [...this.answers],
       selectedLordSpeciesId: this.selectedLordSpeciesId,
@@ -531,7 +612,7 @@ export class QuizScene {
   }
 
   private applySceneBackdropForStep(): void {
-    if (this.step === 'lord_reveal') {
+    if (this.step === 'lord_reveal' && this.revealBeat >= 3) {
       const lordMeta = getDragonLordTraitInfo(this.selectedLordSpeciesId);
       this.rootEl.style.background = lordMeta.revealBackdropCss;
       this.rootEl.dataset.auraFlowerColor = lordMeta.flabebeFlowerColor;
@@ -541,7 +622,133 @@ export class QuizScene {
     }
   }
 
+  private clearTypewriterTimer(): void {
+    if (this.typewriterTimer !== null) {
+      window.clearInterval(this.typewriterTimer);
+      this.typewriterTimer = null;
+    }
+  }
+
+  private getEffectiveTypewriterMs(): number {
+    if (typeof this.activeOptions.typewriterMsPerChar === 'number') {
+      return Math.max(0, this.activeOptions.typewriterMsPerChar);
+    }
+    if (this.fastMode) {
+      return 0;
+    }
+    return DEFAULT_TYPEWRITER_MS_PER_CHAR;
+  }
+
+  private startTypewriter(
+    targetEl: HTMLElement,
+    promptEl: HTMLElement | null,
+    prefixText: string,
+    rollText: string
+  ): void {
+    this.clearTypewriterTimer();
+    this.activeRevealTextEl = targetEl;
+    this.activeRevealPromptEl = promptEl;
+    this.typewriterPrefix = prefixText;
+    this.typewriterRemaining = rollText;
+    this.typewriterCharIndex = 0;
+
+    const msPerChar = this.getEffectiveTypewriterMs();
+    if (msPerChar <= 0 || rollText.length === 0) {
+      targetEl.textContent = `${prefixText}${rollText}`;
+      if (promptEl) promptEl.hidden = false;
+      return;
+    }
+
+    targetEl.textContent = prefixText;
+    if (promptEl) promptEl.hidden = true;
+
+    this.typewriterTimer = window.setInterval(() => {
+      if (!this.openState || this.step !== 'lord_reveal') {
+        this.clearTypewriterTimer();
+        return;
+      }
+      this.typewriterCharIndex += 1;
+      targetEl.textContent = `${this.typewriterPrefix}${this.typewriterRemaining.slice(0, this.typewriterCharIndex)}`;
+      if (this.typewriterCharIndex >= this.typewriterRemaining.length) {
+        this.clearTypewriterTimer();
+        if (this.activeRevealPromptEl) {
+          this.activeRevealPromptEl.hidden = false;
+        }
+      }
+    }, msPerChar);
+  }
+
+  private completeCurrentTypewriterImmediately(): void {
+    if (this.typewriterTimer === null) return;
+    this.clearTypewriterTimer();
+    if (this.activeRevealTextEl) {
+      this.activeRevealTextEl.textContent = `${this.typewriterPrefix}${this.typewriterRemaining}`;
+    }
+    if (this.activeRevealPromptEl) {
+      this.activeRevealPromptEl.hidden = false;
+    }
+  }
+
+  private handleRevealAdvanceTap(): void {
+    if (!this.isOpen() || this.step !== 'lord_reveal') return;
+
+    if (this.typewriterTimer !== null) {
+      this.audioManager.playSfx('select');
+      this.completeCurrentTypewriterImmediately();
+      return;
+    }
+
+    const lordMeta = getDragonLordTraitInfo(this.selectedLordSpeciesId);
+
+    if (this.revealBeat === 0) {
+      this.audioManager.playSfx('select');
+      this.revealBeat = 1;
+      const boxEl = this.panelBodyEl.querySelector<HTMLElement>('[data-testid="quiz-reveal-box"]');
+      if (boxEl) boxEl.dataset.revealBeat = '1';
+      if (this.activeRevealTextEl) {
+        this.startTypewriter(
+          this.activeRevealTextEl,
+          this.activeRevealPromptEl,
+          'You appear to be...',
+          ` the ${lordMeta.personalityTitle} type!`
+        );
+      } else {
+        this.render();
+      }
+      return;
+    }
+
+    if (this.revealBeat === 1) {
+      this.audioManager.playSfx('select');
+      this.revealBeat = 2;
+      this.render();
+      return;
+    }
+
+    if (this.revealBeat === 2) {
+      this.audioManager.playSfx('heal');
+      this.revealBeat = 3;
+      this.render();
+      return;
+    }
+
+    if (this.revealBeat === 3) {
+      this.audioManager.playSfx('select');
+      this.revealBeat = 4;
+      this.render();
+      return;
+    }
+
+    this.finalizeCampaignCreation(
+      this.selectedLordSpeciesId,
+      this.computedQuizSeeds ?? evaluatePersonalityQuiz(this.answers).quizSeeds
+    );
+  }
+
   private render(): void {
+    this.clearTypewriterTimer();
+    this.activeRevealTextEl = null;
+    this.activeRevealPromptEl = null;
     this.panelBodyEl.innerHTML = '';
     this.applySceneBackdropForStep();
 
@@ -577,21 +784,25 @@ export class QuizScene {
       btn.className = `pmd-btn pmd-menu-row pmd-quiz-opt-btn${idx === 0 ? ' pmd-btn-primary' : ''}`;
       btn.dataset.testid = `quiz-option-${opt.id}`;
       btn.innerHTML = `<span style="color:#f8f800; font-weight:700; margin-right:8px;">${opt.id}.</span><span>${opt.text}</span>`;
-      bindPointerTap(btn, () => {
-        this.audioManager.playSfx('select');
-        this.answers[this.questionIndex] = opt.id;
-        if (this.questionIndex + 1 < PERSONALITY_QUIZ_QUESTIONS.length) {
-          this.questionIndex += 1;
-          this.render();
-        } else {
-          const result = evaluatePersonalityQuiz(this.answers);
-          this.selectedLordSpeciesId = result.assignedLordSpeciesId;
-          this.computedQuizSeeds = result.quizSeeds;
-          this.step = 'lord_reveal';
-          this.audioManager.playSfx('heal');
-          this.render();
-        }
-      });
+      bindPointerTap(
+        btn,
+        () => {
+          this.audioManager.playSfx('select');
+          this.answers[this.questionIndex] = opt.id;
+          if (this.questionIndex + 1 < PERSONALITY_QUIZ_QUESTIONS.length) {
+            this.questionIndex += 1;
+            this.render();
+          } else {
+            const result = evaluatePersonalityQuiz(this.answers);
+            this.selectedLordSpeciesId = result.assignedLordSpeciesId;
+            this.computedQuizSeeds = result.quizSeeds;
+            this.step = 'lord_reveal';
+            this.revealBeat = 0;
+            this.render();
+          }
+        },
+        { stopPropagation: true }
+      );
       optStack.appendChild(btn);
     }
 
@@ -603,68 +814,137 @@ export class QuizScene {
     const lordMeta = getDragonLordTraitInfo(this.selectedLordSpeciesId);
     const sp = getSpeciesById(lordMeta.speciesId);
     const skill = sp ? getPersonalSkillById(sp.personalSkillId) : undefined;
+    const isLordRevealed = this.revealBeat >= 3;
 
     this.headerTitleEl.textContent = 'YOUR AURA';
-    this.headerStepBadgeEl.textContent = lordMeta.flabebeFlowerLabel.toUpperCase();
+    this.headerStepBadgeEl.textContent = isLordRevealed
+      ? lordMeta.flabebeFlowerLabel.toUpperCase()
+      : '...';
 
     const wrap = document.createElement('div');
     wrap.style.cssText = 'display:flex; flex-direction:column; gap:0.55rem;';
 
-    const personalityBanner = document.createElement('div');
-    personalityBanner.style.cssText = `background:#16344c; border:2px solid ${lordMeta.accentBorderColor}; padding:10px 12px;`;
-    personalityBanner.innerHTML = `
-      <div style="font-size:clamp(15px, 2.3vw, 18px); font-weight:700; color:#f8f800;" data-testid="quiz-personality-headline">
-        You seem to be the ${lordMeta.personalityTitle} type!
-      </div>
-      <p style="margin:6px 0 0; font-size:13px; line-height:1.42; color:#f8f8f8;" data-testid="quiz-personality-description">
-        ${lordMeta.personalityDescription}
-      </p>
-    `;
-    wrap.appendChild(personalityBanner);
+    // Beats 3 & 4: Happy Pokémon Portrait Card + Colored Typing + Dragon Aura Skill
+    if (isLordRevealed) {
+      const heroCard = document.createElement('div');
+      heroCard.dataset.testid = 'quiz-lord-hero-card';
+      heroCard.style.cssText = `display:flex; gap:10px; align-items:center; flex-wrap:wrap; background:#16344c; border:2px solid ${lordMeta.accentBorderColor}; padding:8px 10px;`;
+      heroCard.innerHTML = `
+        <div class="pmd-forecast-portrait-slot" data-quiz-lord-portrait data-testid="quiz-lord-portrait"></div>
+        <div style="flex:1; min-width:180px;">
+          <div style="font-size:15px; font-weight:700; color:#f8f800;">
+            ${escapeQuizHtml(sp?.name ?? lordMeta.name)}
+          </div>
+          <div style="font-size:12px; color:#a8e0f8; margin-top:2px;" data-testid="quiz-lord-types">
+            ${renderColoredTypesHtml(sp?.types ?? ['Dragon'], ' / ')} · ${escapeQuizHtml(lordMeta.traitLabel)}
+          </div>
+          <div style="margin-top:3px; font-size:12px; color:#58f858;">
+            <strong>${escapeQuizHtml(skill?.name ?? 'Dragon Aura')}</strong>: ${escapeQuizHtml(skill?.description ?? '+2 Atk/SpA, +10 Hit within 2 tiles.')}
+          </div>
+        </div>
+      `;
 
-    const heroCard = document.createElement('div');
-    heroCard.style.cssText =
-      'display:flex; gap:10px; align-items:center; flex-wrap:wrap; background:#16344c; border:2px solid #f8d838; padding:10px;';
-    heroCard.innerHTML = `
-      <div class="pmd-forecast-portrait-slot" data-quiz-lord-portrait></div>
-      <div style="flex:1; min-width:190px;">
-        <div style="font-size:16px; font-weight:700; color:#f8f800;" data-testid="quiz-revealed-lord-name">
-          Will you be ${sp?.name ?? lordMeta.name}?
-        </div>
-        <div style="font-size:12px; color:#a8e0f8; margin-top:2px;">
-          ${sp?.types.join(' / ') ?? 'Dragon'} · ${lordMeta.traitLabel}
-        </div>
-        <div style="margin-top:4px; font-size:12px; color:#58f858;">
-          <strong>${skill?.name ?? 'Dragon Aura'}</strong>: ${skill?.description ?? '+2 Atk/SpA, +10 Hit within 2 tiles.'}
-        </div>
-      </div>
-    `;
-
-    if (!this.lordPortraitView) {
-      this.lordPortraitView = new PmdPortraitView({ testId: 'quiz-lord-portrait-canvas' });
+      if (!this.lordPortraitView) {
+        this.lordPortraitView = new PmdPortraitView({ testId: 'quiz-lord-portrait-canvas' });
+      }
+      heroCard.querySelector('[data-quiz-lord-portrait]')!.appendChild(this.lordPortraitView.canvas);
+      void this.lordPortraitView.setPortrait({
+        speciesIdOrAssetId: lordMeta.speciesId,
+        emotion: 'Happy',
+      });
+      wrap.appendChild(heroCard);
     }
-    heroCard.querySelector('[data-quiz-lord-portrait]')!.appendChild(this.lordPortraitView.canvas);
-    void this.lordPortraitView.setPortrait({
-      speciesIdOrAssetId: lordMeta.speciesId,
-      emotion: 'Determined',
-    });
-    wrap.appendChild(heroCard);
 
-    const actionRow = document.createElement('div');
-    actionRow.style.cssText = 'display:flex; justify-content:flex-end;';
-    actionRow.innerHTML = `
-      <button type="button" class="pmd-btn pmd-btn-primary" data-testid="quiz-accept-lord-btn" style="min-height:46px; padding:8px 16px;">
-        Begin Adventure ▶
-      </button>
-    `;
+    // Sequential Typewriter Dialogue Box
+    const dialogueBox = document.createElement('div');
+    dialogueBox.className = 'pmd-quiz-dialogue-box';
+    dialogueBox.dataset.testid = 'quiz-reveal-box';
+    dialogueBox.dataset.revealBeat = String(this.revealBeat);
+    if (isLordRevealed) {
+      dialogueBox.style.borderColor = '#f8d838';
+    }
 
-    bindPointerTap(actionRow.querySelector('[data-testid="quiz-accept-lord-btn"]'), () => {
-      this.finalizeCampaignCreation(
-        this.selectedLordSpeciesId,
-        this.computedQuizSeeds ?? evaluatePersonalityQuiz(this.answers).quizSeeds
+    const textEl = document.createElement('div');
+    const promptRowEl = document.createElement('div');
+    promptRowEl.className = 'pmd-quiz-advance-row';
+    promptRowEl.dataset.testid = 'quiz-reveal-advance-prompt';
+    promptRowEl.innerHTML = `<span>Tap to continue</span><span class="pmd-quiz-advance-arrow">▼</span>`;
+
+    if (this.revealBeat === 0 || this.revealBeat === 1) {
+      textEl.dataset.testid = 'quiz-personality-headline';
+      textEl.style.cssText =
+        'font-size:clamp(15px, 2.3vw, 18px); font-weight:700; color:#f8f800; line-height:1.42; min-height:1.5em;';
+      dialogueBox.append(textEl, promptRowEl);
+      wrap.appendChild(dialogueBox);
+
+      if (this.revealBeat === 0) {
+        this.startTypewriter(textEl, promptRowEl, '', 'You appear to be...');
+      } else {
+        this.startTypewriter(
+          textEl,
+          promptRowEl,
+          'You appear to be...',
+          ` the ${lordMeta.personalityTitle} type!`
+        );
+      }
+    } else if (this.revealBeat === 2) {
+      textEl.dataset.testid = 'quiz-personality-description';
+      textEl.style.cssText =
+        'margin:0; font-size:clamp(13px, 2vw, 15px); line-height:1.48; color:#f8f8f8; min-height:3em;';
+      dialogueBox.append(textEl, promptRowEl);
+      wrap.appendChild(dialogueBox);
+
+      this.startTypewriter(textEl, promptRowEl, '', lordMeta.personalityDescription);
+    } else if (this.revealBeat === 3) {
+      const speciesName = sp?.name ?? lordMeta.name;
+      textEl.dataset.testid = 'quiz-revealed-lord-name';
+      textEl.style.cssText =
+        'font-size:clamp(15px, 2.3vw, 18px); font-weight:700; color:#f8f800; line-height:1.42; min-height:1.5em;';
+      dialogueBox.append(textEl, promptRowEl);
+      wrap.appendChild(dialogueBox);
+
+      this.startTypewriter(
+        textEl,
+        promptRowEl,
+        '',
+        `With that said, you must be... ${lordMeta.indefiniteArticle} ${speciesName}!`
       );
-    });
-    wrap.appendChild(actionRow);
+    } else {
+      textEl.dataset.testid = 'quiz-reveal-farewell';
+      textEl.style.cssText =
+        'font-size:clamp(14px, 2.1vw, 17px); font-weight:700; color:#f8f8f8; line-height:1.42; min-height:1.5em;';
+      promptRowEl.innerHTML = `<span>Tap or press Begin Adventure</span><span class="pmd-quiz-advance-arrow">▶</span>`;
+      dialogueBox.append(textEl, promptRowEl);
+      wrap.appendChild(dialogueBox);
+
+      const actionRow = document.createElement('div');
+      actionRow.style.cssText = 'display:flex; justify-content:flex-end;';
+      actionRow.innerHTML = `
+        <button type="button" class="pmd-btn pmd-btn-primary" data-testid="quiz-accept-lord-btn" style="min-height:46px; padding:8px 16px;">
+          Begin Adventure ▶
+        </button>
+      `;
+
+      bindPointerTap(
+        actionRow.querySelector('[data-testid="quiz-accept-lord-btn"]'),
+        () => {
+          this.clearTypewriterTimer();
+          this.finalizeCampaignCreation(
+            this.selectedLordSpeciesId,
+            this.computedQuizSeeds ?? evaluatePersonalityQuiz(this.answers).quizSeeds
+          );
+        },
+        { stopPropagation: true }
+      );
+      wrap.appendChild(actionRow);
+
+      this.startTypewriter(
+        textEl,
+        promptRowEl,
+        '',
+        'Now go forth and help save the world from certain destruction!'
+      );
+    }
 
     this.panelBodyEl.appendChild(wrap);
   }

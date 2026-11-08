@@ -466,6 +466,7 @@ const canonicalUrl = Astro.url.href;
 
     async function openOverworldScene(opts?: {
       preservePosition?: boolean;
+      announceCurrentChapter?: boolean;
     }): Promise<void> {
       if (!overworldScene) return;
       overworldReturnTarget = 'title';
@@ -486,6 +487,7 @@ const canonicalUrl = Astro.url.href;
       await overworldScene.open({
         graph: DEMO_OVERWORLD_GRAPH,
         preservePosition: opts?.preservePosition ?? true,
+        announceCurrentChapter: opts?.announceCurrentChapter ?? false,
       });
       backStack.syncButtonLabel();
     }
@@ -1071,7 +1073,7 @@ const canonicalUrl = Astro.url.href;
         audioManager.playSfx('select');
         setStatus('');
         if (manager.getSave() !== null) {
-          void openOverworldScene({ preservePosition: true });
+          void openOverworldScene({ preservePosition: true, announceCurrentChapter: true });
         } else {
           openDemoQuizFlow();
         }

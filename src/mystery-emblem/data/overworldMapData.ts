@@ -80,7 +80,7 @@ export interface OverworldGraphDefinition {
 export const DEMO_OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
   {
     id: 'prologue',
-    code: 'D1',
+    code: 'Ch. 1',
     name: 'Western Beach',
     kingdom: 'Verdant Commonwealth',
     kind: 'story',
@@ -88,7 +88,7 @@ export const DEMO_OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
     x: 208,
     y: 194,
     levelId: 'prologue',
-    tilesetId: '001',
+    tilesetId: '002',
     recommendedLevel: 9,
     skirmishScoutSpeciesId: 'zigzagoon_galar',
     clearGoldReward: 650,
@@ -97,7 +97,7 @@ export const DEMO_OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
   },
   {
     id: 'chapter_01',
-    code: 'D2',
+    code: 'Ch. 2',
     name: 'Verdant Bluff',
     kingdom: 'Verdant Commonwealth',
     kind: 'story',
@@ -113,7 +113,7 @@ export const DEMO_OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
   },
   {
     id: 'chapter_02',
-    code: 'D3',
+    code: 'Ch. 3',
     name: 'Cleft Mountain',
     kingdom: 'Verdant Commonwealth',
     kind: 'story',
@@ -129,7 +129,7 @@ export const DEMO_OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
   },
   {
     id: 'chapter_03',
-    code: 'D4',
+    code: 'Ch. 4',
     name: 'River Shrine',
     kingdom: 'Verdant Commonwealth',
     kind: 'story',
@@ -146,7 +146,7 @@ export const DEMO_OVERWORLD_NODES: ReadonlyArray<OverworldNodeDefinition> = [
   },
   {
     id: 'chapter_04',
-    code: 'D5',
+    code: 'Ch. 5',
     name: 'Berry Orchards',
     kingdom: 'Verdant Commonwealth',
     kind: 'story',

@@ -122,6 +122,7 @@ import {
   type MapCameraBounds,
 } from '../ui/mapZoomController';
 import { bindPointerTap } from '../ui/pointerControls';
+import { renderColoredTypeHtml, renderColoredTypesHtml } from '../ui/typeColors';
 
 export const BATTLE_TILE_SCALE = MAP_DEFAULT_SCALE;
 export const BATTLE_TILE_DISPLAY_PX = PMD_TILE_NATIVE_PX * BATTLE_TILE_SCALE;
@@ -284,12 +285,13 @@ export class BattleScene {
   private readonly tintScratchCanvas: HTMLCanvasElement;
   private readonly tintScratchCtx: CanvasRenderingContext2D;
 
-  // Top HUD, Bottom-Left Tile Display & Floating Character Hover Popup
+  // Top HUD, Bottom-Left Stacked Character Info + Tile Display
   private readonly topHudBarEl: HTMLElement;
   private readonly turnBadgeEl: HTMLElement;
   private readonly dangerBtnEl: HTMLButtonElement;
   private readonly endPhaseBtnEl: HTMLButtonElement;
   private readonly phaseBannerEl: HTMLElement;
+  private readonly bottomLeftHudStackEl: HTMLElement;
   private readonly infoStripEl: HTMLElement;
   private readonly unitPopupEl: HTMLElement;
   private readonly unitPopupPortraitView: PmdPortraitView;
@@ -489,7 +491,11 @@ export class BattleScene {
     this.phaseBannerEl.dataset.testid = 'dungeon-phase-banner';
     this.phaseBannerEl.hidden = true;
 
-    // 4. Bottom-Left Compact Tile Display + Floating Character Hover Popup
+    // 4. Bottom-Left Stacked Character Hover/Tap Info Card + Compact Tile Display
+    this.bottomLeftHudStackEl = document.createElement('div');
+    this.bottomLeftHudStackEl.className = 'pmd-dungeon-hud-bottom-left';
+    this.bottomLeftHudStackEl.dataset.testid = 'dungeon-bottom-left-hud';
+
     this.infoStripEl = document.createElement('div');
     this.infoStripEl.className =
       'pmd-window pmd-window--compact pmd-window--translucent pmd-dungeon-tile-box';
@@ -509,6 +515,7 @@ export class BattleScene {
           <span class="pmd-unit-popup-role-pip" data-popup-role-pip hidden></span>
         </div>
         <div class="pmd-unit-popup-vitals">
+          <div class="pmd-unit-popup-types" data-testid="unit-popup-types"></div>
           <div class="pmd-unit-popup-hp-row">
             <span class="pmd-unit-popup-lbl">HP</span>
             <strong data-testid="unit-popup-hp">20/20</strong>
@@ -529,6 +536,7 @@ export class BattleScene {
     `;
     const popupSlot = this.unitPopupEl.querySelector('[data-popup-portrait-slot]');
     popupSlot?.insertBefore(this.unitPopupPortraitView.canvas, popupSlot.firstChild);
+    this.bottomLeftHudStackEl.append(this.unitPopupEl, this.infoStripEl);
 
     // 5. Floating Command Menu (`Attack` / `Heal` / `Item` / `Wait` / `Cancel`)
     this.actionMenuEl = document.createElement('div');
@@ -714,7 +722,7 @@ export class BattleScene {
         <span class="pmd-battle-kicker is-defeat">DEFEATED</span>
         <h2 id="battle-defeat-title" class="pmd-panel-title is-danger-title">DEFEAT</h2>
         <p class="pmd-panel-sub" data-defeat-sub>Your Dragon Lord fell in battle.</p>
-        <p class="pmd-subcard-text" data-defeat-summary>Regroup and challenge the dungeon again from Turn 1.</p>
+        <p class="pmd-subcard-text" data-defeat-summary>Regroup and challenge the chapter again from Turn 1.</p>
         <div class="pmd-battle-outcome-actions">
           <button type="button" class="pmd-btn pmd-btn-primary" data-testid="defeat-restart-btn">Restart Match</button>
           <button type="button" class="pmd-btn" data-testid="defeat-exit-btn">Return to Menu</button>
@@ -757,8 +765,7 @@ export class BattleScene {
       this.canvasStageEl,
       this.topHudBarEl,
       this.phaseBannerEl,
-      this.infoStripEl,
-      this.unitPopupEl,
+      this.bottomLeftHudStackEl,
       this.actionMenuEl,
       this.forecastModalBackdropEl,
       this.levelUpModalBackdropEl,
@@ -1419,7 +1426,11 @@ export class BattleScene {
       this.unitPopupEl.hidden = true;
     } else {
       this.topHudBarEl.hidden = false;
-      this.infoStripEl.hidden = this.interactionState === 'combat_forecast';
+      const hideHudCards = this.interactionState === 'combat_forecast';
+      this.infoStripEl.hidden = hideHudCards;
+      if (hideHudCards) {
+        this.unitPopupEl.hidden = true;
+      }
     }
   }
 
@@ -2943,7 +2954,7 @@ export class BattleScene {
           : slot.range[0] === slot.range[1]
             ? `R${slot.range[0]}`
             : `R${slot.range[0]}-${slot.range[1]}`;
-      metaSpan.textContent = `${rangeText} · ${slot.ppRemaining}/${slot.maxPp} PP`;
+      metaSpan.innerHTML = `${renderColoredTypeHtml(slot.move.type)} · ${this.escapeHudHtml(rangeText)} · ${slot.ppRemaining}/${slot.maxPp} PP`;
 
       btn.append(nameSpan, metaSpan);
 
@@ -4653,6 +4664,13 @@ export class BattleScene {
       }
     }
 
+    const typesEl = this.unitPopupEl.querySelector<HTMLElement>(
+      '[data-testid="unit-popup-types"]'
+    );
+    if (typesEl) {
+      typesEl.innerHTML = renderColoredTypesHtml(unit.types, ' / ');
+    }
+
     const hpTextEl = this.unitPopupEl.querySelector('[data-testid="unit-popup-hp"]');
     if (hpTextEl) {
       hpTextEl.textContent = `${unit.currentHp}/${unit.maxHp}`;
@@ -4678,7 +4696,7 @@ export class BattleScene {
       movesWrap.innerHTML = unit.activeMoves
         .map((slot) => {
           const isEq = slot.id === unit.equippedMoveId && slot.move.category !== 'Support';
-          return `<div class="pmd-unit-popup-move${isEq ? ' is-equipped' : ''}"><span>${isEq ? '[E] ' : ''}${this.escapeHudHtml(slot.move.name)}</span><em>R${slot.range[0]}</em></div>`;
+          return `<div class="pmd-unit-popup-move${isEq ? ' is-equipped' : ''}"><span>${isEq ? '[E] ' : ''}${this.escapeHudHtml(slot.move.name)}</span><em>${renderColoredTypeHtml(slot.move.type)} · R${slot.range[0]}</em></div>`;
         })
         .join('');
     }
@@ -4739,34 +4757,10 @@ export class BattleScene {
     this.positionUnitHoverPopup(unit);
   }
 
-  private positionUnitHoverPopup(unit: BattleUnitState): void {
-    const stageW = this.canvasStageEl.clientWidth || 640;
-    const stageH = this.canvasStageEl.clientHeight || 480;
-    const canvasOffsetX = (stageW - this.bufferWidth * this.displayScale) / 2;
-    const canvasOffsetY = (stageH - this.bufferHeight * this.displayScale) / 2;
-    const tileDisplayPx = PMD_TILE_NATIVE_PX * this.displayScale;
-    const unitScreenX =
-      canvasOffsetX + (unit.x * PMD_TILE_NATIVE_PX - this.cameraX) * this.displayScale;
-    const unitScreenY =
-      canvasOffsetY + (unit.y * PMD_TILE_NATIVE_PX - this.cameraY) * this.displayScale;
-
-    const popupW = Math.min(206, Math.max(168, stageW - 16));
-    const popupH = this.unitPopupEl.offsetHeight || 152;
-
-    let left = unitScreenX + tileDisplayPx + 10;
-    if (left + popupW > stageW - 8) {
-      left = unitScreenX - popupW - 10;
-    }
-    left = Math.max(8, Math.min(stageW - popupW - 8, left));
-
-    const minTop = stageW <= 720 && stageH > 500 ? 58 : 54;
-    const overlapsBottomLeftTileBox = left < 276;
-    const bottomReserve = overlapsBottomLeftTileBox ? 68 : 10;
-    const maxTop = Math.max(minTop, stageH - popupH - bottomReserve);
-    const top = Math.max(minTop, Math.min(maxTop, unitScreenY - 12));
-
-    this.unitPopupEl.style.left = `${Math.round(left)}px`;
-    this.unitPopupEl.style.top = `${Math.round(top)}px`;
+  private positionUnitHoverPopup(_unit: BattleUnitState): void {
+    // Docked inside `.pmd-dungeon-hud-bottom-left` directly above `[data-testid="dungeon-tile-display"]`.
+    this.unitPopupEl.style.left = '';
+    this.unitPopupEl.style.top = '';
   }
 
   // ==========================================================================

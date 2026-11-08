@@ -100,11 +100,20 @@ function generateId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+const DEMO_CHAPTER_LABELS: Readonly<Record<string, string>> = {
+  prologue: 'Chapter 1',
+  chapter_01: 'Chapter 2',
+  chapter_02: 'Chapter 3',
+  chapter_03: 'Chapter 4',
+  chapter_04: 'Chapter 5',
+};
+
 export function formatCampaignChapterLabel(chapterId: string | null | undefined): string {
   const raw = (chapterId ?? '').trim();
-  if (!raw) return 'Prologue';
+  if (!raw) return 'Chapter 1';
   const lower = raw.toLowerCase();
-  if (lower === 'prologue') return 'Prologue';
+  const demoMapped = DEMO_CHAPTER_LABELS[lower];
+  if (demoMapped) return demoMapped;
   if (lower === 'epilogue') return 'Epilogue';
   if (lower === 'endgame') return 'Endgame';
 

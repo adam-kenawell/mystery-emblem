@@ -3016,18 +3016,47 @@ input[type='radio']:not(:disabled) {
   color: var(--pmd-text-danger);
 }
 
-/* 2. Dungeon Bottom-Left Compact Tile Display (`[data-testid="dungeon-tile-display"]`) */
-.pmd-dungeon-tile-box {
+/* 2. Dungeon Bottom-Left Stacked HUD (`[data-testid="dungeon-bottom-left-hud"]`:
+   `[data-testid="dungeon-unit-popup"]` docked right above `[data-testid="dungeon-tile-display"]`) */
+.pmd-type-text {
+  font-weight: bold;
+  text-shadow:
+    1px 1px 0 #000000,
+    -1px 0 0 rgba(0, 0, 0, 0.72),
+    0 -1px 0 rgba(0, 0, 0, 0.72);
+}
+
+.pmd-type-sep {
+  color: rgba(216, 232, 248, 0.85);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.pmd-dungeon-hud-bottom-left {
   position: absolute;
   left: 0.65rem;
   bottom: 0.55rem;
-  z-index: 62;
+  z-index: 71;
   pointer-events: none;
-  max-width: min(272px, calc(100% - 1.3rem));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  max-width: calc(100% - 1.3rem);
+}
+
+.pmd-dungeon-tile-box {
+  position: relative;
+  pointer-events: none;
+  max-width: min(272px, 100%);
   padding: 4px 8px;
   display: flex;
   flex-direction: column;
   gap: 3px;
+}
+
+.pmd-dungeon-tile-box[hidden],
+.pmd-unit-hover-popup[hidden] {
+  display: none !important;
 }
 
 .pmd-tile-box-head {
@@ -3077,13 +3106,12 @@ input[type='radio']:not(:disabled) {
   text-shadow: 1px 1px 0 #000000;
 }
 
-/* 3. Dungeon Floating Character Hover Popup (`[data-testid="dungeon-unit-popup"]`) */
+/* 3. Dungeon Bottom-Left Character Info Card (`[data-testid="dungeon-unit-popup"]`) */
 .pmd-unit-hover-popup {
-  position: absolute;
-  z-index: 71;
+  position: relative;
   pointer-events: none;
-  width: 206px;
-  max-width: calc(100% - 16px);
+  width: 224px;
+  max-width: 100%;
   border-width: 8px 12px;
   padding: 5px 7px;
   display: flex;
@@ -3135,7 +3163,16 @@ input[type='radio']:not(:disabled) {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
+}
+
+.pmd-unit-popup-types {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  font-size: 11px;
+  line-height: 1.15;
 }
 
 .pmd-unit-popup-hp-row {
@@ -3388,15 +3425,20 @@ input[type='radio']:not(:disabled) {
 
 /* Mobile Portrait (`390x844`): keep literal 2-column 'L' geometry & >= 44x44px touch targets */
 @media (max-width: 600px) {
-  .pmd-dungeon-tile-box {
+  .pmd-dungeon-hud-bottom-left {
     left: 0.45rem;
     bottom: 0.45rem;
-    max-width: min(236px, calc(100% - 0.9rem));
+    gap: 4px;
+    max-width: calc(100% - 0.9rem);
+  }
+
+  .pmd-dungeon-tile-box {
+    max-width: min(236px, 100%);
     padding: 3px 6px;
   }
 
   .pmd-unit-hover-popup {
-    width: 192px;
+    width: 208px;
     padding: 4px 6px;
   }
 
@@ -3448,17 +3490,22 @@ input[type='radio']:not(:disabled) {
     min-height: 54px;
   }
 
-  .pmd-dungeon-tile-box {
+  .pmd-dungeon-hud-bottom-left {
     left: 0.5rem;
     bottom: 0.35rem;
+    gap: 4px;
+    max-width: calc(100% - 1rem);
+  }
+
+  .pmd-dungeon-tile-box {
     padding: 2px 6px;
     gap: 2px;
   }
 
   .pmd-unit-hover-popup {
-    width: 196px;
+    width: 212px;
     border-width: 6px 10px;
-    padding: 4px 6px;
+    padding: 3px 6px;
     gap: 3px;
   }
 
