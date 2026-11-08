@@ -166,6 +166,7 @@ interface FloatingBattleText {
   worldY: number;
   text: string;
   color: string;
+  emphasis: boolean;
   createdAtMs: number;
   durationMs: number;
 }
@@ -294,7 +295,8 @@ export class BattleScene {
   private readonly tintScratchCanvas: HTMLCanvasElement;
   private readonly tintScratchCtx: CanvasRenderingContext2D;
 
-  // Toast Banner, Opening Card, Phase Transition & Bottom-Left Stacked Character + Tile Info Cards
+  // Toast Banner, Opening Card, Phase Transition, High-DPI Combat Callouts & Bottom-Left Stacked Character + Tile Info Cards
+  private readonly floatingCalloutLayerEl: HTMLElement;
   private readonly phaseBannerEl: HTMLElement;
   private readonly beginBattleBackdropEl: HTMLElement;
   private readonly beginBattleObjectiveEl: HTMLElement;
@@ -412,6 +414,7 @@ export class BattleScene {
 
   // Combat visual effects & floating callouts
   private readonly floatingTexts: FloatingBattleText[] = [];
+  private readonly floatingTextEls = new Map<number, HTMLElement>();
   private nextFloatingTextId = 1;
   private activeStrikeVfx: ActiveStrikeVfx | null = null;
 
@@ -480,6 +483,12 @@ export class BattleScene {
     this.ctx = this.canvas.getContext('2d')!;
     this.ctx.imageSmoothingEnabled = false;
     this.canvasStageEl.appendChild(this.canvas);
+
+    // 1b. High-DPI Pixelated Combat Callout Layer (`-X`, `CRIT!`, `MISS`, `DEFEATED!`)
+    this.floatingCalloutLayerEl = document.createElement('div');
+    this.floatingCalloutLayerEl.className = 'pmd-battle-floating-callouts';
+    this.floatingCalloutLayerEl.dataset.testid = 'dungeon-floating-callouts';
+    this.floatingCalloutLayerEl.setAttribute('aria-hidden', 'true');
 
     // 2. Toast Banner, "Begin Battle!" Card & Dramatic Phase Transition Overlay
     this.phaseBannerEl = document.createElement('div');
@@ -802,6 +811,7 @@ export class BattleScene {
 
     this.rootEl.append(
       this.canvasStageEl,
+      this.floatingCalloutLayerEl,
       this.phaseBannerEl,
       this.bottomLeftHudStackEl,
       this.actionMenuEl,
@@ -1019,7 +1029,7 @@ export class BattleScene {
     this.pinchTracker.reset();
     this.activeWalk = null;
     this.activeStrikeVfx = null;
-    this.floatingTexts.length = 0;
+    this.clearFloatingTexts();
     this.prepSwapSlotIndex = null;
     this.hideAllModals();
     this.clearSelection();
@@ -1044,6 +1054,7 @@ export class BattleScene {
       this.phaseBannerTimer = null;
     }
     this.clearOpeningAndPhaseAnimations();
+    this.clearFloatingTexts();
     this.resizeObserver?.disconnect();
     this.resizeObserver = null;
     this.unsubscribeMapChanges?.();
@@ -1544,7 +1555,7 @@ export class BattleScene {
     this.hideAllModals();
     this.activeWalk = null;
     this.activeStrikeVfx = null;
-    this.floatingTexts.length = 0;
+    this.clearFloatingTexts();
     this.trackedEnemyIds.clear();
     this.spawnedReinforcementIds.clear();
     this.blockedReinforcementIds.clear();
@@ -3933,6 +3944,12 @@ export class BattleScene {
     });
   }
 
+  private clearFloatingTexts(): void {
+    this.floatingTexts.length = 0;
+    this.floatingTextEls.clear();
+    this.floatingCalloutLayerEl.innerHTML = '';
+  }
+
   private spawnFloatingText(
     tileX: number,
     tileY: number,
@@ -3940,15 +3957,29 @@ export class BattleScene {
     color: string,
     durationMs = 820
   ): void {
-    this.floatingTexts.push({
-      id: this.nextFloatingTextId++,
+    const now = performance.now();
+    const id = this.nextFloatingTextId++;
+    const emphasis = /^(CRIT!|DEFEATED!|LEVEL UP!|FULL HEAL!|Got )/.test(text);
+    const ft: FloatingBattleText = {
+      id,
       worldX: tileX * PMD_TILE_NATIVE_PX + PMD_TILE_NATIVE_PX / 2,
       worldY: tileY * PMD_TILE_NATIVE_PX + 2,
       text,
       color,
-      createdAtMs: performance.now(),
+      emphasis,
+      createdAtMs: now,
       durationMs: this.fastMode ? Math.max(120, Math.round(durationMs * 0.25)) : durationMs,
-    });
+    };
+    this.floatingTexts.push(ft);
+
+    const el = document.createElement('span');
+    el.className = `pmd-battle-floating-callout${emphasis ? ' is-emphasis' : ''}`;
+    el.dataset.testid = 'battle-floating-callout';
+    el.textContent = text;
+    el.style.color = color;
+    this.floatingCalloutLayerEl.appendChild(el);
+    this.floatingTextEls.set(id, el);
+    this.syncFloatingCalloutDom(now);
   }
 
   private ensureTilePairVisible(ax: number, ay: number, bx: number, by: number): void {
@@ -5395,6 +5426,9 @@ export class BattleScene {
     for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
       const ft = this.floatingTexts[i]!;
       if (now - ft.createdAtMs >= ft.durationMs) {
+        const el = this.floatingTextEls.get(ft.id);
+        el?.remove();
+        this.floatingTextEls.delete(ft.id);
         this.floatingTexts.splice(i, 1);
       }
     }
@@ -5792,28 +5826,50 @@ export class BattleScene {
       ctx.restore();
     }
 
-    // 8. Render Floating Combat Callouts (`-X`, `CRIT!`, `MISS`, `DEFEATED!`)
-    if (this.floatingTexts.length > 0) {
-      ctx.save();
-      ctx.font = 'bold 8px "Fusion Pixel 12px Proportional KR", monospace';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'bottom';
+    // 8. Sync High-DPI Pixelated Combat Callouts (`-X`, `CRIT!`, `MISS`, `DEFEATED!`)
+    this.syncFloatingCalloutDom(now);
+  }
 
-      for (const ft of this.floatingTexts) {
-        const t = Math.max(0, Math.min(1, (now - ft.createdAtMs) / ft.durationMs));
-        const risePx = Math.round(t * 10);
-        const sx = Math.round(ft.worldX - this.cameraX);
-        const sy = Math.round(ft.worldY - this.cameraY - risePx);
+  private syncFloatingCalloutDom(now: number): void {
+    if (this.floatingTexts.length === 0) return;
 
-        ctx.globalAlpha = t > 0.78 ? Math.max(0, (1 - t) / 0.22) : 1;
-        ctx.fillStyle = '#050a14';
-        ctx.fillText(ft.text, sx + 1, sy + 1);
-        ctx.fillText(ft.text, sx - 1, sy + 1);
-        ctx.fillText(ft.text, sx, sy + 2);
-        ctx.fillStyle = ft.color;
-        ctx.fillText(ft.text, sx, sy);
+    const stageW = this.canvasStageEl.clientWidth || 640;
+    const stageH = this.canvasStageEl.clientHeight || 480;
+    const canvasOffsetX = (stageW - this.bufferWidth * this.displayScale) / 2;
+    const canvasOffsetY = (stageH - this.bufferHeight * this.displayScale) / 2;
+    const stackCounts = new Map<string, number>();
+
+    for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+      const ft = this.floatingTexts[i]!;
+      const el = this.floatingTextEls.get(ft.id);
+      if (!el) continue;
+
+      const tileBucketKey = `${Math.round(ft.worldX)}:${Math.round(ft.worldY)}`;
+      const stackIdx = stackCounts.get(tileBucketKey) ?? 0;
+      stackCounts.set(tileBucketKey, stackIdx + 1);
+
+      const t = Math.max(0, Math.min(1, (now - ft.createdAtMs) / Math.max(1, ft.durationMs)));
+      const riseCssPx = Math.round(t * 12 * this.displayScale + stackIdx * 11 * this.displayScale);
+      const screenX = Math.round(canvasOffsetX + (ft.worldX - this.cameraX) * this.displayScale);
+      const screenY = Math.round(
+        canvasOffsetY + (ft.worldY - this.cameraY) * this.displayScale - riseCssPx
+      );
+      const fontPx = Math.max(14, Math.round((ft.emphasis ? 10 : 9) * this.displayScale));
+      const alpha = t > 0.78 ? Math.max(0, (1 - t) / 0.22) : 1;
+
+      el.style.left = `${screenX}px`;
+      el.style.top = `${screenY}px`;
+      el.style.fontSize = `${fontPx}px`;
+      el.style.opacity = alpha.toFixed(3);
+
+      if (t < 0.14) {
+        const popT = t / 0.14;
+        const peak = ft.emphasis ? 1.24 : 1.14;
+        const scale = peak - (peak - 1) * popT;
+        el.style.transform = `translate3d(-50%, -100%, 0) scale(${scale.toFixed(3)})`;
+      } else {
+        el.style.transform = 'translate3d(-50%, -100%, 0)';
       }
-      ctx.restore();
     }
   }
 
