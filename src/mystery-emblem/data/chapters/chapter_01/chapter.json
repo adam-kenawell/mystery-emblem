@@ -4,27 +4,27 @@
   "order": 1,
   "dungeonNumber": 2,
   "shortCode": "Ch. 1",
-  "label": "Chapter 1 — Verdant Bluff",
-  "title": "Verdant Bluff",
+  "label": "Chapter 1 — Capital Road",
+  "title": "Capital Road",
   "subtitle": "Chapter 1",
   "defaultTilesetId": "003",
   "bgmCue": "drenched_bluff",
   "objectiveType": "defeat_boss",
   "objectiveLabel": "Defeat Boss: Captain Aron",
   "recommendedLevel": 2,
-  "deploymentCap": 5,
+  "deploymentCap": 4,
   "postStoryCutsceneId": "cs_03_bluff_campfire",
   "width": 18,
   "height": 12,
   "rows": [
     "X:34 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:33",
-    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:96 X:21",
-    "X:3 F:28 F:92 F:28 F:28 F:9 F:28 F:28 F:28 X:26 F:28 F:28 F:28 F:28 X:27 F:131 F:28 X:21",
+    "X:3 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:96 X:21",
+    "X:3 F:28 F:92 F:28 T:142:1 F:9 F:28 F:28 F:28 X:26 F:28 F:28 F:28 F:28 X:27 F:131 F:28 X:21",
     "X:3 F:28 F:28 F:28 F:131 F:28 F:28 W:41 F:28 X:56 X:8 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
-    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:66 X:8 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 X:66 X:8 F:28 T:142:1 F:28 F:28 F:28 F:28 X:21",
     "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:9 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
     "X:3 F:28 F:28 F:28 F:28 F:28 F:28 W:42 W:43 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
-    "X:3 F:28 F:28 F:28 F:28 F:9 F:28 W:58 W:59 F:28 F:28 F:28 F:28 F:9 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:9 F:28 W:58 W:59 F:28 T:142:1 F:28 F:28 F:9 F:28 F:28 F:28 X:21",
     "X:3 F:28 F:28 F:28 F:28 F:28 F:28 W:93 W:74 F:28 F:28 F:28 F:28 F:28 F:28 F:131 F:28 X:21",
     "X:3 F:28 F:131 F:28 W:41 F:28 F:28 F:131 F:28 F:28 X:27 F:28 F:28 F:28 W:41 F:28 F:28 X:21",
     "X:3 F:95 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
@@ -34,15 +34,38 @@
     {"x":3,"y":5,"speciesId":"dratini"},
     {"x":3,"y":3,"speciesId":"piplup"},
     {"x":3,"y":7,"speciesId":"flabebe"},
-    {"x":2,"y":4,"speciesId":"pidgey"},
-    {"x":2,"y":6,"speciesId":"sewaddle"}
+    {"x":2,"y":5,"speciesId":"sir_empoleon"}
   ],
-  "recruitment": {"seedKey":"slot1Flying","fixedSpeciesIds":["sewaddle"],"joinLevel":2,"scaleStatsToLevel":true,"fallbackSpeciesIds":["pidgey"]},
   "enemySpawns": [
-    {"id":"d2_enemy_0","x":12,"y":4,"speciesId":"zigzagoon_galar","nickname":"Bluff Outrider","level":2,"heldItemId":null,"aiMode":"wait_until_in_range"},
-    {"id":"d2_enemy_1","x":11,"y":7,"speciesId":"impidimp","nickname":"Cliff Hexer","level":2,"heldItemId":null,"aiMode":"wait_until_in_range"},
-    {"id":"d2_enemy_2","x":13,"y":3,"speciesId":"rookidee","nickname":"Bluff Harrier","level":2,"heldItemId":null,"aiMode":"wait_until_in_range"},
+    {"id":"d2_enemy_0","x":12,"y":4,"speciesId":"zigzagoon_galar","nickname":"Road Outrider","level":2,"heldItemId":null,"aiMode":"wait_until_in_range"},
+    {"id":"d2_enemy_1","x":11,"y":7,"speciesId":"impidimp","nickname":"Roadside Hexer","level":2,"heldItemId":null,"aiMode":"wait_until_in_range"},
+    {"id":"d2_enemy_2","x":13,"y":3,"speciesId":"rookidee","nickname":"Imperial Harrier","level":2,"heldItemId":null,"aiMode":"wait_until_in_range"},
     {"id":"d2_boss_aron","x":15,"y":5,"speciesId":"aron","nickname":"Captain Aron","level":3,"heldItemId":null,"isBoss":true,"stationary":true,"droppableItemId":"oran_berry","aiMode":"stationary"}
   ],
-  "reinforcements": []
+  "reinforcements": [],
+  "events": [
+    {
+      "id":"ev_ch1_bird_bug_crash",
+      "once":true,
+      "trigger":{"type":"turn_start","turnNumber":2,"phase":"player_phase"},
+      "actions":[
+        {
+          "type":"spawn_units",
+          "faction":"player",
+          "addToPermanentRoster":true,
+          "calloutText":"TRUCE ALLY!",
+          "bannerText":"Unlikely Truce!",
+          "units":[
+            {"id":"ch1_sewaddle","x":6,"y":3,"speciesId":"sewaddle","nickname":"Sewaddle","level":2},
+            {"id":"ch1_quiz_bird","x":5,"y":2,"speciesId":"pidgey","seedKey":"slot1Flying","nickname":"Pidgey","level":2}
+          ]
+        },
+        {
+          "type":"play_dialogue",
+          "scriptId":"ch1_bird_bug_truce_dialogue",
+          "restorePreviousBgmOnClose":true
+        }
+      ]
+    }
+  ]
 }

@@ -4,7 +4,7 @@
 
 import { loadSpeciesSpriteBundle } from '../../assets/pmdAssetLoader';
 import { buildSingleEnemyBattleUnit } from '../../engine/battleSetup';
-import { computeCombatForecast } from '../../engine/combatEngine';
+import { computeCombatForecast, computeStatusMoveForecast } from '../../engine/combatEngine';
 import { chooseEnemyAction } from '../../engine/enemyAi';
 import { getMapTerrainAt } from '../../engine/terrainAndPathfinding';
 import type { ManualEnemyBattleSpawn } from '../../types/schemas';
@@ -25,6 +25,10 @@ import { runTurnStartEvents, runUnitDefeatedEvents } from './battleEventRunner';
 import { spawnFloatingText } from './battleFloatingCallouts';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { checkAndTriggerMatchEnd, triggerVictoryModal } from './battleOutcomeModals';
+import {
+  playStatusHexActionAsync,
+  runFactionPhaseStartStatusTicks,
+} from './battleStatusHexController';
 import { triggerBattleTutorial } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
@@ -76,6 +80,8 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
 
   await runTurnStartEvents(ctx, state.turnNumber, 'enemy_phase', runGen);
   if (!state.openState || runGen !== state.battleRunGen) return;
+  runFactionPhaseStartStatusTicks(ctx, getLivingEnemies(state));
+  if (!state.openState || runGen !== state.battleRunGen) return;
 
   const protectedSet = new Set(state.defeatIfUnitIdsFall);
   const enemiesOrder = [...getLivingEnemies(state)];
@@ -96,7 +102,26 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
       updateBattleInfoStrip(ctx);
     }
 
-    if (decision.kind === 'attack' && decision.attack) {
+    if (decision.kind === 'status' && decision.statusHex) {
+      const target = state.units.find(
+        (u) => u.id === decision.statusHex!.targetUnitId && !u.defeated && u.currentHp > 0
+      );
+      if (target) {
+        const stForecast = computeStatusMoveForecast(
+          state.map,
+          enemy,
+          target,
+          decision.statusHex.moveId
+        );
+        if (stForecast && !stForecast.blockedReason) {
+          await waitBattleMs(state, 150);
+          if (!state.openState || runGen !== state.battleRunGen) return;
+          await playStatusHexActionAsync(ctx, enemy, target, stForecast, runGen);
+          if (!state.openState || runGen !== state.battleRunGen) return;
+          recomputeDangerArea(ctx);
+        }
+      }
+    } else if (decision.kind === 'attack' && decision.attack) {
       const target = state.units.find(
         (u) => u.id === decision.attack!.targetUnitId && !u.defeated && u.currentHp > 0
       );
@@ -157,8 +182,14 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
   if (!state.openState || runGen !== state.battleRunGen) return;
   if (checkAndTriggerMatchEnd(ctx)) return;
 
+  runFactionPhaseStartStatusTicks(ctx, getLivingAlliedUnits(state));
   for (const au of getLivingAlliedUnits(state)) {
     const terrain = getMapTerrainAt(state.map, au.x, au.y);
+    if (terrain === 'wonder_tile' && au.status !== null) {
+      au.status = null;
+      au.statusTurns = 0;
+      spawnFloatingText(state, dom, au.x, Math.max(0, au.y - 1), 'CURED!', '#68f8a8');
+    }
     if (terrain === 'wonder_tile' && au.currentHp < au.maxHp) {
       const healAmt = Math.max(1, Math.floor(au.maxHp * 0.2));
       const actualHeal = Math.min(au.maxHp - au.currentHp, healAmt);

@@ -39,7 +39,6 @@ export interface TempBattleBoosts {
 
 export interface BattleUnitState extends PathfindingUnitContext {
   slotIndex: number;
-  /** Links back to `OwnedPokemonInstance.instanceId` in `SaveStateManager` when deployed from roster */
   rosterInstanceId?: string;
   isLord: boolean;
   isBoss?: boolean;
@@ -63,7 +62,6 @@ export interface BattleUnitState extends PathfindingUnitContext {
   consumableItemId: string | null;
   status: StatusCondition | null;
   statusTurns?: number;
-  /** Single-battle X-Item boosts (`+3` stat / `+20%` Crit) that reset after the map */
   tempBattleBoosts?: TempBattleBoosts;
   activeMoves: BattleMoveSlot[];
   equippedMoveId: string | null;
@@ -73,12 +71,9 @@ export interface BattleUnitState extends PathfindingUnitContext {
   action: PmdSpriteAction;
   frameIndex: number;
   nextFrameAt: number;
-  /** World-space pixel coordinates in native 1x PMD pixels (`x * 24`, `y * 24`) */
   renderWorldX: number;
   renderWorldY: number;
-  /** Timestamp (`performance.now()`) until which a hurt white/red flash renders */
   hitFlashUntilMs: number;
-  /** `0` when alive/normal, `0..1` while dissolving out on KO */
   koDissolveProgress: number;
 }
 
@@ -113,7 +108,9 @@ export interface CombatForecast {
   projectedDefenderHp: number;
 }
 
-export function isOffensiveMove(move: MoveDefinition | undefined | null): move is MoveDefinition {
+export function isOffensiveMove(
+  move: MoveDefinition | undefined | null
+): move is MoveDefinition & { category: 'Physical' | 'Special' } {
   return Boolean(move && (move.category === 'Physical' || move.category === 'Special'));
 }
 
@@ -140,18 +137,44 @@ export function getOffensiveMovesAtDistance(
       distance >= slot.range[0] &&
       distance <= slot.range[1]
   );
+  matching.sort((a, b) => (a.id === unit.equippedMoveId ? 0 : 1) - (b.id === unit.equippedMoveId ? 0 : 1));
+  return matching;
+}
 
-  matching.sort((a, b) => {
-    const aEq = a.id === unit.equippedMoveId ? 0 : 1;
-    const bEq = b.id === unit.equippedMoveId ? 0 : 1;
-    return aEq - bEq;
+export function getEnemyTargetingMovesAtDistance(
+  unit: Pick<BattleUnitState, 'activeMoves' | 'equippedMoveId'> & { heldItemId?: string | null },
+  distance: number
+): BattleMoveSlot[] {
+  const assaultVestBlocksSupport = Boolean(
+    unit.heldItemId && getItemById(unit.heldItemId)?.effect.assaultVestSpdBoost
+  );
+  const matching = unit.activeMoves.filter((slot) => {
+    if (slot.ppRemaining <= 0 || distance < slot.range[0] || distance > slot.range[1]) {
+      return false;
+    }
+    if (isOffensiveMove(slot.move)) return true;
+    return (
+      !assaultVestBlocksSupport &&
+      slot.move.category === 'Support/Heal' &&
+      slot.move.supportSubkind === 'status' &&
+      slot.move.targetType === 'enemy' &&
+      Boolean(slot.move.supportPayload?.inflictStatus)
+    );
   });
 
+  matching.sort((a, b) => {
+    const aRank = a.id === unit.equippedMoveId ? 0 : isOffensiveMove(a.move) ? 1 : 2;
+    const bRank = b.id === unit.equippedMoveId ? 0 : isOffensiveMove(b.move) ? 1 : 2;
+    return aRank - bRank;
+  });
   return matching;
 }
 
 export function getUnitEffectiveCombatStats(
-  unit: Pick<BattleUnitState, 'speciesId' | 'stats' | 'heldItemId' | 'tempBattleBoosts'>
+  unit: Pick<BattleUnitState, 'speciesId' | 'stats' | 'heldItemId' | 'tempBattleBoosts'> & {
+    status?: StatusCondition | null;
+    personalSkillId?: string;
+  }
 ): {
   atk: number;
   def: number;
@@ -181,9 +204,7 @@ export function getUnitEffectiveCombatStats(
         spd += eff.choiceStatBoost.spd ?? 0;
         spe += eff.choiceStatBoost.spe ?? 0;
       }
-      if (eff.assaultVestSpdBoost) {
-        spd += eff.assaultVestSpdBoost;
-      }
+      if (eff.assaultVestSpdBoost) spd += eff.assaultVestSpdBoost;
       if (eff.evioliteDefSpdBoost) {
         const sp = getSpeciesById(unit.speciesId);
         if (sp && !sp.isFinalStage) {
@@ -195,6 +216,9 @@ export function getUnitEffectiveCombatStats(
       if (eff.critBonus) critBonus += eff.critBonus;
     }
   }
+
+  if (unit.status && unit.personalSkillId === 'guts') atk += 3;
+  if (unit.status === 'PAR') spe = Math.max(1, Math.floor(spe * 0.75));
 
   return { atk, def, spa, spd, spe, hitBonus, critBonus };
 }
@@ -209,10 +233,6 @@ export interface UnitPopupCombatSummary {
   terrainAvoidBonus: number;
 }
 
-/**
- * Computes concise, pre-calculated Might and Terrain-adjusted Defense/SpD for a unit's
- * floating Dungeon Hover Popup (`Effective Atk/SpA + [E] Move Mt + flat item/status mods`).
- */
 export function computeUnitPopupStats(
   map: DungeonMapDefinition,
   unit: BattleUnitState
@@ -235,7 +255,7 @@ export function computeUnitPopupStats(
       mightCategory = isPhysical ? 'Physical' : 'Special';
 
       let effectiveOffensiveStat = isPhysical ? eff.atk : eff.spa;
-      if (isPhysical && unit.status === 'BRN') {
+      if (isPhysical && unit.status === 'BRN' && unit.personalSkillId !== 'guts') {
         effectiveOffensiveStat = Math.floor(effectiveOffensiveStat * 0.5);
       } else if (!isPhysical && unit.status === 'FRZ') {
         effectiveOffensiveStat = Math.floor(effectiveOffensiveStat * 0.5);
@@ -246,16 +266,10 @@ export function computeUnitPopupStats(
         const held = getItemById(unit.heldItemId);
         if (held) {
           const itemEff = held.effect;
-          if (isPhysical && itemEff.physicalDamageBonus) {
-            itemFlatDamageBonus += itemEff.physicalDamageBonus;
-          }
-          if (!isPhysical && itemEff.specialDamageBonus) {
-            itemFlatDamageBonus += itemEff.specialDamageBonus;
-          }
-          if (itemEff.flatDamageBonus) {
-            if (!itemEff.boostedType || itemEff.boostedType === move.type) {
-              itemFlatDamageBonus += itemEff.flatDamageBonus;
-            }
+          if (isPhysical && itemEff.physicalDamageBonus) itemFlatDamageBonus += itemEff.physicalDamageBonus;
+          if (!isPhysical && itemEff.specialDamageBonus) itemFlatDamageBonus += itemEff.specialDamageBonus;
+          if (itemEff.flatDamageBonus && (!itemEff.boostedType || itemEff.boostedType === move.type)) {
+            itemFlatDamageBonus += itemEff.flatDamageBonus;
           }
         }
       }

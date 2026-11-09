@@ -7,7 +7,7 @@ import { hasChapterMapOverride } from '../../data/chapterMapRegistry';
 import { getItemById } from '../../data/index';
 import {
   getHealingMovesForTargetAtDistance,
-  getOffensiveMovesAtDistance,
+  getEnemyTargetingMovesAtDistance,
   manhattanDistance,
   type BattleMoveSlot,
   type BattleUnitState,
@@ -97,7 +97,7 @@ export function getAttackableEnemiesFromCurrentTile(
   const out: Array<{ enemy: BattleUnitState; distance: number; moves: BattleMoveSlot[] }> = [];
   for (const enemy of getLivingEnemies(state)) {
     const dist = manhattanDistance(unit.x, unit.y, enemy.x, enemy.y);
-    const moves = getOffensiveMovesAtDistance(unit, dist);
+    const moves = getEnemyTargetingMovesAtDistance(unit, dist);
     if (moves.length > 0) out.push({ enemy, distance: dist, moves });
   }
   return out;
@@ -232,6 +232,7 @@ export function buildBattleSceneSnapshot(
       activeMoveIds: u.activeMoves.map((m) => m.id),
       equippedMoveId: u.equippedMoveId,
       equippedItemId: u.heldItemId ?? u.consumableItemId ?? null,
+      status: u.status,
       waited: u.waited,
       defeated: u.defeated,
     })),

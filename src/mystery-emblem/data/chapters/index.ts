@@ -11,12 +11,14 @@ import { getSpeciesById } from '../index';
 import { getEffectiveChapterMap, hasChapterMapOverride } from '../mapOverrideStore';
 import { cloneDungeonMap } from './chapterCodec';
 import {
+  buildChapter01BirdBugTruceScript,
   buildChapter01IntroScript,
   buildChapter01OutroScript,
 } from './chapter_01/scripts';
 import {
   buildChapter02IntroScript,
   buildChapter02OutroScript,
+  buildChapter02TalkPsychicScript,
 } from './chapter_02/scripts';
 import {
   buildChapter03IntroScript,
@@ -27,6 +29,14 @@ import {
   buildChapter04OutroScript,
 } from './chapter_04/scripts';
 import {
+  buildChapter05IntroScript,
+  buildChapter05OutroScript,
+} from './chapter_05/scripts';
+import {
+  buildChapter06IntroScript,
+  buildChapter06OutroScript,
+} from './chapter_06/scripts';
+import {
   CHAPTER_LEVEL_CATALOG,
   getChapterCatalogEntry,
   getDefaultChapterMap,
@@ -34,6 +44,16 @@ import {
   validateDungeonMapDefinition,
 } from './defaultCatalog';
 import {
+  buildParalogue01IntroScript,
+  buildParalogue01OutroScript,
+  buildParalogue01TalkSlakothScript,
+} from './paralogue_01/scripts';
+import {
+  buildParalogue02IntroScript,
+  buildParalogue02OutroScript,
+} from './paralogue_02/scripts';
+import {
+  buildPrologueAmbushScript,
   buildPrologueIntroScript,
   buildPrologueOutroScript,
 } from './prologue/scripts';
@@ -61,22 +81,50 @@ const SCRIPTS_BY_ID: Readonly<Record<string, ChapterScriptSet>> = {
   prologue: {
     buildIntroScript: () => buildPrologueIntroScript(),
     buildOutroScript: () => buildPrologueOutroScript(),
+    eventScripts: {
+      prologue_ambush_dialogue: buildPrologueAmbushScript,
+    },
   },
   chapter_01: {
     buildIntroScript: buildChapter01IntroScript,
     buildOutroScript: () => buildChapter01OutroScript(),
+    eventScripts: {
+      ch1_bird_bug_truce_dialogue: buildChapter01BirdBugTruceScript,
+    },
   },
   chapter_02: {
     buildIntroScript: buildChapter02IntroScript,
     buildOutroScript: buildChapter02OutroScript,
+    eventScripts: {
+      ch2_talk_psychic_dialogue: buildChapter02TalkPsychicScript,
+    },
   },
   chapter_03: {
     buildIntroScript: () => buildChapter03IntroScript(),
     buildOutroScript: () => buildChapter03OutroScript(),
   },
+  paralogue_01: {
+    buildIntroScript: buildParalogue01IntroScript,
+    buildOutroScript: buildParalogue01OutroScript,
+    eventScripts: {
+      p1_talk_slakoth_dialogue: buildParalogue01TalkSlakothScript,
+    },
+  },
   chapter_04: {
     buildIntroScript: buildChapter04IntroScript,
     buildOutroScript: () => buildChapter04OutroScript(),
+  },
+  paralogue_02: {
+    buildIntroScript: () => buildParalogue02IntroScript(),
+    buildOutroScript: () => buildParalogue02OutroScript(),
+  },
+  chapter_05: {
+    buildIntroScript: buildChapter05IntroScript,
+    buildOutroScript: buildChapter05OutroScript,
+  },
+  chapter_06: {
+    buildIntroScript: () => buildChapter06IntroScript(),
+    buildOutroScript: () => buildChapter06OutroScript(),
   },
 };
 

@@ -114,7 +114,7 @@ export function computeUnitMovementAndAttackRange(
   const supportRanges: Array<[number, number]> = [];
 
   for (const mv of unit.activeMoves) {
-    if (mv.ppRemaining <= 0) continue;
+    if (mv.ppRemaining <= 0 || unit.status === 'SLP') continue;
     if (mv.targetType === 'enemy') {
       enemyRanges.push(mv.range);
     } else if (

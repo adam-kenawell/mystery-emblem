@@ -6,6 +6,7 @@ import {
   ALL_KECLEON_SHOP_TYPES,
   DEMO_OVERWORLD_GRAPH,
   buildKecleonShopInventory,
+  type KecleonShopBuildOptions,
   type OverworldGraphDefinition,
   type OverworldNodeDefinition,
 } from '../../data/overworldMapData';
@@ -18,7 +19,8 @@ import type {
 
 export function buildKecleonShopState(
   shopType?: KecleonShopType,
-  rng: () => number = Math.random
+  rng: () => number = Math.random,
+  options?: KecleonShopBuildOptions
 ): KecleonShopSpawnState {
   const validType =
     shopType && ALL_KECLEON_SHOP_TYPES.includes(shopType) ? shopType : undefined;
@@ -29,7 +31,7 @@ export function buildKecleonShopState(
     ]!;
   return {
     shopType: resolvedType,
-    inventoryItemIds: buildKecleonShopInventory(resolvedType, rng),
+    inventoryItemIds: buildKecleonShopInventory(resolvedType, rng, options),
   };
 }
 
@@ -54,6 +56,7 @@ export function buildSkirmishSpawnState(
 export interface PostBattleSpawnOptions {
   justClearedNodeId?: string;
   kecleonShopsUnlocked: boolean;
+  completedChapterIds?: ReadonlyArray<string>;
   skirmishChance?: number;
   maxActiveSkirmishes?: number;
   shopChance?: number;
@@ -107,11 +110,15 @@ export function rollPostBattleOverworldSpawns(
 
   if (options.kecleonShopsUnlocked && clearedDefs.length > 0) {
     const activeShopCount = clearedDefs.filter((def) => Boolean(nodes[def.id]?.activeKecleonShop)).length;
-    if (activeShopCount < maxActiveShops && rng() < shopChance) {
+    const effectiveShopChance =
+      options.justClearedNodeId === 'paralogue_02' && activeShopCount === 0 ? 1 : shopChance;
+    if (activeShopCount < maxActiveShops && rng() < effectiveShopChance) {
       const candidates = clearedDefs.filter((def) => !nodes[def.id]?.activeKecleonShop);
       if (candidates.length > 0) {
         const picked = candidates[Math.floor(rng() * candidates.length) % candidates.length]!;
-        const shopState = buildKecleonShopState(undefined, rng);
+        const shopState = buildKecleonShopState(undefined, rng, {
+          completedChapterIds: options.completedChapterIds,
+        });
         nodes[picked.id]!.activeKecleonShop = shopState;
         spawnedShopNodeId = picked.id;
         spawnedShopType = shopState.shopType;

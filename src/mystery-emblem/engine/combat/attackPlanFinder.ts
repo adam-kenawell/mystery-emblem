@@ -1,7 +1,8 @@
 /**
- * Direct-Click Offensive Attack Plan & Stop-Tile Planner
+ * Direct-Click Offensive & Enemy-Status Attack Plan & Stop-Tile Planner
  */
 
+import { getItemById } from '../../data/index';
 import type { DungeonMapDefinition } from '../../types/schemas';
 import {
   coordKey,
@@ -13,12 +14,13 @@ import {
   type ReachableTileInfo,
 } from '../terrainAndPathfinding';
 import {
-  getOffensiveMovesAtDistance,
+  getEnemyTargetingMovesAtDistance,
   isOffensiveMove,
   manhattanDistance,
   type BattleMoveSlot,
   type BattleUnitState,
 } from './combatTypesAndStats';
+import { isEnemyStatusMove } from './statusEngine';
 
 export interface DirectAttackPlan {
   stopX: number;
@@ -30,7 +32,8 @@ export interface DirectAttackPlan {
 
 /**
  * When a player selects `attacker` and directly taps/clicks `targetEnemy`, finds the optimal
- * reachable Blue stopping tile and default offensive move to open the Combat Forecast.
+ * reachable Blue stopping tile and default enemy-targeting move (offensive or status hex)
+ * to open the Combat Forecast.
  */
 export function findBestAttackPlanForTarget(
   map: DungeonMapDefinition,
@@ -45,6 +48,7 @@ export function findBestAttackPlanForTarget(
     cost: number;
     staysOnOrigin: boolean;
     usesEquippedMove: boolean;
+    hasOffensiveMove: boolean;
     terrainScore: number;
     availableMoves: BattleMoveSlot[];
   }
@@ -53,7 +57,7 @@ export function findBestAttackPlanForTarget(
 
   for (const stop of reachableTiles.values()) {
     const dist = manhattanDistance(stop.x, stop.y, targetEnemy.x, targetEnemy.y);
-    const availableMoves = getOffensiveMovesAtDistance(attacker, dist);
+    const availableMoves = getEnemyTargetingMovesAtDistance(attacker, dist);
     if (availableMoves.length === 0) continue;
 
     const terrain = getMapTerrainAt(map, stop.x, stop.y) ?? 'floor';
@@ -61,6 +65,7 @@ export function findBestAttackPlanForTarget(
     const terrainScore = bonuses.defBonus * 10 + bonuses.avoidBonus;
     const staysOnOrigin = stop.x === attacker.x && stop.y === attacker.y;
     const usesEquippedMove = availableMoves.some((m) => m.id === attacker.equippedMoveId);
+    const hasOffensiveMove = availableMoves.some((m) => isOffensiveMove(m.move));
 
     candidates.push({
       stopX: stop.x,
@@ -68,6 +73,7 @@ export function findBestAttackPlanForTarget(
       cost: stop.cost,
       staysOnOrigin,
       usesEquippedMove,
+      hasOffensiveMove,
       terrainScore,
       availableMoves,
     });
@@ -78,6 +84,7 @@ export function findBestAttackPlanForTarget(
   candidates.sort((a, b) => {
     if (a.staysOnOrigin !== b.staysOnOrigin) return a.staysOnOrigin ? -1 : 1;
     if (a.usesEquippedMove !== b.usesEquippedMove) return a.usesEquippedMove ? -1 : 1;
+    if (a.hasOffensiveMove !== b.hasOffensiveMove) return a.hasOffensiveMove ? -1 : 1;
     if (a.cost !== b.cost) return a.cost - b.cost;
     if (a.terrainScore !== b.terrainScore) return b.terrainScore - a.terrainScore;
     return coordKey(a.stopX, a.stopY).localeCompare(coordKey(b.stopX, b.stopY));
@@ -100,17 +107,24 @@ export function findBestAttackPlanForTarget(
 }
 
 /**
- * Returns all offensive move slots (`ppRemaining > 0`) on `attacker` that can strike `targetEnemy`
- * from at least one legal stopping tile in `reachableTiles`.
+ * Returns all enemy-targeting move slots (`ppRemaining > 0`) on `attacker` that can target
+ * `targetEnemy` from at least one legal stopping tile in `reachableTiles`.
  */
 export function getOffensiveMovesReachableForTarget(
-  attacker: Pick<BattleUnitState, 'activeMoves' | 'equippedMoveId'>,
+  attacker: Pick<BattleUnitState, 'activeMoves' | 'equippedMoveId'> & { heldItemId?: string | null },
   targetEnemy: Pick<BattleUnitState, 'x' | 'y'>,
   reachableTiles: ReadonlyMap<string, ReachableTileInfo>
 ): BattleMoveSlot[] {
+  const assaultVestBlocksSupport = Boolean(
+    attacker.heldItemId && getItemById(attacker.heldItemId)?.effect.assaultVestSpdBoost
+  );
   const available: BattleMoveSlot[] = [];
   for (const slot of attacker.activeMoves) {
-    if (slot.ppRemaining <= 0 || !isOffensiveMove(slot.move)) continue;
+    if (slot.ppRemaining <= 0) continue;
+    const usableKind =
+      isOffensiveMove(slot.move) || (!assaultVestBlocksSupport && isEnemyStatusMove(slot.move));
+    if (!usableKind) continue;
+
     let canUse = false;
     for (const stop of reachableTiles.values()) {
       const dist = manhattanDistance(stop.x, stop.y, targetEnemy.x, targetEnemy.y);
@@ -124,9 +138,9 @@ export function getOffensiveMovesReachableForTarget(
     }
   }
   available.sort((a, b) => {
-    const aEq = a.id === attacker.equippedMoveId ? 0 : 1;
-    const bEq = b.id === attacker.equippedMoveId ? 0 : 1;
-    return aEq - bEq;
+    const aRank = a.id === attacker.equippedMoveId ? 0 : isOffensiveMove(a.move) ? 1 : 2;
+    const bRank = b.id === attacker.equippedMoveId ? 0 : isOffensiveMove(b.move) ? 1 : 2;
+    return aRank - bRank;
   });
   return available;
 }

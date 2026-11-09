@@ -10,7 +10,7 @@
   "defaultTilesetId": "002",
   "bgmCue": "beach_cave",
   "objectiveType": "rout",
-  "objectiveLabel": "Rout All Enemies",
+  "objectiveLabel": "Spar with Sir Empoleon",
   "recommendedLevel": 1,
   "deploymentCap": 3,
   "skipPrepPhase": true,
@@ -21,14 +21,14 @@
   "rows": [
     "X:38 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:37",
     "X:3 F:32 F:28 F:28 W:43 F:28 F:98 F:28 F:28 F:28 F:32 F:28 W:43 F:28 F:28 X:27 F:28 X:21",
-    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:27 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 W:43 F:28 X:27 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
     "X:3 F:98 F:28 F:28 F:28 F:28 F:34 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:34 F:28 F:28 X:21",
-    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
-    "X:3 F:32 F:28 F:28 F:28 F:28 F:28 W:43 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:43 X:21",
-    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:32 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:34 F:28 F:28 F:28 F:28 F:98 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:32 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:43 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:34 F:28 F:28 F:28 F:28 F:28 F:32 X:21",
     "X:3 W:43 F:28 F:28 F:28 F:28 X:27 F:32 F:28 F:28 F:98 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
     "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:98 F:28 X:21",
-    "X:3 F:28 F:32 F:28 F:28 F:28 F:34 F:28 F:28 F:32 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:32 F:28 F:28 F:28 F:34 F:28 F:28 F:32 F:28 W:43 F:28 F:28 F:28 F:28 F:28 X:21",
     "X:3 F:28 F:28 X:27 F:28 F:28 F:28 F:28 F:28 F:28 W:43 F:28 F:28 F:28 F:28 F:32 F:28 X:21",
     "X:39 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:50"
   ],
@@ -38,9 +38,71 @@
     {"x":3,"y":7,"speciesId":"flabebe"}
   ],
   "enemySpawns": [
-    {"id":"d1_enemy_0","x":12,"y":5,"speciesId":"zigzagoon_galar","nickname":"Feral Outrider","level":1,"heldItemId":null,"aiMode":"wait_until_in_range"},
-    {"id":"d1_enemy_1","x":12,"y":3,"speciesId":"impidimp","nickname":"Shadow Raider","level":1,"heldItemId":null,"droppableItemId":"evolution_stone","aiMode":"wait_until_in_range"},
-    {"id":"d1_enemy_2","x":13,"y":7,"speciesId":"pawniard","nickname":"Ironscale Scout","level":2,"heldItemId":null,"aiMode":"wait_until_in_range"}
+    {
+      "id":"prologue_sir_empoleon",
+      "x":8,
+      "y":5,
+      "speciesId":"sir_empoleon",
+      "nickname":"Sir Empoleon",
+      "level":12,
+      "moveIds":["peck","metal_claw","bubble_beam","aqua_jet"],
+      "equippedMoveId":"peck",
+      "heldItemId":null,
+      "stationary":true,
+      "aiMode":"stationary"
+    }
   ],
-  "reinforcements": []
+  "reinforcements": [],
+  "events": [
+    {
+      "id":"ev_prologue_ambush",
+      "once":true,
+      "trigger":{"type":"turn_start","turnNumber":1,"phase":"enemy_phase"},
+      "actions":[
+        {
+          "type":"spawn_units",
+          "faction":"enemy",
+          "calloutText":"AMBUSH!",
+          "bannerText":"Feral & Imperial Scouts!",
+          "units":[
+            {"id":"d1_enemy_0","x":13,"y":5,"speciesId":"zigzagoon_galar","nickname":"Feral Outrider","level":1,"heldItemId":null,"aiMode":"wait_until_in_range"},
+            {"id":"d1_enemy_1","x":13,"y":3,"speciesId":"impidimp","nickname":"Feral Raider","level":1,"heldItemId":null,"droppableItemId":"oran_berry","aiMode":"wait_until_in_range"},
+            {"id":"d1_enemy_2","x":14,"y":7,"speciesId":"pawniard","nickname":"Ironscale Scout","level":2,"heldItemId":null,"droppableItemId":"potion","aiMode":"wait_until_in_range"}
+          ]
+        },
+        {
+          "type":"convert_unit",
+          "targetUnitId":"prologue_sir_empoleon",
+          "toFaction":"player",
+          "healToFull":true,
+          "readyToAct":true,
+          "calloutText":"SIR EMPOLEON JOINED!",
+          "addToPermanentRoster":true
+        },
+        {
+          "type":"play_dialogue",
+          "scriptId":"prologue_ambush_dialogue",
+          "restorePreviousBgmOnClose":true
+        },
+        {
+          "type":"set_objective",
+          "objectiveType":"rout",
+          "objectiveLabel":"Rout All Enemies"
+        }
+      ]
+    },
+    {
+      "id":"ev_prologue_mentor_fallback",
+      "once":true,
+      "trigger":{"type":"battle_victory"},
+      "actions":[
+        {
+          "type":"recruit_post_battle",
+          "speciesId":"sir_empoleon",
+          "level":12,
+          "scaleStatsToLevel":false
+        }
+      ]
+    }
+  ]
 }

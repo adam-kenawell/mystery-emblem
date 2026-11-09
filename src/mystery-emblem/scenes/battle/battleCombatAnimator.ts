@@ -6,6 +6,9 @@ import { directionFromDelta } from '../../assets/pmdAssetLoader';
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
 import { getItemById } from '../../data/index';
 import {
+  STATUS_ACTION_CALLOUTS,
+  STATUS_BADGE_COLORS,
+  applyInflictedStatusToUnit,
   resolveCombatExchange,
   type BattleUnitState,
   type CombatForecast,
@@ -170,6 +173,18 @@ export async function playCombatExchangeAsync(
       break;
     } else {
       target.action = 'Idle';
+      if (strike.inflictedStatus) {
+        const stRes = applyInflictedStatusToUnit(target, strike.inflictedStatus);
+        spawnFloatingText(
+          state,
+          dom,
+          target.x,
+          Math.max(0, target.y - 1),
+          stRes.lumBerryConsumed ? 'LUM BERRY!' : STATUS_ACTION_CALLOUTS[strike.inflictedStatus],
+          stRes.lumBerryConsumed ? '#68f8a8' : STATUS_BADGE_COLORS[strike.inflictedStatus],
+          880
+        );
+      }
     }
   }
 

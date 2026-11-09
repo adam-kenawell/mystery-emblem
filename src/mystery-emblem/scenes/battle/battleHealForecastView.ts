@@ -45,7 +45,7 @@ export function refreshHealForecastModalDom(ctx: BattleControllerContext): void 
   const defCardEl = backdrop.querySelector<HTMLElement>('[data-testid="forecast-defender-card"]');
   if (defCardEl) defCardEl.className = 'pmd-fe-enemy-box is-ally-heal';
   const confirmBtnEl = backdrop.querySelector<HTMLElement>('[data-testid="forecast-attack-btn"]');
-  if (confirmBtnEl) confirmBtnEl.textContent = 'Heal!';
+  if (confirmBtnEl) { confirmBtnEl.textContent = 'Heal!'; (confirmBtnEl as HTMLButtonElement).disabled = false; }
 
   renderForecastMoveList(ctx, healer, validMoves, activeSlot.id, () =>
     refreshHealForecastModalDom(ctx)

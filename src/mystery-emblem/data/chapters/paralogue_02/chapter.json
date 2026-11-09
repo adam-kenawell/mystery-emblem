@@ -1,0 +1,59 @@
+{
+  "id": "paralogue_02",
+  "nodeId": "paralogue_02",
+  "order": 6,
+  "dungeonNumber": 7,
+  "shortCode": "Par. 2",
+  "label": "Paralogue 2 — Oran Forest",
+  "title": "Oran Forest",
+  "subtitle": "Paralogue 2",
+  "defaultTilesetId": "042",
+  "bgmCue": "outlaw",
+  "objectiveType": "protect_npc",
+  "objectiveLabel": "Protect Kecleon & Rout Raiders",
+  "defeatIfUnitIdsFall": ["p2_kecleon"],
+  "recommendedLevel": 5,
+  "deploymentCap": 7,
+  "guaranteesKecleonShopOnClear": {"nodeId":"paralogue_02","shopType":"healing_shop"},
+  "clearRewardItems": [
+    {"itemId":"evolution_stone","quantity":1}
+  ],
+  "width": 18,
+  "height": 12,
+  "rows": [
+    "X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1",
+    "X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2",
+    "F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:124 F:28 F:28 F:28 F:28 F:28 F:28 W:39 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 WT:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:39 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:124 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 S:28 F:28",
+    "F:28 F:28 F:28 F:28 W:39 F:28 F:28 F:28 T:142:1 F:28 F:28 F:124 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:39 F:28 F:124 F:28 F:28",
+    "X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5"
+  ],
+  "playerSlots": [
+    {"x":3,"y":5,"speciesId":"dratini"},
+    {"x":3,"y":3,"speciesId":"piplup"},
+    {"x":3,"y":7,"speciesId":"flabebe"},
+    {"x":2,"y":4,"speciesId":"sir_empoleon"},
+    {"x":2,"y":6,"speciesId":"pidgey"},
+    {"x":2,"y":8,"speciesId":"ralts"},
+    {"x":4,"y":5,"speciesId":"elekid"}
+  ],
+  "npcSpawns": [
+    {"id":"p2_kecleon","x":7,"y":5,"speciesId":"kecleon","nickname":"Kecleon","level":8,"stationary":true,"mustSurvive":true}
+  ],
+  "enemySpawns": [
+    {"id":"p2_enemy_0","x":11,"y":3,"speciesId":"pawniard","nickname":"Toll Collector","level":5,"heldItemId":null,"aiMode":"aggressive"},
+    {"id":"p2_enemy_1","x":12,"y":7,"speciesId":"croagunk","nickname":"Forest Brigand","level":5,"heldItemId":null,"aiMode":"wait_until_in_range"},
+    {"id":"p2_enemy_2","x":13,"y":4,"speciesId":"venipede","nickname":"Canopy Raider","level":5,"heldItemId":null,"aiMode":"wait_until_in_range"},
+    {"id":"p2_enemy_3","x":14,"y":8,"speciesId":"rookidee","nickname":"Sky Lookout","level":5,"heldItemId":null,"aiMode":"wait_until_in_range"},
+    {"id":"p2_boss_lairon","x":15,"y":5,"speciesId":"lairon","nickname":"Enforcer Lairon","level":6,"stats":{"hp":25,"atk":9,"def":11,"spa":5,"spd":7,"spe":5,"mov":4},"heldItemId":null,"isBoss":true,"droppableItemId":"tm02_swift","aiMode":"wait_until_in_range"}
+  ],
+  "reinforcements": [
+    {"id":"p2_reinforce_t3_woods","turnNumber":3,"stairsX":16,"stairsY":8,"enemy":{"id":"p2_reinf_impidimp","x":16,"y":8,"speciesId":"impidimp","nickname":"Looter Impidimp","level":5,"heldItemId":null,"aiMode":"aggressive"}}
+  ]
+}

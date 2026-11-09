@@ -7,8 +7,8 @@
 
 import { WIMPOD_PMD_ASSET_ID } from '../assets/pmdAssetLoader';
 import {
-  CHANCELLOR_SERPERIOR_PMD_ASSET_ID,
-  HIGH_SEERESS_MILOTIC_PMD_ASSET_ID,
+  KING_SERPERIOR_PMD_ASSET_ID,
+  LADY_MILOTIC_PMD_ASSET_ID,
 } from './campaignRegistry';
 import { getSpeciesById } from './index';
 import { KECLEON_PMD_ASSET_ID } from './overworldMapData';
@@ -44,9 +44,9 @@ export interface CreditsEndCardCopy {
 export const CREDITS_HERO_META = {
   eyebrow: 'POKÉMON MYSTERY DUNGEON × FIRE EMBLEM',
   mainTitle: 'MYSTERY EMBLEM',
-  actSubtitleDemo: 'Act I — The Verdant Commonwealth',
+  actSubtitleDemo: 'Part 1A — The Verdant Heartland',
   actSubtitleFull: 'Chronicles of the Five Kingdoms',
-  castSectionHeading: 'HEROES OF THE VERDANT COMMONWEALTH',
+  castSectionHeading: 'HEROES OF THE VERDANT HEARTLAND',
 } as const;
 
 export const CREDITS_STATIC_SECTIONS: ReadonlyArray<CreditsSectionBlock> = [
@@ -88,16 +88,19 @@ export const CREDITS_LEGAL_DISCLAIMER =
   'Mystery Emblem is a free, non-commercial fan project. Pokémon and Fire Emblem are trademarks of Nintendo, Creatures Inc., GAME FREAK inc., Spike Chunsoft, and Intelligent Systems.';
 
 const LINE_ROLE_LABELS: Readonly<Record<string, string>> = {
-  piplup_line: 'Headstrong Vanguard & Childhood Best Friend',
-  flabebe_line: 'Sanctuary Healer & Heart of the Tribe',
-  sewaddle_line: 'Verdant Bluff Forest Scout',
+  piplup_line: 'Headstrong Vanguard & Foster Brother',
+  flabebe_line: 'Sanctuary Healer & Childhood Friend',
+  sir_empoleon_line: 'Veteran Royal Guard & Foster Mentor',
+  sewaddle_line: 'Capital Road Brush Scout',
+  duskull_line: 'Lantern Keeper of Northern Pass',
+  slakoth_line: 'Sleepy Lush Prairie Powerhouse',
   wimpod_line: 'Armored Tactician & Reformed Hazard Scholar',
   oricorio_line: 'Inspiring Dancer of the Five Kingdoms',
 };
 
 export function resolveUnitCreditsRoleLabel(unit: OwnedPokemonInstance, index: number): string {
   if (index === 0 || unit.isLord) {
-    return 'Sheltered Dragon Scion & Tribe Strategist';
+    return 'Dragon Kingdom Scion & Foster Strategist';
   }
   const sp = getSpeciesById(unit.speciesId);
   if (sp?.lineId && LINE_ROLE_LABELS[sp.lineId]) {
@@ -119,15 +122,15 @@ export function getCreditsNpcShowcaseList(save: SaveData | null): CreditsNpcCast
   npcs.push(
     {
       id: 'serperior',
-      assetId: CHANCELLOR_SERPERIOR_PMD_ASSET_ID,
-      name: 'Chancellor Serperior',
-      subtitle: 'Co-Ruler of the Verdant Commonwealth',
+      assetId: KING_SERPERIOR_PMD_ASSET_ID,
+      name: 'King Serperior',
+      subtitle: 'Sovereign of the Verdant Commonwealth',
     },
     {
       id: 'milotic',
-      assetId: HIGH_SEERESS_MILOTIC_PMD_ASSET_ID,
-      name: 'High Seeress Milotic',
-      subtitle: 'Co-Ruler of the Verdant Commonwealth',
+      assetId: LADY_MILOTIC_PMD_ASSET_ID,
+      name: 'Lady Milotic',
+      subtitle: 'Royal Advisor of the Verdant Commonwealth',
     },
     {
       id: 'kecleon',
@@ -141,9 +144,9 @@ export function getCreditsNpcShowcaseList(save: SaveData | null): CreditsNpcCast
 
 export function resolveCreditsEndCardCopy(save: SaveData | null): CreditsEndCardCopy {
   const rosterLen = save?.roster.length ?? 0;
-  const clearedCount = save?.campaign.completedChapterIds.length ?? 5;
+  const clearedCount = save?.campaign.completedChapterIds.length ?? 7;
   const isFullCampaign = save?.campaign.campaignMode === 'main';
-  const totalChapterTarget = isFullCampaign ? Math.max(26, clearedCount) : 5;
+  const totalChapterTarget = isFullCampaign ? Math.max(26, clearedCount) : 9;
 
   return {
     eyebrow: isFullCampaign ? 'CAMPAIGN COMPLETE' : 'DEMO COMPLETE',
@@ -152,8 +155,8 @@ export function resolveCreditsEndCardCopy(save: SaveData | null): CreditsEndCard
       : 'Thank You for Playing the Mystery Emblem Demo!',
     teaserLine: isFullCampaign
       ? 'Peace returns across the Five Kingdoms — New Game Plus awaits!'
-      : 'Act II — Beyond the Commonwealth & Across the Five Kingdoms · Coming Soon!',
-    statsLine: `Chapters Cleared: ${clearedCount} / ${totalChapterTarget}  ·  Allies Recruited: ${Math.max(3, rosterLen)}`,
+      : 'Part 1B — Into the Goldensand Diarchy & Across the Five Kingdoms · Coming Soon!',
+    statsLine: `Chapters Cleared: ${clearedCount} / ${totalChapterTarget}  ·  Allies Recruited: ${Math.max(4, rosterLen)}`,
     finishButtonLabel: 'Return to World Map ▶',
   };
 }

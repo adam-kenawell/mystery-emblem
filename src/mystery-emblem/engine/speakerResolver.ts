@@ -3,7 +3,7 @@
  *
  * Single source of truth used across `DialogueOverlay`, `CutsceneScene`, `TutorialOverlay`,
  * `CreditsScene`, and chapter scripts:
- * - Resolves `{lord | partner | healer | advisor | quiz_slot | unit | species | npc}`
+ * - Resolves `{lord | partner | healer | mentor | advisor | quiz_slot | unit | species | npc}`
  * - Honors custom nicknames and live Stage 1 -> Stage 2 -> Stage 3 evolved `speciesId`
  * - Automatically maps 1-to-1 Lord -> Flabébé flower `cosmeticForm` (`0669/000X`..`0671/000X`)
  * - Automatically transitions `{ kind: 'advisor' }` from sideline NPC Wimpod (`0767`) to playable
@@ -16,6 +16,7 @@ import {
   resolveSpeciesAssetTarget,
   resolveUnitVisualAssetId,
 } from '../assets/pmdAssetLoader';
+import { MENTOR_JAGEN_SPECIES_ID } from '../data/campaignConfig';
 import { getSpeciesById } from '../data/index';
 import type {
   OwnedPokemonInstance,
@@ -28,6 +29,7 @@ export type DialogueSpeakerRef =
   | { kind: 'lord'; fallbackSpeciesId?: string }
   | { kind: 'partner'; fallbackSpeciesId?: string }
   | { kind: 'healer'; fallbackSpeciesId?: string }
+  | { kind: 'mentor'; fallbackSpeciesId?: string }
   | { kind: 'advisor'; nickname?: string }
   | { kind: 'quiz_slot'; slot: QuizSeedSlotKey; index?: number; fallbackSpeciesId?: string }
   | { kind: 'unit'; instanceId: string; fallbackSpeciesId?: string }
@@ -70,6 +72,15 @@ export function findHealerRosterUnit(save: SaveData | null): OwnedPokemonInstanc
   return byLine ?? save.roster[2];
 }
 
+export function findMentorRosterUnit(save: SaveData | null): OwnedPokemonInstance | undefined {
+  if (!save) return undefined;
+  return save.roster.find(
+    (u) =>
+      u.speciesId === MENTOR_JAGEN_SPECIES_ID ||
+      getSpeciesById(u.speciesId)?.lineId === 'sir_empoleon_line'
+  );
+}
+
 export function findAdvisorRosterUnit(save: SaveData | null): OwnedPokemonInstance | undefined {
   if (!save) return undefined;
   if (save.campaign.advisorInstanceId) {
@@ -89,10 +100,12 @@ export function resolveRecruitCameoUnits(save: SaveData | null): OwnedPokemonIns
   const lord = findLordRosterUnit(save);
   const partner = findPartnerRosterUnit(save);
   const healer = findHealerRosterUnit(save);
+  const mentor = findMentorRosterUnit(save);
   const advisor = findAdvisorRosterUnit(save);
   if (lord) coreIds.add(lord.instanceId);
   if (partner) coreIds.add(partner.instanceId);
   if (healer) coreIds.add(healer.instanceId);
+  if (mentor) coreIds.add(mentor.instanceId);
   if (advisor) coreIds.add(advisor.instanceId);
   return save.roster.filter((u) => !coreIds.has(u.instanceId));
 }
@@ -187,6 +200,10 @@ export function resolveSpeakerIdentity(
       unit = findHealerRosterUnit(save);
       fallbackSpeciesId = speaker.fallbackSpeciesId ?? 'flabebe';
       break;
+    case 'mentor':
+      unit = findMentorRosterUnit(save);
+      fallbackSpeciesId = speaker.fallbackSpeciesId ?? MENTOR_JAGEN_SPECIES_ID;
+      break;
     case 'unit':
       unit = save?.roster.find((u) => u.instanceId === speaker.instanceId);
       fallbackSpeciesId = speaker.fallbackSpeciesId ?? 'axew';
@@ -233,12 +250,14 @@ export function interpolateCampaignText(
   const lordName = resolveSpeakerIdentity({ kind: 'lord' }, save).nickname;
   const partnerName = resolveSpeakerIdentity({ kind: 'partner' }, save).nickname;
   const healerName = resolveSpeakerIdentity({ kind: 'healer' }, save).nickname;
+  const mentorName = resolveSpeakerIdentity({ kind: 'mentor' }, save).nickname;
   const advisorName = resolveSpeakerIdentity({ kind: 'advisor' }, save).nickname;
 
   let out = rawText
     .replace(/\{lord\}/g, lordName)
     .replace(/\{partner\}/g, partnerName)
     .replace(/\{healer\}/g, healerName)
+    .replace(/\{mentor\}/g, mentorName)
     .replace(/\{advisor\}/g, advisorName);
 
   if (activeSpeakerNickname !== undefined) {

@@ -5,10 +5,13 @@
 import type { DungeonMapDefinition } from '../../types/schemas';
 import {
   computeCombatForecast,
+  computeStatusMoveForecast,
+  getEnemyStatusMovesAtDistance,
   getOffensiveMovesAtDistance,
   manhattanDistance,
   type BattleUnitState,
   type CombatForecast,
+  type StatusMoveForecast,
 } from '../combatEngine';
 import {
   areBattleFactionsAllied,
@@ -26,13 +29,21 @@ export interface EnemyAttackDecision {
   score: number;
 }
 
+export interface EnemyStatusDecision {
+  targetUnitId: string;
+  moveId: string;
+  forecast: StatusMoveForecast;
+  score: number;
+}
+
 export interface EnemyTurnDecision {
-  kind: 'attack' | 'pursue' | 'wait';
+  kind: 'attack' | 'status' | 'pursue' | 'wait';
   enemyId: string;
   stopX: number;
   stopY: number;
   path: AStarPathStep[];
   attack: EnemyAttackDecision | null;
+  statusHex?: EnemyStatusDecision | null;
 }
 
 function chooseAiUnitAction(
@@ -51,6 +62,7 @@ function chooseAiUnitAction(
       stopY: actor.y,
       path: stayPath,
       attack: null,
+      statusHex: null,
     };
   }
 
@@ -65,29 +77,30 @@ function chooseAiUnitAction(
       stopY: actor.y,
       path: stayPath,
       attack: null,
+      statusHex: null,
     };
   }
 
   const range = computeUnitMovementAndAttackRange(map, actor, allLivingUnits);
 
-  interface ScoredAttackCandidate {
+  interface ScoredCandidate {
+    kind: 'attack' | 'status';
     stopX: number;
     stopY: number;
     stopCost: number;
     targetUnitId: string;
     moveId: string;
-    forecast: CombatForecast;
+    forecast: CombatForecast | null;
+    statusForecast: StatusMoveForecast | null;
     score: number;
   }
 
-  const attackCandidates: ScoredAttackCandidate[] = [];
+  const candidates: ScoredCandidate[] = [];
 
   for (const stopTile of range.reachableTiles.values()) {
     for (const target of hostileTargets) {
       const dist = manhattanDistance(stopTile.x, stopTile.y, target.x, target.y);
       const validMoves = getOffensiveMovesAtDistance(actor, dist);
-      if (validMoves.length === 0) continue;
-
       for (const moveSlot of validMoves) {
         const forecast = computeCombatForecast(map, actor, target, moveSlot.id, {
           x: stopTile.x,
@@ -99,7 +112,6 @@ function chooseAiUnitAction(
           forecast.attackerSide.damage *
           forecast.attackerSide.strikes *
           (forecast.attackerSide.hitRate / 100);
-
         const expectedDamageTaken = forecast.defenderSide
           ? forecast.defenderSide.damage *
             forecast.defenderSide.strikes *
@@ -116,58 +128,91 @@ function chooseAiUnitAction(
 
         let score = 0;
         if (killsTarget) {
-          score += 1000;
-          if (isHighValue) score += 500;
+          score += 1000 + (isHighValue ? 500 : 0);
         }
-        if (isHighValue) {
-          score += 14;
-        }
+        if (isHighValue) score += 14;
         score += expectedDamageDealt * 5;
-        if (!forecast.defenderCanCounter) {
-          score += 28;
-        }
+        if (!forecast.defenderCanCounter) score += 28;
         score -= expectedDamageTaken * 2;
-        if (diesOnCounter) {
-          score -= 180;
-        }
+        if (diesOnCounter) score -= 180;
         score +=
           forecast.attackerTerrainBonuses.defBonus * 6 +
           forecast.attackerTerrainBonuses.avoidBonus * 0.4;
         score -= stopTile.cost * 0.45;
+        if (moveSlot.id === actor.equippedMoveId) score += 0.2;
 
-        if (moveSlot.id === actor.equippedMoveId) {
-          score += 0.2;
-        }
-
-        attackCandidates.push({
+        candidates.push({
+          kind: 'attack',
           stopX: stopTile.x,
           stopY: stopTile.y,
           stopCost: stopTile.cost,
           targetUnitId: target.id,
           moveId: moveSlot.id,
           forecast,
+          statusForecast: null,
+          score,
+        });
+      }
+
+      const statusSlots = getEnemyStatusMovesAtDistance(actor, dist);
+      for (const stSlot of statusSlots) {
+        const stForecast = computeStatusMoveForecast(map, actor, target, stSlot.id, {
+          x: stopTile.x,
+          y: stopTile.y,
+        });
+        if (!stForecast || stForecast.blockedReason || stForecast.hitRate <= 0) continue;
+
+        let score = 46 * (stForecast.hitRate / 100);
+        if (stForecast.inflictStatus === 'BRN' && target.stats.atk >= target.stats.spa) {
+          score += 18;
+        } else if (stForecast.inflictStatus === 'SLP') {
+          score += 22;
+        }
+        if (target.isLord) score += 10;
+        score -= stopTile.cost * 0.45;
+
+        candidates.push({
+          kind: 'status',
+          stopX: stopTile.x,
+          stopY: stopTile.y,
+          stopCost: stopTile.cost,
+          targetUnitId: target.id,
+          moveId: stSlot.id,
+          forecast: null,
+          statusForecast: stForecast,
           score,
         });
       }
     }
   }
 
-  if (attackCandidates.length > 0) {
-    attackCandidates.sort((a, b) => {
+  if (candidates.length > 0) {
+    candidates.sort((a, b) => {
       if (Math.abs(b.score - a.score) > 0.001) return b.score - a.score;
       if (a.stopCost !== b.stopCost) return a.stopCost - b.stopCost;
       return coordKey(a.stopX, a.stopY).localeCompare(coordKey(b.stopX, b.stopY));
     });
 
-    for (const best of attackCandidates) {
-      const path = findShortestPathAStar(
-        map,
-        actor,
-        best.stopX,
-        best.stopY,
-        allLivingUnits
-      );
-      if (path) {
+    for (const best of candidates) {
+      const path = findShortestPathAStar(map, actor, best.stopX, best.stopY, allLivingUnits);
+      if (!path) continue;
+      if (best.kind === 'status' && best.statusForecast) {
+        return {
+          kind: 'status',
+          enemyId: actor.id,
+          stopX: best.stopX,
+          stopY: best.stopY,
+          path,
+          attack: null,
+          statusHex: {
+            targetUnitId: best.targetUnitId,
+            moveId: best.moveId,
+            forecast: best.statusForecast,
+            score: best.score,
+          },
+        };
+      }
+      if (best.forecast) {
         return {
           kind: 'attack',
           enemyId: actor.id,
@@ -180,6 +225,7 @@ function chooseAiUnitAction(
             forecast: best.forecast,
             score: best.score,
           },
+          statusHex: null,
         };
       }
     }
@@ -198,6 +244,7 @@ function chooseAiUnitAction(
       stopY: actor.y,
       path: stayPath,
       attack: null,
+      statusHex: null,
     };
   }
 
@@ -225,6 +272,7 @@ function chooseAiUnitAction(
         stopY: pursuitTile.y,
         path,
         attack: null,
+        statusHex: null,
       };
     }
   }
@@ -236,6 +284,7 @@ function chooseAiUnitAction(
     stopY: actor.y,
     path: stayPath,
     attack: null,
+    statusHex: null,
   };
 }
 

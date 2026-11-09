@@ -62,7 +62,9 @@ export function checkAndTriggerMatchEnd(ctx: BattleControllerContext): boolean {
   }
 
   if (state.objectiveType === 'survive_turns') {
-    if (livingEnemies.length === 0 && !hasFutureEnemySpawns(state)) {
+    const hasAnyBossConfigured = state.units.some((u) => u.faction === 'enemy' && u.isBoss);
+    const livingBosses = livingEnemies.filter((u) => u.isBoss);
+    if ((hasAnyBossConfigured && livingBosses.length === 0) || (livingEnemies.length === 0 && !hasFutureEnemySpawns(state))) {
       triggerVictoryModal(ctx);
       return true;
     }

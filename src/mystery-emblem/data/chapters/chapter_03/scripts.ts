@@ -1,23 +1,35 @@
 import type { DialogueScript } from '../../../ui/DialogueOverlay';
-import { KECLEON_SPEAKER } from '../scriptHelpers';
+import { DEINO_SPEAKER, SIR_EMPOLEON_SPEAKER } from '../scriptHelpers';
 
 export function buildChapter03IntroScript(): DialogueScript {
   return {
     id: 'demo_d4_intro',
-    title: 'River Shrine',
+    title: 'Sparkling River Shrine',
     bgm: 'waterfall_cave',
     lines: [
       {
-        speaker: KECLEON_SPEAKER,
+        speaker: DEINO_SPEAKER,
         side: 'right',
-        emotion: 'Worried',
-        text: 'Help! An Ironclad Lairon seized River Shrine to confiscate our Potions and Evolution Stones for Commander Deino’s war chest!',
+        emotion: 'Determined',
+        text: 'Secure the shrine’s Dragon Relic! Wait... that crest—another survivor of the fallen Dragon Kingdom, sheltered under Serperior’s soft banner?',
       },
       {
         speaker: { kind: 'lord' },
         side: 'left',
+        emotion: 'Surprised',
+        text: 'You carry Dragon Aura too?! Why are you leading Ironscale soldiers against the Verdant Commonwealth?!',
+      },
+      {
+        speaker: DEINO_SPEAKER,
+        side: 'right',
+        emotion: 'Angry',
+        text: 'Because Emperor Kingambit took me from the ashes when the old kingdom fell! Soft mercy won’t seal the southeastern Abyss—only Ironscale discipline can hold this world together!',
+      },
+      {
+        speaker: SIR_EMPOLEON_SPEAKER,
+        side: 'left',
         emotion: 'Determined',
-        text: 'Hold fast, Kecleon! Fliers and Water-types can cross the shrine’s river channels—rout them and free the caravan!',
+        text: 'Careful, {lord}! Commander Deino won’t sit idle—the moment anyone steps inside his threat range, he will charge! Use the Wonder Tile and river channels wisely!',
       },
     ],
   };
@@ -26,20 +38,26 @@ export function buildChapter03IntroScript(): DialogueScript {
 export function buildChapter03OutroScript(): DialogueScript {
   return {
     id: 'demo_d4_outro',
-    title: 'River Shrine',
-    bgm: 'kecleon_shop',
+    title: 'Sparkling River Shrine',
+    bgm: 'calm_cutscene',
     lines: [
       {
-        speaker: KECLEON_SPEAKER,
+        speaker: DEINO_SPEAKER,
         side: 'right',
-        emotion: 'Happy',
-        text: 'Saved! Step right into the shrine courtyard, everyone—Chancellor Serperior and High Seeress Milotic have just arrived across the north bridge!',
+        emotion: 'Pain',
+        text: 'Tch... Your fangs aren’t dull, {lord}. Pull back, vanguard! Keep that Evolution Stone—when the Abyss splits wider, you’ll see why Kingambit’s order is necessary!',
       },
       {
         speaker: { kind: 'advisor' },
         side: 'left',
-        emotion: 'Happy',
-        text: 'Potions! Oran Berries! Life-saving emergency snacks! Thank goodness—watching you guys take hits takes years off my tiny bug lifespan!',
+        emotion: 'Surprised',
+        text: 'WHOA—he dropped a real Evolution Stone! Once any Stage-1 ally hits Level 10, that Stone promotes them straight to Stage 2!',
+      },
+      {
+        speaker: { kind: 'partner' },
+        side: 'right',
+        emotion: 'Worried',
+        text: 'Another Dragon orphan raised inside Ironscale... Come on, {lord}—King Serperior and Lady Milotic just arrived on the north shrine bridge!',
       },
     ],
   };

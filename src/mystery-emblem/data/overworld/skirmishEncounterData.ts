@@ -174,6 +174,11 @@ export function buildSkirmishBattlePayload(
     id: `skirmish_${node.id}`,
     name: `${node.name} — Skirmish`,
     objectiveType: 'rout',
+    objectiveLabel: 'Rout Feral Raiders',
+    npcSpawns: undefined,
+    reinforcements: undefined,
+    events: undefined,
+    defeatIfUnitIdsFall: undefined,
     enemySpawns: enemyOverrides.map((e) => ({
       x: e.x,
       y: e.y,

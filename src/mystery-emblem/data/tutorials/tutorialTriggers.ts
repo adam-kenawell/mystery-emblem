@@ -24,7 +24,7 @@ export const TUTORIAL_TRIGGER_RULES: ReadonlyArray<TutorialTriggerRule> = [
         (ctx.save &&
           ctx.deploymentCap !== undefined &&
           ctx.save.roster.length > ctx.deploymentCap) ||
-          ctx.levelId === 'chapter_04'
+          ctx.levelId === 'chapter_03'
       ),
   },
   {
@@ -47,22 +47,28 @@ export const TUTORIAL_TRIGGER_RULES: ReadonlyArray<TutorialTriggerRule> = [
     levelIds: ['chapter_01'],
   },
   {
-    id: 'rule_turn1_ch2_stairs',
+    id: 'rule_turn1_ch2_stairs_and_talk',
     hook: 'battle_turn1',
     topicId: 'ch3_stairs_reinforcements',
     levelIds: ['chapter_02'],
   },
   {
-    id: 'rule_turn1_ch3_vitamins',
+    id: 'rule_turn1_ch3_mobile_boss',
     hook: 'battle_turn1',
-    topicId: 'ch4_vitamins',
+    topicId: 'ch5_deployment_cap_and_mobile_boss',
     levelIds: ['chapter_03'],
   },
   {
-    id: 'rule_turn1_ch4_mobile_boss',
+    id: 'rule_turn1_ch4_vitamins',
     hook: 'battle_turn1',
-    topicId: 'ch5_deployment_cap_and_mobile_boss',
+    topicId: 'ch4_vitamins',
     levelIds: ['chapter_04'],
+  },
+  {
+    id: 'rule_turn1_ch5_status',
+    hook: 'battle_turn1',
+    topicId: 'status_conditions_and_cures',
+    levelIds: ['chapter_05'],
   },
 ];
 

@@ -1,8 +1,8 @@
 /**
- * Mystery Emblem — Campaign Mechanics & Dynamic Terrain Topics 7–15 (`mechanicsAndTerrainTopics.ts`)
+ * Mystery Emblem — Campaign Mechanics & Dynamic Terrain Topics 7–16 (`mechanicsAndTerrainTopics.ts`)
  *
- * Covers Convoy gear, Bosses & Water/Flying, Dungeon Stairs, Vitamins & Drops,
- * Kecleon Shops & TMs, Deployment Caps & Mobile Bosses, Trees/Mountains, Wonder Tiles, and Lava/Void.
+ * Covers Convoy gear, Bosses & Water/Flying, Dungeon Stairs & Talk Recruitment, Vitamins & Drops,
+ * Kecleon Shops & TMs, Deployment Caps & Mobile Bosses, Status Conditions, and Special Terrain.
  */
 
 import type { TutorialTopicDefinition } from './tutorialTypes';
@@ -57,9 +57,9 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
   },
   {
     id: 'ch3_stairs_reinforcements',
-    title: 'Dungeon Stairs & Enemy Reinforcements',
+    title: 'Talk Recruitment & Dungeon Stairs',
     category: 'combat_tactics',
-    summary: 'Standing directly on Stairs tiles to block incoming enemy reinforcement waves.',
+    summary: 'Recruiting hesitant foes with Talk and standing on Stairs tiles to block reinforcements.',
     beats: [
       {
         id: 'ch3_beat1_stairs',
@@ -70,6 +70,13 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
           { kind: 'badge', label: 'Stand On Stairs = Block Spawns', tone: 'gold' },
           { kind: 'badge', label: '+1 Def/SpD · +10% Avo', tone: 'cyan' },
         ],
+      },
+      {
+        id: 'ch3_beat2_talk_recruit',
+        emotion: 'Surprised',
+        dialogue:
+          'AND don’t swing at everyone blindly! When a hesitant unit doesn’t want to fight, walk {lord} right next to them and tap Talk to recruit them onto our side permanently!',
+        chips: [{ kind: 'badge', label: 'Adjacent ★ Lord -> Talk!', tone: 'green' }],
       },
     ],
   },
@@ -101,10 +108,10 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
         id: 'shop_beat1_stalls',
         emotion: 'Happy',
         dialogue:
-          'Kecleon’s traveling merchants now visit cleared World Map nodes with 4 rotating stalls: TMs, Held Gear, Apothecary (Potions & Stones!), and X-Items! Walk onto a Kecleon node to shop!',
+          'Kecleon’s traveling merchants now visit cleared World Map nodes with 4 rotating stalls: TMs, Held Gear, Apothecary (Potions & Full Heals!), and X-Items! Walk onto a Kecleon node to shop!',
         chips: [
           { kind: 'species', speciesId: '0352', label: 'Kecleon Shop' },
-          { kind: 'item', itemId: 'evolution_stone', label: 'Stones & Gear' },
+          { kind: 'item', itemId: 'full_heal', label: 'Heals & Gear' },
         ],
       },
       {
@@ -139,6 +146,34 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     ],
   },
   {
+    id: 'status_conditions_and_cures',
+    title: 'Status Conditions & Full Heals',
+    category: 'combat_tactics',
+    summary: 'How Burn, Poison, Paralysis, Sleep, and Freeze work—and curing them mid-battle.',
+    beats: [
+      {
+        id: 'status_beat1_ailments',
+        emotion: 'Dizzy',
+        dialogue:
+          'Watch out for Status hexes! Burn halves physical Atk + deals 10% chip (Duskull’s Will-O-Wisp shuts down physical brutes!), Poison deals 12.5% chip, Paralysis drops Mov to 1 (-25% Spe), and Sleep/Freeze skip turns!',
+        chips: [
+          { kind: 'badge', label: 'BRN: -50% Atk + Chip', tone: 'danger' },
+          { kind: 'badge', label: 'PAR: 1 Mov · -25% Spe', tone: 'gold' },
+        ],
+      },
+      {
+        id: 'status_beat2_cures',
+        emotion: 'Happy',
+        dialogue:
+          'To cleanse an afflicted teammate right away, use a Full Heal from Item, hold an auto-curing Lum Berry, or step onto a glowing PMD Wonder Tile!',
+        chips: [
+          { kind: 'item', itemId: 'full_heal', label: 'Full Heal' },
+          { kind: 'item', itemId: 'lum_berry', label: 'Lum Berry (Auto)' },
+        ],
+      },
+    ],
+  },
+  {
     id: 'terrain_cover_woods_crags',
     title: 'Defensive Cover: Trees & Mountains',
     category: 'combat_tactics',
@@ -160,13 +195,13 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     id: 'terrain_wonder_tiles',
     title: 'PMD Wonder Tiles',
     category: 'combat_tactics',
-    summary: 'Sanctuary tiles granting +2 Def/SpD, +20% Avoid, 20% HP regen, and debuff cleansing.',
+    summary: 'Sanctuary tiles granting +2 Def/SpD, +20% Avoid, 20% HP regen, and status/debuff cleansing.',
     beats: [
       {
         id: 'terrain_wonder_beat1',
         emotion: 'Surprised',
         dialogue:
-          'A glowing PMD Wonder Tile! Standing on it grants +2 Def/SpD and +20% Avoid (even to Fliers!), heals 20% HP each turn, and clears debuffs—just lure enemies OFF it so they don’t hog my dream hiding spot!',
+          'A glowing PMD Wonder Tile! Standing on it grants +2 Def/SpD and +20% Avoid (even to Fliers!), heals 20% HP each turn, and cleanses status/debuffs—just lure enemies OFF it so they don’t hog my dream hiding spot!',
         chips: [
           { kind: 'badge', label: '+2 Def/SpD · +20% Avo', tone: 'gold' },
           { kind: 'badge', label: '20% Heal + Cleanse', tone: 'green' },
@@ -184,7 +219,7 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
         id: 'terrain_hazards_beat1',
         emotion: 'Dizzy',
         dialogue:
-          'YIKES, don’t look down! Fire-types (+10% Avo), Flying, and Levitate cross Lava at 1 Mov—but deep Void Chasms and Low Barriers block even Fliers! ONLY Levitate Pokémon can float across them!',
+          'YIKES, don’t look down! Fire-types (+10% Avo), Flying, and Levitate cross Lava at 1 Mov—but deep Void Chasms and Low Barriers block even Fliers! ONLY Levitate Pokémon (like Duskull!) can float across them!',
         chips: [
           { kind: 'type', pokemonType: 'Fire' },
           { kind: 'badge', label: 'Levitate Only: Void & Barriers', tone: 'gold' },

@@ -1,0 +1,57 @@
+{
+  "id": "chapter_05",
+  "nodeId": "chapter_05",
+  "order": 7,
+  "dungeonNumber": 8,
+  "shortCode": "Ch. 5",
+  "label": "Chapter 5 — Northern Pass",
+  "title": "Northern Mountain Pass",
+  "subtitle": "Chapter 5",
+  "defaultTilesetId": "014",
+  "bgmCue": "foggy_forest",
+  "objectiveType": "defeat_boss",
+  "objectiveLabel": "Defeat Boss: ShadowBinder Spiritomb",
+  "recommendedLevel": 6,
+  "deploymentCap": 7,
+  "postStoryCutsceneId": "cs_07_lantern_pass",
+  "width": 20,
+  "height": 12,
+  "rows": [
+    "X:55 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:11 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:54",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:9 F:29 F:29 F:29 F:29 F:29 F:29 F:47 X:22",
+    "X:3 F:29 F:29 F:29 T:142:1 F:29 F:29 F:29 V:061:100 V:061:100 F:29 F:29 F:29 F:29 F:29 F:29 F:29 S:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 V:061:100 V:061:100 F:29 F:29 F:29 T:142:1 F:29 F:29 F:29 F:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:15 F:29 V:061:100 V:061:100 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 WT:29 F:9 F:9 F:9 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:9 F:9 F:9 F:29 F:29 F:29 T:142:1 F:29 F:29 F:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 V:061:100 V:061:100 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 T:142:1 F:29 F:29 F:29 V:061:100 V:061:100 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:15 F:29 V:061:100 V:061:100 F:29 F:29 F:29 F:29 F:29 F:29 F:29 S:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
+    "X:37 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:49"
+  ],
+  "playerSlots": [
+    {"x":3,"y":5,"speciesId":"dratini"},
+    {"x":3,"y":3,"speciesId":"piplup"},
+    {"x":3,"y":7,"speciesId":"flabebe"},
+    {"x":2,"y":4,"speciesId":"sir_empoleon"},
+    {"x":2,"y":6,"speciesId":"pidgey"},
+    {"x":2,"y":8,"speciesId":"ralts"},
+    {"x":5,"y":5,"speciesId":"duskull"}
+  ],
+  "recruitment": {"fixedSpeciesIds":["duskull"],"joinLevel":6,"scaleStatsToLevel":true,"fallbackSpeciesIds":["duskull"]},
+  "clearRewardItems": [
+    {"itemId":"full_heal","quantity":2}
+  ],
+  "enemySpawns": [
+    {"id":"ch5_enemy_0","x":11,"y":3,"speciesId":"stufful","nickname":"Chasm Mauler","level":6,"heldItemId":null,"aiMode":"wait_until_in_range"},
+    {"id":"ch5_enemy_1","x":11,"y":8,"speciesId":"aron","nickname":"Crag Enforcer","level":6,"heldItemId":null,"aiMode":"wait_until_in_range"},
+    {"id":"ch5_enemy_2","x":13,"y":5,"speciesId":"zubat","nickname":"Miasma Wing","level":6,"heldItemId":null,"aiMode":"wait_until_in_range"},
+    {"id":"ch5_enemy_3","x":15,"y":3,"speciesId":"honedge","nickname":"Phantom Blade","level":6,"stats":{"hp":22,"atk":9,"def":10,"spa":6,"spd":6,"spe":5,"mov":5},"heldItemId":null,"aiMode":"wait_until_in_range"},
+    {"id":"ch5_enemy_4","x":15,"y":8,"speciesId":"gothita","nickname":"Shadow Acolyte","level":6,"moveIds":["psybeam","thunder_wave"],"equippedMoveId":"psybeam","heldItemId":null,"droppableItemId":"full_heal","aiMode":"wait_until_in_range"},
+    {"id":"ch5_boss_spiritomb","x":17,"y":5,"speciesId":"spiritomb","nickname":"ShadowBinder Spiritomb","level":7,"stats":{"hp":28,"atk":10,"def":12,"spa":11,"spd":12,"spe":6,"mov":4},"moveIds":["ominous_wind","will_o_wisp","bite"],"equippedMoveId":"ominous_wind","heldItemId":"sitrus_berry","isBoss":true,"stationary":false,"droppableItemId":"spell_tag","aiMode":"wait_until_in_range"}
+  ],
+  "reinforcements": [
+    {"id":"ch5_reinforce_t3_north","turnNumber":3,"stairsX":17,"stairsY":2,"enemy":{"id":"ch5_reinf_zubat","x":17,"y":2,"speciesId":"zubat","nickname":"Chasm Skulker","level":6,"heldItemId":null,"aiMode":"wait_until_in_range"}}
+  ]
+}

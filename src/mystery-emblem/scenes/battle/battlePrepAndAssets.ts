@@ -110,7 +110,8 @@ export function rebuildPrepBattleUnits(ctx: BattleControllerContext): void {
     state.map,
     activeSave.roster,
     state.deploymentSlots,
-    state.enemySpawnDefs
+    state.enemySpawnDefs,
+    activeSave
   );
   syncProtectedUnitIdsFromState(state);
   void preloadAllUnitSprites(state).then(() => {
@@ -121,11 +122,19 @@ export function rebuildPrepBattleUnits(ctx: BattleControllerContext): void {
   ctx.renderNow();
 }
 
+const preferredDeployByState = new WeakMap<
+  BattleRuntimeState,
+  ReadonlyArray<string> | undefined
+>();
+
 export async function setupFreshBattleState(
   ctx: BattleControllerContext,
-  opts?: { showPrepOverlay?: boolean }
+  opts?: { showPrepOverlay?: boolean; preferredDeployInstanceIds?: ReadonlyArray<string> }
 ): Promise<void> {
   const { state, dom, prepOverlay, saveManager } = ctx;
+  if (opts && 'preferredDeployInstanceIds' in opts) {
+    preferredDeployByState.set(state, opts.preferredDeployInstanceIds);
+  }
   hideAllBattleModals(ctx);
   state.activeWalk = null;
   state.activeStrikeVfx = null;
@@ -155,14 +164,23 @@ export async function setupFreshBattleState(
 
   state.reinforcements = state.explicitReinforcements ?? state.map.reinforcements ?? [];
   state.events = state.explicitEvents ?? state.map.events ?? [];
-  state.enemySpawnDefs = resolveEnemySpawnsForMap(state.map, state.explicitEnemyOverrides);
+  state.enemySpawnDefs = resolveEnemySpawnsForMap(
+    state.map,
+    state.explicitEnemyOverrides,
+    getActivePrepSaveManager(state, saveManager).getSave()
+  );
   const activeSave = getActivePrepSaveManager(state, saveManager).getSave()!;
-  state.deploymentSlots = createInitialPrepDeploymentSlots(state.map, activeSave.roster);
+  state.deploymentSlots = createInitialPrepDeploymentSlots(
+    state.map,
+    activeSave.roster,
+    preferredDeployByState.get(state)
+  );
   state.units = buildBattleUnitsFromPrepDeployment(
     state.map,
     activeSave.roster,
     state.deploymentSlots,
-    state.enemySpawnDefs
+    state.enemySpawnDefs,
+    activeSave
   );
   syncProtectedUnitIdsFromState(state);
 

@@ -155,7 +155,7 @@ export function hasHeavyDutyBootsEffect(heldItemId: string | null | undefined): 
 }
 
 export function getEffectiveMovementPoints(unit: PathfindingUnitContext): number {
-  if (unit.stationary || unit.aiMode === 'stationary') {
+  if (unit.stationary || unit.aiMode === 'stationary' || unit.status === 'SLP') {
     return 0;
   }
   let mov = unit.mov;

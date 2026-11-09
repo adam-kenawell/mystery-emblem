@@ -3,7 +3,7 @@
  */
 
 import { getItemById } from '../../data/index';
-import { computeUnitPopupStats, type BattleUnitState } from '../../engine/combatEngine';
+import { STATUS_BADGE_COLORS, computeUnitPopupStats, type BattleUnitState } from '../../engine/combatEngine';
 import {
   TERRAIN_METADATA,
   getMapTerrainAt,
@@ -148,6 +148,8 @@ export function updateUnitHoverPopup(ctx: BattleControllerContext): void {
   if (statusEl) {
     if (unit.status) {
       statusEl.textContent = unit.status;
+      statusEl.dataset.testid = 'unit-popup-status';
+      statusEl.style.color = STATUS_BADGE_COLORS[unit.status];
       statusEl.hidden = false;
     } else {
       statusEl.hidden = true;
@@ -186,7 +188,8 @@ export function updateUnitHoverPopup(ctx: BattleControllerContext): void {
     movesWrap.innerHTML = unit.activeMoves
       .map((slot) => {
         const isEq = slot.id === unit.equippedMoveId && slot.move.category !== 'Support/Heal';
-        return `<div class="pmd-unit-popup-move${isEq ? ' is-equipped' : ''}"><span>${isEq ? '[E] ' : ''}${escapeHudHtml(slot.move.name)}</span><em>${renderColoredTypeHtml(slot.move.type)} · R${slot.range[0]}</em></div>`;
+        const rLbl = slot.range[0] === slot.range[1] ? `R${slot.range[0]}` : `R${slot.range[0]}-${slot.range[1]}`;
+        return `<div class="pmd-unit-popup-move${isEq ? ' is-equipped' : ''}"><span>${isEq ? '[E] ' : ''}${escapeHudHtml(slot.move.name)}</span><em>${renderColoredTypeHtml(slot.move.type)} · ${rLbl}</em></div>`;
       })
       .join('');
   }

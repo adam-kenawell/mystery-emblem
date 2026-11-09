@@ -127,6 +127,7 @@ export async function openBattleScene(
 
   await setupFreshBattleState(ctx, {
     showPrepOverlay: !state.cutsceneInProgress && !state.skipPrepPhase,
+    preferredDeployInstanceIds: options?.preferredDeployInstanceIds,
   });
   if (!state.openState || runGen !== state.battleRunGen) return;
 
@@ -198,6 +199,7 @@ export function closeBattleScene(
   }
 
   ctx.onLayerStateChanged();
+  ctx.tutorialOverlay?.closeAll(null);
   ctx.onExitCallback(destination);
 }
 

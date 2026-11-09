@@ -2,12 +2,13 @@
  * Pure 1-to-4 Strike Combat Exchange Resolver
  */
 
-import type { MoveDefinition } from '../../types/schemas';
+import type { MoveDefinition, StatusCondition } from '../../types/schemas';
 import type {
   BattleUnitState,
   CombatForecast,
   CombatSideForecast,
 } from './combatTypesAndStats';
+import { rollSecondaryStatusOnHit } from './statusEngine';
 import type { TypeEffectivenessMultiplier } from './typeEffectiveness';
 
 export interface CombatStrikeOutcome {
@@ -22,6 +23,7 @@ export interface CombatStrikeOutcome {
   didHit: boolean;
   isCrit: boolean;
   damageDealt: number;
+  inflictedStatus: StatusCondition | null;
   typeMultiplier: TypeEffectivenessMultiplier;
   targetHpBefore: number;
   targetHpAfter: number;
@@ -41,7 +43,7 @@ export interface CombatExchangeOutcome {
 
 /**
  * Resolves a complete 1-to-4 strike Fire Emblem combat exchange without mutating unit objects yet,
- * so the scene animation controller can apply each strike's HP/PP delta on its exact impact frame.
+ * so the scene animation controller can apply each strike's HP/PP/status delta on its exact impact frame.
  */
 export function resolveCombatExchange(
   forecast: CombatForecast,
@@ -53,6 +55,8 @@ export function resolveCombatExchange(
   let defenderHp = defender.currentHp;
   let attackerPp = forecast.attackerSide.ppBefore;
   let defenderPp = forecast.defenderSide ? forecast.defenderSide.ppBefore : null;
+  let attackerStatus: StatusCondition | null = attacker.status;
+  let defenderStatus: StatusCondition | null = defender.status;
 
   const strikes: CombatStrikeOutcome[] = [];
 
@@ -75,7 +79,10 @@ export function resolveCombatExchange(
       return;
     }
 
-    if (actor.status === 'PAR') {
+    const curActorStatus = isCounter ? defenderStatus : attackerStatus;
+    if (curActorStatus === 'SLP') return;
+
+    if (curActorStatus === 'PAR') {
       const paraRoll = rng();
       if (paraRoll < 1 / 3) {
         const curTargetHp = isCounter ? attackerHp : defenderHp;
@@ -92,6 +99,7 @@ export function resolveCombatExchange(
           didHit: false,
           isCrit: false,
           damageDealt: 0,
+          inflictedStatus: null,
           typeMultiplier: side.typeMultiplier,
           targetHpBefore: curTargetHp,
           targetHpAfter: curTargetHp,
@@ -129,6 +137,16 @@ export function resolveCombatExchange(
       defenderHp = hpAfter;
     }
 
+    let inflictedStatus: StatusCondition | null = null;
+    if (didHit && side.typeMultiplier > 0 && hpAfter > 0) {
+      const curTargetStatus = isCounter ? attackerStatus : defenderStatus;
+      inflictedStatus = rollSecondaryStatusOnHit(side.move, actor, target, curTargetStatus, rng);
+      if (inflictedStatus) {
+        if (isCounter) attackerStatus = inflictedStatus;
+        else defenderStatus = inflictedStatus;
+      }
+    }
+
     strikes.push({
       strikeIndex: strikes.length,
       actorId: actor.id,
@@ -141,6 +159,7 @@ export function resolveCombatExchange(
       didHit,
       isCrit,
       damageDealt,
+      inflictedStatus,
       typeMultiplier: side.typeMultiplier,
       targetHpBefore: hpBefore,
       targetHpAfter: hpAfter,
@@ -148,11 +167,12 @@ export function resolveCombatExchange(
     });
   };
 
-  if (attacker.status !== 'SLP' && attackerHp > 0 && defenderHp > 0) {
+  if (attackerStatus !== 'SLP' && attackerHp > 0 && defenderHp > 0) {
     runSingleStrike(attacker, defender, forecast.attackerSide, false, false);
   }
 
   if (
+    defenderStatus !== 'SLP' &&
     attackerHp > 0 &&
     defenderHp > 0 &&
     forecast.defenderCanCounter &&
@@ -162,7 +182,7 @@ export function resolveCombatExchange(
   }
 
   if (
-    attacker.status !== 'SLP' &&
+    attackerStatus !== 'SLP' &&
     attackerHp > 0 &&
     defenderHp > 0 &&
     forecast.attackerSide.strikes === 2 &&
@@ -172,6 +192,7 @@ export function resolveCombatExchange(
   }
 
   if (
+    defenderStatus !== 'SLP' &&
     attackerHp > 0 &&
     defenderHp > 0 &&
     forecast.defenderCanCounter &&

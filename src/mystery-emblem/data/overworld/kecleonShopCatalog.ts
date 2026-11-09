@@ -21,6 +21,10 @@ export interface KecleonShopTypeMetadata {
   stockCount: number;
 }
 
+export interface KecleonShopBuildOptions {
+  completedChapterIds?: ReadonlyArray<string>;
+}
+
 export const KECLEON_SHOP_METADATA: Readonly<Record<KecleonShopType, KecleonShopTypeMetadata>> = {
   tm_shop: {
     shopType: 'tm_shop',
@@ -42,7 +46,7 @@ export const KECLEON_SHOP_METADATA: Readonly<Record<KecleonShopType, KecleonShop
     shopType: 'healing_shop',
     title: 'Kecleon Apothecary',
     shortBadge: 'HEAL SHOP',
-    greeting: 'Potions, Full Heals, and rare Evolution Stones!',
+    greeting: 'Potions, Full Heals, and rare dungeon remedies!',
     accentColor: '#f8d048',
     stockCount: 6,
   },
@@ -62,12 +66,21 @@ export function getCatalogItemsForShopType(shopType: KecleonShopType): ItemDefin
 
 export function buildKecleonShopInventory(
   shopType: KecleonShopType,
-  rng: () => number = Math.random
+  rng: () => number = Math.random,
+  options?: KecleonShopBuildOptions
 ): string[] {
-  const pool = getCatalogItemsForShopType(shopType).map((item) => item.id);
+  const completed = new Set(options?.completedChapterIds ?? []);
+  const pool = getCatalogItemsForShopType(shopType)
+    .filter((item) => {
+      if (item.id === 'evolution_stone' && !completed.has('chapter_10')) return false;
+      if (item.id === 'evolution_gem' && !completed.has('chapter_16')) return false;
+      return true;
+    })
+    .map((item) => item.id);
+
   const meta = KECLEON_SHOP_METADATA[shopType];
   if (pool.length <= meta.stockCount) {
-    return [...pool];
+    return [...pool].sort((a, b) => (getItemById(a)?.buyPrice ?? 0) - (getItemById(b)?.buyPrice ?? 0));
   }
 
   const copy = [...pool];

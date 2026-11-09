@@ -97,7 +97,7 @@ export async function executeEventActionsAsync(
           action.faction,
           state.units.length,
           performance.now(),
-          { addToPermanentRoster: action.addToPermanentRoster }
+          { addToPermanentRoster: action.addToPermanentRoster, save: saveManager.getSave() }
         );
         if (!built) continue;
         const free = findNearestFreeSpawnTile(state.map, uSpawn.x, uSpawn.y, built, occupied);

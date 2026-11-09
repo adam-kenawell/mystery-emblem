@@ -4,7 +4,7 @@
 
 import {
   getHealingMovesForTargetAtDistance,
-  getOffensiveMovesAtDistance,
+  getEnemyTargetingMovesAtDistance,
   getOffensiveMovesReachableForTarget,
   manhattanDistance,
   type BattleMoveSlot,
@@ -47,7 +47,7 @@ export function getValidForecastMoves(state: BattleRuntimeState): BattleMoveSlot
     );
   }
   const distNow = manhattanDistance(attacker.x, attacker.y, defender.x, defender.y);
-  return getOffensiveMovesAtDistance(attacker, distNow);
+  return getEnemyTargetingMovesAtDistance(attacker, distNow);
 }
 
 export function setForecastStatLabels(

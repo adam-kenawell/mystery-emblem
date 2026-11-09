@@ -1,5 +1,5 @@
 /**
- * Barrel for Tactical Combat Math, Forecast, Exchange & Support Heal Engine
+ * Barrel for Tactical Combat Math, Forecast, Exchange, Status Conditions & Support Heal Engine
  */
 
 export {
@@ -13,6 +13,7 @@ export {
   isHealingMove,
   manhattanDistance,
   getOffensiveMovesAtDistance,
+  getEnemyTargetingMovesAtDistance,
   getUnitEffectiveCombatStats,
   computeUnitPopupStats,
   type BattleMoveSlot,
@@ -30,6 +31,22 @@ export {
   type CombatStrikeOutcome,
   type CombatExchangeOutcome,
 } from './combat/combatResolver';
+
+export {
+  STATUS_BADGE_COLORS,
+  STATUS_ACTION_CALLOUTS,
+  STATUS_SHORT_EFFECT_TEXT,
+  isEnemyStatusMove,
+  getDefaultStatusDuration,
+  isUnitImmuneToStatus,
+  getEnemyStatusMovesAtDistance,
+  computeStatusMoveForecast,
+  rollSecondaryStatusOnHit,
+  applyInflictedStatusToUnit,
+  applyPhaseStartStatusTick,
+  type StatusMoveForecast,
+  type PhaseStatusTickOutcome,
+} from './combat/statusEngine';
 
 export {
   findBestAttackPlanForTarget,

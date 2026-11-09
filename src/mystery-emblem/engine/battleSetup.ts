@@ -13,6 +13,7 @@ import type {
   ManualEnemyBattleSpawn,
   OwnedPokemonInstance,
   PrepDeploymentSlot,
+  SaveData,
   StatBlockSeven,
 } from '../types/schemas';
 import {
@@ -20,6 +21,7 @@ import {
   buildUnitMoveSlots,
   findNearestFreeSpawnTile,
   resolveDefaultEquippedMoveId,
+  resolveSeededSpawnSpeciesId,
 } from './battleSpawnHelpers';
 import type { BattleUnitState } from './combatEngine';
 import { createFallbackBattlePrepManager } from './fallbackPrepManager';
@@ -55,7 +57,8 @@ export function getMapDeploymentCap(map: DungeonMapDefinition): number {
 
 export function createInitialPrepDeploymentSlots(
   map: DungeonMapDefinition,
-  roster: ReadonlyArray<OwnedPokemonInstance>
+  roster: ReadonlyArray<OwnedPokemonInstance>,
+  preferredInstanceIds?: ReadonlyArray<string>
 ): PrepDeploymentSlot[] {
   const seen = new Set<string>();
   const tileCoords: Array<{ x: number; y: number }> = [];
@@ -75,34 +78,65 @@ export function createInitialPrepDeploymentSlots(
     return 0;
   });
 
+  const deployed = orderedRoster.slice(0, cap);
+  if (preferredInstanceIds?.length && deployed.length < orderedRoster.length) {
+    const preferredSet = new Set(preferredInstanceIds);
+    const missingPreferred = orderedRoster
+      .slice(cap)
+      .filter((u) => preferredSet.has(u.instanceId));
+    let replaceIdx = deployed.length - 1;
+    for (let i = missingPreferred.length - 1; i >= 0 && replaceIdx >= 1; i -= 1) {
+      while (replaceIdx >= 1 && preferredSet.has(deployed[replaceIdx]!.instanceId)) {
+        replaceIdx -= 1;
+      }
+      if (replaceIdx >= 1 && !deployed[replaceIdx]!.isLord) {
+        deployed[replaceIdx] = missingPreferred[i]!;
+        replaceIdx -= 1;
+      }
+    }
+  }
+
   return tileCoords.map((coord, slotIndex) => ({
     slotIndex,
     x: coord.x,
     y: coord.y,
     unitInstanceId:
-      slotIndex < cap && orderedRoster[slotIndex] ? orderedRoster[slotIndex]!.instanceId : null,
+      slotIndex < cap && deployed[slotIndex] ? deployed[slotIndex]!.instanceId : null,
   }));
 }
 
 export function resolveEnemySpawnsForMap(
   map: DungeonMapDefinition,
-  explicitOverrides?: ReadonlyArray<ManualEnemyBattleSpawn>
+  explicitOverrides?: ReadonlyArray<ManualEnemyBattleSpawn>,
+  save?: SaveData | null
 ): ReadonlyArray<ManualEnemyBattleSpawn> {
-  if (explicitOverrides) return explicitOverrides;
-  if (!map.enemySpawns || map.enemySpawns.length === 0) return [];
+  const rawList = explicitOverrides ?? map.enemySpawns ?? [];
+  if (rawList.length === 0) return [];
 
-  return map.enemySpawns.map((spawn, idx) => {
-    const sp = getSpeciesById(spawn.speciesId) ?? getSpeciesById('zigzagoon_galar')!;
+  return rawList.map((spawn, idx) => {
+    const resolvedSpId = resolveSeededSpawnSpeciesId(spawn, save);
+    const sp =
+      getSpeciesById(resolvedSpId) ??
+      getSpeciesById(spawn.speciesId) ??
+      getSpeciesById('zigzagoon_galar')!;
+    const origName = getSpeciesById(spawn.speciesId)?.name;
+    const nickname =
+      !spawn.nickname || (spawn.seedKey && spawn.nickname === origName) ? sp.name : spawn.nickname;
+    const stats =
+      !spawn.seedKey && spawn.stats
+        ? { ...spawn.stats }
+        : computeManualScaledStatsForJoinLevel(sp, spawn.level);
     return {
       id: spawn.id ?? `enemy_${idx}`,
       x: spawn.x,
       y: spawn.y,
       speciesId: sp.id,
-      nickname: spawn.nickname || sp.name,
+      ...(spawn.seedKey ? { seedKey: spawn.seedKey } : {}),
+      nickname,
       level: spawn.level,
-      stats: spawn.stats ? { ...spawn.stats } : computeManualScaledStatsForJoinLevel(sp, spawn.level),
-      ...(spawn.moveIds ? { moveIds: [...spawn.moveIds] } : {}),
-      ...(spawn.equippedMoveId ? { equippedMoveId: spawn.equippedMoveId } : {}),
+      stats,
+      ...(!spawn.seedKey && spawn.moveIds ? { moveIds: [...spawn.moveIds] } : {}),
+      ...(!spawn.seedKey && spawn.equippedMoveId ? { equippedMoveId: spawn.equippedMoveId } : {}),
       heldItemId: spawn.heldItemId ?? null,
       isBoss: spawn.isBoss,
       stationary: spawn.stationary,
@@ -116,16 +150,18 @@ export function resolveEnemySpawnsForMap(
 export function buildSingleEnemyBattleUnit(
   eSpawn: ManualEnemyBattleSpawn,
   slotIndex: number,
-  now: number = typeof performance !== 'undefined' ? performance.now() : 0
+  now: number = typeof performance !== 'undefined' ? performance.now() : 0,
+  save?: SaveData | null
 ): BattleUnitState | null {
-  return buildSpawnedBattleUnit(eSpawn, 'enemy', slotIndex, now);
+  return buildSpawnedBattleUnit(eSpawn, 'enemy', slotIndex, now, { save });
 }
 
 export function buildBattleUnitsFromPrepDeployment(
   map: DungeonMapDefinition,
   roster: ReadonlyArray<OwnedPokemonInstance>,
   deploymentSlots: ReadonlyArray<PrepDeploymentSlot>,
-  enemyOverrides: ReadonlyArray<ManualEnemyBattleSpawn>
+  enemyOverrides: ReadonlyArray<ManualEnemyBattleSpawn>,
+  save?: SaveData | null
 ): BattleUnitState[] {
   const now = typeof performance !== 'undefined' ? performance.now() : 0;
   const units: BattleUnitState[] = [];
@@ -189,13 +225,13 @@ export function buildBattleUnitsFromPrepDeployment(
 
   if (map.npcSpawns?.length) {
     map.npcSpawns.forEach((npcSpawn, idx) => {
-      const built = buildSpawnedBattleUnit(npcSpawn, 'npc', idx, now);
+      const built = buildSpawnedBattleUnit(npcSpawn, 'npc', idx, now, { save });
       if (built) units.push(built);
     });
   }
 
   enemyOverrides.forEach((eSpawn, idx) => {
-    const built = buildSingleEnemyBattleUnit(eSpawn, idx, now);
+    const built = buildSingleEnemyBattleUnit(eSpawn, idx, now, save);
     if (built) units.push(built);
   });
 

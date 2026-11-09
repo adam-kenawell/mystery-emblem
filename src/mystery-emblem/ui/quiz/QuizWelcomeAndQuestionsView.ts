@@ -45,7 +45,7 @@ export function renderQuizWelcomePopup(
     </h2>
     <div data-testid="quiz-welcome-body" style="display:flex; flex-direction:column; gap:8px; font-size:clamp(13px, 1.9vw, 15px); line-height:1.45; color:#f8f8f8;">
       <p style="margin:0;">
-        This 5-chapter demo takes roughly <strong style="color:#58f858;">30–45 minutes</strong> to play.
+        This Part 1A demo (Prologue – Chapter 6 + 2 Paralogues) takes roughly <strong style="color:#58f858;">45–75 minutes</strong> to play.
       </p>
       <p style="margin:0; color:#a8e0f8;">
         The final project is still a work in progress—please visit the page frequently for updates!

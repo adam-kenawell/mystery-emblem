@@ -56,9 +56,13 @@ export function isCorruptedAllWaterOverride(map: DungeonMapDefinition): boolean 
   );
 }
 
-function normalizeSpawnFields(sp: Partial<DungeonUnitSpawn>, fallbackName: string): Omit<DungeonUnitSpawn, 'x' | 'y' | 'speciesId'> {
+function normalizeSpawnFields(
+  sp: Partial<DungeonUnitSpawn>,
+  fallbackName: string
+): Omit<DungeonUnitSpawn, 'x' | 'y' | 'speciesId'> {
   return {
     ...(sp.id ? { id: String(sp.id) } : {}),
+    ...(sp.seedKey ? { seedKey: sp.seedKey } : {}),
     level: Math.max(MIN_UNIT_LEVEL, Math.min(MAX_UNIT_LEVEL, Math.floor(Number(sp.level ?? 1)))),
     nickname: sp.nickname ? String(sp.nickname).slice(0, 22) : fallbackName,
     ...(sp.stats ? { stats: { ...sp.stats } } : {}),
@@ -167,6 +171,15 @@ export function validateDungeonMapDefinition(
     }
   }
 
+  const convertibleEnemyIds = new Set<string>(
+    Array.isArray(raw.events)
+      ? raw.events.flatMap((ev) =>
+          (ev?.actions ?? []).flatMap((a) =>
+            a?.type === 'convert_unit' && a.targetUnitId ? [String(a.targetUnitId)] : []
+          )
+        )
+      : []
+  );
   const normEnemySpawns: DungeonUnitSpawn[] = [];
   if (!Array.isArray(raw.enemySpawns) || raw.enemySpawns.length < 1) {
     errors.push('Map must define at least 1 enemy spawn.');
@@ -180,7 +193,9 @@ export function validateDungeonMapDefinition(
       }
       const speciesId = String(sp?.speciesId || 'zigzagoon_galar');
       const def = getSpeciesById(speciesId);
-      if (!def || def.faction === 'playable' || def.faction === 'ally_npc') {
+      const allowedPlayable =
+        Boolean(sp?.seedKey) || (Boolean(sp?.id) && convertibleEnemyIds.has(String(sp.id)));
+      if (!def || def.faction === 'ally_npc' || (def.faction === 'playable' && !allowedPlayable)) {
         errors.push(`Rule 5: Enemy spawn species "${speciesId}" must be an enemy/convertible species.`);
         continue;
       }

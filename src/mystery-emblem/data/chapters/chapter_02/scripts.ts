@@ -1,6 +1,6 @@
 import type { SaveData } from '../../../types/schemas';
 import type { DialogueScript } from '../../../ui/DialogueOverlay';
-import { findRecruitSpeaker } from '../scriptHelpers';
+import { GOTHITA_SPEAKER, SIR_EMPOLEON_SPEAKER, findRecruitSpeaker } from '../scriptHelpers';
 
 export function buildChapter02IntroScript(save: SaveData | null): DialogueScript {
   const psyId = save?.campaign.quizSeeds.slot2Psychic?.[0] ?? 'ralts';
@@ -10,51 +10,79 @@ export function buildChapter02IntroScript(save: SaveData | null): DialogueScript
     bgm: 'mt_bristle',
     lines: [
       {
-        speaker: findRecruitSpeaker(save, psyId),
+        speaker: GOTHITA_SPEAKER,
         side: 'right',
-        emotion: 'Worried',
-        text: 'Careful, {lord}! Your Dragon Aura woke the runes of this ancient watchtower—and Ironscale reserves are climbing the Dungeon Stairs!',
+        emotion: 'Angry',
+        text: 'Tremble before the Deep Crag’s tremors! Even that stray mountain mystic ahead won’t escape our watchtower snare!',
       },
       {
         speaker: findRecruitSpeaker(save, psyId),
         side: 'right',
-        emotion: 'Determined',
-        text: 'Stand directly on a Stairs tile to seal enemy reinforcements below! Let me lend my mystic sight to your squad.',
+        emotion: 'Worried',
+        text: 'S-stay back! The Abyssal tremors scrambled every aura on this peak—anyone who steps too close gets blasted!',
       },
       {
         speaker: { kind: 'advisor' },
         side: 'left',
         emotion: 'Shouting',
-        text: 'PLUG THE STAIRS! Put somebody big and sturdy right on top of them—and NO, before anyone looks at me, my shell does NOT count as a cork!',
+        text: 'WAIT—DON’T WHACK THAT ONE! See the speech bubble icon?! Move {lord} right next to them and tap Talk to recruit them—and plug those Dungeon Stairs before reserves climb up!',
       },
       {
-        speaker: { kind: 'lord' },
+        speaker: SIR_EMPOLEON_SPEAKER,
         side: 'left',
-        emotion: 'Determined',
-        text: 'A watchtower of the old Dragon Kingdom... Secure those Stairs and clear Cleft Mountain!',
+        emotion: 'Normal',
+        text: 'Steady your Dragon Aura and speak to them yourself, {lord}. Meanwhile, place sturdy allies atop the Stairs tiles to seal enemy reinforcements.',
       },
     ],
   };
 }
 
-export function buildChapter02OutroScript(save: SaveData | null): DialogueScript {
+export function buildChapter02TalkPsychicScript(save: SaveData | null): DialogueScript {
   const psyId = save?.campaign.quizSeeds.slot2Psychic?.[0] ?? 'ralts';
+  return {
+    id: 'ch2_talk_psychic_dialogue',
+    title: 'Cleft Mountain',
+    bgm: 'heartwarming',
+    lines: [
+      {
+        speaker: { kind: 'lord' },
+        side: 'left',
+        emotion: 'Normal',
+        text: 'Easy—we’re not with those raiders! King Serperior and Lady Milotic sent us to investigate the Abyssal tremors.',
+      },
+      {
+        speaker: findRecruitSpeaker(save, psyId),
+        side: 'right',
+        emotion: 'Surprised',
+        text: 'Wait... that clear, sunlit resonance around you—it’s the old Dragon Kingdom’s ward! Forgive me for panicking in the miasma, {lord}!',
+      },
+      {
+        speaker: findRecruitSpeaker(save, psyId),
+        side: 'right',
+        emotion: 'Determined',
+        text: 'Hexer Gothita’s scouts are tampering with the watchtower stones ahead. Let me join your squad and blast them from Range 2!',
+      },
+    ],
+  };
+}
+
+export function buildChapter02OutroScript(_save: SaveData | null): DialogueScript {
   return {
     id: 'demo_d3_outro',
     title: 'Cleft Mountain',
     bgm: 'calm_cutscene',
     lines: [
       {
-        speaker: findRecruitSpeaker(save, psyId),
+        speaker: SIR_EMPOLEON_SPEAKER,
         side: 'right',
-        emotion: 'Surprised',
-        text: 'The miasma over the stairwell is lifting! Look just ahead, {lord}—the ancient Dragon watchtower parapet is shining through the mist!',
+        emotion: 'Worried',
+        text: 'These tremors aren’t natural rockslides, {lord}—look out from the watchtower parapet toward Sparkling River Shrine below.',
       },
       {
         speaker: { kind: 'lord' },
         side: 'left',
-        emotion: 'Normal',
-        text: 'Let’s head out onto the parapet and see what the old watchtower guards.',
+        emotion: 'Determined',
+        text: 'Smoke on the shrine bridges... Let’s look from the parapet and see who is marching on the river!',
       },
     ],
   };

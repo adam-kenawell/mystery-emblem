@@ -43,7 +43,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
     id: 'q1',
     number: 1,
     seedKey: 'slot1Flying',
-    chapterSlotTitle: 'Verdant Bluff Wing Scout',
+    chapterSlotTitle: 'Capital Road Wing Scout',
     prompt:
       "You're out on a walk when you spot something shiny stuck high up in the branches of a tree! What do you do?",
     options: [

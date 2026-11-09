@@ -20,6 +20,7 @@ export async function launchCampaignChapterBattle(
   ctx.demoLaunchInProgress = true;
   ctx.pendingPostVictoryDemoNodeId = null;
   try {
+    const newlyRecruitedIds: string[] = [];
     if (demoChapter.recruitment && !manager.hasRecruitedChapter(demoChapter.nodeId)) {
       const targetIds = resolveChapterRecruitmentSpeciesIds(
         demoChapter.recruitment,
@@ -32,11 +33,12 @@ export async function launchCampaignChapterBattle(
           return getSpeciesById(u.speciesId)?.lineId === sp.lineId;
         });
         if (alreadyOwned) continue;
-        manager.recruitPokemon({
+        const created = manager.recruitPokemon({
           speciesId: spId,
           level: demoChapter.recruitment.joinLevel,
           scaleStatsToLevel: demoChapter.recruitment.scaleStatsToLevel,
         });
+        newlyRecruitedIds.push(created.instanceId);
       }
       manager.markChapterRecruited(demoChapter.nodeId);
     }
@@ -72,6 +74,7 @@ export async function launchCampaignChapterBattle(
       eventScripts: demoChapter.eventScripts,
       commitToSaveOnVictory: true,
       clearRewardItems: demoChapter.clearRewardItems,
+      preferredDeployInstanceIds: newlyRecruitedIds,
       skipPrepPhase: Boolean(demoChapter.skipPrepPhase),
       exitButtonLabel: 'Return to World Map',
       hideReplayOnVictory: true,

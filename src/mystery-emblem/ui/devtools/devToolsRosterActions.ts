@@ -22,7 +22,7 @@ export function seedFreshDemoSaveForCheat(saveManager: SaveStateManager): SaveDa
     healerSpeciesId: 'flabebe',
     startingLevel: DEMO_STARTING_LEVEL,
     scaleStatsToLevel: true,
-    initialConvoy: DEMO_INITIAL_CONVOY,
+    initialConvoy: [...DEMO_INITIAL_CONVOY, { itemId: 'evolution_stone', quantity: 1 }],
     overworldGraph: DEMO_OVERWORLD_GRAPH,
   });
 }
@@ -43,7 +43,7 @@ export function populateDevToolsStaticSelects(
   if (recruitSelectEl) {
     recruitSelectEl.innerHTML = '';
     const recruitable = POKEMON_SPECIES_LIST.filter(
-      (sp) => sp.faction !== 'enemy' && sp.faction !== 'ally_npc' && sp.stage === 1
+      (sp) => sp.faction !== 'enemy' && sp.faction !== 'ally_npc' && (sp.stage === 1 || sp.id === 'sir_empoleon')
     );
     for (const sp of recruitable) {
       const opt = document.createElement('option');

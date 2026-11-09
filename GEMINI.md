@@ -114,9 +114,9 @@ The LLM agent must implement *Mystery Emblem* in the following 10 sequential ste
     * Enforce the **Single-Equipped Move Counter Rule**: On Enemy Phase, the defender only counter-attacks if its single `[E]` move matches the attacker's range (`1` for Physical, `2` for Special) and has `PP > 0`.
     * Resolve Follow-Up Attack (Doubling when `Speed difference >= 5`) and roll random-chance secondary move effects (status infliction or temporary stat buffs/debuffs).
 * **Step 7 Verification Checklist:**
-  * [ ] Confirm a unit with a Range 1 `[E]` move counter-attacks Range 1 foes on Enemy Phase but **cannot** counter Range 2 foes (and vice versa for a Range 2 `[E]` move).
-  * [ ] Confirm all 5 status conditions (PAR, PSN, BRN, FRZ, SLP), Type multipliers (including `0x` immunities), STAB (`1.25x`), Crits (`2.0x`), and Dungeon Stairs blocking behave exactly as specified.
-  * [ ] Confirm right-clicking (PC) or tapping Back (Mobile) cancels uncommitted unit movement and returns the unit to its starting tile.
+  * [x] Confirm a unit with a Range 1 `[E]` move counter-attacks Range 1 foes on Enemy Phase but **cannot** counter Range 2 foes (and vice versa for a Range 2 `[E]` move).
+  * [x] Confirm all 5 status conditions (PAR, PSN, BRN, FRZ, SLP), Type multipliers (including `0x` immunities), STAB (`1.25x`), Crits (`2.0x`), and Dungeon Stairs blocking behave exactly as specified.
+  * [x] Confirm right-clicking (PC) or tapping Back (Mobile) cancels uncommitted unit movement and returns the unit to its starting tile.
 
 ### Step 8: Character Supports (Levels 1–5), Personal Skills & Held/X-Item Combat Hooks
 
@@ -142,8 +142,8 @@ The LLM agent must implement *Mystery Emblem* in the following 10 sequential ste
     * **Eevee Branching Promotion (Level 15+ via Evolution Stone):** Opens the 8-way Eeveelution selection modal.
     * Apply manual promotion stat bonuses, update growth rates/Personal Skill/`Mov`/traversal class, and swap to the new stage's PMD sprites and portraits while preserving the unit's continuous level and custom nickname.
 * **Step 9 Verification Checklist:**
-  * [ ] Confirm leveling up triggers stat rolls using the unit's manual growth rates and unlocks level-up moves at the configured levels.
-  * [ ] Confirm evolving at Level 10, Level 15 (Eevee), and Level 20 applies manual promotion bonuses, keeps the unit's current level number and nickname, and updates its sprites and portraits.
+  * [x] Confirm leveling up triggers stat rolls using the unit's manual growth rates and unlocks level-up moves at the configured levels.
+  * [x] Confirm evolving at Level 10, Level 15 (Eevee), and Level 20 applies manual promotion bonuses, keeps the unit's current level number and nickname, and updates its sprites and portraits.
 
 ### Step 10: Campaign Scripting (Prologue + 25 Chapters + 6 Paralogues), Boss AI & End-to-End Polish
 

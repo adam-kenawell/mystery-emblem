@@ -1,6 +1,6 @@
 import type { SaveData } from '../../../types/schemas';
 import type { DialogueScript } from '../../../ui/DialogueOverlay';
-import { DEINO_SPEAKER, findRecruitSpeaker } from '../scriptHelpers';
+import { MORGREM_SPEAKER, SIR_EMPOLEON_SPEAKER, findRecruitSpeaker } from '../scriptHelpers';
 
 export function buildChapter04IntroScript(save: SaveData | null): DialogueScript {
   const elecId = save?.campaign.quizSeeds.slot3Electric?.[0] ?? 'elekid';
@@ -12,26 +12,26 @@ export function buildChapter04IntroScript(save: SaveData | null): DialogueScript
       {
         speaker: findRecruitSpeaker(save, elecId),
         side: 'right',
-        emotion: 'Determined',
-        text: '{lord}! Commander Deino’s vanguard—and his lieutenants Linoone and Morgrem—have fortified Berry Orchards ahead!',
+        emotion: 'Joyous',
+        text: '{lord}! {partner}! {healer}! I sprinted all the way from our coastal village when I heard Sir Empoleon took you to the capital—don’t leave me out!',
       },
       {
-        speaker: DEINO_SPEAKER,
+        speaker: { kind: 'healer' },
+        side: 'left',
+        emotion: 'Happy',
+        text: 'Our whole village crew is finally back together! And right on time—Feral packs and Raider Morgrem are stripping the Berry Orchards bare!',
+      },
+      {
+        speaker: MORGREM_SPEAKER,
         side: 'right',
         emotion: 'Angry',
-        text: 'Another lost Dragon playing hero? Soft ideals let the Abyss fester—only Ironscale steel can subjugate a broken world!',
+        text: 'Heh! Every Oran and Sitrus crate in these groves belongs to Ironscale’s northern march—and one Thunder Wave will leave you kids twitching in the grass!',
       },
       {
-        speaker: { kind: 'advisor' },
-        side: 'left',
-        emotion: 'Crying',
-        text: 'Uhh, {lord}?! Unlike Aron, Commander Deino’s legs definitely work—he’s going to charge the second anyone steps into his range! I’ll be behind THREE bushes!',
-      },
-      {
-        speaker: { kind: 'lord' },
+        speaker: SIR_EMPOLEON_SPEAKER,
         side: 'left',
         emotion: 'Determined',
-        text: 'Ruling through fear isn’t order, Deino! Stand together, everyone—defeat Commander Deino and free Berry Orchards!',
+        text: 'Watch for Raider Morgrem’s Paralysis hexes—pack a Full Heal or let our new Electric spark shock those Canopy Harriers out of the trees!',
       },
     ],
   };
@@ -40,26 +40,26 @@ export function buildChapter04IntroScript(save: SaveData | null): DialogueScript
 export function buildChapter04OutroScript(): DialogueScript {
   return {
     id: 'demo_d5_outro',
-    title: 'Victory!',
-    bgm: 'victory_fanfare',
+    title: 'Berry Orchards',
+    bgm: 'calm_cutscene',
     lines: [
-      {
-        speaker: DEINO_SPEAKER,
-        side: 'right',
-        emotion: 'Pain',
-        text: 'Tch... Fall back, Linoone, Morgrem! Remember this, {lord}—Emperor Kingambit’s legions and the Abyss beyond will test that soft heart of yours.',
-      },
       {
         speaker: { kind: 'partner' },
         side: 'right',
         emotion: 'Joyous',
-        text: 'Yeah, keep running, Deino! Berry Orchards belongs to the Verdant Commonwealth!',
+        text: 'Take a hike, Morgrem! The Commonwealth’s winter berry harvest is safe!',
+      },
+      {
+        speaker: { kind: 'advisor' },
+        side: 'left',
+        emotion: 'Worried',
+        text: 'Uh, guys? A breathless messenger just pointed toward Oran Forest—Master Kecleon’s supply caravan got ambushed too, AND weird ghost-lights are flickering up on Northern Mountain Pass!',
       },
       {
         speaker: { kind: 'lord' },
         side: 'left',
-        emotion: 'Happy',
-        text: 'Everyone made it through safe—and look ahead, Chancellor Serperior and High Seeress Milotic are lighting the orchard lanterns!',
+        emotion: 'Determined',
+        text: 'Let’s tend the orchard lanterns tonight—we can rescue Kecleon’s caravan in Oran Forest and climb Northern Mountain Pass toward the Border Fortress!',
       },
     ],
   };

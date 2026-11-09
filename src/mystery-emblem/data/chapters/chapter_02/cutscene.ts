@@ -1,9 +1,13 @@
 /**
  * Post-Chapter 2 Story Cutscene: `cs_04_watchtower_bells` (`chapter_02/cutscene.ts`)
+ *
+ * Atop Cleft Mountain's ancient Dragon Watchtower, `{lord}` and Sir Empoleon hear the valley
+ * alarm bells as Commander Deino leads an Ironscale strike force against Sparkling River Shrine.
  */
 
 import type { StoryCutsceneDefinition } from '../../../scenes/CutsceneScene';
 import { STAGE_04_WATCHTOWER_PARAPET } from '../cutsceneStages';
+import { SIR_EMPOLEON_SPEAKER } from '../scriptHelpers';
 
 export const CS_04_WATCHTOWER_BELLS: StoryCutsceneDefinition = {
   id: 'cs_04_watchtower_bells',
@@ -22,6 +26,7 @@ export const CS_04_WATCHTOWER_BELLS: StoryCutsceneDefinition = {
   initialCamera: { x: 7.5, y: 5.5 },
   actors: [
     { actorId: 'lord', role: { kind: 'lord' }, x: 7, y: 5, direction: 'Up' },
+    { actorId: 'mentor', role: { kind: 'mentor' }, x: 8, y: 5, direction: 'UpLeft' },
     { actorId: 'partner', role: { kind: 'partner' }, x: 9, y: 6, direction: 'UpLeft' },
     { actorId: 'healer', role: { kind: 'healer' }, x: 6, y: 6, direction: 'UpRight' },
     { actorId: 'advisor', role: { kind: 'advisor' }, x: 8, y: 7, direction: 'Up' },
@@ -42,21 +47,19 @@ export const CS_04_WATCHTOWER_BELLS: StoryCutsceneDefinition = {
       { type: 'emote', actorId: 'partner', emote: 'music', durationMs: 1100 },
     ],
     2: [
-      { type: 'emote', actorId: 'advisor', emote: 'joy', durationMs: 1050 },
-      { type: 'hop', actorId: 'advisor', count: 1 },
-    ],
-    3: [
-      { type: 'screenShake', durationMs: 360, intensityPx: 2 },
+      { type: 'screenShake', durationMs: 340, intensityPx: 2 },
+      { type: 'emote', actorId: 'mentor', emote: 'exclamation', durationMs: 1000 },
       { type: 'emote', actorId: 'lord', emote: 'exclamation', durationMs: 1000 },
       { type: 'emote', actorId: 'partner', emote: 'exclamation', durationMs: 1000 },
-      { type: 'emote', actorId: 'healer', emote: 'exclamation', durationMs: 1000 },
-      { type: 'emote', actorId: 'advisor', emote: 'exclamation', durationMs: 1000 },
-      { type: 'walk', actorId: 'partner', path: [{ x: 8, y: 9 }], speedTilesPerSec: 4.8, endDirection: 'Down' },
+      { type: 'walk', actorId: 'mentor', path: [{ x: 8, y: 8 }], speedTilesPerSec: 4.0, endDirection: 'Down' },
       { type: 'camera', x: 7.5, y: 6.5, durationMs: 450 },
+    ],
+    3: [
+      { type: 'walk', actorId: 'partner', path: [{ x: 9, y: 8 }], speedTilesPerSec: 4.5, endDirection: 'Down' },
+      { type: 'hop', actorId: 'partner', count: 1, delayMs: 280 },
     ],
     4: [
       { type: 'shake', actorId: 'advisor', durationMs: 520 },
-      { type: 'walk', actorId: 'advisor', path: [{ x: 7, y: 9 }], speedTilesPerSec: 5.2, endDirection: 'Down' },
       { type: 'emote', actorId: 'advisor', emote: 'sweat', durationMs: 1200 },
     ],
     5: [
@@ -73,37 +76,37 @@ export const CS_04_WATCHTOWER_BELLS: StoryCutsceneDefinition = {
         speaker: { kind: 'healer' },
         side: 'left',
         emotion: 'Worried',
-        text: 'The stone crest is glowing softly in answer to you, {lord}... How are you holding up, seeing an actual watchtower of the old Dragon Kingdom?',
+        text: 'The ancient watchtower crest is answering your touch, {lord}... How does it feel standing inside a stronghold of the fallen Dragon Kingdom?',
       },
       {
         speaker: { kind: 'lord' },
         side: 'left',
         emotion: 'Happy',
-        text: 'It feels warm—like half-remembering a lullaby. Then I turn around and see {partner} trying to balance a mountain pebble on his beak, and I feel completely grounded again.',
+        text: 'Warm—like half-remembering a lullaby. Then I look back at {partner} trying to balance a mountain pebble on his beak, and I know right where I belong.',
       },
       {
-        speaker: { kind: 'advisor' },
+        speaker: SIR_EMPOLEON_SPEAKER,
         side: 'right',
-        emotion: 'Happy',
-        text: 'Plus, zero monsters popped out of the last stairwell AND nobody tripped down a cliff! I am officially rating this mission a ten out of—',
+        emotion: 'Surprised',
+        text: 'Hold—hear those bronze sanctuary bells echoing up from the valley?! Look down toward Sparkling River Shrine!',
       },
       {
         speaker: { kind: 'partner' },
         side: 'right',
-        emotion: 'Surprised',
-        text: 'Whoa—hear those bronze bells echoing up from the valley?! {lord}, look down at River Shrine! Ironscale troops have Master Merchant Kecleon’s wagons pinned between the rapids!',
+        emotion: 'Angry',
+        text: 'Crimson-and-black banners on the stone bridges! Dad, {lord}—an Ironscale vanguard is marching straight onto Sparkling River Shrine!',
       },
       {
         speaker: { kind: 'advisor' },
         side: 'left',
         emotion: 'Shouting',
-        text: 'NOT KECLEON!! Do you realize what happens to your HP bars without his Potions, Oran Berries, and Evolution Stones?! MOVE YOUR LEGS, PEOPLE, THIS IS CODE RED!',
+        text: 'WAIT—that black crest at the front of their column belongs to Commander Deino! An actual Imperial Dragon commander?! My shell is NOT rated for Dragon-on-Dragon combat!',
       },
       {
         speaker: { kind: 'lord' },
         side: 'left',
         emotion: 'Determined',
-        text: 'First time in history {advisor} is leading the charge down a mountain. Stay right with him, {partner}, {healer}—let’s free River Shrine!',
+        text: 'Another Dragon... fighting for Ironscale? Stay close to Sir Empoleon, everyone—we descend to defend Sparkling River Shrine right now!',
       },
     ],
   }),

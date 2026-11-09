@@ -1,9 +1,14 @@
 /**
- * Forecast Open / Cancel / Confirm Controllers (`Attack!` & `Heal!`)
+ * Forecast Open / Cancel / Confirm Controllers (`Attack!`, `Heal!` & Status Hexes)
  */
 
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
-import { computeCombatForecast, computeHealForecast } from '../../engine/combatEngine';
+import { getMoveById } from '../../data/index';
+import {
+  computeCombatForecast,
+  computeHealForecast,
+  isEnemyStatusMove,
+} from '../../engine/combatEngine';
 import { refreshCombatForecastModalDom } from './battleAttackForecastView';
 import { waitBattleMs } from './battleBannersAndTransitions';
 import { playCombatExchangeAsync } from './battleCombatAnimator';
@@ -22,6 +27,7 @@ import {
   cancelUncommittedMove,
   openFloatingCommandMenu,
 } from './battleSelectionAndMenu';
+import { confirmForecastStatusHex } from './battleStatusHexController';
 import { triggerBattleTutorial } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
 import { areAllLivingPlayersWaited, getSelectedUnit } from './battleUnitQueries';
@@ -117,9 +123,13 @@ export function cancelCombatForecast(ctx: BattleControllerContext): void {
 export async function confirmForecastAction(ctx: BattleControllerContext): Promise<void> {
   if (ctx.state.forecastMode === 'heal') {
     await confirmForecastHeal(ctx);
-  } else {
-    await confirmForecastAttack(ctx);
+    return;
   }
+  if (ctx.state.forecastMoveId && isEnemyStatusMove(getMoveById(ctx.state.forecastMoveId))) {
+    await confirmForecastStatusHex(ctx, runEnemyPhase);
+    return;
+  }
+  await confirmForecastAttack(ctx);
 }
 
 async function confirmForecastAttack(ctx: BattleControllerContext): Promise<void> {

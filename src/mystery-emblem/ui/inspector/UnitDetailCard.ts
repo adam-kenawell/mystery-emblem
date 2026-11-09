@@ -44,7 +44,7 @@ export function formatMoveCategoryBadge(mv: MoveDefinition): string {
   if (mv.category === 'Physical') return 'Phys · R1';
   if (mv.category === 'Special') return 'Spec · R2';
   const rText = mv.range[0] === mv.range[1] ? `R${mv.range[0]}` : `R${mv.range[0]}-${mv.range[1]}`;
-  return `Support · ${rText}`;
+  return mv.supportSubkind === 'status' ? `Status · ${rText}` : `Support · ${rText}`;
 }
 
 export function getOwnedEvolutionBranches(

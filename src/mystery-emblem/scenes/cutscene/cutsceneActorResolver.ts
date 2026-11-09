@@ -39,6 +39,7 @@ export function instantiateCutsceneActor(
     case 'lord':
     case 'partner':
     case 'healer':
+    case 'mentor':
     case 'advisor': {
       const id = resolveSpeakerIdentity({ kind: spawn.role.kind }, save);
       nickname = id.nickname;

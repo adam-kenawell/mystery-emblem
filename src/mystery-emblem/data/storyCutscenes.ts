@@ -10,6 +10,8 @@ import { CS_03_BLUFF_CAMPFIRE } from './chapters/chapter_01/cutscene';
 import { CS_04_WATCHTOWER_BELLS } from './chapters/chapter_02/cutscene';
 import { CS_05_SANCTUARY_WAR_ROOM } from './chapters/chapter_03/cutscene';
 import { CS_06_ORCHARD_CELEBRATION } from './chapters/chapter_04/cutscene';
+import { CS_07_LANTERN_PASS } from './chapters/chapter_05/cutscene';
+import { CS_08_FORTRESS_RESOLVE } from './chapters/chapter_06/cutscene';
 import { RAW_CHAPTER_JSON_LIST } from './chapters/defaultCatalog';
 import { CS_02_SANCTUARY_REVEAL } from './chapters/prologue/postCutscene';
 import { CS_01_COASTAL_FRIENDS } from './chapters/prologue/preCutscene';
@@ -21,6 +23,8 @@ export const STORY_CUTSCENES: ReadonlyArray<StoryCutsceneDefinition> = [
   CS_04_WATCHTOWER_BELLS,
   CS_05_SANCTUARY_WAR_ROOM,
   CS_06_ORCHARD_CELEBRATION,
+  CS_07_LANTERN_PASS,
+  CS_08_FORTRESS_RESOLVE,
 ];
 
 /** Backward-compatible alias */

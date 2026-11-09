@@ -47,6 +47,7 @@ export type CutsceneActorRole =
   | { kind: 'lord' }
   | { kind: 'partner' }
   | { kind: 'healer' }
+  | { kind: 'mentor' }
   | { kind: 'advisor' }
   | { kind: 'npc'; pmdAssetId: string; name: string }
   | { kind: 'cameo_recruit'; slotIndex: number };

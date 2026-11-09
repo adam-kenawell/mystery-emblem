@@ -5,6 +5,7 @@
 import { computePmdTileSpritePlacement } from '../../assets/pmdAssetLoader';
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
 import { getAvailableTalkTargetIds } from '../../engine/battleEvents';
+import { STATUS_BADGE_COLORS } from '../../engine/combatEngine';
 import type { BattleDomRefs } from './battleDomShell';
 import { drawUnitGroundShadow } from './battleRangeZonePainter';
 import type { BattleRuntimeState } from './battleTypesAndState';
@@ -121,6 +122,12 @@ export function renderUnitsAndStrikeVfx(
 
       ctx.fillStyle = 'rgba(4, 8, 18, 0.92)';
       ctx.fillRect(barX, barY, 18, 3);
+      if (unit.status) {
+        ctx.fillStyle = '#081020';
+        ctx.fillRect(barX, barY - 4, 6, 4);
+        ctx.fillStyle = STATUS_BADGE_COLORS[unit.status];
+        ctx.fillRect(barX + 1, barY - 3, 4, 2);
+      }
       if (fillW > 0) {
         ctx.fillStyle =
           unit.faction === 'enemy'

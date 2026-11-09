@@ -1,130 +1,133 @@
 /**
  * Post-Chapter 1 Story Cutscene: `cs_03_bluff_campfire` (`chapter_01/cutscene.ts`)
+ *
+ * Welcomed into the Verdant Royal Court after clearing the Capital Road, King Serperior and
+ * Royal Advisor Lady Milotic commission `{lord}`'s crew—accompanied by mentor Sir Empoleon—to
+ * investigate Abyssal tremors at Cleft Mountain.
  */
 
 import type { StoryCutsceneDefinition } from '../../../scenes/CutsceneScene';
-import { STAGE_03_BLUFF_CAMP } from '../cutsceneStages';
+import {
+  KING_SERPERIOR_PMD_ASSET_ID,
+  LADY_MILOTIC_PMD_ASSET_ID,
+} from '../../campaignConfig';
+import { STAGE_02_SANCTUARY_GLADE } from '../cutsceneStages';
+import {
+  MILOTIC_SPEAKER,
+  SERPERIOR_SPEAKER,
+  SIR_EMPOLEON_SPEAKER,
+} from '../scriptHelpers';
 
 export const CS_03_BLUFF_CAMPFIRE: StoryCutsceneDefinition = {
   id: 'cs_03_bluff_campfire',
   chapterOrder: 3,
-  title: 'Sparks Over the Bluff',
-  locationLabel: 'Bluff Overlook Camp · Evening',
-  lightingMood: 'campfire_dusk',
+  title: 'King Serperior’s Commission',
+  locationLabel: 'Royal Sanctuary Court · Verdant Capital',
+  lightingMood: 'sanctuary_glow',
   width: 16,
-  height: 11,
-  tiles: STAGE_03_BLUFF_CAMP,
+  height: 12,
+  tiles: STAGE_02_SANCTUARY_GLADE,
   props: [
-    { id: 'bluff_fire', kind: 'campfire', x: 7, y: 5 },
-    { id: 'camp_berries_1', kind: 'berry_basket', x: 6, y: 4 },
-    { id: 'camp_berries_2', kind: 'berry_basket', x: 10, y: 6 },
+    { id: 'court_gem_top', kind: 'sanctuary_crystal', x: 7, y: 2 },
+    { id: 'court_lantern_l', kind: 'lantern', x: 5, y: 5 },
+    { id: 'court_lantern_r', kind: 'lantern', x: 10, y: 5 },
   ],
-  initialCamera: { x: 7.5, y: 5.5 },
+  initialCamera: { x: 7.5, y: 6.0 },
   actors: [
-    { actorId: 'lord', role: { kind: 'lord' }, x: 8, y: 5, direction: 'Left' },
-    { actorId: 'partner', role: { kind: 'partner' }, x: 7, y: 6, direction: 'Up' },
-    { actorId: 'healer', role: { kind: 'healer' }, x: 6, y: 5, direction: 'Right' },
-    { actorId: 'advisor', role: { kind: 'advisor' }, x: 7, y: 4, direction: 'Down' },
-    { actorId: 'recruit_0', role: { kind: 'cameo_recruit', slotIndex: 0 }, x: 10, y: 4, direction: 'DownLeft' },
-    { actorId: 'recruit_1', role: { kind: 'cameo_recruit', slotIndex: 1 }, x: 11, y: 5, direction: 'Left' },
+    {
+      actorId: 'serperior',
+      role: { kind: 'npc', pmdAssetId: KING_SERPERIOR_PMD_ASSET_ID, name: 'King Serperior' },
+      x: 7,
+      y: 4,
+      direction: 'Down',
+    },
+    {
+      actorId: 'milotic',
+      role: { kind: 'npc', pmdAssetId: LADY_MILOTIC_PMD_ASSET_ID, name: 'Lady Milotic' },
+      x: 8,
+      y: 4,
+      direction: 'Down',
+    },
+    { actorId: 'mentor', role: { kind: 'mentor' }, x: 6, y: 6, direction: 'UpRight' },
+    { actorId: 'lord', role: { kind: 'lord' }, x: 7, y: 7, direction: 'Up' },
+    { actorId: 'partner', role: { kind: 'partner' }, x: 8, y: 7, direction: 'Up' },
+    { actorId: 'healer', role: { kind: 'healer' }, x: 6, y: 8, direction: 'Up' },
+    { actorId: 'advisor', role: { kind: 'advisor' }, x: 9, y: 8, direction: 'Up' },
+    { actorId: 'recruit_0', role: { kind: 'cameo_recruit', slotIndex: 0 }, x: 6, y: 9, direction: 'UpRight' },
+    { actorId: 'recruit_1', role: { kind: 'cameo_recruit', slotIndex: 1 }, x: 9, y: 9, direction: 'UpLeft' },
   ],
-  openingDurationMs: 650,
+  openingDurationMs: 800,
   openingActions: [
-    { type: 'emote', actorId: 'partner', emote: 'music', durationMs: 1000 },
-    { type: 'emote', actorId: 'recruit_0', emote: 'joy', durationMs: 1000, delayMs: 250 },
+    { type: 'walk', actorId: 'lord', path: [{ x: 7, y: 6 }], speedTilesPerSec: 2.8, endDirection: 'Up' },
+    { type: 'walk', actorId: 'partner', path: [{ x: 8, y: 6 }], speedTilesPerSec: 3.0, endDirection: 'Up' },
   ],
   lineCues: {
-    0: [
-      { type: 'walk', actorId: 'partner', path: [{ x: 8, y: 6 }], speedTilesPerSec: 3.8, endDirection: 'UpLeft' },
-      { type: 'hop', actorId: 'partner', count: 2, delayMs: 260 },
-      { type: 'emote', actorId: 'partner', emote: 'joy', durationMs: 1150 },
-    ],
+    0: [{ type: 'pose', actorId: 'serperior', action: 'Special', durationMs: 520 }],
     1: [
-      { type: 'hop', actorId: 'advisor', count: 1 },
-      { type: 'emote', actorId: 'advisor', emote: 'music', durationMs: 1150 },
+      { type: 'walk', actorId: 'milotic', path: [{ x: 8, y: 5 }], speedTilesPerSec: 2.2, endDirection: 'DownLeft' },
+      { type: 'auraPulse', actorId: 'lord', durationMs: 1100, delayMs: 250 },
     ],
     2: [
-      {
-        type: 'walk',
-        actorId: 'healer',
-        path: [{ x: 6, y: 6 }, { x: 7, y: 6 }],
-        speedTilesPerSec: 2.8,
-        endDirection: 'Right',
-      },
-      { type: 'emote', actorId: 'healer', emote: 'heart', durationMs: 1100 },
+      { type: 'hop', actorId: 'partner', count: 2 },
+      { type: 'hop', actorId: 'recruit_0', count: 1, delayMs: 220 },
     ],
     3: [
-      { type: 'emote', actorId: 'partner', emote: 'sweat', durationMs: 1050 },
-      { type: 'hop', actorId: 'recruit_1', count: 1, delayMs: 220 },
+      { type: 'shake', actorId: 'advisor', durationMs: 520 },
+      { type: 'emote', actorId: 'advisor', emote: 'sweat', durationMs: 1150 },
     ],
-    4: [
-      { type: 'walk', actorId: 'lord', path: [{ x: 12, y: 5 }], speedTilesPerSec: 3.0, endDirection: 'Right' },
-      { type: 'camera', x: 9.2, y: 5.5, durationMs: 560 },
-      { type: 'face', actorId: 'partner', direction: 'Right' },
-      { type: 'face', actorId: 'healer', direction: 'Right' },
-    ],
-    5: [
-      {
-        type: 'walk',
-        actorId: 'advisor',
-        path: [{ x: 9, y: 4 }, { x: 10, y: 5 }],
-        speedTilesPerSec: 4.0,
-        endDirection: 'Right',
-      },
-      { type: 'emote', actorId: 'advisor', emote: 'exclamation', durationMs: 1050 },
-    ],
+    4: [{ type: 'walk', actorId: 'serperior', path: [{ x: 7, y: 5 }], speedTilesPerSec: 2.3, endDirection: 'Down' }],
+    5: [{ type: 'pose', actorId: 'mentor', action: 'Attack', durationMs: 480 }],
     6: [
-      { type: 'face', actorId: 'lord', direction: 'Left' },
-      { type: 'walk', actorId: 'partner', path: [{ x: 10, y: 6 }], speedTilesPerSec: 3.6, endDirection: 'UpRight' },
-      { type: 'hop', actorId: 'partner', count: 1, delayMs: 360 },
+      { type: 'auraPulse', actorId: 'lord', durationMs: 1200 },
+      { type: 'emote', actorId: 'healer', emote: 'heart', durationMs: 1100, delayMs: 220 },
     ],
   },
   buildScript: () => ({
     id: 'cs_03_bluff_campfire',
-    title: 'Campfire on Verdant Bluff',
-    bgm: 'at_the_end_of_the_day',
+    title: 'Royal Sanctuary Court',
+    bgm: 'one_for_all',
     lines: [
+      {
+        speaker: SERPERIOR_SPEAKER,
+        side: 'left',
+        emotion: 'Normal',
+        text: 'Welcome to the Royal Court, Sir Empoleon—and stand tall, young ones. Word of how you broke Captain Aron’s blockade on the Capital Road raced ahead of you.',
+      },
+      {
+        speaker: MILOTIC_SPEAKER,
+        side: 'right',
+        emotion: 'Happy',
+        text: 'Look how warmly your Dragon Aura shines now, {lord}. Sir Empoleon raised a true protector beside young {partner} and gentle {healer}.',
+      },
       {
         speaker: { kind: 'partner' },
         side: 'right',
         emotion: 'Joyous',
-        text: '"NONE PASS VERDANT BLUFF!"—haha! Did you see Captain Aron’s face when he realized standing glued to one post meant we could line up around him for free?!',
+        text: 'Plus two new pals tumbled straight out of the roadside brush into our squad! Point us at the next trouble spot, King Serperior!',
       },
       {
         speaker: { kind: 'advisor' },
-        side: 'left',
-        emotion: 'Inspired',
-        text: 'Honestly? Zero movement on fortified terrain is my dream lifestyle! If Captain Aron wasn’t working for an invading Empire, he and I could start a Stationary Appreciation Club!',
-      },
-      {
-        speaker: { kind: 'healer' },
-        side: 'left',
-        emotion: 'Happy',
-        text: 'Hold still a second, {partner}—you scuffed your flipper showing off again. Here, warm Oran cider for everyone, and extra shares for our newest teammates by the baskets!',
-      },
-      {
-        speaker: { kind: 'partner' },
         side: 'right',
-        emotion: 'Happy',
-        text: 'Hey, battle scuffs look heroic! Though... okay, yeah, that cider smells amazing. Thanks, {healer}. What are you scouting over by the ridge, {lord}?',
+        emotion: 'Teary-Eyed',
+        text: 'O-or a very safe royal library! Libraries have zero ambushes, Your Majesty—I volunteer to guard the bookshelves!',
+      },
+      {
+        speaker: SERPERIOR_SPEAKER,
+        side: 'left',
+        emotion: 'Determined',
+        text: 'Would that we had the luxury, little scholar. Violent Abyssal tremors are shaking Cleft Mountain to the east, and Gengar’s shadow scouts have been sighted among its crags.',
+      },
+      {
+        speaker: SIR_EMPOLEON_SPEAKER,
+        side: 'left',
+        emotion: 'Determined',
+        text: 'With your leave, King Serperior, I will accompany {lord}’s company personally as their vanguard mentor while they investigate Cleft Mountain.',
       },
       {
         speaker: { kind: 'lord' },
         side: 'left',
-        emotion: 'Worried',
-        text: 'Cleft Mountain to the east. See that faint violet haze curling around the old Dragon watchtower? That peak is riddled with subterranean shafts and old stairwells.',
-      },
-      {
-        speaker: { kind: 'advisor' },
-        side: 'left',
-        emotion: 'Surprised',
-        text: 'AHA! {lord} spotted it! Subterranean shafts mean Dungeon Stairs—enemy reserves can climb straight up behind us unless a sturdy unit stands right on the Stairs tile to cork it!',
-      },
-      {
-        speaker: { kind: 'lord' },
-        side: 'left',
-        emotion: 'Happy',
-        text: 'And no, {advisor}, nobody is using your shell as a stair-plug. Get some sleep around the fire, everyone—at dawn we climb Cleft Mountain.',
+        emotion: 'Determined',
+        text: 'We accept your commission, King Serperior, Lady Milotic. Together with Sir Empoleon, we’ll uncover what’s shaking Cleft Mountain!',
       },
     ],
   }),

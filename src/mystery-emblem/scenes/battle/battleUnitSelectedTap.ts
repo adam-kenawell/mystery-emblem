@@ -9,7 +9,7 @@ import {
   findBestAttackPlanForTarget,
   findBestDancePlanForAlly,
   findBestHealPlanForAlly,
-  getOffensiveMovesAtDistance,
+  getEnemyTargetingMovesAtDistance,
   manhattanDistance,
   type BattleUnitState,
 } from '../../engine/combatEngine';
@@ -85,7 +85,7 @@ export function handleSelectedUnitTileTap(
         state.currentRange.reachableTiles.has(targetKey) &&
         getLivingEnemies(state).some(
           (e) =>
-            getOffensiveMovesAtDistance(selected, manhattanDistance(tx, ty, e.x, e.y)).length > 0
+            getEnemyTargetingMovesAtDistance(selected, manhattanDistance(tx, ty, e.x, e.y)).length > 0
         );
       if (!canWalkToInRangeTile) {
         tutorialOverlay?.nudgeActiveStep();

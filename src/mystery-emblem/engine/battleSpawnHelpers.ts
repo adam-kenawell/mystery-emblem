@@ -7,6 +7,7 @@ import { getMoveById, getSpeciesById } from '../data/index';
 import type {
   DungeonMapDefinition,
   DungeonUnitSpawn,
+  SaveData,
   StatBlockSeven,
   UnitBattleFaction,
 } from '../types/schemas';
@@ -18,6 +19,19 @@ import {
   getTerrainMoveCost,
   isInMapBounds,
 } from './terrainAndPathfinding';
+
+export function resolveSeededSpawnSpeciesId(
+  spawn: Pick<DungeonUnitSpawn, 'speciesId' | 'seedKey'>,
+  save?: SaveData | null
+): string {
+  if (spawn.seedKey && save?.campaign?.quizSeeds?.[spawn.seedKey]?.length) {
+    const seeded = save.campaign.quizSeeds[spawn.seedKey][0];
+    if (seeded && getSpeciesById(seeded)) {
+      return seeded;
+    }
+  }
+  return spawn.speciesId;
+}
 
 export function buildUnitMoveSlots(
   moveIds: ReadonlyArray<string>,
@@ -58,20 +72,32 @@ export function buildSpawnedBattleUnit(
   faction: UnitBattleFaction,
   slotIndex: number,
   now: number = typeof performance !== 'undefined' ? performance.now() : 0,
-  opts?: { addToPermanentRoster?: boolean }
+  opts?: { addToPermanentRoster?: boolean; save?: SaveData | null }
 ): BattleUnitState | null {
-  const sp = getSpeciesById(spawn.speciesId);
+  const resolvedSpeciesId = resolveSeededSpawnSpeciesId(spawn, opts?.save);
+  const sp = getSpeciesById(resolvedSpeciesId) ?? getSpeciesById(spawn.speciesId);
   if (!sp) return null;
+  const fallbackOriginalName = getSpeciesById(spawn.speciesId)?.name;
+  const resolvedNickname =
+    !spawn.nickname || (spawn.seedKey && spawn.nickname === fallbackOriginalName)
+      ? sp.name
+      : spawn.nickname;
   const allLearnedMoveIds = sp.learnset
     .filter((l) => l.level <= Math.max(spawn.level, sp.defaultJoinLevel))
     .map((l) => l.moveId);
   const rawMoveIds =
-    spawn.moveIds && spawn.moveIds.length > 0 ? spawn.moveIds : allLearnedMoveIds.slice(-4);
+    !spawn.seedKey && spawn.moveIds && spawn.moveIds.length > 0
+      ? spawn.moveIds
+      : allLearnedMoveIds.slice(-4);
   const moveSlots = buildUnitMoveSlots(rawMoveIds);
-  const equippedMoveId = resolveDefaultEquippedMoveId(moveSlots, spawn.equippedMoveId);
-  const stats: StatBlockSeven = spawn.stats
-    ? { ...spawn.stats }
-    : computeManualScaledStatsForJoinLevel(sp, spawn.level);
+  const equippedMoveId = resolveDefaultEquippedMoveId(
+    moveSlots,
+    spawn.seedKey ? undefined : spawn.equippedMoveId
+  );
+  const stats: StatBlockSeven =
+    !spawn.seedKey && spawn.stats
+      ? { ...spawn.stats }
+      : computeManualScaledStatsForJoinLevel(sp, spawn.level);
   const defaultPrefix = faction === 'npc' ? 'npc' : faction === 'player' ? 'ally' : 'enemy';
 
   return {
@@ -87,7 +113,7 @@ export function buildSpawnedBattleUnit(
     droppableItemId: spawn.droppableItemId ?? null,
     speciesId: sp.id,
     speciesName: sp.name,
-    nickname: spawn.nickname || sp.name,
+    nickname: resolvedNickname,
     level: spawn.level,
     exp: 0,
     unlockedMoveIds: [...new Set([...allLearnedMoveIds, ...rawMoveIds])],

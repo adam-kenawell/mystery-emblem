@@ -145,6 +145,7 @@ export function hydrateChapterDefaultMap(raw: CompactChapterJson): DungeonMapDef
       x: e.x,
       y: e.y,
       speciesId: e.speciesId,
+      ...(e.seedKey ? { seedKey: e.seedKey } : {}),
       level: e.level,
       nickname: e.nickname,
       ...(e.stats ? { stats: { ...e.stats } } : {}),

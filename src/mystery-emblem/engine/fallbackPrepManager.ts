@@ -31,10 +31,11 @@ export function createFallbackBattlePrepManager(minSquadSize = 5): SaveStateMana
     campaignMode: 'demo',
   });
 
-  const extraPool = ['pidgey', 'sewaddle', 'ralts', 'elekid', 'starly'];
+  const extraPool = ['sir_empoleon', 'pidgey', 'sewaddle', 'ralts', 'elekid', 'duskull', 'starly'];
   let idx = 0;
   while ((mgr.getSave()?.roster.length ?? 0) < Math.min(8, minSquadSize) && idx < extraPool.length) {
-    mgr.recruitPokemon({ speciesId: extraPool[idx]!, level: 2, scaleStatsToLevel: true });
+    const spId = extraPool[idx]!;
+    mgr.recruitPokemon({ speciesId: spId, level: spId === 'sir_empoleon' ? 12 : 2, scaleStatsToLevel: spId !== 'sir_empoleon' });
     idx += 1;
   }
 

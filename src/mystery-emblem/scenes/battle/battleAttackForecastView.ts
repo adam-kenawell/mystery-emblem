@@ -8,12 +8,14 @@ import { getItemById } from '../../data/index';
 import {
   computeCombatForecast,
   findBestStopTileForOffensiveMove,
+  isEnemyStatusMove,
   manhattanDistance,
   type BattleUnitState,
 } from '../../engine/combatEngine';
 import { createMiniItemIcon } from '../../ui/PmdItemIconGrid';
 import { createMiniSpeciesPortrait } from '../../ui/PmdUnitPortraitGrid';
 import { bindPointerTap } from '../../ui/pointerControls';
+import { renderStatusHexForecastModalDom } from './battleStatusHexController';
 import {
   getValidForecastMoves,
   renderForecastMoveList,
@@ -80,6 +82,12 @@ export function refreshCombatForecastModalDom(ctx: BattleControllerContext): voi
     }
   }
 
+  if (isEnemyStatusMove(chosenSlot.move)) {
+    renderStatusHexForecastModalDom(ctx, attacker, defender, chosenSlot, validMoves, () =>
+      refreshCombatForecastModalDom(ctx)
+    );
+    return;
+  }
   const allTargets = getAttackableEnemiesFromCurrentTile(state, attacker);
   const forecast = computeCombatForecast(state.map, attacker, defender, state.forecastMoveId);
   if (!forecast) return;
@@ -91,7 +99,7 @@ export function refreshCombatForecastModalDom(ctx: BattleControllerContext): voi
   const defCardEl = backdrop.querySelector<HTMLElement>('[data-testid="forecast-defender-card"]');
   if (defCardEl) defCardEl.className = 'pmd-fe-enemy-box is-defender';
   const confirmBtnEl = backdrop.querySelector<HTMLElement>('[data-testid="forecast-attack-btn"]');
-  if (confirmBtnEl) confirmBtnEl.textContent = 'Attack!';
+  if (confirmBtnEl) { confirmBtnEl.textContent = 'Attack!'; (confirmBtnEl as HTMLButtonElement).disabled = false; }
 
   renderForecastMoveList(ctx, attacker, validMoves, chosenSlot.id, () =>
     refreshCombatForecastModalDom(ctx)

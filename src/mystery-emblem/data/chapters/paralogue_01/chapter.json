@@ -1,0 +1,90 @@
+{
+  "id": "paralogue_01",
+  "nodeId": "paralogue_01",
+  "order": 4,
+  "dungeonNumber": 5,
+  "shortCode": "Par. 1",
+  "label": "Paralogue 1 — Lush Prairie",
+  "title": "Lush Prairie",
+  "subtitle": "Paralogue 1",
+  "defaultTilesetId": "142",
+  "bgmCue": "fun_exploration",
+  "objectiveType": "rout",
+  "objectiveLabel": "Protect Slakoth & Rout Raiders",
+  "defeatIfUnitIdsFall": ["p1_slakoth"],
+  "recommendedLevel": 4,
+  "deploymentCap": 6,
+  "width": 18,
+  "height": 12,
+  "rows": [
+    "X:003:34 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:33",
+    "X:003:3 F:59 F:59 F:59 T:1 F:59 F:59 F:59 F:59 F:59 F:59 W:88 W:88 F:59 F:59 T:1 F:59 X:003:21",
+    "X:003:3 F:59 T:1 F:59 F:59 F:59 F:59 F:59 F:59 T:1 F:59 F:59 W:88 F:59 F:59 F:59 F:59 X:003:21",
+    "X:003:3 F:59 F:59 F:59 F:59 F:59 T:1 F:59 F:59 F:59 F:59 F:59 F:59 F:59 T:1 F:59 F:59 X:003:21",
+    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 X:003:21",
+    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 F:59 WT:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 X:003:21",
+    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 T:1 F:59 F:59 F:59 T:1 F:59 F:59 F:59 F:59 F:59 X:003:21",
+    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 T:1 F:59 X:003:21",
+    "X:003:3 F:59 T:1 F:59 F:59 W:88 W:88 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 X:003:21",
+    "X:003:3 F:59 F:59 F:59 F:59 W:88 F:59 F:59 T:1 F:59 F:59 F:59 T:1 F:59 F:59 F:59 F:59 X:003:21",
+    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 X:003:21",
+    "X:003:36 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:48"
+  ],
+  "playerSlots": [
+    {"x":3,"y":5,"speciesId":"dratini"},
+    {"x":3,"y":3,"speciesId":"piplup"},
+    {"x":3,"y":7,"speciesId":"flabebe"},
+    {"x":2,"y":4,"speciesId":"sir_empoleon"},
+    {"x":2,"y":6,"speciesId":"pidgey"},
+    {"x":2,"y":8,"speciesId":"ralts"}
+  ],
+  "clearRewardItems": [
+    {"itemId":"hp_up","quantity":1}
+  ],
+  "npcSpawns": [
+    {"id":"p1_slakoth","x":8,"y":5,"speciesId":"slakoth","nickname":"Slakoth","level":1,"stationary":true,"mustSurvive":true}
+  ],
+  "enemySpawns": [
+    {"id":"p1_enemy_0","x":12,"y":3,"speciesId":"zigzagoon_galar","nickname":"Prairie Poacher","level":4,"heldItemId":null,"aiMode":"aggressive"},
+    {"id":"p1_enemy_1","x":13,"y":5,"speciesId":"venipede","nickname":"Grass Stalker","level":4,"heldItemId":null,"aiMode":"wait_until_in_range"},
+    {"id":"p1_enemy_2","x":12,"y":8,"speciesId":"rookidee","nickname":"Meadow Harrier","level":4,"heldItemId":null,"aiMode":"wait_until_in_range"},
+    {"id":"p1_boss_stufful","x":15,"y":6,"speciesId":"stufful","nickname":"Bruiser Stufful","level":5,"heldItemId":null,"isBoss":true,"droppableItemId":"sitrus_berry","aiMode":"wait_until_in_range"}
+  ],
+  "reinforcements": [],
+  "events": [
+    {
+      "id":"ev_p1_talk_slakoth",
+      "once":true,
+      "trigger":{"type":"talk","targetUnitId":"p1_slakoth","initiator":"lord"},
+      "actions":[
+        {
+          "type":"play_dialogue",
+          "scriptId":"p1_talk_slakoth_dialogue",
+          "restorePreviousBgmOnClose":true
+        },
+        {
+          "type":"convert_unit",
+          "targetUnitId":"p1_slakoth",
+          "toFaction":"player",
+          "healToFull":true,
+          "readyToAct":true,
+          "calloutText":"WOKE UP!",
+          "addToPermanentRoster":true
+        }
+      ]
+    },
+    {
+      "id":"ev_p1_survive_recruit",
+      "once":true,
+      "trigger":{"type":"battle_victory","requireSurvivedUnitIds":["p1_slakoth"]},
+      "actions":[
+        {
+          "type":"recruit_post_battle",
+          "speciesId":"slakoth",
+          "level":1,
+          "scaleStatsToLevel":true
+        }
+      ]
+    }
+  ]
+}

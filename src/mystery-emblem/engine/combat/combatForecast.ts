@@ -33,7 +33,7 @@ export function buildSideForecast(
   const targetEff = getUnitEffectiveCombatStats(target);
 
   let effectiveOffensiveStat = isPhysical ? actorEff.atk : actorEff.spa;
-  if (isPhysical && actor.status === 'BRN') {
+  if (isPhysical && actor.status === 'BRN' && actor.personalSkillId !== 'guts') {
     effectiveOffensiveStat = Math.floor(effectiveOffensiveStat * 0.5);
   } else if (!isPhysical && actor.status === 'FRZ') {
     effectiveOffensiveStat = Math.floor(effectiveOffensiveStat * 0.5);

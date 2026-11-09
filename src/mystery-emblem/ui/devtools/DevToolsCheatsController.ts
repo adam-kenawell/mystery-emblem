@@ -159,7 +159,7 @@ export class DevToolsCheatsController {
         this.ensureActiveSaveForCheat();
         saveManager.unlockAllOverworldNodes(DEMO_OVERWORLD_GRAPH);
         audioManager.playSfx('select');
-        this.setCheatStatus('Unlocked all 5 Demo nodes.');
+        this.setCheatStatus('Unlocked all 9 Demo nodes.');
         this.deps.onLiveStateMutated();
       },
       { signal }

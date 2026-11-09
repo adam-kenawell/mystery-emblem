@@ -16,6 +16,7 @@ import type {
   PrepDeploymentSlot,
   ReinforcementWaveDefinition,
   SaveData,
+  StatusCondition,
   TraversalClass,
   UnitBattleFaction,
   UnitCosmeticForm,
@@ -78,6 +79,7 @@ export interface BattleOpenOptions {
   eventScripts?: Readonly<Record<string, (save: SaveData | null) => DialogueScript>>;
   commitToSaveOnVictory?: boolean;
   clearRewardItems?: ReadonlyArray<ConvoyEntry>;
+  preferredDeployInstanceIds?: ReadonlyArray<string>;
   pauseOnLevelUpInFastMode?: boolean;
   skipPrepPhase?: boolean;
   onDungeonEnteredBeforePrep?: () => Promise<void>;
@@ -162,6 +164,7 @@ export interface BattleSceneSnapshot {
     activeMoveIds: string[];
     equippedMoveId: string | null;
     equippedItemId: string | null;
+    status: StatusCondition | null;
     waited: boolean;
     defeated: boolean;
   }>;

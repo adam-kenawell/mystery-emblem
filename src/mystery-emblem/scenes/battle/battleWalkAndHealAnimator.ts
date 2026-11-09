@@ -100,7 +100,8 @@ export async function playHealActionAsync(
     durationMs: state.fastMode ? 80 : 300,
   };
 
-  spawnFloatingText(state, dom, target.x, target.y, `+${healForecast.actualHeal} HP`, '#68f8a8');
+  const healMsg = healForecast.actualHeal > 0 ? `+${healForecast.actualHeal} HP${healForecast.curesStatus ? ' · CURED!' : ''}` : 'CURED!';
+  spawnFloatingText(state, dom, target.x, target.y, healMsg, '#68f8a8');
   updateBattleInfoStrip(ctx);
 
   await waitBattleMs(state, 320);

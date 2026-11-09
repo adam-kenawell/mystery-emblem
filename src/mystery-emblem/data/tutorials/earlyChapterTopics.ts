@@ -18,7 +18,7 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
         id: 'ch1_step1_empty_tile',
         emotion: 'Teary-Eyed',
         dialogue:
-          'EEP! Raiders ahead! Rule #1 of not getting squished: check how far their claws reach! Drag to pan the map anytime, and tap a glowing empty floor tile to open the Field Menu!',
+          'EEP! Sir Empoleon’s live combat lesson is starting! Rule #1 from his drills: check how far an opponent’s reach goes! Drag to pan the map anytime, and tap a glowing empty floor tile to open the Field Menu!',
         actionHint: 'Tap any highlighted empty floor tile',
         awaitAction: 'battle_open_field_menu',
         spotlight: { kind: 'battle_tiles', tileFilter: 'empty_floor' },
@@ -64,7 +64,7 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
         id: 'ch1_step5_wait',
         emotion: 'Happy',
         dialogue:
-          'Looking Way Braver Than Me! Tap Wait to finish {lord}’s move—once all three of you act (or pick End Phase), Enemy Phase begins! I’ll cheer quietly from behind my boulder!',
+          'Looking Way Braver Than Me! Tap Wait to finish {lord}’s move—spar with Sir Empoleon from Range 1, snipe uncountered from Range 2, or pick End Phase! I’ll coach from behind my boulder!',
         actionHint: 'Tap Wait in the command menu',
         awaitAction: 'battle_confirm_wait',
         spotlight: { kind: 'dom', selector: '[data-testid="dungeon-cmd-wait"]' },

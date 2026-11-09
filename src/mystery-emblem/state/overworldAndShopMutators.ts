@@ -140,7 +140,9 @@ export function mutateSpawnOverworldKecleonShop(
   if (!nodeState || !nodeState.unlocked) {
     throw new Error(`Cannot spawn a Kecleon Shop on locked node "${nodeId}".`);
   }
-  nodeState.activeKecleonShop = buildKecleonShopState(shopType, rng);
+  nodeState.activeKecleonShop = buildKecleonShopState(shopType, rng, {
+    completedChapterIds: save.campaign.completedChapterIds,
+  });
   save.campaign.kecleonShopsUnlocked = true;
   save.overworld = { currentNodeId: reconciled.currentNodeId, nodes: reconciled.nodes };
 }
@@ -219,6 +221,7 @@ export function mutateCompleteOverworldChapter(
   const spawns = rollPostBattleOverworldSpawns(reconciled.nodes, graph, {
     justClearedNodeId: nodeId,
     kecleonShopsUnlocked: save.campaign.kecleonShopsUnlocked,
+    completedChapterIds: save.campaign.completedChapterIds,
     skirmishChance: opts?.skirmishChance,
     shopChance: opts?.shopChance,
     rng: opts?.rng,

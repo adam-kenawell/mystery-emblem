@@ -9,6 +9,7 @@ import {
   FIXED_PARTNER_SPECIES_ID,
   INITIAL_CAMPAIGN_CONVOY,
   MAX_UNIT_LEVEL,
+  MENTOR_JAGEN_SPECIES_ID,
   MIN_UNIT_LEVEL,
   STARTING_CAMPAIGN_GOLD,
   STARTING_CAMPAIGN_LEVEL,
@@ -19,6 +20,7 @@ import {
   CURRENT_SAVE_SCHEMA_VERSION,
   type CampaignMode,
   type ConvoyEntry,
+  type OwnedPokemonInstance,
   type QuizRecruitSeeds,
   type SaveData,
   type TutorialFamiliarityPreferences,
@@ -90,6 +92,17 @@ export function buildNewCampaignSaveData(
   const initialChapterId = cfg.currentChapterId?.trim() || 'prologue';
   const defaultConvoy: ConvoyEntry[] = INITIAL_CAMPAIGN_CONVOY.map((c) => ({ ...c }));
 
+  const roster: OwnedPokemonInstance[] = [lord, partner, healer];
+  if (initialChapterId.toLowerCase() !== 'prologue' && SPECIES_MAP.has(MENTOR_JAGEN_SPECIES_ID)) {
+    roster.push(
+      createPokemonInstance({
+        speciesId: MENTOR_JAGEN_SPECIES_ID,
+        level: 12,
+        scaleStatsToLevel: false,
+      })
+    );
+  }
+
   return {
     schemaVersion: CURRENT_SAVE_SCHEMA_VERSION,
     saveId: generateSaveId('campaign'),
@@ -115,7 +128,7 @@ export function buildNewCampaignSaveData(
       seenIntroChapterIds: [],
       seenOutroChapterIds: [],
     },
-    roster: [lord, partner, healer],
+    roster,
     convoy: cfg.initialConvoy
       ? cfg.initialConvoy.map((c) => ({ itemId: c.itemId, quantity: c.quantity }))
       : defaultConvoy,
