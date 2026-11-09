@@ -430,6 +430,8 @@ export class BattleScene {
   // Danger Area
   private globalDangerEnabled = false;
   private readonly trackedEnemyIds = new Set<string>();
+  private lastComputedHoverEnemyId: string | null = null;
+  private suppressedHoverEnemyId: string | null = null;
   private currentDanger: DangerAreaResult = {
     globalDangerTiles: new Set(),
     individualDangerTiles: new Set(),
@@ -1064,6 +1066,9 @@ export class BattleScene {
     this.activeStrikeVfx = null;
     this.clearFloatingTexts();
     this.prepSwapSlotIndex = null;
+    this.hoveredTile = null;
+    this.lastComputedHoverEnemyId = null;
+    this.suppressedHoverEnemyId = null;
     this.hideAllModals();
     this.clearSelection();
     this.rootEl.hidden = true;
@@ -1123,15 +1128,24 @@ export class BattleScene {
         this.phase === 'dungeon_prep' &&
         (expectedTutorialAction === 'prep_close_manage_units' ||
           expectedTutorialAction === 'prep_swap_or_finish_view_map');
-      const allowFieldMenuOpen =
-        expectedTutorialAction === 'battle_open_field_menu' &&
+      const allowDangerToggle =
+        expectedTutorialAction === 'battle_toggle_danger_area' &&
         this.phase === 'player_phase' &&
-        this.interactionState === 'idle' &&
-        !this.systemMenuOpen;
-      if (!allowPrepBack && !allowFieldMenuOpen) {
+        (this.interactionState === 'idle' || this.systemMenuOpen);
+      if (!allowPrepBack && !allowDangerToggle) {
         this.tutorialOverlay?.nudgeActiveStep();
         return;
       }
+    }
+
+    if (expectedTutorialAction === 'battle_toggle_danger_area' && this.phase === 'player_phase') {
+      this.toggleGlobalDangerArea();
+      if (this.systemMenuOpen) {
+        this.closeSystemMenu();
+      }
+      this.tutorialOverlay?.notifyActionCompleted('battle_toggle_danger_area');
+      this.renderFrame(performance.now());
+      return;
     }
 
     if (this.systemMenuOpen) {
@@ -1197,7 +1211,7 @@ export class BattleScene {
       return;
     }
 
-    this.openSystemMenu('root', clientX, clientY);
+    this.toggleGlobalDangerArea();
   }
 
   public async restartMatch(): Promise<void> {
@@ -1560,8 +1574,8 @@ export class BattleScene {
           case 'battle_toggle_danger_area':
             return (
               this.phase === 'player_phase' &&
-              this.systemMenuOpen &&
-              this.systemMenuSubView === 'root'
+              ((this.systemMenuOpen && this.systemMenuSubView === 'root') ||
+                (!this.systemMenuOpen && this.interactionState === 'idle'))
             );
           case 'battle_select_lord': {
             const lord = this.getLordUnit();
@@ -1866,6 +1880,9 @@ export class BattleScene {
     this.activeStrikeVfx = null;
     this.clearFloatingTexts();
     this.trackedEnemyIds.clear();
+    this.hoveredTile = null;
+    this.lastComputedHoverEnemyId = null;
+    this.suppressedHoverEnemyId = null;
     this.spawnedReinforcementIds.clear();
     this.blockedReinforcementIds.clear();
     this.collectedDrops = [];
@@ -2341,6 +2358,7 @@ export class BattleScene {
           anchor.worldX,
           anchor.worldY
         );
+        this.updateHoveredTile(this.clientPointToTile(e.clientX, e.clientY));
         this.renderFrame(performance.now());
       },
       { passive: false, signal }
@@ -2389,6 +2407,7 @@ export class BattleScene {
           this.updateHoveredTile(this.clientPointToTile(e.clientX, e.clientY));
         } else {
           this.hoveredTile = null;
+          this.suppressedHoverEnemyId = null;
           longPressTimer = window.setTimeout(() => {
             if (
               !isDraggingCamera &&
@@ -2532,6 +2551,8 @@ export class BattleScene {
         if (tile) {
           this.handleTileTap(tile.x, tile.y, e.clientX, e.clientY);
         }
+      } else if (wasDrag && e.pointerType === 'mouse') {
+        this.updateHoveredTile(this.clientPointToTile(e.clientX, e.clientY));
       }
     };
 
@@ -2565,6 +2586,7 @@ export class BattleScene {
       return;
     }
     this.hoveredTile = tile;
+    this.suppressedHoverEnemyId = null;
     this.touchInspectedUnitId = null;
     if (this.prepSwapSlotIndex === null) {
       this.prepMapStatusNotice = null;
@@ -2613,7 +2635,14 @@ export class BattleScene {
       }
     }
 
+    const prevHoverEnemyId = this.lastComputedHoverEnemyId;
     this.updateInfoStrip();
+    if (
+      this.lastComputedHoverEnemyId !== prevHoverEnemyId ||
+      (this.phase === 'player_phase' && this.interactionState === 'unit_selected')
+    ) {
+      this.renderFrame(performance.now());
+    }
   }
 
   // ==========================================================================
@@ -4756,6 +4785,7 @@ export class BattleScene {
     this.phase = 'enemy_phase';
     this.interactionState = 'enemy_acting';
     this.syncHudControls();
+    this.updateInfoStrip();
     this.onLayerStateChanged();
 
     this.audioManager.playSfx('phase_change');
@@ -5104,8 +5134,12 @@ export class BattleScene {
   private toggleIndividualEnemyDanger(enemyId: string): void {
     if (this.trackedEnemyIds.has(enemyId)) {
       this.trackedEnemyIds.delete(enemyId);
+      this.suppressedHoverEnemyId = enemyId;
     } else {
       this.trackedEnemyIds.add(enemyId);
+      if (this.suppressedHoverEnemyId === enemyId) {
+        this.suppressedHoverEnemyId = null;
+      }
       if (!this.selectedUnitId) {
         this.selectionPulseStartMs = performance.now();
       }
@@ -5113,10 +5147,56 @@ export class BattleScene {
     this.recomputeDangerArea();
   }
 
+  private getHoveredEnemyDangerId(): string | null {
+    if (!this.canInteractWithMapViewport() || this.hoveredTile === null) {
+      return null;
+    }
+    const inViewMap =
+      this.phase === 'dungeon_prep' &&
+      this.prepOverlay.isOpen() &&
+      this.prepOverlay.getSubMode() === 'view_map';
+    if (this.phase !== 'player_phase' && !inViewMap) {
+      return null;
+    }
+    if (this.interactionState !== 'idle' && this.interactionState !== 'unit_selected') {
+      return null;
+    }
+    const { x, y } = this.hoveredTile;
+    const hoveredEnemy = this.getLivingEnemies().find((e) => e.x === x && e.y === y);
+    if (!hoveredEnemy || hoveredEnemy.id === this.suppressedHoverEnemyId) {
+      return null;
+    }
+    return hoveredEnemy.id;
+  }
+
+  private syncHoverDangerArea(): boolean {
+    const nextHoverEnemyId = this.getHoveredEnemyDangerId();
+    if (nextHoverEnemyId === this.lastComputedHoverEnemyId) {
+      return false;
+    }
+    if (
+      nextHoverEnemyId !== null &&
+      !this.selectedUnitId &&
+      !this.globalDangerEnabled &&
+      this.trackedEnemyIds.size === 0
+    ) {
+      this.selectionPulseStartMs = performance.now();
+    }
+    this.recomputeDangerArea();
+    return true;
+  }
+
   private recomputeDangerArea(): void {
+    const hoveredEnemyId = this.getHoveredEnemyDangerId();
+    let effectiveTracked: Set<string> = this.trackedEnemyIds;
+    if (hoveredEnemyId && !this.trackedEnemyIds.has(hoveredEnemyId)) {
+      effectiveTracked = new Set(this.trackedEnemyIds);
+      effectiveTracked.add(hoveredEnemyId);
+    }
+    this.lastComputedHoverEnemyId = hoveredEnemyId;
     this.currentDanger = computeEnemyDangerArea(this.map, this.getLivingUnits(), {
       globalEnabled: this.globalDangerEnabled,
-      trackedEnemyIds: this.trackedEnemyIds,
+      trackedEnemyIds: effectiveTracked,
     });
     this.fieldDangerBtnEl.textContent = this.globalDangerEnabled
       ? 'Danger Area: ON'
@@ -5682,6 +5762,7 @@ export class BattleScene {
       ${this.prepMapStatusNotice ? `<div class="pmd-tile-box-notice" data-testid="dungeon-tile-notice">${this.escapeHudHtml(this.prepMapStatusNotice)}</div>` : ''}
     `;
 
+    this.syncHoverDangerArea();
     this.updateUnitHoverPopup();
   }
 
@@ -6656,7 +6737,7 @@ export class BattleScene {
         ? unit.waited
           ? 'rgba(136, 152, 176, 0.50)'
           : 'rgba(72, 204, 255, 0.85)'
-        : this.trackedEnemyIds.has(unit.id)
+        : this.trackedEnemyIds.has(unit.id) || this.lastComputedHoverEnemyId === unit.id
           ? 'rgba(255, 112, 196, 0.90)'
           : 'rgba(248, 84, 92, 0.85)';
 

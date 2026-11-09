@@ -121,7 +121,7 @@ export const TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinition> = [
         id: 'ch1_step2_danger_area',
         emotion: 'Shouting',
         dialogue:
-          'Now tap Danger Area! Being a lifelong coward means I memorized every predator’s exact attack reach!',
+          'Now tap Danger Area! Being a lifelong coward means I memorized every predator’s exact attack reach—you can also hover any foe or right-click to check it anytime!',
         actionHint: 'Tap Danger Area in the Field Menu',
         awaitAction: 'battle_toggle_danger_area',
         spotlight: { kind: 'dom', selector: '[data-testid="battle-field-danger"]' },
