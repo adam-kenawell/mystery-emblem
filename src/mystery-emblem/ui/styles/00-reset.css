@@ -1,0 +1,25 @@
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100%;
+  background-color: #0b1324;
+  color: #f8f8f8;
+  font-family: 'Fusion Pixel 12px Proportional KR', sans-serif;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}

@@ -1,0 +1,238 @@
+/* ==========================================================================
+   Playable Dungeon Modals: Dungeon Start, Victory, Defeat & Combat Forecast
+   ========================================================================== */
+
+.pmd-battle-outcome-dialog {
+  width: 100%;
+  max-width: 440px;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.pmd-battle-outcome-dialog.is-defeat-window {
+  border-image-source: var(--pmd-frame-danger);
+}
+
+.pmd-battle-scene .pmd-panel-title.is-danger-title {
+  color: var(--pmd-text-danger);
+}
+
+.pmd-battle-kicker {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  background: var(--pmd-fill-well-deep);
+  border: 2px solid var(--pmd-border-outer);
+  color: var(--pmd-text-cyan);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.pmd-battle-kicker.is-victory {
+  border-color: var(--pmd-text-green);
+  color: var(--pmd-text-green);
+}
+
+.pmd-battle-kicker.is-defeat {
+  border-color: var(--pmd-text-danger);
+  color: var(--pmd-text-danger);
+}
+
+.pmd-battle-outcome-actions {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.pmd-battle-outcome-actions .pmd-btn {
+  min-height: 46px;
+  min-width: 138px;
+}
+
+/* Fire Emblem Combat Forecast Modal inside Solid `#204868` PMD Frame */
+.pmd-battle-forecast-dialog {
+  width: 100%;
+  max-width: 660px;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pmd-forecast-eff-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: bold;
+  background: var(--pmd-fill-well-deep);
+  border: 2px solid var(--pmd-border-outer);
+  color: var(--pmd-text-white);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.pmd-forecast-eff-badge.is-super {
+  border-color: var(--pmd-text-green);
+  color: var(--pmd-text-green);
+}
+
+.pmd-forecast-eff-badge.is-resisted {
+  border-color: var(--pmd-text-orange);
+  color: #ffd088;
+}
+
+.pmd-forecast-unit-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Crisp 1x (40px) PMD Portrait Cell with 2px White Pixel Border (Reference Image 2) */
+.pmd-forecast-portrait-slot {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  background: #081018;
+  border: 2px solid var(--pmd-text-white);
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.pmd-forecast-portrait-slot canvas {
+  width: 40px !important;
+  height: 40px !important;
+  display: block;
+}
+
+.pmd-forecast-unit-id {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pmd-forecast-unit-name {
+  font-size: 14px;
+  color: var(--pmd-text-yellow);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pmd-forecast-unit-meta {
+  font-size: 12px;
+  color: var(--pmd-text-cyan);
+  text-shadow: 1px 1px 0 #000000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pmd-forecast-move-line {
+  font-size: 12px;
+  color: var(--pmd-text-green);
+  text-shadow: 1px 1px 0 #000000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Crisp PMD Pixel HP Bar (White 2px outer frame, `#50F850` emerald fill — Reference Image 1) */
+.pmd-forecast-hp-bar-track {
+  position: relative;
+  width: 100%;
+  height: 10px;
+  background: #182028;
+  border: 2px solid var(--pmd-text-white);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.pmd-forecast-hp-bar-ghost {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: rgba(248, 216, 56, 0.55);
+}
+
+.pmd-forecast-hp-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: #50f850;
+}
+
+.pmd-forecast-hp-bar-fill.is-enemy {
+  background: #f85868;
+}
+
+.pmd-forecast-hp-bar-fill.is-heal {
+  background: #58f888;
+}
+
+.pmd-forecast-stat {
+  background: var(--pmd-fill-well-deep);
+  border: 2px solid var(--pmd-divider-subtle);
+  padding: 3px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.pmd-forecast-stat span {
+  font-size: 10px;
+  color: var(--pmd-text-cyan);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.pmd-forecast-stat strong {
+  font-size: 12px;
+  color: var(--pmd-text-white);
+  text-shadow: 1px 1px 0 #000000;
+  white-space: nowrap;
+}
+
+.pmd-forecast-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pmd-forecast-actions .pmd-btn {
+  min-height: 46px;
+  min-width: 124px;
+}
+
+/* Mobile Portrait (`390x844`) Forecast & Outcome Layout */
+@media (max-width: 600px) {
+
+  .pmd-battle-forecast-dialog {
+    padding: 6px 8px;
+    gap: 6px;
+  }
+
+  .pmd-forecast-actions {
+    justify-content: stretch;
+  }
+
+  .pmd-forecast-actions .pmd-btn {
+    flex: 1;
+    min-width: 0;
+  }
+
+}

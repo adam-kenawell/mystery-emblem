@@ -1,0 +1,56 @@
+{
+  "id": "chapter_04",
+  "nodeId": "chapter_04",
+  "order": 4,
+  "dungeonNumber": 5,
+  "shortCode": "Ch. 4",
+  "label": "Chapter 4 — Berry Orchards",
+  "title": "Berry Orchards",
+  "subtitle": "Chapter 4",
+  "defaultTilesetId": "042",
+  "bgmCue": "apple_woods",
+  "objectiveType": "defeat_boss",
+  "objectiveLabel": "Defeat Boss: Commander Deino",
+  "recommendedLevel": 5,
+  "deploymentCap": 6,
+  "isDemoFinale": true,
+  "postStoryCutsceneId": "cs_06_orchard_celebration",
+  "width": 20,
+  "height": 12,
+  "rows": [
+    "X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1",
+    "X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:124 F:28 F:28 W:39 F:28 F:28 F:28 F:28 F:28 F:28 F:126 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:124 W:39 F:28 F:28 F:28 F:28 F:28 F:28 F:124 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:124 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:126 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:45 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 S:28 F:28",
+    "F:28 F:28 F:28 F:124 F:28 F:28 F:28 F:28 F:116 W:117 W:88 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 W:39 F:28 F:28 F:28 F:28 W:90 F:28 F:28 F:28 F:28 F:28 W:39 F:28 F:124 F:28 F:28",
+    "X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5"
+  ],
+  "playerSlots": [
+    {"x":3,"y":5,"speciesId":"dratini"},
+    {"x":3,"y":3,"speciesId":"piplup"},
+    {"x":3,"y":7,"speciesId":"flabebe"},
+    {"x":2,"y":4,"speciesId":"pidgey"},
+    {"x":2,"y":6,"speciesId":"sewaddle"},
+    {"x":2,"y":8,"speciesId":"ralts"}
+  ],
+  "recruitment": {"seedKey":"slot3Electric","joinLevel":5,"scaleStatsToLevel":true,"fallbackSpeciesIds":["elekid"]},
+  "clearRewardItems": [
+    {"itemId":"evolution_stone","quantity":1}
+  ],
+  "enemySpawns": [
+    {"id":"d5_enemy_0","x":12,"y":3,"speciesId":"linoone_galar","nickname":"Captain Linoone","level":5,"stats":{"hp":22,"atk":8,"def":6,"spa":5,"spd":6,"spe":9,"mov":5},"heldItemId":null,"aiMode":"wait_until_in_range"},
+    {"id":"d5_enemy_1","x":13,"y":8,"speciesId":"venipede","nickname":"Thicket Lancer","level":5,"heldItemId":null,"droppableItemId":"sitrus_berry","aiMode":"wait_until_in_range"},
+    {"id":"d5_enemy_2","x":15,"y":4,"speciesId":"corvisquire","nickname":"Canopy Harrier","level":5,"stats":{"hp":22,"atk":8,"def":6,"spa":5,"spd":6,"spe":8,"mov":6},"heldItemId":null,"aiMode":"wait_until_in_range"},
+    {"id":"d5_enemy_3","x":15,"y":7,"speciesId":"morgrem","nickname":"Captain Morgrem","level":5,"stats":{"hp":21,"atk":7,"def":5,"spa":8,"spd":6,"spe":7,"mov":5},"heldItemId":null,"aiMode":"wait_until_in_range"},
+    {"id":"d5_boss_deino","x":17,"y":5,"speciesId":"deino","nickname":"Commander Deino","level":6,"stats":{"hp":25,"atk":9,"def":8,"spa":9,"spd":8,"spe":8,"mov":5},"heldItemId":"oran_berry","isBoss":true,"stationary":false,"droppableItemId":"carbos","aiMode":"wait_until_in_range"}
+  ],
+  "reinforcements": [
+    {"id":"d5_reinforce_t2_woods","turnNumber":2,"stairsX":18,"stairsY":8,"enemy":{"id":"d5_reinf_pawniard","x":18,"y":8,"speciesId":"pawniard","nickname":"Imperial Pursuer","level":5,"heldItemId":null,"aiMode":"wait_until_in_range"}}
+  ]
+}

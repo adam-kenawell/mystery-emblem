@@ -1,0 +1,150 @@
+/* ==========================================================================
+   OUT-OF-DUNGEON CUTSCENE STAGE (`CutsceneScene.ts`), HIGH-DPI OVERWORLD
+   NODE NAMEPLATES & ENDING CREDITS SCROLL (`CreditsScene.ts`)
+   ========================================================================== */
+
+.pmd-dialogue-overlay.is-cutscene-stage {
+  background: transparent;
+}
+
+.pmd-cutscene-scene {
+  position: fixed;
+  inset: 0;
+  z-index: 86;
+  background: #050a14;
+  overflow: hidden;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.pmd-cutscene-scene[hidden] {
+  display: none !important;
+}
+
+.pmd-cutscene-canvas-wrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #050a14;
+}
+
+.pmd-cutscene-canvas {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.pmd-cutscene-location-pill {
+  position: fixed;
+  top: 0.8rem;
+  left: 0.85rem;
+  z-index: 88;
+  pointer-events: none;
+  padding: 5px 11px;
+  font-size: 13px;
+  color: var(--pmd-text-yellow);
+  max-width: calc(100vw - 120px);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pmd-cutscene-intro-skip-btn {
+  position: fixed;
+  top: 0.8rem;
+  right: 0.85rem;
+  z-index: 89;
+  min-width: 72px;
+  min-height: 44px;
+}
+
+/* High-DPI Screen-Space Overworld Node Nameplate Pills (`Ch. 1 Western Beach`) */
+.pmd-overworld-node-labels {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+  overflow: hidden;
+  user-select: none;
+}
+
+.pmd-overworld-node-label-anchor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.pmd-overworld-node-label-anchor[hidden] {
+  display: none !important;
+}
+
+.pmd-overworld-node-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 7px;
+  border-radius: 3px;
+  white-space: nowrap;
+  background: rgba(14, 28, 52, 0.94);
+  border: 2px solid #58c8f8;
+  box-shadow:
+    0 0 0 2px #050a14,
+    0 3px 6px rgba(0, 0, 0, 0.78),
+    inset 0 1px 0 rgba(184, 232, 255, 0.28);
+  font-family: 'Fusion Pixel 12px Proportional KR', monospace;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: 0.02em;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: unset;
+  text-rendering: geometricPrecision;
+  text-shadow:
+    -1px -1px 0 #050a14,
+    1px -1px 0 #050a14,
+    -1px 1px 0 #050a14,
+    1px 1px 0 #050a14,
+    0 2px 0 rgba(0, 0, 0, 0.9);
+}
+
+.pmd-overworld-node-pill-code {
+  color: var(--pmd-text-yellow);
+  padding-right: 5px;
+  border-right: 1px solid rgba(136, 200, 248, 0.45);
+}
+
+.pmd-overworld-node-pill-name {
+  color: #f4f8ff;
+}
+
+.pmd-overworld-node-pill.is-current {
+  background: rgba(24, 48, 84, 0.97);
+  border-color: #f8d858;
+  box-shadow:
+    0 0 0 2px #050a14,
+    0 0 12px rgba(248, 216, 88, 0.55),
+    inset 0 1px 0 rgba(255, 244, 176, 0.35);
+}
+
+.pmd-overworld-node-pill.is-current .pmd-overworld-node-pill-name {
+  color: #fff6b0;
+}
+
+.pmd-overworld-node-pill.is-hovered {
+  border-color: #8cf6ff;
+  box-shadow:
+    0 0 0 2px #050a14,
+    0 0 10px rgba(120, 244, 255, 0.48);
+}
+
+.pmd-overworld-node-pill.has-skirmish {
+  border-color: #ff7890;
+}

@@ -1,0 +1,251 @@
+.pmd-prep-ability-title strong {
+  color: var(--pmd-text-yellow);
+}
+
+.pmd-prep-item-shortcut-row,
+.pmd-prep-slot-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: var(--pmd-fill-well);
+  border: 2px solid var(--pmd-divider-subtle);
+  padding: 6px 8px;
+}
+
+.pmd-prep-item-shortcut-info {
+  font-size: 14px;
+  color: var(--pmd-text-white);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pmd-prep-item-shortcut-info strong {
+  color: var(--pmd-text-yellow);
+}
+
+.pmd-prep-slot-info {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pmd-prep-stats-section,
+.pmd-prep-moves-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pmd-prep-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.pmd-prep-stat-box {
+  background: var(--pmd-fill-well-deep);
+  border: 2px solid var(--pmd-divider-subtle);
+  padding: 4px 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1px;
+}
+
+.pmd-prep-stat-lbl {
+  font-size: 10px;
+  color: var(--pmd-text-cyan);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.pmd-prep-stat-val {
+  font-size: 14px;
+  color: var(--pmd-text-yellow);
+}
+
+/* Authentic PMD Move List Styling (Reference Image 3: Emerald `#58F858` + White 2px Dividers) */
+.pmd-prep-move-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: var(--pmd-fill-well);
+  border: 2px solid var(--pmd-divider-subtle);
+  padding: 2px 8px;
+}
+
+.pmd-prep-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pmd-prep-move-card,
+
+.pmd-prep-move-card:last-child,
+
+.pmd-prep-move-card.is-equipped,
+
+.pmd-prep-move-card.is-bench {
+  border-bottom-style: dashed;
+  border-bottom-color: var(--pmd-divider-subtle);
+}
+
+.pmd-prep-move-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pmd-prep-move-title-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--pmd-text-green);
+}
+
+.pmd-prep-move-stats {
+  font-size: 12px;
+  color: var(--pmd-text-white);
+  text-shadow: 1px 1px 0 #000000;
+  line-height: 1.35;
+}
+
+.pmd-prep-move-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.pmd-prep-items-unit-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pmd-prep-filter-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pmd-prep-status-line {
+  margin: 0;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: var(--pmd-text-green);
+  background: var(--pmd-fill-well-deep);
+  border: 2px solid var(--pmd-text-green);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.pmd-prep-map-hud {
+  z-index: 81;
+}
+
+/* Mobile Portrait (`<= 760px`, e.g., `390x844`) */
+@media (max-width: 760px) {
+  .pmd-prep-units-body {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .pmd-prep-stats-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .pmd-prep-modal-dialog,
+  .pmd-prep-hub-dialog {
+    padding: 6px 8px;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 560px) {
+  .pmd-prep-menu-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .pmd-prep-option-btn {
+    min-height: 50px;
+  }
+
+  .pmd-prep-unit-hero {
+    flex-wrap: wrap;
+  }
+
+  .pmd-prep-move-card,
+
+  .pmd-prep-move-actions {
+    justify-content: flex-end;
+  }
+
+  .pmd-prep-map-pill {
+    display: none !important;
+  }
+}
+
+/* Short Mobile Landscape (`<= 500px` height, e.g., `844x390`) — zero clipping */
+@media (max-height: 500px) {
+  .pmd-prep-hub-dialog {
+    max-width: 720px;
+    border-width: 8px 12px;
+    padding: 4px 8px;
+    gap: 4px;
+  }
+
+  .pmd-prep-hub-header {
+    gap: 2px;
+    padding-bottom: 4px;
+  }
+
+  .pmd-prep-menu-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2px 10px;
+    padding: 2px 6px;
+  }
+
+  .pmd-prep-option-btn {
+    min-height: 46px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    gap: 1px;
+  }
+
+  .pmd-prep-opt-title {
+    font-size: 14px;
+  }
+
+  .pmd-prep-modal-dialog {
+    max-width: 820px;
+    border-width: 8px 12px;
+    padding: 4px 8px;
+    gap: 6px;
+  }
+
+  .pmd-prep-units-body {
+    grid-template-columns: 250px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .pmd-prep-portrait-box,
+
+  .pmd-prep-portrait-box canvas {
+    width: 40px !important;
+    height: 40px !important;
+  }
+}

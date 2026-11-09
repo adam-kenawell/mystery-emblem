@@ -1,0 +1,104 @@
+/* ==========================================================================
+   PORTRAIT-FIRST UNIT SELECTORS, MINI PORTRAITS, DUNGEON TILE BOX,
+   CHARACTER HOVER POPUPS & FIRE EMBLEM INTERLOCKING 'L' FORECAST
+   ========================================================================== */
+
+/* 1. Reusable Unit Portrait Grid & Mini Portrait Tags (`PmdUnitPortraitGrid.ts`) */
+.pmd-unit-portrait-grid,
+.pmd-overworld-unit-list.pmd-unit-portrait-grid {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  background: var(--pmd-fill-well);
+  border: 2px solid var(--pmd-divider-subtle);
+}
+
+.pmd-unit-portrait-cell {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  min-width: 52px;
+  min-height: 52px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #081018;
+}
+
+.pmd-unit-portrait-inner > canvas {
+  width: 40px !important;
+  height: 40px !important;
+  display: block;
+}
+
+.pmd-unit-portrait-cell.is-selected,
+.pmd-unit-portrait-cell.is-hovered,
+.pmd-unit-portrait-cell:hover:not(:disabled) {
+  border-image-source: var(--pmd-frame-mini-active);
+}
+
+.pmd-unit-portrait-cell.is-benched:not(.is-selected):not(.is-hovered) {
+  opacity: 0.52;
+  filter: saturate(0.75);
+}
+
+.pmd-portrait-pip {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 2px;
+  font-size: 10px;
+  line-height: 13px;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #081018;
+  border: 1px solid var(--pmd-text-white);
+  color: var(--pmd-text-white);
+  text-shadow: none;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.pmd-portrait-pip.is-lord {
+  border-color: var(--pmd-text-yellow);
+  color: var(--pmd-text-yellow);
+}
+
+.pmd-portrait-pip.is-deployed {
+  border-color: var(--pmd-text-green);
+  color: var(--pmd-text-green);
+}
+
+.pmd-portrait-pip.is-item {
+  top: -4px;
+  right: -4px;
+  bottom: auto;
+  font-size: 9px;
+  border-color: var(--pmd-border-outer);
+  color: var(--pmd-text-cyan);
+}
+
+.pmd-portrait-pip.is-item.has-icon {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  padding: 0;
+  background: #081018;
+  border: 1px solid var(--pmd-border-outer);
+}
+
+.pmd-portrait-pip.is-item.has-icon .pmd-mini-item-icon {
+  width: 16px !important;
+  height: 16px !important;
+  border: none;
+  background: transparent;
+}

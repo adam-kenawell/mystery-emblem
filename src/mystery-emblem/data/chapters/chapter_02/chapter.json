@@ -1,0 +1,52 @@
+{
+  "id": "chapter_02",
+  "nodeId": "chapter_02",
+  "order": 2,
+  "dungeonNumber": 3,
+  "shortCode": "Ch. 2",
+  "label": "Chapter 2 — Cleft Mountain",
+  "title": "Cleft Mountain",
+  "subtitle": "Chapter 2",
+  "defaultTilesetId": "014",
+  "bgmCue": "mt_bristle",
+  "objectiveType": "rout",
+  "objectiveLabel": "Rout All Enemies",
+  "recommendedLevel": 3,
+  "deploymentCap": 6,
+  "postStoryCutsceneId": "cs_04_watchtower_bells",
+  "width": 20,
+  "height": 12,
+  "rows": [
+    "X:55 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:11 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:54",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:9 F:29 F:29 F:29 F:29 F:29 W:48 F:47 X:22",
+    "X:3 F:29 F:29 F:29 F:29 W:42 F:29 S:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 W:65 S:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:15 W:65 F:29 X:33",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:15 F:29 F:29 F:29 W:42 F:29 F:29 F:29 F:29 F:29 F:29 W:65 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 W:65 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 W:65 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 W:48 F:29 F:29 F:29 F:29 F:29 W:113 W:73 W:73 W:114 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 W:65 F:29 F:29 F:29 F:29 F:29 W:65 F:29 F:29 F:29 S:29 X:22",
+    "X:3 W:72 W:73 W:73 W:73 W:73 W:73 W:73 W:116 W:73 W:73 W:73 W:73 W:73 W:114 F:29 F:29 F:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
+    "X:37 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:49"
+  ],
+  "playerSlots": [
+    {"x":3,"y":5,"speciesId":"dratini"},
+    {"x":3,"y":3,"speciesId":"piplup"},
+    {"x":3,"y":7,"speciesId":"flabebe"},
+    {"x":2,"y":4,"speciesId":"pidgey"},
+    {"x":2,"y":6,"speciesId":"sewaddle"},
+    {"x":2,"y":8,"speciesId":"ralts"}
+  ],
+  "recruitment": {"seedKey":"slot2Psychic","joinLevel":3,"scaleStatsToLevel":true,"fallbackSpeciesIds":["ralts"]},
+  "enemySpawns": [
+    {"id":"d3_enemy_0","x":12,"y":4,"speciesId":"rolycoly","nickname":"Crag Sapper","level":3,"heldItemId":null,"aiMode":"wait_until_in_range"},
+    {"id":"d3_enemy_1","x":13,"y":7,"speciesId":"zubat","nickname":"Peak Flier","level":3,"heldItemId":null,"aiMode":"wait_until_in_range"},
+    {"id":"d3_enemy_2","x":16,"y":5,"speciesId":"gothita","nickname":"Hexer Gothita","level":4,"heldItemId":null,"droppableItemId":"super_potion","aiMode":"wait_until_in_range"}
+  ],
+  "reinforcements": [
+    {"id":"d3_reinforce_t2_north_stairs","turnNumber":2,"stairsX":7,"stairsY":2,"enemy":{"id":"d3_reinf_rookidee","x":7,"y":2,"speciesId":"rookidee","nickname":"Stairs Outrider","level":3,"heldItemId":null,"aiMode":"wait_until_in_range"}},
+    {"id":"d3_reinforce_t2_lower_stairs","turnNumber":2,"stairsX":18,"stairsY":8,"enemy":{"id":"d3_reinf_pawniard","x":18,"y":8,"speciesId":"pawniard","nickname":"Stairs Raider","level":3,"heldItemId":null,"aiMode":"wait_until_in_range"}},
+    {"id":"d3_reinforce_t3_upper_stairs","turnNumber":3,"stairsX":18,"stairsY":2,"enemy":{"id":"d3_reinf_impidimp","x":18,"y":2,"speciesId":"impidimp","nickname":"Stairs Warlock","level":3,"heldItemId":null,"aiMode":"wait_until_in_range"}}
+  ]
+}

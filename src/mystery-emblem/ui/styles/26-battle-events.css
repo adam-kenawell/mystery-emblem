@@ -1,0 +1,139 @@
+/* 26. Green Allied NPC HUD, ALLY PHASE Banner & Branching Talk Choice Modal */
+
+.pmd-unit-hover-popup.is-npc {
+  border-image-source: var(--pmd-frame-solid);
+}
+
+.pmd-unit-hover-popup.is-npc .pmd-unit-popup-role-pip {
+  border-color: #68f8a8;
+  color: #68f8a8;
+}
+
+.pmd-forecast-hp-bar-fill.is-npc {
+  background: linear-gradient(180deg, #78ffba 0%, #2ec878 100%);
+}
+
+.pmd-phase-cine-overlay.is-ally .pmd-phase-cine-band {
+  border-top-color: rgba(104, 248, 168, 0.86);
+  border-bottom-color: rgba(104, 248, 168, 0.86);
+  background: linear-gradient(
+    180deg,
+    rgba(72, 232, 144, 0.2) 0%,
+    rgba(28, 148, 88, 0.09) 50%,
+    rgba(72, 232, 144, 0.2) 100%
+  );
+  box-shadow:
+    0 0 22px rgba(56, 216, 128, 0.36),
+    inset 0 0 18px rgba(120, 248, 176, 0.18);
+}
+
+.pmd-phase-cine-overlay.is-ally .pmd-phase-cine-title {
+  color: #e4fff0;
+  text-shadow:
+    -2px -2px 0 #0e6b3c,
+    2px -2px 0 #0e6b3c,
+    -2px 2px 0 #0e6b3c,
+    2px 2px 0 #06381e,
+    4px 4px 0 #040a18,
+    0 0 16px rgba(88, 240, 152, 0.8);
+}
+
+.pmd-battle-cmd-btn.is-talk {
+  color: var(--pmd-text-yellow);
+}
+
+.pmd-battle-cmd-btn.is-dance {
+  color: var(--pmd-text-green);
+}
+
+.pmd-talk-choice-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 86;
+  background: rgba(4, 10, 20, 0.68);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem;
+}
+
+.pmd-talk-choice-backdrop[hidden] {
+  display: none !important;
+}
+
+.pmd-talk-choice-modal {
+  width: min(440px, 100%);
+  max-height: calc(100% - 1.5rem);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.75rem 0.9rem;
+}
+
+.pmd-talk-choice-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pmd-talk-choice-btn {
+  min-height: 52px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.65rem;
+  padding: 0.45rem 0.7rem;
+  text-align: left;
+}
+
+.pmd-talk-choice-portrait {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 16, 28, 0.78);
+  border: 1px solid rgba(168, 208, 248, 0.55);
+}
+
+.pmd-talk-choice-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pmd-talk-choice-label {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--pmd-text-yellow);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.pmd-talk-choice-desc {
+  font-size: 12px;
+  color: #dbeeff;
+  text-shadow: 1px 1px 0 #000000;
+}
+
+@media (max-height: 500px) {
+  .pmd-talk-choice-modal {
+    width: min(520px, 100%);
+    padding: 0.5rem 0.75rem;
+    gap: 0.45rem;
+  }
+
+  .pmd-talk-choice-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.45rem;
+  }
+
+  .pmd-talk-choice-btn {
+    min-height: 46px;
+    padding: 0.35rem 0.55rem;
+  }
+}

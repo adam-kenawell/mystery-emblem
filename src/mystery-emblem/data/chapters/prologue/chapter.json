@@ -1,0 +1,46 @@
+{
+  "id": "prologue",
+  "nodeId": "prologue",
+  "order": 0,
+  "dungeonNumber": 1,
+  "shortCode": "Prologue",
+  "label": "Prologue — Western Beach",
+  "title": "Western Beach",
+  "subtitle": "Prologue",
+  "defaultTilesetId": "002",
+  "bgmCue": "beach_cave",
+  "objectiveType": "rout",
+  "objectiveLabel": "Rout All Enemies",
+  "recommendedLevel": 1,
+  "deploymentCap": 3,
+  "skipPrepPhase": true,
+  "preStoryCutsceneId": "cs_01_coastal_friends",
+  "postStoryCutsceneId": "cs_02_sanctuary_reveal",
+  "width": 18,
+  "height": 12,
+  "rows": [
+    "X:38 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:37",
+    "X:3 F:32 F:28 F:28 W:43 F:28 F:98 F:28 F:28 F:28 F:32 F:28 W:43 F:28 F:28 X:27 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:27 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:98 F:28 F:28 F:28 F:28 F:34 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:34 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:32 F:28 F:28 F:28 F:28 F:28 W:43 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:43 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:32 X:21",
+    "X:3 W:43 F:28 F:28 F:28 F:28 X:27 F:32 F:28 F:28 F:98 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:98 F:28 X:21",
+    "X:3 F:28 F:32 F:28 F:28 F:28 F:34 F:28 F:28 F:32 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 X:27 F:28 F:28 F:28 F:28 F:28 F:28 W:43 F:28 F:28 F:28 F:28 F:32 F:28 X:21",
+    "X:39 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:50"
+  ],
+  "playerSlots": [
+    {"x":3,"y":5,"speciesId":"dratini"},
+    {"x":3,"y":3,"speciesId":"piplup"},
+    {"x":3,"y":7,"speciesId":"flabebe"}
+  ],
+  "enemySpawns": [
+    {"id":"d1_enemy_0","x":12,"y":5,"speciesId":"zigzagoon_galar","nickname":"Feral Outrider","level":1,"heldItemId":null,"aiMode":"wait_until_in_range"},
+    {"id":"d1_enemy_1","x":12,"y":3,"speciesId":"impidimp","nickname":"Shadow Raider","level":1,"heldItemId":null,"droppableItemId":"evolution_stone","aiMode":"wait_until_in_range"},
+    {"id":"d1_enemy_2","x":13,"y":7,"speciesId":"pawniard","nickname":"Ironscale Scout","level":2,"heldItemId":null,"aiMode":"wait_until_in_range"}
+  ],
+  "reinforcements": []
+}

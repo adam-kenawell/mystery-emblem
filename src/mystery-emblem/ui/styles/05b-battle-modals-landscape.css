@@ -1,0 +1,44 @@
+/* Short Mobile Landscape (`844x390`) Compact Zero-Clip Forecast & Outcome Layout */
+@media (max-height: 500px) {
+  .pmd-battle-outcome-dialog {
+    max-width: 560px;
+    border-width: 8px 12px;
+    padding: 6px 10px;
+    gap: 4px;
+  }
+
+  .pmd-battle-outcome-actions .pmd-btn {
+    min-height: 44px;
+    padding: 4px 10px;
+  }
+
+  .pmd-battle-forecast-dialog {
+    max-width: 720px;
+    border-width: 8px 12px;
+    padding: 4px 8px;
+    gap: 4px;
+  }
+
+  .pmd-forecast-portrait-slot {
+    width: 44px;
+    height: 44px;
+  }
+
+  .pmd-forecast-portrait-slot canvas {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .pmd-forecast-stat {
+    padding: 2px 3px;
+  }
+
+  .pmd-forecast-stat strong {
+    font-size: 12px;
+  }
+
+  .pmd-forecast-actions .pmd-btn {
+    min-height: 44px;
+    padding: 3px 10px;
+  }
+}

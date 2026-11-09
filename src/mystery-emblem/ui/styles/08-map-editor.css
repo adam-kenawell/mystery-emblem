@@ -1,0 +1,100 @@
+/* ==========================================================================
+   DEV TOOLS: LEVEL & CHAPTER MAP EDITOR (`ChapterMapEditorScene` + Preview)
+   ========================================================================== */
+
+.pmd-map-editor-drawer {
+  width: min(460px, calc(100% - 1.5rem));
+}
+
+.pmd-editor-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  background: var(--pmd-fill-well-deep);
+  border: 2px solid var(--pmd-border-outer);
+  color: var(--pmd-text-cyan);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.pmd-editor-status-pill.is-custom {
+  border-color: var(--pmd-text-green);
+  color: var(--pmd-text-green);
+}
+
+.pmd-editor-status-pill.is-unsaved {
+  border-color: var(--pmd-text-yellow);
+  color: var(--pmd-text-yellow);
+}
+
+.pmd-editor-brush-readout {
+  padding: 5px 8px;
+  background: var(--pmd-fill-well-deep);
+  border: 2px solid var(--pmd-text-yellow);
+  color: var(--pmd-text-yellow) !important;
+}
+
+.pmd-editor-enemy-config {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  background: #301624;
+  border: 2px solid #e06078;
+}
+
+.pmd-editor-stepper-row {
+  align-items: center;
+}
+
+.pmd-editor-dim-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(122px, 1fr));
+  gap: 6px;
+}
+
+.pmd-editor-dim-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  background: var(--pmd-fill-well-deep);
+  border: 2px solid var(--pmd-divider-subtle);
+}
+
+.pmd-devtools-map-preview-wrap {
+  width: 100%;
+  background: #08101c;
+  border: 2px solid var(--pmd-border-outer);
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.pmd-devtools-map-preview-canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 260px;
+  width: auto;
+  height: auto;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+  border: 2px solid var(--pmd-text-white);
+}
+
+@media (max-width: 720px) {
+  .pmd-map-editor-drawer {
+    width: auto;
+  }
+}
+
+@media (max-height: 500px) {
+  .pmd-devtools-map-preview-canvas {
+    max-height: 150px;
+  }
+}

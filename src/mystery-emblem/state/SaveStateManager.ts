@@ -1,369 +1,63 @@
-import { getFlabebeFlowerColorForLord } from '../assets/pmdAssetLoader';
-import {
-  getAllCustomMapOverrides,
-  getCustomMapsSyncEnvelope,
-  hasAnyCustomMapSyncState,
-  mergeCustomMapsRecord,
-  reconcileCustomMapsEnvelope,
-  type CustomMapsSyncEnvelope,
-} from '../data/chapterMapRegistry';
-import { ITEM_MAP, MOVE_MAP, SPECIES_MAP } from '../data/index';
-import {
-  DEMO_OVERWORLD_GRAPH,
-  getOverworldNodeById,
-  type OverworldGraphDefinition,
-} from '../data/overworldMapData';
-import {
-  buildKecleonShopState,
-  buildSkirmishSpawnState,
-  createPrologueOverworldNodes,
-  createUnlockedAllOverworldNodes,
-  ensureOverworldGraphState,
-  rollPostBattleOverworldSpawns,
-  type PostBattleSpawnResult,
-} from '../engine/overworldEngine';
-import { computeManualScaledStatsForJoinLevel } from '../engine/progressionEngine';
-import {
-  CURRENT_SAVE_SCHEMA_VERSION,
-  type CampaignMode,
-  type ConvoyEntry,
-  type EvolutionBranch,
-  type FlabebeFlowerColor,
-  type ItemDefinition,
-  type KecleonShopType,
-  type OwnedPokemonInstance,
-  type PokemonSpeciesDefinition,
-  type QuizRecruitSeeds,
-  type SaveData,
-  type SeriesFamiliarityLevel,
-  type StatBlockSeven,
-  type SupportLevel,
-  type SupportPairProgress,
-  type TutorialDetailLevel,
-  type TutorialFamiliarityPreferences,
+/**
+ * Mystery Emblem — Persistent SaveStateManager (`localStorage` + Cloud Firestore Sync)
+ */
+
+import { mergeCustomMapsRecord } from '../data/chapterMapRegistry';
+import { DEFAULT_QUIZ_SEEDS, formatCampaignChapterLabel } from '../data/campaignConfig';
+import { DEMO_OVERWORLD_GRAPH, type OverworldGraphDefinition } from '../data/overworldMapData';
+import type { PostBattleSpawnResult } from '../engine/overworldEngine';
+import type {
+  ItemDefinition, KecleonShopType, OwnedPokemonInstance, SaveData,
+  SupportPairProgress, TutorialDetailLevel, TutorialFamiliarityPreferences,
 } from '../types/schemas';
-import { validateSaveData } from '../types/validators';
 import {
-  FirestoreSyncAdapter,
-  extractCloudPayloadParts,
-  type CloudSyncAdapter,
-  type CloudUser,
-} from './firebaseSync';
+  mutateAddSupportPoints, mutateCommitBattleResults,
+  type BattleUnitSaveSyncEntry, type CommitBattleResultsPayload,
+} from './battleCommitMutators';
+import {
+  mutateMarkTutorialSeen, mutateTutorialDetailLevel, pushUniqueIdToFlagList,
+  readAreTutorialsEnabled, readTutorialPreferences, readUnlockedTutorialIds,
+} from './campaignAndTutorialMutators';
+import { buildNewCampaignSaveData, type NewCampaignConfig } from './campaignSaveFactory';
+import { performCloudSaveReconciliation, serializeCustomMapsEnvelope } from './cloudReconciler';
+import {
+  mutateAddConvoyItem, mutateEquipItemToUnit, mutateTeachTmMove,
+  mutateUseEvolutionItemOnUnit, mutateUseVitaminOnUnit,
+} from './convoyAndItemMutators';
+import { FirestoreSyncAdapter, type CloudSyncAdapter } from './firebaseSync';
+import {
+  mutateBuyKecleonShopItem, mutateClearOverworldSkirmish, mutateCompleteOverworldChapter,
+  mutateEnsureOverworldInitialized, mutateResetOverworldToPrologue, mutateSetOverworldCurrentNode,
+  mutateSetOverworldNodeStateCheat, mutateSpawnOverworldKecleonShop,
+  mutateSpawnOverworldSkirmish, mutateUnlockAllOverworldNodes,
+} from './overworldAndShopMutators';
+import {
+  mutateEvolveUnitToSpecies, mutatePromoteAdvisorToPlayableRoster, mutateRecruitPokemon,
+  mutateRenamePokemon, mutateSetActiveMoves, mutateSetEquippedMove,
+  mutateSetUnitLevelForTest, mutateUnlockUnitMove,
+} from './rosterAndMoveMutators';
+import {
+  computeSupportLevel, createPokemonInstance, getDefaultStorage, getUnitEquippedItemId,
+  LEGACY_SAVE_STORAGE_KEY, makeSupportPairKey, META_STORAGE_KEY, sanitizeNickname,
+  SAVE_STORAGE_KEY, SUPPORT_LEVEL_THRESHOLDS,
+  type CloudSyncResolution, type CreatePokemonOptions, type StorageLike, type SyncStatusSnapshot,
+} from './saveHelpersAndFactory';
+import {
+  parseImportedSaveBackup, performDeleteSaveFromAccount, performSyncCustomMapsWithSave,
+  readValidLocalSaveFromStorage, stampAndValidateSaveForCommit, writeLocalSaveToStorage,
+} from './saveStorageIo';
 
-export const SAVE_STORAGE_KEY = 'mystery_emblem_save_v1';
-const LEGACY_SAVE_STORAGE_KEY = 'poke_emblem_save_v1';
-export const META_STORAGE_KEY = 'mystery_emblem_meta_v1';
-
-export const SUPPORT_LEVEL_THRESHOLDS: readonly [number, number, number, number, number] = [
-  5, 12, 22, 35, 50,
-];
-
-export type CloudSyncResolution =
-  | 'unauthenticated'
-  | 'empty'
-  | 'already_in_sync'
-  | 'pulled_newer_cloud'
-  | 'pushed_newer_local'
-  | 'cloud_error';
-
-export interface SyncStatusSnapshot {
-  isFirebaseConfigured: boolean;
-  user: CloudUser | null;
-  lastResolution: CloudSyncResolution | null;
-  lastSyncedAt: number | null;
-  errorMessage: string | null;
-}
-
-export interface StorageLike {
-  getItem(key: string): string | null;
-  setItem(key: string, value: string): void;
-  removeItem(key: string): void;
-}
-
-function getDefaultStorage(): StorageLike {
-  if (typeof window !== 'undefined' && window.localStorage) {
-    return window.localStorage;
-  }
-  const map = new Map<string, string>();
-  return {
-    getItem: (k) => map.get(k) ?? null,
-    setItem: (k, v) => {
-      map.set(k, v);
-    },
-    removeItem: (k) => {
-      map.delete(k);
-    },
-  };
-}
-
-function generateId(prefix: string): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return `${prefix}_${crypto.randomUUID()}`;
-  }
-  return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
-}
-
-const DEMO_CHAPTER_LABELS: Readonly<Record<string, string>> = {
-  prologue: 'Chapter 1',
-  chapter_01: 'Chapter 2',
-  chapter_02: 'Chapter 3',
-  chapter_03: 'Chapter 4',
-  chapter_04: 'Chapter 5',
+export {
+  DEFAULT_QUIZ_SEEDS, formatCampaignChapterLabel, SAVE_STORAGE_KEY, META_STORAGE_KEY,
+  SUPPORT_LEVEL_THRESHOLDS, makeSupportPairKey, computeSupportLevel, sanitizeNickname,
+  getUnitEquippedItemId, createPokemonInstance,
+};
+export type {
+  CloudSyncResolution, SyncStatusSnapshot, StorageLike, CreatePokemonOptions,
+  NewCampaignConfig, BattleUnitSaveSyncEntry, CommitBattleResultsPayload,
 };
 
-export function formatCampaignChapterLabel(chapterId: string | null | undefined): string {
-  const raw = (chapterId ?? '').trim();
-  if (!raw) return 'Chapter 1';
-  const lower = raw.toLowerCase();
-  const demoMapped = DEMO_CHAPTER_LABELS[lower];
-  if (demoMapped) return demoMapped;
-  if (lower === 'epilogue') return 'Epilogue';
-  if (lower === 'endgame') return 'Endgame';
-
-  const chMatch = /^(?:chapter|ch)[_\-\s]*(\d+)$/i.exec(raw);
-  if (chMatch) {
-    return `Chapter ${Number(chMatch[1])}`;
-  }
-  if (/^\d+$/.test(raw)) {
-    return `Chapter ${Number(raw)}`;
-  }
-  const paraMatch = /^(?:paralogue|para|par)[_\-\s]*(\d+)$/i.exec(raw);
-  if (paraMatch) {
-    return `Paralogue ${Number(paraMatch[1])}`;
-  }
-
-  return raw
-    .split(/[_\-\s]+/)
-    .filter(Boolean)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-}
-
-export function makeSupportPairKey(instanceIdA: string, instanceIdB: string): string {
-  if (instanceIdA === instanceIdB) {
-    throw new Error('Cannot compute Support pair key between a unit and itself.');
-  }
-  return instanceIdA < instanceIdB
-    ? `${instanceIdA}::${instanceIdB}`
-    : `${instanceIdB}::${instanceIdA}`;
-}
-
-export function computeSupportLevel(points: number): SupportLevel {
-  if (points >= SUPPORT_LEVEL_THRESHOLDS[4]) return 5;
-  if (points >= SUPPORT_LEVEL_THRESHOLDS[3]) return 4;
-  if (points >= SUPPORT_LEVEL_THRESHOLDS[2]) return 3;
-  if (points >= SUPPORT_LEVEL_THRESHOLDS[1]) return 2;
-  if (points >= SUPPORT_LEVEL_THRESHOLDS[0]) return 1;
-  return 0;
-}
-
-export function sanitizeNickname(rawNickname: string | undefined, fallbackSpeciesName: string): string {
-  const trimmed = (rawNickname ?? '').trim().slice(0, 16);
-  return trimmed.length > 0 ? trimmed : fallbackSpeciesName;
-}
-
-/**
- * Returns the single item equipped on a unit (either a Held Gear/Berry in `heldItemId`
- * or an Active Healing/Promotion/X-Item in `consumableItemId`), or `null` if empty.
- */
-export function getUnitEquippedItemId(
-  unit: Pick<OwnedPokemonInstance, 'heldItemId' | 'consumableItemId'>
-): string | null {
-  return unit.heldItemId ?? unit.consumableItemId ?? null;
-}
-
-function returnItemToConvoyList(convoy: Array<{ itemId: string; quantity: number }>, itemId: string): void {
-  if (!ITEM_MAP.has(itemId)) return;
-  const existing = convoy.find((c) => c.itemId === itemId);
-  if (existing) {
-    existing.quantity += 1;
-  } else {
-    convoy.push({ itemId, quantity: 1 });
-  }
-}
-
-/**
- * Sanitizes legacy saves that had both `heldItemId` and `consumableItemId` populated by
- * returning `consumableItemId` to the Convoy so every unit strictly obeys the 1-item-slot rule.
- */
-function normalizeLegacySingleItemSlots(candidate: unknown): unknown {
-  if (!candidate || typeof candidate !== 'object') return candidate;
-  const obj = candidate as Partial<SaveData>;
-  if (!Array.isArray(obj.roster) || !Array.isArray(obj.convoy)) return candidate;
-
-  let mutated = false;
-  for (const unit of obj.roster) {
-    if (unit && unit.heldItemId !== null && unit.consumableItemId !== null) {
-      mutated = true;
-      break;
-    }
-  }
-  if (!mutated) return candidate;
-
-  const cloned = JSON.parse(JSON.stringify(obj)) as SaveData;
-  for (const unit of cloned.roster) {
-    if (unit.heldItemId !== null && unit.consumableItemId !== null) {
-      returnItemToConvoyList(cloned.convoy, unit.consumableItemId);
-      unit.consumableItemId = null;
-    }
-  }
-  return cloned;
-}
-
-function findForwardEvolutionPath(
-  fromSp: PokemonSpeciesDefinition,
-  targetSpeciesId: string,
-  visited = new Set<string>()
-): EvolutionBranch[] | null {
-  if (visited.has(fromSp.id)) return null;
-  visited.add(fromSp.id);
-  for (const branch of fromSp.evolutions) {
-    if (branch.targetSpeciesId === targetSpeciesId) {
-      return [branch];
-    }
-    const nextSp = SPECIES_MAP.get(branch.targetSpeciesId);
-    if (nextSp) {
-      const rest = findForwardEvolutionPath(nextSp, targetSpeciesId, new Set(visited));
-      if (rest) {
-        return [branch, ...rest];
-      }
-    }
-  }
-  return null;
-}
-
-export interface CreatePokemonOptions {
-  speciesId: string;
-  nickname?: string;
-  cosmeticForm?: FlabebeFlowerColor;
-  level?: number;
-  /** When true and `level > defaultJoinLevel`, scales manual `baseStats` via manual `growthRates` */
-  scaleStatsToLevel?: boolean;
-  isLord?: boolean;
-  heldItemId?: string | null;
-  consumableItemId?: string | null;
-}
-
-export function createPokemonInstance(opts: CreatePokemonOptions): OwnedPokemonInstance {
-  const sp = SPECIES_MAP.get(opts.speciesId);
-  if (!sp) {
-    throw new Error(`Unknown Pokémon speciesId "${opts.speciesId}".`);
-  }
-  if (sp.faction === 'enemy') {
-    throw new Error(
-      `Rule 5 violation: Enemy-only Pokémon "${sp.name}" cannot be instantiated for the player roster.`
-    );
-  }
-
-  const level = Math.max(1, Math.min(40, Math.floor(opts.level ?? sp.defaultJoinLevel)));
-  const unlockedMoveIds: string[] = [];
-  for (const entry of sp.learnset) {
-    if (entry.level <= level && !unlockedMoveIds.includes(entry.moveId)) {
-      unlockedMoveIds.push(entry.moveId);
-    }
-  }
-  if (unlockedMoveIds.length === 0 && sp.learnset[0]) {
-    unlockedMoveIds.push(sp.learnset[0].moveId);
-  }
-
-  // Equip up to the 4 most recent unlocked moves
-  const activeMoveIds = unlockedMoveIds.slice(-4);
-
-  // Rule 4: Single [E] Equipped offensive move for Enemy Phase counter-attacks
-  let equippedMoveId: string | null = null;
-  for (const mId of activeMoveIds) {
-    const mv = MOVE_MAP.get(mId);
-    if (mv && (mv.category === 'Physical' || mv.category === 'Special')) {
-      equippedMoveId = mId;
-      break;
-    }
-  }
-
-  if (opts.heldItemId && opts.consumableItemId) {
-    throw new Error(
-      `Unit "${sp.name}" cannot start with both heldItemId ("${opts.heldItemId}") and consumableItemId ("${opts.consumableItemId}") — each unit has 1 item slot.`
-    );
-  }
-
-  const initialStats: StatBlockSeven = opts.scaleStatsToLevel
-    ? computeManualScaledStatsForJoinLevel(sp, level)
-    : { ...sp.baseStats };
-
-  return {
-    instanceId: generateId('unit'),
-    speciesId: sp.id,
-    nickname: sanitizeNickname(opts.nickname, sp.name),
-    ...(opts.cosmeticForm ? { cosmeticForm: opts.cosmeticForm } : {}),
-    isLord: Boolean(opts.isLord),
-    level,
-    exp: 0,
-    currentStats: initialStats,
-    bonusPpByMoveId: {},
-    unlockedMoveIds,
-    activeMoveIds,
-    equippedMoveId,
-    heldItemId: opts.heldItemId ?? null,
-    consumableItemId: opts.consumableItemId ?? null,
-  };
-}
-
-export const DEFAULT_QUIZ_SEEDS: QuizRecruitSeeds = {
-  slot1Flying: ['pidgey'],
-  slot2Psychic: ['ralts'],
-  slot3Electric: ['elekid'],
-  slot8Ice: ['vanillish'],
-  q1Healer: ['flabebe'],
-  q2BugFlying: ['pidgey', 'sewaddle'],
-  q3GhostPsychic: ['ralts'],
-  q4Electric: ['elekid'],
-  q5FrontlineTrio: ['machop', 'geodude', 'trapinch'],
-  q6WaterGrass: ['poliwag', 'bellsprout'],
-  q7Fire: ['litwick'],
-  q8SteelFairy: ['tinkatink', 'cleffa'],
-  q9IceArmored: ['mime_jr_galar', 'beldum'],
-};
-
-export interface NewCampaignConfig {
-  lordSpeciesId: string;
-  lordNickname?: string;
-  partnerSpeciesId?: string;
-  partnerNickname?: string;
-  healerSpeciesId?: string;
-  healerNickname?: string;
-  quizSeeds?: QuizRecruitSeeds;
-  tutorialsEnabled?: boolean;
-  tutorialPreferences?: TutorialFamiliarityPreferences;
-  newGamePlusUnlocked?: boolean;
-  startingLevel?: number;
-  scaleStatsToLevel?: boolean;
-  campaignMode?: CampaignMode;
-  initialConvoy?: ReadonlyArray<ConvoyEntry>;
-  startingGold?: number;
-  currentChapterId?: string;
-  overworldGraph?: OverworldGraphDefinition;
-}
-
-export interface BattleUnitSaveSyncEntry {
-  instanceId: string;
-  speciesId: string;
-  nickname: string;
-  cosmeticForm?: FlabebeFlowerColor;
-  level: number;
-  exp: number;
-  currentStats: StatBlockSeven;
-  unlockedMoveIds: string[];
-  activeMoveIds: string[];
-  equippedMoveId: string | null;
-  heldItemId: string | null;
-  consumableItemId: string | null;
-}
-
-export interface CommitBattleResultsPayload {
-  deployedUnits: ReadonlyArray<BattleUnitSaveSyncEntry>;
-  droppedItemIds?: ReadonlyArray<string>;
-  clearRewardItems?: ReadonlyArray<ConvoyEntry>;
-  bonusGold?: number;
-}
+const cloneUnit = (u: OwnedPokemonInstance): OwnedPokemonInstance => JSON.parse(JSON.stringify(u)) as OwnedPokemonInstance;
 
 export class SaveStateManager {
   private readonly storage: StorageLike;
@@ -377,1306 +71,128 @@ export class SaveStateManager {
 
   constructor(storage?: StorageLike, cloudAdapter?: CloudSyncAdapter) {
     this.storage = storage ?? getDefaultStorage();
-    this.isBrowserPrimaryStorage =
-      typeof window !== 'undefined' &&
-      Boolean(window.localStorage) &&
-      this.storage === window.localStorage;
+    this.isBrowserPrimaryStorage = typeof window !== 'undefined' && Boolean(window.localStorage) && this.storage === window.localStorage;
     this.cloud = cloudAdapter ?? new FirestoreSyncAdapter();
-    this.currentSave = this.readValidLocalSave();
-    if (this.isBrowserPrimaryStorage && this.currentSave?.customMaps) {
-      mergeCustomMapsRecord(this.currentSave.customMaps);
-    }
-    this.syncStatus = {
-      isFirebaseConfigured: this.cloud.isConfigured,
-      user: this.cloud.getCurrentUser(),
-      lastResolution: null,
-      lastSyncedAt: null,
-      errorMessage: null,
-    };
-
+    this.currentSave = readValidLocalSaveFromStorage(this.storage);
+    if (this.isBrowserPrimaryStorage && this.currentSave?.customMaps) mergeCustomMapsRecord(this.currentSave.customMaps);
+    this.syncStatus = { isFirebaseConfigured: this.cloud.isConfigured, user: this.cloud.getCurrentUser(), lastResolution: null, lastSyncedAt: null, errorMessage: null };
     this.unsubscribeAuth = this.cloud.onAuthStateChanged((user) => {
       this.syncStatus = { ...this.syncStatus, user };
-      if (user) {
-        void this.reconcileWithCloud();
-      } else {
-        this.emitChange();
-      }
+      if (user) void this.reconcileWithCloud();
+      else this.emitChange();
     });
   }
 
-  public dispose(): void {
-    if (this.unsubscribeAuth) {
-      this.unsubscribeAuth();
-      this.unsubscribeAuth = null;
-    }
-    this.changeListeners.clear();
-  }
+  public dispose(): void { this.unsubscribeAuth?.(); this.unsubscribeAuth = null; this.changeListeners.clear(); }
+  public getSave(): SaveData | null { return this.currentSave ? (JSON.parse(JSON.stringify(this.currentSave)) as SaveData) : null; }
+  public getSyncStatus(): SyncStatusSnapshot { return { ...this.syncStatus }; }
 
   public subscribe(listener: (save: SaveData | null, status: SyncStatusSnapshot) => void): () => void {
     this.changeListeners.add(listener);
     listener(this.getSave(), this.getSyncStatus());
-    return () => {
-      this.changeListeners.delete(listener);
-    };
-  }
-
-  public getSave(): SaveData | null {
-    return this.currentSave ? (JSON.parse(JSON.stringify(this.currentSave)) as SaveData) : null;
-  }
-
-  public getSyncStatus(): SyncStatusSnapshot {
-    return { ...this.syncStatus };
+    return () => { this.changeListeners.delete(listener); };
   }
 
   public isNewGamePlusUnlocked(): boolean {
     if (this.currentSave?.newGamePlusUnlocked) return true;
-    try {
-      const rawMeta = this.storage.getItem(META_STORAGE_KEY);
-      if (!rawMeta) return false;
-      const parsed = JSON.parse(rawMeta) as { newGamePlusUnlocked?: boolean };
-      return Boolean(parsed.newGamePlusUnlocked);
-    } catch {
-      return false;
-    }
+    try { const r = this.storage.getItem(META_STORAGE_KEY); return r ? Boolean((JSON.parse(r) as { newGamePlusUnlocked?: boolean }).newGamePlusUnlocked) : false; }
+    catch { return false; }
   }
-
-  public unlockNewGamePlus(): void {
-    this.setNewGamePlusUnlocked(true);
-  }
-
+  public unlockNewGamePlus(): void { this.setNewGamePlusUnlocked(true); }
   public setNewGamePlusUnlocked(unlocked: boolean): void {
     this.storage.setItem(META_STORAGE_KEY, JSON.stringify({ newGamePlusUnlocked: unlocked }));
-    if (this.currentSave) {
-      this.currentSave.newGamePlusUnlocked = unlocked;
-      this.commitSave(this.currentSave);
-    } else {
-      this.emitChange();
-    }
+    if (this.currentSave) { this.currentSave.newGamePlusUnlocked = unlocked; this.commitSave(this.currentSave); } else this.emitChange();
   }
-
-  public createNewCampaignSave(cfg: NewCampaignConfig): SaveData {
-    const startLv = Math.max(1, Math.min(40, Math.floor(cfg.startingLevel ?? 1)));
-    const scaleStats = Boolean(cfg.scaleStatsToLevel ?? startLv > 1);
-    const partnerSpeciesId = cfg.partnerSpeciesId ?? 'piplup';
-    const healerSpeciesId = cfg.healerSpeciesId ?? 'flabebe';
-    const flabebeFlower = getFlabebeFlowerColorForLord(cfg.lordSpeciesId);
-
-    const lord = createPokemonInstance({
-      speciesId: cfg.lordSpeciesId,
-      nickname: cfg.lordNickname,
-      level: startLv,
-      scaleStatsToLevel: scaleStats,
-      isLord: true,
-      consumableItemId: 'potion',
-    });
-    const partner = createPokemonInstance({
-      speciesId: partnerSpeciesId,
-      nickname: cfg.partnerNickname,
-      cosmeticForm:
-        SPECIES_MAP.get(partnerSpeciesId)?.lineId === 'flabebe_line' ? flabebeFlower : undefined,
-      level: startLv,
-      scaleStatsToLevel: scaleStats,
-      heldItemId: 'oran_berry',
-    });
-    const healer = createPokemonInstance({
-      speciesId: healerSpeciesId,
-      nickname: cfg.healerNickname,
-      cosmeticForm:
-        SPECIES_MAP.get(healerSpeciesId)?.lineId === 'flabebe_line' ? flabebeFlower : undefined,
-      level: startLv,
-      scaleStatsToLevel: scaleStats,
-    });
-
-    const seeds: QuizRecruitSeeds = cfg.quizSeeds
-      ? JSON.parse(JSON.stringify(cfg.quizSeeds))
-      : {
-          ...DEFAULT_QUIZ_SEEDS,
-          q1Healer: [healerSpeciesId],
-        };
-
-    const initialChapterId = cfg.currentChapterId?.trim() || 'prologue';
-    const defaultConvoy: ConvoyEntry[] = [
-      { itemId: 'potion', quantity: 3 },
-      { itemId: 'full_heal', quantity: 1 },
-      { itemId: 'oran_berry', quantity: 2 },
-      { itemId: 'muscle_band', quantity: 1 },
-      { itemId: 'x_attack', quantity: 1 },
-    ];
-
-    const save: SaveData = {
-      schemaVersion: CURRENT_SAVE_SCHEMA_VERSION,
-      saveId: generateId('campaign'),
-      lastUpdated: Date.now(),
-      newGamePlusUnlocked: Boolean(cfg.newGamePlusUnlocked || this.isNewGamePlusUnlocked()),
-      gold: cfg.startingGold ?? 1500,
-      campaign: {
-        currentChapterId: initialChapterId,
-        lordInstanceId: lord.instanceId,
-        partnerInstanceId: partner.instanceId,
-        quizSeeds: seeds,
-        kecleonShopsUnlocked: false,
-        completedChapterIds: [],
-        ...(cfg.campaignMode ? { campaignMode: cfg.campaignMode } : {}),
-        ...(cfg.tutorialsEnabled !== undefined
-          ? { tutorialsEnabled: Boolean(cfg.tutorialsEnabled) }
-          : {}),
-        ...(cfg.tutorialPreferences
-          ? { tutorialPreferences: { ...cfg.tutorialPreferences } }
-          : {}),
-        seenTutorialIds: [],
-        unlockedTutorialIds: [],
-        recruitedChapterIds: [],
-        seenIntroChapterIds: [],
-        seenOutroChapterIds: [],
-      },
-      roster: [lord, partner, healer],
-      convoy: cfg.initialConvoy
-        ? cfg.initialConvoy.map((c) => ({ itemId: c.itemId, quantity: c.quantity }))
-        : defaultConvoy,
-      supports: {},
-      overworld: {
-        currentNodeId: initialChapterId,
-        nodes: {
-          [initialChapterId]: {
-            nodeId: initialChapterId,
-            unlocked: true,
-            cleared: false,
-            activeSkirmish: null,
-            activeKecleonShop: null,
-          },
-        },
-      },
-    };
-
-    this.commitSave(save);
-    return this.getSave()!;
-  }
-
+  public createNewCampaignSave(cfg: NewCampaignConfig): SaveData { this.commitSave(buildNewCampaignSaveData(cfg, this.isNewGamePlusUnlocked())); return this.getSave()!; }
   public setCurrentChapter(chapterId: string): SaveData {
-    const save = this.requireActiveSave();
     const trimmed = chapterId.trim();
-    if (!trimmed) {
-      throw new Error('chapterId must be a non-empty string.');
-    }
-    save.campaign.currentChapterId = trimmed;
-    this.commitSave(save);
-    return this.getSave()!;
+    if (!trimmed) throw new Error('chapterId must be a non-empty string.');
+    return this.mutateAndCommit((s) => { s.campaign.currentChapterId = trimmed; });
   }
 
-  public renamePokemon(instanceId: string, newNickname: string): OwnedPokemonInstance {
-    const save = this.requireActiveSave();
-    const unit = save.roster.find((u) => u.instanceId === instanceId);
-    if (!unit) {
-      throw new Error(`Pokémon instance "${instanceId}" not found in roster.`);
-    }
-    const sp = SPECIES_MAP.get(unit.speciesId);
-    unit.nickname = sanitizeNickname(newNickname, sp?.name ?? unit.speciesId);
-    this.commitSave(save);
-    return JSON.parse(JSON.stringify(unit)) as OwnedPokemonInstance;
+  public renamePokemon(id: string, name: string): OwnedPokemonInstance { return this.mutateUnit((s) => mutateRenamePokemon(s, id, name)); }
+  public setEquippedMove(id: string, moveId: string | null): OwnedPokemonInstance { return this.mutateUnit((s) => mutateSetEquippedMove(s, id, moveId)); }
+  public setActiveMoves(id: string, moveIds: string[]): OwnedPokemonInstance { return this.mutateUnit((s) => mutateSetActiveMoves(s, id, moveIds)); }
+  public addConvoyItem(itemId: string, quantity = 1): void { this.mutateAndCommit((s) => mutateAddConvoyItem(s, itemId, quantity)); }
+  public recruitPokemon(opts: CreatePokemonOptions): OwnedPokemonInstance { return this.mutateUnit((s) => mutateRecruitPokemon(s, opts)); }
+  public unlockUnitMove(id: string, moveId: string, autoEquip = false): OwnedPokemonInstance { return this.mutateUnit((s) => mutateUnlockUnitMove(s, id, moveId, autoEquip)); }
+  public useVitaminOnUnit(id: string, vitaminItemId: string, targetMoveId?: string): OwnedPokemonInstance { return this.mutateUnit((s) => mutateUseVitaminOnUnit(s, id, vitaminItemId, targetMoveId)); }
+  public teachTmMove(id: string, tmItemId: string): OwnedPokemonInstance { return this.mutateUnit((s) => mutateTeachTmMove(s, id, tmItemId)); }
+  public setUnitLevelForTest(id: string, level: number, rescaleStats = false): OwnedPokemonInstance { return this.mutateUnit((s) => mutateSetUnitLevelForTest(s, id, level, rescaleStats)); }
+  public useEvolutionItemOnUnit(id: string, itemId: 'evolution_stone' | 'evolution_gem', targetSpeciesId?: string): OwnedPokemonInstance { return this.mutateUnit((s) => mutateUseEvolutionItemOnUnit(s, id, itemId, targetSpeciesId)); }
+  public promoteAdvisorToPlayableRoster(opts?: { speciesId?: 'wimpod' | 'golisopod'; level?: number; nickname?: string; scaleStatsToLevel?: boolean }): OwnedPokemonInstance { return this.mutateUnit((s) => mutatePromoteAdvisorToPlayableRoster(s, opts)); }
+  public evolveUnitToSpecies(id: string, targetSpeciesId: string): OwnedPokemonInstance { const s = this.requireActiveSave(); const { unit, mutated } = mutateEvolveUnitToSpecies(s, id, targetSpeciesId); if (mutated) this.commitSave(s); return cloneUnit(unit); }
+  public equipItemToUnit(id: string, itemId: string | null, sourceUnitId?: string): OwnedPokemonInstance { const s = this.requireActiveSave(); const { unit, mutated } = mutateEquipItemToUnit(s, id, itemId, sourceUnitId); if (mutated) this.commitSave(s); return cloneUnit(unit); }
+  public addSupportPoints(idA: string, idB: string, delta = 1): SupportPairProgress { const s = this.requireActiveSave(); const p = mutateAddSupportPoints(s, idA, idB, delta); this.commitSave(s); return p; }
+  public addGold(amount: number): SaveData { return this.mutateAndCommit((s) => { s.gold = Math.max(0, Math.floor(s.gold + amount)); }); }
+  public commitBattleResults(payload: CommitBattleResultsPayload): SaveData { return this.mutateAndCommit((s) => mutateCommitBattleResults(s, payload)); }
+
+  public hasRecruitedChapter(id: string): boolean { return Boolean(this.currentSave?.campaign.recruitedChapterIds?.includes(id)); }
+  public markChapterRecruited(id: string): SaveData { return this.pushCampaignFlag('recruitedChapterIds', id); }
+  public hasSeenChapterCutscene(kind: 'intro' | 'outro', id: string): boolean {
+    const list = kind === 'intro' ? this.currentSave?.campaign.seenIntroChapterIds : this.currentSave?.campaign.seenOutroChapterIds;
+    return Boolean(list?.includes(id));
   }
-
-  /**
-   * Transitions an owned Pokémon within its evolutionary line (e.g., Stage 1 -> 2 -> 3 or Eevee branching).
-   * Applies manual `promotionBonuses` when advancing along an evolution branch, preserves custom nicknames
-   * and continuous level, and triggers immediate UI + cloud save updates.
-   */
-  public evolveUnitToSpecies(instanceId: string, targetSpeciesId: string): OwnedPokemonInstance {
-    const save = this.requireActiveSave();
-    const unit = save.roster.find((u) => u.instanceId === instanceId);
-    if (!unit) {
-      throw new Error(`Pokémon instance "${instanceId}" not found in roster.`);
-    }
-    const currentSp = SPECIES_MAP.get(unit.speciesId);
-    const targetSp = SPECIES_MAP.get(targetSpeciesId);
-    if (!currentSp || !targetSp) {
-      throw new Error(`Unknown species transition "${unit.speciesId}" -> "${targetSpeciesId}".`);
-    }
-    if (targetSp.faction === 'enemy') {
-      throw new Error(`Rule 5 violation: Cannot evolve player unit into enemy-only species "${targetSp.name}".`);
-    }
-    if (currentSp.lineId !== targetSp.lineId) {
-      throw new Error(
-        `Invalid evolution line mismatch: "${currentSp.id}" (${currentSp.lineId}) cannot become "${targetSp.id}" (${targetSp.lineId}).`
-      );
-    }
-    if (unit.speciesId === targetSp.id) {
-      return JSON.parse(JSON.stringify(unit)) as OwnedPokemonInstance;
-    }
-
-    const forwardPath = findForwardEvolutionPath(currentSp, targetSp.id);
-    if (forwardPath && forwardPath.length > 0) {
-      for (const branch of forwardPath) {
-        unit.currentStats.hp += branch.promotionBonuses.hp;
-        unit.currentStats.atk += branch.promotionBonuses.atk;
-        unit.currentStats.def += branch.promotionBonuses.def;
-        unit.currentStats.spa += branch.promotionBonuses.spa;
-        unit.currentStats.spd += branch.promotionBonuses.spd;
-        unit.currentStats.spe += branch.promotionBonuses.spe;
-      }
-      unit.currentStats.mov = targetSp.baseStats.mov;
-    } else {
-      // Sideways branch preview (e.g., Vaporeon -> Sylveon) or Dev Tools stage reset (Stage 3 -> Stage 1)
-      unit.currentStats = computeManualScaledStatsForJoinLevel(targetSp, unit.level);
-    }
-
-    // Preserve custom nicknames across evolutions; only update if still using the uncustomized species name
-    if (unit.nickname === currentSp.name) {
-      unit.nickname = targetSp.name;
-    }
-
-    unit.speciesId = targetSp.id;
-
-    for (const entry of targetSp.learnset) {
-      if (entry.level <= unit.level && !unit.unlockedMoveIds.includes(entry.moveId)) {
-        unit.unlockedMoveIds.push(entry.moveId);
-        if (unit.activeMoveIds.length < 4) {
-          unit.activeMoveIds.push(entry.moveId);
-        }
-      }
-    }
-    if (!unit.equippedMoveId) {
-      const firstOffensive = unit.activeMoveIds.find((mId) => {
-        const mv = MOVE_MAP.get(mId);
-        return mv && (mv.category === 'Physical' || mv.category === 'Special');
-      });
-      unit.equippedMoveId = firstOffensive ?? null;
-    }
-
-    this.commitSave(save);
-    return JSON.parse(JSON.stringify(unit)) as OwnedPokemonInstance;
+  public markChapterCutsceneSeen(kind: 'intro' | 'outro', id: string): SaveData {
+    return this.pushCampaignFlag(kind === 'intro' ? 'seenIntroChapterIds' : 'seenOutroChapterIds', id);
   }
-
-  public setEquippedMove(instanceId: string, moveId: string | null): OwnedPokemonInstance {
-    const save = this.requireActiveSave();
-    const unit = save.roster.find((u) => u.instanceId === instanceId);
-    if (!unit) {
-      throw new Error(`Pokémon instance "${instanceId}" not found in roster.`);
-    }
-    if (moveId !== null) {
-      if (!unit.activeMoveIds.includes(moveId)) {
-        throw new Error(`Move "${moveId}" is not in unit's 4-move active loadout.`);
-      }
-      const mv = MOVE_MAP.get(moveId);
-      if (!mv || (mv.category !== 'Physical' && mv.category !== 'Special')) {
-        throw new Error('Only offensive (Physical or Special) moves can be marked [E] Equipped.');
-      }
-    }
-    unit.equippedMoveId = moveId;
-    this.commitSave(save);
-    return JSON.parse(JSON.stringify(unit)) as OwnedPokemonInstance;
-  }
-
-  public setActiveMoves(instanceId: string, moveIds: string[]): OwnedPokemonInstance {
-    const save = this.requireActiveSave();
-    const unit = save.roster.find((u) => u.instanceId === instanceId);
-    if (!unit) {
-      throw new Error(`Pokémon instance "${instanceId}" not found in roster.`);
-    }
-    const uniqueMoves = [...new Set(moveIds)];
-    if (uniqueMoves.length === 0 || uniqueMoves.length > 4) {
-      throw new Error('Active loadout must contain between 1 and 4 moves.');
-    }
-    for (const mId of uniqueMoves) {
-      if (!unit.unlockedMoveIds.includes(mId)) {
-        throw new Error(`Move "${mId}" has not been unlocked by ${unit.nickname}.`);
-      }
-    }
-    unit.activeMoveIds = uniqueMoves;
-    if (unit.equippedMoveId && !uniqueMoves.includes(unit.equippedMoveId)) {
-      const fallback = uniqueMoves.find((mId) => {
-        const mv = MOVE_MAP.get(mId);
-        return mv && (mv.category === 'Physical' || mv.category === 'Special');
-      });
-      unit.equippedMoveId = fallback ?? null;
-    }
-    this.commitSave(save);
-    return JSON.parse(JSON.stringify(unit)) as OwnedPokemonInstance;
-  }
-
-  public addConvoyItem(itemId: string, quantity = 1): void {
-    if (!ITEM_MAP.has(itemId) || quantity < 1) {
-      throw new Error(`Invalid item "${itemId}" or quantity ${quantity}.`);
-    }
-    const save = this.requireActiveSave();
-    const existing = save.convoy.find((c) => c.itemId === itemId);
-    if (existing) {
-      existing.quantity += quantity;
-    } else {
-      save.convoy.push({ itemId, quantity });
-    }
-    this.commitSave(save);
-  }
-
-  public recruitPokemon(opts: CreatePokemonOptions): OwnedPokemonInstance {
-    const save = this.requireActiveSave();
-    const lordUnit = save.roster.find((u) => u.instanceId === save.campaign.lordInstanceId);
-    const sp = SPECIES_MAP.get(opts.speciesId);
-    const resolvedCosmeticForm =
-      opts.cosmeticForm ??
-      (sp?.lineId === 'flabebe_line'
-        ? getFlabebeFlowerColorForLord(lordUnit?.speciesId)
-        : undefined);
-    const created = createPokemonInstance({
-      ...opts,
-      cosmeticForm: resolvedCosmeticForm,
-      isLord: false,
-    });
-    save.roster.push(created);
-    this.commitSave(save);
-    return JSON.parse(JSON.stringify(created)) as OwnedPokemonInstance;
-  }
-
-  public unlockUnitMove(
-    instanceId: string,
-    moveId: string,
-    autoEquipIfRoom = false
-  ): OwnedPokemonInstance {
-    const save = this.requireActiveSave();
-    const unit = save.roster.find((u) => u.instanceId === instanceId);
-    if (!unit) {
-      throw new Error(`Pokémon instance "${instanceId}" not found in roster.`);
-    }
-    const mv = MOVE_MAP.get(moveId);
-    if (!mv) {
-      throw new Error(`Unknown moveId "${moveId}".`);
-    }
-    if (!unit.unlockedMoveIds.includes(moveId)) {
-      unit.unlockedMoveIds.push(moveId);
-    }
-    if (autoEquipIfRoom && unit.activeMoveIds.length < 4 && !unit.activeMoveIds.includes(moveId)) {
-      unit.activeMoveIds.push(moveId);
-      if (!unit.equippedMoveId && (mv.category === 'Physical' || mv.category === 'Special')) {
-        unit.equippedMoveId = moveId;
-      }
-    }
-    this.commitSave(save);
-    return JSON.parse(JSON.stringify(unit)) as OwnedPokemonInstance;
-  }
-
-  /**
-   * Equips or unequips a single item (`itemId | null`) on `instanceId`, enforcing the 1-item-slot
-   * rule across Held Gear, Berries, Healing Consumables, Promotion Stones/Gems, and X-Items.
-   * - Any previously equipped item on `instanceId` is automatically returned to `save.convoy`.
-   * - When `sourceUnitInstanceId` is provided, transfers the item directly from that roster unit;
-   *   otherwise consumes `1` from `save.convoy`.
-   */
-  public equipItemToUnit(
-    instanceId: string,
-    itemId: string | null,
-    sourceUnitInstanceId?: string
-  ): OwnedPokemonInstance {
-    const save = this.requireActiveSave();
-    const targetUnit = save.roster.find((u) => u.instanceId === instanceId);
-    if (!targetUnit) {
-      throw new Error(`Pokémon instance "${instanceId}" not found in roster.`);
-    }
-
-    const prevItemId = getUnitEquippedItemId(targetUnit);
-
-    if (itemId === null) {
-      if (prevItemId !== null) {
-        returnItemToConvoyList(save.convoy, prevItemId);
-        targetUnit.heldItemId = null;
-        targetUnit.consumableItemId = null;
-        this.commitSave(save);
-      }
-      return JSON.parse(JSON.stringify(targetUnit)) as OwnedPokemonInstance;
-    }
-
-    const item = ITEM_MAP.get(itemId);
-    if (!item) {
-      throw new Error(`Unknown item "${itemId}".`);
-    }
-    if (item.equipSlot !== 'held' && item.equipSlot !== 'consumable') {
-      throw new Error(`${item.name} cannot be equipped into a unit's battle item slot.`);
-    }
-
-    if (prevItemId === itemId && (!sourceUnitInstanceId || sourceUnitInstanceId === instanceId)) {
-      return JSON.parse(JSON.stringify(targetUnit)) as OwnedPokemonInstance;
-    }
-
-    if (sourceUnitInstanceId && sourceUnitInstanceId !== instanceId) {
-      const sourceUnit = save.roster.find((u) => u.instanceId === sourceUnitInstanceId);
-      if (!sourceUnit || getUnitEquippedItemId(sourceUnit) !== itemId) {
-        throw new Error(`Source unit does not currently hold ${item.name}.`);
-      }
-      sourceUnit.heldItemId = null;
-      sourceUnit.consumableItemId = null;
-      if (prevItemId !== null) {
-        returnItemToConvoyList(save.convoy, prevItemId);
-      }
-    } else {
-      const convoySlot = save.convoy.find((c) => c.itemId === itemId);
-      if (!convoySlot || convoySlot.quantity < 1) {
-        throw new Error(`${item.name} is not available in the Bag.`);
-      }
-      convoySlot.quantity -= 1;
-      if (convoySlot.quantity <= 0) {
-        save.convoy = save.convoy.filter((c) => c.itemId !== itemId);
-      }
-      if (prevItemId !== null) {
-        returnItemToConvoyList(save.convoy, prevItemId);
-      }
-    }
-
-    if (item.equipSlot === 'held') {
-      targetUnit.heldItemId = item.id;
-      targetUnit.consumableItemId = null;
-    } else {
-      targetUnit.consumableItemId = item.id;
-      targetUnit.heldItemId = null;
-    }
-
-    this.commitSave(save);
-    return JSON.parse(JSON.stringify(targetUnit)) as OwnedPokemonInstance;
-  }
-
-  public useVitaminOnUnit(
-    instanceId: string,
-    vitaminItemId: string,
-    targetMoveId?: string
-  ): OwnedPokemonInstance {
-    const save = this.requireActiveSave();
-    const unit = save.roster.find((u) => u.instanceId === instanceId);
-    if (!unit) {
-      throw new Error(`Pokémon instance "${instanceId}" not found in roster.`);
-    }
-    const item = ITEM_MAP.get(vitaminItemId);
-    if (!item || item.category !== 'vitamin') {
-      throw new Error(`"${vitaminItemId}" is not a valid Vitamin.`);
-    }
-    const convoySlot = save.convoy.find((c) => c.itemId === vitaminItemId);
-    if (!convoySlot || convoySlot.quantity < 1) {
-      throw new Error(`${item.name} is not in the Bag.`);
-    }
-
-    if (item.effect.permanentPpBoost) {
-      const moveId = targetMoveId ?? unit.activeMoveIds[0];
-      if (!moveId || !unit.unlockedMoveIds.includes(moveId)) {
-        throw new Error(`Select a known move to apply ${item.name}.`);
-      }
-      unit.bonusPpByMoveId[moveId] =
-        (unit.bonusPpByMoveId[moveId] ?? 0) + item.effect.permanentPpBoost;
-    } else if (item.effect.permanentStatBoost) {
-      const b = item.effect.permanentStatBoost;
-      if (b.hp) unit.currentStats.hp += b.hp;
-      if (b.atk) unit.currentStats.atk += b.atk;
-      if (b.def) unit.currentStats.def += b.def;
-      if (b.spa) unit.currentStats.spa += b.spa;
-      if (b.spd) unit.currentStats.spd += b.spd;
-      if (b.spe) unit.currentStats.spe += b.spe;
-    }
-
-    convoySlot.quantity -= 1;
-    if (convoySlot.quantity <= 0) {
-      save.convoy = save.convoy.filter((c) => c.itemId !== vitaminItemId);
-    }
-
-    this.commitSave(save);
-    return JSON.parse(JSON.stringify(unit)) as OwnedPokemonInstance;
-  }
-
-  public teachTmMove(instanceId: string, tmItemId: string): OwnedPokemonInstance {
-    const save = this.requireActiveSave();
-    const unit = save.roster.find((u) => u.instanceId === instanceId);
-    if (!unit) throw new Error(`Pokémon instance "${instanceId}" not found.`);
-
-    const tmItem = ITEM_MAP.get(tmItemId);
-    if (!tmItem || tmItem.category !== 'tm' || !tmItem.effect.teachesMoveId) {
-      throw new Error(`"${tmItemId}" is not a valid Technical Machine.`);
-    }
-
-    const sp = SPECIES_MAP.get(unit.speciesId);
-    if (!sp || !sp.compatibleTmIds.includes(tmItemId)) {
-      throw new Error(`${unit.nickname} (${sp?.name ?? unit.speciesId}) is not compatible with ${tmItem.name}.`);
-    }
-
-    const moveId = tmItem.effect.teachesMoveId;
-    if (unit.unlockedMoveIds.includes(moveId)) {
-      throw new Error(`${unit.nickname} already knows that move.`);
-    }
-
-    const convoySlot = save.convoy.find((c) => c.itemId === tmItemId);
-    if (!convoySlot || convoySlot.quantity < 1) {
-      throw new Error(`${tmItem.name} is not in the Convoy.`);
-    }
-
-    // Consume single-use TM
-    convoySlot.quantity -= 1;
-    if (convoySlot.quantity <= 0) {
-      save.convoy = save.convoy.filter((c) => c.itemId !== tmItemId);
-    }
-
-    unit.unlockedMoveIds.push(moveId);
-    if (unit.activeMoveIds.length < 4) {
-      unit.activeMoveIds.push(moveId);
-      if (!unit.equippedMoveId) {
-        const mv = MOVE_MAP.get(moveId);
-        if (mv && (mv.category === 'Physical' || mv.category === 'Special')) {
-          unit.equippedMoveId = moveId;
-        }
-      }
-    }
-
-    this.commitSave(save);
-    return JSON.parse(JSON.stringify(unit)) as OwnedPokemonInstance;
-  }
-
-  public addSupportPoints(instanceIdA: string, instanceIdB: string, delta = 1): SupportPairProgress {
-    const save = this.requireActiveSave();
-    const pairKey = makeSupportPairKey(instanceIdA, instanceIdB);
-    const prev = save.supports[pairKey]?.points ?? 0;
-    const points = Math.max(0, prev + delta);
-    const progress: SupportPairProgress = {
-      points,
-      level: computeSupportLevel(points),
-    };
-    save.supports[pairKey] = progress;
-    this.commitSave(save);
-    return { ...progress };
-  }
-
-  // ==========================================================================
-  // Step 4 Overworld Traversal, Kecleon Shops, Skirmish Spawners & Promotions
-  // ==========================================================================
-
-  public addGold(amount: number): SaveData {
-    const save = this.requireActiveSave();
-    save.gold = Math.max(0, Math.floor(save.gold + amount));
-    this.commitSave(save);
-    return this.getSave()!;
-  }
-
-  /**
-   * Atomically commits post-battle unit EXP, level-ups, mid-battle evolutions, consumed items,
-   * newly unlocked moves, and defeated-enemy item drops to `localStorage` + Cloud Firestore.
-   */
-  public commitBattleResults(payload: CommitBattleResultsPayload): SaveData {
-    const save = this.requireActiveSave();
-    const byId = new Map(save.roster.map((u) => [u.instanceId, u]));
-
-    for (const syncUnit of payload.deployedUnits) {
-      const owned = byId.get(syncUnit.instanceId);
-      if (!owned) continue;
-      const sp = SPECIES_MAP.get(syncUnit.speciesId);
-      if (!sp || sp.faction === 'enemy') continue;
-
-      owned.speciesId = sp.id;
-      owned.nickname = sanitizeNickname(syncUnit.nickname, sp.name);
-      if (syncUnit.cosmeticForm !== undefined) {
-        owned.cosmeticForm = syncUnit.cosmeticForm;
-      }
-      owned.level = Math.max(1, Math.min(40, Math.floor(syncUnit.level)));
-      owned.exp = owned.level >= 40 ? 0 : Math.max(0, Math.min(99, Math.floor(syncUnit.exp)));
-      owned.currentStats = { ...syncUnit.currentStats };
-
-      for (const mId of syncUnit.unlockedMoveIds) {
-        if (MOVE_MAP.has(mId) && !owned.unlockedMoveIds.includes(mId)) {
-          owned.unlockedMoveIds.push(mId);
-        }
-      }
-
-      const validActive = syncUnit.activeMoveIds
-        .filter((mId) => MOVE_MAP.has(mId) && owned.unlockedMoveIds.includes(mId))
-        .slice(0, 4);
-      if (validActive.length > 0) {
-        owned.activeMoveIds = validActive;
-      }
-
-      if (
-        syncUnit.equippedMoveId &&
-        owned.activeMoveIds.includes(syncUnit.equippedMoveId) &&
-        (MOVE_MAP.get(syncUnit.equippedMoveId)?.category === 'Physical' ||
-          MOVE_MAP.get(syncUnit.equippedMoveId)?.category === 'Special')
-      ) {
-        owned.equippedMoveId = syncUnit.equippedMoveId;
-      } else {
-        const firstOff = owned.activeMoveIds.find((mId) => {
-          const mv = MOVE_MAP.get(mId);
-          return mv && (mv.category === 'Physical' || mv.category === 'Special');
-        });
-        owned.equippedMoveId = firstOff ?? null;
-      }
-
-      // Enforce 1-item-slot invariant (consumed berries/potions/stones become null)
-      if (syncUnit.heldItemId && ITEM_MAP.get(syncUnit.heldItemId)?.equipSlot === 'held') {
-        owned.heldItemId = syncUnit.heldItemId;
-        owned.consumableItemId = null;
-      } else if (
-        syncUnit.consumableItemId &&
-        ITEM_MAP.get(syncUnit.consumableItemId)?.equipSlot === 'consumable'
-      ) {
-        owned.consumableItemId = syncUnit.consumableItemId;
-        owned.heldItemId = null;
-      } else {
-        owned.heldItemId = null;
-        owned.consumableItemId = null;
-      }
-    }
-
-    if (payload.droppedItemIds) {
-      for (const itemId of payload.droppedItemIds) {
-        if (ITEM_MAP.has(itemId)) {
-          returnItemToConvoyList(save.convoy, itemId);
-        }
-      }
-    }
-
-    if (payload.clearRewardItems) {
-      for (const reward of payload.clearRewardItems) {
-        if (ITEM_MAP.has(reward.itemId) && reward.quantity > 0) {
-          for (let i = 0; i < reward.quantity; i++) {
-            returnItemToConvoyList(save.convoy, reward.itemId);
-          }
-        }
-      }
-    }
-
-    if (payload.bonusGold && payload.bonusGold > 0) {
-      save.gold = Math.max(0, Math.floor(save.gold + payload.bonusGold));
-    }
-
-    this.commitSave(save);
-    return this.getSave()!;
-  }
-
-  public hasRecruitedChapter(chapterId: string): boolean {
-    const save = this.currentSave;
-    if (!save) return false;
-    return Boolean(save.campaign.recruitedChapterIds?.includes(chapterId));
-  }
-
-  public markChapterRecruited(chapterId: string): SaveData {
-    const save = this.requireActiveSave();
-    if (!Array.isArray(save.campaign.recruitedChapterIds)) {
-      save.campaign.recruitedChapterIds = [];
-    }
-    if (!save.campaign.recruitedChapterIds.includes(chapterId)) {
-      save.campaign.recruitedChapterIds.push(chapterId);
-      this.commitSave(save);
-    }
-    return this.getSave()!;
-  }
-
-  public hasSeenChapterCutscene(kind: 'intro' | 'outro', chapterId: string): boolean {
-    const save = this.currentSave;
-    if (!save) return false;
-    const list =
-      kind === 'intro' ? save.campaign.seenIntroChapterIds : save.campaign.seenOutroChapterIds;
-    return Boolean(list?.includes(chapterId));
-  }
-
-  public markChapterCutsceneSeen(kind: 'intro' | 'outro', chapterId: string): SaveData {
-    const save = this.requireActiveSave();
-    if (kind === 'intro') {
-      if (!Array.isArray(save.campaign.seenIntroChapterIds)) {
-        save.campaign.seenIntroChapterIds = [];
-      }
-      if (!save.campaign.seenIntroChapterIds.includes(chapterId)) {
-        save.campaign.seenIntroChapterIds.push(chapterId);
-        this.commitSave(save);
-      }
-    } else {
-      if (!Array.isArray(save.campaign.seenOutroChapterIds)) {
-        save.campaign.seenOutroChapterIds = [];
-      }
-      if (!save.campaign.seenOutroChapterIds.includes(chapterId)) {
-        save.campaign.seenOutroChapterIds.push(chapterId);
-        this.commitSave(save);
-      }
-    }
-    return this.getSave()!;
-  }
-
-  public markDemoCompleted(): SaveData {
-    const save = this.requireActiveSave();
-    save.campaign.demoCompleted = true;
-    this.commitSave(save);
-    return this.getSave()!;
-  }
-
-  public hasSeenStoryCutscene(cutsceneId: string): boolean {
-    const save = this.currentSave;
-    if (!save) return false;
-    return Boolean(save.campaign.seenStoryCutsceneIds?.includes(cutsceneId));
-  }
-
-  public markStoryCutsceneSeen(cutsceneId: string): SaveData {
-    const trimmed = cutsceneId.trim();
-    const save = this.requireActiveSave();
-    if (!trimmed) return save;
-    if (!Array.isArray(save.campaign.seenStoryCutsceneIds)) {
-      save.campaign.seenStoryCutsceneIds = [];
-    }
-    if (!save.campaign.seenStoryCutsceneIds.includes(trimmed)) {
-      save.campaign.seenStoryCutsceneIds.push(trimmed);
-      this.commitSave(save);
-    }
-    return this.getSave()!;
-  }
-
-  public hasSeenCredits(): boolean {
-    return Boolean(this.currentSave?.campaign.creditsSeen);
-  }
-
+  public markDemoCompleted(): SaveData { return this.mutateAndCommit((s) => { s.campaign.demoCompleted = true; }); }
+  public hasSeenStoryCutscene(id: string): boolean { return Boolean(this.currentSave?.campaign.seenStoryCutsceneIds?.includes(id)); }
+  public markStoryCutsceneSeen(id: string): SaveData { return this.pushCampaignFlag('seenStoryCutsceneIds', id); }
+  public hasSeenCredits(): boolean { return Boolean(this.currentSave?.campaign.creditsSeen); }
   public markCreditsSeen(): SaveData {
     const save = this.requireActiveSave();
-    if (!save.campaign.creditsSeen) {
-      save.campaign.creditsSeen = true;
-      this.commitSave(save);
-    }
+    if (!save.campaign.creditsSeen) { save.campaign.creditsSeen = true; this.commitSave(save); }
     return this.getSave()!;
   }
 
-  public areTutorialsEnabled(): boolean {
-    const save = this.currentSave;
-    if (!save) return false;
-    if (typeof save.campaign.tutorialsEnabled === 'boolean') {
-      return save.campaign.tutorialsEnabled;
-    }
-    const tp = save.campaign.tutorialPreferences;
-    if (tp) {
-      return !(tp.pokemonTutorialDetail === 'none' && tp.fireEmblemTutorialDetail === 'none');
-    }
-    return false;
-  }
-
-  public setTutorialsEnabled(enabled: boolean): SaveData {
+  public areTutorialsEnabled(): boolean { return readAreTutorialsEnabled(this.currentSave); }
+  public setTutorialsEnabled(enabled: boolean): SaveData { return this.mutateAndCommit((s) => { s.campaign.tutorialsEnabled = Boolean(enabled); }); }
+  public getTutorialPreferences(): TutorialFamiliarityPreferences { return readTutorialPreferences(this.currentSave); }
+  public setTutorialDetailLevel(sub: 'pokemon' | 'fire_emblem', detail: TutorialDetailLevel): SaveData { return this.mutateAndCommit((s) => mutateTutorialDetailLevel(s, sub, detail)); }
+  public hasSeenTutorial(id: string): boolean { return Boolean(this.currentSave?.campaign.seenTutorialIds?.includes(id)); }
+  public hasUnlockedTutorial(id: string): boolean { return Boolean(this.currentSave?.campaign.unlockedTutorialIds?.includes(id) || this.currentSave?.campaign.seenTutorialIds?.includes(id)); }
+  public getUnlockedTutorialIds(): string[] { return readUnlockedTutorialIds(this.currentSave); }
+  public getSeenTutorialIds(): string[] { return [...(this.currentSave?.campaign.seenTutorialIds ?? [])]; }
+  public unlockTutorial(id: string): SaveData { return this.pushCampaignFlag('unlockedTutorialIds', id); }
+  public markTutorialSeen(id: string): SaveData {
     const save = this.requireActiveSave();
-    save.campaign.tutorialsEnabled = Boolean(enabled);
-    this.commitSave(save);
+    if (mutateMarkTutorialSeen(save, id)) this.commitSave(save);
     return this.getSave()!;
   }
+  public resetTutorialsProgress(): SaveData { return this.mutateAndCommit((s) => { s.campaign.seenTutorialIds = []; s.campaign.unlockedTutorialIds = []; }); }
 
-  public getTutorialPreferences(): TutorialFamiliarityPreferences {
-    const tp = this.currentSave?.campaign.tutorialPreferences;
-    if (tp) {
-      return { ...tp };
-    }
-    return {
-      pokemonFamiliarity: 'somewhat_familiar',
-      fireEmblemFamiliarity: 'somewhat_familiar',
-      pokemonTutorialDetail: 'brief',
-      fireEmblemTutorialDetail: 'brief',
-    };
-  }
-
-  public setTutorialDetailLevel(
-    subject: 'pokemon' | 'fire_emblem',
-    detail: TutorialDetailLevel
-  ): SaveData {
+  public ensureOverworldInitialized(graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH): SaveData {
     const save = this.requireActiveSave();
-    const familiarityByDetail: Record<TutorialDetailLevel, SeriesFamiliarityLevel> = {
-      none: 'very_familiar',
-      brief: 'somewhat_familiar',
-      detailed: 'beginner',
-    };
-    const current = this.getTutorialPreferences();
-    if (subject === 'pokemon') {
-      current.pokemonTutorialDetail = detail;
-      current.pokemonFamiliarity = familiarityByDetail[detail];
-    } else {
-      current.fireEmblemTutorialDetail = detail;
-      current.fireEmblemFamiliarity = familiarityByDetail[detail];
-    }
-    save.campaign.tutorialPreferences = current;
-    this.commitSave(save);
+    if (mutateEnsureOverworldInitialized(save, graph)) this.commitSave(save);
     return this.getSave()!;
   }
-
-  public hasSeenTutorial(topicId: string): boolean {
-    const save = this.currentSave;
-    if (!save) return false;
-    return Boolean(save.campaign.seenTutorialIds?.includes(topicId));
+  public setOverworldNodeStateCheat(nodeId: string, patch: { unlocked?: boolean; cleared?: boolean; activeKecleonShop?: SaveData['overworld']['nodes'][string]['activeKecleonShop']; activeSkirmish?: SaveData['overworld']['nodes'][string]['activeSkirmish'] }, graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH): SaveData {
+    return this.mutateAndCommit((s) => mutateSetOverworldNodeStateCheat(s, nodeId, patch, graph));
   }
-
-  public hasUnlockedTutorial(topicId: string): boolean {
-    const save = this.currentSave;
-    if (!save) return false;
-    return Boolean(
-      save.campaign.unlockedTutorialIds?.includes(topicId) ||
-        save.campaign.seenTutorialIds?.includes(topicId)
-    );
+  public resetOverworldToPrologue(graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH): SaveData { return this.mutateAndCommit((s) => mutateResetOverworldToPrologue(s, graph)); }
+  public unlockAllOverworldNodes(graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH): SaveData { return this.mutateAndCommit((s) => mutateUnlockAllOverworldNodes(s, graph)); }
+  public setOverworldCurrentNode(nodeId: string, graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH): SaveData { return this.mutateAndCommit((s) => mutateSetOverworldCurrentNode(s, nodeId, graph)); }
+  public spawnOverworldKecleonShop(nodeId: string, shopType?: KecleonShopType, rng: () => number = Math.random, graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH): SaveData {
+    return this.mutateAndCommit((s) => mutateSpawnOverworldKecleonShop(s, nodeId, shopType, rng, graph));
   }
-
-  public getUnlockedTutorialIds(): string[] {
-    const save = this.currentSave;
-    if (!save) return [];
-    const combined = new Set<string>([
-      ...(save.campaign.unlockedTutorialIds ?? []),
-      ...(save.campaign.seenTutorialIds ?? []),
-    ]);
-    return [...combined];
+  public spawnOverworldSkirmish(nodeId: string, level?: number, tilesetId?: string, graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH): SaveData {
+    return this.mutateAndCommit((s) => mutateSpawnOverworldSkirmish(s, nodeId, level, tilesetId, graph));
   }
-
-  public getSeenTutorialIds(): string[] {
-    const save = this.currentSave;
-    if (!save) return [];
-    return [...(save.campaign.seenTutorialIds ?? [])];
+  public clearOverworldSkirmish(nodeId: string, gold = 0, graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH): SaveData {
+    return this.mutateAndCommit((s) => mutateClearOverworldSkirmish(s, nodeId, gold, graph));
   }
-
-  public unlockTutorial(topicId: string): SaveData {
+  public completeOverworldChapter(nodeId: string, opts?: { rng?: () => number; graph?: OverworldGraphDefinition; skirmishChance?: number; shopChance?: number }): { save: SaveData; firstClear: boolean; spawns: PostBattleSpawnResult } {
     const save = this.requireActiveSave();
-    const trimmed = topicId.trim();
-    if (!trimmed) {
-      return this.getSave()!;
-    }
-    if (!Array.isArray(save.campaign.unlockedTutorialIds)) {
-      save.campaign.unlockedTutorialIds = [];
-    }
-    if (!save.campaign.unlockedTutorialIds.includes(trimmed)) {
-      save.campaign.unlockedTutorialIds.push(trimmed);
-      this.commitSave(save);
-    }
-    return this.getSave()!;
-  }
-
-  public markTutorialSeen(topicId: string): SaveData {
-    const save = this.requireActiveSave();
-    const trimmed = topicId.trim();
-    if (!trimmed) {
-      return this.getSave()!;
-    }
-    if (!Array.isArray(save.campaign.unlockedTutorialIds)) {
-      save.campaign.unlockedTutorialIds = [];
-    }
-    if (!Array.isArray(save.campaign.seenTutorialIds)) {
-      save.campaign.seenTutorialIds = [];
-    }
-    let mutated = false;
-    if (!save.campaign.unlockedTutorialIds.includes(trimmed)) {
-      save.campaign.unlockedTutorialIds.push(trimmed);
-      mutated = true;
-    }
-    if (!save.campaign.seenTutorialIds.includes(trimmed)) {
-      save.campaign.seenTutorialIds.push(trimmed);
-      mutated = true;
-    }
-    if (mutated) {
-      this.commitSave(save);
-    }
-    return this.getSave()!;
-  }
-
-  public resetTutorialsProgress(): SaveData {
-    const save = this.requireActiveSave();
-    save.campaign.seenTutorialIds = [];
-    save.campaign.unlockedTutorialIds = [];
+    const { firstClear, spawns } = mutateCompleteOverworldChapter(save, nodeId, opts);
     this.commitSave(save);
-    return this.getSave()!;
+    return { save: this.getSave()!, firstClear, spawns };
   }
-
-  public setUnitLevelForTest(instanceId: string, level: number, rescaleStats = false): OwnedPokemonInstance {
+  public buyKecleonShopItem(nodeId: string, itemId: string, graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH): { save: SaveData; item: ItemDefinition; remainingStock: number } {
     const save = this.requireActiveSave();
-    const unit = save.roster.find((u) => u.instanceId === instanceId);
-    if (!unit) {
-      throw new Error(`Pokémon instance "${instanceId}" not found in roster.`);
-    }
-    const clamped = Math.max(1, Math.min(40, Math.floor(level)));
-    unit.level = clamped;
-    unit.exp = 0;
-    const sp = SPECIES_MAP.get(unit.speciesId);
-    if (sp) {
-      if (rescaleStats) {
-        unit.currentStats = computeManualScaledStatsForJoinLevel(sp, clamped);
-      }
-      for (const entry of sp.learnset) {
-        if (entry.level <= clamped && !unit.unlockedMoveIds.includes(entry.moveId)) {
-          unit.unlockedMoveIds.push(entry.moveId);
-          if (unit.activeMoveIds.length < 4) {
-            unit.activeMoveIds.push(entry.moveId);
-          }
-        }
-      }
-    }
+    const { item, remainingStock } = mutateBuyKecleonShopItem(save, nodeId, itemId, graph);
     this.commitSave(save);
-    return JSON.parse(JSON.stringify(unit)) as OwnedPokemonInstance;
-  }
-
-  public useEvolutionItemOnUnit(
-    instanceId: string,
-    itemId: 'evolution_stone' | 'evolution_gem',
-    targetSpeciesId?: string
-  ): OwnedPokemonInstance {
-    const save = this.requireActiveSave();
-    const unit = save.roster.find((u) => u.instanceId === instanceId);
-    if (!unit) {
-      throw new Error(`Pokémon instance "${instanceId}" not found in roster.`);
-    }
-    const currentSp = SPECIES_MAP.get(unit.speciesId);
-    if (!currentSp) {
-      throw new Error(`Unknown species "${unit.speciesId}".`);
-    }
-
-    const matchingBranches = currentSp.evolutions.filter((b) => b.requiredItemId === itemId);
-    if (matchingBranches.length === 0) {
-      throw new Error(`${unit.nickname} (${currentSp.name}) cannot promote with ${ITEM_MAP.get(itemId)?.name ?? itemId}.`);
-    }
-
-    const chosenBranch = targetSpeciesId
-      ? matchingBranches.find((b) => b.targetSpeciesId === targetSpeciesId)
-      : matchingBranches[0];
-    if (!chosenBranch) {
-      throw new Error(`Invalid promotion target "${targetSpeciesId ?? ''}" for ${currentSp.name}.`);
-    }
-
-    if (unit.level < chosenBranch.minLevel) {
-      throw new Error(
-        `${unit.nickname} must reach Lv. ${chosenBranch.minLevel} to use ${ITEM_MAP.get(itemId)?.name ?? itemId} (currently Lv. ${unit.level}).`
-      );
-    }
-
-    // Consume promotion item from unit's equipped slot OR Convoy
-    if (unit.consumableItemId === itemId) {
-      unit.consumableItemId = null;
-    } else {
-      const convoySlot = save.convoy.find((c) => c.itemId === itemId);
-      if (!convoySlot || convoySlot.quantity < 1) {
-        throw new Error(`${ITEM_MAP.get(itemId)?.name ?? itemId} is not in the Bag.`);
-      }
-      convoySlot.quantity -= 1;
-      if (convoySlot.quantity <= 0) {
-        save.convoy = save.convoy.filter((c) => c.itemId !== itemId);
-      }
-    }
-
-    const targetSp = SPECIES_MAP.get(chosenBranch.targetSpeciesId)!;
-    unit.currentStats.hp += chosenBranch.promotionBonuses.hp;
-    unit.currentStats.atk += chosenBranch.promotionBonuses.atk;
-    unit.currentStats.def += chosenBranch.promotionBonuses.def;
-    unit.currentStats.spa += chosenBranch.promotionBonuses.spa;
-    unit.currentStats.spd += chosenBranch.promotionBonuses.spd;
-    unit.currentStats.spe += chosenBranch.promotionBonuses.spe;
-    unit.currentStats.mov = targetSp.baseStats.mov;
-
-    if (unit.nickname === currentSp.name) {
-      unit.nickname = targetSp.name;
-    }
-    unit.speciesId = targetSp.id;
-
-    for (const entry of targetSp.learnset) {
-      if (entry.level <= unit.level && !unit.unlockedMoveIds.includes(entry.moveId)) {
-        unit.unlockedMoveIds.push(entry.moveId);
-        if (unit.activeMoveIds.length < 4) {
-          unit.activeMoveIds.push(entry.moveId);
-        }
-      }
-    }
-    if (!unit.equippedMoveId) {
-      const firstOffensive = unit.activeMoveIds.find((mId) => {
-        const mv = MOVE_MAP.get(mId);
-        return mv && (mv.category === 'Physical' || mv.category === 'Special');
-      });
-      unit.equippedMoveId = firstOffensive ?? null;
-    }
-
-    this.commitSave(save);
-    return JSON.parse(JSON.stringify(unit)) as OwnedPokemonInstance;
-  }
-
-  public ensureOverworldInitialized(
-    graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
-  ): SaveData {
-    const save = this.requireActiveSave();
-    const reconciled = ensureOverworldGraphState(save, graph);
-    if (reconciled.mutated) {
-      save.overworld = {
-        currentNodeId: reconciled.currentNodeId,
-        nodes: reconciled.nodes,
-      };
-      this.commitSave(save);
-    }
-    return this.getSave()!;
-  }
-
-  public setOverworldNodeStateCheat(
-    nodeId: string,
-    patch: {
-      unlocked?: boolean;
-      cleared?: boolean;
-      activeKecleonShop?: SaveData['overworld']['nodes'][string]['activeKecleonShop'];
-      activeSkirmish?: SaveData['overworld']['nodes'][string]['activeSkirmish'];
-    },
-    graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
-  ): SaveData {
-    const save = this.requireActiveSave();
-    const reconciled = ensureOverworldGraphState(save, graph);
-    const target = reconciled.nodes[nodeId];
-    if (!target) {
-      throw new Error(`Unknown Overworld node "${nodeId}".`);
-    }
-    if (patch.unlocked !== undefined) {
-      target.unlocked = patch.unlocked;
-      if (!patch.unlocked) {
-        target.cleared = false;
-        target.activeKecleonShop = null;
-        target.activeSkirmish = null;
-      }
-    }
-    if (patch.cleared !== undefined) {
-      target.cleared = patch.cleared;
-      if (patch.cleared) {
-        target.unlocked = true;
-        if (!save.campaign.completedChapterIds.includes(nodeId)) {
-          save.campaign.completedChapterIds.push(nodeId);
-        }
-      } else {
-        save.campaign.completedChapterIds = save.campaign.completedChapterIds.filter(
-          (id) => id !== nodeId
-        );
-      }
-    }
-    if (patch.activeKecleonShop !== undefined) {
-      target.activeKecleonShop = patch.activeKecleonShop;
-      if (patch.activeKecleonShop) {
-        save.campaign.kecleonShopsUnlocked = true;
-      }
-    }
-    if (patch.activeSkirmish !== undefined) {
-      target.activeSkirmish = patch.activeSkirmish;
-    }
-    save.overworld = {
-      currentNodeId:
-        reconciled.nodes[reconciled.currentNodeId]?.unlocked
-          ? reconciled.currentNodeId
-          : graph.startNodeId,
-      nodes: reconciled.nodes,
-    };
-    this.commitSave(save);
-    return this.getSave()!;
-  }
-
-  public resetOverworldToPrologue(
-    graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
-  ): SaveData {
-    const save = this.requireActiveSave();
-    save.campaign.completedChapterIds = [];
-    save.campaign.kecleonShopsUnlocked = false;
-    save.campaign.currentChapterId = graph.startNodeId;
-    save.overworld = {
-      currentNodeId: graph.startNodeId,
-      nodes: createPrologueOverworldNodes(graph),
-    };
-    this.commitSave(save);
-    return this.getSave()!;
-  }
-
-  public unlockAllOverworldNodes(
-    graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
-  ): SaveData {
-    const save = this.requireActiveSave();
-    const nodes = createUnlockedAllOverworldNodes(graph, save.overworld?.nodes);
-    const current =
-      save.overworld?.currentNodeId && nodes[save.overworld.currentNodeId]
-        ? save.overworld.currentNodeId
-        : graph.startNodeId;
-    save.campaign.kecleonShopsUnlocked = true;
-    save.overworld = {
-      currentNodeId: current,
-      nodes,
-    };
-    this.commitSave(save);
-    return this.getSave()!;
-  }
-
-  public setOverworldCurrentNode(
-    nodeId: string,
-    graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
-  ): SaveData {
-    const save = this.requireActiveSave();
-    const reconciled = ensureOverworldGraphState(save, graph);
-    const target = reconciled.nodes[nodeId];
-    if (!target || !target.unlocked) {
-      throw new Error(`Overworld node "${nodeId}" is locked or does not exist.`);
-    }
-    save.overworld = {
-      currentNodeId: nodeId,
-      nodes: reconciled.nodes,
-    };
-    this.commitSave(save);
-    return this.getSave()!;
-  }
-
-  public spawnOverworldKecleonShop(
-    nodeId: string,
-    shopType?: KecleonShopType,
-    rng: () => number = Math.random,
-    graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
-  ): SaveData {
-    const save = this.requireActiveSave();
-    const reconciled = ensureOverworldGraphState(save, graph);
-    const nodeState = reconciled.nodes[nodeId];
-    if (!nodeState || !nodeState.unlocked) {
-      throw new Error(`Cannot spawn a Kecleon Shop on locked node "${nodeId}".`);
-    }
-    nodeState.activeKecleonShop = buildKecleonShopState(shopType, rng);
-    save.campaign.kecleonShopsUnlocked = true;
-    save.overworld = {
-      currentNodeId: reconciled.currentNodeId,
-      nodes: reconciled.nodes,
-    };
-    this.commitSave(save);
-    return this.getSave()!;
-  }
-
-  public spawnOverworldSkirmish(
-    nodeId: string,
-    recommendedLevel?: number,
-    tilesetId?: string,
-    graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
-  ): SaveData {
-    const save = this.requireActiveSave();
-    const reconciled = ensureOverworldGraphState(save, graph);
-    const def = getOverworldNodeById(nodeId, graph);
-    const nodeState = reconciled.nodes[nodeId];
-    if (!def || !nodeState || !nodeState.unlocked) {
-      throw new Error(`Cannot spawn a Feral Skirmish on locked node "${nodeId}".`);
-    }
-    nodeState.activeSkirmish = buildSkirmishSpawnState(def, {
-      recommendedLevel,
-      tilesetId,
-    });
-    save.overworld = {
-      currentNodeId: reconciled.currentNodeId,
-      nodes: reconciled.nodes,
-    };
-    this.commitSave(save);
-    return this.getSave()!;
-  }
-
-  public clearOverworldSkirmish(
-    nodeId: string,
-    goldBounty = 0,
-    graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
-  ): SaveData {
-    const save = this.requireActiveSave();
-    const reconciled = ensureOverworldGraphState(save, graph);
-    const nodeState = reconciled.nodes[nodeId];
-    if (nodeState) {
-      nodeState.activeSkirmish = null;
-    }
-    if (goldBounty > 0) {
-      save.gold += Math.floor(goldBounty);
-    }
-    save.overworld = {
-      currentNodeId: reconciled.currentNodeId,
-      nodes: reconciled.nodes,
-    };
-    this.commitSave(save);
-    return this.getSave()!;
-  }
-
-  public completeOverworldChapter(
-    nodeId: string,
-    opts?: {
-      rng?: () => number;
-      graph?: OverworldGraphDefinition;
-      skirmishChance?: number;
-      shopChance?: number;
-    }
-  ): { save: SaveData; firstClear: boolean; spawns: PostBattleSpawnResult } {
-    const graph = opts?.graph ?? DEMO_OVERWORLD_GRAPH;
-    const save = this.requireActiveSave();
-    const reconciled = ensureOverworldGraphState(save, graph);
-    const def = getOverworldNodeById(nodeId, graph);
-    const nodeState = reconciled.nodes[nodeId];
-    if (!def || !nodeState) {
-      throw new Error(`Unknown Overworld node "${nodeId}".`);
-    }
-
-    const firstClear = !nodeState.cleared && !save.campaign.completedChapterIds.includes(nodeId);
-    nodeState.unlocked = true;
-    nodeState.cleared = true;
-    if (!save.campaign.completedChapterIds.includes(nodeId)) {
-      save.campaign.completedChapterIds.push(nodeId);
-    }
-    if (def.unlocksKecleonShopsOnClear) {
-      save.campaign.kecleonShopsUnlocked = true;
-    }
-    if (firstClear && def.clearGoldReward > 0) {
-      save.gold += def.clearGoldReward;
-    }
-
-    for (const nextId of def.unlocksNodeIdsOnClear) {
-      const nextState = reconciled.nodes[nextId];
-      if (nextState) {
-        nextState.unlocked = true;
-      }
-    }
-
-    // Advance `campaign.currentChapterId` to the earliest unlocked non-cleared story node
-    const nextStory = graph.nodes.find(
-      (n) => n.kind === 'story' && reconciled.nodes[n.id]?.unlocked && !reconciled.nodes[n.id]?.cleared
-    );
-    if (nextStory) {
-      save.campaign.currentChapterId = nextStory.id;
-    }
-
-    const spawns = rollPostBattleOverworldSpawns(reconciled.nodes, graph, {
-      justClearedNodeId: nodeId,
-      kecleonShopsUnlocked: save.campaign.kecleonShopsUnlocked,
-      skirmishChance: opts?.skirmishChance,
-      shopChance: opts?.shopChance,
-      rng: opts?.rng,
-    });
-
-    save.overworld = {
-      currentNodeId: nodeId,
-      nodes: reconciled.nodes,
-    };
-
-    this.commitSave(save);
-    return {
-      save: this.getSave()!,
-      firstClear,
-      spawns,
-    };
-  }
-
-  public buyKecleonShopItem(
-    nodeId: string,
-    itemId: string,
-    graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
-  ): { save: SaveData; item: ItemDefinition; remainingStock: number } {
-    const save = this.requireActiveSave();
-    const reconciled = ensureOverworldGraphState(save, graph);
-    const nodeState = reconciled.nodes[nodeId];
-    const shop = nodeState?.activeKecleonShop;
-    if (!nodeState || !shop) {
-      throw new Error('No Kecleon Shop is currently active at this location.');
-    }
-
-    const stockIndex = shop.inventoryItemIds.indexOf(itemId);
-    if (stockIndex === -1) {
-      throw new Error('That item is out of stock at this Kecleon stall.');
-    }
-
-    const item = ITEM_MAP.get(itemId);
-    if (!item || item.buyPrice === null) {
-      throw new Error(`Item "${itemId}" cannot be purchased.`);
-    }
-    if (save.gold < item.buyPrice) {
-      throw new Error(`Not enough Gold! Need ${item.buyPrice}G (have ${save.gold}G).`);
-    }
-
-    save.gold -= item.buyPrice;
-    returnItemToConvoyList(save.convoy, item.id);
-    shop.inventoryItemIds.splice(stockIndex, 1);
-    const remainingStock = shop.inventoryItemIds.length;
-    if (remainingStock === 0) {
-      nodeState.activeKecleonShop = null;
-    }
-
-    save.overworld = {
-      currentNodeId: reconciled.currentNodeId,
-      nodes: reconciled.nodes,
-    };
-    this.commitSave(save);
-    return {
-      save: this.getSave()!,
-      item,
-      remainingStock,
-    };
+    return { save: this.getSave()!, item, remainingStock };
   }
 
   public clearLocalSave(): void {
@@ -1686,98 +202,19 @@ export class SaveStateManager {
     this.emitChange();
   }
 
-  /**
-   * Deletes all save data from localStorage AND from the currently signed-in Google account's
-   * Cloud Firestore document (`saves/{uid}`).
-   */
-  public async deleteSaveFromLinkedAccount(): Promise<{
-    deletedLocal: boolean;
-    deletedCloud: boolean;
-  }> {
-    const hadLocal = Boolean(
-      this.currentSave ||
-        this.storage.getItem(SAVE_STORAGE_KEY) ||
-        this.storage.getItem(LEGACY_SAVE_STORAGE_KEY)
-    );
-    this.storage.removeItem(SAVE_STORAGE_KEY);
-    this.storage.removeItem(LEGACY_SAVE_STORAGE_KEY);
-    this.storage.removeItem(META_STORAGE_KEY);
+  public deleteSaveFromLinkedAccount(): Promise<{ deletedLocal: boolean; deletedCloud: boolean }> {
+    const hadCurrent = Boolean(this.currentSave);
     this.currentSave = null;
-
-    const user = this.cloud.getCurrentUser();
-    if (!user || typeof this.cloud.deleteCloudSave !== 'function') {
-      this.syncStatus = {
-        ...this.syncStatus,
-        lastResolution: 'unauthenticated',
-        errorMessage: null,
-      };
-      this.emitChange();
-      return { deletedLocal: hadLocal, deletedCloud: false };
-    }
-
-    try {
-      await this.cloud.deleteCloudSave(user.uid);
-      if (
-        this.isBrowserPrimaryStorage &&
-        Object.keys(getAllCustomMapOverrides()).length > 0 &&
-        typeof this.cloud.pushCustomMapsOnly === 'function'
-      ) {
-        await this.cloud.pushCustomMapsOnly(
-          user.uid,
-          JSON.stringify(getCustomMapsSyncEnvelope())
-        );
-      }
-      this.syncStatus = {
-        ...this.syncStatus,
-        user,
-        lastResolution: 'empty',
-        lastSyncedAt: Date.now(),
-        errorMessage: null,
-      };
-      this.emitChange();
-      return { deletedLocal: hadLocal, deletedCloud: true };
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to delete save data from Cloud Firestore.';
-      this.syncStatus = {
-        ...this.syncStatus,
-        user,
-        lastResolution: 'cloud_error',
-        errorMessage: message,
-      };
-      this.emitChange();
-      throw err;
-    }
+    return performDeleteSaveFromAccount({
+      storage: this.storage, isBrowserPrimaryStorage: this.isBrowserPrimaryStorage, cloud: this.cloud, hadCurrentSave: hadCurrent,
+      onUpdateSyncStatus: (p) => { this.syncStatus = { ...this.syncStatus, ...p }; this.emitChange(); },
+    });
   }
 
-  public exportSaveJson(): string {
-    const save = this.requireActiveSave();
-    return JSON.stringify(save, null, 2);
-  }
-
+  public exportSaveJson(): string { return JSON.stringify(this.requireActiveSave(), null, 2); }
   public importSaveJson(rawJson: string, preserveTimestamp = false): SaveData {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(rawJson);
-    } catch {
-      throw new Error('Invalid JSON file: could not parse backup payload.');
-    }
-
-    const normalized = normalizeLegacySingleItemSlots(parsed);
-    const check = validateSaveData(normalized, SPECIES_MAP, MOVE_MAP, ITEM_MAP);
-    if (!check.valid || !check.save) {
-      throw new Error(`Invalid save backup: ${check.errors.join(' ')}`);
-    }
-
-    const nextSave: SaveData = {
-      ...check.save,
-      lastUpdated: preserveTimestamp ? check.save.lastUpdated : Date.now(),
-    };
-
-    if (nextSave.newGamePlusUnlocked) {
-      this.storage.setItem(META_STORAGE_KEY, JSON.stringify({ newGamePlusUnlocked: true }));
-    }
-
+    const nextSave = parseImportedSaveBackup(rawJson, preserveTimestamp);
+    if (nextSave.newGamePlusUnlocked) this.storage.setItem(META_STORAGE_KEY, JSON.stringify({ newGamePlusUnlocked: true }));
     this.commitSave(nextSave, preserveTimestamp);
     return this.getSave()!;
   }
@@ -1785,348 +222,74 @@ export class SaveStateManager {
   public async signInWithGoogleAndSync(): Promise<CloudSyncResolution> {
     const user = await this.cloud.signInWithGoogle();
     this.syncStatus = { ...this.syncStatus, user, errorMessage: null };
-    if (this.inFlightReconcile) {
-      return this.inFlightReconcile;
-    }
-    return this.reconcileWithCloud();
+    return this.inFlightReconcile ?? this.reconcileWithCloud();
   }
-
   public async signOutFromGoogle(): Promise<void> {
     await this.cloud.signOut();
-    this.syncStatus = {
-      ...this.syncStatus,
-      user: null,
-      lastResolution: 'unauthenticated',
-      errorMessage: null,
-    };
+    this.syncStatus = { ...this.syncStatus, user: null, lastResolution: 'unauthenticated', errorMessage: null };
     this.emitChange();
   }
-
-  /**
-   * Rule 7: Cross-Device Timestamp Resolution between `localStorage` and Cloud Firestore (`saves/{uid}`).
-   */
   public reconcileWithCloud(): Promise<CloudSyncResolution> {
-    if (this.inFlightReconcile) {
-      return this.inFlightReconcile;
-    }
-    const p = this.performReconcileWithCloud().finally(() => {
-      if (this.inFlightReconcile === p) {
-        this.inFlightReconcile = null;
-      }
-    });
+    if (this.inFlightReconcile) return this.inFlightReconcile;
+    const p = this.performReconcileWithCloud().finally(() => { if (this.inFlightReconcile === p) this.inFlightReconcile = null; });
     this.inFlightReconcile = p;
     return p;
   }
-
-  private getSerializedCustomMapsEnvelopeOrNull(): string | null {
-    if (this.isBrowserPrimaryStorage && hasAnyCustomMapSyncState()) {
-      return JSON.stringify(getCustomMapsSyncEnvelope());
-    }
-    if (this.currentSave?.customMaps && Object.keys(this.currentSave.customMaps).length > 0) {
-      return JSON.stringify({
-        version: 2,
-        overrides: this.currentSave.customMaps,
-        resets: {},
-      });
-    }
-    return null;
-  }
-
-  private withMergedCustomMaps(save: SaveData): SaveData {
-    if (!this.isBrowserPrimaryStorage) return save;
-    const cloned = JSON.parse(JSON.stringify(save)) as SaveData;
-    const allOverrides = getAllCustomMapOverrides();
-    if (Object.keys(allOverrides).length > 0) {
-      cloned.customMaps = allOverrides;
-    } else {
-      delete cloned.customMaps;
-    }
-    return cloned;
+  public syncCustomMapsWithActiveSave(): Promise<CloudSyncResolution> {
+    return performSyncCustomMapsWithSave({
+      isBrowserPrimaryStorage: this.isBrowserPrimaryStorage, cloud: this.cloud, getCurrentSave: () => this.currentSave,
+      writeLocalOnly: (s) => { this.currentSave = writeLocalSaveToStorage(this.storage, this.isBrowserPrimaryStorage, s); this.emitChange(); },
+      onUpdateSyncStatus: (p) => { this.syncStatus = { ...this.syncStatus, ...p }; this.emitChange(); },
+    });
   }
 
   private async performReconcileWithCloud(): Promise<CloudSyncResolution> {
     const user = this.cloud.getCurrentUser();
-    if (!user) {
-      this.syncStatus = { ...this.syncStatus, user: null, lastResolution: 'unauthenticated' };
-      this.emitChange();
-      return 'unauthenticated';
-    }
-
+    if (!user) { this.syncStatus = { ...this.syncStatus, user: null, lastResolution: 'unauthenticated' }; this.emitChange(); return 'unauthenticated'; }
     try {
-      const localSave = this.readValidLocalSave();
-      this.currentSave = localSave;
-
-      if (this.isBrowserPrimaryStorage && localSave?.customMaps) {
-        mergeCustomMapsRecord(localSave.customMaps);
-      }
-
-      const rawCloud = await this.cloud.fetchCloudSave(user.uid);
-      const { saveCandidate, customMapsEnvelope } = extractCloudPayloadParts(rawCloud);
-
-      let mapSync = { localChanged: false, cloudOutdated: false };
-      if (this.isBrowserPrimaryStorage) {
-        mapSync = reconcileCustomMapsEnvelope(
-          customMapsEnvelope as CustomMapsSyncEnvelope | null
-        );
-      }
-
-      let cloudSave: SaveData | null = null;
-      if (saveCandidate) {
-        const normalizedCloud = normalizeLegacySingleItemSlots(saveCandidate);
-        const check = validateSaveData(normalizedCloud, SPECIES_MAP, MOVE_MAP, ITEM_MAP);
-        if (check.valid && check.save) {
-          cloudSave = check.save;
-        }
-      }
-
-      let resolution: CloudSyncResolution;
-      if (!localSave && !cloudSave) {
-        if (mapSync.cloudOutdated) {
-          const envJson = this.getSerializedCustomMapsEnvelopeOrNull();
-          if (envJson && typeof this.cloud.pushCustomMapsOnly === 'function') {
-            await this.cloud.pushCustomMapsOnly(user.uid, envJson);
-          }
-          resolution = mapSync.localChanged ? 'pulled_newer_cloud' : 'pushed_newer_local';
-        } else if (mapSync.localChanged) {
-          resolution = 'pulled_newer_cloud';
-        } else {
-          resolution = 'empty';
-        }
-      } else if (!localSave && cloudSave) {
-        this.writeLocalOnly(this.withMergedCustomMaps(cloudSave));
-        if (mapSync.cloudOutdated) {
-          await this.cloud.pushCloudSave(
-            user.uid,
-            this.currentSave!,
-            this.getSerializedCustomMapsEnvelopeOrNull()
-          );
-        }
-        resolution = 'pulled_newer_cloud';
-      } else if (localSave && !cloudSave) {
-        this.writeLocalOnly(this.withMergedCustomMaps(localSave));
-        await this.cloud.pushCloudSave(
-          user.uid,
-          this.currentSave!,
-          this.getSerializedCustomMapsEnvelopeOrNull()
-        );
-        resolution = 'pushed_newer_local';
-      } else if (cloudSave!.lastUpdated > localSave!.lastUpdated) {
-        this.writeLocalOnly(this.withMergedCustomMaps(cloudSave!));
-        if (mapSync.cloudOutdated) {
-          await this.cloud.pushCloudSave(
-            user.uid,
-            this.currentSave!,
-            this.getSerializedCustomMapsEnvelopeOrNull()
-          );
-        }
-        resolution = 'pulled_newer_cloud';
-      } else if (localSave!.lastUpdated > cloudSave!.lastUpdated) {
-        this.writeLocalOnly(this.withMergedCustomMaps(localSave!));
-        await this.cloud.pushCloudSave(
-          user.uid,
-          this.currentSave!,
-          this.getSerializedCustomMapsEnvelopeOrNull()
-        );
-        resolution = 'pushed_newer_local';
-      } else {
-        if (mapSync.localChanged) {
-          this.writeLocalOnly(this.withMergedCustomMaps(localSave!));
-        }
-        if (mapSync.cloudOutdated) {
-          this.writeLocalOnly(this.withMergedCustomMaps(localSave!));
-          await this.cloud.pushCloudSave(
-            user.uid,
-            this.currentSave!,
-            this.getSerializedCustomMapsEnvelopeOrNull()
-          );
-          resolution = mapSync.localChanged ? 'pulled_newer_cloud' : 'pushed_newer_local';
-        } else {
-          resolution = mapSync.localChanged ? 'pulled_newer_cloud' : 'already_in_sync';
-        }
-      }
-
-      this.syncStatus = {
-        ...this.syncStatus,
-        user,
-        lastResolution: resolution,
-        lastSyncedAt: Date.now(),
-        errorMessage: null,
-      };
+      this.currentSave = readValidLocalSaveFromStorage(this.storage);
+      const resolution = await performCloudSaveReconciliation({
+        cloud: this.cloud, user, isBrowserPrimaryStorage: this.isBrowserPrimaryStorage, localSave: this.currentSave,
+        writeLocalOnly: (s) => { this.currentSave = writeLocalSaveToStorage(this.storage, this.isBrowserPrimaryStorage, s); },
+        getCurrentSave: () => this.currentSave,
+      });
+      this.syncStatus = { ...this.syncStatus, user, lastResolution: resolution, lastSyncedAt: Date.now(), errorMessage: null };
       this.emitChange();
       return resolution;
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Cloud Firestore sync failed.';
-      this.syncStatus = {
-        ...this.syncStatus,
-        user,
-        lastResolution: 'cloud_error',
-        errorMessage: message,
-      };
+      this.syncStatus = { ...this.syncStatus, user, lastResolution: 'cloud_error', errorMessage: err instanceof Error ? err.message : 'Cloud Firestore sync failed.' };
       this.emitChange();
       return 'cloud_error';
     }
   }
 
   private requireActiveSave(): SaveData {
-    if (!this.currentSave) {
-      throw new Error('No active campaign save loaded.');
-    }
+    if (!this.currentSave) throw new Error('No active campaign save loaded.');
     return this.currentSave;
   }
-
-  private readValidLocalSave(): SaveData | null {
-    try {
-      let raw = this.storage.getItem(SAVE_STORAGE_KEY);
-      if (!raw) {
-        const legacy = this.storage.getItem(LEGACY_SAVE_STORAGE_KEY);
-        if (legacy) {
-          this.storage.setItem(SAVE_STORAGE_KEY, legacy);
-          this.storage.removeItem(LEGACY_SAVE_STORAGE_KEY);
-          raw = legacy;
-        }
-      }
-      if (!raw) return null;
-      const parsed = JSON.parse(raw) as unknown;
-      const normalized = normalizeLegacySingleItemSlots(parsed);
-      const check = validateSaveData(normalized, SPECIES_MAP, MOVE_MAP, ITEM_MAP);
-      return check.valid && check.save ? check.save : null;
-    } catch {
-      return null;
-    }
+  private mutateAndCommit(fn: (save: SaveData) => void): SaveData { const s = this.requireActiveSave(); fn(s); this.commitSave(s); return this.getSave()!; }
+  private mutateUnit(fn: (save: SaveData) => OwnedPokemonInstance): OwnedPokemonInstance { const s = this.requireActiveSave(); const u = fn(s); this.commitSave(s); return cloneUnit(u); }
+  private pushCampaignFlag(key: 'recruitedChapterIds' | 'seenIntroChapterIds' | 'seenOutroChapterIds' | 'seenStoryCutsceneIds' | 'unlockedTutorialIds', id: string): SaveData {
+    const save = this.requireActiveSave();
+    const { nextList, mutated } = pushUniqueIdToFlagList(save.campaign[key], id);
+    save.campaign[key] = nextList;
+    if (mutated) this.commitSave(save);
+    return this.getSave()!;
   }
-
-  /**
-   * Syncs Dev Tools map overrides & reset tombstones (`ChapterMapStore`) to `localStorage` AND
-   * immediately pushes them to Cloud Firestore (`saves/{uid}`) — even if no campaign save has
-   * been started yet — so PC and Mobile devices signed into the same Google account stay in sync.
-   */
-  public async syncCustomMapsWithActiveSave(): Promise<CloudSyncResolution> {
-    if (!this.isBrowserPrimaryStorage) {
-      return 'unauthenticated';
-    }
-
-    const allOverrides = getAllCustomMapOverrides();
-    const customMapsField = Object.keys(allOverrides).length > 0 ? allOverrides : undefined;
-    const envelopeJson = this.getSerializedCustomMapsEnvelopeOrNull();
-
-    if (this.currentSave) {
-      const stamped: SaveData = {
-        ...this.currentSave,
-        customMaps: customMapsField,
-        lastUpdated: Math.max(Date.now(), (this.currentSave.lastUpdated ?? 0) + 1),
-      };
-      if (stamped.customMaps === undefined) {
-        delete stamped.customMaps;
-      }
-      const check = validateSaveData(stamped, SPECIES_MAP, MOVE_MAP, ITEM_MAP);
-      if (check.valid && check.save) {
-        this.writeLocalOnly(check.save);
-        this.emitChange();
-      }
-    }
-
-    const user = this.cloud.getCurrentUser();
-    if (!user) {
-      return 'unauthenticated';
-    }
-
-    try {
-      if (this.currentSave) {
-        await this.cloud.pushCloudSave(user.uid, this.currentSave, envelopeJson);
-      } else if (envelopeJson && typeof this.cloud.pushCustomMapsOnly === 'function') {
-        await this.cloud.pushCustomMapsOnly(user.uid, envelopeJson);
-      }
-      this.syncStatus = {
-        ...this.syncStatus,
-        user,
-        lastResolution: 'pushed_newer_local',
-        lastSyncedAt: Date.now(),
-        errorMessage: null,
-      };
-      this.emitChange();
-      return 'pushed_newer_local';
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to sync custom maps to Cloud Firestore.';
-      this.syncStatus = {
-        ...this.syncStatus,
-        user,
-        lastResolution: 'cloud_error',
-        errorMessage: message,
-      };
-      this.emitChange();
-      return 'cloud_error';
-    }
-  }
-
-  private writeLocalOnly(save: SaveData): void {
-    this.currentSave = JSON.parse(JSON.stringify(save)) as SaveData;
-    if (this.isBrowserPrimaryStorage && this.currentSave.customMaps) {
-      mergeCustomMapsRecord(this.currentSave.customMaps);
-    }
-    this.storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(this.currentSave));
-    if (this.currentSave.newGamePlusUnlocked) {
-      this.storage.setItem(META_STORAGE_KEY, JSON.stringify({ newGamePlusUnlocked: true }));
-    }
-  }
-
   private commitSave(save: SaveData, keepExistingTimestamp = false): void {
-    let customMapsField = save.customMaps;
-    if (this.isBrowserPrimaryStorage) {
-      if (save.customMaps) {
-        mergeCustomMapsRecord(save.customMaps);
-      }
-      const allOverrides = getAllCustomMapOverrides();
-      customMapsField = Object.keys(allOverrides).length > 0 ? allOverrides : undefined;
-    }
-
-    const stamped: SaveData = {
-      ...save,
-      customMaps: customMapsField,
-      lastUpdated: keepExistingTimestamp ? save.lastUpdated : Math.max(Date.now(), (this.currentSave?.lastUpdated ?? 0) + 1),
-    };
-    if (stamped.customMaps === undefined) {
-      delete stamped.customMaps;
-    }
-
-    const check = validateSaveData(stamped, SPECIES_MAP, MOVE_MAP, ITEM_MAP);
-    if (!check.valid || !check.save) {
-      throw new Error(`Refusing to persist invalid save state: ${check.errors.join(' ')}`);
-    }
-
-    this.writeLocalOnly(check.save);
+    const validated = stampAndValidateSaveForCommit({ save, previousLastUpdated: this.currentSave?.lastUpdated ?? 0, isBrowserPrimaryStorage: this.isBrowserPrimaryStorage, keepExistingTimestamp });
+    this.currentSave = writeLocalSaveToStorage(this.storage, this.isBrowserPrimaryStorage, validated);
     this.emitChange();
-
     const user = this.cloud.getCurrentUser();
     if (user) {
-      const envelopeJson = this.getSerializedCustomMapsEnvelopeOrNull();
-      void this.cloud
-        .pushCloudSave(user.uid, this.currentSave!, envelopeJson)
-        .then(() => {
-          this.syncStatus = {
-            ...this.syncStatus,
-            lastResolution: 'pushed_newer_local',
-            lastSyncedAt: Date.now(),
-            errorMessage: null,
-          };
-          this.emitChange();
-        })
-        .catch((err: unknown) => {
-          this.syncStatus = {
-            ...this.syncStatus,
-            lastResolution: 'cloud_error',
-            errorMessage: err instanceof Error ? err.message : 'Failed to push save to Firestore.',
-          };
-          this.emitChange();
-        });
+      const envelopeJson = serializeCustomMapsEnvelope(this.isBrowserPrimaryStorage, this.currentSave);
+      void this.cloud.pushCloudSave(user.uid, this.currentSave, envelopeJson)
+        .then(() => { this.syncStatus = { ...this.syncStatus, lastResolution: 'pushed_newer_local', lastSyncedAt: Date.now(), errorMessage: null }; this.emitChange(); })
+        .catch((err: unknown) => { this.syncStatus = { ...this.syncStatus, lastResolution: 'cloud_error', errorMessage: err instanceof Error ? err.message : 'Failed to push save to Firestore.' }; this.emitChange(); });
     }
   }
-
   private emitChange(): void {
-    const snapSave = this.getSave();
-    const snapStatus = this.getSyncStatus();
-    for (const fn of this.changeListeners) {
-      fn(snapSave, snapStatus);
-    }
+    const s = this.getSave(), st = this.getSyncStatus();
+    for (const fn of this.changeListeners) fn(s, st);
   }
 }

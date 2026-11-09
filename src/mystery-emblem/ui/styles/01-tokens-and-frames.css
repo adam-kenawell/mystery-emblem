@@ -1,0 +1,261 @@
+/**
+ * Authentic Pokémon Mystery Dungeon: Explorers of Sky / Rescue Team UI Skin (2x Pixel Ratio)
+ *
+ * Strictly enforces:
+ * - Rule 2: >= 44x44px touch targets & zero-clipping scaling across 1920x1080, 390x844, and 844x390
+ * - Rule 3: Sampled 15-bit GBA/DS stepped cobalt-periwinkle 9-slice frames (`1 texel = 2 CSS px`),
+ *   solid `#204868` menu interiors vs. translucent live map/dungeon interiors, PMD semantic text
+ *   colors (`#F8F8F8` white, `#F8F800` nickname yellow, `#58F858` move green), pixel `▶` cursors,
+ *   `'Fusion Pixel 12px Proportional KR'` bitmap font, and `image-rendering: pixelated` assets.
+ */
+
+:root {
+  /* PMD 15-Bit GBA/DS Reference Palette */
+  --pmd-fill-solid: #204868;
+  --pmd-fill-well: #16344c;
+  --pmd-fill-well-deep: #102638;
+  --pmd-fill-translucent: rgba(12, 20, 32, 0.64);
+  --pmd-border-outer: #a8c0e0;
+  --pmd-border-mid: #5878f8;
+  --pmd-border-band: #6080f8;
+  --pmd-border-indigo: #4820f8;
+  --pmd-text-white: #f8f8f8;
+  --pmd-text-yellow: #f8f800;
+  --pmd-text-gold: #f8d838;
+  --pmd-text-green: #58f858;
+  --pmd-text-cyan: #a8e0f8;
+  --pmd-text-orange: #f89050;
+  --pmd-text-danger: #ff8898;
+  --pmd-divider-line: rgba(248, 248, 248, 0.85);
+  --pmd-divider-subtle: rgba(168, 192, 224, 0.38);
+
+  /* 24x20 Native Texel 9-Slice Frame -> Rendered at 2x (`border-width: 10px 16px`, `slice: 5 8 fill`) */
+  --pmd-frame-solid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='20' viewBox='0 0 24 20' shape-rendering='crispEdges'%3E%3Cpath fill='%23A8C0E0' d='M3,0H21V1H22V2H23V3H24V17H23V18H22V19H21V20H3V19H2V18H1V17H0V3H1V2H2V1H3Z'/%3E%3Cpath fill='%235878F8' d='M3,1H21V2H22V3H23V17H22V18H21V19H3V18H2V17H1V3H2V2H3Z'/%3E%3Cpath fill='%236080F8' d='M3,2H21V3H22V17H21V18H3V17H2V3H3Z'/%3E%3Cpath fill='%234820F8' d='M8,3H16V4H17V5H18V15H17V16H16V17H8V16H7V15H6V5H7V4H8Z'/%3E%3Cpath fill='%231C4A59' d='M8,4H16V5H17V15H16V16H8V15H7V5H8Z'/%3E%3Crect fill='%23204868' x='8' y='5' width='8' height='10'/%3E%3C/svg%3E");
+
+  --pmd-frame-translucent: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='20' viewBox='0 0 24 20' shape-rendering='crispEdges'%3E%3Cpath fill='%23A8C0E0' fill-rule='evenodd' d='M3,0H21V1H22V2H23V3H24V17H23V18H22V19H21V20H3V19H2V18H1V17H0V3H1V2H2V1H3ZM8,4H16V5H17V15H16V16H8V15H7V5H8Z'/%3E%3Cpath fill='%235878F8' fill-rule='evenodd' d='M3,1H21V2H22V3H23V17H22V18H21V19H3V18H2V17H1V3H2V2H3ZM8,4H16V5H17V15H16V16H8V15H7V5H8Z'/%3E%3Cpath fill='%236080F8' fill-rule='evenodd' d='M3,2H21V3H22V17H21V18H3V17H2V3H3ZM8,4H16V5H17V15H16V16H8V15H7V5H8Z'/%3E%3Cpath fill='%234820F8' fill-rule='evenodd' d='M8,3H16V4H17V5H18V15H17V16H16V17H8V16H7V15H6V5H7V4H8ZM8,4H16V5H17V15H16V16H8V15H7V5H8Z'/%3E%3Cpath fill='%230E1824' fill-opacity='0.64' d='M8,4H16V5H17V15H16V16H8V15H7V5H8Z'/%3E%3C/svg%3E");
+
+  --pmd-frame-field-menu: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='20' viewBox='0 0 24 20' shape-rendering='crispEdges'%3E%3Cpath fill='%23A8C0E0' fill-rule='evenodd' d='M3,0H21V1H22V2H23V3H24V17H23V18H22V19H21V20H3V19H2V18H1V17H0V3H1V2H2V1H3ZM8,4H16V5H17V15H16V16H8V15H7V5H8Z'/%3E%3Cpath fill='%235878F8' fill-rule='evenodd' d='M3,1H21V2H22V3H23V17H22V18H21V19H3V18H2V17H1V3H2V2H3ZM8,4H16V5H17V15H16V16H8V15H7V5H8Z'/%3E%3Cpath fill='%236080F8' fill-rule='evenodd' d='M3,2H21V3H22V17H21V18H3V17H2V3H3ZM8,4H16V5H17V15H16V16H8V15H7V5H8Z'/%3E%3Cpath fill='%234820F8' fill-rule='evenodd' d='M8,3H16V4H17V5H18V15H17V16H16V17H8V16H7V15H6V5H7V4H8ZM8,4H16V5H17V15H16V16H8V15H7V5H8Z'/%3E%3Cpath fill='%23102238' fill-opacity='0.44' d='M8,4H16V5H17V15H16V16H8V15H7V5H8Z'/%3E%3C/svg%3E");
+
+  --pmd-frame-danger: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='20' viewBox='0 0 24 20' shape-rendering='crispEdges'%3E%3Cpath fill='%23F8B8C8' d='M3,0H21V1H22V2H23V3H24V17H23V18H22V19H21V20H3V19H2V18H1V17H0V3H1V2H2V1H3Z'/%3E%3Cpath fill='%23E05070' d='M3,1H21V2H22V3H23V17H22V18H21V19H3V18H2V17H1V3H2V2H3Z'/%3E%3Cpath fill='%23C83858' d='M3,2H21V3H22V17H21V18H3V17H2V3H3Z'/%3E%3Cpath fill='%23881030' d='M8,3H16V4H17V5H18V15H17V16H16V17H8V16H7V15H6V5H7V4H8Z'/%3E%3Cpath fill='%2328101C' d='M8,4H16V5H17V15H16V16H8V15H7V5H8Z'/%3E%3Crect fill='%23381424' x='8' y='5' width='8' height='10'/%3E%3C/svg%3E");
+
+  /* 12x12 Native Texel Mini-Frame -> Rendered at 2x (`border-width: 6px 8px`, `slice: 3 4 fill`) */
+  --pmd-frame-mini: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' shape-rendering='crispEdges'%3E%3Cpath fill='%23A8C0E0' d='M1,0H11V1H12V11H11V12H1V11H0V1H1Z'/%3E%3Cpath fill='%236080F8' d='M2,1H10V2H11V10H10V11H2V10H1V2H2Z'/%3E%3Cpath fill='%234820F8' d='M3,2H9V3H10V9H9V10H3V9H2V3H3Z'/%3E%3Crect fill='%23204868' x='3' y='3' width='6' height='6'/%3E%3C/svg%3E");
+
+  --pmd-frame-mini-active: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' shape-rendering='crispEdges'%3E%3Cpath fill='%23FFF8A8' d='M1,0H11V1H12V11H11V12H1V11H0V1H1Z'/%3E%3Cpath fill='%23F8D838' d='M2,1H10V2H11V10H10V11H2V10H1V2H2Z'/%3E%3Cpath fill='%23B87810' d='M3,2H9V3H10V9H9V10H3V9H2V3H3Z'/%3E%3Crect fill='%232A5A80' x='3' y='3' width='6' height='6'/%3E%3C/svg%3E");
+
+  --pmd-frame-mini-danger: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' shape-rendering='crispEdges'%3E%3Cpath fill='%23F8B8C8' d='M1,0H11V1H12V11H11V12H1V11H0V1H1Z'/%3E%3Cpath fill='%23D84060' d='M2,1H10V2H11V10H10V11H2V10H1V2H2Z'/%3E%3Cpath fill='%23881030' d='M3,2H9V3H10V9H9V10H3V9H2V3H3Z'/%3E%3Crect fill='%23481828' x='3' y='3' width='6' height='6'/%3E%3C/svg%3E");
+
+  --pmd-frame-mini-translucent: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' shape-rendering='crispEdges'%3E%3Cpath fill='%23A8C0E0' fill-rule='evenodd' d='M1,0H11V1H12V11H11V12H1V11H0V1H1ZM3,3H9V9H3Z'/%3E%3Cpath fill='%236080F8' fill-rule='evenodd' d='M2,1H10V2H11V10H10V11H2V10H1V2H2ZM3,3H9V9H3Z'/%3E%3Cpath fill='%234820F8' fill-rule='evenodd' d='M3,2H9V3H10V9H9V10H3V9H2V3H3ZM3,3H9V9H3Z'/%3E%3Crect fill='%230E1824' fill-opacity='0.68' x='3' y='3' width='6' height='6'/%3E%3C/svg%3E");
+
+  /* 6x7 Native Texel Cursor Triangle (`▶`) -> Rendered at 2x (`12x14px`) */
+  --pmd-cursor-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='14' viewBox='0 0 6 7' shape-rendering='crispEdges'%3E%3Cpath fill='%23000000' d='M0,0H2V1H3V2H4V3H5V4H4V5H3V6H2V7H0Z'/%3E%3Cpath fill='%23F8F8F8' d='M1,1H2V2H3V3H4V4H3V5H2V6H1Z'/%3E%3C/svg%3E");
+
+  /* Custom 2x Pixel-Art Glove Pointer (`32x32`, fingertip hotspot at `2 2`) */
+  --pmd-cursor-glove: url('/cursor.png') 2 2, auto;
+}
+
+html {
+  cursor: var(--pmd-cursor-glove);
+}
+
+a,
+button:not(:disabled),
+[role='button'],
+select:not(:disabled),
+summary,
+label[for],
+input[type='range']:not(:disabled),
+input[type='checkbox']:not(:disabled),
+input[type='radio']:not(:disabled) {
+  cursor: inherit;
+}
+
+.pmd-sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* ==========================================================================
+   CORE PMD STEPPED 2X PIXEL WINDOW FRAMES & BUTTONS
+   ========================================================================== */
+
+.pmd-window {
+  background: transparent;
+  border-style: solid;
+  border-width: 10px 16px;
+  border-image-source: var(--pmd-frame-solid);
+  border-image-slice: 5 8 fill;
+  border-image-repeat: stretch;
+  border-radius: 0;
+  outline: none;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.52);
+  color: var(--pmd-text-white);
+  font-family: 'Fusion Pixel 12px Proportional KR', sans-serif;
+  text-shadow: 2px 2px 0 #000000;
+}
+
+/* Unified cobalt-periwinkle PMD frame on `--gold` windows for authentic EoS cohesion */
+.pmd-window--gold {
+  border-image-source: var(--pmd-frame-solid);
+}
+
+/* Live Dungeon / Overworld / Cutscene Translucent Interior (Reference Image 1) */
+.pmd-window--translucent {
+  border-image-source: var(--pmd-frame-translucent);
+}
+
+/* Compact 2x Mini-Frame (`6px 8px` border) for HUD Pills, Corner Buttons & Portrait Frames */
+.pmd-window--compact {
+  border-width: 6px 8px;
+  border-image-source: var(--pmd-frame-mini);
+  border-image-slice: 3 4 fill;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.52);
+}
+
+.pmd-window--compact.pmd-window--translucent {
+  border-image-source: var(--pmd-frame-mini-translucent);
+}
+
+.pmd-pixelated,
+.pmd-sprite-canvas,
+.pmd-portrait-canvas {
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}
+
+/* Crisp 1.5x (60px) / 2x (80px) pixel portrait canvas */
+.pmd-portrait-canvas {
+  display: block;
+  width: 60px;
+  height: 60px;
+}
+
+/* Standalone Framed Mini-Window Button */
+.pmd-btn {
+  min-height: 46px;
+  min-width: 46px;
+  padding: 6px 12px;
+  background: transparent;
+  border-style: solid;
+  border-width: 6px 8px;
+  border-image-source: var(--pmd-frame-mini);
+  border-image-slice: 3 4 fill;
+  border-image-repeat: stretch;
+  border-radius: 0;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45);
+  color: var(--pmd-text-white);
+  font-family: 'Fusion Pixel 12px Proportional KR', sans-serif;
+  font-size: 14px;
+  line-height: 1.25;
+  cursor: inherit;
+  text-shadow: 2px 2px 0 #000000;
+  touch-action: manipulation;
+}
+
+.pmd-btn:hover:not(:disabled),
+.pmd-btn:active:not(:disabled) {
+  border-image-source: var(--pmd-frame-mini-active);
+  color: var(--pmd-text-yellow);
+}
+
+.pmd-btn-primary,
+.pmd-btn.is-active,
+.pmd-tab-btn.is-active {
+  border-image-source: var(--pmd-frame-mini-active);
+  color: var(--pmd-text-yellow);
+}
+
+.pmd-btn-danger {
+  border-image-source: var(--pmd-frame-mini-danger);
+  color: #ffd8e0;
+}
+
+.pmd-btn-danger:hover:not(:disabled),
+.pmd-btn-danger:active:not(:disabled) {
+  border-image-source: var(--pmd-frame-mini-danger);
+  color: var(--pmd-text-yellow);
+}
+
+.pmd-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   AUTHENTIC PMD BORDERLESS CURSOR (`▶`) MENU ROWS (Reference Images 1, 2, 3)
+   Used inside PMD Windows to eliminate modern nested box-inside-box borders!
+   ========================================================================== */
+
+.pmd-btn.pmd-menu-row {
+  position: relative;
+  border: 0;
+  border-bottom: 2px solid var(--pmd-divider-subtle);
+  border-image: none;
+  box-shadow: none;
+  background: transparent;
+  padding: 8px 10px 8px 24px;
+  min-height: 46px;
+  text-align: left;
+  justify-content: flex-start;
+  color: var(--pmd-text-white);
+}
+
+.pmd-btn.pmd-menu-row:last-child {
+  border-bottom: 0;
+}
+
+.pmd-btn.pmd-menu-row::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  width: 12px;
+  height: 14px;
+  transform: translateY(-50%);
+  background-image: var(--pmd-cursor-arrow);
+  background-repeat: no-repeat;
+  background-size: 12px 14px;
+  image-rendering: pixelated;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Show pixel `▶` cursor on primary/active/selected row by default, or on hovered row */
+.pmd-btn.pmd-menu-row.pmd-btn-primary::before,
+.pmd-btn.pmd-menu-row.is-active::before,
+.pmd-btn.pmd-menu-row.is-selected::before,
+.pmd-btn.pmd-menu-row:hover:not(:disabled)::before,
+.pmd-btn.pmd-menu-row:focus-visible:not(:disabled)::before,
+.pmd-btn.pmd-menu-row:active:not(:disabled)::before {
+  opacity: 1;
+}
+
+.pmd-btn.pmd-menu-row:hover:not(:disabled),
+.pmd-btn.pmd-menu-row:focus-visible:not(:disabled),
+.pmd-btn.pmd-menu-row:active:not(:disabled) {
+  background: rgba(96, 128, 248, 0.22);
+  color: var(--pmd-text-yellow);
+  border-image: none;
+}
+
+.pmd-btn.pmd-menu-row.pmd-btn-danger {
+  color: var(--pmd-text-danger);
+}
+
+/* On desktop hover inside any menu list, move the `▶` cursor exclusively to the hovered item */
+.pmd-menu-list:has(.pmd-menu-row:hover:not(:disabled))
+  .pmd-menu-row:not(:hover)::before {
+  opacity: 0;
+}

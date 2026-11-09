@@ -1,0 +1,194 @@
+/* Admin DevTools Backdrop, Shared Panels, Inputs, Chips & Compact Viewport Queries */
+
+.pmd-devtools-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 93;
+  background: rgba(4, 8, 16, 0.72);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 4.1rem 0.85rem 0.85rem;
+  overflow-y: auto;
+  touch-action: pan-y;
+}
+
+.pmd-panel {
+  position: relative;
+  width: 100%;
+  max-width: 780px;
+  max-height: calc(100dvh - 5rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  touch-action: pan-y;
+}
+
+.pmd-panel-title {
+  font-size: 18px;
+  color: #f8f800;
+  letter-spacing: 0.04em;
+  text-shadow: 2px 2px 0 #000000;
+}
+
+.pmd-panel-sub {
+  font-size: 12px;
+  color: #a8e0f8;
+}
+
+.pmd-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pmd-tab-btn {
+  flex: 1 1 130px;
+}
+
+.pmd-tab-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pmd-devtools-row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pmd-subcard {
+  background: #16344c;
+  border: 2px solid rgba(168, 192, 224, 0.45);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pmd-subcard-title {
+  font-size: 14px;
+  color: #f8f800;
+}
+
+.pmd-subcard-text {
+  font-size: 12px;
+  color: #f8f8f8;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.pmd-inline-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pmd-textarea,
+.pmd-text-input,
+.pmd-select {
+  width: 100%;
+  padding: 8px 10px;
+  background: #102638;
+  border: 2px solid #a8c0e0;
+  border-radius: 0;
+  color: #f8f8f8;
+  font-size: 14px;
+  user-select: text;
+}
+
+.pmd-text-input,
+.pmd-select {
+  min-height: 44px;
+}
+
+.pmd-slider-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 12px;
+  color: #a8e0f8;
+}
+
+.pmd-range {
+  flex: 1;
+  min-height: 44px;
+  accent-color: #f8f800;
+  cursor: inherit;
+}
+
+.pmd-textarea:focus,
+.pmd-text-input:focus,
+.pmd-select:focus {
+  outline: 2px solid #f8f800;
+  border-color: #f8f800;
+}
+
+.pmd-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 8, 16, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 100;
+}
+
+.pmd-preset-label {
+  font-size: 12px;
+  color: #a8e0f8;
+}
+
+.pmd-chip-btn {
+  min-height: 44px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .pmd-viewport {
+    min-height: 100dvh;
+    padding: 4.15rem 0.65rem 1rem;
+  }
+
+  .pmd-panel {
+    padding: 8px 10px;
+  }
+}
+
+@media (max-height: 500px) {
+  .pmd-viewport {
+    min-height: 100dvh;
+    padding: 3.35rem 0.85rem 0.6rem;
+  }
+
+  .pmd-corner-btn {
+    top: max(0.5rem, env(safe-area-inset-top));
+    min-height: 44px;
+  }
+
+  .pmd-title-card {
+    width: min(260px, 84vw);
+    padding: 2px 6px;
+    margin-bottom: 0.25rem;
+  }
+
+  .pmd-devtools-backdrop {
+    padding: 3.35rem 0.65rem 0.45rem;
+  }
+
+  .pmd-panel {
+    max-height: calc(100dvh - 3.85rem);
+    padding: 6px 8px;
+    gap: 6px;
+  }
+}

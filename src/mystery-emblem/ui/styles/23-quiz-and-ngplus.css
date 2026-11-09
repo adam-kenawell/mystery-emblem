@@ -1,0 +1,142 @@
+/* ==========================================================================
+   QUIZ_SCENE & NG_PLUS_SELECT_SCENE — Mystical Aura Wave Stage & Picker
+   ========================================================================== */
+
+.pmd-quiz-scene[hidden] {
+  display: none !important;
+}
+
+.pmd-quiz-wave-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}
+
+.pmd-quiz-stage {
+  position: relative;
+  z-index: 1;
+  width: min(620px, 94vw);
+  max-height: calc(100dvh - 3.6rem);
+  margin-top: clamp(2.2rem, 5vh, 2.8rem);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+@media (max-height: 460px) and (min-width: 600px) {
+  .pmd-quiz-stage {
+    width: min(580px, calc(100vw - 170px));
+    max-height: calc(100dvh - 14px);
+    margin-top: 0;
+    gap: 6px;
+  }
+}
+
+.pmd-quiz-dialogue-window {
+  padding: clamp(6px, 1.5vw, 10px) clamp(8px, 1.8vw, 12px);
+  cursor: var(--pmd-cursor-glove, pointer);
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+  font-family: 'Fusion Pixel 12px Proportional KR', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+}
+
+.pmd-quiz-options-window {
+  padding: 2px 4px;
+  overflow-y: auto;
+  min-height: 0;
+  font-family: 'Fusion Pixel 12px Proportional KR', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+}
+
+.pmd-quiz-opt-btn {
+  width: 100%;
+  min-height: 46px;
+  text-align: left;
+  justify-content: flex-start;
+  padding: 7px 10px 7px 26px;
+  line-height: 1.3;
+  font-size: 14px;
+  font-family: 'Fusion Pixel 12px Proportional KR', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+}
+
+@media (max-height: 460px) {
+  .pmd-quiz-opt-btn {
+    min-height: 44px;
+    padding: 5px 8px 5px 24px;
+    font-size: 13px;
+  }
+}
+
+@keyframes pmdQuizPromptBlink {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.32;
+    transform: translateY(2px);
+  }
+}
+
+.pmd-quiz-advance-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-height: 16px;
+  font-size: 12px;
+  color: #f8f800;
+}
+
+.pmd-quiz-advance-row[hidden] {
+  display: flex !important;
+  visibility: hidden;
+}
+
+.pmd-quiz-advance-row.is-collapsed {
+  display: none !important;
+}
+
+.pmd-quiz-advance-arrow {
+  display: inline-block;
+  animation: pmdQuizPromptBlink 900ms ease-in-out infinite;
+}
+
+.pmd-ngplus-window {
+  padding: clamp(8px, 1.8vw, 14px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: calc(100dvh - 3.8rem);
+  overflow-y: auto;
+}
+
+.pmd-ngplus-slot-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 6px;
+}
+
+.pmd-ngplus-slot-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 5px 7px;
+  background: rgba(8, 20, 38, 0.55);
+  border: 1px solid rgba(168, 192, 224, 0.35);
+  border-radius: 4px;
+}
+
+.pmd-ngplus-slot-label {
+  font-size: 11.5px;
+  color: var(--pmd-text-cyan);
+}

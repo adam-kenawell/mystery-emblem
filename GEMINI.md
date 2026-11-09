@@ -18,7 +18,7 @@ The following system instructions must be read and strictly obeyed by the coding
 
 8\. Rule 7 — Cross-Device Save Sync via Google Sign-In (Firebase Auth + Firestore) \& localStorage: Because the game is hosted as a static site on GitHub Pages, implement a hybrid SaveStateManager that writes immediately to localStorage (with a lastUpdated UTC timestamp) for instant offline-capable saving, and automatically syncs the save JSON to Cloud Firestore (saves/{uid}) whenever the player is signed in with their Google Account via Firebase Authentication. On startup or sign-in, compare lastUpdated timestamps between localStorage and Firestore so switching between desktop and mobile always loads the most recent campaign state.
 
-9\. Rule 8 — Persistent Session Memory (`memory.md`): Always read `memory.md` at the start of every session to understand current project context and completed milestones, and keep `memory.md` updated at a high level as steps are completed.
+9\. Rule 8 — Persistent Session Memory (`memory.md`) \& Low-Token Architecture Index (`docs/ARCHITECTURE_MAP.md`): Always read `memory.md` and `docs/ARCHITECTURE_MAP.md` at the start of every session to understand current project context, completed milestones, and exact file responsibilities without scanning the full directory tree, and keep both updated as steps are completed.
 
 @[memory.md](memory.md)
 

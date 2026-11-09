@@ -17,16 +17,14 @@ export interface DetailedAnimEntry {
   returnFrame?: number;
 }
 
-export interface DetailedAnimData {
+interface DetailedAnimData {
   shadowSize: number;
   anims: Record<string, DetailedAnimEntry>;
 }
 
-export const SPRITE_BASE = 'https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/sprite';
-export const PORTRAIT_BASE =
-  'https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/portrait';
-export const ITEM_SPRITE_BASE =
-  'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items';
+const SPRITE_BASE = 'https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/sprite';
+const PORTRAIT_BASE = 'https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/portrait';
+const ITEM_SPRITE_BASE = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items';
 
 export function itemSpriteUrl(iconSlug: string): string {
   return `${ITEM_SPRITE_BASE}/${encodeURIComponent(iconSlug.trim())}.png`;
@@ -58,7 +56,7 @@ export function portraitUrl(
   return `${PORTRAIT_BASE}/${path}/${encodeURIComponent(fileStem)}.png`;
 }
 
-export function animDataUrl(pokemonIdOrPath: number | string): string {
+function animDataUrl(pokemonIdOrPath: number | string): string {
   const path = normalizeAssetPath(pokemonIdOrPath);
   return `${SPRITE_BASE}/${path}/AnimData.xml`;
 }
@@ -181,18 +179,6 @@ export async function fetchDetailedAnimData(
   }
 }
 
-export async function fetchAnimData(
-  pokemonIdOrPath: number | string
-): Promise<Record<string, { w: number; h: number }>> {
-  const detailed = await fetchDetailedAnimData(pokemonIdOrPath);
-  if (!detailed) return {};
-  const result: Record<string, { w: number; h: number }> = {};
-  for (const [name, entry] of Object.entries(detailed.anims)) {
-    result[name] = { w: entry.w, h: entry.h };
-  }
-  return result;
-}
-
 export function calcFrameInfo(img: HTMLImageElement, dims?: { w: number; h: number }): FrameInfo {
   if (dims && dims.w > 0 && dims.h > 0) {
     return {
@@ -207,155 +193,4 @@ export function calcFrameInfo(img: HTMLImageElement, dims?: { w: number; h: numb
     h: size,
     count: Math.max(1, Math.floor(img.naturalWidth / size)),
   };
-}
-
-const WIDGET_ACTIONS = ['Walk', 'Idle', 'Attack', 'Sleep'] as const;
-type WidgetAction = (typeof WIDGET_ACTIONS)[number];
-
-interface SpriteWidgetInstance {
-  canvas: HTMLCanvasElement;
-  ctx: CanvasRenderingContext2D;
-  sheets: Record<WidgetAction, HTMLImageElement | null>;
-  frameInfo: Record<WidgetAction, FrameInfo | null>;
-  frame: number;
-  state: 'idle' | 'attacking';
-  stateEnd: number;
-  direction: number;
-  nextFrameTime: number;
-  scale: number;
-}
-
-let activeWidgets: SpriteWidgetInstance[] = [];
-let widgetLoopRunning = false;
-
-export function resetSpriteWidgets(): void {
-  activeWidgets = [];
-  widgetLoopRunning = false;
-}
-
-function startWidgetLoop(): void {
-  if (widgetLoopRunning) return;
-  widgetLoopRunning = true;
-
-  function tick() {
-    if (activeWidgets.length === 0) {
-      widgetLoopRunning = false;
-      return;
-    }
-    const now = performance.now();
-    for (const w of activeWidgets) {
-      const frameDuration = w.state === 'attacking' ? 80 : 150;
-      if (now >= w.nextFrameTime) {
-        w.nextFrameTime = now + frameDuration;
-        const action: WidgetAction = w.state === 'attacking' ? 'Attack' : 'Idle';
-        const sheet = w.sheets[action] || w.sheets.Idle || w.sheets.Walk;
-        const info = w.frameInfo[action] || w.frameInfo.Idle || w.frameInfo.Walk;
-        if (!sheet || !info) continue;
-
-        const frameIdx = w.frame % info.count;
-        w.ctx.clearRect(0, 0, w.canvas.width, w.canvas.height);
-        w.ctx.imageSmoothingEnabled = false;
-        const offsetX = Math.floor((w.canvas.width - info.w * w.scale) / 2);
-        const offsetY = Math.floor((w.canvas.height - info.h * w.scale) / 2);
-        w.ctx.drawImage(
-          sheet,
-          frameIdx * info.w,
-          w.direction * info.h,
-          info.w,
-          info.h,
-          offsetX,
-          offsetY,
-          info.w * w.scale,
-          info.h * w.scale
-        );
-        w.frame++;
-      }
-      if (w.state === 'attacking' && now > w.stateEnd) {
-        w.state = 'idle';
-        w.frame = 0;
-        w.nextFrameTime = 0;
-      }
-    }
-    requestAnimationFrame(tick);
-  }
-
-  requestAnimationFrame(tick);
-}
-
-export async function createSpriteWidget(
-  pokemonIdOrPath: number | string,
-  scale = 2
-): Promise<HTMLCanvasElement | null> {
-  if (typeof pokemonIdOrPath === 'number' && pokemonIdOrPath <= 0) return null;
-  if (typeof pokemonIdOrPath === 'string' && pokemonIdOrPath.trim().length === 0) return null;
-
-  const detailed = await fetchDetailedAnimData(pokemonIdOrPath);
-  const anims = detailed?.anims ?? {};
-
-  const sheetNameFor = (act: WidgetAction): string => anims[act]?.resolvedSheetName ?? act;
-  const [walkImg, idleImg, attackImg, sleepImg] = await Promise.all([
-    loadImage(spriteUrl(pokemonIdOrPath, sheetNameFor('Walk'))),
-    loadImage(spriteUrl(pokemonIdOrPath, sheetNameFor('Idle'))),
-    loadImage(spriteUrl(pokemonIdOrPath, sheetNameFor('Attack'))),
-    loadImage(spriteUrl(pokemonIdOrPath, sheetNameFor('Sleep'))),
-  ]);
-  if (!walkImg && !idleImg) return null;
-
-  const sheets: Record<WidgetAction, HTMLImageElement | null> = {
-    Walk: walkImg,
-    Idle: idleImg,
-    Attack: attackImg,
-    Sleep: sleepImg,
-  };
-  const frameInfo: Record<WidgetAction, FrameInfo | null> = {
-    Walk: walkImg ? calcFrameInfo(walkImg, anims.Walk) : null,
-    Idle: idleImg ? calcFrameInfo(idleImg, anims.Idle) : null,
-    Attack: attackImg ? calcFrameInfo(attackImg, anims.Attack) : null,
-    Sleep: sleepImg ? calcFrameInfo(sleepImg, anims.Sleep) : null,
-  };
-
-  let maxW = 0;
-  let maxH = 0;
-  for (const act of WIDGET_ACTIONS) {
-    const info = frameInfo[act];
-    if (info) {
-      if (info.w > maxW) maxW = info.w;
-      if (info.h > maxH) maxH = info.h;
-    }
-  }
-
-  const canvas = document.createElement('canvas');
-  canvas.width = maxW * scale;
-  canvas.height = maxH * scale;
-  canvas.className = 'poke-sprite-canvas';
-  canvas.style.imageRendering = 'pixelated';
-  canvas.style.cursor = 'inherit';
-
-  const ctx = canvas.getContext('2d')!;
-  const widget: SpriteWidgetInstance = {
-    canvas,
-    ctx,
-    sheets,
-    frameInfo,
-    frame: 0,
-    state: 'idle',
-    stateEnd: 0,
-    direction: 0,
-    nextFrameTime: 0,
-    scale,
-  };
-
-  canvas.addEventListener('pointerdown', () => {
-    const atkInfo = widget.frameInfo.Attack;
-    if (widget.sheets.Attack && atkInfo) {
-      widget.state = 'attacking';
-      widget.frame = 0;
-      widget.nextFrameTime = performance.now();
-      widget.stateEnd = performance.now() + atkInfo.count * 80;
-    }
-  });
-
-  activeWidgets.push(widget);
-  startWidgetLoop();
-  return canvas;
 }

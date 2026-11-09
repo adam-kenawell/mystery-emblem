@@ -1,9 +1,21 @@
-import speciesRaw from './pokemon_species.json';
-import movesRaw from './moves.json';
-import itemsRaw from './items.json';
+import consumablesAndVitaminsRaw from './items/consumables_and_vitamins.json';
+import heldItemsRaw from './items/held_items.json';
+import tmsRaw from './items/tms.json';
+import physicalMovesRaw from './moves/physical.json';
+import specialMovesRaw from './moves/special.json';
+import supportMovesRaw from './moves/support.json';
 import skillsRaw from './personal_skills.json';
+import enemiesCommonwealthSandRaw from './species/enemies_commonwealth_sand.json';
+import enemiesEmpireAbyssRaw from './species/enemies_empire_abyss.json';
+import lineLearnsetsRaw from './species/line_learnsets.json';
+import playableCoreRaw from './species/playable_core.json';
+import playableParaloguesRaw from './species/playable_paralogues.json';
+import playableQuizEarlyRaw from './species/playable_quiz_early.json';
+import playableQuizLateRaw from './species/playable_quiz_late.json';
+import playableStoryRaw from './species/playable_story.json';
 import {
   type ItemDefinition,
+  type LearnsetEntry,
   type MoveDefinition,
   type PersonalSkillDefinition,
   type PokemonSpeciesDefinition,
@@ -11,10 +23,58 @@ import {
 } from '../types/schemas';
 import { validateAllRegistries, type RegistryValidationSummary } from '../types/validators';
 
-export const POKEMON_SPECIES_LIST = speciesRaw as PokemonSpeciesDefinition[];
-export const MOVES_LIST = movesRaw as MoveDefinition[];
-export const ITEMS_LIST = itemsRaw as ItemDefinition[];
-export const PERSONAL_SKILLS_LIST = skillsRaw as PersonalSkillDefinition[];
+type RawLearnsetTuple = readonly [number, string];
+
+interface RawLineLearnsetBundle {
+  learnset: RawLearnsetTuple[];
+  compatibleTmIds: string[];
+}
+
+type RawSpeciesShardEntry = Omit<PokemonSpeciesDefinition, 'learnset' | 'compatibleTmIds'> & {
+  learnset?: RawLearnsetTuple[];
+  compatibleTmIds?: string[];
+};
+
+const LINE_LEARNSETS = lineLearnsetsRaw as unknown as Record<string, RawLineLearnsetBundle>;
+
+function hydrateSpeciesEntry(raw: RawSpeciesShardEntry): PokemonSpeciesDefinition {
+  const shared = LINE_LEARNSETS[raw.lineId];
+  const tuples = raw.learnset ?? shared?.learnset ?? [];
+  const learnset: LearnsetEntry[] = tuples.map(([level, moveId]) => ({ level, moveId }));
+  const compatibleTmIds = [...(raw.compatibleTmIds ?? shared?.compatibleTmIds ?? [])];
+  return {
+    ...raw,
+    learnset,
+    compatibleTmIds,
+  };
+}
+
+const RAW_SPECIES_SHARDS: readonly RawSpeciesShardEntry[] = [
+  ...(playableCoreRaw as unknown as RawSpeciesShardEntry[]),
+  ...(playableStoryRaw as unknown as RawSpeciesShardEntry[]),
+  ...(playableQuizEarlyRaw as unknown as RawSpeciesShardEntry[]),
+  ...(playableQuizLateRaw as unknown as RawSpeciesShardEntry[]),
+  ...(playableParaloguesRaw as unknown as RawSpeciesShardEntry[]),
+  ...(enemiesCommonwealthSandRaw as unknown as RawSpeciesShardEntry[]),
+  ...(enemiesEmpireAbyssRaw as unknown as RawSpeciesShardEntry[]),
+];
+
+export const POKEMON_SPECIES_LIST: PokemonSpeciesDefinition[] =
+  RAW_SPECIES_SHARDS.map(hydrateSpeciesEntry);
+
+export const MOVES_LIST: MoveDefinition[] = [
+  ...(physicalMovesRaw as unknown as MoveDefinition[]),
+  ...(specialMovesRaw as unknown as MoveDefinition[]),
+  ...(supportMovesRaw as unknown as MoveDefinition[]),
+];
+
+export const ITEMS_LIST: ItemDefinition[] = [
+  ...(consumablesAndVitaminsRaw as unknown as ItemDefinition[]),
+  ...(heldItemsRaw as unknown as ItemDefinition[]),
+  ...(tmsRaw as unknown as ItemDefinition[]),
+];
+
+export const PERSONAL_SKILLS_LIST = skillsRaw as unknown as PersonalSkillDefinition[];
 
 export const SPECIES_MAP: ReadonlyMap<string, PokemonSpeciesDefinition> = new Map(
   POKEMON_SPECIES_LIST.map((sp) => [sp.id, sp])

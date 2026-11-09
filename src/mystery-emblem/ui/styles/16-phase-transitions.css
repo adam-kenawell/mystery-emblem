@@ -1,0 +1,203 @@
+/* Dramatic Portrait-Mode Camera Phase Transition (`PLAYER PHASE` / `ENEMY PHASE`) */
+.pmd-phase-cine-overlay {
+  --pmd-phase-dur: 1150ms;
+  position: absolute;
+  inset: 0;
+  z-index: 82;
+  pointer-events: none;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.pmd-phase-cine-veil {
+  flex: 1 1 0%;
+  backdrop-filter: blur(2.5px) brightness(0.46) saturate(0.82);
+  -webkit-backdrop-filter: blur(2.5px) brightness(0.46) saturate(0.82);
+}
+
+.pmd-phase-cine-veil--top {
+  background: linear-gradient(
+    180deg,
+    rgba(4, 8, 18, 0.72) 0%,
+    rgba(6, 12, 24, 0.48) 82%,
+    rgba(8, 16, 30, 0.18) 100%
+  );
+}
+
+.pmd-phase-cine-veil--bottom {
+  background: linear-gradient(
+    0deg,
+    rgba(4, 8, 18, 0.72) 0%,
+    rgba(6, 12, 24, 0.48) 82%,
+    rgba(8, 16, 30, 0.18) 100%
+  );
+}
+
+.pmd-phase-cine-band {
+  position: relative;
+  height: clamp(76px, 22dvh, 122px);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-top: 2px solid rgba(168, 224, 248, 0.82);
+  border-bottom: 2px solid rgba(168, 224, 248, 0.82);
+  background: linear-gradient(
+    180deg,
+    rgba(136, 208, 255, 0.18) 0%,
+    rgba(72, 148, 248, 0.08) 50%,
+    rgba(136, 208, 255, 0.18) 100%
+  );
+  box-shadow:
+    0 0 22px rgba(72, 148, 248, 0.34),
+    inset 0 0 18px rgba(168, 224, 248, 0.16);
+}
+
+.pmd-phase-cine-overlay.is-enemy .pmd-phase-cine-band {
+  border-top-color: rgba(255, 128, 152, 0.85);
+  border-bottom-color: rgba(255, 128, 152, 0.85);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 96, 128, 0.2) 0%,
+    rgba(196, 36, 72, 0.09) 50%,
+    rgba(255, 96, 128, 0.2) 100%
+  );
+  box-shadow:
+    0 0 22px rgba(232, 64, 96, 0.36),
+    inset 0 0 18px rgba(255, 120, 144, 0.18);
+}
+
+.pmd-phase-cine-overlay.is-animating .pmd-phase-cine-veil,
+.pmd-phase-cine-overlay.is-animating .pmd-phase-cine-band {
+  animation: pmd-phase-veil-fade var(--pmd-phase-dur) ease-in-out both;
+}
+
+.pmd-phase-cine-mover {
+  will-change: transform, opacity;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+.pmd-phase-cine-overlay.is-animating .pmd-phase-cine-mover {
+  animation: pmd-phase-slide-lr var(--pmd-phase-dur) cubic-bezier(0.22, 0.82, 0.32, 1) both;
+}
+
+.pmd-phase-cine-title {
+  font-family: 'Fusion Pixel 12px Proportional KR', sans-serif;
+  font-size: clamp(26px, 5.2vw, 48px);
+  font-weight: bold;
+  font-style: italic;
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+  color: #dff6ff;
+  text-shadow:
+    -2px -2px 0 #103a8c,
+    2px -2px 0 #103a8c,
+    -2px 2px 0 #103a8c,
+    2px 2px 0 #081c48,
+    4px 4px 0 #040a18,
+    0 0 16px rgba(104, 196, 255, 0.78);
+}
+
+.pmd-phase-cine-overlay.is-enemy .pmd-phase-cine-title {
+  color: #ffe4ea;
+  text-shadow:
+    -2px -2px 0 #8c102c,
+    2px -2px 0 #8c102c,
+    -2px 2px 0 #8c102c,
+    2px 2px 0 #480616,
+    4px 4px 0 #040a18,
+    0 0 16px rgba(255, 88, 120, 0.8);
+}
+
+@keyframes pmd-phase-veil-fade {
+  0% {
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  83% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes pmd-phase-slide-lr {
+  0% {
+    transform: translate3d(-105vw, 0, 0);
+    opacity: 0.45;
+  }
+  24% {
+    transform: translate3d(-2.5vw, 0, 0);
+    opacity: 1;
+  }
+  76% {
+    transform: translate3d(2.5vw, 0, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: translate3d(105vw, 0, 0);
+    opacity: 0.45;
+  }
+}
+
+@media (max-width: 600px) {
+  .pmd-dungeon-field-menu {
+    width: min(220px, calc(100% - 16px));
+  }
+
+  .pmd-dungeon-obj-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pmd-phase-cine-title {
+    font-size: clamp(22px, 6.8vw, 34px);
+    letter-spacing: 0.08em;
+  }
+}
+
+@media (max-height: 500px) {
+  .pmd-dungeon-field-backdrop.is-submodal {
+    padding: 3.35rem 0.65rem 0.45rem;
+  }
+
+  .pmd-dungeon-field-menu {
+    border-width: 8px 12px;
+    padding: 2px 4px;
+    max-height: calc(100% - 16px);
+  }
+
+  .pmd-dungeon-field-menu .pmd-btn.pmd-menu-row {
+    min-height: 44px;
+    padding: 4px 8px 4px 22px;
+    font-size: 13px;
+  }
+
+  .pmd-dungeon-submodal {
+    max-width: 480px;
+    border-width: 8px 12px;
+    padding: 6px 10px;
+    gap: 6px;
+  }
+
+  .pmd-begin-battle-card {
+    border-width: 8px 12px;
+    padding: 8px 12px;
+    gap: 6px;
+  }
+
+  .pmd-phase-cine-band {
+    height: clamp(64px, 24dvh, 88px);
+  }
+
+  .pmd-phase-cine-title {
+    font-size: clamp(22px, 4.5vw, 34px);
+  }
+}
