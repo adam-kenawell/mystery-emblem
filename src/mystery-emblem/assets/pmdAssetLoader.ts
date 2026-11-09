@@ -41,6 +41,69 @@ export type PmdDirection = (typeof PMD_DIRECTIONS)[number];
 
 export type PmdCompassCode = 'S' | 'SE' | 'E' | 'NE' | 'N' | 'NW' | 'W' | 'SW';
 
+export type PmdNamedDirection =
+  | 'Down'
+  | 'DownRight'
+  | 'Right'
+  | 'UpRight'
+  | 'Up'
+  | 'UpLeft'
+  | 'Left'
+  | 'DownLeft';
+
+export type PmdDirectionInput = PmdDirection | PmdCompassCode | PmdNamedDirection;
+
+const NAMED_DIRECTION_TO_PMD_ROW: Readonly<Record<string, PmdDirection>> = {
+  '0': 0,
+  s: 0,
+  south: 0,
+  down: 0,
+  '1': 1,
+  se: 1,
+  southeast: 1,
+  downright: 1,
+  '2': 2,
+  e: 2,
+  east: 2,
+  right: 2,
+  '3': 3,
+  ne: 3,
+  northeast: 3,
+  upright: 3,
+  '4': 4,
+  n: 4,
+  north: 4,
+  up: 4,
+  '5': 5,
+  nw: 5,
+  northwest: 5,
+  upleft: 5,
+  '6': 6,
+  w: 6,
+  west: 6,
+  left: 6,
+  '7': 7,
+  sw: 7,
+  southwest: 7,
+  downleft: 7,
+};
+
+export function normalizePmdDirection(
+  raw: PmdDirectionInput | number | string | null | undefined,
+  fallback: PmdDirection = 0
+): PmdDirection {
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    const mod = ((Math.round(raw) % 8) + 8) % 8;
+    return mod as PmdDirection;
+  }
+  if (typeof raw === 'string') {
+    const key = raw.trim().toLowerCase().replace(/[\s_-]+/g, '');
+    const mapped = NAMED_DIRECTION_TO_PMD_ROW[key];
+    if (mapped !== undefined) return mapped;
+  }
+  return fallback;
+}
+
 export interface PmdDirectionDescriptor {
   dir: PmdDirection;
   code: PmdCompassCode;

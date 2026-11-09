@@ -410,6 +410,8 @@ export interface CampaignState {
   recruitedChapterIds?: string[];
   seenIntroChapterIds?: string[];
   seenOutroChapterIds?: string[];
+  seenStoryCutsceneIds?: string[];
+  creditsSeen?: boolean;
   demoCompleted?: boolean;
 }
 

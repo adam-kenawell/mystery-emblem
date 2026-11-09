@@ -27,7 +27,7 @@ const rawAudioModules = import.meta.glob<string>(
 );
 
 /** Track numbers that are one-shot fanfares/jingles rather than continuous loops */
-const NON_LOOPING_TRACK_IDS = new Set<string>(['007', '010', '013', '028']);
+const NON_LOOPING_TRACK_IDS = new Set<string>(['007', '010', '013', '028', '075', '146']);
 
 function slugify(value: string): string {
   return value
@@ -118,6 +118,23 @@ export const PMD_BGM_ALIASES: Readonly<Record<string, ReadonlyArray<string>>> = 
   far_amp_plains: ['037'],
   monster_house: ['038', '019'],
   rising_fear: ['039', '016'],
+  calm_cutscene: ['015', '004'],
+  at_the_end_of_the_day: ['045', '004'],
+  dont_ever_forget: ['070', '073'],
+  a_wish_for_peace: ['073', '015'],
+  memories_returned: ['074', '073'],
+  ending_theme_intro: ['075', '076'],
+  ending_theme: ['076', '141'],
+  epilogue_theme: ['077', '015'],
+  do_your_best: ['079', '110'],
+  sympathy: ['103', '015'],
+  one_for_all: ['108', '133'],
+  fun_exploration: ['110', '014'],
+  proud_accomplishment: ['133', '139'],
+  in_the_morning_sun: ['136', '015'],
+  thoughts_for_friends: ['139', '015'],
+  life_goes_on: ['141', '076'],
+  victory_fanfare: ['146', '013'],
 };
 
 export function resolveBgmTrack(idOrAlias: string | null | undefined): PmdBgmTrack | null {

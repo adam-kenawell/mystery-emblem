@@ -213,8 +213,17 @@ const canonicalUrl = Astro.url.href;
     resetChapterMapOverride,
     saveChapterMapOverride,
   } from '../mystery-emblem/data/chapterMapRegistry';
+  import {
+    DEMO_STORY_CUTSCENES,
+    POST_CHAPTER_STORY_CUTSCENE_BY_NODE_ID,
+    PRE_CHAPTER_STORY_CUTSCENE_BY_NODE_ID,
+    STORY_CUTSCENE_BY_ID,
+    getStoryCutsceneById,
+  } from '../mystery-emblem/data/storyCutscenes';
   import { BattleScene } from '../mystery-emblem/scenes/BattleScene';
   import { ChapterMapEditorScene } from '../mystery-emblem/scenes/ChapterMapEditorScene';
+  import { CreditsScene } from '../mystery-emblem/scenes/CreditsScene';
+  import { CutsceneScene } from '../mystery-emblem/scenes/CutsceneScene';
   import { OverworldScene } from '../mystery-emblem/scenes/OverworldScene';
   import {
     DEMO_OVERWORLD_GRAPH,
@@ -258,6 +267,8 @@ const canonicalUrl = Astro.url.href;
   let currentTutorialOverlay: TutorialOverlay | null = null;
   let currentQuizScene: QuizScene | null = null;
   let currentDevToolsHarness: DevToolsHarness | null = null;
+  let currentCutsceneScene: CutsceneScene | null = null;
+  let currentCreditsScene: CreditsScene | null = null;
   let currentBattleScene: BattleScene | null = null;
   let currentMapEditorScene: ChapterMapEditorScene | null = null;
   let currentOverworldScene: OverworldScene | null = null;
@@ -266,6 +277,10 @@ const canonicalUrl = Astro.url.href;
   async function initMysteryEmblemApp() {
     resetSpriteWidgets();
     destroyAllPmdSpriteActors();
+    currentCreditsScene?.destroy();
+    currentCreditsScene = null;
+    currentCutsceneScene?.destroy();
+    currentCutsceneScene = null;
     currentBattleScene?.destroy();
     currentBattleScene = null;
     currentMapEditorScene?.destroy();
@@ -309,8 +324,11 @@ const canonicalUrl = Astro.url.href;
     const btnContinueLabel = document.getElementById('btn-continue-label');
     const btnContinueChapter = document.getElementById('btn-continue-chapter');
 
+    let cutsceneScene: CutsceneScene | null = null;
+    let creditsScene: CreditsScene | null = null;
     let battleScene: BattleScene | null = null;
     let battleReturnTarget: 'devtools' | 'overworld' | 'title' = 'overworld';
+    let pendingPostVictoryDemoNodeId: string | null = null;
     let overworldScene: OverworldScene | null = null;
     let overworldReturnTarget: 'title' | 'suppress' = 'title';
     let demoLaunchInProgress = false;
@@ -329,6 +347,8 @@ const canonicalUrl = Astro.url.href;
       if (!devToolsBackdrop) return;
       devToolsBackdrop.hidden = true;
       const anySceneOpen =
+        Boolean(cutsceneScene?.isOpen()) ||
+        Boolean(creditsScene?.isOpen()) ||
         Boolean(battleScene?.isOpen()) ||
         Boolean(overworldScene?.isOpen()) ||
         Boolean(mapEditorScene?.isOpen()) ||
@@ -379,8 +399,9 @@ const canonicalUrl = Astro.url.href;
       {
         shouldHideCornerButton: () =>
           Boolean(
-            battleScene?.isOpen() &&
-              battleScene.getSnapshot().phase !== 'dungeon_prep' &&
+            ((battleScene?.isOpen() && battleScene.getSnapshot().phase !== 'dungeon_prep') ||
+              cutsceneScene?.isOpen() ||
+              creditsScene?.isOpen()) &&
               !isDevToolsOpen() &&
               !recruitNicknameOverlay?.isOpen()
           ),
@@ -428,6 +449,8 @@ const canonicalUrl = Astro.url.href;
     function syncLandingBackdrop(): void {
       if (!landingBackdrop) return;
       const inGameplayScene =
+        Boolean(cutsceneScene?.isOpen()) ||
+        Boolean(creditsScene?.isOpen()) ||
         Boolean(battleScene?.isOpen()) ||
         Boolean(mapEditorScene?.isOpen()) ||
         Boolean(overworldScene?.isOpen()) ||
@@ -448,6 +471,28 @@ const canonicalUrl = Astro.url.href;
         })
       : null;
     currentDialogueOverlay = dialogueOverlay;
+
+    cutsceneScene =
+      viewportEl && dialogueOverlay
+        ? new CutsceneScene({
+            viewportEl,
+            saveManager: manager,
+            dialogueOverlay,
+            audioManager,
+            onStateChange: () => backStack.syncButtonLabel(),
+          })
+        : null;
+    currentCutsceneScene = cutsceneScene;
+
+    creditsScene = viewportEl
+      ? new CreditsScene({
+          viewportEl,
+          saveManager: manager,
+          audioManager,
+          onStateChange: () => backStack.syncButtonLabel(),
+        })
+      : null;
+    currentCreditsScene = creditsScene;
 
     const recruitNicknameOverlay = viewportEl
       ? new RecruitNicknameOverlay(viewportEl, manager, {
@@ -556,20 +601,80 @@ const canonicalUrl = Astro.url.href;
         overworldGraph: DEMO_OVERWORLD_GRAPH,
         skipNicknamePrompts: opts?.skipNicknamePrompts,
         onComplete: () => {
-          const prologueChapter = getDemoChapterByNodeId('prologue');
-          if (prologueChapter) {
-            void launchDemoChapterBattle(prologueChapter);
-          } else {
-            void openOverworldScene({ preservePosition: false });
-          }
+          void (async () => {
+            if (titleScreen) titleScreen.hidden = true;
+            if (devToolsBackdrop) devToolsBackdrop.hidden = true;
+            const openingCutsceneId = PRE_CHAPTER_STORY_CUTSCENE_BY_NODE_ID['prologue'];
+            const openingDef = openingCutsceneId ? getStoryCutsceneById(openingCutsceneId) : undefined;
+            if (openingDef && cutsceneScene && !manager.hasSeenStoryCutscene(openingDef.id)) {
+              await cutsceneScene.play(openingDef);
+              manager.markStoryCutsceneSeen(openingDef.id);
+            }
+            const prologueChapter = getDemoChapterByNodeId('prologue');
+            if (prologueChapter) {
+              await launchDemoChapterBattle(prologueChapter);
+            } else {
+              await openOverworldScene({ preservePosition: false });
+            }
+          })();
         },
       });
       backStack.syncButtonLabel();
     }
 
+    async function runPostChapterStoryFlowAndOpenOverworld(clearedNodeId: string): Promise<void> {
+      if (titleScreen) titleScreen.hidden = true;
+      if (devToolsBackdrop) devToolsBackdrop.hidden = true;
+
+      const postCutsceneId = POST_CHAPTER_STORY_CUTSCENE_BY_NODE_ID[clearedNodeId];
+      const postDef = postCutsceneId ? getStoryCutsceneById(postCutsceneId) : undefined;
+      if (postDef && cutsceneScene && !manager.hasSeenStoryCutscene(postDef.id)) {
+        await cutsceneScene.play(postDef);
+        manager.markStoryCutsceneSeen(postDef.id);
+      }
+
+      const demoCh = getDemoChapterByNodeId(clearedNodeId);
+      if (demoCh?.isDemoFinale && creditsScene && !manager.hasSeenCredits()) {
+        await creditsScene.play();
+        manager.markCreditsSeen();
+      }
+
+      await openOverworldScene({ preservePosition: true });
+    }
+
+    async function replayStoryCutsceneFromOverworld(cutsceneId: string): Promise<void> {
+      const def = getStoryCutsceneById(cutsceneId);
+      if (!def || !cutsceneScene) return;
+      tutorialOverlay?.closeAll(null);
+      if (overworldScene?.isOpen()) {
+        overworldReturnTarget = 'suppress';
+        overworldScene.close();
+      }
+      if (titleScreen) titleScreen.hidden = true;
+      if (devToolsBackdrop) devToolsBackdrop.hidden = true;
+      await cutsceneScene.play(def);
+      manager.markStoryCutsceneSeen(def.id);
+      await openOverworldScene({ preservePosition: true });
+    }
+
+    async function replayCreditsFromOverworld(): Promise<void> {
+      if (!creditsScene) return;
+      tutorialOverlay?.closeAll(null);
+      if (overworldScene?.isOpen()) {
+        overworldReturnTarget = 'suppress';
+        overworldScene.close();
+      }
+      if (titleScreen) titleScreen.hidden = true;
+      if (devToolsBackdrop) devToolsBackdrop.hidden = true;
+      await creditsScene.play();
+      manager.markCreditsSeen();
+      await openOverworldScene({ preservePosition: true });
+    }
+
     async function launchDemoChapterBattle(demoChapter: CampaignChapterConfig): Promise<void> {
       if (!battleScene || demoLaunchInProgress) return;
       demoLaunchInProgress = true;
+      pendingPostVictoryDemoNodeId = null;
       try {
         // 1. Silent chapter recruitment (quiz-seeded + fixed story units; zero NEW ALLY popups)
         if (demoChapter.recruitment && !manager.hasRecruitedChapter(demoChapter.nodeId)) {
@@ -647,6 +752,7 @@ const canonicalUrl = Astro.url.href;
             if (demoChapter.isDemoFinale) {
               manager.markDemoCompleted();
             }
+            pendingPostVictoryDemoNodeId = demoChapter.nodeId;
           },
           onBeforeVictoryModal: shouldPlayOutro
             ? async () => {
@@ -704,14 +810,17 @@ const canonicalUrl = Astro.url.href;
           promptRenameUnit(instanceId, battleScene?.getPrepSaveManager()),
         onExit: (destination = 'default') => {
           if (destination === 'overworld') {
+            pendingPostVictoryDemoNodeId = null;
             void openOverworldScene({ preservePosition: true });
             return;
           }
           if (destination === 'title') {
+            pendingPostVictoryDemoNodeId = null;
             showTitleScreen();
             return;
           }
           if (battleReturnTarget === 'devtools' && isAdminSignedIn()) {
+            pendingPostVictoryDemoNodeId = null;
             if (manager.getSave()) {
               void openOverworldScene({ preservePosition: true }).then(() => {
                 openDevToolsOverlay('maps');
@@ -721,8 +830,15 @@ const canonicalUrl = Astro.url.href;
               openDevToolsOverlay('maps');
             }
           } else if (battleReturnTarget === 'overworld') {
-            void openOverworldScene({ preservePosition: true });
+            if (pendingPostVictoryDemoNodeId) {
+              const clearedNodeId = pendingPostVictoryDemoNodeId;
+              pendingPostVictoryDemoNodeId = null;
+              void runPostChapterStoryFlowAndOpenOverworld(clearedNodeId);
+            } else {
+              void openOverworldScene({ preservePosition: true });
+            }
           } else {
+            pendingPostVictoryDemoNodeId = null;
             showTitleScreen();
           }
         },
@@ -769,6 +885,12 @@ const canonicalUrl = Astro.url.href;
         onLayerStateChanged: () => backStack.syncButtonLabel(),
         onRequestRenameUnit: (instanceId) => void promptRenameUnit(instanceId),
         onRequestNewGame: () => openDemoQuizFlow(),
+        onReplayCutscene: (cutsceneId) => {
+          void replayStoryCutsceneFromOverworld(cutsceneId);
+        },
+        onReplayCredits: () => {
+          void replayCreditsFromOverworld();
+        },
         onLaunchChapterBattle: ({ nodeId, levelId }) => {
           if (!battleScene) return;
           const demoChapter = getDemoChapterByNodeId(nodeId);
@@ -882,6 +1004,13 @@ const canonicalUrl = Astro.url.href;
       getRegistryValidationSummary,
       audioManager,
       dialogueOverlay,
+      cutsceneScene,
+      creditsScene,
+      DEMO_STORY_CUTSCENES,
+      STORY_CUTSCENE_BY_ID,
+      PRE_CHAPTER_STORY_CUTSCENE_BY_NODE_ID,
+      POST_CHAPTER_STORY_CUTSCENE_BY_NODE_ID,
+      getStoryCutsceneById,
       recruitNicknameOverlay,
       tutorialOverlay,
       quizScene,
@@ -994,6 +1123,16 @@ const canonicalUrl = Astro.url.href;
       },
     });
     backStack.registerLayer({
+      id: 'cutscene-scene',
+      isActive: () => Boolean(cutsceneScene?.isOpen()),
+      onBack: () => cutsceneScene?.handleBack(),
+    });
+    backStack.registerLayer({
+      id: 'credits-scene',
+      isActive: () => Boolean(creditsScene?.isOpen()),
+      onBack: () => creditsScene?.handleBack(),
+    });
+    backStack.registerLayer({
       id: 'dialogue-overlay',
       isActive: () => Boolean(dialogueOverlay?.isOpen()),
       onBack: () => dialogueOverlay?.close('cancelled'),
@@ -1018,6 +1157,8 @@ const canonicalUrl = Astro.url.href;
       }
 
       const anySceneOpen =
+        Boolean(cutsceneScene?.isOpen()) ||
+        Boolean(creditsScene?.isOpen()) ||
         Boolean(quizScene?.isOpen()) ||
         Boolean(recruitNicknameOverlay?.isOpen()) ||
         Boolean(dialogueOverlay?.isOpen()) ||

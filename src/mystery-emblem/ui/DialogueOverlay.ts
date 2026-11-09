@@ -50,6 +50,8 @@ export interface DialogueLine {
   bgm?: string | null;
   /** Optional UI/scene SFX cue triggered when this line begins */
   sfx?: PmdUiSfxId;
+  /** Optional stage choreography beat identifier when paired with `CutsceneScene` */
+  stageCueId?: string;
 }
 
 export interface DialogueScript {
@@ -76,6 +78,12 @@ export type DialogueFinishReason = 'completed' | 'skipped' | 'cancelled';
 export interface PlayDialogueOptions {
   /** Override typewriter speed in ms per character (`0` = instant full-line reveal) */
   typewriterMsPerChar?: number;
+  /** True when rendered over a dedicated `CutsceneScene` stage (keeps upper stage crystal clear) */
+  inCutsceneStage?: boolean;
+  /** Optional hook invoked whenever a new line begins rendering (used for sprite choreography) */
+  onLineStart?: (lineIndex: number, line: DialogueLine) => void | Promise<void>;
+  /** Optional hook invoked right before advancing to the next line or closing (snaps in-flight stage beats) */
+  onAdvanceInterrupt?: () => void;
 }
 
 interface SideSlotState {
@@ -116,6 +124,8 @@ export class DialogueOverlay {
   private typewriterTimer: number | null = null;
   private typewriterMsPerChar = 10;
   private finishResolver: ((reason: DialogueFinishReason) => void) | null = null;
+  private activeOnLineStart?: (lineIndex: number, line: DialogueLine) => void | Promise<void>;
+  private activeOnAdvanceInterrupt?: () => void;
   private onStateChange?: () => void;
 
   constructor(
@@ -291,6 +301,9 @@ export class DialogueOverlay {
 
     this.typewriterMsPerChar =
       options?.typewriterMsPerChar ?? (prefersReducedMotion ? 0 : 10);
+    this.activeOnLineStart = options?.onLineStart;
+    this.activeOnAdvanceInterrupt = options?.onAdvanceInterrupt;
+    this.rootEl.classList.toggle('is-cutscene-stage', Boolean(options?.inCutsceneStage));
 
     this.savedPreCutsceneBgmId = this.audioManager.getCurrentTrackId();
     this.cutsceneChangedBgm = false;
@@ -325,6 +338,9 @@ export class DialogueOverlay {
 
     this.clearTypewriter();
     this.activeScript = null;
+    this.activeOnLineStart = undefined;
+    this.activeOnAdvanceInterrupt = undefined;
+    this.rootEl.classList.remove('is-cutscene-stage');
     this.cutsceneChangedBgm = false;
     this.activeSides = { left: null, right: null };
     this.rootEl.hidden = true;
@@ -468,6 +484,7 @@ export class DialogueOverlay {
     }
 
     this.audioManager.playSfx('dialogue_advance');
+    this.activeOnAdvanceInterrupt?.();
 
     const nextIdx = this.currentLineIndex + 1;
     if (nextIdx >= this.activeScript.lines.length) {
@@ -505,6 +522,9 @@ export class DialogueOverlay {
       }
       if (line.sfx) {
         this.audioManager.playSfx(line.sfx);
+      }
+      void this.activeOnLineStart?.(this.currentLineIndex, line);
+      if (false) {
       }
     }
 

@@ -5,6 +5,8 @@
 import {
   loadSpeciesPortrait,
   loadSpeciesSpriteBundle,
+  normalizePmdDirection,
+  type PmdDirectionInput,
   type LoadedActionAnimation,
   type LoadedPortraitAsset,
   type LoadedSpriteBundle,
@@ -32,7 +34,7 @@ export interface PmdSpriteActorOptions {
   /** Uniform pixel scale override; defaults to `1.5` on Desktop and `2` on Mobile */
   scale?: number;
   initialAction?: PmdSpriteAction;
-  initialDirection?: PmdDirection;
+  initialDirection?: PmdDirectionInput;
   /** Optional fixed logical CSS box; if omitted, sizes dynamically to `maxFrameWidth * scale` */
   fixedBoxPx?: { width: number; height: number };
   /** When true, tapping the sprite triggers a one-shot `Attack` animation */
@@ -132,7 +134,7 @@ export class PmdSpriteActor {
   constructor(options: PmdSpriteActorOptions) {
     this.currentTarget = options.speciesIdOrAssetId;
     this.action = options.initialAction ?? 'Idle';
-    this.direction = options.initialDirection ?? 0;
+    this.direction = normalizePmdDirection(options.initialDirection, 0);
     this.usesResponsiveDefaultScale = options.scale === undefined;
     this.scale = options.scale ?? getDefaultPmdSpriteScale();
     this.fixedBoxPx = options.fixedBoxPx;
@@ -209,8 +211,8 @@ export class PmdSpriteActor {
     this.drawCurrentFrame();
   }
 
-  public setDirection(direction: PmdDirection): void {
-    this.direction = direction;
+  public setDirection(direction: PmdDirectionInput): void {
+    this.direction = normalizePmdDirection(direction, 0);
     this.syncDataset();
     this.drawCurrentFrame();
   }
@@ -343,7 +345,8 @@ export class PmdSpriteActor {
     this.ctx.imageSmoothingEnabled = false;
 
     const frameIdx = this.frameIndex % Math.max(1, anim.frameCount);
-    const rowIdx = anim.rowCount >= 8 ? this.direction : this.direction % anim.rowCount;
+    const safeDir = normalizePmdDirection(this.direction, 0);
+    const rowIdx = anim.rowCount >= 8 ? safeDir : safeDir % Math.max(1, anim.rowCount);
 
     // Draw 1:1 native texels centered in the species' max bounding box; CSS `style.width/height`
     // applies uniform `this.scale` (1.5x desktop, 2x mobile) across all actions via `image-rendering: pixelated`.

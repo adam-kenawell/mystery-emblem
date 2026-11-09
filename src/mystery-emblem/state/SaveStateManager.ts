@@ -1095,6 +1095,39 @@ export class SaveStateManager {
     return this.getSave()!;
   }
 
+  public hasSeenStoryCutscene(cutsceneId: string): boolean {
+    const save = this.currentSave;
+    if (!save) return false;
+    return Boolean(save.campaign.seenStoryCutsceneIds?.includes(cutsceneId));
+  }
+
+  public markStoryCutsceneSeen(cutsceneId: string): SaveData {
+    const trimmed = cutsceneId.trim();
+    const save = this.requireActiveSave();
+    if (!trimmed) return save;
+    if (!Array.isArray(save.campaign.seenStoryCutsceneIds)) {
+      save.campaign.seenStoryCutsceneIds = [];
+    }
+    if (!save.campaign.seenStoryCutsceneIds.includes(trimmed)) {
+      save.campaign.seenStoryCutsceneIds.push(trimmed);
+      this.commitSave(save);
+    }
+    return this.getSave()!;
+  }
+
+  public hasSeenCredits(): boolean {
+    return Boolean(this.currentSave?.campaign.creditsSeen);
+  }
+
+  public markCreditsSeen(): SaveData {
+    const save = this.requireActiveSave();
+    if (!save.campaign.creditsSeen) {
+      save.campaign.creditsSeen = true;
+      this.commitSave(save);
+    }
+    return this.getSave()!;
+  }
+
   public areTutorialsEnabled(): boolean {
     const save = this.currentSave;
     if (!save) return false;

@@ -6,7 +6,7 @@
  * - `chapter_01` (`D2`): Verdant Bluff (Cap 5, `defeat_boss` vs stationary `Captain Aron`; joins `slot1Flying` + `Sewaddle`)
  * - `chapter_02` (`D3`): Cleft Mountain (Cap 6, `rout` w/ Dungeon Stairs waves; joins `slot2Psychic`)
  * - `chapter_03` (`D4`): River Shrine (Cap 6, `rout`; rescues `Kecleon` & unlocks World Map Kecleon Shops)
- * - `chapter_04` (`D5`): Berry Orchards (Cap 7, `defeat_boss` vs `Commander Deino` w/ `Captain Linoone` & `Captain Morgrem`; joins `slot3Electric`)
+ * - `chapter_04` (`D5`): Berry Orchards (Cap 6, `defeat_boss` vs `Commander Deino` w/ `Captain Linoone` & `Captain Morgrem`; joins `slot3Electric`)
  */
 
 import type { DialogueLine, DialogueScript, DialogueSpeakerRef } from '../ui/DialogueOverlay';
@@ -117,20 +117,6 @@ export interface CampaignChapterConfig {
   buildOutroScript: (save: SaveData | null) => DialogueScript;
 }
 
-const SERPERIOR_SPEAKER: DialogueSpeakerRef = {
-  kind: 'npc',
-  pmdAssetId: CHANCELLOR_SERPERIOR_PMD_ASSET_ID,
-  speciesName: 'Serperior',
-  nickname: 'Chancellor Serperior',
-};
-
-const MILOTIC_SPEAKER: DialogueSpeakerRef = {
-  kind: 'npc',
-  pmdAssetId: HIGH_SEERESS_MILOTIC_PMD_ASSET_ID,
-  speciesName: 'Milotic',
-  nickname: 'High Seeress Milotic',
-};
-
 const KECLEON_SPEAKER: DialogueSpeakerRef = {
   kind: 'npc',
   pmdAssetId: KECLEON_PMD_ASSET_ID,
@@ -182,7 +168,7 @@ function attachMapMetadata(
   opts: {
     name: string;
     deploymentCap: number;
-  skipPrepPhase?: boolean;
+    skipPrepPhase?: boolean;
     objectiveType: BattleObjectiveType;
     enemies: ReadonlyArray<ManualEnemyBattleSpawn>;
     preserveCustomEnemies?: boolean;
@@ -545,14 +531,14 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
         {
           speaker: { kind: 'partner' },
           side: 'right',
-          emotion: 'Worried',
-          text: 'Wake up, {lord}! The tide washed you onto Western Beach—{healer}, Wimpod, and I found you with no memory of the storm.',
+          emotion: 'Angry',
+          text: 'Hey! Drop our tribe’s Evolution Stone right now! Nobody raids Western Beach and walks away!',
         },
         {
           speaker: { kind: 'healer' },
           side: 'right',
           emotion: 'Worried',
-          text: 'Shadow-crazed Feral Pokémon and Ironscale scouts are sweeping the shore! One raider stole an Evolution Stone from the shrine!',
+          text: 'Careful, {partner}! Those Feral outriders are maddened by purple miasma—and an armored Ironscale scout is directing them from the rear!',
         },
         {
           speaker: { kind: 'advisor' },
@@ -564,7 +550,7 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
           speaker: { kind: 'lord' },
           side: 'left',
           emotion: 'Determined',
-          text: 'My memory is gone, {partner}, {healer}—but my Dragon Aura resonates with you all. Keep watch from cover, Wimpod; let’s rout them and reclaim that Stone!',
+          text: 'Three hostiles across the sand—and something warm is pulsing inside my chest... Stay close, {partner}, {healer}; let’s rout them and reclaim our Stone!',
         },
       ],
     }),
@@ -574,28 +560,22 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
       bgm: 'calm_cutscene',
       lines: [
         {
-          speaker: SERPERIOR_SPEAKER,
+          speaker: { kind: 'partner' },
           side: 'right',
           emotion: 'Surprised',
-          text: 'That golden Dragon Aura... High Seeress Milotic—a scion of the vanished Dragon Kingdom lives!',
+          text: 'WHOA! {lord}, did you just see yourself?! Right when that last raider went down, golden light flared right off your scales!',
         },
         {
-          speaker: MILOTIC_SPEAKER,
+          speaker: { kind: 'healer' },
           side: 'right',
-          emotion: 'Worried',
-          text: 'Generations ago, Royal Tactician Gengar betrayed the Dragon Court and sundered the southeastern Abyss, whose miasma drives wild Pokémon Feral.',
+          emotion: 'Surprised',
+          text: 'We recovered our tribe’s Evolution Stone too—and look how warm {lord}’s light feels! Chancellor Serperior and High Seeress Milotic must know what this is!',
         },
         {
-          speaker: { kind: 'advisor' },
+          speaker: { kind: 'lord' },
           side: 'left',
-          emotion: 'Stunned',
-          text: 'A cursed Abyss AND an invading Empire?! Fantastic! My shell is already sweating—tell me we at least get snacks on the march!',
-        },
-        {
-          speaker: SERPERIOR_SPEAKER,
-          side: 'right',
-          emotion: 'Determined',
-          text: 'Now the Ironscale Empire invades our Verdant Commonwealth claiming "martial law" is the only cure. March north to Verdant Bluff and break Captain Aron’s blockade, {lord}!',
+          emotion: 'Surprised',
+          text: 'All these years growing up together on this coast, I’ve never felt power like that... Come on, everyone—let’s report to the Emerald Sanctuary!',
         },
       ],
     }),
@@ -630,7 +610,9 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
     buildIntroScript: (save) => {
       const flyId =
         save?.campaign.quizSeeds.slot1Flying?.[0] ??
-        save?.campaign.quizSeeds.q2BugFlying?.find((id) => id !== 'caterpie' && id !== 'sewaddle' && id !== 'grubbin') ??
+        save?.campaign.quizSeeds.q2BugFlying?.find(
+          (id) => id !== 'caterpie' && id !== 'sewaddle' && id !== 'grubbin'
+        ) ??
         'pidgey';
       const lines: DialogueLine[] = [
         {
@@ -685,8 +667,8 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
         {
           speaker: { kind: 'healer' },
           side: 'right',
-          emotion: 'Worried',
-          text: 'Look east toward Cleft Mountain—purple miasma is rising from the ancient Dragon Kingdom watchtower!',
+          emotion: 'Normal',
+          text: 'Dusk is settling fast over the bluff, {lord}—let’s pitch camp on the overlook before climbing Cleft Mountain!',
         },
       ],
     }),
@@ -768,13 +750,13 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
             speaker: findRecruitSpeaker(save, psyId),
             side: 'right',
             emotion: 'Surprised',
-            text: 'These carvings show the Dragon bloodlines standing together before Gengar tore open the southeastern sky...',
+            text: 'The miasma over the stairwell is lifting! Look just ahead, {lord}—the ancient Dragon watchtower parapet is shining through the mist!',
           },
           {
-            speaker: { kind: 'partner' },
-            side: 'right',
-            emotion: 'Surprised',
-            text: '{lord}, distress bells from River Shrine below! Master Merchant Kecleon’s caravan is surrounded!',
+            speaker: { kind: 'lord' },
+            side: 'left',
+            emotion: 'Normal',
+            text: 'Let’s head out onto the parapet and see what the old watchtower guards.',
           },
         ],
       };
@@ -832,19 +814,13 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
           speaker: KECLEON_SPEAKER,
           side: 'right',
           emotion: 'Happy',
-          text: 'Saved! My Kecleon Shops are now open along cleared World Map roads whenever you need TMs, gear, or Stones!',
+          text: 'Saved! Step right into the shrine courtyard, everyone—Chancellor Serperior and High Seeress Milotic have just arrived across the north bridge!',
         },
         {
           speaker: { kind: 'advisor' },
           side: 'left',
           emotion: 'Happy',
           text: 'Potions! Oran Berries! Life-saving emergency snacks! Thank goodness—watching you guys take hits takes years off my tiny bug lifespan!',
-        },
-        {
-          speaker: MILOTIC_SPEAKER,
-          side: 'right',
-          emotion: 'Worried',
-          text: 'Urgent word from Berry Orchards, {lord}—Commander Deino himself leads Captains Linoone and Morgrem against our heartland!',
         },
       ],
     }),
@@ -923,25 +899,19 @@ export const DEMO_CAMPAIGN_CHAPTERS: ReadonlyArray<CampaignChapterConfig> = [
           speaker: DEINO_SPEAKER,
           side: 'right',
           emotion: 'Pain',
-          text: 'Tch... Fall back, Linoone, Morgrem! Remember this, {lord}—Emperor Aggron’s legions and the Abyss beyond will test that soft heart of yours.',
+          text: 'Tch... Fall back, Linoone, Morgrem! Remember this, {lord}—Emperor Kingambit’s legions and the Abyss beyond will test that soft heart of yours.',
         },
         {
-          speaker: SERPERIOR_SPEAKER,
+          speaker: { kind: 'partner' },
           side: 'right',
-          emotion: 'Happy',
-          text: 'Berry Orchards stands free! Thanks to your squad, the Verdant Commonwealth can unite against both the Empire and the Abyss.',
+          emotion: 'Joyous',
+          text: 'Yeah, keep running, Deino! Berry Orchards belongs to the Verdant Commonwealth!',
         },
         {
-          speaker: { kind: 'advisor' },
+          speaker: { kind: 'lord' },
           side: 'left',
           emotion: 'Happy',
-          text: 'WE LIVED! Nobody got flattened AND my survival notes actually worked! Maybe being a tactical coward is a superpower after all!',
-        },
-        {
-          speaker: MILOTIC_SPEAKER,
-          side: 'right',
-          emotion: 'Happy',
-          text: 'Your journey across the five kingdoms has only just begun, {lord}. Thank you for playing the Mystery Emblem Demo!',
+          text: 'Everyone made it through safe—and look ahead, Chancellor Serperior and High Seeress Milotic are lighting the orchard lanterns!',
         },
       ],
     }),

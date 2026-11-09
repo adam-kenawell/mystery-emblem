@@ -22,6 +22,10 @@ import {
 } from '../assets/pmdAssetLoader';
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
 import {
+  DEMO_STORY_CUTSCENES,
+  POST_CHAPTER_STORY_CUTSCENE_BY_NODE_ID,
+} from '../data/storyCutscenes';
+import {
   DEMO_OVERWORLD_GRAPH,
   KECLEON_PMD_ASSET_ID,
   KECLEON_SHOP_METADATA,
@@ -112,6 +116,8 @@ export interface OverworldSceneOptions {
   onLayerStateChanged: () => void;
   onRequestRenameUnit?: (instanceId: string) => Promise<void> | void;
   onLaunchChapterBattle?: (payload: { nodeId: string; levelId: string }) => void;
+  onReplayCutscene?: (cutsceneId: string) => void;
+  onReplayCredits?: () => void;
   onLaunchSkirmishBattle?: (payload: {
     nodeId: string;
     customMap: DungeonMapDefinition;
@@ -295,10 +301,18 @@ export class OverworldScene {
   private readonly onLayerStateChanged: () => void;
   private readonly onRequestRenameUnit?: (instanceId: string) => Promise<void> | void;
   private readonly onLaunchChapterBattle?: OverworldSceneOptions['onLaunchChapterBattle'];
+  private readonly onReplayCutscene?: OverworldSceneOptions['onReplayCutscene'];
+  private readonly onReplayCredits?: OverworldSceneOptions['onReplayCredits'];
   private readonly onLaunchSkirmishBattle?: OverworldSceneOptions['onLaunchSkirmishBattle'];
 
   private readonly rootEl: HTMLElement;
   private readonly canvasStageEl: HTMLElement;
+  private readonly nodeLabelsLayerEl: HTMLElement;
+  private readonly nodeLabelMap = new Map<
+    string,
+    { anchorEl: HTMLElement; pillEl: HTMLElement; codeEl: HTMLElement; nameEl: HTMLElement }
+  >();
+  private canvasDpr = 1;
   private readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
 
@@ -407,6 +421,8 @@ export class OverworldScene {
     this.onLayerStateChanged = options.onLayerStateChanged;
     this.onRequestRenameUnit = options.onRequestRenameUnit;
     this.onLaunchChapterBattle = options.onLaunchChapterBattle;
+    this.onReplayCutscene = options.onReplayCutscene;
+    this.onReplayCredits = options.onReplayCredits;
     this.onLaunchSkirmishBattle = options.onLaunchSkirmishBattle;
 
     // Root Scene Container
@@ -430,6 +446,10 @@ export class OverworldScene {
     ctx.imageSmoothingEnabled = false;
     this.ctx = ctx;
     this.canvasStageEl.appendChild(this.canvas);
+    this.nodeLabelsLayerEl = document.createElement('div');
+    this.nodeLabelsLayerEl.className = 'pmd-overworld-node-labels';
+    this.nodeLabelsLayerEl.dataset.testid = 'overworld-node-labels';
+    this.canvasStageEl.appendChild(this.nodeLabelsLayerEl);
 
     // 2. Top HUD Bar
     this.topHudBarEl = document.createElement('div');
@@ -1109,10 +1129,20 @@ export class OverworldScene {
     this.viewHeightPx = h;
     this.displayScale = clampMapScale(this.displayScale, OVERWORLD_SCALE_BOUNDS);
 
-    if (this.canvas.width !== w || this.canvas.height !== h) {
-      this.canvas.width = w;
-      this.canvas.height = h;
+    const dpr = Math.min(
+      3,
+      Math.max(1, typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1)
+    );
+    this.canvasDpr = dpr;
+    const backingW = Math.round(w * dpr);
+    const backingH = Math.round(h * dpr);
+    if (this.canvas.width !== backingW || this.canvas.height !== backingH) {
+      this.canvas.width = backingW;
+      this.canvas.height = backingH;
     }
+    this.canvas.style.width = `${w}px`;
+    this.canvas.style.height = `${h}px`;
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.ctx.imageSmoothingEnabled = false;
     this.clampCamera();
 
@@ -2723,11 +2753,156 @@ export class OverworldScene {
           },
         })
       );
-      this.menuPanelBodyEl.append(audioBox, tutorialsBox, saveBox, actionsBox);
+      const storyBox = this.buildStoryReplaySubbox(save);
+      if (storyBox) {
+        this.menuPanelBodyEl.append(audioBox, storyBox, tutorialsBox, saveBox, actionsBox);
+      } else {
+        this.menuPanelBodyEl.append(audioBox, tutorialsBox, saveBox, actionsBox);
+      }
       return;
     }
 
-    this.menuPanelBodyEl.append(audioBox, saveBox, actionsBox);
+    const storyBox = this.buildStoryReplaySubbox(save);
+    if (storyBox) {
+      this.menuPanelBodyEl.append(audioBox, storyBox, saveBox, actionsBox);
+    } else {
+      this.menuPanelBodyEl.append(audioBox, saveBox, actionsBox);
+    }
+  }
+
+  private buildStoryReplaySubbox(save: SaveData): HTMLElement | null {
+    if (!this.onReplayCutscene && !this.onReplayCredits) {
+      return null;
+    }
+
+    const seenSet = new Set(save.campaign.seenStoryCutsceneIds ?? []);
+    const completedNodes = new Set(save.campaign.completedChapterIds ?? []);
+    const nodeIdByPostCutscene = new Map<string, string>(
+      Object.entries(POST_CHAPTER_STORY_CUTSCENE_BY_NODE_ID).map(([nodeId, csId]) => [csId, nodeId])
+    );
+
+    const unlockedCutscenes = DEMO_STORY_CUTSCENES.filter((cs) => {
+      if (cs.id === 'cs_01_coastal_friends') return true;
+      if (seenSet.has(cs.id)) return true;
+      const reqNode = nodeIdByPostCutscene.get(cs.id);
+      return Boolean(reqNode && completedNodes.has(reqNode));
+    });
+    const creditsUnlocked = Boolean(save.campaign.demoCompleted || save.campaign.creditsSeen);
+
+    if (unlockedCutscenes.length === 0 && !creditsUnlocked) {
+      return null;
+    }
+
+    const box = document.createElement('div');
+    box.className = 'pmd-overworld-subbox';
+    box.dataset.testid = 'overworld-story-replay-box';
+    box.style.marginTop = '0.5rem';
+
+    const title = document.createElement('p');
+    title.className = 'pmd-overworld-subbox-title';
+    title.textContent = 'Story & Credits';
+    box.appendChild(title);
+
+    const btnWrap = document.createElement('div');
+    btnWrap.className = 'pmd-inline-btns';
+
+    for (const cs of unlockedCutscenes) {
+      if (!this.onReplayCutscene) break;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'pmd-btn pmd-chip-btn';
+      btn.dataset.testid = `overworld-replay-cutscene-${cs.id}`;
+      btn.textContent = `${cs.chapterOrder}. ${cs.title}`;
+      bindPointerTap(btn, () => {
+        this.audioManager.playSfx('confirm');
+        this.closeSystemMenu();
+        this.onReplayCutscene?.(cs.id);
+      });
+      btnWrap.appendChild(btn);
+    }
+
+    if (creditsUnlocked && this.onReplayCredits) {
+      const creditsBtn = document.createElement('button');
+      creditsBtn.type = 'button';
+      creditsBtn.className = 'pmd-btn pmd-btn-gold pmd-chip-btn';
+      creditsBtn.dataset.testid = 'overworld-replay-credits-btn';
+      creditsBtn.textContent = 'Ending Credits ★';
+      bindPointerTap(creditsBtn, () => {
+        this.audioManager.playSfx('confirm');
+        this.closeSystemMenu();
+        this.onReplayCredits?.();
+      });
+      btnWrap.appendChild(creditsBtn);
+    }
+
+    box.appendChild(btnWrap);
+    return box;
+  }
+
+  private syncNodeLabelsOverlay(reconciled: {
+    currentNodeId: string;
+    nodes: Record<string, OverworldNodeState>;
+  }): void {
+    const scale = this.displayScale;
+    const activeIds = new Set<string>();
+
+    for (const def of this.graph.nodes) {
+      activeIds.add(def.id);
+      let entry = this.nodeLabelMap.get(def.id);
+      if (!entry) {
+        const anchorEl = document.createElement('div');
+        anchorEl.className = 'pmd-overworld-node-label-anchor';
+
+        const pillEl = document.createElement('div');
+        pillEl.className = 'pmd-overworld-node-pill';
+        pillEl.dataset.testid = `overworld-node-label-${def.id}`;
+        pillEl.dataset.nodeId = def.id;
+
+        const codeEl = document.createElement('span');
+        codeEl.className = 'pmd-overworld-node-pill-code';
+
+        const nameEl = document.createElement('span');
+        nameEl.className = 'pmd-overworld-node-pill-name';
+
+        pillEl.append(codeEl, nameEl);
+        anchorEl.appendChild(pillEl);
+        this.nodeLabelsLayerEl.appendChild(anchorEl);
+        entry = { anchorEl, pillEl, codeEl, nameEl };
+        this.nodeLabelMap.set(def.id, entry);
+      }
+
+      const st = reconciled.nodes[def.id];
+      const isUnlocked = Boolean(st?.unlocked);
+      if (!isUnlocked) {
+        entry.anchorEl.hidden = true;
+        continue;
+      }
+
+      entry.anchorEl.hidden = false;
+      entry.codeEl.textContent = def.code;
+      entry.nameEl.textContent = def.name;
+
+      const isCurrent = reconciled.currentNodeId === def.id && !this.activeTravel;
+      const isHovered = this.hoveredNodeId === def.id;
+      const isCleared = Boolean(st?.cleared);
+      const hasSkirmish = Boolean(st?.activeSkirmish);
+
+      entry.pillEl.classList.toggle('is-current', isCurrent);
+      entry.pillEl.classList.toggle('is-hovered', isHovered);
+      entry.pillEl.classList.toggle('is-cleared', isCleared);
+      entry.pillEl.classList.toggle('has-skirmish', hasSkirmish);
+
+      const cx = Math.round((def.x - this.cameraX) * scale);
+      const cy = Math.round((def.y - this.cameraY) * scale);
+      const labelY = cy + Math.round(7.2 * scale);
+      entry.anchorEl.style.transform = `translate3d(${cx}px, ${labelY}px, 0)`;
+    }
+
+    for (const [nodeId, entry] of this.nodeLabelMap.entries()) {
+      if (!activeIds.has(nodeId)) {
+        entry.anchorEl.hidden = true;
+      }
+    }
   }
 
   // ==========================================================================
@@ -2886,10 +3061,12 @@ export class OverworldScene {
     if (!this.openState) return;
     const ctx = this.ctx;
     const scale = this.displayScale;
+    const dpr = this.canvasDpr || 1;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.imageSmoothingEnabled = false;
 
     ctx.fillStyle = '#080e1c';
-    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    ctx.fillRect(0, 0, this.viewWidthPx, this.viewHeightPx);
 
     // 1. Wonder Map Pixel Art Layer + Crisp Stepped PMD Outer Frame
     if (this.mapSource) {
@@ -3042,29 +3219,9 @@ export class OverworldScene {
         );
       }
 
-      if (isUnlocked) {
-        const label = `(${def.code}) ${def.name}`;
-        ctx.save();
-        ctx.font = `bold ${scale >= 4 ? 13 : 11}px "Fusion Pixel 12px Proportional KR", sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        const metrics = ctx.measureText(label);
-        const padX = 6;
-        const boxW = Math.ceil(metrics.width) + padX * 2;
-        const boxH = scale >= 4 ? 18 : 16;
-        const labelY = cy + Math.round(7.4 * scale);
-
-        ctx.fillStyle = isCurrent ? 'rgba(16, 28, 54, 0.94)' : 'rgba(10, 18, 34, 0.86)';
-        ctx.strokeStyle = isCurrent ? '#f8d048' : '#48b8e8';
-        ctx.lineWidth = 1.5;
-        ctx.fillRect(Math.round(cx - boxW / 2), labelY, boxW, boxH);
-        ctx.strokeRect(Math.round(cx - boxW / 2), labelY, boxW, boxH);
-
-        ctx.fillStyle = isCurrent ? '#f8d048' : '#f4f8ff';
-        ctx.fillText(label, cx, labelY + boxH / 2 + 0.5);
-        ctx.restore();
-      }
     }
+
+    this.syncNodeLabelsOverlay(reconciled);
 
     // 4. Player's Active Dragon Lord Animated 8-Directional PMD Sprite
     const lord = this.getActiveLordUnit(save);

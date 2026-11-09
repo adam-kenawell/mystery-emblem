@@ -713,6 +713,26 @@ export function validateSaveData(
       }
     }
   }
+  if (data.campaign && typeof data.campaign === 'object') {
+    if (data.campaign.seenStoryCutsceneIds !== undefined) {
+      if (
+        !Array.isArray(data.campaign.seenStoryCutsceneIds) ||
+        data.campaign.seenStoryCutsceneIds.some(
+          (id) => typeof id !== 'string' || id.trim().length === 0
+        )
+      ) {
+        errors.push(
+          'Save payload campaign.seenStoryCutsceneIds must be an array of non-empty strings when present.'
+        );
+      }
+    }
+    if (
+      data.campaign.creditsSeen !== undefined &&
+      typeof data.campaign.creditsSeen !== 'boolean'
+    ) {
+      errors.push('Save payload campaign.creditsSeen must be a boolean when present.');
+    }
+  }
   if (!data.overworld || typeof data.overworld !== 'object') {
     errors.push('Save payload missing overworld state.');
   }
