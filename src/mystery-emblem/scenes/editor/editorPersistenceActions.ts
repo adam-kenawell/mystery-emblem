@@ -8,6 +8,8 @@ import {
   CHAPTER_LEVEL_CATALOG,
   cloneDungeonMap,
   getChapterCatalogEntry,
+  getCutsceneStageActorMarkers,
+  getCutsceneStageCatalogEntry,
   getEffectiveChapterMap,
   resetChapterMapOverride,
   saveChapterMapOverride,
@@ -38,8 +40,29 @@ export async function selectEditorLevel(params: {
   renderFrame: () => void;
 }): Promise<void> {
   const { dom, state, audioManager, signal, levelId, recenterCamera } = params;
-  const entry = getChapterCatalogEntry(levelId) ?? CHAPTER_LEVEL_CATALOG[0]!;
-  state.activeLevelId = entry.id;
+  const stageEntry = getCutsceneStageCatalogEntry(levelId);
+  let preferredSheet: string;
+
+  if (stageEntry) {
+    state.activeLevelId = stageEntry.id;
+    state.editorTargetKind = 'cutscene';
+    state.cutsceneActorMarkers = getCutsceneStageActorMarkers(stageEntry.id);
+    if (
+      state.toolMode === 'player_spawn' ||
+      state.toolMode === 'enemy_spawn' ||
+      state.toolMode === 'stairs_wave'
+    ) {
+      state.toolMode = 'paint';
+    }
+    preferredSheet = normalizeTilesetId(stageEntry.primaryTilesetId);
+  } else {
+    const entry = getChapterCatalogEntry(levelId) ?? CHAPTER_LEVEL_CATALOG[0]!;
+    state.activeLevelId = entry.id;
+    state.editorTargetKind = 'chapter';
+    state.cutsceneActorMarkers = [];
+    preferredSheet = normalizeTilesetId(entry.primaryTilesetId);
+  }
+
   renderEditorLevelSelectOptions(dom, state.activeLevelId);
   dom.levelSelectEl.value = state.activeLevelId;
 
@@ -47,13 +70,19 @@ export async function selectEditorLevel(params: {
   state.undoStack = [];
   state.dirty = false;
 
-  const preferredSheet = normalizeTilesetId(entry.primaryTilesetId);
   state.brushTilesetId = preferredSheet;
   dom.tilesetSelectEl.value = preferredSheet;
 
+  const firstMarker = state.cutsceneActorMarkers[0];
   state.inspectedTile = {
-    x: state.map.playerSpawns[0]?.x ?? Math.floor(state.map.width / 2),
-    y: state.map.playerSpawns[0]?.y ?? Math.floor(state.map.height / 2),
+    x:
+      state.editorTargetKind === 'cutscene'
+        ? (firstMarker?.x ?? Math.floor(state.map.width / 2))
+        : (state.map.playerSpawns[0]?.x ?? Math.floor(state.map.width / 2)),
+    y:
+      state.editorTargetKind === 'cutscene'
+        ? (firstMarker?.y ?? Math.floor(state.map.height / 2))
+        : (state.map.playerSpawns[0]?.y ?? Math.floor(state.map.height / 2)),
   };
 
   params.syncUiAndInfo();

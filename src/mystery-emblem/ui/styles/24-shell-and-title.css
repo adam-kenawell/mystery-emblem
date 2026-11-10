@@ -77,6 +77,10 @@
   right: max(0.85rem, env(safe-area-inset-right));
 }
 
+#pmd-corner-menu-btn[data-corner-mode='back'] {
+  z-index: 101;
+}
+
 .pmd-corner-btn:hover,
 .pmd-corner-btn:active {
   border-image-source: var(--pmd-frame-mini-active);

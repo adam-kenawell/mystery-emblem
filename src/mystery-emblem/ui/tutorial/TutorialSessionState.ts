@@ -25,6 +25,8 @@ export class TutorialSessionState {
   public activeTopic: TutorialTopicDefinition | null = null;
   public activeBeats: ReadonlyArray<WimpodTutorialBeat> = [];
   public activeBeatIndex = 0;
+  /** Furthest beat reached this session; beats behind it are "review" beats (already satisfied). */
+  public furthestBeatIndex = 0;
   public activeBeatInteractive = false;
   public returnToCompendiumOnClose = false;
   public activeCardResolver: ((shown: boolean) => void) | null = null;
@@ -40,7 +42,9 @@ export class TutorialSessionState {
       this.mode === 'card' && !this.returnToCompendiumOnClose
         ? this.activeBeats[this.activeBeatIndex] ?? null
         : null;
-    if (!beat?.awaitAction) {
+    // Revisited beats (reached via ◀ Back) were already satisfied — show them as plain
+    // read-only beats with Next so the player can never soft-lock on a finished action.
+    if (!beat?.awaitAction || this.activeBeatIndex < this.furthestBeatIndex) {
       this.activeBeatInteractive = false;
       return;
     }
@@ -104,8 +108,16 @@ export class TutorialSessionState {
     this.activeTopic = topic;
     this.activeBeats = topic.beats;
     this.activeBeatIndex = startIdx;
+    this.furthestBeatIndex = startIdx;
     this.returnToCompendiumOnClose = returnToCompendium;
     this.activeCardResolver = resolver;
+  }
+
+  /** Moves to `idx` (forward or back) and keeps the furthest-reached marker in sync. */
+  public goToBeat(idx: number): void {
+    this.activeBeatIndex = idx;
+    if (idx > this.furthestBeatIndex) this.furthestBeatIndex = idx;
+    this.syncInteractivity();
   }
 
   public applyModalDomVisibility(shell: TutorialShellElements, nextMode: ActiveTutorialModalMode): void {
@@ -141,6 +153,7 @@ export class TutorialSessionState {
     this.activeTopic = null;
     this.activeBeats = [];
     this.activeBeatIndex = 0;
+    this.furthestBeatIndex = 0;
     this.activeBeatInteractive = false;
     this.returnToCompendiumOnClose = false;
     return resolver;

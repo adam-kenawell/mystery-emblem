@@ -15,6 +15,7 @@ import {
   getLivingPlayers,
   getLordUnit,
 } from './battleUnitQueries';
+import { renderBattleUnitsRosterPanel } from './battleUnitsRosterPanel';
 
 export function renderFieldSubmodalContents(
   ctx: BattleControllerContext,
@@ -26,7 +27,13 @@ export function renderFieldSubmodalContents(
 ): void {
   const { state, dom, audioManager, tutorialOverlay } = ctx;
   const cardEl = dom.fieldSubmodalCardEl;
+  cardEl.classList.remove('is-units-panel');
   cardEl.innerHTML = '';
+
+  if (subView === 'units') {
+    renderBattleUnitsRosterPanel(ctx, cardEl, hooks.closeSystemMenu);
+    return;
+  }
 
   if (subView === 'objective') {
     cardEl.dataset.testid = 'dungeon-objective-modal';

@@ -11,6 +11,7 @@ import {
   normalizeTilesetId,
   type LoadedTilesetSheet,
 } from '../../assets/tilesetLoader';
+import type { CutsceneStageActorMarker } from '../../data/chapterMapRegistry';
 import type { DungeonMapDefinition } from '../../types/schemas';
 import type { EditorRuntimeState } from './editorTypesAndState';
 
@@ -20,12 +21,13 @@ function drawEditorUnitPreviewSprite(
   speciesId: string,
   tileX: number,
   tileY: number,
-  direction: 2 | 6
+  direction: number,
+  alpha = 1
 ): void {
   const bundle = state.spriteBundles.get(speciesId);
   const anim = bundle ? (bundle.actions.Idle ?? bundle.actions.Walk) : undefined;
   if (!anim) return;
-  const row = anim.rowCount >= 8 ? direction : direction % Math.max(1, anim.rowCount);
+  const row = anim.rowCount >= 8 ? direction % 8 : direction % Math.max(1, anim.rowCount);
   const sy = row * anim.frameHeight;
   const screenTileX = tileX * PMD_TILE_NATIVE_PX - state.cam.cameraX;
   const screenTileY = tileY * PMD_TILE_NATIVE_PX - state.cam.cameraY;
@@ -36,6 +38,8 @@ function drawEditorUnitPreviewSprite(
     anim.frameHeight,
     PMD_TILE_NATIVE_PX
   );
+  ctx.save();
+  ctx.globalAlpha = alpha;
   ctx.drawImage(
     anim.source,
     0,
@@ -47,6 +51,7 @@ function drawEditorUnitPreviewSprite(
     anim.frameWidth,
     anim.frameHeight
   );
+  ctx.restore();
 }
 
 export function renderEditorFrame(
@@ -160,6 +165,37 @@ export function renderEditorFrame(
       ctx.font = 'bold 6px monospace';
       ctx.fillText(`T${wave.turnNumber}`, dx + 3, dy + 8);
     });
+
+    if (state.editorTargetKind === 'cutscene') {
+      for (const marker of state.cutsceneActorMarkers) {
+        if (marker.x < 0 || marker.y < 0 || marker.x >= map.width || marker.y >= map.height) {
+          continue;
+        }
+        const dx = marker.x * PMD_TILE_NATIVE_PX - cam.cameraX;
+        const dy = marker.y * PMD_TILE_NATIVE_PX - cam.cameraY;
+        ctx.fillStyle = 'rgba(152, 112, 248, 0.28)';
+        ctx.fillRect(dx + 1, dy + 1, PMD_TILE_NATIVE_PX - 2, PMD_TILE_NATIVE_PX - 2);
+        ctx.strokeStyle = 'rgba(248, 224, 112, 0.85)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(dx + 1.5, dy + 1.5, PMD_TILE_NATIVE_PX - 3, PMD_TILE_NATIVE_PX - 3);
+        drawEditorUnitPreviewSprite(
+          ctx,
+          state,
+          marker.previewAssetId,
+          marker.x,
+          marker.y,
+          marker.direction,
+          0.68
+        );
+        const tag = marker.actorId.slice(0, 6);
+        const pillW = Math.min(PMD_TILE_NATIVE_PX - 2, Math.max(12, tag.length * 4 + 2));
+        ctx.fillStyle = 'rgba(8, 14, 28, 0.86)';
+        ctx.fillRect(dx + 1, dy + PMD_TILE_NATIVE_PX - 8, pillW, 7);
+        ctx.fillStyle = '#f8f858';
+        ctx.font = 'bold 6px monospace';
+        ctx.fillText(tag, dx + 2, dy + PMD_TILE_NATIVE_PX - 2);
+      }
+    }
   }
 
   const focusTile = state.hoveredTile ?? state.inspectedTile;
@@ -178,7 +214,8 @@ export function renderEditorFrame(
  */
 export async function renderDungeonMapPreviewCanvas(
   canvas: HTMLCanvasElement,
-  map: DungeonMapDefinition
+  map: DungeonMapDefinition,
+  actorMarkers?: ReadonlyArray<CutsceneStageActorMarker>
 ): Promise<void> {
   const sheetIds = new Set<string>();
   for (const row of map.tiles) {
@@ -241,5 +278,14 @@ export async function renderDungeonMapPreviewCanvas(
     ctx.fillRect(dx + 3, dy + 3, PMD_TILE_NATIVE_PX - 6, PMD_TILE_NATIVE_PX - 6);
     ctx.strokeStyle = '#ffd0d0';
     ctx.strokeRect(dx + 3.5, dy + 3.5, PMD_TILE_NATIVE_PX - 7, PMD_TILE_NATIVE_PX - 7);
+  }
+  for (const m of actorMarkers ?? []) {
+    if (m.x < 0 || m.y < 0 || m.x >= map.width || m.y >= map.height) continue;
+    const dx = m.x * PMD_TILE_NATIVE_PX;
+    const dy = m.y * PMD_TILE_NATIVE_PX;
+    ctx.fillStyle = 'rgba(168, 128, 255, 0.55)';
+    ctx.fillRect(dx + 4, dy + 4, PMD_TILE_NATIVE_PX - 8, PMD_TILE_NATIVE_PX - 8);
+    ctx.strokeStyle = '#f8e070';
+    ctx.strokeRect(dx + 4.5, dy + 4.5, PMD_TILE_NATIVE_PX - 9, PMD_TILE_NATIVE_PX - 9);
   }
 }

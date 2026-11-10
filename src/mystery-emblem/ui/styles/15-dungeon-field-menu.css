@@ -1,6 +1,6 @@
 /* ==========================================================================
-   5. Empty-Tile Dungeon Field Menu, Sub-Modals, "Begin Battle!" Card &
-      Cinematic Phase Transition Banner (`PLAYER PHASE` / `ENEMY PHASE`)
+   5. Empty-Tile Dungeon Field Menu, Sub-Modals (`Objective`, `Units`, `Settings`),
+      "Begin Battle!" Card & Opening Animations
    ========================================================================== */
 
 .pmd-dungeon-field-backdrop {
@@ -40,9 +40,7 @@
   border-bottom-color: rgba(168, 208, 240, 0.24);
 }
 
-.pmd-dungeon-field-menu .pmd-btn.pmd-menu-row:last-child {
-  border-bottom-color: transparent;
-}
+.pmd-dungeon-field-menu .pmd-btn.pmd-menu-row:last-child { border-bottom-color: transparent; }
 
 .pmd-dungeon-field-menu .pmd-btn.pmd-menu-row:hover:not(:disabled),
 .pmd-dungeon-field-menu .pmd-btn.pmd-menu-row:focus-visible:not(:disabled),
@@ -61,6 +59,93 @@
   touch-action: pan-y;
 }
 
+.pmd-dungeon-submodal.is-units-panel { width: min(540px, 100%); }
+
+.pmd-dungeon-units-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pmd-unit-portrait-cell.is-fainted { opacity: 0.56; filter: grayscale(0.68) brightness(0.88); }
+.pmd-unit-portrait-cell.is-fainted.is-selected { opacity: 0.88; }
+.pmd-portrait-pip.is-fainted,
+.pmd-unit-popup-status.is-fainted { border-color: var(--pmd-text-danger); color: var(--pmd-text-danger); }
+.pmd-dungeon-units-state { font-size: 11px; color: var(--pmd-text-cyan); text-shadow: 1px 1px 0 #000000; }
+.pmd-dungeon-units-detail { display: flex; flex-direction: column; gap: 6px; }
+
+.pmd-dungeon-units-hp-box,
+.pmd-dungeon-units-subbox {
+  background: var(--pmd-fill-well-deep);
+  border: 2px solid var(--pmd-divider-subtle);
+  padding: 5px 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pmd-prep-stat-box.is-buffed .pmd-prep-stat-val { color: var(--pmd-text-green); }
+.pmd-prep-stat-box.is-debuffed .pmd-prep-stat-val { color: var(--pmd-text-danger); }
+
+.pmd-dungeon-units-kicker {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pmd-text-cyan);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.pmd-dungeon-units-growth-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+  font-size: 11px;
+}
+
+.pmd-dungeon-units-growth-strip span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(8, 16, 28, 0.72);
+  border: 1px solid var(--pmd-divider-subtle);
+  padding: 2px 3px;
+}
+
+.pmd-dungeon-units-growth-strip em { font-style: normal; font-size: 9px; color: var(--pmd-text-cyan); }
+.pmd-dungeon-units-growth-strip strong { color: var(--pmd-text-yellow); }
+.pmd-dungeon-units-growth-strip.is-boosted strong { color: var(--pmd-text-green); }
+.pmd-dungeon-units-kv { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
+.pmd-dungeon-units-kv strong { color: var(--pmd-text-yellow); }
+
+.pmd-dungeon-units-moves {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 5px;
+}
+
+.pmd-dungeon-units-move {
+  background: var(--pmd-fill-well-deep);
+  border: 2px solid var(--pmd-divider-subtle);
+  padding: 4px 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pmd-dungeon-units-move.is-equipped { border-color: var(--pmd-text-green); }
+
+.pmd-dungeon-units-move-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.pmd-dungeon-units-move-top strong { color: var(--pmd-text-green); }
+.pmd-dungeon-units-move-stats { font-size: 11px; color: var(--pmd-text-cyan); }
+
 .pmd-dungeon-obj-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -76,9 +161,7 @@
   gap: 2px;
 }
 
-.pmd-dungeon-obj-cell.is-wide {
-  grid-column: 1 / -1;
-}
+.pmd-dungeon-obj-cell.is-wide { grid-column: 1 / -1; }
 
 .pmd-dungeon-obj-cell span {
   font-size: 10px;
@@ -88,15 +171,8 @@
   text-shadow: 1px 1px 0 #000000;
 }
 
-.pmd-dungeon-obj-cell strong {
-  font-size: 13px;
-  color: var(--pmd-text-yellow);
-  text-shadow: 1px 1px 0 #000000;
-}
-
-.pmd-dungeon-obj-cell strong.is-danger {
-  color: var(--pmd-text-danger);
-}
+.pmd-dungeon-obj-cell strong { font-size: 13px; color: var(--pmd-text-yellow); text-shadow: 1px 1px 0 #000000; }
+.pmd-dungeon-obj-cell strong.is-danger { color: var(--pmd-text-danger); }
 
 .pmd-dungeon-settings-list {
   display: flex;
@@ -153,9 +229,7 @@
   animation: pmd-begin-card-pop 180ms ease-out;
 }
 
-.pmd-begin-battle-backdrop.is-fast-mode {
-  pointer-events: none;
-}
+.pmd-begin-battle-backdrop.is-fast-mode { pointer-events: none; }
 
 .pmd-begin-battle-card {
   width: min(390px, 94%);
@@ -172,9 +246,7 @@
   font-size: clamp(22px, 4vw, 28px);
   letter-spacing: 0.06em;
   color: var(--pmd-text-yellow);
-  text-shadow:
-    2px 2px 0 #000000,
-    0 0 12px rgba(248, 216, 56, 0.45);
+  text-shadow: 2px 2px 0 #000000, 0 0 12px rgba(248, 216, 56, 0.45);
 }
 
 .pmd-begin-battle-obj-box {
@@ -203,12 +275,6 @@
 }
 
 @keyframes pmd-begin-card-pop {
-  0% {
-    opacity: 0;
-    transform: scale(0.94);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
+  0% { opacity: 0; transform: scale(0.94); }
+  100% { opacity: 1; transform: scale(1); }
 }

@@ -44,7 +44,7 @@ export interface CreditsEndCardCopy {
 export const CREDITS_HERO_META = {
   eyebrow: 'POKÉMON MYSTERY DUNGEON × FIRE EMBLEM',
   mainTitle: 'MYSTERY EMBLEM',
-  actSubtitleDemo: 'Part 1A — The Verdant Heartland',
+  actSubtitleDemo: 'The Verdant Heartland',
   actSubtitleFull: 'Chronicles of the Five Kingdoms',
   castSectionHeading: 'HEROES OF THE VERDANT HEARTLAND',
 } as const;
@@ -155,7 +155,7 @@ export function resolveCreditsEndCardCopy(save: SaveData | null): CreditsEndCard
       : 'Thank You for Playing the Mystery Emblem Demo!',
     teaserLine: isFullCampaign
       ? 'Peace returns across the Five Kingdoms — New Game Plus awaits!'
-      : 'Part 1B — Into the Goldensand Diarchy & Across the Five Kingdoms · Coming Soon!',
+      : 'Into the Goldensand Diarchy · Coming Soon!',
     statsLine: `Chapters Cleared: ${clearedCount} / ${totalChapterTarget}  ·  Allies Recruited: ${Math.max(4, rosterLen)}`,
     finishButtonLabel: 'Return to World Map ▶',
   };

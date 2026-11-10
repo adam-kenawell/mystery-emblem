@@ -58,12 +58,12 @@ export function renderCutsceneStageFrame(params: RenderCutsceneFrameParams): voi
   let camY = Math.round(targetWorldY - focalScreenY);
 
   if (mapPixelW <= nativeW) {
-    camX = Math.round((mapPixelW - nativeW) / 2);
+    camX = -Math.round((nativeW - mapPixelW) * 0.5);
   } else {
     camX = Math.max(0, Math.min(mapPixelW - nativeW, camX));
   }
   if (mapPixelH <= nativeH) {
-    camY = Math.round((mapPixelH - nativeH) / 2);
+    camY = -Math.round((nativeH - mapPixelH) * 0.38);
   } else {
     const maxCamY = Math.max(0, mapPixelH - Math.round(nativeH * 0.68));
     camY = Math.max(0, Math.min(maxCamY, camY));
@@ -104,6 +104,7 @@ export function renderCutsceneStageFrame(params: RenderCutsceneFrameParams): voi
 
   if (def.props) {
     for (const prop of def.props) {
+      if (prop.x < 0 || prop.y < 0 || prop.x >= def.width || prop.y >= def.height) continue;
       drawStageProp(ctx, prop, camX, camY, choreo.animClockMs);
     }
   }
@@ -146,6 +147,10 @@ export function renderCutsceneStageFrame(params: RenderCutsceneFrameParams): voi
     );
   }
 
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(-camX, -camY, mapPixelW, mapPixelH);
+  ctx.clip();
   drawAtmosphericMood(
     ctx,
     def,
@@ -156,6 +161,7 @@ export function renderCutsceneStageFrame(params: RenderCutsceneFrameParams): voi
     choreo.animClockMs,
     params.ambientMotes
   );
+  ctx.restore();
 }
 
 function drawCutsceneActor(

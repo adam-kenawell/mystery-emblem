@@ -6,6 +6,7 @@ import { PMD_TILESET_LIST } from '../../assets/tilesetLoader';
 import type { AudioManager } from '../../audio/AudioManager';
 import {
   CHAPTER_LEVEL_CATALOG,
+  CUTSCENE_STAGE_CATALOG,
   hasChapterMapOverride,
 } from '../../data/chapterMapRegistry';
 import { POKEMON_SPECIES_LIST } from '../../data/index';
@@ -24,13 +25,30 @@ export function renderEditorLevelSelectOptions(
   activeLevelId: string
 ): void {
   dom.levelSelectEl.innerHTML = '';
+
+  const chapterGroup = document.createElement('optgroup');
+  chapterGroup.label = 'Chapter Maps';
+  chapterGroup.dataset.testid = 'editor-optgroup-chapters';
   for (const item of CHAPTER_LEVEL_CATALOG) {
     const opt = document.createElement('option');
     opt.value = item.id;
     const customizedSuffix = hasChapterMapOverride(item.id) ? ' ★ [Custom]' : '';
     opt.textContent = `${item.label}${customizedSuffix}`;
-    dom.levelSelectEl.appendChild(opt);
+    chapterGroup.appendChild(opt);
   }
+
+  const cutsceneGroup = document.createElement('optgroup');
+  cutsceneGroup.label = 'Cutscene Stages';
+  cutsceneGroup.dataset.testid = 'editor-optgroup-cutscenes';
+  for (const stage of CUTSCENE_STAGE_CATALOG) {
+    const opt = document.createElement('option');
+    opt.value = stage.id;
+    const customizedSuffix = hasChapterMapOverride(stage.id) ? ' ★ [Custom]' : '';
+    opt.textContent = `${stage.label}${customizedSuffix}`;
+    cutsceneGroup.appendChild(opt);
+  }
+
+  dom.levelSelectEl.append(chapterGroup, cutsceneGroup);
   if ([...dom.levelSelectEl.options].some((o) => o.value === activeLevelId)) {
     dom.levelSelectEl.value = activeLevelId;
   }
@@ -154,12 +172,28 @@ export function syncEditorUiControls(
   dom.hudUndoBtnEl.textContent =
     state.undoStack.length > 0 ? `Undo (${state.undoStack.length})` : 'Undo';
 
-  dom.drawerEl.querySelectorAll<HTMLElement>('[data-editor-tool]').forEach((btn) => {
-    btn.classList.toggle('is-active', btn.dataset.editorTool === state.toolMode);
+  const isCutscene = state.editorTargetKind === 'cutscene';
+  dom.rootEl.dataset.editorKind = state.editorTargetKind;
+
+  dom.hudPlayBtnEl.hidden = isCutscene;
+  dom.hudPlayBtnEl.disabled = isCutscene;
+  dom.savePlayBtnEl.hidden = isCutscene;
+  dom.savePlayBtnEl.disabled = isCutscene;
+  dom.sysPlayBtnEl.hidden = isCutscene;
+  dom.sysPlayBtnEl.disabled = isCutscene;
+  dom.deployCapItemEl.hidden = isCutscene;
+
+  dom.drawerEl.querySelectorAll<HTMLButtonElement>('[data-editor-tool]').forEach((btn) => {
+    const tool = btn.dataset.editorTool;
+    const spawnOrWave =
+      tool === 'player_spawn' || tool === 'enemy_spawn' || tool === 'stairs_wave';
+    btn.hidden = isCutscene && spawnOrWave;
+    btn.disabled = isCutscene && spawnOrWave;
+    btn.classList.toggle('is-active', tool === state.toolMode);
   });
   dom.enemyConfigBoxEl.hidden =
-    state.toolMode !== 'enemy_spawn' && state.toolMode !== 'stairs_wave';
-  dom.waveTurnRowEl.hidden = state.toolMode !== 'stairs_wave';
+    isCutscene || (state.toolMode !== 'enemy_spawn' && state.toolMode !== 'stairs_wave');
+  dom.waveTurnRowEl.hidden = isCutscene || state.toolMode !== 'stairs_wave';
   dom.enemyLevelValEl.textContent = String(state.spawnEnemyLevel);
   dom.waveTurnValEl.textContent = String(state.spawnWaveTurn);
 
@@ -170,7 +204,13 @@ export function syncEditorUiControls(
   dom.gridToggleBtnEl.textContent = state.showGrid ? 'Grid: ON' : 'Grid: OFF';
   dom.gridToggleBtnEl.classList.toggle('is-active', state.showGrid);
 
-  dom.spawnsToggleBtnEl.textContent = state.showSpawns ? 'Spawns: ON' : 'Spawns: OFF';
+  dom.spawnsToggleBtnEl.textContent = isCutscene
+    ? state.showSpawns
+      ? 'Actors: ON'
+      : 'Actors: OFF'
+    : state.showSpawns
+      ? 'Spawns: ON'
+      : 'Spawns: OFF';
   dom.spawnsToggleBtnEl.classList.toggle('is-active', state.showSpawns);
 
   const tMeta = TERRAIN_METADATA[state.brushTerrainType];
@@ -178,11 +218,18 @@ export function syncEditorUiControls(
 
   dom.mapWidthValEl.textContent = String(state.map.width);
   dom.mapHeightValEl.textContent = String(state.map.height);
-  const cap = Math.max(
-    1,
-    Math.min(state.map.deploymentCap ?? state.map.playerSpawns.length, state.map.playerSpawns.length)
-  );
-  dom.deployCapValEl.textContent = `${cap} / ${state.map.playerSpawns.length}`;
+  if (isCutscene) {
+    dom.deployCapValEl.textContent = '—';
+  } else {
+    const cap = Math.max(
+      1,
+      Math.min(
+        state.map.deploymentCap ?? state.map.playerSpawns.length,
+        state.map.playerSpawns.length
+      )
+    );
+    dom.deployCapValEl.textContent = `${cap} / ${state.map.playerSpawns.length}`;
+  }
 }
 
 export function updateEditorInfoStrip(
@@ -214,7 +261,16 @@ export function updateEditorInfoStrip(
       ? ` · Waves: ${wavesAtTile.map((w) => `T${w.turnNumber} ${w.enemy.speciesId}`).join(', ')}`
       : '';
 
-  dom.infoStripEl.textContent = `${state.map.name} (${state.map.width}×${state.map.height}) · Tile (${x},${y}): ${tLabel}${spawnDesc}${waveDesc} · Brush: ${TERRAIN_METADATA[state.brushTerrainType].shortLabel} (#${state.brushTilesetId}:${state.brushChunkIndex})`;
+  const actorsAtTile =
+    state.editorTargetKind === 'cutscene'
+      ? state.cutsceneActorMarkers.filter((m) => m.x === x && m.y === y)
+      : [];
+  const actorDesc =
+    actorsAtTile.length > 0
+      ? ` · Actor: ${actorsAtTile.map((m) => `${m.actorId} (${m.roleLabel})`).join(', ')}`
+      : '';
+
+  dom.infoStripEl.textContent = `${state.map.name} (${state.map.width}×${state.map.height}) · Tile (${x},${y}): ${tLabel}${spawnDesc}${waveDesc}${actorDesc} · Brush: ${TERRAIN_METADATA[state.brushTerrainType].shortLabel} (#${state.brushTilesetId}:${state.brushChunkIndex})`;
 }
 
 export function showEditorToast(

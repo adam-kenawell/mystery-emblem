@@ -105,14 +105,14 @@ export function buildDevToolsModalHtml(): string {
     <div class="pmd-tab-panel" data-devtab-panel="maps" hidden>
       <div class="pmd-subcard">
         <div class="pmd-devtools-row-between">
-          <h3 class="pmd-subcard-title">Demo Chapter Maps (Part 1A)</h3>
+          <h3 class="pmd-subcard-title">Chapter Maps &amp; Cutscene Stages</h3>
           <span id="devtools-map-status-badge" class="pmd-editor-status-pill" data-testid="devtools-map-status-badge">DEFAULT</span>
         </div>
         <select
           id="devtools-map-level-select"
           class="pmd-select"
           data-testid="devtools-map-level-select"
-          aria-label="Select Demo Chapter Map"
+          aria-label="Select Chapter Map or Cutscene Stage"
         ></select>
         <div class="pmd-devtools-map-preview-wrap">
           <canvas

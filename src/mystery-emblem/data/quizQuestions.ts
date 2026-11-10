@@ -45,11 +45,11 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
     seedKey: 'slot1Flying',
     chapterSlotTitle: 'Capital Road Wing Scout',
     prompt:
-      "You're out on a walk when you spot something shiny stuck high up in the branches of a tree! What do you do?",
+      'You spot something shiny stuck high in a tree! What do you do?',
     options: [
       {
         id: 'A',
-        text: 'Start climbing right away! I can reach it!',
+        text: 'Climb right up! I can reach it!',
         primaryLord: 'bagon',
         secondaryLord: 'axew',
         recruitSpeciesIds: ['starly'],
@@ -57,7 +57,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'B',
-        text: 'Shake the trunk with all my might until it falls!',
+        text: 'Shake the trunk until it falls!',
         primaryLord: 'gible',
         secondaryLord: 'bagon',
         recruitSpeciesIds: ['pikipek'],
@@ -65,7 +65,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'C',
-        text: 'Look around for a long stick or a safer way up.',
+        text: 'Find a long stick or a safer way up.',
         primaryLord: 'dratini',
         secondaryLord: 'goomy',
         recruitSpeciesIds: ['pidgey'],
@@ -79,7 +79,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
     seedKey: 'slot2Psychic',
     chapterSlotTitle: 'Cleft Mountain Mystic',
     prompt:
-      'Your friend proudly bakes a batch of cookies for you, but when you take a bite, they used salt instead of sugar! What do you say?',
+      'A friend bakes you cookies, but used salt instead of sugar! What do you say?',
     options: [
       {
         id: 'A',
@@ -91,7 +91,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'B',
-        text: "Swallow it with a big smile so I don't hurt their feelings.",
+        text: 'Swallow it with a smile to spare their feelings.',
         primaryLord: 'goomy',
         secondaryLord: 'dratini',
         recruitSpeciesIds: ['ralts'],
@@ -99,7 +99,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'C',
-        text: 'Quietly reach for a huge glass of water and change the subject.',
+        text: 'Gulp some water and change the subject.',
         primaryLord: 'dratini',
         secondaryLord: 'goomy',
         recruitSpeciesIds: ['solosis'],
@@ -112,11 +112,11 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
     number: 3,
     seedKey: 'slot3Electric',
     chapterSlotTitle: 'Berry Orchards Vanguard',
-    prompt: "You're trying to open a stubborn jar lid, and it just won't budge! What do you do?",
+    prompt: "A stubborn jar lid won't budge! What do you do?",
     options: [
       {
         id: 'A',
-        text: "Keep twisting with everything I've got! I refuse to lose to a jar!",
+        text: "Keep twisting! I refuse to lose to a jar!",
         primaryLord: 'axew',
         secondaryLord: 'gible',
         recruitSpeciesIds: ['elekid'],
@@ -124,7 +124,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'B',
-        text: 'Tap the rim on the counter or hand it to a friend to try.',
+        text: 'Tap it on the counter or ask a friend.',
         primaryLord: 'bagon',
         secondaryLord: 'dratini',
         recruitSpeciesIds: ['pawmi'],
@@ -137,11 +137,11 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
     number: 4,
     seedKey: 'slot4Rock',
     chapterSlotTitle: 'Desert Oasis Bulwark',
-    prompt: 'A sudden summer downpour catches you halfway home without an umbrella! What do you do?',
+    prompt: 'A summer downpour catches you without an umbrella! What do you do?',
     options: [
       {
         id: 'A',
-        text: 'Sprint straight through the puddles at top speed!',
+        text: 'Sprint home through the puddles!',
         primaryLord: 'gible',
         secondaryLord: 'dratini',
         recruitSpeciesIds: ['geodude'],
@@ -149,7 +149,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'B',
-        text: 'Duck beneath a stone awning and enjoy the sound of the rain.',
+        text: 'Duck under an awning and enjoy the rain.',
         primaryLord: 'bagon',
         secondaryLord: 'goomy',
         recruitSpeciesIds: ['roggenrola'],
@@ -162,11 +162,11 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
     number: 5,
     seedKey: 'slot5Fire',
     chapterSlotTitle: 'Volcanic Pass Striker',
-    prompt: 'Before a big festival competition, everyone around you is getting nervous. How do you react?',
+    prompt: "Before a big festival competition, everyone's nervous. What do you do?",
     options: [
       {
         id: 'A',
-        text: 'Warm up twice as hard to set a fearless example!',
+        text: 'Warm up extra hard to set an example!',
         primaryLord: 'bagon',
         secondaryLord: 'axew',
         recruitSpeciesIds: ['combusken'],
@@ -174,7 +174,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'B',
-        text: 'Crack a lively joke to get the whole team grinning again!',
+        text: 'Crack a joke to get everyone grinning!',
         primaryLord: 'gible',
         secondaryLord: 'dratini',
         recruitSpeciesIds: ['monferno'],
@@ -187,11 +187,11 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
     number: 6,
     seedKey: 'slot6Grass',
     chapterSlotTitle: 'Ruined Citadel Botanist',
-    prompt: 'You discover a fork in an overgrown forest trail with no signpost in sight. Which path calls to you?',
+    prompt: 'An overgrown forest trail forks with no signpost. Which way?',
     options: [
       {
         id: 'A',
-        text: 'Check where the sunlight and moss point, then chart the smart route.',
+        text: 'Read the sunlight and moss, then pick the smart route.',
         primaryLord: 'axew',
         secondaryLord: 'dratini',
         recruitSpeciesIds: ['gloom'],
@@ -199,7 +199,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'B',
-        text: 'Follow the winding path bursting with strange wildflowers!',
+        text: 'Follow the path full of strange wildflowers!',
         primaryLord: 'goomy',
         secondaryLord: 'gible',
         recruitSpeciesIds: ['weepinbell'],
@@ -212,11 +212,11 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
     number: 7,
     seedKey: 'slot7Fairy',
     chapterSlotTitle: 'Sunken Foundry Chorister',
-    prompt: 'Everyone gathers around a crackling campfire after a long journey. Where do you find yourself?',
+    prompt: 'Everyone gathers by a crackling campfire. Where are you?',
     options: [
       {
         id: 'A',
-        text: 'Passing out warm cider and making sure nobody is left out.',
+        text: 'Passing out cider so nobody feels left out.',
         primaryLord: 'goomy',
         secondaryLord: 'dratini',
         recruitSpeciesIds: ['clefairy'],
@@ -224,7 +224,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'B',
-        text: 'Leading the biggest, most dramatic story of the night!',
+        text: "Telling the night's most dramatic story!",
         primaryLord: 'axew',
         secondaryLord: 'gible',
         recruitSpeciesIds: ['jigglypuff'],
@@ -238,11 +238,11 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
     seedKey: 'slot8Ice',
     chapterSlotTitle: 'Ice Kingdom Specialist',
     prompt:
-      'You wake up on a freezing winter morning and realize you still have thirty minutes before you have to get up. What do you do?',
+      'On a freezing winter morning, you have 30 more minutes in bed. What do you do?',
     options: [
       {
         id: 'A',
-        text: 'Burrow right back under the blankets and stay cozy!',
+        text: 'Burrow back under the blankets!',
         primaryLord: 'goomy',
         secondaryLord: 'dratini',
         recruitSpeciesIds: ['vanillish'],
@@ -250,7 +250,7 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
       },
       {
         id: 'B',
-        text: 'Hop out of bed anyway! No sense wasting the morning!',
+        text: "Hop up anyway! Don't waste the morning!",
         primaryLord: 'axew',
         secondaryLord: 'bagon',
         recruitSpeciesIds: ['piloswine'],

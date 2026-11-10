@@ -4,7 +4,7 @@
 
 import { bindPointerTap } from '../../ui/pointerControls';
 import { handleBattleMenuOrBack } from './battleBackAndCheats';
-import { dismissBeginBattleCard } from './battleBannersAndTransitions';
+import { dismissBeginBattleCard, isPhaseTransitionPlaying } from './battleBannersAndTransitions';
 import {
   confirmUnitWait,
   openForecastFromCommandMenu,
@@ -128,16 +128,12 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
   );
 
   bindPointerTap(
-    dom.forecastModalBackdropEl.querySelector<HTMLElement>(
-      '[data-testid="forecast-attack-btn"]'
-    ),
+    dom.forecastModalBackdropEl.querySelector<HTMLElement>('[data-testid="forecast-attack-btn"]'),
     () => void confirmForecastAction(ctx),
     { signal }
   );
   bindPointerTap(
-    dom.forecastModalBackdropEl.querySelector<HTMLElement>(
-      '[data-testid="forecast-cancel-btn"]'
-    ),
+    dom.forecastModalBackdropEl.querySelector<HTMLElement>('[data-testid="forecast-cancel-btn"]'),
     () => {
       if (getExpectedTutorialAction(tutorialOverlay) === 'battle_confirm_attack') {
         tutorialOverlay?.nudgeActiveStep();
@@ -173,7 +169,7 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
     (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      handleBattleMenuOrBack(ctx);
+      if (!isPhaseTransitionPlaying(state)) handleBattleMenuOrBack(ctx);
     },
     { signal }
   );
@@ -205,54 +201,25 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
     },
     { signal }
   );
-  bindPointerTap(
-    dom.fieldObjectiveBtnEl,
-    () => {
-      if (getExpectedTutorialAction(tutorialOverlay)) {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
-      audioManager.playSfx('select');
-      setSystemMenuSubView(ctx, 'objective');
-    },
-    { signal }
-  );
-  bindPointerTap(
-    dom.fieldSettingsBtnEl,
-    () => {
-      if (getExpectedTutorialAction(tutorialOverlay)) {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
-      audioManager.playSfx('select');
-      setSystemMenuSubView(ctx, 'settings');
-    },
-    { signal }
-  );
-  bindPointerTap(
-    dom.fieldOverworldBtnEl,
-    () => {
-      if (getExpectedTutorialAction(tutorialOverlay)) {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
-      audioManager.playSfx('select');
-      setSystemMenuSubView(ctx, 'confirm_overworld');
-    },
-    { signal }
-  );
-  bindPointerTap(
-    dom.fieldTitleBtnEl,
-    () => {
-      if (getExpectedTutorialAction(tutorialOverlay)) {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
-      audioManager.playSfx('select');
-      setSystemMenuSubView(ctx, 'confirm_title');
-    },
-    { signal }
-  );
+  const bindFieldSubViewBtn = (btn: HTMLElement, view: 'objective' | 'units' | 'settings' | 'confirm_overworld' | 'confirm_title') => {
+    bindPointerTap(
+      btn,
+      () => {
+        if (getExpectedTutorialAction(tutorialOverlay)) {
+          tutorialOverlay?.nudgeActiveStep();
+          return;
+        }
+        audioManager.playSfx('select');
+        setSystemMenuSubView(ctx, view);
+      },
+      { signal }
+    );
+  };
+  bindFieldSubViewBtn(dom.fieldObjectiveBtnEl, 'objective');
+  bindFieldSubViewBtn(dom.fieldUnitsBtnEl, 'units');
+  bindFieldSubViewBtn(dom.fieldSettingsBtnEl, 'settings');
+  bindFieldSubViewBtn(dom.fieldOverworldBtnEl, 'confirm_overworld');
+  bindFieldSubViewBtn(dom.fieldTitleBtnEl, 'confirm_title');
 
   bindPointerTap(
     dom.victoryModalBackdropEl.querySelector<HTMLElement>('[data-testid="victory-replay-btn"]'),

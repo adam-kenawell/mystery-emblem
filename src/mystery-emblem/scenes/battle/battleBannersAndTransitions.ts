@@ -57,6 +57,13 @@ export function dismissBeginBattleCard(state: BattleRuntimeState, dom: BattleDom
   }
 }
 
+export function isPhaseTransitionPlaying(state: BattleRuntimeState): boolean {
+  return (
+    !state.fastMode &&
+    (state.phaseTransitionResolver !== null || state.phaseTransitionTimer !== null)
+  );
+}
+
 export function cancelPhaseTransitionAnimation(
   state: BattleRuntimeState,
   dom: BattleDomRefs

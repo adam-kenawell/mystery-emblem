@@ -160,6 +160,18 @@ export function updateUnitHoverPopup(ctx: BattleControllerContext): void {
   if (typesEl) {
     typesEl.innerHTML = renderColoredTypesHtml(unit.types, ' / ');
   }
+  const nameEl = dom.unitPopupEl.querySelector<HTMLElement>('[data-testid="unit-popup-name"]');
+  if (nameEl) {
+    nameEl.textContent = unit.nickname || unit.speciesName;
+  }
+  const levelExpEl = dom.unitPopupEl.querySelector<HTMLElement>(
+    '[data-testid="unit-popup-level-exp"]'
+  );
+  if (levelExpEl) {
+    const expText =
+      unit.faction === 'player' && typeof unit.exp === 'number' ? String(unit.exp) : '--';
+    levelExpEl.textContent = `Lv ${unit.level}\u2002EXP ${expText}`;
+  }
 
   const hpTextEl = dom.unitPopupEl.querySelector('[data-testid="unit-popup-hp"]');
   if (hpTextEl) {
@@ -176,10 +188,21 @@ export function updateUnitHoverPopup(ctx: BattleControllerContext): void {
   const summary = computeUnitPopupStats(state.map, unit);
   const mightEl = dom.unitPopupEl.querySelector('[data-testid="unit-popup-might"]');
   const defEl = dom.unitPopupEl.querySelector('[data-testid="unit-popup-def"]');
-  const spdEl = dom.unitPopupEl.querySelector('[data-testid="unit-popup-spd"]');
-  if (mightEl) mightEl.textContent = summary.might !== null ? String(summary.might) : '—';
+  const spdefEl = dom.unitPopupEl.querySelector<HTMLElement>('[data-testid="unit-popup-spdef"]');
+  const speEl = dom.unitPopupEl.querySelector('[data-testid="unit-popup-spe"]');
+  if (mightEl) mightEl.textContent = summary.might !== null ? String(summary.might) : '\u2014';
   if (defEl) defEl.textContent = String(summary.effectiveDef);
-  if (spdEl) spdEl.textContent = String(summary.effectiveSpd);
+  if (spdefEl) {
+    let spdAliasEl = spdefEl.querySelector<HTMLElement>('[data-testid="unit-popup-spd"]');
+    if (!spdAliasEl) {
+      spdefEl.textContent = '';
+      spdAliasEl = document.createElement('span');
+      spdAliasEl.dataset.testid = 'unit-popup-spd';
+      spdefEl.appendChild(spdAliasEl);
+    }
+    spdAliasEl.textContent = String(summary.effectiveSpd);
+  }
+  if (speEl) speEl.textContent = String(summary.effectiveSpe);
 
   const movesWrap = dom.unitPopupEl.querySelector<HTMLElement>(
     '[data-testid="unit-popup-moves"]'
@@ -189,7 +212,7 @@ export function updateUnitHoverPopup(ctx: BattleControllerContext): void {
       .map((slot) => {
         const isEq = slot.id === unit.equippedMoveId && slot.move.category !== 'Support/Heal';
         const rLbl = slot.range[0] === slot.range[1] ? `R${slot.range[0]}` : `R${slot.range[0]}-${slot.range[1]}`;
-        return `<div class="pmd-unit-popup-move${isEq ? ' is-equipped' : ''}"><span>${isEq ? '[E] ' : ''}${escapeHudHtml(slot.move.name)}</span><em>${renderColoredTypeHtml(slot.move.type)} · ${rLbl}</em></div>`;
+        return `<div class="pmd-unit-popup-move${isEq ? ' is-equipped' : ''}"><span>${isEq ? '[E] ' : ''}${escapeHudHtml(slot.move.name)}</span><em>${renderColoredTypeHtml(slot.move.type)} \u00b7 ${rLbl}</em></div>`;
       })
       .join('');
   }
@@ -199,37 +222,42 @@ export function updateUnitHoverPopup(ctx: BattleControllerContext): void {
     const hasHeld = Boolean(unit.heldItemId && getItemById(unit.heldItemId));
     const hasCons = Boolean(unit.consumableItemId && getItemById(unit.consumableItemId));
     const hasDrop = Boolean(unit.droppableItemId && getItemById(unit.droppableItemId));
-    const itemKey = `${hasHeld ? unit.heldItemId : ''}|${hasCons ? unit.consumableItemId : ''}|${hasDrop ? unit.droppableItemId : ''}`;
-    if (!hasHeld && !hasCons && !hasDrop) {
-      itemEl.dataset.itemKey = '';
+    const itemKey = !hasHeld && !hasCons && !hasDrop
+      ? '__empty__'
+      : `${hasHeld ? unit.heldItemId : ''}|${hasCons ? unit.consumableItemId : ''}|${hasDrop ? unit.droppableItemId : ''}`;
+    if (itemEl.dataset.itemKey !== itemKey) {
+      itemEl.dataset.itemKey = itemKey;
       itemEl.innerHTML = '';
-      itemEl.hidden = true;
-    } else {
-      if (itemEl.dataset.itemKey !== itemKey) {
-        itemEl.dataset.itemKey = itemKey;
-        itemEl.innerHTML = '';
-        if (hasHeld && unit.heldItemId) {
-          itemEl.appendChild(createMiniItemIcon(unit.heldItemId, { sizePx: 18, cropped: true }));
-        }
-        if (hasCons && unit.consumableItemId) {
-          itemEl.appendChild(
-            createMiniItemIcon(unit.consumableItemId, { sizePx: 18, cropped: true })
-          );
-        }
+      if (!hasHeld && !hasCons && !hasDrop) {
+        const emptySlot = document.createElement('span');
+        emptySlot.className = 'pmd-mini-item-icon is-empty';
+        emptySlot.dataset.testid = 'unit-popup-empty-item';
+        emptySlot.setAttribute('role', 'img');
+        emptySlot.setAttribute('aria-label', 'No Item');
+        emptySlot.title = 'No Item';
+        emptySlot.innerHTML =
+          '<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" shape-rendering="crispEdges"><circle cx="5" cy="5" r="3.5" fill="none" stroke="currentColor" stroke-width="1"/><line x1="2.5" y1="7.5" x2="7.5" y2="2.5" stroke="currentColor" stroke-width="1"/></svg>';
+        itemEl.appendChild(emptySlot);
+      } else {
+        const appendItemPip = (id: string) => {
+          itemEl.appendChild(createMiniItemIcon(id, { sizePx: 14, cropped: true }));
+        };
+        if (hasHeld && unit.heldItemId) appendItemPip(unit.heldItemId);
+        if (hasCons && unit.consumableItemId) appendItemPip(unit.consumableItemId);
         if (hasDrop && unit.droppableItemId) {
           const dropChip = document.createElement('span');
-          dropChip.className = 'pmd-hud-drop-chip';
+          dropChip.className = 'pmd-unit-popup-drop-pip';
           const dropLbl = document.createElement('span');
           dropLbl.textContent = 'DROP';
           dropChip.append(
             dropLbl,
-            createMiniItemIcon(unit.droppableItemId, { sizePx: 16, cropped: true })
+            createMiniItemIcon(unit.droppableItemId, { sizePx: 14, cropped: true })
           );
           itemEl.appendChild(dropChip);
         }
       }
-      itemEl.hidden = false;
     }
+    itemEl.hidden = false;
   }
 
   dom.unitPopupEl.hidden = false;

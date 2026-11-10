@@ -14,6 +14,7 @@ export function toggleEditorPlayerSpawnAt(
   ty: number
 ): void {
   const { state, audioManager } = hooks;
+  if (state.editorTargetKind === 'cutscene') return;
   const existingIdx = state.map.playerSpawns.findIndex((s) => s.x === tx && s.y === ty);
   if (existingIdx >= 0) {
     if (state.map.playerSpawns.length <= 1) {
@@ -80,6 +81,7 @@ export function toggleEditorEnemySpawnAt(
   ty: number
 ): void {
   const { state, audioManager } = hooks;
+  if (state.editorTargetKind === 'cutscene') return;
   const existingIdx = state.map.enemySpawns.findIndex((e) => e.x === tx && e.y === ty);
   if (existingIdx >= 0) {
     const existing = state.map.enemySpawns[existingIdx]!;
@@ -160,13 +162,22 @@ export function resizeEditorMap(
   if (clampedW === state.map.width && clampedH === state.map.height) return;
 
   pushEditorUndoSnapshot(state);
+  const isCutscene = state.editorTargetKind === 'cutscene';
   const newTiles: DungeonMapTileCell[][] = [];
   for (let y = 0; y < clampedH; y++) {
     const row: DungeonMapTileCell[] = [];
     for (let x = 0; x < clampedW; x++) {
       const isBorder = x === 0 || y === 0 || x === clampedW - 1 || y === clampedH - 1;
       const old = state.map.tiles[y]?.[x];
-      if (
+      if (isCutscene) {
+        row.push(
+          old
+            ? { ...old }
+            : isBorder
+              ? { terrainType: 'wall', tilesetId: state.brushTilesetId, chunkIndex: 1 }
+              : { terrainType: 'floor', tilesetId: state.brushTilesetId, chunkIndex: 28 }
+        );
+      } else if (
         old &&
         !(x === state.map.width - 1 && clampedW > state.map.width && old.terrainType === 'wall') &&
         !(y === state.map.height - 1 && clampedH > state.map.height && old.terrainType === 'wall')
@@ -240,6 +251,7 @@ export function adjustEditorDeploymentCap(
   delta: number
 ): void {
   const { state, audioManager } = hooks;
+  if (state.editorTargetKind === 'cutscene') return;
   const maxCap = Math.min(12, Math.max(1, state.map.playerSpawns.length));
   const current = Math.max(1, Math.min(maxCap, state.map.deploymentCap ?? maxCap));
   const next = Math.max(1, Math.min(maxCap, current + delta));

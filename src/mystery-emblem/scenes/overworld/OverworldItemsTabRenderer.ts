@@ -94,7 +94,7 @@ export function renderOverworldConvoyTab(params: OverworldItemsTabParams): {
 
   const box = document.createElement('div');
   box.className = 'pmd-overworld-subbox';
-  box.innerHTML = `<p class="pmd-overworld-subbox-title">Bag (${save.gold}G)</p>`;
+  box.innerHTML = `<p class="pmd-overworld-subbox-title">Bag (<span data-testid="overworld-items-gold">${save.gold}G</span>)</p>`;
 
   const validBagEntries: Array<{ item: ItemDefinition; quantity: number }> = [];
   for (const entry of save.convoy) {

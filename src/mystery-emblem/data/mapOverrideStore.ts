@@ -7,7 +7,11 @@
 
 import type { CustomMapOverrideEntry, DungeonMapDefinition } from '../types/schemas';
 import { cloneDungeonMap } from './chapters/chapterCodec';
-import { getDefaultChapterMap, validateDungeonMapDefinition } from './chapters/defaultCatalog';
+import {
+  getDefaultTargetMap,
+  isCutsceneStageId,
+  validateTargetMapDefinition,
+} from './chapters/cutsceneStageCatalog';
 import { isCorruptedAllWaterOverride } from './chapters/mapValidator';
 
 export const MAP_OVERRIDES_STORAGE_KEY = 'mystery_emblem_map_overrides_v1';
@@ -69,9 +73,9 @@ class ChapterMapOverrideStore {
         if (!entry || typeof entry !== 'object') continue;
         const ts = typeof entry.updatedAt === 'number' && Number.isFinite(entry.updatedAt) && entry.updatedAt > 0 ? entry.updatedAt : Date.now();
         if ((this.resets.get(id) ?? 0) >= ts) continue;
-        const v = validateDungeonMapDefinition(entry.map, id);
+        const v = validateTargetMapDefinition(entry.map, id);
         if (v.valid && v.map) {
-          if (isCorruptedAllWaterOverride(v.map)) {
+          if (!isCutsceneStageId(id) && isCorruptedAllWaterOverride(v.map)) {
             const healTs = Math.max(ts + 1, Date.now());
             this.resets.set(id, healTs);
             if (healTs > this.lastStamp) this.lastStamp = healTs;
@@ -126,7 +130,7 @@ class ChapterMapOverrideStore {
   public getEffectiveMap(id: string): DungeonMapDefinition {
     this.ensureLoaded();
     const ov = this.overrides.get(id);
-    return ov ? cloneDungeonMap(ov.map) : cloneDungeonMap(getDefaultChapterMap(id));
+    return ov ? cloneDungeonMap(ov.map) : getDefaultTargetMap(id);
   }
 
   public getAllOverridesRecord(): Record<string, CustomMapOverrideEntry> {
@@ -145,7 +149,7 @@ class ChapterMapOverrideStore {
 
   public saveOverride(id: string, candidateMap: DungeonMapDefinition, updatedAt?: number): DungeonMapDefinition {
     this.ensureLoaded();
-    const v = validateDungeonMapDefinition(candidateMap, id);
+    const v = validateTargetMapDefinition(candidateMap, id);
     if (!v.valid || !v.map) throw new Error(`Invalid map for "${id}": ${v.errors.join(' ')}`);
     const stamp = this.nextTimestamp(updatedAt);
     const stored = cloneDungeonMap(v.map);
@@ -164,7 +168,7 @@ class ChapterMapOverrideStore {
       this.persist();
       if (existed) this.emit(id);
     }
-    return cloneDungeonMap(getDefaultChapterMap(id));
+    return getDefaultTargetMap(id);
   }
 
   public resetAllOverrides(clearResetsToo = false): void {
@@ -206,10 +210,10 @@ class ChapterMapOverrideStore {
       let incResTs = incRes[id] ?? 0;
       const rawOv = incOv[id];
       if (rawOv && typeof rawOv === 'object') {
-        const v = validateDungeonMapDefinition(rawOv.map, id);
+        const v = validateTargetMapDefinition(rawOv.map, id);
         if (v.valid && v.map) {
           const rawTs = typeof rawOv.updatedAt === 'number' && Number.isFinite(rawOv.updatedAt) && rawOv.updatedAt > 0 ? rawOv.updatedAt : 1;
-          if (isCorruptedAllWaterOverride(v.map)) {
+          if (!isCutsceneStageId(id) && isCorruptedAllWaterOverride(v.map)) {
             incResTs = Math.max(incResTs, rawTs + 1, locTs + 1, Date.now());
             cloudOutdated = true;
           } else {

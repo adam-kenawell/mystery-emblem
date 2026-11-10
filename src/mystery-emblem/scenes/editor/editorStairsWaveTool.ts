@@ -15,6 +15,7 @@ export function toggleEditorStairsWaveAt(
   ty: number
 ): void {
   const { state, audioManager } = hooks;
+  if (state.editorTargetKind === 'cutscene') return;
   if (tx <= 0 || ty <= 0 || tx >= state.map.width - 1 || ty >= state.map.height - 1) {
     hooks.showToast('Place Stairs Waves inside the map perimeter');
     return;

@@ -32,6 +32,7 @@ export interface BattleDomRefs extends BattleModalsDomRefs {
   cmdWaitBtnEl: HTMLButtonElement;
   cmdCancelBtnEl: HTMLButtonElement;
   talkChoiceBackdropEl: HTMLElement;
+  fieldUnitsBtnEl: HTMLButtonElement;
   forecastModalBackdropEl: HTMLElement;
   attackerPortraitView: PmdPortraitView;
   defenderPortraitView: PmdPortraitView;
@@ -124,12 +125,21 @@ export function createBattleDomShell(): BattleDomRefs {
   unitPopupEl.dataset.testid = 'dungeon-unit-popup';
   unitPopupEl.hidden = true;
   unitPopupEl.innerHTML = `
+    <div class="pmd-unit-popup-header">
+      <div class="pmd-unit-popup-header-main">
+        <div class="pmd-unit-popup-title-line">
+          <strong class="pmd-unit-popup-name" data-testid="unit-popup-name"></strong>
+          <span class="pmd-unit-popup-level-exp" data-testid="unit-popup-level-exp">Lv 1</span>
+        </div>
+        <span class="pmd-unit-popup-types" data-testid="unit-popup-types"></span>
+      </div>
+      <div class="pmd-unit-popup-item-slot" data-testid="unit-popup-item"></div>
+    </div>
     <div class="pmd-unit-popup-top">
       <div class="pmd-forecast-portrait-slot pmd-unit-popup-portrait-slot" data-popup-portrait-slot>
         <span class="pmd-unit-popup-role-pip" data-popup-role-pip hidden></span>
       </div>
       <div class="pmd-unit-popup-vitals">
-        <div class="pmd-unit-popup-types" data-testid="unit-popup-types"></div>
         <div class="pmd-unit-popup-hp-row">
           <span class="pmd-unit-popup-lbl">HP</span>
           <strong data-testid="unit-popup-hp">20/20</strong>
@@ -138,15 +148,15 @@ export function createBattleDomShell(): BattleDomRefs {
         <div class="pmd-forecast-hp-bar-track pmd-unit-popup-hp-bar">
           <div class="pmd-forecast-hp-bar-fill" data-popup-hp-fill></div>
         </div>
-        <div class="pmd-unit-popup-stats-row">
-          <span class="pmd-unit-popup-stat"><em>MGT</em><strong data-testid="unit-popup-might">—</strong></span>
-          <span class="pmd-unit-popup-stat"><em>DEF</em><strong data-testid="unit-popup-def">0</strong></span>
-          <span class="pmd-unit-popup-stat"><em>SPD</em><strong data-testid="unit-popup-spd">0</strong></span>
-        </div>
       </div>
     </div>
+    <div class="pmd-unit-popup-stats-row">
+      <span class="pmd-unit-popup-stat"><em>MGT</em><strong data-testid="unit-popup-might">—</strong></span>
+      <span class="pmd-unit-popup-stat"><em>DEF</em><strong data-testid="unit-popup-def">0</strong></span>
+      <span class="pmd-unit-popup-stat"><em>SPDEF</em><strong data-testid="unit-popup-spdef"><span data-testid="unit-popup-spd">0</span></strong></span>
+      <span class="pmd-unit-popup-stat"><em>SPE</em><strong data-testid="unit-popup-spe">0</strong></span>
+    </div>
     <div class="pmd-unit-popup-moves" data-testid="unit-popup-moves"></div>
-    <div class="pmd-unit-popup-item" data-testid="unit-popup-item" hidden></div>
   `;
   const popupSlot = unitPopupEl.querySelector('[data-popup-portrait-slot]');
   popupSlot?.insertBefore(unitPopupPortraitView.canvas, popupSlot.firstChild);
@@ -173,6 +183,14 @@ export function createBattleDomShell(): BattleDomRefs {
 
   const forecastDom = createBattleForecastDom();
   const modalsDom = createBattleModalsDom();
+
+  // 7th Field Menu option (`Units`) docked between `Objective` and `Settings`
+  const fieldUnitsBtnEl = document.createElement('button');
+  fieldUnitsBtnEl.type = 'button';
+  fieldUnitsBtnEl.className = 'pmd-btn pmd-menu-row';
+  fieldUnitsBtnEl.dataset.testid = 'battle-field-units';
+  fieldUnitsBtnEl.textContent = 'Units';
+  modalsDom.fieldMenuCardEl.insertBefore(fieldUnitsBtnEl, modalsDom.fieldSettingsBtnEl);
 
   rootEl.append(
     canvasStageEl,
@@ -216,6 +234,7 @@ export function createBattleDomShell(): BattleDomRefs {
     cmdWaitBtnEl: actionMenuEl.querySelector('[data-testid="dungeon-cmd-wait"]')!,
     cmdCancelBtnEl: actionMenuEl.querySelector('[data-testid="dungeon-cmd-cancel"]')!,
     talkChoiceBackdropEl,
+    fieldUnitsBtnEl,
     ...forecastDom,
     ...modalsDom,
   };

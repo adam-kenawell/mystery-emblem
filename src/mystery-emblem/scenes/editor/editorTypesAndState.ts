@@ -8,6 +8,8 @@ import type { AudioManager } from '../../audio/AudioManager';
 import {
   getEffectiveChapterMap,
   hasChapterMapOverride,
+  type CutsceneStageActorMarker,
+  type MapEditorTargetKind,
 } from '../../data/chapterMapRegistry';
 import type { SaveStateManager } from '../../state/SaveStateManager';
 import type { DungeonMapDefinition, TerrainType } from '../../types/schemas';
@@ -57,6 +59,7 @@ export const BIOME_BRUSH_PRESETS: ReadonlyArray<BiomeBrushPreset> = [
 
 export interface ChapterMapEditorSnapshot {
   isOpen: boolean;
+  kind: MapEditorTargetKind;
   levelId: string;
   mapName: string;
   width: number;
@@ -65,6 +68,7 @@ export interface ChapterMapEditorSnapshot {
   playerSpawnCount: number;
   enemySpawnCount: number;
   reinforcementWaveCount: number;
+  actorMarkerCount: number;
   isCustomizedInStore: boolean;
   hasUnsavedChanges: boolean;
   toolMode: MapEditorToolMode;
@@ -108,6 +112,8 @@ export interface EditorRuntimeState {
   previousBgmId: string | null;
 
   activeLevelId: string;
+  editorTargetKind: MapEditorTargetKind;
+  cutsceneActorMarkers: ReadonlyArray<CutsceneStageActorMarker>;
   map: DungeonMapDefinition;
   undoStack: DungeonMapDefinition[];
   dirty: boolean;
@@ -154,6 +160,8 @@ export function createInitialEditorState(): EditorRuntimeState {
     previousBgmId: null,
 
     activeLevelId: 'prologue',
+    editorTargetKind: 'chapter',
+    cutsceneActorMarkers: [],
     map: getEffectiveChapterMap('prologue'),
     undoStack: [],
     dirty: false,
@@ -199,15 +207,24 @@ export function buildEditorSnapshot(
   const bounds = computeDungeonCameraBounds(state.map.width, state.map.height, state.cam);
   return {
     isOpen: state.openState,
+    kind: state.editorTargetKind,
     levelId: state.activeLevelId,
     mapName: state.map.name,
     width: state.map.width,
     height: state.map.height,
     deploymentCap:
-      state.map.deploymentCap ?? Math.max(1, state.map.playerSpawns.length),
+      state.editorTargetKind === 'cutscene'
+        ? 0
+        : (state.map.deploymentCap ?? Math.max(1, state.map.playerSpawns.length)),
     playerSpawnCount: state.map.playerSpawns.length,
     enemySpawnCount: state.map.enemySpawns.length,
     reinforcementWaveCount: state.map.reinforcements?.length ?? 0,
+    actorMarkerCount:
+      state.editorTargetKind === 'cutscene'
+        ? state.cutsceneActorMarkers.filter(
+            (m) => m.x >= 0 && m.y >= 0 && m.x < state.map.width && m.y < state.map.height
+          ).length
+        : 0,
     isCustomizedInStore: hasChapterMapOverride(state.activeLevelId),
     hasUnsavedChanges: state.dirty,
     toolMode: state.toolMode,

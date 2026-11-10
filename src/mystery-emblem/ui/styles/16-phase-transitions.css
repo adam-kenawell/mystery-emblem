@@ -157,6 +157,14 @@
     grid-template-columns: 1fr;
   }
 
+  .pmd-dungeon-units-growth-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pmd-dungeon-units-moves {
+    grid-template-columns: 1fr;
+  }
+
   .pmd-phase-cine-title {
     font-size: clamp(22px, 6.8vw, 34px);
     letter-spacing: 0.08em;
@@ -185,6 +193,10 @@
     border-width: 8px 12px;
     padding: 6px 10px;
     gap: 6px;
+  }
+
+  .pmd-dungeon-submodal.is-units-panel {
+    max-width: 560px;
   }
 
   .pmd-begin-battle-card {

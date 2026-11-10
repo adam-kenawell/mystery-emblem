@@ -3,6 +3,9 @@
  *
  * Covers Prologue Turn 1 movement/Danger Area, Combat Forecast & `[E]` rule,
  * 1-Item Slot & Heal Pulse, Level-Ups & Stones, Overworld Menu, and Chapter Prep.
+ *
+ * Copy rule: 1–2 short sentences per beat. Interactive (`awaitAction`) beats MUST end with
+ * a clear instruction — the coach card renders no hint pill or buttons on those beats.
  */
 
 import type { TutorialTopicDefinition } from './tutorialTypes';
@@ -12,14 +15,13 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
     id: 'ch1_turn1_controls_phases',
     title: 'Danger Area, Moving & Turn Phases',
     category: 'controls_fusion',
-    summary: 'Checking enemy reach from empty floor tiles, moving your squad, and protecting your ★ Lord.',
+    summary: 'Check enemy reach, move your team, and keep your ★ Lord safe.',
     beats: [
       {
         id: 'ch1_step1_empty_tile',
         emotion: 'Teary-Eyed',
-        dialogue:
-          'EEP! Sir Empoleon’s live combat lesson is starting! Rule #1 from his drills: check how far an opponent’s reach goes! Drag to pan the map anytime, and tap a glowing empty floor tile to open the Field Menu!',
-        actionHint: 'Tap any highlighted empty floor tile',
+        dialogue: 'Eep, the lesson’s starting! Tap a glowing empty tile to open the Field Menu.',
+        actionHint: 'Tap a glowing empty tile',
         awaitAction: 'battle_open_field_menu',
         spotlight: { kind: 'battle_tiles', tileFilter: 'empty_floor' },
         chips: [{ kind: 'badge', label: 'Empty Tile -> Field Menu', tone: 'gold' }],
@@ -27,9 +29,8 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
       {
         id: 'ch1_step2_danger_area',
         emotion: 'Shouting',
-        dialogue:
-          'Now tap Danger Area! Being a lifelong coward means I memorized every predator’s exact attack reach—you can also hover any foe or right-click to check it anytime!',
-        actionHint: 'Tap Danger Area in the Field Menu',
+        dialogue: 'Now tap Danger Area to see where enemies can reach.',
+        actionHint: 'Tap Danger Area',
         awaitAction: 'battle_toggle_danger_area',
         spotlight: { kind: 'dom', selector: '[data-testid="battle-field-danger"]' },
         chips: [{ kind: 'badge', label: 'Danger Area', tone: 'danger' }],
@@ -38,8 +39,8 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
         id: 'ch1_step3_select_lord',
         emotion: 'Worried',
         dialogue:
-          'See that crimson zone? Enemies can strike there on Enemy Phase! Now tap {lord} (★)—if {lord} hits 0 HP it’s Game Over, while other fainted pals just retreat until next battle!',
-        actionHint: 'Tap {lord} (★) on the beach',
+          'Enemies can hit anything in red, and if {lord} faints, it’s game over! Tap {lord} (★) to select them.',
+        actionHint: 'Tap {lord} (★)',
         awaitAction: 'battle_select_lord',
         spotlight: { kind: 'battle_tiles', tileFilter: 'lord_unit' },
         chips: [
@@ -50,9 +51,8 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
       {
         id: 'ch1_step4_move_blue',
         emotion: 'Surprised',
-        dialogue:
-          'Blue tiles show where {lord} can walk, Red shows attack reach, and the bottom-left cards show stats & terrain! Tap any Blue tile to step forward!',
-        actionHint: 'Tap any Blue movement tile',
+        dialogue: 'Blue tiles show where {lord} can move. Tap a blue tile to walk there.',
+        actionHint: 'Tap a blue tile',
         awaitAction: 'battle_move_to_blue_tile',
         spotlight: { kind: 'battle_tiles', tileFilter: 'reachable_move' },
         chips: [
@@ -63,9 +63,8 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
       {
         id: 'ch1_step5_wait',
         emotion: 'Happy',
-        dialogue:
-          'Looking Way Braver Than Me! Tap Wait to finish {lord}’s move—spar with Sir Empoleon from Range 1, snipe uncountered from Range 2, or pick End Phase! I’ll coach from behind my boulder!',
-        actionHint: 'Tap Wait in the command menu',
+        dialogue: 'Way braver than me! Tap Wait to end {lord}’s turn.',
+        actionHint: 'Tap Wait',
         awaitAction: 'battle_confirm_wait',
         spotlight: { kind: 'dom', selector: '[data-testid="dungeon-cmd-wait"]' },
       },
@@ -75,14 +74,13 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
     id: 'ch1_first_combat_forecast',
     title: 'Combat Forecast, Ranges & [E] Counters',
     category: 'combat_tactics',
-    summary: 'Physical (R1) vs Special (R2), the single [E] counter-attack rule, STAB, and +5 Spe doubling.',
+    summary: 'Physical vs Special range, the [E] counter rule, and hitting twice.',
     beats: [
       {
         id: 'combat_step1_open_forecast',
         emotion: 'Stunned',
-        dialogue:
-          'WAH! An enemy is inside your Red attack range! Don’t swing blind—tap that enemy (or Attack) to inspect the Combat Forecast first!',
-        actionHint: 'Tap the highlighted enemy in Red range',
+        dialogue: 'Wah, an enemy’s in range! Tap the glowing enemy to see the Combat Forecast.',
+        actionHint: 'Tap the glowing enemy',
         awaitAction: 'battle_open_attack_forecast',
         spotlight: {
           kind: 'battle_tiles',
@@ -94,7 +92,7 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
         id: 'combat_step2_equipped_rule',
         emotion: 'Determined',
         dialogue:
-          'Survival Secret #1: Physical moves hit Range 1 (adjacent) and Special moves hit Range 2! Foes ONLY counter-attack if their single [E] move matches your range—so snipe melee brutes from 2 tiles away for a free hit!',
+          'Physical moves hit 1 tile away, Special moves hit 2. Foes only counter if their single [E] move matches your range!',
         chips: [
           { kind: 'badge', label: 'Physical = R1', tone: 'gold' },
           { kind: 'badge', label: 'Special = R2', tone: 'cyan' },
@@ -105,8 +103,8 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
         id: 'combat_step3_confirm_attack',
         emotion: 'Teary-Eyed',
         dialogue:
-          'Weaknesses & same-type STAB boost damage (1.25x), and +5 Speed strikes twice (x2)! Pick a move on the left bar, then tap Attack! ...Tell me when the scary noise is over!',
-        actionHint: 'Tap Attack! to strike',
+          'Type advantage hits harder, and being 5+ Speed faster hits twice. Pick a move, then tap Attack!',
+        actionHint: 'Tap Attack!',
         awaitAction: 'battle_confirm_attack',
         spotlight: {
           kind: 'dom',
@@ -124,13 +122,13 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
     id: 'ch1_healing_and_items',
     title: 'Healing Allies & The 1-Item Slot',
     category: 'prep_pokemon',
-    summary: 'Auto-trigger Berries vs manual Potions in your 1 Item Slot, plus R1–2 Support healing.',
+    summary: 'Your one item slot, auto Berries vs Potions, and healing allies.',
     beats: [
       {
         id: 'heal_step1_item_slot_rule',
         emotion: 'Crying',
         dialogue:
-          'SOMEBODY TOOK A HIT! NOBODY PANIC—OKAY I’M PANICKING! Each Pokémon has 1 Item Slot: Held Berries (like {partner}’s Oran Berry) trigger automatically, while Potions are used manually via Item!',
+          'Someone got hurt! Each Pokémon holds one item: Berries like {partner}’s Oran Berry work on their own, and Potions are used from Item.',
         chips: [
           { kind: 'item', itemId: 'oran_berry', label: 'Oran Berry (Auto)' },
           { kind: 'item', itemId: 'potion', label: 'Potion (Manual)' },
@@ -140,8 +138,8 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
         id: 'heal_step2_heal_pulse',
         emotion: 'Worried',
         dialogue:
-          'Even better, {healer}’s Heal Pulse heals allies from 1–2 tiles away (Green tiles) AND awards EXP without spending items! Tap your highlighted teammate to check their Green heal range or Item!',
-        actionHint: 'Tap the highlighted ally to inspect Heal / Item',
+          '{healer}’s Heal Pulse heals allies up to 2 tiles away and earns EXP. Tap the glowing ally to try it.',
+        actionHint: 'Tap the glowing ally',
         awaitAction: 'battle_inspect_heal_or_item',
         spotlight: { kind: 'battle_tiles', tileFilter: 'wounded_or_healer' },
         chips: [
@@ -155,20 +153,19 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
     id: 'levelup_and_evolution',
     title: 'Level-Ups & Evolution Stone Promotions',
     category: 'world_progression',
-    summary: '100 EXP level-ups, bespoke stat growths, and manual Lv. 10+ Evolution Stone promotion.',
+    summary: 'Level-ups, stat growth, and evolving with Stones at Lv. 10+.',
     beats: [
       {
         id: 'evo_beat1_exp',
         emotion: 'Surprised',
-        dialogue:
-          'Whoa, stronger already?! Every 100 EXP rolls that Pokémon’s personal stat growths (and lower-level pals earn catch-up EXP faster—not that I’m volunteering!).',
+        dialogue: 'Whoa, a level up! Every 100 EXP means a new level and better stats.',
         chips: [{ kind: 'badge', label: '100 EXP = +1 Lv', tone: 'gold' }],
       },
       {
         id: 'evo_beat2_manual_stone',
         emotion: 'Happy',
         dialogue:
-          'Important twist: nobody evolves automatically! At Level 10+, use an Evolution Stone manually (in Units, Chapter Prep, or mid-battle Evolve! if held) for instant bonus stats while keeping your continuous Level 1–40!',
+          'Nobody evolves on their own. At Lv. 10+, use an Evolution Stone from Units, Chapter Prep, or Evolve! in battle.',
         chips: [
           { kind: 'item', itemId: 'evolution_stone', label: 'Lv. 10+ Stone' },
           { kind: 'item', itemId: 'evolution_gem', label: 'Lv. 20+ Gem' },
@@ -180,14 +177,13 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
     id: 'overworld_and_skirmishes',
     title: 'The World Map & Party Menu',
     category: 'world_progression',
-    summary: 'Traveling kingdom roads, managing Units/Items/System, and optional Feral Skirmishes.',
+    summary: 'Traveling the map, the party menu, and bonus Skirmishes.',
     beats: [
       {
         id: 'ow_step1_open_menu',
         emotion: 'Happy',
-        dialogue:
-          'Fresh air! Sunshine! Zero claws swinging at my face! Tap unlocked nodes to travel the World Map—first, tap Menu in the top-right corner so we check our squad!',
-        actionHint: 'Tap Menu in the top-right corner',
+        dialogue: 'Phew, fresh air! Tap nodes to travel, but first tap Menu in the top-right corner.',
+        actionHint: 'Tap Menu',
         awaitAction: 'overworld_open_menu',
         spotlight: { kind: 'dom', selector: '#pmd-corner-menu-btn', preferredDock: 'bottom' },
         chips: [{ kind: 'badge', label: 'Tap Nodes to Travel', tone: 'cyan' }],
@@ -196,7 +192,7 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
         id: 'ow_step2_tour_tabs',
         emotion: 'Normal',
         dialogue:
-          'In Units & Items, swap moves, rename pals, equip Convoy gear, or use Evolution Stones at Lv. 10+! Cleared chapters can’t be farmed infinitely, though occasional Feral Skirmishes pop up—and System has Ask Wimpod anytime!',
+          'Units and Items let you swap moves, equip gear, and evolve. Bonus Feral Skirmishes sometimes pop up on cleared spots!',
         chips: [
           { kind: 'badge', label: 'Units · Items · System', tone: 'gold' },
           { kind: 'badge', label: 'Bonus Feral Skirmishes', tone: 'danger' },
@@ -208,13 +204,12 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
     id: 'prep_units_and_moves',
     title: 'Chapter Prep, [E] Loadouts & Positioning',
     category: 'prep_pokemon',
-    summary: 'Configuring 4-move loadouts, setting your [E] counter move, and swapping starting tiles.',
+    summary: 'Set moves and your [E] counter, then arrange starting spots.',
     beats: [
       {
         id: 'prep_step1_open_units',
         emotion: 'Happy',
-        dialogue:
-          'Ooh, Chapter Prep—planning BEFORE danger starts is my love language! First, tap Manage Units so we inspect our new recruits’ moves!',
+        dialogue: 'Chapter Prep—planning before danger is my favorite! Tap Manage Units.',
         actionHint: 'Tap Manage Units',
         awaitAction: 'prep_open_manage_units',
         spotlight: { kind: 'dom', selector: '[data-testid="prep-btn-manage-units"]' },
@@ -223,8 +218,8 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
         id: 'prep_step2_check_equipped',
         emotion: 'Determined',
         dialogue:
-          'Each fighter brings up to 4 unlocked moves, and tapping [E] picks the ONE move they counter with on Enemy Phase (R1 Physical vs R2 Special)! Check your squad, then tap Done!',
-        actionHint: 'Check moves / [E], then tap Done',
+          'Each Pokémon brings 4 moves, and [E] marks the one they counter with. Take a look, then tap Done.',
+        actionHint: 'Tap Done',
         awaitAction: 'prep_close_manage_units',
         spotlight: {
           kind: 'dom',
@@ -239,8 +234,7 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
       {
         id: 'prep_step3_open_view_map',
         emotion: 'Worried',
-        dialogue:
-          'Never march into an ambush blind! Tap View Map next so we scout enemy positions and rearrange our starting formation!',
+        dialogue: 'Never walk into an ambush blind! Tap View Map.',
         actionHint: 'Tap View Map',
         awaitAction: 'prep_open_view_map',
         spotlight: { kind: 'dom', selector: '[data-testid="prep-btn-view-map"]' },
@@ -248,9 +242,8 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
       {
         id: 'prep_step4_swap_blue_tiles',
         emotion: 'Happy',
-        dialogue:
-          'Tap any two glowing Blue tiles to swap where teammates start (great for putting fliers or {partner} near rivers!), or tap Prep up top when you’re ready to hit Fight!',
-        actionHint: 'Swap 2 Blue tiles (or tap Prep)',
+        dialogue: 'Tap two blue tiles to swap starting spots, or tap Prep when you’re ready.',
+        actionHint: 'Swap 2 blue tiles (or tap Prep)',
         awaitAction: 'prep_swap_or_finish_view_map',
         spotlight: {
           kind: 'battle_tiles',

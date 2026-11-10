@@ -12,23 +12,6 @@
   gap: 6px;
 }
 
-.pmd-tutorial-domain-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 7px;
-  border-radius: 3px;
-  font-size: 11px;
-  letter-spacing: 0.03em;
-  background: var(--pmd-fill-well-deep);
-  border: 1px solid var(--pmd-border-mid);
-  color: var(--pmd-text-cyan);
-}
-
-.pmd-tutorial-domain-pill.is-fusion {
-  border-color: var(--pmd-text-gold);
-  color: var(--pmd-text-yellow);
-}
-
 .pmd-tutorial-step-badge {
   display: inline-flex;
   align-items: center;
@@ -63,50 +46,6 @@
   flex: 1 1 auto;
   min-height: 0;
   padding-right: 2px;
-}
-
-.pmd-tutorial-chips {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 5px;
-}
-
-.pmd-tutorial-chips:empty {
-  display: none;
-}
-
-.pmd-tutorial-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 7px;
-  min-height: 26px;
-  border-radius: 4px;
-  background: var(--pmd-fill-well-deep);
-  border: 1px solid var(--pmd-divider-subtle);
-  font-size: 11.5px;
-  color: var(--pmd-text-white);
-}
-
-.pmd-tutorial-chip.is-badge.is-gold {
-  border-color: var(--pmd-text-gold);
-  color: var(--pmd-text-yellow);
-}
-
-.pmd-tutorial-chip.is-badge.is-green {
-  border-color: #58e868;
-  color: var(--pmd-text-green);
-}
-
-.pmd-tutorial-chip.is-badge.is-cyan {
-  border-color: #60a8f8;
-  color: var(--pmd-text-cyan);
-}
-
-.pmd-tutorial-chip.is-badge.is-danger {
-  border-color: #ff6880;
-  color: var(--pmd-text-danger);
 }
 
 .pmd-tutorial-nav-btn {

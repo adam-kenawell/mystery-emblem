@@ -228,6 +228,8 @@ export interface UnitPopupCombatSummary {
   mightCategory: 'Physical' | 'Special' | null;
   effectiveDef: number;
   effectiveSpd: number;
+  /** Effective Speed (base + boosts + held item; PAR penalty). Terrain grants no Speed bonus. */
+  effectiveSpe: number;
   terrainDefBonus: number;
   terrainSpdBonus: number;
   terrainAvoidBonus: number;
@@ -283,6 +285,7 @@ export function computeUnitPopupStats(
     mightCategory,
     effectiveDef,
     effectiveSpd,
+    effectiveSpe: eff.spe,
     terrainDefBonus: terrainBonuses.defBonus,
     terrainSpdBonus: terrainBonuses.spdBonus,
     terrainAvoidBonus: terrainBonuses.avoidBonus,

@@ -6,6 +6,7 @@ import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
 import { isInMapBounds } from '../../engine/terrainAndPathfinding';
 import {
   dismissBeginBattleCard,
+  isPhaseTransitionPlaying,
   showPhaseBanner,
 } from './battleBannersAndTransitions';
 import {
@@ -41,7 +42,7 @@ export function handleBattleMenuOrBack(
   clientY?: number
 ): void {
   const { state, dom, prepOverlay, audioManager, tutorialOverlay } = ctx;
-  if (!state.openState || state.cutsceneInProgress) return;
+  if (!state.openState || state.cutsceneInProgress || isPhaseTransitionPlaying(state)) return;
 
   if (!dom.beginBattleBackdropEl.hidden && !state.fastMode) {
     audioManager.playSfx('select');

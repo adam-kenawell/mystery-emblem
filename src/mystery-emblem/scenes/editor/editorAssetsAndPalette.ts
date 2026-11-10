@@ -48,7 +48,11 @@ export async function preloadEditorMapAndUnitAssets(
       sheetIds.add(normalizeTilesetId(cell.tilesetId));
     }
   }
-  const spIds = new Set<string>([state.spawnEnemySpeciesId]);
+  const spIds = new Set<string>(
+    state.editorTargetKind === 'cutscene'
+      ? state.cutsceneActorMarkers.map((m) => m.previewAssetId)
+      : [state.spawnEnemySpeciesId]
+  );
   for (const p of state.map.playerSpawns) spIds.add(p.speciesId);
   for (const e of state.map.enemySpawns) spIds.add(e.speciesId);
   for (const n of state.map.npcSpawns ?? []) spIds.add(n.speciesId);

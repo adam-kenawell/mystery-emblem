@@ -180,10 +180,8 @@ export class TutorialOverlay {
   public handleBack(): boolean {
     if (!this.isOpen()) return false;
     if (this.session.mode === 'card') {
-      if (this.session.returnToCompendiumOnClose && this.session.activeBeatIndex > 0) {
-        this.stepBeatBackward();
-        return true;
-      }
+      // Right-click / long-press / corner Back always exits the topic (live: skip & mark seen;
+      // compendium: return to the Ask-Wimpod list). Stepping beats uses the ◀ Back button.
       this.dismissActiveCard('cancel');
       return true;
     }
@@ -200,11 +198,13 @@ export class TutorialOverlay {
   }
 
   private stepBeatBackward(): void {
-    if (this.session.activeBeatIndex <= 0) return;
-    this.session.activeBeatIndex -= 1;
-    this.session.syncInteractivity();
+    if (this.session.mode !== 'card' || this.session.activeBeatIndex <= 0) return;
+    if (this.hasActiveInteractiveStep()) return;
+    this.typewriter.stop();
+    this.session.goToBeat(this.session.activeBeatIndex - 1);
     this.audioManager.playSfx('dialogue_advance');
     this.renderActiveCard();
+    this.onLayerStateChanged?.();
   }
 
   private handleCoachAdvanceTap(): void {
@@ -220,12 +220,12 @@ export class TutorialOverlay {
   private advanceFromCurrentBeat(finishSfx: 'cancel' | 'select'): void {
     this.typewriter.stop();
     const rawNext = this.session.activeBeatIndex + 1;
-    const nextIdx = this.session.returnToCompendiumOnClose
-      ? rawNext
-      : this.session.findFirstPendingBeat(this.session.activeBeats, rawNext);
+    const nextIdx =
+      this.session.returnToCompendiumOnClose || rawNext <= this.session.furthestBeatIndex
+        ? rawNext
+        : this.session.findFirstPendingBeat(this.session.activeBeats, rawNext);
     if (nextIdx < this.session.activeBeats.length) {
-      this.session.activeBeatIndex = nextIdx;
-      this.session.syncInteractivity();
+      this.session.goToBeat(nextIdx);
       this.audioManager.playSfx('select');
       this.renderActiveCard();
       this.onLayerStateChanged?.();
@@ -264,7 +264,6 @@ export class TutorialOverlay {
         returnToCompendiumOnClose: this.session.returnToCompendiumOnClose,
         save: this.saveManager.getSave(),
         signal: this.abortController.signal,
-        onDismiss: () => this.dismissActiveCard('cancel'),
         onPrev: () => this.stepBeatBackward(),
         onNext: () => this.handleCoachAdvanceTap(),
       },

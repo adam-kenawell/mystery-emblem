@@ -218,6 +218,10 @@ export interface CutsceneActorSnapshot {
 export interface CutsceneSceneSnapshot {
   isOpen: boolean;
   cutsceneId: string | null;
+  stageId: string | null;
+  isStageCustomized: boolean;
+  stageWidth: number;
+  stageHeight: number;
   title: string | null;
   locationLabel: string | null;
   lightingMood: CutsceneLightingMood | null;

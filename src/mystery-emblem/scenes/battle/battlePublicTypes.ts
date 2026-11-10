@@ -51,6 +51,7 @@ export type BattleExitDestination = 'default' | 'overworld' | 'title';
 export type BattleFieldMenuSubView =
   | 'root'
   | 'objective'
+  | 'units'
   | 'settings'
   | 'confirm_overworld'
   | 'confirm_title';

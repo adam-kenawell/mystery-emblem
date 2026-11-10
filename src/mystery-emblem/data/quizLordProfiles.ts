@@ -45,7 +45,7 @@ export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
     personalityTitle: 'Brave',
     traitLabel: 'Brave & Steadfast',
     personalityDescription:
-      'Have you noticed how you always step forward first when someone is in trouble? Even when the odds look overwhelming, you refuse to let a single friend face danger alone. Your earnest courage lights a fire in everyone standing beside you!',
+      "You always step forward first when someone's in trouble. Your courage lights a fire in everyone beside you!",
     auraSummary: 'Steadfast vanguard whose crimson aura resonates with Red-Flower Flabébé.',
     flabebeFlowerColor: 'red',
     flabebeFlowerLabel: 'Red Aura',
@@ -65,7 +65,7 @@ export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
     personalityTitle: 'Hardy',
     traitLabel: 'Hardy & Determined',
     personalityDescription:
-      'Has anyone ever told you how unstoppable you become once your mind is made up? Setbacks that would discourage anyone else only make your resolve burn brighter. Eyes fixed on the horizon, you turn every hard trial into the strength to soar!',
+      'Once your mind is made up, nothing can stop you. Every setback only makes your resolve burn brighter!',
     auraSummary: 'Relentless trailblazer whose amber aura resonates with Orange-Flower Flabébé.',
     flabebeFlowerColor: 'orange',
     flabebeFlowerLabel: 'Orange Aura',
@@ -85,7 +85,7 @@ export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
     personalityTitle: 'Bold',
     traitLabel: 'Bold & Spirited',
     personalityDescription:
-      'Has anyone ever mentioned that fearless grin you wear right when things look toughest? You charge headfirst into the unknown with boundless spark and zero hesitation. When tension freezes the room, your bold spirit shatters the doubt in an instant!',
+      'You flash a fearless grin right when things look toughest. Your bold spirit shatters doubt in an instant!',
     auraSummary: 'Hard-hitting frontliner whose golden aura resonates with Yellow-Flower Flabébé.',
     flabebeFlowerColor: 'yellow',
     flabebeFlowerLabel: 'Yellow Aura',
@@ -105,7 +105,7 @@ export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
     personalityTitle: 'Calm',
     traitLabel: 'Calm & Perceptive',
     personalityDescription:
-      'Has anyone ever told you how relaxed you look in the face of fear? Even when dark clouds gather and everyone else begins to panic, your composed heart never wavers. You listen closely, notice what others miss, and quietly steady every ally at your side!',
+      'Has anyone ever told you how relaxed you look in the face of fear? You notice what others miss and quietly steady every ally at your side!',
     auraSummary: 'Serene tactician whose azure aura resonates with Blue-Flower Flabébé.',
     flabebeFlowerColor: 'blue',
     flabebeFlowerLabel: 'Blue Aura',
@@ -125,7 +125,7 @@ export const DRAGON_LORD_OPTIONS: ReadonlyArray<DragonLordTraitInfo> = [
     personalityTitle: 'Gentle',
     traitLabel: 'Gentle & Resilient',
     personalityDescription:
-      'Has anyone ever told you how comforting it feels just to have you nearby? You treasure the bonds between friends above all else and meet a harsh world with genuine warmth. Yet beneath that gentle kindness lies a quiet resilience nothing can break!',
+      'Just having you nearby comforts your friends. Beneath that gentle kindness lies a resilience nothing can break!',
     auraSummary: 'Warm-hearted guardian whose luminous aura resonates with White-Flower Flabébé.',
     flabebeFlowerColor: 'white',
     flabebeFlowerLabel: 'White Aura',

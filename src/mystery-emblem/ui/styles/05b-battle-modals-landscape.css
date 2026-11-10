@@ -24,7 +24,7 @@
     height: 44px;
   }
 
-  .pmd-forecast-portrait-slot canvas {
+  .pmd-forecast-portrait-slot > canvas {
     width: 40px !important;
     height: 40px !important;
   }

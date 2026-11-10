@@ -13,6 +13,11 @@ import {
   type LoadedTilesetSheet,
 } from '../../assets/tilesetLoader';
 import {
+  getEffectiveChapterMap,
+  hasChapterMapOverride,
+  resolveCutsceneStageIdForDefinition,
+} from '../../data/chapterMapRegistry';
+import {
   resolveRecruitCameoUnits,
   resolveSpeakerIdentity,
 } from '../../engine/speakerResolver';
@@ -126,9 +131,40 @@ export async function preloadCutsceneStageAssets(opts: {
   ]);
 }
 
+export function resolveEffectiveCutsceneDefinition(rawDef: StoryCutsceneDefinition): {
+  def: StoryCutsceneDefinition;
+  stageId: string | null;
+  isStageCustomized: boolean;
+} {
+  const stageId = resolveCutsceneStageIdForDefinition(rawDef);
+  if (!stageId || !hasChapterMapOverride(stageId)) {
+    return { def: rawDef, stageId, isStageCustomized: false };
+  }
+  const ov = getEffectiveChapterMap(stageId);
+  const maxX = Math.max(0, ov.width - 1);
+  const maxY = Math.max(0, ov.height - 1);
+  return {
+    def: {
+      ...rawDef,
+      width: ov.width,
+      height: ov.height,
+      tiles: ov.tiles,
+      actors: rawDef.actors.map((a) => ({
+        ...a,
+        x: Math.max(0, Math.min(maxX, a.x)),
+        y: Math.max(0, Math.min(maxY, a.y)),
+      })),
+    },
+    stageId,
+    isStageCustomized: true,
+  };
+}
+
 export function buildCutsceneSceneSnapshot(opts: {
   isOpen: boolean;
   activeDef: StoryCutsceneDefinition | null;
+  stageId: string | null;
+  isStageCustomized: boolean;
   currentLineIndex: number;
   choreo: CutsceneChoreographer;
   displayScale: number;
@@ -137,6 +173,10 @@ export function buildCutsceneSceneSnapshot(opts: {
   return {
     isOpen: opts.isOpen,
     cutsceneId: opts.activeDef?.id ?? null,
+    stageId: opts.stageId,
+    isStageCustomized: opts.isStageCustomized,
+    stageWidth: opts.activeDef?.width ?? 0,
+    stageHeight: opts.activeDef?.height ?? 0,
     title: opts.activeDef?.title ?? null,
     locationLabel: opts.activeDef?.locationLabel ?? null,
     lightingMood: opts.activeDef?.lightingMood ?? null,

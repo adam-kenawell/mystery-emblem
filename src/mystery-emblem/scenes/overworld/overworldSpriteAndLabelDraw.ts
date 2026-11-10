@@ -9,6 +9,7 @@ import {
   type PmdSpriteAction,
 } from '../../assets/pmdAssetLoader';
 import type { OverworldGraphDefinition } from '../../data/overworldMapData';
+import { resolveCurrentStoryChapterNodeId } from '../../engine/overworld/overworldGraphState';
 import type { OverworldNodeState } from '../../types/schemas';
 
 const OVERWORLD_SPRITE_SCALE_FACTOR = 0.5;
@@ -121,6 +122,7 @@ export function syncOverworldNodeLabelsOverlay(params: {
     hoveredNodeId,
   } = params;
   const activeIds = new Set<string>();
+  const storyChapterNodeId = resolveCurrentStoryChapterNodeId(reconciled.nodes, graph);
 
   for (const def of graph.nodes) {
     activeIds.add(def.id);
@@ -144,7 +146,11 @@ export function syncOverworldNodeLabelsOverlay(params: {
     }
 
     const st = reconciled.nodes[def.id];
-    if (!st?.unlocked) {
+    // Declutter: only the Lord's settled node and the current story chapter show a title card
+    // (no hover reveal); paralogues, cleared chapters and shop/skirmish nodes stay hidden.
+    const isCurrent = reconciled.currentNodeId === def.id && !isTraveling;
+    const isStoryChapter = storyChapterNodeId === def.id;
+    if (!st?.unlocked || (!isCurrent && !isStoryChapter)) {
       entry.anchorEl.hidden = true;
       continue;
     }
@@ -152,7 +158,8 @@ export function syncOverworldNodeLabelsOverlay(params: {
     entry.anchorEl.hidden = false;
     entry.codeEl.textContent = def.code;
     entry.nameEl.textContent = def.name;
-    entry.pillEl.classList.toggle('is-current', reconciled.currentNodeId === def.id && !isTraveling);
+    entry.pillEl.classList.toggle('is-current', isCurrent);
+    entry.pillEl.classList.toggle('is-story-chapter', isStoryChapter);
     entry.pillEl.classList.toggle('is-hovered', hoveredNodeId === def.id);
     entry.pillEl.classList.toggle('is-cleared', Boolean(st?.cleared));
     entry.pillEl.classList.toggle('has-skirmish', Boolean(st?.activeSkirmish));

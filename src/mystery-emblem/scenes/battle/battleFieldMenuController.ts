@@ -53,6 +53,7 @@ export function closeSystemMenu(ctx: BattleControllerContext): void {
   dom.systemMenuBackdropEl.hidden = true;
   dom.systemMenuBackdropEl.classList.remove('is-submodal');
   dom.fieldSubmodalCardEl.hidden = true;
+  dom.fieldSubmodalCardEl.classList.remove('is-units-panel');
   dom.fieldSubmodalCardEl.innerHTML = '';
   updateBattleInfoStrip(ctx);
   ctx.onLayerStateChanged();
@@ -64,7 +65,7 @@ export function positionFieldMenuCard(ctx: BattleControllerContext): void {
   const stageW = stageRect.width || dom.canvasStageEl.clientWidth || 640;
   const stageH = stageRect.height || dom.canvasStageEl.clientHeight || 480;
   const menuW = dom.fieldMenuCardEl.offsetWidth || 228;
-  const menuH = dom.fieldMenuCardEl.offsetHeight || 292;
+  const menuH = dom.fieldMenuCardEl.offsetHeight || 338;
   const EDGE_PAD = 8;
   const CURSOR_GAP_X = 12;
   const CURSOR_OFFSET_Y = 14;
@@ -119,6 +120,7 @@ export function setSystemMenuSubView(
     dom.systemMenuBackdropEl.classList.remove('is-submodal');
     dom.fieldMenuCardEl.hidden = false;
     dom.fieldSubmodalCardEl.hidden = true;
+    dom.fieldSubmodalCardEl.classList.remove('is-units-panel');
     dom.fieldSubmodalCardEl.removeAttribute('data-testid');
     dom.fieldSubmodalCardEl.innerHTML = '';
     if (!dom.systemMenuBackdropEl.hidden) {

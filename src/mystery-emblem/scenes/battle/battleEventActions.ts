@@ -29,7 +29,11 @@ import { updateBattleInfoStrip } from './battleHudCards';
 import { preloadMapTilesets } from './battlePrepAndAssets';
 import { presentTalkChoiceModalAsync } from './battleTalkChoiceModal';
 import type { BattleControllerContext } from './battleTypesAndState';
-import { getLivingUnits, getUnitVisualKey } from './battleUnitQueries';
+import {
+  getLivingUnits,
+  getUnitVisualKey,
+  recomputeSelectedUnitRange,
+} from './battleUnitQueries';
 
 export function resolveDialogueScriptFromAction(
   ctx: BattleControllerContext,
@@ -129,6 +133,7 @@ export async function executeEventActionsAsync(
         await waitBattleMs(state, 220);
       }
       if (action.bannerText) showPhaseBanner(state, dom, action.bannerText);
+      if (state.selectedUnitId) recomputeSelectedUnitRange(state);
       recomputeDangerArea(ctx);
       updateBattleInfoStrip(ctx);
     } else if (action.type === 'convert_unit') {
@@ -138,6 +143,8 @@ export async function executeEventActionsAsync(
       if (target) {
         target.faction = action.toFaction;
         state.trackedEnemyIds.delete(target.id);
+        if (state.lastComputedHoverEnemyId === target.id) state.lastComputedHoverEnemyId = null;
+        if (state.suppressedHoverEnemyId === target.id) state.suppressedHoverEnemyId = null;
         if (action.healToFull) {
           target.currentHp = target.maxHp;
           target.status = null;
@@ -145,12 +152,24 @@ export async function executeEventActionsAsync(
         }
         if (action.toFaction === 'player') {
           target.isBoss = false;
+          // Clear BOTH immobility flags: `getEffectiveMovementPoints` returns 0 Mov while
+          // `aiMode === 'stationary'`, which previously froze converted Empoleon / Slakoth.
           target.stationary = false;
+          target.aiMode = 'wait_until_in_range';
           target.waited = !(action.readyToAct ?? true);
           if (action.addToPermanentRoster !== false) target.recruitedMidBattle = true;
         } else if (action.toFaction === 'npc') {
           target.isBoss = false;
+          if (!target.stationary && target.aiMode === 'stationary') {
+            target.aiMode = 'wait_until_in_range';
+          }
           target.waited = !(action.readyToAct ?? true);
+        }
+        state.originRangeSnapshot = null;
+        if (state.selectedUnitId) {
+          recomputeSelectedUnitRange(state);
+        } else {
+          state.currentRange = null;
         }
         ensureTilePairVisible(state, target.x, target.y, target.x, target.y);
         audioManager.playSfx('victory_fanfare');
@@ -167,10 +186,13 @@ export async function executeEventActionsAsync(
           const u = state.units[idx]!;
           spawnFloatingText(state, dom, u.x, u.y, action.calloutText ?? 'DEPARTED', '#a8d8ff', 950);
           state.trackedEnemyIds.delete(u.id);
+          if (state.lastComputedHoverEnemyId === u.id) state.lastComputedHoverEnemyId = null;
+          if (state.suppressedHoverEnemyId === u.id) state.suppressedHoverEnemyId = null;
           state.defeatIfUnitIdsFall = state.defeatIfUnitIdsFall.filter((id) => id !== u.id);
           state.units.splice(idx, 1);
         }
       }
+      if (state.selectedUnitId) recomputeSelectedUnitRange(state);
       recomputeDangerArea(ctx);
       updateBattleInfoStrip(ctx);
       ctx.renderNow();
@@ -196,6 +218,7 @@ export async function executeEventActionsAsync(
         };
       }
       await preloadMapTilesets(state);
+      if (state.selectedUnitId) recomputeSelectedUnitRange(state);
       recomputeDangerArea(ctx);
       updateBattleInfoStrip(ctx);
       ctx.renderNow();

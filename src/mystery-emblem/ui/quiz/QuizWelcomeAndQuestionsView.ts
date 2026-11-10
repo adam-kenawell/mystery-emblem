@@ -41,14 +41,11 @@ export function renderQuizWelcomePopup(
 
   popup.innerHTML = `
     <h2 data-testid="quiz-welcome-title" style="margin:0; font-size:clamp(15px, 2.3vw, 19px); line-height:1.35; color:#f8f800;">
-      Welcome to Mystery Emblem, a Pokémon / Fire Emblem fan game!
+      Welcome to Mystery Emblem, a Pokémon × Fire Emblem fan game!
     </h2>
     <div data-testid="quiz-welcome-body" style="display:flex; flex-direction:column; gap:8px; font-size:clamp(13px, 1.9vw, 15px); line-height:1.45; color:#f8f8f8;">
       <p style="margin:0;">
-        This Part 1A demo (Prologue – Chapter 6 + 2 Paralogues) takes roughly <strong style="color:#58f858;">45–75 minutes</strong> to play.
-      </p>
-      <p style="margin:0; color:#a8e0f8;">
-        The final project is still a work in progress—please visit the page frequently for updates!
+        Answer a few questions to meet your hero.
       </p>
     </div>
     <div style="display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; margin-top:2px;">

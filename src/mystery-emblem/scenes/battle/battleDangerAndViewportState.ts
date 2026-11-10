@@ -17,6 +17,7 @@ export function canInteractWithBattleViewport(
 ): boolean {
   if (
     !state.openState ||
+    state.cutsceneInProgress ||
     state.systemMenuOpen ||
     !dom.levelUpModalBackdropEl.hidden ||
     !dom.talkChoiceBackdropEl.hidden ||

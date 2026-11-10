@@ -10,7 +10,7 @@ import {
   type OverworldGraphDefinition,
 } from '../../data/overworldMapData';
 import { ensureOverworldGraphState } from '../../engine/overworldEngine';
-import type { OwnedPokemonInstance, SaveData } from '../../types/schemas';
+import type { SaveData } from '../../types/schemas';
 import type { PmdPortraitView } from '../../ui/PmdSpriteCanvas';
 
 export type OverworldMenuTab = 'units' | 'convoy' | 'system';
@@ -49,9 +49,6 @@ export interface OverworldDomElements {
   nodeLabelsLayerEl: HTMLElement;
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
-  topHudBarEl: HTMLElement;
-  lordHudPillEl: HTMLElement;
-  goldHudPillEl: HTMLElement;
   toastEl: HTMLElement;
   dockEl: HTMLElement;
   dockTitleEl: HTMLElement;
@@ -99,13 +96,6 @@ export function createOverworldDomElements(
   nodeLabelsLayerEl.className = 'pmd-overworld-node-labels';
   nodeLabelsLayerEl.dataset.testid = 'overworld-node-labels';
   canvasStageEl.appendChild(nodeLabelsLayerEl);
-
-  const topHudBarEl = document.createElement('div');
-  topHudBarEl.className = 'pmd-battle-hud-top';
-  topHudBarEl.innerHTML = `
-    <div class="pmd-window pmd-window--compact pmd-window--translucent pmd-battle-pill" data-testid="overworld-lord-pill">Squad</div>
-    <div class="pmd-window pmd-window--compact pmd-window--translucent pmd-battle-pill" data-testid="overworld-gold-pill">0G</div>
-  `;
 
   const toastEl = document.createElement('div');
   toastEl.className = 'pmd-window pmd-window--translucent pmd-overworld-toast';
@@ -180,7 +170,6 @@ export function createOverworldDomElements(
 
   rootEl.append(
     canvasStageEl,
-    topHudBarEl,
     toastEl,
     dockEl,
     kecleonBackdropEl,
@@ -194,9 +183,6 @@ export function createOverworldDomElements(
     nodeLabelsLayerEl,
     canvas,
     ctx,
-    topHudBarEl,
-    lordHudPillEl: topHudBarEl.querySelector('[data-testid="overworld-lord-pill"]')!,
-    goldHudPillEl: topHudBarEl.querySelector('[data-testid="overworld-gold-pill"]')!,
     toastEl,
     dockEl,
     dockTitleEl: dockEl.querySelector('[data-testid="overworld-current-node-title"]')!,
@@ -221,12 +207,9 @@ export function createOverworldDomElements(
 export function syncOverworldHudAndDock(
   dom: OverworldDomElements,
   save: SaveData,
-  graph: OverworldGraphDefinition,
-  lord: OwnedPokemonInstance | undefined
+  graph: OverworldGraphDefinition
 ): void {
   const reconciled = ensureOverworldGraphState(save, graph);
-  dom.lordHudPillEl.textContent = lord ? `${lord.nickname} · Lv.${lord.level}` : 'Squad';
-  dom.goldHudPillEl.textContent = `${save.gold}G`;
 
   const nodeDef =
     getOverworldNodeById(reconciled.currentNodeId, graph) ??

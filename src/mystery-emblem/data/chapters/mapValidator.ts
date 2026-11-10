@@ -80,7 +80,12 @@ function normalizeSpawnFields(
 export function validateDungeonMapDefinition(
   candidate: unknown,
   expectedLevelId?: string,
-  catalogDefaults?: { label?: string; bgmCue?: string; defaultDeploymentCap?: number }
+  catalogDefaults?: {
+    label?: string;
+    bgmCue?: string;
+    defaultDeploymentCap?: number;
+    allowEmptySpawns?: boolean;
+  }
 ): { valid: boolean; errors: string[]; map?: DungeonMapDefinition } {
   const errors: string[] = [];
   if (!candidate || typeof candidate !== 'object') {
@@ -143,9 +148,10 @@ export function validateDungeonMapDefinition(
   const inBounds = (x: number, y: number) =>
     Number.isInteger(x) && Number.isInteger(y) && x >= 0 && x < width && y >= 0 && y < height;
 
+  const allowEmptySpawns = Boolean(catalogDefaults?.allowEmptySpawns);
   const normPlayerSpawns: DungeonUnitSpawn[] = [];
   if (!Array.isArray(raw.playerSpawns) || raw.playerSpawns.length < 1) {
-    errors.push('Map must define at least 1 blue player starting spawn.');
+    if (!allowEmptySpawns) errors.push('Map must define at least 1 blue player starting spawn.');
   } else if (errors.length === 0) {
     for (const sp of raw.playerSpawns) {
       const x = Math.floor(Number(sp?.x));
@@ -174,15 +180,13 @@ export function validateDungeonMapDefinition(
   const convertibleEnemyIds = new Set<string>(
     Array.isArray(raw.events)
       ? raw.events.flatMap((ev) =>
-          (ev?.actions ?? []).flatMap((a) =>
-            a?.type === 'convert_unit' && a.targetUnitId ? [String(a.targetUnitId)] : []
-          )
+          (ev?.actions ?? []).flatMap((a) => (a?.type === 'convert_unit' && a.targetUnitId ? [String(a.targetUnitId)] : []))
         )
       : []
   );
   const normEnemySpawns: DungeonUnitSpawn[] = [];
   if (!Array.isArray(raw.enemySpawns) || raw.enemySpawns.length < 1) {
-    errors.push('Map must define at least 1 enemy spawn.');
+    if (!allowEmptySpawns) errors.push('Map must define at least 1 enemy spawn.');
   } else if (errors.length === 0) {
     for (const sp of raw.enemySpawns) {
       const x = Math.floor(Number(sp?.x));
@@ -193,18 +197,12 @@ export function validateDungeonMapDefinition(
       }
       const speciesId = String(sp?.speciesId || 'zigzagoon_galar');
       const def = getSpeciesById(speciesId);
-      const allowedPlayable =
-        Boolean(sp?.seedKey) || (Boolean(sp?.id) && convertibleEnemyIds.has(String(sp.id)));
+      const allowedPlayable = Boolean(sp?.seedKey) || (Boolean(sp?.id) && convertibleEnemyIds.has(String(sp.id)));
       if (!def || def.faction === 'ally_npc' || (def.faction === 'playable' && !allowedPlayable)) {
         errors.push(`Rule 5: Enemy spawn species "${speciesId}" must be an enemy/convertible species.`);
         continue;
       }
-      normEnemySpawns.push({
-        x,
-        y,
-        speciesId: def.id,
-        ...normalizeSpawnFields(sp, def.name),
-      });
+      normEnemySpawns.push({ x, y, speciesId: def.id, ...normalizeSpawnFields(sp, def.name) });
     }
   }
 
@@ -265,7 +263,10 @@ export function validateDungeonMapDefinition(
     raw.deploymentCap !== undefined
       ? Math.floor(Number(raw.deploymentCap))
       : (catalogDefaults?.defaultDeploymentCap ?? normPlayerSpawns.length);
-  const deploymentCap = Math.max(1, Math.min(12, Math.min(rawCap, normPlayerSpawns.length)));
+  const deploymentCap =
+    allowEmptySpawns && normPlayerSpawns.length === 0
+      ? 0
+      : Math.max(1, Math.min(12, Math.min(rawCap, normPlayerSpawns.length)));
   const normObj =
     raw.objectiveType && VALID_OBJECTIVE_SET.has(raw.objectiveType)
       ? (raw.objectiveType as BattleObjectiveType)

@@ -8,28 +8,20 @@ import type { LoadedSpriteBundle } from '../assets/pmdAssetLoader';
 import type { LoadedTilesetSheet } from '../assets/tilesetLoader';
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
 import type { SaveStateManager } from '../state/SaveStateManager';
-import type {
-  DialogueFinishReason,
-  DialogueOverlay,
-  DialogueScript,
-} from '../ui/DialogueOverlay';
+import type { DungeonMapTileCell } from '../types/schemas';
+import type { DialogueFinishReason, DialogueOverlay, DialogueScript } from '../ui/DialogueOverlay';
 import { prefersReducedMotionEnabled } from '../ui/typewriterController';
 import {
   buildCutsceneSceneSnapshot,
   instantiateCutsceneActor,
   preloadCutsceneStageAssets,
+  resolveEffectiveCutsceneDefinition,
 } from './cutscene/cutsceneActorResolver';
 import { CutsceneChoreographer } from './cutscene/cutsceneChoreographer';
 import { buildCutsceneDomShell, type CutsceneDomShell } from './cutscene/cutsceneDomShell';
 import { createAmbientMotes } from './cutscene/cutscenePropsAndMoods';
 import { renderCutsceneStageFrame } from './cutscene/cutsceneRenderer';
-import type {
-  AmbientMote,
-  CutsceneSceneOptions,
-  CutsceneSceneSnapshot,
-  RuntimeCutsceneActor,
-  StoryCutsceneDefinition,
-} from './cutscene/cutsceneTypes';
+import type { AmbientMote, CutsceneSceneOptions, CutsceneSceneSnapshot, RuntimeCutsceneActor, StoryCutsceneDefinition } from './cutscene/cutsceneTypes';
 
 export * from './cutscene/cutsceneTypes';
 
@@ -51,6 +43,8 @@ export class CutsceneScene {
   private openState = false;
   private fastMode = false;
   private activeDef: StoryCutsceneDefinition | null = null;
+  private activeStageId: string | null = null;
+  private activeStageCustomized = false;
   private actors: RuntimeCutsceneActor[] = [];
   private viewHeightCss = 540;
   private displayScale = 2;
@@ -86,13 +80,9 @@ export class CutsceneScene {
     this.rootEl = this.shell.rootEl;
   }
 
-  public isOpen(): boolean {
-    return this.openState;
-  }
-
-  public setFastMode(enabled: boolean): void {
-    this.fastMode = Boolean(enabled);
-  }
+  public isOpen(): boolean { return this.openState; }
+  public setFastMode(enabled: boolean): void { this.fastMode = Boolean(enabled); }
+  public handleBack(): void { this.skipActiveCutscene(); }
 
   public skipActiveCutscene(): void {
     if (!this.openState) return;
@@ -106,16 +96,15 @@ export class CutsceneScene {
     if (this.dialogueOverlay.isOpen()) this.dialogueOverlay.close('skipped');
   }
 
-  public handleBack(): void {
-    this.skipActiveCutscene();
-  }
-
-  public async play(def: StoryCutsceneDefinition): Promise<DialogueFinishReason> {
+  public async play(rawDef: StoryCutsceneDefinition): Promise<DialogueFinishReason> {
     const token = ++this.runToken;
     this.choreo.clearPendingTimers();
     if (this.dialogueOverlay.isOpen()) this.dialogueOverlay.close('cancelled');
 
+    const { def, stageId, isStageCustomized } = resolveEffectiveCutsceneDefinition(rawDef);
     this.activeDef = def;
+    this.activeStageId = stageId;
+    this.activeStageCustomized = isStageCustomized;
     this.openState = true;
     this.skippedEarly = false;
     this.currentLineIndex = -1;
@@ -130,12 +119,7 @@ export class CutsceneScene {
     this.viewportEl.classList.add('is-battle-active');
     this.onStateChange?.();
 
-    await preloadCutsceneStageAssets({
-      def,
-      actors: this.actors,
-      tilesetSheets: this.tilesetSheets,
-      spriteBundles: this.spriteBundles,
-    });
+    await preloadCutsceneStageAssets({ def, actors: this.actors, tilesetSheets: this.tilesetSheets, spriteBundles: this.spriteBundles });
     if (!this.openState || token !== this.runToken) return 'cancelled';
 
     this.refreshSize();
@@ -173,16 +157,17 @@ export class CutsceneScene {
       return 'skipped';
     }
 
-    const scriptWithRestoredFlag: DialogueScript = {
-      ...script,
-      restorePreviousBgmOnClose: false,
-    };
+    const scriptWithRestoredFlag: DialogueScript = { ...script, restorePreviousBgmOnClose: false };
 
     const reason = await this.dialogueOverlay.playScript(scriptWithRestoredFlag, {
       inCutsceneStage: true,
       typewriterMsPerChar: this.fastMode || reducedMotion ? 0 : 10,
       onLineStart: (lineIdx, line) => {
         if (!this.openState || token !== this.runToken) return;
+        if (this.skippedEarly) {
+          this.dialogueOverlay.close('skipped');
+          return;
+        }
         this.currentLineIndex = lineIdx;
         const combined = [
           ...(def.lineCues?.[lineIdx] ?? []),
@@ -241,10 +226,17 @@ export class CutsceneScene {
     this.renderFrame();
   }
 
+  public getTileAt(tx: number, ty: number): DungeonMapTileCell | null {
+    const cell = this.activeDef?.tiles[ty]?.[tx];
+    return cell ? { ...cell } : null;
+  }
+
   public getSnapshot(): CutsceneSceneSnapshot {
     return buildCutsceneSceneSnapshot({
       isOpen: this.openState,
       activeDef: this.activeDef,
+      stageId: this.activeStageId,
+      isStageCustomized: this.activeStageCustomized,
       currentLineIndex: this.currentLineIndex,
       choreo: this.choreo,
       displayScale: this.displayScale,
@@ -284,10 +276,8 @@ export class CutsceneScene {
   }
 
   private stopLoop(): void {
-    if (this.rafId !== null) {
-      window.cancelAnimationFrame(this.rafId);
-      this.rafId = null;
-    }
+    if (this.rafId !== null) window.cancelAnimationFrame(this.rafId);
+    this.rafId = null;
   }
 
   private renderFrame(): void {

@@ -18,6 +18,7 @@ export interface EditorDomRefs {
   drawerEl: HTMLElement;
   levelSelectEl: HTMLSelectElement;
   statusBadgeEl: HTMLElement;
+  savePlayBtnEl: HTMLButtonElement;
   enemyConfigBoxEl: HTMLElement;
   enemySpeciesSelectEl: HTMLSelectElement;
   enemyLevelValEl: HTMLElement;
@@ -30,8 +31,10 @@ export interface EditorDomRefs {
   chunkPaletteEl: HTMLElement;
   mapWidthValEl: HTMLElement;
   mapHeightValEl: HTMLElement;
+  deployCapItemEl: HTMLElement;
   deployCapValEl: HTMLElement;
   systemMenuBackdropEl: HTMLElement;
+  sysPlayBtnEl: HTMLButtonElement;
   jsonModalBackdropEl: HTMLElement;
   jsonTextareaEl: HTMLTextAreaElement;
   jsonStatusEl: HTMLElement;
@@ -98,10 +101,10 @@ export function createEditorDomShell(viewportEl: HTMLElement): EditorDomRefs {
     </div>
     <div class="pmd-battle-sandbox-section">
       <div class="pmd-devtools-row-between">
-        <span class="pmd-preset-label">1. Select Demo Chapter</span>
+        <span class="pmd-preset-label">1. Select Chapter or Cutscene Stage</span>
         <span class="pmd-editor-status-pill" data-testid="editor-status-badge">DEFAULT</span>
       </div>
-      <select class="pmd-select" data-testid="editor-level-select" aria-label="Select Demo Chapter"></select>
+      <select class="pmd-select" data-testid="editor-level-select" aria-label="Select Chapter or Cutscene Stage"></select>
       <div class="pmd-inline-btns">
         <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="editor-save-btn">Save to Game</button>
         <button type="button" class="pmd-btn pmd-chip-btn" data-testid="editor-save-play-btn">Save &amp; Play</button>
@@ -165,7 +168,7 @@ export function createEditorDomShell(viewportEl: HTMLElement): EditorDomRefs {
             <button type="button" class="pmd-btn pmd-chip-btn" data-testid="editor-height-inc">+H</button>
           </div>
         </div>
-        <div class="pmd-editor-dim-item">
+        <div class="pmd-editor-dim-item" data-testid="editor-deploy-cap-item">
           <span class="pmd-subcard-text">Deploy Cap: <strong data-testid="editor-cap-val">3</strong></span>
           <div class="pmd-inline-btns">
             <button type="button" class="pmd-btn pmd-chip-btn" data-testid="editor-cap-dec">-Cap</button>
@@ -246,6 +249,7 @@ export function createEditorDomShell(viewportEl: HTMLElement): EditorDomRefs {
     drawerEl,
     levelSelectEl: q<HTMLSelectElement>(drawerEl, '[data-testid="editor-level-select"]'),
     statusBadgeEl: q(drawerEl, '[data-testid="editor-status-badge"]'),
+    savePlayBtnEl: q<HTMLButtonElement>(drawerEl, '[data-testid="editor-save-play-btn"]'),
     enemyConfigBoxEl: q(drawerEl, '[data-editor-enemy-config]'),
     enemySpeciesSelectEl: q<HTMLSelectElement>(drawerEl, '[data-testid="editor-enemy-species-select"]'),
     enemyLevelValEl: q(drawerEl, '[data-enemy-level-val]'),
@@ -258,8 +262,10 @@ export function createEditorDomShell(viewportEl: HTMLElement): EditorDomRefs {
     chunkPaletteEl: q(drawerEl, '[data-testid="editor-chunk-grid"]'),
     mapWidthValEl: q(drawerEl, '[data-testid="editor-width-val"]'),
     mapHeightValEl: q(drawerEl, '[data-testid="editor-height-val"]'),
+    deployCapItemEl: q(drawerEl, '[data-testid="editor-deploy-cap-item"]'),
     deployCapValEl: q(drawerEl, '[data-testid="editor-cap-val"]'),
     systemMenuBackdropEl,
+    sysPlayBtnEl: q<HTMLButtonElement>(systemMenuBackdropEl, '[data-testid="editor-sys-play-btn"]'),
     jsonModalBackdropEl,
     jsonTextareaEl: q<HTMLTextAreaElement>(jsonModalBackdropEl, '[data-testid="editor-json-textarea"]'),
     jsonStatusEl: q(jsonModalBackdropEl, '[data-testid="editor-json-status"]'),

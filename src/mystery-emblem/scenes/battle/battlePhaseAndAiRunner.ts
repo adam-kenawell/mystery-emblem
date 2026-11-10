@@ -99,6 +99,7 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
       await playWalkPathAsync(state, enemy, decision.path, true);
       if (!state.openState || runGen !== state.battleRunGen) return;
       state.inspectedTile = { x: enemy.x, y: enemy.y };
+      recomputeDangerArea(ctx);
       updateBattleInfoStrip(ctx);
     }
 
@@ -269,6 +270,7 @@ async function processTurnReinforcements(
     ensureTilePairVisible(state, newEnemy.x, newEnemy.y, newEnemy.x, newEnemy.y);
     audioManager.playSfx('phase_change');
     spawnFloatingText(state, dom, newEnemy.x, newEnemy.y, 'REINFORCEMENT!', '#ff8090', 1050);
+    recomputeDangerArea(ctx);
     ctx.renderNow();
     await waitBattleMs(state, 260);
   }

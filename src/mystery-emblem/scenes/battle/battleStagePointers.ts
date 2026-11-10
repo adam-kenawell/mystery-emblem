@@ -10,6 +10,7 @@ import {
 } from '../../ui/gridViewportMath';
 import { computeWheelZoomScale } from '../../ui/mapZoomController';
 import { handleBattleMenuOrBack } from './battleBackAndCheats';
+import { isPhaseTransitionPlaying } from './battleBannersAndTransitions';
 import { canInteractWithBattleViewport } from './battleDangerAndViewportState';
 import { positionFieldMenuCard } from './battleFieldMenuController';
 import { updateHoveredTile } from './battleHoverPreview';
@@ -80,7 +81,7 @@ export function bindBattleCanvasStagePointers(
     (e: MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      handleBattleMenuOrBack(ctx, e.clientX, e.clientY);
+      if (!isPhaseTransitionPlaying(state)) handleBattleMenuOrBack(ctx, e.clientX, e.clientY);
     },
     { signal }
   );
@@ -144,7 +145,8 @@ export function bindBattleCanvasStagePointers(
           if (
             isDraggingCamera ||
             activePointerId !== e.pointerId ||
-            state.pinchTracker.isMultiTouchSession()
+            state.pinchTracker.isMultiTouchSession() ||
+            isPhaseTransitionPlaying(state)
           ) {
             return;
           }
@@ -276,7 +278,7 @@ export function bindBattleCanvasStagePointers(
     longPressTriggered = false;
     clearLongPress();
 
-    if (commitTap && !wasDrag && !wasLongPress) {
+    if (commitTap && !wasDrag && !wasLongPress && !isPhaseTransitionPlaying(state)) {
       const tile = toTile(e.clientX, e.clientY);
       if (tile) handleBattleTileTap(ctx, tile.x, tile.y, e.clientX, e.clientY);
     } else if (wasDrag && e.pointerType === 'mouse') {

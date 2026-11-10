@@ -301,6 +301,6 @@ export class OverworldScene {
 
   private syncHudAndDock(): void {
     const save = this.saveManager.getSave();
-    if (save) syncOverworldHudAndDock(this.dom, save, this.graph, getActiveLordUnit(save));
+    if (save) syncOverworldHudAndDock(this.dom, save, this.graph);
   }
 }

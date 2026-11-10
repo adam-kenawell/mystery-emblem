@@ -148,3 +148,20 @@ export function ensureOverworldGraphState(
 
   return { currentNodeId, nodes: nextNodes, mutated };
 }
+
+/**
+ * Pure helper: resolves the current story chapter node — the first unlocked, uncleared,
+ * non-paralogue (`kind: 'story'`) node in graph/campaign order. Returns `null` once every
+ * unlocked main chapter is cleared.
+ */
+export function resolveCurrentStoryChapterNodeId(
+  nodes: Record<string, OverworldNodeState>,
+  graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH
+): string | null {
+  for (const def of graph.nodes) {
+    if (def.kind !== 'story') continue;
+    const st = nodes[def.id];
+    if (st?.unlocked && !st.cleared) return def.id;
+  }
+  return null;
+}

@@ -10,6 +10,7 @@ import {
   manhattanDistance,
 } from '../../engine/combatEngine';
 import { isInMapBounds } from '../../engine/terrainAndPathfinding';
+import { isPhaseTransitionPlaying } from './battleBannersAndTransitions';
 import { executeDanceFromCommandMenu } from './battleDanceController';
 import { toggleIndividualEnemyDanger } from './battleDangerAndViewportState';
 import { executeTalkFromCommandMenu } from './battleEventRunner';
@@ -46,7 +47,15 @@ export function handleBattleTileTap(
   clientY?: number
 ): void {
   const { state, dom, prepOverlay, audioManager, tutorialOverlay } = ctx;
-  if (!isInMapBounds(state.map, tx, ty) || state.systemMenuOpen) return;
+  if (
+    !state.openState ||
+    state.cutsceneInProgress ||
+    isPhaseTransitionPlaying(state) ||
+    !isInMapBounds(state.map, tx, ty) ||
+    state.systemMenuOpen
+  ) {
+    return;
+  }
 
   if (state.phase === 'dungeon_prep') {
     if (!prepOverlay.isOpen() || prepOverlay.getSubMode() !== 'view_map') return;

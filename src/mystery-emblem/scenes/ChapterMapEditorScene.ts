@@ -189,7 +189,14 @@ export class ChapterMapEditorScene {
   }
 
   public setToolMode(mode: MapEditorToolMode): void {
-    this.state.toolMode = mode;
+    if (
+      this.state.editorTargetKind === 'cutscene' &&
+      (mode === 'player_spawn' || mode === 'enemy_spawn' || mode === 'stairs_wave')
+    ) {
+      this.state.toolMode = 'paint';
+    } else {
+      this.state.toolMode = mode;
+    }
     this.syncUiAndInfo();
   }
 
@@ -241,6 +248,7 @@ export class ChapterMapEditorScene {
 
   private saveAndPlayCurrentLevel(): void {
     this.saveCurrentMapToGame();
+    if (this.state.editorTargetKind === 'cutscene') return;
     const targetId = this.state.activeLevelId;
     this.state.openState = false;
     this.stopLoop();

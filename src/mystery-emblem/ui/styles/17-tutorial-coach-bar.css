@@ -21,18 +21,6 @@
   }
 }
 
-@keyframes pmd-wimpod-prompt-pulse {
-  0%,
-  100% {
-    border-color: var(--pmd-text-yellow);
-    background: rgba(248, 248, 88, 0.12);
-  }
-  50% {
-    border-color: #ffffff;
-    background: rgba(248, 248, 88, 0.24);
-  }
-}
-
 @keyframes pmd-wimpod-nudge-shake {
   0%,
   100% {
@@ -172,21 +160,6 @@
   min-width: 0;
 }
 
-.pmd-wimpod-coach-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.pmd-wimpod-speaker-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-width: 0;
-}
-
 .pmd-wimpod-speaker-name {
   font-size: 15px;
   font-weight: 700;
@@ -202,35 +175,12 @@
   min-height: 2.5em;
 }
 
-.pmd-wimpod-bottom-strip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding-top: 2px;
-}
-
 .pmd-wimpod-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
-  margin-left: auto;
-}
-
-.pmd-wimpod-action-prompt {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  min-height: 30px;
-  border-radius: 4px;
-  background: rgba(248, 248, 88, 0.14);
-  border: 1px solid var(--pmd-text-yellow);
-  color: var(--pmd-text-yellow);
-  font-size: 12.5px;
-  font-weight: 700;
-  line-height: 1.25;
-  animation: pmd-wimpod-prompt-pulse 1.4s ease-in-out infinite;
+  padding-top: 2px;
 }
 
 .pmd-tutorial-header {

@@ -97,7 +97,7 @@ export function renderNgPlusRosterSelectorView(
       </button>
     </div>
     <div class="pmd-ngplus-slot-row">
-      <label class="pmd-ngplus-slot-label" for="ngplus-lord-select">Protagonist Dragon Lord (Piplup &amp; Flabébé join automatically)</label>
+      <label class="pmd-ngplus-slot-label" for="ngplus-lord-select">Dragon Lord</label>
       <select id="ngplus-lord-select" class="pmd-select" data-testid="ngplus-lord-select">
         ${lordOptionsHtml}
       </select>

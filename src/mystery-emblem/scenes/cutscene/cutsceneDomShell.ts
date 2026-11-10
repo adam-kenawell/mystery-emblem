@@ -3,6 +3,7 @@
  */
 
 import { createPmdButton } from '../../ui/PmdWindow';
+import { MAP_DEFAULT_SCALE } from '../../ui/mapZoomController';
 
 export interface CutsceneDomShell {
   rootEl: HTMLElement;
@@ -37,6 +38,7 @@ export function buildCutsceneDomShell(opts: {
   const canvas = document.createElement('canvas');
   canvas.className = 'pmd-cutscene-canvas pmd-pixelated';
   canvas.dataset.testid = 'cutscene-canvas';
+  canvas.style.flexShrink = '0';
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Could not initialize 2D context for CutsceneScene.');
   ctx.imageSmoothingEnabled = false;
@@ -75,7 +77,7 @@ export function buildCutsceneDomShell(opts: {
     const rect = stageWrapEl.getBoundingClientRect();
     const w = Math.max(320, Math.round(rect.width || window.innerWidth || 960));
     const h = Math.max(240, Math.round(rect.height || window.innerHeight || 540));
-    const displayScale = w >= 1280 && h >= 720 ? 3 : 2;
+    const displayScale = MAP_DEFAULT_SCALE;
     const nativeW = Math.max(160, Math.ceil(w / displayScale));
     const nativeH = Math.max(120, Math.ceil(h / displayScale));
     if (canvas.width !== nativeW || canvas.height !== nativeH) {
