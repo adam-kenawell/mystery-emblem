@@ -9,7 +9,7 @@ Read this index first in every session before scanning directories. Read only th
 - **Strict Faction & Lv. 1–40 Curve:** `playable`, `enemy`, `convertible` (`gastly_line`, `sandile_line`, `seedot_line`), and `ally_npc` (`kecleon_line`) enforced by `campaignConfig.ts` & `registryValidators.ts`; Stone promotions Lv. 10+ (Lv. 15 `eevee`/`wimpod`), Gem Lv. 20+.
 - **Pixel Rendering:** `imageSmoothingEnabled = false` + `image-rendering: pixelated`; `1x` native `24x24`px buffer + CSS scale (`ui/gridViewportMath.ts`); sprite footline `(frameW/2, frameH/2 + 4)` anchored at `(12, 20)`.
 - **Hybrid Cloud Save:** Immediate `localStorage` (`mystery_emblem_save_v1`, `mystery_emblem_map_overrides_v1`) + Firebase Auth/Firestore (`saves/{uid}`, flat `customMapsEnvelopeJson`, `lastUpdated` timestamp resolution; `signInWithPopup` bound strictly to `click`).
-- **Module Size & Verification Gate:** Every `.ts`/`.css`/`.astro` file stays `<=308` raw lines. Always run `npm run typecheck && npm run build && npm test` (`playwright.config.ts` serves `dist/`).
+- **Verification Gate:** Always run `npm run typecheck && npm run build && npm test` (`playwright.config.ts` serves `dist/`).
 
 ## 2. File Path, Responsibility & Export Index
 
