@@ -2,6 +2,8 @@
  * Ally & Enemy Phase AI Sequencer, Dungeon Stairs Reinforcements & Start-of-Turn Events
  */
 
+import { equipMoveInItsSlot } from '../../data/equippedMoves';
+import { PROLOGUE_LEVEL_ID } from '../../data/chapters/prologue/tutorialStaging';
 import { loadSpeciesSpriteBundle } from '../../assets/pmdAssetLoader';
 import { buildSingleEnemyBattleUnit } from '../../engine/battleSetup';
 import { computeCombatForecast, computeStatusMoveForecast } from '../../engine/combatEngine';
@@ -29,7 +31,7 @@ import {
   playStatusHexActionAsync,
   runFactionPhaseStartStatusTicks,
 } from './battleStatusHexController';
-import { triggerBattleTutorial } from './battleTutorialIntegration';
+import { triggerBattleTutorial, triggerPrologueTurn2Drills } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
   getLivingAlliedUnits,
@@ -127,7 +129,7 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
         (u) => u.id === decision.attack!.targetUnitId && !u.defeated && u.currentHp > 0
       );
       if (target) {
-        enemy.equippedMoveId = decision.attack.moveId;
+        equipMoveInItsSlot(enemy, decision.attack.moveId);
         const liveForecast = computeCombatForecast(
           state.map,
           enemy,
@@ -215,12 +217,14 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
 
   audioManager.playSfx('phase_change');
   void playPhaseTransitionAsync(state, dom, 'player', runGen).then(() => {
-    if (
-      state.openState &&
-      runGen === state.battleRunGen &&
-      state.phase === 'player_phase' &&
-      getLivingPlayers(state).some((u) => u.currentHp < u.maxHp)
-    ) {
+    if (!state.openState || runGen !== state.battleRunGen || state.phase !== 'player_phase') {
+      return;
+    }
+    if (state.activeLevelId === PROLOGUE_LEVEL_ID) {
+      if (state.turnNumber === 2) void triggerPrologueTurn2Drills(ctx, runGen);
+      return;
+    }
+    if (getLivingPlayers(state).some((u) => u.currentHp < u.maxHp)) {
       void triggerBattleTutorial(ctx, 'ch1_healing_and_items');
     }
   });

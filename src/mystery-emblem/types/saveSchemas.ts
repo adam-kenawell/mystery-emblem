@@ -57,10 +57,11 @@ export interface OwnedPokemonInstance {
   /** Up to 4 active moves equipped for battle */
   activeMoveIds: string[];
   /**
-   * Single offensive move marked [E] Equipped for Enemy Phase counter-attacks.
-   * Must be one of activeMoveIds with category 'Physical' or 'Special' (or null if none).
+   * [E] Equipped moves for Enemy Phase counters: one Physical (Range 1) and one Special (Range 2).
+   * Each must be in activeMoveIds with the matching category, or null (unequipped).
    */
-  equippedMoveId: string | null;
+  equippedPhysicalMoveId: string | null;
+  equippedSpecialMoveId: string | null;
   /**
    * Single item slot per unit (Held Gear / Berry, Active Healing/Status Consumable, Promotion Stone/Gem, or X-Item).
    * At most ONE of `heldItemId` or `consumableItemId` may be non-null at any time.

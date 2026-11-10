@@ -2,6 +2,7 @@
  * Tactical Enemy & Green Allied NPC Phase Action Scoring & Turn Planner
  */
 
+import { isMoveEquipped } from '../../data/equippedMoves';
 import type { DungeonMapDefinition } from '../../types/schemas';
 import {
   computeCombatForecast,
@@ -139,7 +140,7 @@ function chooseAiUnitAction(
           forecast.attackerTerrainBonuses.defBonus * 6 +
           forecast.attackerTerrainBonuses.avoidBonus * 0.4;
         score -= stopTile.cost * 0.45;
-        if (moveSlot.id === actor.equippedMoveId) score += 0.2;
+        if (isMoveEquipped(actor, moveSlot.id)) score += 0.2;
 
         candidates.push({
           kind: 'attack',

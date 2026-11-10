@@ -1,7 +1,11 @@
 /**
- * Fire Emblem Combat Forecast Calculator (Rule 4 Single-Equipped `[E]` Counter-Attack)
+ * Fire Emblem Combat Forecast Calculator (Rule 4 Dual-Equipped Physical/Special `[E]` Counter-Attack)
  */
 
+import {
+  getEquippedMoveIdForCategory,
+  type EquipCategory,
+} from '../../data/equippedMoves';
 import { getItemById, getMoveById } from '../../data/index';
 import type { DungeonMapDefinition, TerrainBonuses } from '../../types/schemas';
 import { getMapTerrainAt, getTerrainBonuses } from '../terrainAndPathfinding';
@@ -93,10 +97,11 @@ export function buildSideForecast(
     actorEff.hitBonus +
     (actorEff.spe - targetEff.spe) * 2 -
     targetTerrainBonuses.avoidBonus;
-  const hitRate = clampInt(rawHit, 15, 100);
+  // Sparring partners always land a clean, non-critical hit (see `DungeonUnitSpawn.sparring`).
+  const hitRate = actor.sparring ? 100 : clampInt(rawHit, 15, 100);
 
   const rawCrit = move.crit + Math.floor(actorEff.spe / 2) + actorEff.critBonus;
-  const critRate = typeMultiplier === 0 ? 0 : clampInt(rawCrit, 0, 100);
+  const critRate = typeMultiplier === 0 || actor.sparring ? 0 : clampInt(rawCrit, 0, 100);
 
   const canDouble = actorEff.spe - targetEff.spe >= 5 && moveSlot.ppRemaining >= 2;
   const strikes: 1 | 2 = canDouble ? 2 : 1;
@@ -160,13 +165,15 @@ export function computeCombatForecast(
 
   if (defender.status === 'SLP') {
     defenderCounterReason = 'Asleep';
-  } else if (!defender.equippedMoveId) {
-    defenderCounterReason = 'No [E] Move';
   } else {
-    const defSlot = defender.activeMoves.find((s) => s.id === defender.equippedMoveId);
-    const eqMove = defSlot?.move ?? getMoveById(defender.equippedMoveId);
-    if (!defSlot || !isOffensiveMove(eqMove)) {
-      defenderCounterReason = 'No Offensive [E]';
+    // Physical is always Range 1 and Special always Range 2, so distance picks the counter slot.
+    const counterCategory: EquipCategory = distance <= 1 ? 'Physical' : 'Special';
+    const counterMoveId = getEquippedMoveIdForCategory(defender, counterCategory);
+    const defSlot = counterMoveId
+      ? defender.activeMoves.find((s) => s.id === counterMoveId)
+      : undefined;
+    if (!counterMoveId || !defSlot || !isOffensiveMove(defSlot.move)) {
+      defenderCounterReason = `No ${counterCategory} [E]`;
     } else if (defSlot.ppRemaining <= 0) {
       defenderCounterReason = '0 PP';
     } else if (distance < defSlot.range[0] || distance > defSlot.range[1]) {
@@ -177,17 +184,19 @@ export function computeCombatForecast(
     }
   }
 
+  const hpFloor = attacker.sparring || defender.sparring ? 1 : 0;
+  const applyHit = (hp: number, dmg: number) => Math.max(Math.min(hpFloor, hp), hp - dmg);
   let projAttackerHp = attacker.currentHp;
   let projDefenderHp = defender.currentHp;
 
-  projDefenderHp = Math.max(0, projDefenderHp - attackerSide.damage);
+  projDefenderHp = applyHit(projDefenderHp, attackerSide.damage);
 
   if (projDefenderHp > 0 && defenderCanCounter && defenderSide) {
-    projAttackerHp = Math.max(0, projAttackerHp - defenderSide.damage);
+    projAttackerHp = applyHit(projAttackerHp, defenderSide.damage);
   }
 
   if (projAttackerHp > 0 && projDefenderHp > 0 && attackerSide.strikes === 2) {
-    projDefenderHp = Math.max(0, projDefenderHp - attackerSide.damage);
+    projDefenderHp = applyHit(projDefenderHp, attackerSide.damage);
   }
 
   if (
@@ -197,7 +206,7 @@ export function computeCombatForecast(
     defenderSide &&
     defenderSide.strikes === 2
   ) {
-    projAttackerHp = Math.max(0, projAttackerHp - defenderSide.damage);
+    projAttackerHp = applyHit(projAttackerHp, defenderSide.damage);
   }
 
   return {

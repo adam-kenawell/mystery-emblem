@@ -122,7 +122,7 @@ export function renderOverworldUnitsTab(params: OverworldUnitsTabParams): {
       <div class="pmd-forecast-unit-head">
         <div class="pmd-forecast-portrait-slot" data-ow-unit-portrait></div>
         <div class="pmd-forecast-unit-id">
-          <strong class="pmd-forecast-unit-name" data-testid="overworld-unit-detail-name">${escapeUiHtml(selected.nickname)}${selected.isLord ? ' ★' : ''}</strong>
+          <strong class="pmd-forecast-unit-name" data-testid="overworld-unit-detail-name">${escapeUiHtml(selected.nickname)}</strong>
           <span class="pmd-forecast-unit-meta">${escapeUiHtml(showSpeciesMeta)}Lv. ${selected.level} · ${sp ? renderColoredTypesHtml(sp.types, '/') : ''} · ${escapeUiHtml(sp?.traversalClass ?? 'Grounded')}</span>
         </div>
       </div>

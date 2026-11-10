@@ -10,7 +10,11 @@
  * intentionally NOT rendered here (the Ask-Wimpod compendium list still shows titles).
  */
 
-import type { TutorialTopicDefinition, WimpodTutorialBeat } from '../../data/tutorialRegistry';
+import type {
+  TutorialPresenter,
+  TutorialTopicDefinition,
+  WimpodTutorialBeat,
+} from '../../data/tutorialRegistry';
 import { interpolateCampaignText, resolveSpeakerIdentity } from '../../engine/speakerResolver';
 import type { SaveData } from '../../types/schemas';
 import type { PmdPortraitView } from '../PmdSpriteCanvas';
@@ -27,6 +31,8 @@ export interface RenderCoachCardParams {
   isInteractive: boolean;
   returnToCompendiumOnClose: boolean;
   save: SaveData | null;
+  /** Defaults to the Wimpod/Golisopod advisor */
+  presenter?: TutorialPresenter;
   signal: AbortSignal;
   onPrev: () => void;
   onNext: () => void;
@@ -73,15 +79,18 @@ export function renderCoachCardDom(params: RenderCoachCardParams): {
   formattedDialogue: string;
 } {
   const { cardWindowEl, coachPortraitView, topic, beat, isInteractive, save } = params;
+  const isMentor = params.presenter === 'mentor';
+  const emotion = (isMentor && beat.mentorEmotion) || beat.emotion;
 
   cardWindowEl.innerHTML = '';
-  const advisor = resolveSpeakerIdentity({ kind: 'advisor' }, save);
+  const advisor = resolveSpeakerIdentity({ kind: isMentor ? 'mentor' : 'advisor' }, save);
 
   cardWindowEl.dataset.topicId = topic.id;
   cardWindowEl.dataset.beatId = beat.id;
+  cardWindowEl.dataset.presenter = isMentor ? 'mentor' : 'advisor';
   cardWindowEl.dataset.interactive = isInteractive ? 'true' : 'false';
   cardWindowEl.dataset.awaitAction = isInteractive ? beat.awaitAction ?? '' : '';
-  cardWindowEl.dataset.wimpodEmotion = beat.emotion;
+  cardWindowEl.dataset.wimpodEmotion = emotion;
 
   const layoutRow = document.createElement('div');
   layoutRow.className = 'pmd-wimpod-coach-row';
@@ -92,7 +101,7 @@ export function renderCoachCardDom(params: RenderCoachCardParams): {
   portraitSlot.appendChild(coachPortraitView.canvas);
   void coachPortraitView.setPortrait({
     speciesIdOrAssetId: advisor.visualAssetId ?? advisor.pmdAssetId,
-    emotion: beat.emotion,
+    emotion,
   });
   layoutRow.appendChild(portraitSlot);
 
@@ -105,7 +114,10 @@ export function renderCoachCardDom(params: RenderCoachCardParams): {
   speakerName.textContent = advisor.nickname;
   contentCol.appendChild(speakerName);
 
-  const formattedDialogue = interpolateCampaignText(beat.dialogue, save);
+  const formattedDialogue = interpolateCampaignText(
+    (isMentor && beat.mentorDialogue) || beat.dialogue,
+    save
+  );
   const speechEl = document.createElement('p');
   speechEl.className = 'pmd-wimpod-speech-text';
   speechEl.dataset.testid = 'tutorial-dialogue-text';

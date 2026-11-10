@@ -2,9 +2,10 @@
  * Mid-Battle Evolution Stone & Evolution Gem Promotion Resolver
  */
 
+import { autoEquipNewMoveIfSlotEmpty } from '../../data/equippedMoves';
 import { getMoveById, getSpeciesById } from '../../data/index';
 import type { EvolutionBranch, StatBlockSeven } from '../../types/schemas';
-import { isOffensiveMove, type BattleUnitState } from '../combatEngine';
+import { type BattleUnitState } from '../combatEngine';
 import { buildMoveSlotForLearnedMove } from './expAndLevelUp';
 
 export interface BattlePromotionOutcome {
@@ -99,9 +100,7 @@ export function promoteBattleUnitMidBattle(
           const slot = buildMoveSlotForLearnedMove(entry.moveId);
           if (slot) {
             unit.activeMoves.push(slot);
-            if (!unit.equippedMoveId && isOffensiveMove(slot.move)) {
-              unit.equippedMoveId = slot.id;
-            }
+            autoEquipNewMoveIfSlotEmpty(unit, slot.id);
           }
         }
       }

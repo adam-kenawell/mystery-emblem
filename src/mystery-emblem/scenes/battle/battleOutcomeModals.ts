@@ -28,6 +28,9 @@ function hasFutureEnemySpawns(state: BattleRuntimeState): boolean {
       ev.trigger.type === 'turn_start' &&
       ev.trigger.turnNumber > state.turnNumber &&
       !state.triggeredEventIds.has(ev.id) &&
+      !(ev.conditions ?? []).some(
+        (c) => c.kind === 'event_triggered' && c.negated && state.triggeredEventIds.has(c.eventId)
+      ) &&
       ev.actions.some((a) => a.type === 'spawn_units' && a.faction === 'enemy')
   );
 }
@@ -143,7 +146,8 @@ export function triggerVictoryModal(ctx: BattleControllerContext): void {
           currentStats: { ...u.stats },
           unlockedMoveIds: [...(u.unlockedMoveIds ?? u.activeMoves.map((m) => m.id))],
           activeMoveIds: u.activeMoves.map((m) => m.id),
-          equippedMoveId: u.equippedMoveId,
+          equippedPhysicalMoveId: u.equippedPhysicalMoveId,
+          equippedSpecialMoveId: u.equippedSpecialMoveId,
           heldItemId: u.heldItemId,
           consumableItemId: u.consumableItemId,
         }));

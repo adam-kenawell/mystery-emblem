@@ -2,6 +2,7 @@
  * Shared Move-Row List & Valid Move Resolver for Attack & Heal Forecast Modals
  */
 
+import { isMoveEquipped } from '../../data/equippedMoves';
 import {
   getHealingMovesForTargetAtDistance,
   getEnemyTargetingMovesAtDistance,
@@ -92,7 +93,7 @@ export function renderForecastMoveList(
     const isUsable = validIds.has(slot.id);
     const isSelected = slot.id === selectedMoveId;
     const isEqCounter =
-      slot.id === actor.equippedMoveId && slot.move.category !== 'Support/Heal';
+      isMoveEquipped(actor, slot.id) && slot.move.category !== 'Support/Heal';
 
     const btn = document.createElement('button');
     btn.type = 'button';

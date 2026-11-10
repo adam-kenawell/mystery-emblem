@@ -1,7 +1,7 @@
 /**
  * Campaign Save State Validator (`saveValidator.ts`)
  *
- * Enforces Rule 4 (single `[E]` offensive move, 4-move loadout),
+ * Enforces Rule 4 (one Physical + one Special `[E]` slot, 4-move loadout),
  * Rule 5 (no enemy/ally_npc species in player roster, Lv. 1..40),
  * and Rule 7 (`schemaVersion` & `lastUpdated` UTC timestamp).
  */
@@ -91,18 +91,22 @@ export function validateSaveData(
         }
       }
 
-      if (unit.equippedMoveId !== null) {
-        if (!unit.activeMoveIds?.includes(unit.equippedMoveId)) {
+      const equipChecks: Array<[string | null | undefined, 'Physical' | 'Special']> = [
+        [unit.equippedPhysicalMoveId, 'Physical'],
+        [unit.equippedSpecialMoveId, 'Special'],
+      ];
+      for (const [eqId, category] of equipChecks) {
+        if (eqId === null) continue;
+        if (eqId === undefined) {
+          errors.push(`Rule 4 violation: unit "${unit.instanceId}" is missing its ${category} [E] slot.`);
+        } else if (!unit.activeMoveIds?.includes(eqId)) {
           errors.push(
-            `Rule 4 violation: unit "${unit.instanceId}" equippedMoveId "${unit.equippedMoveId}" is not in activeMoveIds.`
+            `Rule 4 violation: unit "${unit.instanceId}" ${category} [E] move "${eqId}" is not in activeMoveIds.`
           );
-        } else {
-          const eqMove = movesById.get(unit.equippedMoveId);
-          if (eqMove && eqMove.category === 'Support/Heal') {
-            errors.push(
-              `Rule 4 violation: unit "${unit.instanceId}" cannot mark Support/Heal move "${unit.equippedMoveId}" as [E] Equipped.`
-            );
-          }
+        } else if (movesById.get(eqId)?.category !== category) {
+          errors.push(
+            `Rule 4 violation: unit "${unit.instanceId}" ${category} [E] slot holds non-${category} move "${eqId}".`
+          );
         }
       }
 

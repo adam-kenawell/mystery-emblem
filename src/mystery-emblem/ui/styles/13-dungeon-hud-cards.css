@@ -105,10 +105,25 @@
 
 .pmd-unit-popup-title-line {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 5px;
   min-width: 0;
+}
+
+.pmd-unit-popup-subline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 5px;
+  min-width: 0;
+}
+
+.pmd-unit-popup-sub-left {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .pmd-unit-popup-name {
@@ -128,6 +143,19 @@
   text-shadow: 1px 1px 0 #000000;
   white-space: nowrap;
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.1;
+}
+
+.pmd-unit-popup-allegiance {
+  font-size: 9px;
+  color: var(--pmd-text-muted, #c8d0e0);
+  text-shadow: 1px 1px 0 #000000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .pmd-unit-popup-item-slot {

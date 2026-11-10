@@ -60,6 +60,10 @@ export type DungeonEventTrigger =
   | {
       type: 'battle_victory';
       requireSurvivedUnitIds?: string[];
+    }
+  | {
+      /** Fires after a player unit's HP is restored by a heal move or healing item */
+      type: 'unit_healed';
     };
 
 export type DungeonEventCondition =
@@ -162,6 +166,20 @@ export type DungeonEventAction =
       nickname?: string;
       scaleStatsToLevel?: boolean;
       bannerText?: string;
+    }
+  | {
+      /** Walks a unit along the shortest path to `(x, y)`, ignoring its Mov stat */
+      type: 'move_unit';
+      targetUnitId: string;
+      x: number;
+      y: number;
+    }
+  | {
+      /** Marks player units as already acted this phase (e.g. tutorial turns that lock the team) */
+      type: 'rest_player_units';
+      exceptLord?: boolean;
+      /** Keeps the first non-lord unit that knows a heal move active */
+      exceptHealer?: boolean;
     };
 
 export interface DungeonEventDefinition {

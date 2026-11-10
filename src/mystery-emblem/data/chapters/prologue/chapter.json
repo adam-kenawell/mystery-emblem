@@ -40,24 +40,41 @@
   "enemySpawns": [
     {
       "id":"prologue_sir_empoleon",
-      "x":8,
+      "x":14,
       "y":5,
       "speciesId":"sir_empoleon",
       "nickname":"Sir Empoleon",
       "level":12,
-      "moveIds":["peck","metal_claw","bubble_beam","aqua_jet"],
+      "moveIds":["peck","metal_claw"],
       "equippedMoveId":"peck",
+      "equippedMoveIds":["peck"],
       "heldItemId":null,
-      "stationary":true,
-      "aiMode":"stationary"
+      "aiMode":"wait_until_in_range",
+      "sparring":true
     }
   ],
   "reinforcements": [],
   "events": [
     {
+      "id":"ev_prologue_rest_team_turn1",
+      "once":true,
+      "trigger":{"type":"turn_start","turnNumber":1,"phase":"player_phase"},
+      "actions":[
+        {"type":"rest_player_units","exceptLord":true}
+      ]
+    },
+    {
+      "id":"ev_prologue_rest_team_turn2",
+      "once":true,
+      "trigger":{"type":"turn_start","turnNumber":2,"phase":"player_phase"},
+      "actions":[
+        {"type":"rest_player_units","exceptLord":true,"exceptHealer":true}
+      ]
+    },
+    {
       "id":"ev_prologue_ambush",
       "once":true,
-      "trigger":{"type":"turn_start","turnNumber":1,"phase":"enemy_phase"},
+      "trigger":{"type":"turn_start","turnNumber":2,"phase":"enemy_phase"},
       "actions":[
         {
           "type":"spawn_units",

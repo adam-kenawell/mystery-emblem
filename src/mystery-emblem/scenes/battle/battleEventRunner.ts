@@ -9,6 +9,7 @@ import {
   getMatchingTileReachedEvents,
   getMatchingTurnStartEvents,
   getMatchingUnitDefeatedEvents,
+  getMatchingUnitHealedEvents,
   getMatchingVictoryEvents,
 } from '../../engine/battleEvents';
 import { manhattanDistance, type BattleUnitState } from '../../engine/combatEngine';
@@ -94,6 +95,18 @@ export async function runTileReachedEvents(
     ctx.state.events,
     ctx.state.triggeredEventIds,
     unit,
+    ctx.state.units
+  );
+  await runMatchedEvents(ctx, matched, runGen);
+}
+
+export async function runUnitHealedEvents(
+  ctx: BattleControllerContext,
+  runGen: number
+): Promise<void> {
+  const matched = getMatchingUnitHealedEvents(
+    ctx.state.events,
+    ctx.state.triggeredEventIds,
     ctx.state.units
   );
   await runMatchedEvents(ctx, matched, runGen);

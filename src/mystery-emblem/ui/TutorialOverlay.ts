@@ -7,6 +7,7 @@ import {
   getTutorialTopicById,
   type TutorialActionTriggerId,
   type TutorialBattleTileFilter,
+  type TutorialPresenter,
   type WimpodTutorialBeat,
 } from '../data/tutorialRegistry';
 import type { SaveStateManager } from '../state/SaveStateManager';
@@ -43,6 +44,7 @@ export class TutorialOverlay {
   private presentationQueue: Promise<unknown> = Promise.resolve();
   private fastMode = false;
   private pauseInFastMode = false;
+  private activePresenter: TutorialPresenter = 'advisor';
 
   constructor(options: TutorialOverlayOptions) {
     this.saveManager = options.saveManager;
@@ -111,15 +113,22 @@ export class TutorialOverlay {
     this.session.triggerNudgeAnimation(this.shell.cardWindowEl);
   }
 
-  public presentTopicIfNeeded(topicId: string, opts?: { sceneFastMode?: boolean }): Promise<boolean> {
+  public presentTopicIfNeeded(
+    topicId: string,
+    opts?: { sceneFastMode?: boolean; presenter?: TutorialPresenter }
+  ): Promise<boolean> {
     const next = this.presentationQueue.then(() =>
-      this.runTopicPresentation(topicId, Boolean(opts?.sceneFastMode))
+      this.runTopicPresentation(topicId, Boolean(opts?.sceneFastMode), opts?.presenter ?? 'advisor')
     );
     this.presentationQueue = next.catch(() => false);
     return next;
   }
 
-  private async runTopicPresentation(topicId: string, sceneFastMode: boolean): Promise<boolean> {
+  private async runTopicPresentation(
+    topicId: string,
+    sceneFastMode: boolean,
+    presenter: TutorialPresenter
+  ): Promise<boolean> {
     const skipFast = (this.fastMode || sceneFastMode) && !this.pauseInFastMode;
     const topic = this.session.evaluateTopicEligibility(this.saveManager, topicId, skipFast);
     if (!topic) return false;
@@ -128,6 +137,7 @@ export class TutorialOverlay {
       this.session.findFirstPendingBeat(topic.beats, 0)
     );
     return new Promise<boolean>((resolve) => {
+      this.activePresenter = presenter;
       this.session.startTopic(topic, startIdx, false, resolve);
       this.session.applyModalDomVisibility(this.shell, 'card');
       this.session.syncInteractivity();
@@ -169,6 +179,7 @@ export class TutorialOverlay {
     const topic = getTutorialTopicById(topicId);
     if (!topic || topic.beats.length === 0) return;
     if (this.saveManager.getSave()) this.saveManager.markTutorialSeen(topic.id);
+    this.activePresenter = 'advisor';
     this.session.startTopic(topic, 0, true, null);
     this.session.applyModalDomVisibility(this.shell, 'card');
     this.session.syncInteractivity();
@@ -263,6 +274,7 @@ export class TutorialOverlay {
         isInteractive: interactive,
         returnToCompendiumOnClose: this.session.returnToCompendiumOnClose,
         save: this.saveManager.getSave(),
+        presenter: this.activePresenter,
         signal: this.abortController.signal,
         onPrev: () => this.stepBeatBackward(),
         onNext: () => this.handleCoachAdvanceTap(),

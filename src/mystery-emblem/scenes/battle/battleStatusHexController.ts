@@ -119,7 +119,7 @@ export function renderStatusHexForecastModalDom(
   }
 
   const [rMin, rMax] = chosenSlot.range;
-  setTxt('[data-testid="forecast-attacker-name"]', `${caster.nickname}${caster.isLord ? ' ★' : ''}`);
+  setTxt('[data-testid="forecast-attacker-name"]', `${caster.nickname}`);
   setTxt('[data-testid="forecast-attacker-weapon"]', forecast.move.name);
   setTxt('[data-testid="forecast-attacker-hp"]', `${caster.currentHp} → ${caster.currentHp}`);
   setTxt('[data-testid="forecast-attacker-dmg"]', forecast.inflictStatus);

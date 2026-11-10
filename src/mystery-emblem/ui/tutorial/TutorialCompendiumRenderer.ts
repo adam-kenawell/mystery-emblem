@@ -68,7 +68,7 @@ export function renderTutorialCompendiumDom(params: {
   const subQuote = document.createElement('span');
   subQuote.className = 'pmd-wimpod-compendium-quote';
   subQuote.textContent =
-    '“Psst! Forget how something works? Read my cowardly notes before an enemy spots us!”';
+    '“Forget how something works? I wrote it all down. Mostly so I’d stop panicking.”';
 
   titleCol.append(metaRow, titleEl, subQuote);
   heroLeft.append(portraitBox, titleCol);

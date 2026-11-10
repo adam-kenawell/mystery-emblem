@@ -45,10 +45,6 @@ export function createRosterUnitPortraitBtn(
     rolePip.className = 'pmd-portrait-pip is-fainted';
     rolePip.textContent = 'KO';
     btn.appendChild(rolePip);
-  } else if (unit.isLord) {
-    rolePip.className = 'pmd-portrait-pip is-lord';
-    rolePip.textContent = '★';
-    btn.appendChild(rolePip);
   } else if (!unit.waited) {
     rolePip.className = 'pmd-portrait-pip is-deployed';
     rolePip.textContent = '✓';

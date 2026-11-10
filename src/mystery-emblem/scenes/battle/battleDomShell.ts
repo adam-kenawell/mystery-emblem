@@ -129,11 +129,19 @@ export function createBattleDomShell(): BattleDomRefs {
       <div class="pmd-unit-popup-header-main">
         <div class="pmd-unit-popup-title-line">
           <strong class="pmd-unit-popup-name" data-testid="unit-popup-name"></strong>
-          <span class="pmd-unit-popup-level-exp" data-testid="unit-popup-level-exp">Lv 1</span>
+          <div class="pmd-unit-popup-item-slot" data-testid="unit-popup-item"></div>
         </div>
-        <span class="pmd-unit-popup-types" data-testid="unit-popup-types"></span>
+        <div class="pmd-unit-popup-subline">
+          <div class="pmd-unit-popup-sub-left">
+            <span class="pmd-unit-popup-types" data-testid="unit-popup-types"></span>
+            <span class="pmd-unit-popup-allegiance" data-testid="unit-popup-allegiance"></span>
+          </div>
+          <span class="pmd-unit-popup-level-exp" data-testid="unit-popup-level-exp">
+            <span data-popup-level>Lv 1</span>
+            <span data-popup-exp>EXP --</span>
+          </span>
+        </div>
       </div>
-      <div class="pmd-unit-popup-item-slot" data-testid="unit-popup-item"></div>
     </div>
     <div class="pmd-unit-popup-top">
       <div class="pmd-forecast-portrait-slot pmd-unit-popup-portrait-slot" data-popup-portrait-slot>

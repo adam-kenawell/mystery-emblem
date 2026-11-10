@@ -28,6 +28,7 @@ import {
 import {
   getExpectedTutorialAction,
   getHealOrConsumableTutorialUnits,
+  getTutorialHealerUnit,
 } from './battleTutorialSpotlights';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
@@ -164,6 +165,16 @@ export function handleBattleTileTap(
     if (expectedTutorialAction === 'battle_select_lord') {
       const lord = getLordUnit(state);
       if (!occupant || occupant.id !== lord?.id || occupant.waited) {
+        tutorialOverlay?.nudgeActiveStep();
+        return;
+      }
+      selectPlayerUnit(ctx, occupant);
+      return;
+    }
+
+    if (expectedTutorialAction === 'battle_select_healer') {
+      const healer = getTutorialHealerUnit(state);
+      if (!occupant || occupant.id !== healer?.id || occupant.waited) {
         tutorialOverlay?.nudgeActiveStep();
         return;
       }

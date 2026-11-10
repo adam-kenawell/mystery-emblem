@@ -4,6 +4,7 @@
 
 import { mergeCustomMapsRecord } from '../data/chapterMapRegistry';
 import { DEFAULT_QUIZ_SEEDS, formatCampaignChapterLabel } from '../data/campaignConfig';
+import type { EquipCategory } from '../data/equippedMoves';
 import { DEMO_OVERWORLD_GRAPH, type OverworldGraphDefinition } from '../data/overworldMapData';
 import type { PostBattleSpawnResult } from '../engine/overworldEngine';
 import type {
@@ -32,7 +33,7 @@ import {
   mutateSpawnOverworldSkirmish, mutateUnlockAllOverworldNodes,
 } from './overworldAndShopMutators';
 import {
-  mutateEvolveUnitToSpecies, mutatePromoteAdvisorToPlayableRoster, mutateRecruitPokemon,
+  mutateClearEquippedMove, mutateEvolveUnitToSpecies, mutatePromoteAdvisorToPlayableRoster, mutateRecruitPokemon,
   mutateRenamePokemon, mutateSetActiveMoves, mutateSetEquippedMove,
   mutateSetUnitLevelForTest, mutateUnlockUnitMove,
 } from './rosterAndMoveMutators';
@@ -111,7 +112,8 @@ export class SaveStateManager {
   }
 
   public renamePokemon(id: string, name: string): OwnedPokemonInstance { return this.mutateUnit((s) => mutateRenamePokemon(s, id, name)); }
-  public setEquippedMove(id: string, moveId: string | null): OwnedPokemonInstance { return this.mutateUnit((s) => mutateSetEquippedMove(s, id, moveId)); }
+  public setEquippedMove(id: string, moveId: string): OwnedPokemonInstance { return this.mutateUnit((s) => mutateSetEquippedMove(s, id, moveId)); }
+  public clearEquippedMove(id: string, category: EquipCategory): OwnedPokemonInstance { return this.mutateUnit((s) => mutateClearEquippedMove(s, id, category)); }
   public setActiveMoves(id: string, moveIds: string[]): OwnedPokemonInstance { return this.mutateUnit((s) => mutateSetActiveMoves(s, id, moveIds)); }
   public addConvoyItem(itemId: string, quantity = 1): void { this.mutateAndCommit((s) => mutateAddConvoyItem(s, itemId, quantity)); }
   public recruitPokemon(opts: CreatePokemonOptions): OwnedPokemonInstance { return this.mutateUnit((s) => mutateRecruitPokemon(s, opts)); }

@@ -131,7 +131,7 @@ export function refreshHealForecastModalDom(ctx: BattleControllerContext): void 
 
   const healerProjectedHp =
     target.id === healer.id ? healForecast.projectedTargetHp : healer.currentHp;
-  if (atkNameEl) atkNameEl.textContent = `${healer.nickname}${healer.isLord ? ' ★' : ''}`;
+  if (atkNameEl) atkNameEl.textContent = `${healer.nickname}`;
   if (atkWpnEl) atkWpnEl.textContent = healForecast.move.name;
   if (atkHpEl) {
     atkHpEl.textContent =
@@ -160,7 +160,7 @@ export function refreshHealForecastModalDom(ctx: BattleControllerContext): void 
   const defCurBar = q('[data-defender-hp-cur-bar]');
   const defProjBar = q('[data-defender-hp-proj-bar]');
 
-  if (defNameEl) defNameEl.textContent = `${target.nickname}${target.isLord ? ' ★' : ''}`;
+  if (defNameEl) defNameEl.textContent = `${target.nickname}`;
   if (defMetaEl) {
     defMetaEl.textContent = '';
     defMetaEl.hidden = true;

@@ -250,6 +250,16 @@ export function getMatchingTileReachedEvents(
   });
 }
 
+export function getMatchingUnitHealedEvents(
+  events: ReadonlyArray<DungeonEventDefinition>,
+  triggeredEventIds: ReadonlySet<string>,
+  units: ReadonlyArray<BattleUnitState>
+): DungeonEventDefinition[] {
+  return events.filter(
+    (ev) => ev.trigger.type === 'unit_healed' && isEventEligibleToFire(ev, triggeredEventIds, units)
+  );
+}
+
 export function getMatchingVictoryEvents(
   events: ReadonlyArray<DungeonEventDefinition>,
   triggeredEventIds: ReadonlySet<string>,

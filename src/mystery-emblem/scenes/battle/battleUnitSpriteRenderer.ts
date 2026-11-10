@@ -142,33 +142,20 @@ export function renderUnitsAndStrikeVfx(
         ctx.fillRect(barX + 1, barY + 1, fillW, 1);
       }
 
-      if (unit.isLord || unit.isBoss) {
-        const cx = Math.round(tileScreenX + 1);
-        const cy = Math.round(tileScreenY + 1);
-        ctx.fillStyle = '#081020';
-        ctx.fillRect(cx, cy, 7, 5);
-        ctx.fillStyle = unit.isLord ? '#f8d048' : '#ff5468';
-        ctx.fillRect(cx + 1, cy + 3, 5, 1);
-        ctx.fillRect(cx + 1, cy + 1, 1, 2);
-        ctx.fillRect(cx + 3, cy + 1, 1, 2);
-        ctx.fillRect(cx + 5, cy + 1, 1, 2);
-      }
-
       if (talkTargetIds?.has(unit.id)) {
         const tx = Math.round(tileScreenX + PMD_TILE_NATIVE_PX - 8);
         const ty = Math.round(tileScreenY + 1);
+        const pulse = 0.5 + 0.5 * Math.sin(now / 220);
+        const glow = ctx.createRadialGradient(tx + 3.5, ty + 3, 1, tx + 3.5, ty + 3, 8);
+        glow.addColorStop(0, `rgba(255, 248, 120, ${(0.55 + pulse * 0.35).toFixed(2)})`);
+        glow.addColorStop(1, 'rgba(255, 216, 64, 0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(tx - 5, ty - 5, 17, 16);
         ctx.fillStyle = '#081020';
         ctx.fillRect(tx, ty, 7, 6);
-        ctx.fillStyle = '#f8f858';
+        ctx.fillStyle = pulse > 0.5 ? '#ffffc8' : '#f8f858';
         ctx.fillRect(tx + 1, ty + 1, 5, 3);
         ctx.fillRect(tx + 2, ty + 4, 2, 1);
-      } else if (unit.droppableItemId) {
-        const dx = Math.round(tileScreenX + PMD_TILE_NATIVE_PX - 6);
-        const dy = Math.round(tileScreenY + 1);
-        ctx.fillStyle = '#081020';
-        ctx.fillRect(dx, dy, 5, 5);
-        ctx.fillStyle = '#ffd860';
-        ctx.fillRect(dx + 1, dy + 1, 3, 3);
       }
     }
 

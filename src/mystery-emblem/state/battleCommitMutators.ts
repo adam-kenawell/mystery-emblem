@@ -3,6 +3,7 @@
  */
 
 import { MAX_UNIT_LEVEL, MIN_UNIT_LEVEL } from '../data/campaignConfig';
+import { reconcileEquippedMoves, type EquippedMoveSlots } from '../data/equippedMoves';
 import { ITEM_MAP, MOVE_MAP, SPECIES_MAP } from '../data/index';
 import type {
   ConvoyEntry,
@@ -18,7 +19,7 @@ import {
   sanitizeNickname,
 } from './saveHelpersAndFactory';
 
-export interface BattleUnitSaveSyncEntry {
+export interface BattleUnitSaveSyncEntry extends EquippedMoveSlots {
   instanceId: string;
   speciesId: string;
   nickname: string;
@@ -28,7 +29,6 @@ export interface BattleUnitSaveSyncEntry {
   currentStats: StatBlockSeven;
   unlockedMoveIds: string[];
   activeMoveIds: string[];
-  equippedMoveId: string | null;
   heldItemId: string | null;
   consumableItemId: string | null;
 }
@@ -86,20 +86,9 @@ export function mutateCommitBattleResults(
       .slice(0, 4);
     if (validActive.length > 0) owned.activeMoveIds = validActive;
 
-    if (
-      syncUnit.equippedMoveId &&
-      owned.activeMoveIds.includes(syncUnit.equippedMoveId) &&
-      (MOVE_MAP.get(syncUnit.equippedMoveId)?.category === 'Physical' ||
-        MOVE_MAP.get(syncUnit.equippedMoveId)?.category === 'Special')
-    ) {
-      owned.equippedMoveId = syncUnit.equippedMoveId;
-    } else {
-      const firstOff = owned.activeMoveIds.find((mId) => {
-        const mv = MOVE_MAP.get(mId);
-        return mv && (mv.category === 'Physical' || mv.category === 'Special');
-      });
-      owned.equippedMoveId = firstOff ?? null;
-    }
+    owned.equippedPhysicalMoveId = syncUnit.equippedPhysicalMoveId;
+    owned.equippedSpecialMoveId = syncUnit.equippedSpecialMoveId;
+    reconcileEquippedMoves(owned, owned.activeMoveIds, { fillEmpty: false });
 
     if (syncUnit.heldItemId && ITEM_MAP.get(syncUnit.heldItemId)?.equipSlot === 'held') {
       owned.heldItemId = syncUnit.heldItemId;

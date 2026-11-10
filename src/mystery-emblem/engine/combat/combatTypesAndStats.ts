@@ -4,6 +4,11 @@
 
 import type { PmdDirection, PmdSpriteAction } from '../../assets/pmdAssetLoader';
 import { getItemById, getMoveById, getSpeciesById } from '../../data/index';
+import {
+  getEquippedMoveIds,
+  isMoveEquipped,
+  type EquippedMoveSlots,
+} from '../../data/equippedMoves';
 import type {
   DungeonMapDefinition,
   MoveDefinition,
@@ -37,11 +42,12 @@ export interface TempBattleBoosts {
   crit: number;
 }
 
-export interface BattleUnitState extends PathfindingUnitContext {
+export interface BattleUnitState extends PathfindingUnitContext, EquippedMoveSlots {
   slotIndex: number;
   rosterInstanceId?: string;
   isLord: boolean;
   isBoss?: boolean;
+  sparring?: boolean;
   mustSurvive?: boolean;
   recruitedMidBattle?: boolean;
   droppableItemId?: string | null;
@@ -64,7 +70,6 @@ export interface BattleUnitState extends PathfindingUnitContext {
   statusTurns?: number;
   tempBattleBoosts?: TempBattleBoosts;
   activeMoves: BattleMoveSlot[];
-  equippedMoveId: string | null;
   waited: boolean;
   defeated: boolean;
   direction: PmdDirection;
@@ -127,7 +132,7 @@ export function manhattanDistance(ax: number, ay: number, bx: number, by: number
 }
 
 export function getOffensiveMovesAtDistance(
-  unit: Pick<BattleUnitState, 'activeMoves' | 'equippedMoveId'>,
+  unit: Pick<BattleUnitState, 'activeMoves' | keyof EquippedMoveSlots>,
   distance: number
 ): BattleMoveSlot[] {
   const matching = unit.activeMoves.filter(
@@ -137,12 +142,12 @@ export function getOffensiveMovesAtDistance(
       distance >= slot.range[0] &&
       distance <= slot.range[1]
   );
-  matching.sort((a, b) => (a.id === unit.equippedMoveId ? 0 : 1) - (b.id === unit.equippedMoveId ? 0 : 1));
+  matching.sort((a, b) => (isMoveEquipped(unit, a.id) ? 0 : 1) - (isMoveEquipped(unit, b.id) ? 0 : 1));
   return matching;
 }
 
 export function getEnemyTargetingMovesAtDistance(
-  unit: Pick<BattleUnitState, 'activeMoves' | 'equippedMoveId'> & { heldItemId?: string | null },
+  unit: Pick<BattleUnitState, 'activeMoves' | keyof EquippedMoveSlots> & { heldItemId?: string | null },
   distance: number
 ): BattleMoveSlot[] {
   const assaultVestBlocksSupport = Boolean(
@@ -163,8 +168,8 @@ export function getEnemyTargetingMovesAtDistance(
   });
 
   matching.sort((a, b) => {
-    const aRank = a.id === unit.equippedMoveId ? 0 : isOffensiveMove(a.move) ? 1 : 2;
-    const bRank = b.id === unit.equippedMoveId ? 0 : isOffensiveMove(b.move) ? 1 : 2;
+    const aRank = isMoveEquipped(unit, a.id) ? 0 : isOffensiveMove(a.move) ? 1 : 2;
+    const bRank = isMoveEquipped(unit, b.id) ? 0 : isOffensiveMove(b.move) ? 1 : 2;
     return aRank - bRank;
   });
   return matching;
@@ -224,8 +229,10 @@ export function getUnitEffectiveCombatStats(
 }
 
 export interface UnitPopupCombatSummary {
-  might: number | null;
-  mightCategory: 'Physical' | 'Special' | null;
+  /** Might of the equipped Physical (Range 1) move, or null if none is equipped. */
+  physicalMight: number | null;
+  /** Might of the equipped Special (Range 2) move, or null if none is equipped. */
+  specialMight: number | null;
   effectiveDef: number;
   effectiveSpd: number;
   /** Effective Speed (base + boosts + held item; PAR penalty). Terrain grants no Speed bonus. */
@@ -246,15 +253,14 @@ export function computeUnitPopupStats(
   const effectiveDef = eff.def + terrainBonuses.defBonus;
   const effectiveSpd = eff.spd + terrainBonuses.spdBonus;
 
-  let might: number | null = null;
-  let mightCategory: 'Physical' | 'Special' | null = null;
+  let physicalMight: number | null = null;
+  let specialMight: number | null = null;
 
-  if (unit.equippedMoveId) {
-    const slot = unit.activeMoves.find((s) => s.id === unit.equippedMoveId);
-    const move = slot?.move ?? getMoveById(unit.equippedMoveId);
+  for (const moveId of getEquippedMoveIds(unit)) {
+    const slot = unit.activeMoves.find((s) => s.id === moveId);
+    const move = slot?.move ?? getMoveById(moveId);
     if (move && isOffensiveMove(move)) {
       const isPhysical = move.category === 'Physical';
-      mightCategory = isPhysical ? 'Physical' : 'Special';
 
       let effectiveOffensiveStat = isPhysical ? eff.atk : eff.spa;
       if (isPhysical && unit.status === 'BRN' && unit.personalSkillId !== 'guts') {
@@ -276,13 +282,15 @@ export function computeUnitPopupStats(
         }
       }
 
-      might = effectiveOffensiveStat + move.mt + itemFlatDamageBonus;
+      const might = effectiveOffensiveStat + move.mt + itemFlatDamageBonus;
+      if (isPhysical) physicalMight = might;
+      else specialMight = might;
     }
   }
 
   return {
-    might,
-    mightCategory,
+    physicalMight,
+    specialMight,
     effectiveDef,
     effectiveSpd,
     effectiveSpe: eff.spe,

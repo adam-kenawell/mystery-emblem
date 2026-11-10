@@ -163,7 +163,8 @@ export interface BattleSceneSnapshot {
     traversalClass: TraversalClass;
     types: ReadonlyArray<PokemonType>;
     activeMoveIds: string[];
-    equippedMoveId: string | null;
+    equippedPhysicalMoveId: string | null;
+    equippedSpecialMoveId: string | null;
     equippedItemId: string | null;
     status: StatusCondition | null;
     waited: boolean;

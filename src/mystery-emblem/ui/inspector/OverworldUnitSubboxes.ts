@@ -3,6 +3,7 @@
  */
 
 import type { AudioManager } from '../../audio/AudioManager';
+import { isMoveEquipped, type EquipCategory } from '../../data/equippedMoves';
 import { getItemById, getMoveById } from '../../data/index';
 import type { SaveStateManager } from '../../state/SaveStateManager';
 import type { OwnedPokemonInstance, SaveData } from '../../types/schemas';
@@ -103,13 +104,13 @@ export function buildOverworldMoveLoadoutSubbox(params: {
   const { unit, saveManager, audioManager, onFeedbackAndRefresh } = params;
   const movesBox = document.createElement('div');
   movesBox.className = 'pmd-overworld-subbox';
-  movesBox.innerHTML = `<p class="pmd-overworld-subbox-title">Moves (${unit.activeMoveIds.length}/4 Active · [E] Counter)</p>`;
+  movesBox.innerHTML = `<p class="pmd-overworld-subbox-title">Moves (${unit.activeMoveIds.length}/4 Active · [E] Phys + Spec Counters)</p>`;
 
   for (const mId of unit.unlockedMoveIds) {
     const mv = getMoveById(mId);
     if (!mv) continue;
     const isActive = unit.activeMoveIds.includes(mId);
-    const isEquipped = unit.equippedMoveId === mId;
+    const isEquipped = isMoveEquipped(unit, mId);
     const canCounter = mv.category === 'Physical' || mv.category === 'Special';
     const row = document.createElement('div');
     row.className = 'pmd-overworld-action-row';
@@ -121,6 +122,7 @@ export function buildOverworldMoveLoadoutSubbox(params: {
       </div>
       <div class="pmd-inline-btns">
         ${isActive && canCounter && !isEquipped ? `<button type="button" class="pmd-btn pmd-chip-btn" data-set-eq="${mId}">Set [E]</button>` : ''}
+        ${isActive && canCounter && isEquipped ? `<button type="button" class="pmd-btn pmd-chip-btn is-active" data-clear-eq="${mId}">[E]</button>` : ''}
         ${!isActive && unit.activeMoveIds.length < 4 ? `<button type="button" class="pmd-btn pmd-chip-btn" data-add-active="${mId}">Equip</button>` : ''}
         ${isActive && unit.activeMoveIds.length > 1 ? `<button type="button" class="pmd-btn pmd-chip-btn" data-rem-active="${mId}">Unequip</button>` : ''}
       </div>
@@ -128,7 +130,12 @@ export function buildOverworldMoveLoadoutSubbox(params: {
     bindPointerTap(row.querySelector<HTMLElement>(`[data-set-eq="${mId}"]`), () => {
       audioManager.playSfx('select');
       saveManager.setEquippedMove(unit.instanceId, mId);
-      onFeedbackAndRefresh(`[E] ${mv.name} set for Enemy Phase.`);
+      onFeedbackAndRefresh(`[E] ${mv.name} set as ${mv.category} counter.`);
+    });
+    bindPointerTap(row.querySelector<HTMLElement>(`[data-clear-eq="${mId}"]`), () => {
+      audioManager.playSfx('cancel');
+      saveManager.clearEquippedMove(unit.instanceId, mv.category as EquipCategory);
+      onFeedbackAndRefresh(`${mv.category} [E] cleared — no counter at Range ${mv.range[0]}.`);
     });
     bindPointerTap(row.querySelector<HTMLElement>(`[data-add-active="${mId}"]`), () => {
       audioManager.playSfx('select');

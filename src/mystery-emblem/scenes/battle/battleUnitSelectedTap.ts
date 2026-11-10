@@ -30,7 +30,10 @@ import {
   selectPlayerUnit,
   startInteractiveWalk,
 } from './battleSelectionAndMenu';
-import { resolveTutorialSpotlightTiles } from './battleTutorialSpotlights';
+import {
+  getForcedTutorialMoveTile,
+  resolveTutorialSpotlightTiles,
+} from './battleTutorialSpotlights';
 import type { BattleControllerContext } from './battleTypesAndState';
 import { getLivingEnemies, getSelectedUnit } from './battleUnitQueries';
 
@@ -57,11 +60,19 @@ export function handleSelectedUnitTileTap(
       'reachable_move'
     ).some((pt) => pt.x !== selected.x || pt.y !== selected.y);
     const isOriginTap = tx === selected.x && ty === selected.y;
+    const forced = getForcedTutorialMoveTile(state);
     if (
       occupant ||
       !state.currentRange.reachableTiles.has(targetKey) ||
-      (hasNonOriginMove && isOriginTap)
+      (hasNonOriginMove && isOriginTap) ||
+      (forced && (tx !== forced.x || ty !== forced.y))
     ) {
+      tutorialOverlay?.nudgeActiveStep();
+      return;
+    }
+  } else if (expectedTutorialAction === 'battle_open_heal_forecast') {
+    const lord = livingUnits.find((u) => u.isLord && u.faction === 'player');
+    if (!occupant || occupant.id !== lord?.id) {
       tutorialOverlay?.nudgeActiveStep();
       return;
     }

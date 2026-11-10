@@ -157,6 +157,8 @@ export function hydrateChapterDefaultMap(raw: CompactChapterJson): DungeonMapDef
       ...(e.mustSurvive ? { mustSurvive: true } : {}),
       droppableItemId: e.droppableItemId ?? null,
       ...(e.aiMode ? { aiMode: e.aiMode } : {}),
+      ...(e.sparring ? { sparring: true } : {}),
+      ...(e.equippedMoveIds ? { equippedMoveIds: [...e.equippedMoveIds] } : {}),
     })),
     ...(raw.npcSpawns?.length ? { npcSpawns: raw.npcSpawns.map(cloneSpawn) } : {}),
     ...(raw.reinforcements?.length

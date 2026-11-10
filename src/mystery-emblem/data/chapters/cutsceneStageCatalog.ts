@@ -75,7 +75,7 @@ export const CUTSCENE_STAGE_CATALOG: ReadonlyArray<CutsceneStageCatalogEntry> = 
     shortCode: 'CS1',
     label: 'Stage 1 — Coastal Meadow (cs_01)',
     name: 'Coastal Meadow',
-    primaryTilesetId: '002',
+    primaryTilesetId: '042',
     bgmCue: 'in_the_morning_sun',
     defaultTiles: STAGE_01_COASTAL_MEADOW,
     cutsceneIds: ['cs_01_coastal_friends'],

@@ -130,6 +130,10 @@ export function resolveCombatExchange(
     }
 
     const hpBefore = isCounter ? attackerHp : defenderHp;
+    // Sparring bouts never knock anyone out: strikes to or from a sparring unit stop at 1 HP.
+    const isSparringStrike = Boolean(actor.sparring || target.sparring);
+    const hpFloor = isSparringStrike ? Math.min(1, hpBefore) : 0;
+    damageDealt = Math.min(damageDealt, Math.max(0, hpBefore - hpFloor));
     const hpAfter = Math.max(0, hpBefore - damageDealt);
     if (isCounter) {
       attackerHp = hpAfter;

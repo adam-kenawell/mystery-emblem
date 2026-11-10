@@ -15,7 +15,7 @@ import {
   findNearestFreeSpawnTile,
 } from '../../engine/battleSpawnHelpers';
 import { interpolateCampaignText } from '../../engine/speakerResolver';
-import { coordKey, isInMapBounds } from '../../engine/terrainAndPathfinding';
+import { coordKey, findShortestPathAStar, isInMapBounds } from '../../engine/terrainAndPathfinding';
 import type { DungeonEventAction } from '../../types/schemas';
 import type { DialogueScript } from '../../ui/DialogueOverlay';
 import {
@@ -29,6 +29,8 @@ import { updateBattleInfoStrip } from './battleHudCards';
 import { preloadMapTilesets } from './battlePrepAndAssets';
 import { presentTalkChoiceModalAsync } from './battleTalkChoiceModal';
 import type { BattleControllerContext } from './battleTypesAndState';
+import { getTutorialHealerUnit } from './battleTutorialSpotlights';
+import { playWalkPathAsync } from './battleWalkAndHealAnimator';
 import {
   getLivingUnits,
   getUnitVisualKey,
@@ -142,6 +144,7 @@ export async function executeEventActionsAsync(
       );
       if (target) {
         target.faction = action.toFaction;
+        target.sparring = false;
         state.trackedEnemyIds.delete(target.id);
         if (state.lastComputedHoverEnemyId === target.id) state.lastComputedHoverEnemyId = null;
         if (state.suppressedHoverEnemyId === target.id) state.suppressedHoverEnemyId = null;
@@ -252,6 +255,39 @@ export async function executeEventActionsAsync(
         scaleStatsToLevel: action.scaleStatsToLevel,
       });
       if (action.bannerText) showPhaseBanner(state, dom, action.bannerText);
+    } else if (action.type === 'move_unit') {
+      const mover = state.units.find(
+        (u) => u.id === action.targetUnitId && !u.defeated && u.currentHp > 0
+      );
+      if (mover) {
+        // Scripted footwork ignores Mov / stationary anchoring.
+        const path = findShortestPathAStar(
+          state.map,
+          { ...mover, stationary: false, aiMode: 'aggressive', mov: 99 },
+          action.x,
+          action.y,
+          getLivingUnits(state)
+        );
+        if (path && path.length > 1) {
+          ensureTilePairVisible(state, mover.x, mover.y, action.x, action.y);
+          await playWalkPathAsync(state, mover, path, true);
+          if (!state.openState || runGen !== state.battleRunGen) return { aborted: true };
+          if (state.selectedUnitId) recomputeSelectedUnitRange(state);
+          recomputeDangerArea(ctx);
+          updateBattleInfoStrip(ctx);
+          ctx.renderNow();
+        }
+      }
+    } else if (action.type === 'rest_player_units') {
+      const keepHealerId = action.exceptHealer ? getTutorialHealerUnit(state)?.id : undefined;
+      for (const u of getLivingUnits(state)) {
+        if (u.faction !== 'player' || (action.exceptLord && u.isLord) || u.id === keepHealerId) {
+          continue;
+        }
+        u.waited = true;
+        u.action = 'Idle';
+      }
+      ctx.renderNow();
     }
   }
   return { aborted: false };

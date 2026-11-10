@@ -12,7 +12,7 @@ import {
   recomputeDangerArea,
   syncHudControls,
 } from './battleDangerAndViewportState';
-import { runTileReachedEvents } from './battleEventRunner';
+import { runTileReachedEvents, runUnitHealedEvents } from './battleEventRunner';
 import { spawnFloatingText } from './battleFloatingCallouts';
 import {
   openCombatForecastModal,
@@ -132,6 +132,10 @@ export async function useEquippedBattleConsumable(ctx: BattleControllerContext):
     await triggerBattleTutorial(ctx, 'ch1_healing_and_items');
   }
   if (!state.openState || runGen !== state.battleRunGen) return;
+  if (item.category === 'consumable') {
+    await runUnitHealedEvents(ctx, runGen);
+    if (!state.openState || runGen !== state.battleRunGen) return;
+  }
 
   if (areAllLivingPlayersWaited(state)) {
     await waitBattleMs(state, 200);

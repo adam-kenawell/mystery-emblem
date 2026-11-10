@@ -2,7 +2,10 @@
  * Wimpod Interactive Tutorial Action Availability & Topic Triggers in `BattleScene`
  */
 
+import { PROLOGUE_LEVEL_ID } from '../../data/chapters/prologue/tutorialStaging';
 import {
+  PROLOGUE_HEAL_DRILL_TOPIC_ID,
+  PROLOGUE_RANGED_DRILL_TOPIC_ID,
   evaluatePrepTutorialTopics,
   evaluateTurn1TutorialTopics,
 } from '../../data/tutorialRegistry';
@@ -12,6 +15,7 @@ import {
   getAttackableEnemiesForSelectedState,
   getExpectedTutorialAction,
   getHealOrConsumableTutorialUnits,
+  getTutorialHealerUnit,
   resolveTutorialSpotlightTiles,
 } from './battleTutorialSpotlights';
 import type { BattleControllerContext } from './battleTypesAndState';
@@ -21,6 +25,7 @@ export {
   getAttackableEnemiesForSelectedState,
   getExpectedTutorialAction,
   getHealOrConsumableTutorialUnits,
+  getTutorialHealerUnit,
   resolveTutorialSpotlightTiles,
 };
 
@@ -52,6 +57,21 @@ export function registerBattleTutorialAvailabilityProvider(ctx: BattleController
             state.phase === 'player_phase' &&
             state.interactionState === 'combat_forecast' &&
             state.forecastMode === 'attack' &&
+            !dom.forecastModalBackdropEl.hidden
+          );
+        case 'battle_select_healer': {
+          const healer = getTutorialHealerUnit(state);
+          return (
+            state.phase === 'player_phase' &&
+            state.interactionState === 'unit_selected' &&
+            Boolean(healer && getSelectedUnit(state)?.id === healer.id)
+          );
+        }
+        case 'battle_open_heal_forecast':
+          return (
+            state.phase === 'player_phase' &&
+            state.interactionState === 'combat_forecast' &&
+            state.forecastMode === 'heal' &&
             !dom.forecastModalBackdropEl.hidden
           );
         case 'prep_open_manage_units':
@@ -126,6 +146,30 @@ export function registerBattleTutorialAvailabilityProvider(ctx: BattleController
             !state.systemMenuOpen &&
             getHealOrConsumableTutorialUnits(state).length > 0
           );
+        case 'battle_select_healer': {
+          const healer = getTutorialHealerUnit(state);
+          return (
+            state.phase === 'player_phase' &&
+            state.interactionState === 'idle' &&
+            !state.systemMenuOpen &&
+            Boolean(healer && !healer.waited)
+          );
+        }
+        case 'battle_open_heal_forecast': {
+          const healer = getTutorialHealerUnit(state);
+          return (
+            state.phase === 'player_phase' &&
+            state.interactionState === 'unit_selected' &&
+            Boolean(healer && getSelectedUnit(state)?.id === healer.id)
+          );
+        }
+        case 'battle_confirm_heal':
+          return (
+            state.phase === 'player_phase' &&
+            state.interactionState === 'combat_forecast' &&
+            state.forecastMode === 'heal' &&
+            !dom.forecastModalBackdropEl.hidden
+          );
         case 'prep_open_manage_units':
         case 'prep_open_view_map':
           return (
@@ -160,9 +204,35 @@ export function triggerBattleTutorial(
   if (!tutorialOverlay || !state.openState || state.cutsceneInProgress) {
     return Promise.resolve(false);
   }
+  const isPrologue = state.activeLevelId === PROLOGUE_LEVEL_ID;
+  // The Prologue teaches combat & healing through its own scripted drills instead.
+  if (isPrologue && PROLOGUE_SUPPRESSED_TOPIC_IDS.has(topicId)) {
+    return Promise.resolve(false);
+  }
   return tutorialOverlay.presentTopicIfNeeded(topicId, {
     sceneFastMode: state.fastMode,
+    // Sir Empoleon coaches the Prologue fight; Wimpod takes over from Chapter 1 onward.
+    presenter: isPrologue ? 'mentor' : 'advisor',
   });
+}
+
+const PROLOGUE_SUPPRESSED_TOPIC_IDS: ReadonlySet<string> = new Set([
+  'ch1_first_combat_forecast',
+  'ch1_healing_and_items',
+]);
+
+/** Prologue Turn 2: heal the lord, then strike Sir Empoleon from Range 2. */
+export async function triggerPrologueTurn2Drills(
+  ctx: BattleControllerContext,
+  runGen: number
+): Promise<void> {
+  const { state } = ctx;
+  for (const topicId of [PROLOGUE_HEAL_DRILL_TOPIC_ID, PROLOGUE_RANGED_DRILL_TOPIC_ID]) {
+    if (!state.openState || runGen !== state.battleRunGen || state.phase !== 'player_phase') {
+      return;
+    }
+    await triggerBattleTutorial(ctx, topicId);
+  }
 }
 
 export function triggerPrepHubTutorials(ctx: BattleControllerContext): void {

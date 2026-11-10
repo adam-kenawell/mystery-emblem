@@ -2,7 +2,8 @@
  * Mystery Emblem — Convoy, Single-Item Equip, Vitamin, TM & Stone/Gem Mutators (`convoyAndItemMutators.ts`)
  */
 
-import { ITEM_MAP, MOVE_MAP, SPECIES_MAP } from '../data/index';
+import { autoEquipNewMoveIfSlotEmpty } from '../data/equippedMoves';
+import { ITEM_MAP, SPECIES_MAP } from '../data/index';
 import type { OwnedPokemonInstance, SaveData } from '../types/schemas';
 import { getUnitEquippedItemId, returnItemToConvoyList } from './saveHelpersAndFactory';
 
@@ -154,12 +155,7 @@ export function mutateTeachTmMove(
   unit.unlockedMoveIds.push(moveId);
   if (unit.activeMoveIds.length < 4) {
     unit.activeMoveIds.push(moveId);
-    if (!unit.equippedMoveId) {
-      const mv = MOVE_MAP.get(moveId);
-      if (mv && (mv.category === 'Physical' || mv.category === 'Special')) {
-        unit.equippedMoveId = moveId;
-      }
-    }
+    autoEquipNewMoveIfSlotEmpty(unit, moveId);
   }
 
   return unit;
@@ -222,15 +218,11 @@ export function mutateUseEvolutionItemOnUnit(
   for (const entry of targetSp.learnset) {
     if (entry.level <= unit.level && !unit.unlockedMoveIds.includes(entry.moveId)) {
       unit.unlockedMoveIds.push(entry.moveId);
-      if (unit.activeMoveIds.length < 4) unit.activeMoveIds.push(entry.moveId);
+      if (unit.activeMoveIds.length < 4) {
+        unit.activeMoveIds.push(entry.moveId);
+        autoEquipNewMoveIfSlotEmpty(unit, entry.moveId);
+      }
     }
-  }
-  if (!unit.equippedMoveId) {
-    const firstOffensive = unit.activeMoveIds.find((mId) => {
-      const mv = MOVE_MAP.get(mId);
-      return mv && (mv.category === 'Physical' || mv.category === 'Special');
-    });
-    unit.equippedMoveId = firstOffensive ?? null;
   }
 
   return unit;

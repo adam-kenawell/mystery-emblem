@@ -74,6 +74,8 @@ function normalizeSpawnFields(
     ...(sp.mustSurvive ? { mustSurvive: true } : {}),
     ...(sp.droppableItemId ? { droppableItemId: String(sp.droppableItemId) } : {}),
     ...(sp.aiMode ? { aiMode: sp.aiMode } : {}),
+    ...(sp.sparring ? { sparring: true } : {}),
+    ...(Array.isArray(sp.equippedMoveIds) ? { equippedMoveIds: sp.equippedMoveIds.map(String) } : {}),
   };
 }
 

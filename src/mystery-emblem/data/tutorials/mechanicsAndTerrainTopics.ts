@@ -4,7 +4,8 @@
  * Covers Convoy gear, Bosses & Water/Flying, Dungeon Stairs & Talk Recruitment, Vitamins & Drops,
  * Kecleon Shops & TMs, Deployment Caps & Mobile Bosses, Status Conditions, and Special Terrain.
  *
- * Copy rule: 1–2 short sentences per beat in Wimpod's plain, friendly voice.
+ * Copy rule: 1–2 short sentences per beat in Wimpod's nervous, friendly voice. Explain rules in
+ * plain words (no shorthand like R1/R2, `[E]`, BOSS, DROP, KO or stat notation).
  */
 
 import type { TutorialTopicDefinition } from './tutorialTypes';
@@ -20,7 +21,7 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
         id: 'convoy_beat1',
         emotion: 'Happy',
         dialogue:
-          'Everyone shares the Convoy bag! Pick a teammate and tap an item to give it to them—their old item goes back in the bag.',
+          'We all share one bag. Pick a teammate, then tap an item to hand it over. Whatever they had goes back in the bag.',
         chips: [
           { kind: 'item', itemId: 'muscle_band', label: 'Held Gear' },
           { kind: 'item', itemId: 'x_attack', label: 'X-Item (+3 Stat)' },
@@ -38,7 +39,7 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
         id: 'ch2_beat1_water_flying',
         emotion: 'Surprised',
         dialogue:
-          'Most Pokémon can’t cross water. Flying types fly over it, and Water types like {partner} swim right across!',
+          'Most of us can’t cross water. Flyers go right over it, and swimmers like {partner} just paddle across.',
         chips: [
           { kind: 'type', pokemonType: 'Flying' },
           { kind: 'type', pokemonType: 'Water' },
@@ -48,7 +49,8 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
       {
         id: 'ch2_beat2_stationary_boss',
         emotion: 'Happy',
-        dialogue: 'Beat Captain Aron (BOSS) to win! He won’t move, so grab any DROP items first.',
+        dialogue:
+          'See Captain Aron? Beat him and his whole squad will run. He won’t leave his post, so there’s no rush.',
         chips: [
           { kind: 'badge', label: 'Defeat Boss = Instant Win', tone: 'gold' },
           { kind: 'badge', label: '0 Mov Stationary', tone: 'danger' },
@@ -65,7 +67,7 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
       {
         id: 'ch3_beat1_stairs',
         emotion: 'Shouting',
-        dialogue: 'Enemy reinforcements come up the Stairs! Stand on a Stairs tile to block them.',
+        dialogue: 'More enemies come up those stairs! If one of us stands on them, nobody gets through.',
         chips: [
           { kind: 'badge', label: 'Stand On Stairs = Block Spawns', tone: 'gold' },
           { kind: 'badge', label: '+1 Def/SpD · +10% Avo', tone: 'cyan' },
@@ -74,8 +76,9 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
       {
         id: 'ch3_beat2_talk_recruit',
         emotion: 'Surprised',
-        dialogue: 'Some foes don’t want to fight. Move {lord} next to them and tap Talk to recruit them!',
-        chips: [{ kind: 'badge', label: 'Adjacent ★ Lord -> Talk!', tone: 'green' }],
+        dialogue:
+          'Some foes don’t really want to fight. Walk {lord} right up to one and tap Talk. They might join us!',
+        chips: [{ kind: 'badge', label: 'Adjacent Lord -> Talk!', tone: 'green' }],
       },
     ],
   },
@@ -89,7 +92,7 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
         id: 'ch4_beat1_vitamins',
         emotion: 'Surprised',
         dialogue:
-          'Beat enemies with a DROP icon to win their item! Vitamins like Protein raise a stat for good—use them on the World Map.',
+          'Some enemies carry items. Beat them and it’s ours! Vitamins like Protein make someone stronger for good. Use them from the map Menu.',
         chips: [
           { kind: 'item', itemId: 'protein', label: 'Permanent +Stat' },
           { kind: 'badge', label: 'KO Enemy w/ DROP', tone: 'gold' },
@@ -107,7 +110,7 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
         id: 'shop_beat1_stalls',
         emotion: 'Happy',
         dialogue:
-          'Kecleon shops now show up on cleared map spots. Walk onto one to buy TMs, gear, and healing items!',
+          'Kecleon’s stalls are popping up in places we’ve cleared. Walk onto one to buy new moves, gear, and medicine!',
         chips: [
           { kind: 'species', speciesId: '0352', label: 'Kecleon Shop' },
           { kind: 'item', itemId: 'full_heal', label: 'Heals & Gear' },
@@ -116,7 +119,7 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
       {
         id: 'shop_beat2_tms',
         emotion: 'Normal',
-        dialogue: 'A TM teaches a move forever. Use it from Menu → Units or Items.',
+        dialogue: 'A TM teaches someone a new move for good. Use it from Menu, under Units or Items.',
         chips: [{ kind: 'item', itemId: 'tm13_scald', label: 'Permanent Move Unlock' }],
       },
     ],
@@ -131,14 +134,14 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
         id: 'ch5_beat1_cap',
         emotion: 'Worried',
         dialogue:
-          'Only some of us can fight here. Pick your team in Manage Units ({lord} always goes) and give them the best gear.',
+          'Only some of us can fight here. Pick your team in Manage Units ({lord} always comes) and give them the best gear.',
         chips: [{ kind: 'badge', label: 'Rotate Standby Gear', tone: 'gold' }],
       },
       {
         id: 'ch5_beat2_mobile_boss',
         emotion: 'Teary-Eyed',
         dialogue:
-          'Commander Deino moves! He charges anyone who steps into his range, so bait him with a tough teammate.',
+          'Commander Deino doesn’t stay put. He charges anyone who gets close, so lure him out with someone sturdy.',
         chips: [{ kind: 'species', speciesId: '0633', label: 'Mobile Boss Charges!' }],
       },
     ],
@@ -153,7 +156,7 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
         id: 'status_beat1_ailments',
         emotion: 'Dizzy',
         dialogue:
-          'Burn and Poison chip away HP (Burn also weakens physical hits). Paralysis slows you down, and Sleep or Freeze skip turns!',
+          'Burns and poison hurt a little every turn, and burns weaken physical hits. Paralysis slows you down, and sleep or ice makes you lose turns!',
         chips: [
           { kind: 'badge', label: 'BRN: -50% Atk + Chip', tone: 'danger' },
           { kind: 'badge', label: 'PAR: 1 Mov · -25% Spe', tone: 'gold' },
@@ -162,7 +165,7 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
       {
         id: 'status_beat2_cures',
         emotion: 'Happy',
-        dialogue: 'Cure status with a Full Heal, a Lum Berry, or by standing on a Wonder Tile.',
+        dialogue: 'A Full Heal, a Lum Berry, or a rest on a Wonder Tile will cure any of that.',
         chips: [
           { kind: 'item', itemId: 'full_heal', label: 'Full Heal' },
           { kind: 'item', itemId: 'lum_berry', label: 'Lum Berry (Auto)' },
@@ -180,7 +183,7 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
         id: 'terrain_woods_beat1',
         emotion: 'Happy',
         dialogue:
-          'Trees and mountains cost extra steps but give great cover. Flying and floating Pokémon pass right over them, but get no cover.',
+          'Trees and mountains are slow to cross but great to hide in. Flyers and floaters drift right over them, but get no cover.',
         chips: [
           { kind: 'badge', label: 'Trees: +1 Def/SpD · +15% Avo', tone: 'green' },
           { kind: 'badge', label: 'Mountain: +2 Def/SpD · +20% Avo', tone: 'gold' },
@@ -198,7 +201,7 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
         id: 'terrain_wonder_beat1',
         emotion: 'Surprised',
         dialogue:
-          'A Wonder Tile! Standing on it gives cover, heals HP each turn, and cures status—so don’t let enemies hog it.',
+          'A Wonder Tile! Standing on it protects you, heals you a bit each turn, and cures ailments. Don’t let enemies hog it.',
         chips: [
           { kind: 'badge', label: '+2 Def/SpD · +20% Avo', tone: 'gold' },
           { kind: 'badge', label: '20% Heal + Cleanse', tone: 'green' },
@@ -216,7 +219,7 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
         id: 'terrain_hazards_beat1',
         emotion: 'Dizzy',
         dialogue:
-          'Yikes, don’t look down! Fire, Flying, and Levitate Pokémon can cross lava, but only Levitate ones like Duskull can cross chasms.',
+          'Don’t look down! Fire types, flyers, and floaters can cross lava, but only floaters like Duskull can cross a chasm.',
         chips: [
           { kind: 'type', pokemonType: 'Fire' },
           { kind: 'badge', label: 'Levitate Only: Void & Barriers', tone: 'gold' },

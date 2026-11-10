@@ -59,13 +59,7 @@ export function createUnitPortraitCell(
     emotion: initialEmotion,
   });
 
-  if (options.isLord) {
-    const pip = document.createElement('span');
-    pip.className = 'pmd-portrait-pip is-lord';
-    pip.setAttribute('aria-hidden', 'true');
-    pip.textContent = '★';
-    btn.appendChild(pip);
-  } else if (options.isDeployed) {
+  if (options.isDeployed) {
     const pip = document.createElement('span');
     pip.className = 'pmd-portrait-pip is-deployed';
     pip.setAttribute('aria-hidden', 'true');

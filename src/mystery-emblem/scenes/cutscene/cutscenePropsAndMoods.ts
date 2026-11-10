@@ -72,64 +72,6 @@ export function drawStageProp(
       ctx.fillRect(px + 11 + (sparkOffset % 2), py + 6 - sparkOffset, 1, 1);
       break;
     }
-    case 'sanctuary_crystal': {
-      const pulse = 0.5 + 0.5 * Math.sin(animClockMs / 360);
-      const grad = ctx.createRadialGradient(px + 12, py + 12, 2, px + 12, py + 12, 24);
-      grad.addColorStop(0, `rgba(120, 248, 255, ${(0.32 + pulse * 0.16).toFixed(2)})`);
-      grad.addColorStop(1, 'rgba(64, 184, 248, 0)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(px - 12, py - 12, 48, 48);
-
-      ctx.fillStyle = '#324a68';
-      ctx.fillRect(px + 7, py + 16, 10, 4);
-      ctx.fillStyle = '#88b8d8';
-      ctx.fillRect(px + 8, py + 15, 8, 2);
-      const bob = frame === 1 ? -1 : 0;
-      ctx.fillStyle = '#28a8e8';
-      ctx.fillRect(px + 9, py + 6 + bob, 6, 8);
-      ctx.fillStyle = '#98f8ff';
-      ctx.fillRect(px + 10, py + 5 + bob, 4, 9);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(px + 11, py + 7 + bob, 2, 4);
-      break;
-    }
-    case 'lantern': {
-      const grad = ctx.createRadialGradient(px + 12, py + 8, 2, px + 12, py + 8, 18);
-      grad.addColorStop(0, 'rgba(255, 216, 112, 0.34)');
-      grad.addColorStop(1, 'rgba(255, 160, 48, 0)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(px - 6, py - 10, 36, 36);
-
-      ctx.fillStyle = '#4a3020';
-      ctx.fillRect(px + 11, py + 10, 2, 10);
-      ctx.fillRect(px + 9, py + 19, 6, 2);
-      ctx.fillStyle = '#d84838';
-      ctx.fillRect(px + 8, py + 4, 8, 7);
-      ctx.fillStyle = '#ffe888';
-      ctx.fillRect(px + 9, py + 5, 6, 5);
-      break;
-    }
-    case 'ancient_rune': {
-      const alpha = 0.35 + 0.25 * Math.sin(animClockMs / 320);
-      ctx.strokeStyle = `rgba(184, 144, 255, ${alpha.toFixed(2)})`;
-      ctx.lineWidth = 1;
-      ctx.strokeRect(px + 4.5, py + 4.5, 15, 15);
-      ctx.fillStyle = `rgba(224, 192, 255, ${alpha.toFixed(2)})`;
-      ctx.fillRect(px + 10, py + 10, 4, 4);
-      break;
-    }
-    case 'berry_basket': {
-      ctx.fillStyle = '#784c28';
-      ctx.fillRect(px + 6, py + 12, 12, 7);
-      ctx.fillStyle = '#a8703c';
-      ctx.fillRect(px + 7, py + 13, 10, 5);
-      ctx.fillStyle = '#3898ff';
-      ctx.fillRect(px + 8, py + 10, 3, 3);
-      ctx.fillRect(px + 13, py + 11, 3, 3);
-      ctx.fillStyle = '#f8d038';
-      ctx.fillRect(px + 10, py + 9, 4, 3);
-      break;
-    }
   }
 
   ctx.restore();

@@ -193,7 +193,7 @@ export function refreshCombatForecastModalDom(ctx: BattleControllerContext): voi
   const atkCurBar = q('[data-attacker-hp-cur-bar]');
   const atkProjBar = q('[data-attacker-hp-proj-bar]');
 
-  if (atkNameEl) atkNameEl.textContent = `${attacker.nickname}${attacker.isLord ? ' ★' : ''}`;
+  if (atkNameEl) atkNameEl.textContent = `${attacker.nickname}`;
   if (atkWpnEl) atkWpnEl.textContent = atkSide.move.name;
   if (atkHpEl) atkHpEl.textContent = `${attacker.currentHp} → ${forecast.projectedAttackerHp}`;
   if (atkDmgEl) {

@@ -3,6 +3,12 @@
  */
 
 import { PMD_TILE_NATIVE_PX } from '../assets/tilesetLoader';
+import {
+  buildEquippedSlotsFromSeed,
+  equipMoveInItsSlot,
+  reconcileEquippedMoves,
+  type EquippedMoveSlots,
+} from '../data/equippedMoves';
 import { getMoveById, getSpeciesById } from '../data/index';
 import type {
   DungeonMapDefinition,
@@ -11,7 +17,7 @@ import type {
   StatBlockSeven,
   UnitBattleFaction,
 } from '../types/schemas';
-import { isOffensiveMove, type BattleMoveSlot, type BattleUnitState } from './combatEngine';
+import { type BattleMoveSlot, type BattleUnitState } from './combatEngine';
 import { computeManualScaledStatsForJoinLevel } from './progressionEngine';
 import {
   coordKey,
@@ -54,17 +60,21 @@ export function buildUnitMoveSlots(
   return slots;
 }
 
-export function resolveDefaultEquippedMoveId(
+export function resolveEquippedSlotsForOwnedUnit(
   slots: ReadonlyArray<BattleMoveSlot>,
-  preferredId: string | null | undefined
-): string | null {
-  if (preferredId !== undefined) {
-    if (preferredId === null) return null;
-    const found = slots.find((s) => s.id === preferredId && isOffensiveMove(s.move));
-    if (found) return found.id;
-  }
-  const firstOff = slots.find((s) => isOffensiveMove(s.move));
-  return firstOff ? firstOff.id : null;
+  owned: EquippedMoveSlots
+): EquippedMoveSlots {
+  const resolved: EquippedMoveSlots = {
+    equippedPhysicalMoveId: owned.equippedPhysicalMoveId,
+    equippedSpecialMoveId: owned.equippedSpecialMoveId,
+  };
+  // Respect deliberately empty slots; only clear stale references.
+  reconcileEquippedMoves(
+    resolved,
+    slots.map((s) => s.id),
+    { fillEmpty: false }
+  );
+  return resolved;
 }
 
 export function buildSpawnedBattleUnit(
@@ -90,10 +100,18 @@ export function buildSpawnedBattleUnit(
       ? spawn.moveIds
       : allLearnedMoveIds.slice(-4);
   const moveSlots = buildUnitMoveSlots(rawMoveIds);
-  const equippedMoveId = resolveDefaultEquippedMoveId(
-    moveSlots,
-    spawn.seedKey ? undefined : spawn.equippedMoveId
-  );
+  const equippedSlots: EquippedMoveSlots =
+    !spawn.seedKey && spawn.equippedMoveIds
+      ? { equippedPhysicalMoveId: null, equippedSpecialMoveId: null }
+      : buildEquippedSlotsFromSeed(
+          moveSlots.map((s) => s.id),
+          spawn.seedKey ? undefined : spawn.equippedMoveId
+        );
+  if (!spawn.seedKey && spawn.equippedMoveIds) {
+    for (const id of spawn.equippedMoveIds) {
+      if (moveSlots.some((s) => s.id === id)) equipMoveInItsSlot(equippedSlots, id);
+    }
+  }
   const stats: StatBlockSeven =
     !spawn.seedKey && spawn.stats
       ? { ...spawn.stats }
@@ -108,6 +126,7 @@ export function buildSpawnedBattleUnit(
     isBoss: Boolean(spawn.isBoss),
     stationary: Boolean(spawn.stationary),
     mustSurvive: Boolean(spawn.mustSurvive),
+    ...(spawn.sparring ? { sparring: true } : {}),
     ...(opts?.addToPermanentRoster ? { recruitedMidBattle: true } : {}),
     aiMode: spawn.stationary ? 'stationary' : (spawn.aiMode ?? 'wait_until_in_range'),
     droppableItemId: spawn.droppableItemId ?? null,
@@ -132,7 +151,7 @@ export function buildSpawnedBattleUnit(
     statusTurns: 0,
     tempBattleBoosts: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, crit: 0 },
     activeMoves: moveSlots,
-    equippedMoveId,
+    ...equippedSlots,
     waited: false,
     defeated: false,
     direction: faction === 'enemy' ? 6 : 2,

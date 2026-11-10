@@ -15,6 +15,7 @@ import { updateBattleInfoStrip } from './battleHudCards';
 import {
   getAttackableEnemiesForSelectedState,
   getHealOrConsumableTutorialUnits,
+  getTutorialHealerUnit,
   triggerBattleTutorial,
 } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
@@ -50,6 +51,11 @@ export function selectPlayerUnit(ctx: BattleControllerContext, unit: BattleUnitS
   if (getHealOrConsumableTutorialUnits(state).some((u) => u.id === unit.id)) {
     satisfiedTutorialStep =
       Boolean(tutorialOverlay?.notifyActionCompleted('battle_inspect_heal_or_item')) ||
+      satisfiedTutorialStep;
+  }
+  if (unit.id === getTutorialHealerUnit(state)?.id) {
+    satisfiedTutorialStep =
+      Boolean(tutorialOverlay?.notifyActionCompleted('battle_select_healer')) ||
       satisfiedTutorialStep;
   }
   ctx.renderNow();

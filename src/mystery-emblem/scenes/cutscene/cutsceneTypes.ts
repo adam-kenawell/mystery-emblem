@@ -20,12 +20,7 @@ export type CutsceneLightingMood =
   | 'shrine_courtyard'
   | 'twilight_festival';
 
-export type CutscenePropKind =
-  | 'campfire'
-  | 'sanctuary_crystal'
-  | 'lantern'
-  | 'ancient_rune'
-  | 'berry_basket';
+export type CutscenePropKind = 'campfire';
 
 export type CutsceneEmoteKind =
   | 'exclamation'

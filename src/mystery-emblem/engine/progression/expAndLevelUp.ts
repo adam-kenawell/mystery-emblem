@@ -2,6 +2,7 @@
  * Tactical EXP Formula, Manual Growth Stat Roll & Level-Up Engine
  */
 
+import { autoEquipNewMoveIfSlotEmpty } from '../../data/equippedMoves';
 import { getMoveById, getSpeciesById } from '../../data/index';
 import type {
   PokemonSpeciesDefinition,
@@ -9,7 +10,7 @@ import type {
   StatBlockSix,
   StatKeySix,
 } from '../../types/schemas';
-import { isOffensiveMove, type BattleMoveSlot, type BattleUnitState } from '../combatEngine';
+import { type BattleMoveSlot, type BattleUnitState } from '../combatEngine';
 
 export const MAX_UNIT_LEVEL = 40;
 export const EXP_PER_LEVEL = 100;
@@ -218,9 +219,7 @@ export function awardBattleUnitExp(
         const slot = buildMoveSlotForLearnedMove(moveId);
         if (slot) {
           unit.activeMoves.push(slot);
-          if (!unit.equippedMoveId && isOffensiveMove(slot.move)) {
-            unit.equippedMoveId = slot.id;
-          }
+          autoEquipNewMoveIfSlotEmpty(unit, slot.id);
         }
       }
     }

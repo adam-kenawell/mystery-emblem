@@ -9,6 +9,12 @@ import {
   MAX_UNIT_LEVEL,
   MIN_UNIT_LEVEL,
 } from '../data/campaignConfig';
+import {
+  autoEquipNewMoveIfSlotEmpty,
+  reconcileEquippedMoves,
+  setEquippedMoveIdForCategory,
+  type EquipCategory,
+} from '../data/equippedMoves';
 import { MOVE_MAP, SPECIES_MAP } from '../data/index';
 import { computeManualScaledStatsForJoinLevel } from '../engine/progressionEngine';
 import type {
@@ -107,37 +113,43 @@ export function mutateEvolveUnitToSpecies(
       unit.unlockedMoveIds.push(entry.moveId);
       if (unit.activeMoveIds.length < 4) {
         unit.activeMoveIds.push(entry.moveId);
+        autoEquipNewMoveIfSlotEmpty(unit, entry.moveId);
       }
     }
   }
-  if (!unit.equippedMoveId) {
-    const firstOffensive = unit.activeMoveIds.find((mId) => {
-      const mv = MOVE_MAP.get(mId);
-      return mv && (mv.category === 'Physical' || mv.category === 'Special');
-    });
-    unit.equippedMoveId = firstOffensive ?? null;
-  }
+  reconcileEquippedMoves(unit, unit.activeMoveIds, { fillEmpty: false });
 
   return { unit, mutated: true };
 }
 
+/** Equips an offensive move into its matching Physical/Special [E] slot. */
 export function mutateSetEquippedMove(
   save: SaveData,
   instanceId: string,
-  moveId: string | null
+  moveId: string
 ): OwnedPokemonInstance {
   const unit = save.roster.find((u) => u.instanceId === instanceId);
   if (!unit) throw new Error(`Pokémon instance "${instanceId}" not found in roster.`);
-  if (moveId !== null) {
-    if (!unit.activeMoveIds.includes(moveId)) {
-      throw new Error(`Move "${moveId}" is not in unit's 4-move active loadout.`);
-    }
-    const mv = MOVE_MAP.get(moveId);
-    if (!mv || (mv.category !== 'Physical' && mv.category !== 'Special')) {
-      throw new Error('Only offensive (Physical or Special) moves can be marked [E] Equipped.');
-    }
+  if (!unit.activeMoveIds.includes(moveId)) {
+    throw new Error(`Move "${moveId}" is not in unit's 4-move active loadout.`);
   }
-  unit.equippedMoveId = moveId;
+  const mv = MOVE_MAP.get(moveId);
+  if (!mv || (mv.category !== 'Physical' && mv.category !== 'Special')) {
+    throw new Error('Only offensive (Physical or Special) moves can be marked [E] Equipped.');
+  }
+  setEquippedMoveIdForCategory(unit, mv.category, moveId);
+  return unit;
+}
+
+/** Deliberately unequips the Physical or Special [E] slot (unit won't counter at that range). */
+export function mutateClearEquippedMove(
+  save: SaveData,
+  instanceId: string,
+  category: EquipCategory
+): OwnedPokemonInstance {
+  const unit = save.roster.find((u) => u.instanceId === instanceId);
+  if (!unit) throw new Error(`Pokémon instance "${instanceId}" not found in roster.`);
+  setEquippedMoveIdForCategory(unit, category, null);
   return unit;
 }
 
@@ -157,13 +169,12 @@ export function mutateSetActiveMoves(
       throw new Error(`Move "${mId}" has not been unlocked by ${unit.nickname}.`);
     }
   }
+  const previousActive = unit.activeMoveIds;
   unit.activeMoveIds = uniqueMoves;
-  if (unit.equippedMoveId && !uniqueMoves.includes(unit.equippedMoveId)) {
-    const fallback = uniqueMoves.find((mId) => {
-      const mv = MOVE_MAP.get(mId);
-      return mv && (mv.category === 'Physical' || mv.category === 'Special');
-    });
-    unit.equippedMoveId = fallback ?? null;
+  reconcileEquippedMoves(unit, uniqueMoves, { fillEmpty: false });
+  // A newly swapped-in move fills its slot if that slot was emptied or had nothing equipped.
+  for (const mId of uniqueMoves) {
+    if (!previousActive.includes(mId)) autoEquipNewMoveIfSlotEmpty(unit, mId);
   }
   return unit;
 }
@@ -241,9 +252,7 @@ export function mutateUnlockUnitMove(
   }
   if (autoEquipIfRoom && unit.activeMoveIds.length < 4 && !unit.activeMoveIds.includes(moveId)) {
     unit.activeMoveIds.push(moveId);
-    if (!unit.equippedMoveId && (mv.category === 'Physical' || mv.category === 'Special')) {
-      unit.equippedMoveId = moveId;
-    }
+    autoEquipNewMoveIfSlotEmpty(unit, moveId);
   }
   return unit;
 }

@@ -7,7 +7,8 @@ import {
   MAX_UNIT_LEVEL,
   MIN_UNIT_LEVEL,
 } from '../data/campaignConfig';
-import { ITEM_MAP, MOVE_MAP, SPECIES_MAP } from '../data/index';
+import { buildEquippedSlotsFromSeed } from '../data/equippedMoves';
+import { ITEM_MAP, SPECIES_MAP } from '../data/index';
 import { computeManualScaledStatsForJoinLevel } from '../engine/progressionEngine';
 import {
   QUIZ_SEED_SLOT_KEYS,
@@ -125,9 +126,26 @@ export function normalizeLegacySingleItemSlots(candidate: unknown): unknown {
   const needsItemNormalize = obj.roster.some(
     (unit) => Boolean(unit && unit.heldItemId !== null && unit.consumableItemId !== null)
   );
-  if (!needsItemNormalize && !needsSeedHydration) return candidate;
+  const needsDualEquipMigration = obj.roster.some(
+    (unit) => Boolean(unit && unit.equippedPhysicalMoveId === undefined)
+  );
+  if (!needsItemNormalize && !needsSeedHydration && !needsDualEquipMigration) return candidate;
 
   const cloned = JSON.parse(JSON.stringify(obj)) as SaveData;
+  if (needsDualEquipMigration) {
+    // Pre-dual-[E] saves stored one `equippedMoveId`; slot it by category and auto-fill the other.
+    for (const unit of cloned.roster) {
+      if (!unit || unit.equippedPhysicalMoveId !== undefined) continue;
+      const legacy = unit as typeof unit & { equippedMoveId?: string | null };
+      const migrated = buildEquippedSlotsFromSeed(
+        Array.isArray(unit.activeMoveIds) ? unit.activeMoveIds : [],
+        legacy.equippedMoveId
+      );
+      delete legacy.equippedMoveId;
+      unit.equippedPhysicalMoveId = migrated.equippedPhysicalMoveId;
+      unit.equippedSpecialMoveId = migrated.equippedSpecialMoveId;
+    }
+  }
   if (needsItemNormalize) {
     for (const unit of cloned.roster) {
       if (unit.heldItemId !== null && unit.consumableItemId !== null) {
@@ -195,14 +213,7 @@ export function createPokemonInstance(opts: CreatePokemonOptions): OwnedPokemonI
   }
 
   const activeMoveIds = unlockedMoveIds.slice(-4);
-  let equippedMoveId: string | null = null;
-  for (const mId of activeMoveIds) {
-    const mv = MOVE_MAP.get(mId);
-    if (mv && (mv.category === 'Physical' || mv.category === 'Special')) {
-      equippedMoveId = mId;
-      break;
-    }
-  }
+  const equippedSlots = buildEquippedSlotsFromSeed(activeMoveIds, undefined);
 
   if (opts.heldItemId && opts.consumableItemId) {
     throw new Error(
@@ -226,7 +237,7 @@ export function createPokemonInstance(opts: CreatePokemonOptions): OwnedPokemonI
     bonusPpByMoveId: {},
     unlockedMoveIds,
     activeMoveIds,
-    equippedMoveId,
+    ...equippedSlots,
     heldItemId: opts.heldItemId ?? null,
     consumableItemId: opts.consumableItemId ?? null,
   };

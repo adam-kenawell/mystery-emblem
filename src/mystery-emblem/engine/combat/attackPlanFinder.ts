@@ -2,6 +2,7 @@
  * Direct-Click Offensive & Enemy-Status Attack Plan & Stop-Tile Planner
  */
 
+import { isMoveEquipped, type EquippedMoveSlots } from '../../data/equippedMoves';
 import { getItemById } from '../../data/index';
 import type { DungeonMapDefinition } from '../../types/schemas';
 import {
@@ -64,7 +65,7 @@ export function findBestAttackPlanForTarget(
     const bonuses = getTerrainBonuses(terrain, attacker);
     const terrainScore = bonuses.defBonus * 10 + bonuses.avoidBonus;
     const staysOnOrigin = stop.x === attacker.x && stop.y === attacker.y;
-    const usesEquippedMove = availableMoves.some((m) => m.id === attacker.equippedMoveId);
+    const usesEquippedMove = availableMoves.some((m) => isMoveEquipped(attacker, m.id));
     const hasOffensiveMove = availableMoves.some((m) => isOffensiveMove(m.move));
 
     candidates.push({
@@ -111,7 +112,7 @@ export function findBestAttackPlanForTarget(
  * `targetEnemy` from at least one legal stopping tile in `reachableTiles`.
  */
 export function getOffensiveMovesReachableForTarget(
-  attacker: Pick<BattleUnitState, 'activeMoves' | 'equippedMoveId'> & { heldItemId?: string | null },
+  attacker: Pick<BattleUnitState, 'activeMoves' | keyof EquippedMoveSlots> & { heldItemId?: string | null },
   targetEnemy: Pick<BattleUnitState, 'x' | 'y'>,
   reachableTiles: ReadonlyMap<string, ReachableTileInfo>
 ): BattleMoveSlot[] {
@@ -138,8 +139,8 @@ export function getOffensiveMovesReachableForTarget(
     }
   }
   available.sort((a, b) => {
-    const aRank = a.id === attacker.equippedMoveId ? 0 : isOffensiveMove(a.move) ? 1 : 2;
-    const bRank = b.id === attacker.equippedMoveId ? 0 : isOffensiveMove(b.move) ? 1 : 2;
+    const aRank = isMoveEquipped(attacker, a.id) ? 0 : isOffensiveMove(a.move) ? 1 : 2;
+    const bRank = isMoveEquipped(attacker, b.id) ? 0 : isOffensiveMove(b.move) ? 1 : 2;
     return aRank - bRank;
   });
   return available;

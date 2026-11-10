@@ -5,6 +5,7 @@
  * exist on the map (e.g., Paralogue 2 `Kecleon` or Ch. 17 `Baxcalibur`).
  */
 
+import { equipMoveInItsSlot } from '../../data/equippedMoves';
 import { computeCombatForecast } from '../../engine/combatEngine';
 import { chooseNpcAllyAction } from '../../engine/enemyAi';
 import {
@@ -63,7 +64,7 @@ export async function runAllyNpcPhase(
         (u) => u.id === decision.attack!.targetUnitId && !u.defeated && u.currentHp > 0
       );
       if (target) {
-        npc.equippedMoveId = decision.attack.moveId;
+        equipMoveInItsSlot(npc, decision.attack.moveId);
         const liveForecast = computeCombatForecast(
           state.map,
           npc,

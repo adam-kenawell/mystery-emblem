@@ -3,6 +3,7 @@
  */
 
 import type { AudioManager } from '../../audio/AudioManager';
+import { isMoveEquipped, type EquipCategory } from '../../data/equippedMoves';
 import { getItemById, getMoveById, getSpeciesById } from '../../data/index';
 import type { SaveStateManager } from '../../state/SaveStateManager';
 import type { OwnedPokemonInstance, SaveData } from '../../types/schemas';
@@ -41,7 +42,7 @@ export function renderPrepMoveLoadout(params: PrepMoveLoadoutRenderParams): void
   if (activeHeadingEl) {
     activeHeadingEl.textContent = pendingMoveToSwapIn
       ? `Replace a move with ${getMoveById(pendingMoveToSwapIn)?.name ?? pendingMoveToSwapIn}:`
-      : `Moves (${unit.activeMoveIds.length} / 4) · [E] Counter`;
+      : `Moves (${unit.activeMoveIds.length} / 4) · [E] Phys + Spec Counters`;
   }
 
   if (activeListEl) {
@@ -51,7 +52,7 @@ export function renderPrepMoveLoadout(params: PrepMoveLoadoutRenderParams): void
       if (!mv) continue;
       const maxPp = mv.pp + (unit.bonusPpByMoveId[mv.id] ?? 0);
       const isOffensive = mv.category === 'Physical' || mv.category === 'Special';
-      const isEquipped = unit.equippedMoveId === mv.id;
+      const isEquipped = isMoveEquipped(unit, mv.id);
 
       const card = document.createElement('div');
       card.className = `pmd-prep-move-card${isEquipped ? ' is-equipped' : ''}`;
@@ -94,11 +95,19 @@ export function renderPrepMoveLoadout(params: PrepMoveLoadoutRenderParams): void
           eqBtn.className = `pmd-btn pmd-chip-btn${isEquipped ? ' is-active' : ''}`;
           eqBtn.dataset.testid = `prep-move-equip-counter-${mv.id}`;
           eqBtn.textContent = isEquipped ? '[E]' : 'Set [E]';
+          eqBtn.title = isEquipped
+            ? `Tap to unequip (no ${mv.category} counter at R${mv.range[0]})`
+            : `Counter R${mv.range[0]} attacks with ${mv.name}`;
           bindPointerTap(eqBtn, () => {
-            if (isEquipped) return;
+            if (isEquipped) {
+              saveManager.clearEquippedMove(unit.instanceId, mv.category as EquipCategory);
+              audioManager.playSfx('cancel');
+              onMutated(`${mv.category} [E] cleared — no counter at Range ${mv.range[0]}.`);
+              return;
+            }
             saveManager.setEquippedMove(unit.instanceId, mv.id);
             audioManager.playSfx('select');
-            onMutated(`[E] ${mv.name} set for Enemy Phase.`);
+            onMutated(`[E] ${mv.name} set as ${mv.category} counter.`);
           });
           btnsDiv.appendChild(eqBtn);
         }

@@ -2,7 +2,9 @@
  * Bottom-Left Stacked Tile Info Card (`dungeon-tile-display`) & Character Info Card (`dungeon-unit-popup`)
  */
 
+import { isMoveEquipped } from '../../data/equippedMoves';
 import { getItemById } from '../../data/index';
+import { resolveUnitAllegiance } from '../../data/allegiance';
 import { STATUS_BADGE_COLORS, computeUnitPopupStats, type BattleUnitState } from '../../engine/combatEngine';
 import {
   TERRAIN_METADATA,
@@ -130,10 +132,7 @@ export function updateUnitHoverPopup(ctx: BattleControllerContext): void {
 
   const rolePipEl = dom.unitPopupEl.querySelector<HTMLElement>('[data-popup-role-pip]');
   if (rolePipEl) {
-    if (unit.isLord) {
-      rolePipEl.textContent = '★';
-      rolePipEl.hidden = false;
-    } else if (unit.isBoss) {
+    if (unit.isBoss) {
       rolePipEl.textContent = 'BOSS';
       rolePipEl.hidden = false;
     } else if (isNpc) {
@@ -162,15 +161,22 @@ export function updateUnitHoverPopup(ctx: BattleControllerContext): void {
   }
   const nameEl = dom.unitPopupEl.querySelector<HTMLElement>('[data-testid="unit-popup-name"]');
   if (nameEl) {
-    nameEl.textContent = unit.nickname || unit.speciesName;
+    nameEl.textContent =
+      unit.faction === 'player' ? unit.nickname || unit.speciesName : unit.speciesName;
   }
-  const levelExpEl = dom.unitPopupEl.querySelector<HTMLElement>(
-    '[data-testid="unit-popup-level-exp"]'
+  const allegianceEl = dom.unitPopupEl.querySelector<HTMLElement>(
+    '[data-testid="unit-popup-allegiance"]'
   );
-  if (levelExpEl) {
+  if (allegianceEl) {
+    allegianceEl.textContent = resolveUnitAllegiance(unit);
+  }
+  const levelEl = dom.unitPopupEl.querySelector<HTMLElement>('[data-popup-level]');
+  if (levelEl) levelEl.textContent = `Lv ${unit.level}`;
+  const expEl = dom.unitPopupEl.querySelector<HTMLElement>('[data-popup-exp]');
+  if (expEl) {
     const expText =
       unit.faction === 'player' && typeof unit.exp === 'number' ? String(unit.exp) : '--';
-    levelExpEl.textContent = `Lv ${unit.level}\u2002EXP ${expText}`;
+    expEl.textContent = `EXP ${expText}`;
   }
 
   const hpTextEl = dom.unitPopupEl.querySelector('[data-testid="unit-popup-hp"]');
@@ -190,7 +196,12 @@ export function updateUnitHoverPopup(ctx: BattleControllerContext): void {
   const defEl = dom.unitPopupEl.querySelector('[data-testid="unit-popup-def"]');
   const spdefEl = dom.unitPopupEl.querySelector<HTMLElement>('[data-testid="unit-popup-spdef"]');
   const speEl = dom.unitPopupEl.querySelector('[data-testid="unit-popup-spe"]');
-  if (mightEl) mightEl.textContent = summary.might !== null ? String(summary.might) : '\u2014';
+  if (mightEl) {
+    const parts = [summary.physicalMight, summary.specialMight]
+      .filter((m): m is number => m !== null)
+      .map(String);
+    mightEl.textContent = parts.length > 0 ? parts.join('/') : '\u2014';
+  }
   if (defEl) defEl.textContent = String(summary.effectiveDef);
   if (spdefEl) {
     let spdAliasEl = spdefEl.querySelector<HTMLElement>('[data-testid="unit-popup-spd"]');
@@ -210,7 +221,7 @@ export function updateUnitHoverPopup(ctx: BattleControllerContext): void {
   if (movesWrap) {
     movesWrap.innerHTML = unit.activeMoves
       .map((slot) => {
-        const isEq = slot.id === unit.equippedMoveId && slot.move.category !== 'Support/Heal';
+        const isEq = isMoveEquipped(unit, slot.id) && slot.move.category !== 'Support/Heal';
         const rLbl = slot.range[0] === slot.range[1] ? `R${slot.range[0]}` : `R${slot.range[0]}-${slot.range[1]}`;
         return `<div class="pmd-unit-popup-move${isEq ? ' is-equipped' : ''}"><span>${isEq ? '[E] ' : ''}${escapeHudHtml(slot.move.name)}</span><em>${renderColoredTypeHtml(slot.move.type)} \u00b7 ${rLbl}</em></div>`;
       })

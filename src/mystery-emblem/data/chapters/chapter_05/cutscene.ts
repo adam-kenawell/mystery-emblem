@@ -19,11 +19,6 @@ export const CS_07_LANTERN_PASS: StoryCutsceneDefinition = {
   width: 16,
   height: 11,
   tiles: STAGE_04_WATCHTOWER_PARAPET,
-  props: [
-    { id: 'pass_lantern_c', kind: 'lantern', x: 7, y: 3 },
-    { id: 'pass_lantern_l', kind: 'lantern', x: 4, y: 5 },
-    { id: 'pass_lantern_r', kind: 'lantern', x: 11, y: 5 },
-  ],
   initialCamera: { x: 7.5, y: 5.5 },
   actors: [
     {
@@ -79,37 +74,37 @@ export const CS_07_LANTERN_PASS: StoryCutsceneDefinition = {
           speaker: duskullSpeaker,
           side: 'left',
           emotion: 'Worried',
-          text: 'Look past the mist toward the frontier... Every beacon on Border Fortress burns red.',
+          text: 'Look past the mist, toward the frontier... Every beacon on Border Fortress is burning red.',
         },
         {
           speaker: SIR_EMPOLEON_SPEAKER,
           side: 'left',
           emotion: 'Surprised',
-          text: 'Siege fires—and beyond the gate, desert riders flee the Goldensand Diarchy in disarray!',
+          text: 'Siege fires. And past the gate, riders fleeing Goldensand. Something terrible has happened there.',
         },
         {
           speaker: { kind: 'partner' },
           side: 'right',
           emotion: 'Surprised',
-          text: 'Goldensand in chaos AND Ironscale hammering the fortress at the same time...?',
+          text: 'Goldensand in chaos, and Ironscale hitting the fortress? At the same time?',
         },
         {
           speaker: { kind: 'advisor' },
           side: 'right',
           emotion: 'Teary-Eyed',
-          text: 'Commander Lairon wants to smash the gate before help arrives! And the fortress has TWO stairwells!',
+          text: 'That’s Commander Lairon’s army. He’ll smash the gate before help can get there.',
         },
         {
           speaker: duskullSpeaker,
           side: 'left',
           emotion: 'Determined',
-          text: 'You honored the spirits, {lord}. Follow my lantern—I’ll lead you to the ramparts by dawn.',
+          text: 'You honored the spirits, {lord}. Follow my lantern. I’ll have you on the ramparts by dawn.',
         },
         {
           speaker: { kind: 'lord' },
           side: 'right',
           emotion: 'Determined',
-          text: 'Thank you, {speaker}. If Border Fortress falls, the whole Heartland lies open. We make our stand at the gate!',
+          text: 'Thank you. If the fortress falls, the whole Heartland is open. We hold the gate.',
         },
       ],
     };

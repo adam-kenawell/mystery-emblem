@@ -2,6 +2,7 @@
  * Forecast Open / Cancel / Confirm Controllers (`Attack!`, `Heal!` & Status Hexes)
  */
 
+import { equipMoveInItsSlot } from '../../data/equippedMoves';
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
 import { getMoveById } from '../../data/index';
 import {
@@ -18,7 +19,11 @@ import {
   syncHudControls,
   syncPrepChromeVisibility,
 } from './battleDangerAndViewportState';
-import { runTileReachedEvents, runUnitDefeatedEvents } from './battleEventRunner';
+import {
+  runTileReachedEvents,
+  runUnitDefeatedEvents,
+  runUnitHealedEvents,
+} from './battleEventRunner';
 import { refreshHealForecastModalDom } from './battleHealForecastView';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { checkAndTriggerMatchEnd } from './battleOutcomeModals';
@@ -30,7 +35,7 @@ import {
 import { confirmForecastStatusHex } from './battleStatusHexController';
 import { triggerBattleTutorial } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
-import { areAllLivingPlayersWaited, getSelectedUnit } from './battleUnitQueries';
+import { areAllLivingPlayersWaited, getLivingPlayers, getSelectedUnit } from './battleUnitQueries';
 import { playHealActionAsync } from './battleWalkAndHealAnimator';
 
 export function openCombatForecastModal(
@@ -72,7 +77,7 @@ export function openHealForecastModal(
   targetAllyId: string,
   moveId: string
 ): void {
-  const { state, dom, prepOverlay } = ctx;
+  const { state, dom, prepOverlay, tutorialOverlay } = ctx;
   const healer = getSelectedUnit(state);
   const targetAlly = state.units.find(
     (u) => u.id === targetAllyId && !u.defeated && u.currentHp > 0
@@ -97,6 +102,7 @@ export function openHealForecastModal(
   updateBattleInfoStrip(ctx);
   ctx.onLayerStateChanged();
   ctx.renderNow();
+  tutorialOverlay?.notifyActionCompleted('battle_open_heal_forecast');
   void triggerBattleTutorial(ctx, 'ch1_healing_and_items');
 }
 
@@ -144,7 +150,7 @@ async function confirmForecastAttack(ctx: BattleControllerContext): Promise<void
   if (!forecast) return;
 
   const runGen = state.battleRunGen;
-  attacker.equippedMoveId = forecast.attackerSide.move.id;
+  equipMoveInItsSlot(attacker, forecast.attackerSide.move.id);
 
   tutorialOverlay?.notifyActionCompleted('battle_confirm_attack');
   audioManager.playSfx('select');
@@ -187,6 +193,11 @@ async function confirmForecastAttack(ctx: BattleControllerContext): Promise<void
   ctx.onLayerStateChanged();
   ctx.renderNow();
 
+  if (getLivingPlayers(state).some((u) => u.currentHp < u.maxHp)) {
+    // e.g. the Prologue sparring counter: teach healing right after the first hit lands.
+    void triggerBattleTutorial(ctx, 'ch1_healing_and_items');
+  }
+
   if (areAllLivingPlayersWaited(state)) {
     await waitBattleMs(state, 240);
     if (!state.openState || runGen !== state.battleRunGen || state.phase !== 'player_phase') {
@@ -208,6 +219,7 @@ async function confirmForecastHeal(ctx: BattleControllerContext): Promise<void> 
   if (!healForecast) return;
 
   const runGen = state.battleRunGen;
+  ctx.tutorialOverlay?.notifyActionCompleted('battle_confirm_heal');
   audioManager.playSfx('select');
   dom.forecastModalBackdropEl.hidden = true;
   dom.actionMenuEl.hidden = true;
@@ -232,6 +244,8 @@ async function confirmForecastHeal(ctx: BattleControllerContext): Promise<void> 
   await runTileReachedEvents(ctx, healer, runGen);
   if (!state.openState || runGen !== state.battleRunGen) return;
   if (checkAndTriggerMatchEnd(ctx)) return;
+  await runUnitHealedEvents(ctx, runGen);
+  if (!state.openState || runGen !== state.battleRunGen) return;
   syncHudControls(state, dom);
   updateBattleInfoStrip(ctx);
   ctx.onLayerStateChanged();

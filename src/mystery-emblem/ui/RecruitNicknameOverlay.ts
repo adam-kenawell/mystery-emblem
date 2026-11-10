@@ -230,10 +230,8 @@ export class RecruitNicknameOverlay {
 
     const sp = getSpeciesById(current.speciesId);
     const skill = sp ? getPersonalSkillById(sp.personalSkillId) : undefined;
-    const roleTag = current.isLord ? ' ★' : '';
-
     this.stepBadgeEl.textContent = `${this.queueIndex + 1} / ${this.queue.length}`;
-    this.speciesTitleEl.textContent = `${sp?.name ?? current.speciesId}${roleTag}`;
+    this.speciesTitleEl.textContent = sp?.name ?? current.speciesId;
     this.speciesMetaEl.innerHTML = `Lv. ${current.level} · ${renderColoredTypesHtml(sp?.types ?? ['Normal'], ' / ')} · ${escapeHtml(sp?.traversalClass ?? 'Grounded')}`;
     this.skillDescEl.textContent = skill && this.mode === 'recruit' ? `${skill.name}` : '';
     this.inputEl.value = current.nickname || sp?.name || current.speciesId;

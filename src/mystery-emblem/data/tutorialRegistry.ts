@@ -6,13 +6,16 @@
 
 import { EARLY_CHAPTER_TUTORIAL_TOPICS } from './tutorials/earlyChapterTopics';
 import { MECHANICS_AND_TERRAIN_TOPICS } from './tutorials/mechanicsAndTerrainTopics';
+import { PROLOGUE_DRILL_TUTORIAL_TOPICS } from './tutorials/prologueDrillTopics';
 import type { TutorialTopicDefinition } from './tutorials/tutorialTypes';
 
 export * from './tutorials/tutorialTypes';
 export * from './tutorials/tutorialTriggers';
+export * from './tutorials/prologueDrillTopics';
 
 export const TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinition> = [
   ...EARLY_CHAPTER_TUTORIAL_TOPICS,
+  ...PROLOGUE_DRILL_TUTORIAL_TOPICS,
   ...MECHANICS_AND_TERRAIN_TOPICS,
 ];
 

@@ -10,7 +10,7 @@ The following system instructions must be read and strictly obeyed by the coding
 
 4\. Rule 3 — Authentic PMD Visual Skin \& Asset Pipeline: All UI windows, menus, combat forecasts, and dialogue boxes must use the Pokémon Mystery Dungeon: Explorers of Sky aesthetic (deep navy translucent backgrounds, double-layered pixel borders, and bitmap RPG typography). Pull all 8-directional unit animations and multi-emotion character portraits directly from the existing site's PMD Git repository endpoints.
 
-5\. Rule 4 — Single-Equipped Enemy Phase \& Clean Tactical Math: Enforce the 4-move battle loadout where Physical moves are Range 1, Special moves are Range 2, and only one offensive move is marked \[E] Equipped at a time during Enemy Phase (meaning a unit can only counter-attack on Enemy Phase if its single equipped move matches the attacker's range). Exclude all pure stat-changing moves (like Growl or Swords Dance); stat buffs and debuffs may only occur as random-chance secondary effects on damaging moves, or via X-Items, Personal Skills, and Held Items.
+5\. Rule 4 — Dual-Equipped (Physical + Special) Enemy Phase \& Clean Tactical Math: Enforce the 4-move battle loadout where Physical moves are Range 1, Special moves are Range 2, and each unit may mark one Physical AND one Special move \[E] Equipped for Enemy Phase (a unit counter-attacks only if it has an \[E] move for the attacker's range — its Physical \[E] at Range 1, its Special \[E] at Range 2; either slot may be deliberately left empty). Exclude all pure stat-changing moves (like Growl or Swords Dance); stat buffs and debuffs may only occur as random-chance secondary effects on damaging moves, or via X-Items, Personal Skills, and Held Items.
 
 6\. Rule 5 — Strict Faction Separation \& 3-Stage Promotion Curve: Never allow enemy Pokémon lines to appear in the player's recruitable pool, with the sole exception of the single defecting Gastly in Paralogue 6. Enforce the continuous Level 1–40 curve (targeting \~Level 30 by Chapter 25) with Evolution Stones at Level 10+ and Evolution Gems at Level 20+ (plus the Paralogue exceptions for Level 15 branching Eevee and Hidden Potential +20% growth Slakoth).
 
@@ -97,13 +97,13 @@ The LLM agent must implement *Mystery Emblem* in the following 10 sequential ste
   * Build `PREP_SCENE` loaded before Turn 1 of every battle with the 4 core *Fire Emblem* prep options:
     * **1. Select Units:** Toggle units in/out of the squad up to the chapter's deployment cap (`3` in Prologue, `5–8` in Act 1, `8–10` in Act 2, `10–12` in Acts 3–4), keeping the Dragon Lord locked in on story chapters.
     * **2. View Map & Swap Positions:** Pan the map to inspect enemies, terrain, and Stairs tiles; click/tap any two blue deployment tiles to swap the starting positions of deployed Pokémon.
-    * **3. Check / Equip Loadout:** Select up to **4 active moves** from each Pokémon's Unlocked Move Pool, set its single **[E] Equipped Move** for Enemy Phase, equip **1 Held Item** and **1 Consumable**, or edit its nickname.
+    * **3. Check / Equip Loadout:** Select up to **4 active moves** from each Pokémon's Unlocked Move Pool, set its **Physical and Special [E] Equipped Moves** for Enemy Phase, equip **1 Held Item** and **1 Consumable**, or edit its nickname.
     * **4. Fight!:** Transition into Turn 1 of `BATTLE_SCENE`.
 * **Step 6 Verification Checklist:**
   * [x] Confirm deployment caps and mandatory Dragon Lord deployment are enforced.
   * [x] Confirm swapping two units on blue deployment tiles and changing a unit's 4 active moves, `[E]` Equipped move, and Held/Consumable items carry over into Turn 1 of battle on both PC and mobile.
 
-### Step 7: Turn Phase Sequencer, Combat Math, Single-Equipped Counter & Status Engine
+### Step 7: Turn Phase Sequencer, Combat Math, Dual-Equipped Counter & Status Engine
 
 * **What to Implement:**
   * Build the `Player Phase` and `Enemy Phase` state machine, including start-of-phase triggers: Wonder Tile healing (`20% HP` + clear debuffs), Leftovers healing (`10% HP`), Poison damage (`1/8 HP`), Burn damage (`1/16 HP`), Freeze thaw roll (`2–5 turns`), Sleep wake check (`1–2 turns`), and **Dungeon Stairs** enemy reinforcement spawns (blocked if a player unit is standing on the Stairs tile).
@@ -111,10 +111,10 @@ The LLM agent must implement *Mystery Emblem* in the following 10 sequential ste
   * Implement the exact combat resolution sequence:
     * Check Paralysis (`1/3` chance to skip attack) and Sleep (cannot act or counter).
     * Calculate Damage using Effective Atk/SpA (halved by Burn for Physical or Freeze for Special), Move Might, Terrain Defense, STAB (`1.25x`), Type Effectiveness (`0x`, `0.5x`, `0.75x`, `1.0x`, `1.25x`, `1.5x`), and Critical Hits (`2.0x`).
-    * Enforce the **Single-Equipped Move Counter Rule**: On Enemy Phase, the defender only counter-attacks if its single `[E]` move matches the attacker's range (`1` for Physical, `2` for Special) and has `PP > 0`.
+    * Enforce the **Dual-Equipped Move Counter Rule**: On Enemy Phase, the defender only counter-attacks if it has an `[E]` move for the attacker's range (Physical `[E]` at `1`, Special `[E]` at `2`) with `PP > 0`.
     * Resolve Follow-Up Attack (Doubling when `Speed difference >= 5`) and roll random-chance secondary move effects (status infliction or temporary stat buffs/debuffs).
 * **Step 7 Verification Checklist:**
-  * [x] Confirm a unit with a Range 1 `[E]` move counter-attacks Range 1 foes on Enemy Phase but **cannot** counter Range 2 foes (and vice versa for a Range 2 `[E]` move).
+  * [x] Confirm a unit with only a Physical `[E]` counters Range 1 foes but **cannot** counter Range 2 foes (and vice versa), while a unit with both `[E]` slots counters at both ranges.
   * [x] Confirm all 5 status conditions (PAR, PSN, BRN, FRZ, SLP), Type multipliers (including `0x` immunities), STAB (`1.25x`), Crits (`2.0x`), and Dungeon Stairs blocking behave exactly as specified.
   * [x] Confirm right-clicking (PC) or tapping Back (Mobile) cancels uncommitted unit movement and returns the unit to its starting tile.
 
@@ -148,7 +148,7 @@ The LLM agent must implement *Mystery Emblem* in the following 10 sequential ste
 ### Step 10: Campaign Scripting (Prologue + 25 Chapters + 6 Paralogues), Boss AI & End-to-End Polish
 
 * **What to Implement:**
-  * Build the CPU Enemy AI controller (scoring legal attacks by damage dealt vs. counter damage taken, prioritizing free hits against player units whose `[E]` move cannot counter at that range, and executing Boss/Commander behaviors).
+  * Build the CPU Enemy AI controller (scoring legal attacks by damage dealt vs. counter damage taken, prioritizing free hits against player units with no `[E]` move for that range, and executing Boss/Commander behaviors).
   * Populate all map layouts (using *Explorers of Sky* dungeon tilesets), enemy placements, Stairs reinforcement schedules, and PMD portrait cutscene/recruitment scripts across the **Prologue, 25 Main Chapters, and 6 Paralogues**.
   * Implement mid-battle **Talk** recruitment events on the grid (including choosing between Nidoran♂ and Nidoran♀ in Paralogue 3, and recruiting the defecting enemy **Gastly** in Paralogue 6—the only enemy-line Pokémon that can join the player's team).
   * Implement victory and defeat flows (Lord fainting triggers immediate Game Over; clearing Chapter 25 against Final Boss Emperor Kingambit unlocks **New Game Plus**).

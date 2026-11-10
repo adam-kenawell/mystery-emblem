@@ -11,13 +11,13 @@ export function buildParalogue02IntroScript(): DialogueScript {
         speaker: KECLEON_SPEAKER,
         side: 'right',
         emotion: 'Worried',
-        text: 'Help, travelers! Imperial enforcers flipped my wagon to steal my Potions, TMs, and Evolution Stone!',
+        text: 'Help, travelers! Imperial thugs flipped my wagon, and they’re stealing all my stock!',
       },
       {
         speaker: SIR_EMPOLEON_SPEAKER,
         side: 'left',
         emotion: 'Determined',
-        text: 'Hold your ground, Master Kecleon! Surround him, {lord}—Kecleon must not fall!',
+        text: 'Hold on, Master Kecleon! {lord}, stay close to him. Don’t let them reach him.',
       },
     ],
   };
@@ -33,13 +33,13 @@ export function buildParalogue02OutroScript(): DialogueScript {
         speaker: KECLEON_SPEAKER,
         side: 'right',
         emotion: 'Joyous',
-        text: 'Saved! Take this Evolution Stone, {lord}, and look for my shops on cleared roads!',
+        text: 'You saved my shop! Take this stone as thanks, and look for my stalls along the roads.',
       },
       {
         speaker: { kind: 'advisor' },
         side: 'left',
         emotion: 'Joyous',
-        text: 'KECLEON SHOPS UNLOCKED! Healing, Held Items, Vitamins, AND TMs—plus a second Stone!',
+        text: 'Kecleon’s back in business! Potions, gear, all of it. Best rescue ever.',
       },
     ],
   };

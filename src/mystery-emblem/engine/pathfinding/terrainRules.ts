@@ -46,7 +46,6 @@ export interface PathfindingUnitContext {
   heldItemId: string | null;
   status?: StatusCondition | null;
   activeMoves: ReadonlyArray<ActiveMoveRangeEntry>;
-  equippedMoveId: string | null;
 }
 
 export interface TerrainMetadata {

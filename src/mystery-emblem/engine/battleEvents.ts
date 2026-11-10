@@ -11,6 +11,7 @@ export {
   findBestTalkPlanForTarget,
   getMatchingUnitDefeatedEvents,
   getMatchingTileReachedEvents,
+  getMatchingUnitHealedEvents,
   getMatchingVictoryEvents,
   type DirectTalkPlan,
 } from './events/eventEvaluator';

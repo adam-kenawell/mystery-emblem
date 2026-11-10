@@ -90,7 +90,7 @@ export function renderPrepManageUnits(ctx: PrepUnitsRenderContext): string | nul
   });
 
   const nickEl = unitsBackdropEl.querySelector('[data-testid="prep-detail-nickname"]');
-  if (nickEl) nickEl.textContent = `${selected.nickname}${selected.isLord ? ' ★' : ''}`;
+  if (nickEl) nickEl.textContent = `${selected.nickname}`;
 
   const deploySlotEl = unitsBackdropEl.querySelector<HTMLElement>('[data-prep-deploy-slot]');
   if (deploySlotEl) {

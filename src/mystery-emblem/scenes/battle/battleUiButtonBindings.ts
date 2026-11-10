@@ -135,7 +135,8 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
   bindPointerTap(
     dom.forecastModalBackdropEl.querySelector<HTMLElement>('[data-testid="forecast-cancel-btn"]'),
     () => {
-      if (getExpectedTutorialAction(tutorialOverlay) === 'battle_confirm_attack') {
+      const expected = getExpectedTutorialAction(tutorialOverlay);
+      if (expected === 'battle_confirm_attack' || expected === 'battle_confirm_heal') {
         tutorialOverlay?.nudgeActiveStep();
         return;
       }

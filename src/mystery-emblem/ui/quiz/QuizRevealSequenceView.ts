@@ -2,12 +2,10 @@
  * Mystery Emblem — 4-Beat Sequential Dragon Lord Aura Reveal View
  */
 
-import { getPersonalSkillById, getSpeciesById } from '../../data/index';
+import { getSpeciesById } from '../../data/index';
 import { getDragonLordTraitInfo, type DragonLordSpeciesId } from '../../data/quizData';
 import { PmdPortraitView } from '../PmdSpriteCanvas';
 import { bindPointerTap } from '../pointerControls';
-import { renderColoredTypesHtml } from '../typeColors';
-import { escapeQuizHtml } from './QuizWelcomeAndQuestionsView';
 
 export type QuizRevealBeat = 0 | 1 | 2 | 3 | 4;
 
@@ -28,36 +26,20 @@ export function renderQuizLordRevealView(
 ): { revealTextEl: HTMLElement; promptRowEl: HTMLElement } {
   const lordMeta = getDragonLordTraitInfo(opts.selectedLordSpeciesId);
   const sp = getSpeciesById(lordMeta.speciesId);
-  const skill = sp ? getPersonalSkillById(sp.personalSkillId) : undefined;
   const isLordRevealed = opts.revealBeat >= 3;
 
   if (isLordRevealed) {
-    const heroCard = document.createElement('div');
-    heroCard.className = 'pmd-window';
-    heroCard.dataset.testid = 'quiz-lord-hero-card';
-    heroCard.style.cssText =
-      'display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:6px 10px; flex-shrink:0;';
-    heroCard.innerHTML = `
-      <div class="pmd-forecast-portrait-slot" data-quiz-lord-portrait data-testid="quiz-lord-portrait"></div>
-      <div style="flex:1; min-width:180px;">
-        <div style="font-size:15px; font-weight:700; color:#f8f800;">
-          ${escapeQuizHtml(sp?.name ?? lordMeta.name)}
-        </div>
-        <div style="font-size:12px; color:#a8e0f8; margin-top:2px;" data-testid="quiz-lord-types">
-          ${renderColoredTypesHtml(sp?.types ?? ['Dragon'], ' / ')} · ${escapeQuizHtml(lordMeta.traitLabel)}
-        </div>
-        <div style="margin-top:3px; font-size:12px; color:#58f858;">
-          <strong>${escapeQuizHtml(skill?.name ?? 'Dragon Aura')}</strong>: ${escapeQuizHtml(skill?.description ?? '+2 Atk/SpA, +10 Hit within 2 tiles.')}
-        </div>
-      </div>
-    `;
+    const heroPortrait = document.createElement('div');
+    heroPortrait.dataset.testid = 'quiz-lord-hero-card';
+    heroPortrait.style.cssText = 'display:flex; justify-content:center; flex-shrink:0;';
+    heroPortrait.innerHTML = `<div class="pmd-forecast-portrait-slot pmd-quiz-lord-portrait-slot" data-quiz-lord-portrait data-testid="quiz-lord-portrait"></div>`;
 
-    heroCard.querySelector('[data-quiz-lord-portrait]')!.appendChild(opts.portraitView.canvas);
+    heroPortrait.querySelector('[data-quiz-lord-portrait]')!.appendChild(opts.portraitView.canvas);
     void opts.portraitView.setPortrait({
       speciesIdOrAssetId: lordMeta.speciesId,
       emotion: 'Happy',
     });
-    stageEl.appendChild(heroCard);
+    stageEl.appendChild(heroPortrait);
   }
 
   const dialogueBox = document.createElement('div');
@@ -106,7 +88,7 @@ export function renderQuizLordRevealView(
       textEl,
       promptRowEl,
       '',
-      `With that said, you must be... ${lordMeta.indefiniteArticle} ${speciesName}!`
+      `So you must be... ${lordMeta.indefiniteArticle} ${speciesName}!`
     );
   } else {
     textEl.dataset.testid = 'quiz-reveal-farewell';
@@ -134,7 +116,7 @@ export function renderQuizLordRevealView(
       textEl,
       promptRowEl,
       '',
-      'Now go forth and help save the world from certain destruction!'
+      'Now go. A world on the brink is waiting for you.'
     );
   }
 

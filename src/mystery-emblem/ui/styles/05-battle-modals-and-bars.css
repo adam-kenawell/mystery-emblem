@@ -119,6 +119,17 @@
   display: block;
 }
 
+.pmd-forecast-portrait-slot.pmd-quiz-lord-portrait-slot {
+  width: 84px;
+  height: 84px;
+}
+
+.pmd-forecast-portrait-slot.pmd-quiz-lord-portrait-slot > canvas {
+  width: 80px !important;
+  height: 80px !important;
+  image-rendering: pixelated;
+}
+
 .pmd-forecast-unit-id {
   min-width: 0;
   display: flex;

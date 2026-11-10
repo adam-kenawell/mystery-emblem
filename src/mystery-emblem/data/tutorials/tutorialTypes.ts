@@ -34,6 +34,9 @@ export type TutorialActionTriggerId =
   | 'battle_open_attack_forecast'
   | 'battle_confirm_attack'
   | 'battle_inspect_heal_or_item'
+  | 'battle_select_healer'
+  | 'battle_open_heal_forecast'
+  | 'battle_confirm_heal'
   | 'overworld_open_menu'
   | 'prep_open_manage_units'
   | 'prep_close_manage_units'
@@ -43,6 +46,7 @@ export type TutorialActionTriggerId =
 export type TutorialBattleTileFilter =
   | 'empty_floor'
   | 'lord_unit'
+  | 'healer_unit'
   | 'reachable_move'
   | 'attackable_enemy'
   | 'wounded_or_healer'
@@ -81,7 +85,14 @@ export interface WimpodTutorialBeat {
   awaitAction?: TutorialActionTriggerId;
   spotlight?: TutorialSpotlightTarget;
   chips?: ReadonlyArray<TutorialVisualChip>;
+  /** Alternate line when Sir Empoleon presents this beat (Prologue fight); falls back to `dialogue` */
+  mentorDialogue?: string;
+  /** Alternate portrait emotion when Sir Empoleon presents this beat; falls back to `emotion` */
+  mentorEmotion?: PmdPortraitEmotion;
 }
+
+/** Who voices the coach card: Wimpod/Golisopod advisor (default) or Sir Empoleon (Prologue fight). */
+export type TutorialPresenter = 'advisor' | 'mentor';
 
 export interface TutorialTopicDefinition {
   id: string;

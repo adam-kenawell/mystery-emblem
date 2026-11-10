@@ -3,7 +3,7 @@
  *
  * Converts `DungeonMapDefinition` spawns (`playerSpawns`, `enemySpawns`, `npcSpawns`),
  * `PrepDeploymentSlot` selections, and `OwnedPokemonInstance` save entries into live
- * `BattleUnitState` objects. Strictly obeys Rule 1 (manual balance) and Rule 4 (single `[E]` move).
+ * `BattleUnitState` objects. Strictly obeys Rule 1 (manual balance) and Rule 4 (Physical + Special `[E]` slots).
  */
 
 import { PMD_TILE_NATIVE_PX } from '../assets/tilesetLoader';
@@ -20,7 +20,7 @@ import {
   buildSpawnedBattleUnit,
   buildUnitMoveSlots,
   findNearestFreeSpawnTile,
-  resolveDefaultEquippedMoveId,
+  resolveEquippedSlotsForOwnedUnit,
   resolveSeededSpawnSpeciesId,
 } from './battleSpawnHelpers';
 import type { BattleUnitState } from './combatEngine';
@@ -143,6 +143,10 @@ export function resolveEnemySpawnsForMap(
       mustSurvive: spawn.mustSurvive,
       droppableItemId: spawn.droppableItemId ?? null,
       aiMode: spawn.aiMode,
+      ...(spawn.sparring ? { sparring: true } : {}),
+      ...(!spawn.seedKey && spawn.equippedMoveIds
+        ? { equippedMoveIds: [...spawn.equippedMoveIds] }
+        : {}),
     };
   });
 }
@@ -177,7 +181,7 @@ export function buildBattleUnitsFromPrepDeployment(
     if (!sp) continue;
 
     const moveSlots = buildUnitMoveSlots(owned.activeMoveIds, owned.bonusPpByMoveId);
-    const equippedMoveId = resolveDefaultEquippedMoveId(moveSlots, owned.equippedMoveId);
+    const equippedSlots = resolveEquippedSlotsForOwnedUnit(moveSlots, owned);
     const stats: StatBlockSeven = { ...owned.currentStats };
 
     units.push({
@@ -208,7 +212,7 @@ export function buildBattleUnitsFromPrepDeployment(
       statusTurns: 0,
       tempBattleBoosts: { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, crit: 0 },
       activeMoves: moveSlots,
-      equippedMoveId,
+      ...equippedSlots,
       waited: false,
       defeated: false,
       direction: 2,

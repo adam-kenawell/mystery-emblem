@@ -164,7 +164,7 @@ Once the player enters a Chapter or Skirmish node, the game loads the Battle Pre
    * **Act 1 (Chapters 1 – 6):** 5 to 8 Deployment Slots  
    * **Act 2 (Chapters 7 – 13):** 8 to 10 Deployment Slots  
    * **Act 3 & Act 4 (Chapters 14 – 25):** 10 to 12 Deployment Slots  
-8. **Equip Moves (4-Move Loadout & Single Active Move):** Each Pokémon can equip up to **4 moves** for the upcoming battle from all the moves it has unlocked so far (via level-up or TMs). You also choose which **single move** starts as that Pokémon's currently equipped move for Enemy Phase counter-attacks.  
+8. **Equip Moves (4-Move Loadout & Dual Active Moves):** Each Pokémon can equip up to **4 moves** for the upcoming battle from all the moves it has unlocked so far (via level-up or TMs). You also choose which **Physical move and which Special move** start as that Pokémon's equipped moves for Enemy Phase counter-attacks.  
 9. **Manage Items:** Each Pokémon has 2 item slots:  
    * **1 Held Item Slot (Passive):** Items like Leftovers, Oran Berry, or Mystic Water that grant passive stat boosts or automatic effects in combat.  
    * **1 Consumable / Utility Slot (Active):** Items like Potions, Full Heals, **Evolution Stones**, or **Evolution Gems** that use the unit's action for the turn when activated.
@@ -366,9 +366,9 @@ Each Pokémon stage has a manually assigned **Movement (`Mov`)** stat (typically
 | **Void / Chasm** | Impassable | Impassable | 1 | \+0 Def/SpD, 0% Avoid; Only Levitate units can cross |
 | **Wonder Tile** | 1 | 1 | 1 | \+2 Def/SpD, \+20% Avoid, Heals 20% HP & clears debuffs each turn (All units) |
 
-## **2.3 Combat Mechanics, Move Stats, Status Effects & Single-Equipped Enemy Phase**
+## **2.3 Combat Mechanics, Move Stats, Status Effects & Dual-Equipped Enemy Phase**
 
-Moves function like **weapons and tomes in Fire Emblem**, with manually balanced tactical stats and a **single-equipped move rule** for Enemy Phase counter-attacks.
+Moves function like **weapons and tomes in Fire Emblem**, with manually balanced tactical stats and a **dual-equipped (Physical + Special) move rule** for Enemy Phase counter-attacks.
 
 * **Move Attributes (Fire Emblem Weapon Stats):**  
   Every move in the game's move database is defined by the following stats:  
@@ -385,12 +385,12 @@ Moves function like **weapons and tomes in Fire Emblem**, with manually balanced
   * **Crit (%):** Critical hit chance bonus granted by the move (typically `0%–5%`, or `15%–25%` for high-crit moves like *Slash*, *Night Slash*, or *Shadow Claw*).  
   * **PP (Uses per Battle):** How many times the move can be used during a map (acting as weapon durability that refreshes between chapters).  
   * **Secondary Effect (Optional):** Random percentage chance (`10%–30%`) to inflict a Status Condition or apply a temporary stat buff/debuff on hit.  
-* **4-Move Battle Loadout & Single-Equipped Move Rule (Enemy Phase):**  
+* **4-Move Battle Loadout & Dual-Equipped Move Rule (Enemy Phase):**  
   * **Pre-Battle Loadout (Up to 4 Moves):** During the Pre-Battle (Battle Prep) screen, the player can equip up to **4 moves** onto each Pokémon from that unit's unlocked learnset.  
   * **Player Phase Selection:** On Player Phase, when a unit initiates combat, the player can freely pick **any of the unit's 4 equipped moves** that is in range of the target.  
-  * **Single Equipped Move During Enemy Phase:** Just like weapon equipping in *Fire Emblem*, **a Pokémon can only have ONE offensive move equipped at a time during Enemy Phase**:  
-    * Whichever offensive move the Pokémon used most recently on Player Phase (or whichever move the player manually sets via the **"Equip"** submenu before ending the unit's turn) is marked with an **\[E\] (Equipped)** badge.  
-    * During **Enemy Phase**, the defending Pokémon can **only counter-attack if its single currently equipped \[E\] move matches the range of the enemy's attack**.  
+  * **Dual Equipped Moves During Enemy Phase:** Like carrying a sword and a bow in *Fire Emblem*, **a Pokémon can have ONE Physical (Range 1) and ONE Special (Range 2) move equipped at a time during Enemy Phase**:  
+    * Whichever Physical / Special move the Pokémon used most recently on Player Phase (or whichever move the player manually sets via the **"Equip"** submenu) fills that category's slot and is marked with an **\[E\] (Equipped)** badge. Tapping an equipped \[E\] again leaves that slot deliberately empty.  
+    * During **Enemy Phase**, the defending Pokémon **counter-attacks with its Physical \[E\] against Range 1 attacks and its Special \[E\] against Range 2 attacks**; with no \[E\] for that range it cannot counter.  
 * **Damage, STAB, Type Chart & Critical Hit Multipliers:**  
   * **STAB (Same-Type Attack Bonus):** Grants a **1.25x multiplier** to damage when the move's elemental type matches one of the user's types (`M_STAB = 1.25`, otherwise `1.0`).  
   * **Type Effectiveness Multipliers (`M_Type`):**  
@@ -589,7 +589,7 @@ The agent must structure the game's menu flows after *Fire Emblem Awakening*, st
 14. **Pre-Battle (Battle Prep) Menu:**  
     * **Select Units:** Grid of all owned Pokémon; click/tap to toggle deployment up to the chapter's deployment cap (with the Dragon Lord locked in as mandatory).  
     * **View Map & Swap Positions:** Pan around the dungeon map to inspect enemies, terrain, and Stairs tiles; click/tap two blue deployment tiles to swap the starting positions of deployed Pokémon.  
-    * **Check / Equip Loadout:** Select any Pokémon to equip up to **4 Moves** from its Unlocked Move Pool, designate its single **\[E\] Equipped Move** for Enemy Phase, equip **1 Held Item** and **1 Consumable**, teach a **TM**, or **edit its Nickname**.  
+    * **Check / Equip Loadout:** Select any Pokémon to equip up to **4 Moves** from its Unlocked Move Pool, designate its **Physical and Special \[E\] Equipped Moves** for Enemy Phase, equip **1 Held Item** and **1 Consumable**, teach a **TM**, or **edit its Nickname**.  
     * **Fight\! (Start Battle):** Begins Turn 1 of Player Phase.  
 15. **In-Battle Tactical Menus:**  
     * **Unit Selection & Action Menu:** Clicking/tapping an unmoved player Pokémon highlights its valid movement tiles (Blue) and attack range (Red). Clicking a destination tile moves the unit there and opens the floating *Fire Emblem* command menu beside the unit:  
@@ -612,7 +612,7 @@ The following system instructions must be read and strictly obeyed by the coding
 * **2\. Rule 1 — 100% Data-Driven Manual Balance (Zero Automated Stat Formulas):** Never use automated formulas to calculate stats or growth rates from PokéAPI base stats. Every Pokémon's Base Stats (`HP`, `Atk`, `Def`, `SpA`, `SpD`, `Spe`), `Mov`, Join Level, 6 Percentage Growth Rates, Promotion Bonuses, Learnset levels, and Personal Skill must be read from human-editable JSON/TypeScript data files so the developer can manually tune every unit.  
 * **3\. Rule 2 — Strict PC & Mobile Parity (Unified Pointer Events Only):** Every screen, canvas interaction, and menu modal must work cleanly on both Desktop (Mouse) and Mobile (Touchscreen) browsers. Never bind or require keyboard keys (`WASD`, arrow keys, `Space`, `Enter`, `Esc`). Use unified Pointer Events (`pointerdown`, `pointermove`, `pointerup`) for clicking/tapping and click-and-drag/touch-drag camera panning. Always render an on-screen PMD-styled **Menu / Back** button (and support long-press) on mobile to mirror PC right-click behavior.  
 * **4\. Rule 3 — Authentic PMD Visual Skin & Asset Pipeline:** All UI windows, menus, combat forecasts, and dialogue boxes must use the *Pokémon Mystery Dungeon: Explorers of Sky* aesthetic (deep navy translucent backgrounds, double-layered pixel borders, and bitmap RPG typography). Pull all 8-directional unit animations and multi-emotion character portraits directly from the existing site's PMD Git repository endpoints.  
-* **5\. Rule 4 — Single-Equipped Enemy Phase & Clean Tactical Math:** Enforce the 4-move battle loadout where Physical moves are Range 1, Special moves are Range 2, and **only one offensive move is marked `[E] Equipped` at a time during Enemy Phase** (meaning a unit can only counter-attack on Enemy Phase if its single equipped move matches the attacker's range). Exclude all pure stat-changing moves (like *Growl* or *Swords Dance*); stat buffs and debuffs may only occur as random-chance secondary effects on damaging moves, or via X-Items, Personal Skills, and Held Items.  
+* **5\. Rule 4 — Dual-Equipped (Physical + Special) Enemy Phase & Clean Tactical Math:** Enforce the 4-move battle loadout where Physical moves are Range 1, Special moves are Range 2, and **each unit may mark one Physical AND one Special move `[E] Equipped` for Enemy Phase** (a unit counter-attacks only if it has an `[E]` move for the attacker's range; either slot may be left empty). Exclude all pure stat-changing moves (like *Growl* or *Swords Dance*); stat buffs and debuffs may only occur as random-chance secondary effects on damaging moves, or via X-Items, Personal Skills, and Held Items.  
 * **6\. Rule 5 — Strict Faction Separation & 3-Stage Promotion Curve:** Never allow enemy Pokémon lines to appear in the player's recruitable pool, with the **sole exception of the single defecting Gastly in Paralogue 6**. Enforce the continuous Level 1–40 curve (targeting \~Level 30 by Chapter 25\) with **Evolution Stones** at Level 10+ and **Evolution Gems** at Level 20+ (plus the Paralogue exceptions for Level 15 branching Eevee and Hidden Potential \+20% growth Slakoth).  
 * **7\. Rule 6 — Incremental Step-by-Step Execution & Verification Gates:** Implement the game one step at a time following the roadmap in Section 3.6. Do **not** skip ahead to the next step until every item in the current step's **Verification Checklist** has been tested and confirmed working on both Desktop and Mobile viewports.  
 * **8\. Rule 7 — Cross-Device Save Sync via Google Sign-In (Firebase Auth \+ Firestore) & localStorage:** Because the game is hosted as a static site on GitHub Pages, implement a hybrid `SaveStateManager` that writes immediately to `localStorage` (with a `lastUpdated` UTC timestamp) for instant offline-capable saving, and automatically syncs the save JSON to **Cloud Firestore** (`saves/{uid}`) whenever the player is signed in with their **Google Account** via **Firebase Authentication**. On startup or sign-in, compare `lastUpdated` timestamps between `localStorage` and Firestore so switching between desktop and mobile always loads the most recent campaign state.
@@ -689,13 +689,13 @@ The LLM agent must implement *Mystery Emblem* in the following 10 sequential ste
   * Build `PREP_SCENE` loaded before Turn 1 of every battle with the 4 core *Fire Emblem* prep options:  
     * **1\. Select Units:** Toggle units in/out of the squad up to the chapter's deployment cap (`3` in Prologue, `5–8` in Act 1, `8–10` in Act 2, `10–12` in Acts 3–4), keeping the Dragon Lord locked in on story chapters.  
     * **2\. View Map & Swap Positions:** Pan the map to inspect enemies, terrain, and Stairs tiles; click/tap any two blue deployment tiles to swap the starting positions of deployed Pokémon.  
-    * **3\. Check / Equip Loadout:** Select up to **4 active moves** from each Pokémon's Unlocked Move Pool, set its single **\[E\] Equipped Move** for Enemy Phase, equip **1 Held Item** and **1 Consumable**, or edit its nickname.  
+    * **3\. Check / Equip Loadout:** Select up to **4 active moves** from each Pokémon's Unlocked Move Pool, set its **Physical and Special \[E\] Equipped Moves** for Enemy Phase, equip **1 Held Item** and **1 Consumable**, or edit its nickname.  
     * **4\. Fight\!:** Transition into Turn 1 of `BATTLE_SCENE`.  
 * **Step 6 Verification Checklist:**  
   * \[ \] Confirm deployment caps and mandatory Dragon Lord deployment are enforced.  
   * \[ \] Confirm swapping two units on blue deployment tiles and changing a unit's 4 active moves, `[E]` Equipped move, and Held/Consumable items carry over into Turn 1 of battle on both PC and mobile.
 
-### **Step 7: Turn Phase Sequencer, Combat Math, Single-Equipped Counter & Status Engine**
+### **Step 7: Turn Phase Sequencer, Combat Math, Dual-Equipped Counter & Status Engine**
 
 * **What to Implement:**  
   * Build the `Player Phase` and `Enemy Phase` state machine, including start-of-phase triggers: Wonder Tile healing (`20% HP` \+ clear debuffs), Leftovers healing (`10% HP`), Poison damage (`1/8 HP`), Burn damage (`1/16 HP`), Freeze thaw roll (`2–5 turns`), Sleep wake check (`1–2 turns`), and **Dungeon Stairs** enemy reinforcement spawns (blocked if a player unit is standing on the Stairs tile).  
@@ -703,10 +703,10 @@ The LLM agent must implement *Mystery Emblem* in the following 10 sequential ste
   * Implement the exact combat resolution sequence:  
     * Check Paralysis (`1/3` chance to skip attack) and Sleep (cannot act or counter).  
     * Calculate Damage using Effective Atk/SpA (halved by Burn for Physical or Freeze for Special), Move Might, Terrain Defense, STAB (`1.25x`), Type Effectiveness (`0x`, `0.5x`, `0.75x`, `1.0x`, `1.25x`, `1.5x`), and Critical Hits (`2.0x`).  
-    * Enforce the **Single-Equipped Move Counter Rule**: On Enemy Phase, the defender only counter-attacks if its single `[E]` move matches the attacker's range (`1` for Physical, `2` for Special) and has `PP > 0`.  
+    * Enforce the **Dual-Equipped Move Counter Rule**: On Enemy Phase, the defender only counter-attacks if it has an `[E]` move for the attacker's range (Physical `[E]` at `1`, Special `[E]` at `2`) with `PP > 0`.  
     * Resolve Follow-Up Attack (Doubling when `Speed difference >= 5`) and roll random-chance secondary move effects (status infliction or temporary stat buffs/debuffs).  
 * **Step 7 Verification Checklist:**  
-  * \[ \] Confirm a unit with a Range 1 `[E]` move counter-attacks Range 1 foes on Enemy Phase but **cannot** counter Range 2 foes (and vice versa for a Range 2 `[E]` move).  
+  * \[ \] Confirm a unit with only a Physical `[E]` counters Range 1 foes but **cannot** counter Range 2 foes (and vice versa), while a unit with both `[E]` slots counters at both ranges.  
   * \[ \] Confirm all 5 status conditions (PAR, PSN, BRN, FRZ, SLP), Type multipliers (including `0x` immunities), STAB (`1.25x`), Crits (`2.0x`), and Dungeon Stairs blocking behave exactly as specified.  
   * \[ \] Confirm right-clicking (PC) or tapping Back (Mobile) cancels uncommitted unit movement and returns the unit to its starting tile.
 
@@ -740,7 +740,7 @@ The LLM agent must implement *Mystery Emblem* in the following 10 sequential ste
 ### **Step 10: Campaign Scripting (Prologue \+ 25 Chapters \+ 6 Paralogues), Boss AI & End-to-End Polish**
 
 * **What to Implement:**  
-  * Build the CPU Enemy AI controller (scoring legal attacks by damage dealt vs. counter damage taken, prioritizing free hits against player units whose `[E]` move cannot counter at that range, and executing Boss/Commander behaviors).  
+  * Build the CPU Enemy AI controller (scoring legal attacks by damage dealt vs. counter damage taken, prioritizing free hits against player units with no `[E]` move for that range, and executing Boss/Commander behaviors).  
   * Populate all map layouts (using *Explorers of Sky* dungeon tilesets), enemy placements, Stairs reinforcement schedules, and PMD portrait cutscene/recruitment scripts across the **Prologue, 25 Main Chapters, and 6 Paralogues**.  
   * Implement mid-battle **Talk** recruitment events on the grid (including choosing between Nidoran♂ and Nidoran♀ in Paralogue 3, and recruiting the defecting enemy **Gastly** in Paralogue 6—the only enemy-line Pokémon that can join the player's team).  
   * Implement victory and defeat flows (Lord fainting triggers immediate Game Over; clearing Chapter 25 against Final Boss Emperor Kingambit unlocks **New Game Plus**).  

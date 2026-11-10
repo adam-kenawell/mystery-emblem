@@ -63,6 +63,7 @@ export interface DungeonUnitSpawn {
   nickname?: string;
   stats?: StatBlockSeven;
   moveIds?: string[];
+  /** Seeds that move's Physical/Special [E] slot; the other slot auto-fills with the first matching move. */
   equippedMoveId?: string;
   heldItemId?: string | null;
   /** Marks Enemy Leader / Boss for `defeat_boss` objective and Boss UI badge */
@@ -75,6 +76,13 @@ export interface DungeonUnitSpawn {
   droppableItemId?: string | null;
   /** AI movement behavior (defaults to `'wait_until_in_range'`) */
   aiMode?: EnemyAiMode;
+  /**
+   * Training sparring partner: its strikes always hit (no crits), and no strike to or from it
+   * can drop a unit below 1 HP. Cleared when converted to the player.
+   */
+  sparring?: boolean;
+  /** Exact [E] slots to equip (overrides `equippedMoveId` seeding and Physical/Special auto-fill) */
+  equippedMoveIds?: string[];
 }
 
 export interface DungeonMapDefinition {
@@ -129,6 +137,8 @@ export interface ManualEnemyBattleSpawn {
   mustSurvive?: boolean;
   droppableItemId?: string | null;
   aiMode?: EnemyAiMode;
+  sparring?: boolean;
+  equippedMoveIds?: string[];
 }
 
 export interface PrepDeploymentSlot {

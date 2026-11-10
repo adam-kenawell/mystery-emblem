@@ -7,6 +7,7 @@
  * manual % growth rates w/ Hidden Potential +20%, skill, item, and 4 moves w/ Mt/Hit/Crit/PP/[E]).
  */
 
+import { isMoveEquipped } from '../../data/equippedMoves';
 import { getItemById, getPersonalSkillById, getSpeciesById } from '../../data/index';
 import {
   STATUS_BADGE_COLORS,
@@ -129,7 +130,7 @@ export function renderBattleUnitsRosterPanel(
       <div class="pmd-forecast-unit-head">
         <div class="pmd-forecast-portrait-slot" data-units-detail-portrait></div>
         <div class="pmd-forecast-unit-id">
-          <strong class="pmd-forecast-unit-name" data-testid="dungeon-units-detail-name">${escapeUiHtml(unit.nickname)}${unit.isLord ? ' ★' : ''}</strong>
+          <strong class="pmd-forecast-unit-name" data-testid="dungeon-units-detail-name">${escapeUiHtml(unit.nickname)}</strong>
           <span class="pmd-forecast-unit-meta" data-testid="dungeon-units-detail-level-exp">${speciesTag}Lv ${unit.level} · EXP ${expLabel}</span>
           <span class="pmd-forecast-unit-meta"><span data-testid="dungeon-units-detail-types">${renderColoredTypesHtml(unit.types, ' / ')}</span> · ${escapeUiHtml(unit.traversalClass)}</span>
         </div>
@@ -239,7 +240,7 @@ export function renderBattleUnitsRosterPanel(
     const movesEl = detailEl.querySelector<HTMLElement>('[data-testid="dungeon-units-detail-moves"]')!;
     movesEl.innerHTML = unit.activeMoves
       .map((slot) => {
-        const isEq = slot.id === unit.equippedMoveId && isOffensiveMove(slot.move);
+        const isEq = isMoveEquipped(unit, slot.id) && isOffensiveMove(slot.move);
         const mtLbl = isOffensiveMove(slot.move) ? String(slot.move.mt) : '—';
         return `
           <div class="pmd-dungeon-units-move${isEq ? ' is-equipped' : ''}" data-testid="dungeon-units-move-${escapeUiHtml(slot.id)}">

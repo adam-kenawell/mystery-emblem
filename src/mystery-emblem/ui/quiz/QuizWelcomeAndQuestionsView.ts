@@ -44,6 +44,13 @@ export function renderQuizWelcomePopup(
       Welcome to Mystery Emblem, a Pokémon × Fire Emblem fan game!
     </h2>
     <div data-testid="quiz-welcome-body" style="display:flex; flex-direction:column; gap:8px; font-size:clamp(13px, 1.9vw, 15px); line-height:1.45; color:#f8f8f8;">
+      <p style="margin:0;">This is a demo that takes about <strong>1 hour</strong> to finish.</p>
+      <p style="margin:0;"><strong>Sign in with Google</strong> to save your progress and keep playing on any device.</p>
+      <p style="margin:0;">
+        Follow the game's progress on my blog:
+        <a href="https://adam.kenawell.family/blog/" target="_blank" rel="noopener noreferrer" data-testid="quiz-welcome-blog-link" style="color:#88d8ff;">adam.kenawell.family/blog</a>
+      </p>
+      <p style="margin:0;">At the end of the demo there's a short Google Form for feedback. All feedback helps, and I want this game to be the best it can be!</p>
       <p style="margin:0;">
         Answer a few questions to meet your hero.
       </p>

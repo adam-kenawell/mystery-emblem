@@ -28,31 +28,24 @@ function buildGrid(
   return rows;
 }
 
-/** Stage 1 (`002` Coast/Beach): Sunny tribe shoreline trail overlooking sparkling eastern tidewaters. */
+/** Stage 1 (`042` Emerald Heartwood): Coastal meadow layout authored in the DevTools Map Editor. */
+const STAGE_01_CHUNKS: ReadonlyArray<ReadonlyArray<number>> = [
+  [28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 20],
+  [28, 27, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 30],
+  [28, 42, 28, 28, 58, 28, 28, 42, 28, 9, 28, 28, 28, 28, 28, 29],
+  [28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 58, 28, 30],
+  [28, 92, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 22],
+  [28, 28, 28, 28, 28, 28, 28, 42, 28, 28, 28, 28, 28, 28, 28, 14],
+  [28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 20],
+  [28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 29],
+  [28, 28, 42, 28, 28, 42, 28, 28, 28, 42, 28, 28, 28, 42, 28, 30],
+  [28, 28, 28, 27, 28, 92, 28, 28, 28, 28, 28, 9, 28, 28, 28, 30],
+  [28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 22],
+];
+
 export const STAGE_01_COASTAL_MEADOW = buildGrid(16, 11, (x, y) => {
-  const t = '002';
-  if (y === 0) {
-    if (x === 0) return cell('wall', t, 38);
-    if (x === 15) return cell('wall', t, 37);
-    return cell('wall', t, 2);
-  }
-  if (y === 10) {
-    if (x === 0) return cell('wall', t, 39);
-    if (x >= 12) return cell('water', t, 43);
-    return cell('wall', t, 5);
-  }
-  if (x === 0) return cell('wall', t, 3);
-  if (x >= 13 && y >= 2 && y <= 9) return cell('water', t, 43);
-  if (x === 12 && (y === 3 || y === 4 || y === 7 || y === 8)) return cell('water', t, 43);
-  if ((x === 3 && y === 2) || (x === 10 && y === 2) || (x === 4 && y === 8)) {
-    return cell('wall', t, 27);
-  }
-  if (x === 9 && y === 8) return cell('water', t, 43);
-  const pattern = (x * 7 + y * 13) % 9;
-  if (pattern === 0) return cell('floor', t, 98);
-  if (pattern === 1 || pattern === 2) return cell('floor', t, 32);
-  if (pattern === 3) return cell('floor', t, 34);
-  return cell('floor', t, 28);
+  const chunk = STAGE_01_CHUNKS[y][x];
+  return cell(chunk === 27 ? 'floor' : 'wall', '042', chunk);
 });
 
 /** Stage 2 (`042` Emerald Heartwood): Verdant Commonwealth Sanctuary with crystal spring & flower meadow. */
