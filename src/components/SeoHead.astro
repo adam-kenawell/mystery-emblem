@@ -1,0 +1,47 @@
+---
+/**
+ * Shared <head> SEO tags: title, description, canonical URL, Open Graph / Twitter share card,
+ * favicon, and optional JSON-LD structured data.
+ */
+import { OG_IMAGE_PATH, SITE_NAME, SITE_URL } from '../siteMeta';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Site-relative path, e.g. `/about/`. Defaults to the current page. */
+  path?: string;
+  jsonLd?: ReadonlyArray<object>;
+}
+
+const { title, description, path, jsonLd = [] } = Astro.props;
+const canonicalUrl = new URL(path ?? Astro.url.pathname, SITE_URL).href;
+const ogImageUrl = new URL(OG_IMAGE_PATH, SITE_URL).href;
+---
+
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="generator" content={Astro.generator} />
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonicalUrl} />
+<meta name="theme-color" content="#0b1324" />
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={SITE_NAME} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonicalUrl} />
+<meta property="og:image" content={ogImageUrl} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Mystery Emblem box art" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImageUrl} />
+
+<link rel="icon" type="image/png" sizes="84x84" href="/favicon.png" />
+<link rel="apple-touch-icon" href="/favicon.png" />
+<link rel="sitemap" href="/sitemap.xml" />
+
+{jsonLd.map((data) => <script type="application/ld+json" set:html={JSON.stringify(data)} />)}

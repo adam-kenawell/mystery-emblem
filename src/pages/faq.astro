@@ -1,0 +1,81 @@
+---
+import InfoPageLayout from '../layouts/InfoPageLayout.astro';
+import { AUTHOR_BLOG_URL } from '../siteMeta';
+
+const title = 'Mystery Emblem FAQ | Free Pokémon Fire Emblem Fan Game';
+const description =
+  'Answers about Mystery Emblem, the free Pokémon x Fire Emblem fan game: price, devices, saving, length, permadeath, and how to share feedback.';
+
+const faqs: ReadonlyArray<{ q: string; a: string }> = [
+  {
+    q: 'What is Mystery Emblem?',
+    a: 'A free fan game that mixes Fire Emblem-style tactics battles with the look of Pokémon Mystery Dungeon: Explorers of Sky. You lead a team of Pokémon across grid-based battlefields in a story-driven campaign.',
+  },
+  {
+    q: 'Is it free?',
+    a: 'Yes. Mystery Emblem is completely free, with no ads and no purchases.',
+  },
+  {
+    q: 'Do I need to download anything?',
+    a: 'No. It runs in your web browser on phones, tablets, and computers. Just open mysteryemblem.com and press Start.',
+  },
+  {
+    q: 'How long is it?',
+    a: 'The current demo takes about an hour. It covers the Prologue, six main chapters, and two optional side chapters.',
+  },
+  {
+    q: 'How do I save my progress?',
+    a: 'The game saves as you play. Sign in with Google on the title screen to keep your save across devices.',
+  },
+  {
+    q: 'Is there permadeath like in Fire Emblem?',
+    a: 'Only your hero has to survive. If your hero falls, you lose the battle and can try again. Any other Pokémon who faint recover once the battle ends.',
+  },
+  {
+    q: 'Do I need to know Fire Emblem or Pokémon Mystery Dungeon?',
+    a: 'No. Wimpod explains each new idea the first time it comes up, and you can look tips up again at any time. There is also a How to Play page on this site.',
+  },
+  {
+    q: 'Which Pokémon can I play as?',
+    a: 'A short personality quiz makes you one of five Dragon-type Pokémon: Axew, Bagon, Gible, Dratini, or Goomy. More Pokémon join your team as the story goes on.',
+  },
+  {
+    q: 'Is this an official Pokémon or Fire Emblem game?',
+    a: 'No. Mystery Emblem is an unofficial, non-commercial fan game. It is not affiliated with or endorsed by Nintendo, The Pokémon Company, Game Freak, Creatures Inc., or Intelligent Systems.',
+  },
+  {
+    q: 'How can I give feedback or follow development?',
+    a: 'There is a short feedback form at the end of the demo, and development updates are posted on the blog at adam.kenawell.family/blog.',
+  },
+];
+
+const faqJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map(({ q, a }) => ({
+    '@type': 'Question',
+    name: q,
+    acceptedAnswer: { '@type': 'Answer', text: a },
+  })),
+};
+---
+
+<InfoPageLayout
+  title={title}
+  description={description}
+  heading="Frequently Asked Questions"
+  jsonLd={[faqJsonLd]}
+>
+  {
+    faqs.map(({ q, a }) => (
+      <section>
+        <h2>{q}</h2>
+        <p>{a}</p>
+      </section>
+    ))
+  }
+  <p>
+    Still curious? Read <a href="/about/">about the game</a>, see <a href="/how-to-play/">how to play</a>,
+    or follow along on the <a href={AUTHOR_BLOG_URL}>blog</a>.
+  </p>
+</InfoPageLayout>

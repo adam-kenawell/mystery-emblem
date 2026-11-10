@@ -1,0 +1,70 @@
+---
+import InfoPageLayout from '../layouts/InfoPageLayout.astro';
+
+const title = 'How to Play Mystery Emblem | Pokémon Fire Emblem Fan Game Guide';
+const description =
+  'Learn the basics of Mystery Emblem: moving on the grid, attacking and counterattacks, Pokémon types, healing, recruiting, evolving, and planning before each chapter.';
+---
+
+<InfoPageLayout title={title} description={description} heading="How to Play">
+  <p>
+    Mystery Emblem teaches everything as you go, so you can jump straight in. This page is a quick
+    reference if you want to know the rules ahead of time, or if you're new to Fire Emblem-style
+    tactics games.
+  </p>
+
+  <h2>Taking turns</h2>
+  <ol>
+    <li><strong>Your turn:</strong> tap one of your Pokémon. Blue squares show where it can move, and red squares show what it can attack.</li>
+    <li>Tap a blue square to move, then choose <strong>Attack</strong>, a heal, an item, or <strong>Wait</strong>.</li>
+    <li>Once all your Pokémon have acted, the <strong>enemy's turn</strong> begins and they move and attack.</li>
+  </ol>
+  <p>
+    Your hero, the Dragon you got from the personality quiz, must stay standing. If your hero
+    falls, the battle is lost. Anyone else who faints recovers after the battle.
+  </p>
+
+  <h2>Attacking</h2>
+  <ul>
+    <li><strong>Physical moves</strong> hit an enemy right next to you. <strong>Special moves</strong> hit from two squares away.</li>
+    <li>Before you attack, a preview shows the damage, hit chance, and whether the enemy will hit back.</li>
+    <li>Each Pokémon has one physical and one special move marked <strong>E</strong>. Those are the moves it uses to fight back. An enemy can only counterattack if one of its marked moves can reach you, so attacking from the right distance keeps you safe.</li>
+    <li>Pokémon types matter: a move that hits a weakness does more damage.</li>
+    <li>If your Pokémon is much faster than its target, it attacks twice.</li>
+  </ul>
+
+  <h2>Healing and items</h2>
+  <ul>
+    <li>Healers like Flabébé can restore an ally's health from up to two squares away.</li>
+    <li>Each Pokémon holds one item. Berries are eaten automatically when needed, and Potions are used on your turn.</li>
+    <li>Glowing Wonder Tiles heal whoever stands on them and cure status problems like burns and poison.</li>
+  </ul>
+
+  <h2>The battlefield</h2>
+  <ul>
+    <li>Trees and mountains are slow to cross but make your Pokémon harder to hit.</li>
+    <li>Water blocks most Pokémon. Flying and Water types can cross it.</li>
+    <li>Enemy reinforcements can arrive by stairs. Stand on the stairs to block them.</li>
+    <li>Some chapters end when you defeat the boss. Others ask you to defeat every enemy or survive.</li>
+  </ul>
+
+  <h2>Growing your team</h2>
+  <ul>
+    <li><strong>Recruit:</strong> some enemies don't really want to fight. Move your hero next to them and choose <strong>Talk</strong>.</li>
+    <li><strong>Level up:</strong> fighting and healing earn experience and make your Pokémon stronger.</li>
+    <li><strong>Evolve:</strong> from level 10, an Evolution Stone evolves a Pokémon to its next stage.</li>
+    <li><strong>Shop:</strong> once you rescue Kecleon, his shops appear on the world map, selling moves, gear, and medicine.</li>
+  </ul>
+
+  <h2>Before each chapter</h2>
+  <p>
+    Chapter Prep lets you choose who fights, change moves, hand out items, and look over the map. You
+    can also swap your team's starting positions before the battle begins.
+  </p>
+
+  <h2>Saving</h2>
+  <p>
+    The game saves as you play. Sign in with Google from the title screen to keep your progress
+    across devices. More questions? See the <a href="/faq/">FAQ</a>.
+  </p>
+</InfoPageLayout>

@@ -176,3 +176,43 @@
   border-top: 2px solid rgba(168, 192, 224, 0.38);
   width: 100%;
 }
+
+/* Info-page links: a framed bar beside the top-right Log In button (title screen only, since it
+   lives inside #pmd-title-screen and hides with it). */
+.pmd-title-links {
+  position: fixed;
+  top: max(0.85rem, env(safe-area-inset-top));
+  right: calc(max(0.85rem, env(safe-area-inset-right)) + 108px + 10px);
+  z-index: 95;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 4px 14px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.pmd-title-links a {
+  color: #a8e0f8;
+  text-decoration: none;
+  padding: 2px 0;
+}
+
+.pmd-title-links a:hover,
+.pmd-title-links a:focus-visible {
+  color: #f8f800;
+  text-decoration: underline;
+}
+
+/* Narrow screens: drop the bar onto its own row under the Log In button. */
+@media (max-width: 640px) {
+  .pmd-title-links {
+    top: calc(max(0.85rem, env(safe-area-inset-top)) + 46px + 8px);
+    right: max(0.85rem, env(safe-area-inset-right));
+    min-height: 38px;
+    gap: 12px;
+    padding: 2px 12px;
+    font-size: 13px;
+  }
+}

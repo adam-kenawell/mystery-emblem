@@ -1,27 +1,18 @@
 ---
 import '@fontsource/fusion-pixel-12px-proportional-kr';
 import '../mystery-emblem/ui/pmdWindow.css';
+import SeoHead from '../components/SeoHead.astro';
+import { INFO_PAGES, VIDEO_GAME_JSON_LD } from '../siteMeta';
 
-const title = 'Mystery Emblem — Tactical RPG';
+const title = 'Mystery Emblem – Free Tactics RPG Fan Game in Your Browser';
 const description =
-  'A browser-based tactical RPG combining Fire Emblem Awakening gameplay systems with Pokémon Mystery Dungeon: Explorers of Sky visuals.';
-const canonicalUrl = Astro.url.href;
+  'Mystery Emblem is a free Pokémon x Fire Emblem fan game: turn-based grid tactics with Pokémon Mystery Dungeon pixel art. Play instantly in your browser on phone or PC.';
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="generator" content={Astro.generator} />
-    <meta name="description" content={description} />
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonicalUrl} />
-    <link rel="icon" type="image/png" sizes="84x84" href={`${import.meta.env.BASE_URL}favicon.png`} />
-    <link rel="apple-touch-icon" href={`${import.meta.env.BASE_URL}favicon.png`} />
-    <title>{title}</title>
+    <SeoHead title={title} description={description} path="/" jsonLd={[VIDEO_GAME_JSON_LD]} />
   </head>
   <body>
     <main class="mystery-emblem-shell">
@@ -36,8 +27,11 @@ const canonicalUrl = Astro.url.href;
           <img
             class="pmd-landing-art"
             data-testid="landing-boxart"
-            src={`${import.meta.env.BASE_URL}boxart.png`}
+            src={`${import.meta.env.BASE_URL}boxart.webp`}
+            width="1024"
+            height="572"
             alt=""
+            fetchpriority="high"
             decoding="async"
           />
         </div>
@@ -107,6 +101,13 @@ const canonicalUrl = Astro.url.href;
             </button>
           </div>
           <p id="pmd-status-msg" class="pmd-status" aria-live="polite" hidden></p>
+          <nav
+            class="pmd-window pmd-window--compact pmd-window--translucent pmd-title-links"
+            aria-label="About the game"
+            data-testid="title-info-links"
+          >
+            {INFO_PAGES.map((page) => <a href={page.path}>{page.label}</a>)}
+          </nav>
         </section>
 
         <!-- Admin-Only Dev Tools Overlay Modal (Strictly accessible ONLY for ADMIN_DEVTOOLS_EMAILS) -->
