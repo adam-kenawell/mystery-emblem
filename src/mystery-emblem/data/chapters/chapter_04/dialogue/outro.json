@@ -1,0 +1,28 @@
+{
+  "id": "outro",
+  "chapter": "chapter_04",
+  "role": "outro",
+  "title": "Berry Orchards",
+  "music": "calm_cutscene",
+  "cast": [{ "id": "partner", "who": { "kind": "partner" } }, { "id": "healer", "who": { "kind": "healer" } }],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Joyous",
+        "side": "right",
+        "text": "Take a hike, Morgrem! The harvest is safe."
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "healer",
+        "emotion": "Happy",
+        "side": "left",
+        "text": "And the farmers can finally pick their own berries again."
+      }
+    }
+  ]
+}

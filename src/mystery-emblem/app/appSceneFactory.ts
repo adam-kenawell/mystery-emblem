@@ -4,6 +4,7 @@
 
 import { getDemoChapterByNodeId } from '../data/campaignRegistry';
 import { DEMO_OVERWORLD_GRAPH } from '../data/overworldMapData';
+import { getPreChapterCutsceneId } from '../data/storyCutscenes';
 import { BattleScene } from '../scenes/BattleScene';
 import { ChapterMapEditorScene } from '../scenes/ChapterMapEditorScene';
 import { OverworldScene } from '../scenes/OverworldScene';
@@ -100,7 +101,7 @@ export function mountGameplayScenesAndDevTools(ctx: AppRuntimeContext, router: S
         const demoChapter = getDemoChapterByNodeId(nodeId);
         if (demoChapter) {
           void (async () => {
-            if (demoChapter.nodeId !== 'prologue' && demoChapter.preStoryCutsceneId) {
+            if (demoChapter.nodeId !== 'prologue' && getPreChapterCutsceneId(demoChapter.nodeId)) {
               await router.playPreChapterStoryCutsceneIfNeeded(demoChapter.nodeId);
             }
             await router.launchDemoChapterBattle(demoChapter);
@@ -158,8 +159,22 @@ export function mountGameplayScenesAndDevTools(ctx: AppRuntimeContext, router: S
       onLaunchMapEditor: (levelId) => void router.openMapEditor(levelId),
       onPlayMapBattle: (levelId) => void router.openBattleScene('devtools', levelId),
       onRequestRenameUnit: (id) => void router.promptRenameUnit(id),
+      getCutsceneEditorHost: () => ({
+        audioManager,
+        cutsceneScene: ctx.cutsceneScene,
+        dialogueOverlay: ctx.dialogueOverlay,
+        mapEditorScene: ctx.mapEditorScene,
+      }),
+      onHideForEditor: () => {
+        if (dom.devToolsBackdrop) dom.devToolsBackdrop.hidden = true;
+        backStack.syncButtonLabel();
+      },
+      onShowAfterEditor: () => router.openDevToolsOverlay('cutscenes'),
       onClose: () => router.closeDevToolsOverlay(),
       signal,
     });
+    if (isAppAdminSignedIn(ctx)) {
+      window.setTimeout(() => ctx.devToolsHarness?.resumeCutsceneEditorIfNeeded(), 0);
+    }
   }
 }

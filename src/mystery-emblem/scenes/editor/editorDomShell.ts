@@ -38,6 +38,13 @@ export interface EditorDomRefs {
   jsonModalBackdropEl: HTMLElement;
   jsonTextareaEl: HTMLTextAreaElement;
   jsonStatusEl: HTMLElement;
+  locationBarEl: HTMLElement;
+  locationTitleEl: HTMLElement;
+  chapterOnlyEl: HTMLElement;
+  saveProjectBtnEl: HTMLButtonElement;
+  sysSaveProjectBtnEl: HTMLButtonElement;
+  sysSaveBtnEl: HTMLButtonElement;
+  biomePresetsEl: HTMLElement;
 }
 
 export function createEditorDomShell(viewportEl: HTMLElement): EditorDomRefs {
@@ -99,15 +106,24 @@ export function createEditorDomShell(viewportEl: HTMLElement): EditorDomRefs {
       <h3 class="pmd-subcard-title">LEVEL &amp; CHAPTER MAP EDITOR</h3>
       <button type="button" class="pmd-btn pmd-chip-btn" data-testid="editor-drawer-close-btn">Hide Panel</button>
     </div>
-    <div class="pmd-battle-sandbox-section">
+    <div class="pmd-battle-sandbox-section" data-editor-location-bar hidden>
+      <span class="pmd-preset-label" data-testid="editor-location-title">Painting cutscene location</span>
+      <p class="pmd-subcard-text">Use the <strong>Empty</strong> brush for see-through cells that show the layers underneath. Done sends the tiles back to the Cutscene Editor (save there).</p>
+      <div class="pmd-inline-btns">
+        <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="editor-location-done-btn">Done ✓</button>
+        <button type="button" class="pmd-btn pmd-btn-danger pmd-chip-btn" data-testid="editor-location-cancel-btn">Cancel</button>
+      </div>
+    </div>
+    <div class="pmd-battle-sandbox-section" data-editor-chapter-only>
       <div class="pmd-devtools-row-between">
-        <span class="pmd-preset-label">1. Select Chapter or Cutscene Stage</span>
+        <span class="pmd-preset-label">1. Select Chapter</span>
         <span class="pmd-editor-status-pill" data-testid="editor-status-badge">DEFAULT</span>
       </div>
-      <select class="pmd-select" data-testid="editor-level-select" aria-label="Select Chapter or Cutscene Stage"></select>
+      <select class="pmd-select" data-testid="editor-level-select" aria-label="Select Chapter"></select>
       <div class="pmd-inline-btns">
         <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="editor-save-btn">Save to Game</button>
         <button type="button" class="pmd-btn pmd-chip-btn" data-testid="editor-save-play-btn">Save &amp; Play</button>
+        <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="editor-save-project-btn" hidden title="Writes this map into the chapter's chapter.json (localhost only)">Save to Project</button>
         <button type="button" class="pmd-btn pmd-chip-btn" data-testid="editor-json-modal-btn">Import / Export JSON</button>
         <button type="button" class="pmd-btn pmd-btn-danger pmd-chip-btn" data-testid="editor-reset-default-btn">Reset Default</button>
       </div>
@@ -192,6 +208,7 @@ export function createEditorDomShell(viewportEl: HTMLElement): EditorDomRefs {
       <p class="pmd-panel-sub">Save your custom dungeon tiles to the live game or jump straight into battle.</p>
       <div class="pmd-battle-system-actions pmd-menu-list">
         <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row" data-testid="editor-sys-save-btn">Save Map to Game</button>
+        <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row" data-testid="editor-sys-save-project-btn" hidden>Save Map to Project</button>
         <button type="button" class="pmd-btn pmd-menu-row" data-testid="editor-sys-play-btn">Save &amp; Play Level</button>
         <button type="button" class="pmd-btn pmd-menu-row" data-testid="editor-sys-drawer-btn">Open Palette Drawer</button>
         <button type="button" class="pmd-btn pmd-btn-danger pmd-menu-row" data-testid="editor-sys-reset-btn">Reset Level to Default</button>
@@ -269,5 +286,12 @@ export function createEditorDomShell(viewportEl: HTMLElement): EditorDomRefs {
     jsonModalBackdropEl,
     jsonTextareaEl: q<HTMLTextAreaElement>(jsonModalBackdropEl, '[data-testid="editor-json-textarea"]'),
     jsonStatusEl: q(jsonModalBackdropEl, '[data-testid="editor-json-status"]'),
+    locationBarEl: q(drawerEl, '[data-editor-location-bar]'),
+    locationTitleEl: q(drawerEl, '[data-testid="editor-location-title"]'),
+    chapterOnlyEl: q(drawerEl, '[data-editor-chapter-only]'),
+    saveProjectBtnEl: q<HTMLButtonElement>(drawerEl, '[data-testid="editor-save-project-btn"]'),
+    sysSaveProjectBtnEl: q<HTMLButtonElement>(systemMenuBackdropEl, '[data-testid="editor-sys-save-project-btn"]'),
+    sysSaveBtnEl: q<HTMLButtonElement>(systemMenuBackdropEl, '[data-testid="editor-sys-save-btn"]'),
+    biomePresetsEl: q(drawerEl, '[data-editor-biome-presets]'),
   };
 }

@@ -33,7 +33,13 @@ import {
   prepareEditorOpenState,
 } from './editor/editorLifecycleHelpers';
 import { bindEditorModalInteractions } from './editor/editorModalBindings';
-import { resetEditorMapToDefault, saveEditorMapToGame, selectEditorLevel } from './editor/editorPersistenceActions';
+import {
+  openEditorLocationSession,
+  resetEditorMapToDefault,
+  saveEditorMapToGame,
+  saveEditorMapToProject,
+  selectEditorLevel,
+} from './editor/editorPersistenceActions';
 import {
   populateEditorStaticControls,
   showEditorToast,
@@ -48,8 +54,11 @@ import {
   type ChapterMapEditorSceneOptions,
   type ChapterMapEditorSnapshot,
   type EditorRuntimeState,
+  type LocationEditSession,
   type MapEditorToolMode,
 } from './editor/editorTypesAndState';
+import { checkProjectSaveAvailable } from '../ui/devtools/projectFileClient';
+import { bindPointerTap } from '../ui/pointerControls';
 
 export {
   renderDungeonMapPreviewCanvas,
@@ -57,6 +66,7 @@ export {
   getDefaultChapterMap,
   type ChapterMapEditorSceneOptions,
   type ChapterMapEditorSnapshot,
+  type LocationEditSession,
   type MapEditorToolMode,
 };
 
@@ -111,6 +121,37 @@ export class ChapterMapEditorScene {
     bindEditorHudAndDrawerInteractions(ctrlCallbacks);
     bindEditorModalInteractions(ctrlCallbacks);
 
+    const signal = this.abortController.signal;
+    const onSaveProject = () => {
+      this.audioManager.playSfx('select');
+      this.state.systemMenuOpen = false;
+      this.dom.systemMenuBackdropEl.hidden = true;
+      void this.saveCurrentMapToProject();
+      this.onLayerStateChanged();
+    };
+    bindPointerTap(this.dom.saveProjectBtnEl, onSaveProject, { signal });
+    bindPointerTap(this.dom.sysSaveProjectBtnEl, onSaveProject, { signal });
+    bindPointerTap(
+      this.dom.drawerEl.querySelector<HTMLElement>('[data-testid="editor-location-done-btn"]'),
+      () => {
+        this.audioManager.playSfx('select');
+        this.finishLocationSession(true);
+      },
+      { signal }
+    );
+    bindPointerTap(
+      this.dom.drawerEl.querySelector<HTMLElement>('[data-testid="editor-location-cancel-btn"]'),
+      () => {
+        this.audioManager.playSfx('cancel');
+        this.finishLocationSession(false);
+      },
+      { signal }
+    );
+    void checkProjectSaveAvailable().then((ok) => {
+      this.dom.saveProjectBtnEl.hidden = !ok;
+      this.syncUiAndInfo();
+    });
+
     this.resizeObserver = bindEditorCanvasStagePointers({
       dom: this.dom,
       state: this.state,
@@ -140,6 +181,10 @@ export class ChapterMapEditorScene {
   }
 
   public close(): void {
+    if (this.state.locationSession) {
+      this.finishLocationSession(false);
+      return;
+    }
     performEditorCloseState({
       dom: this.dom,
       state: this.state,
@@ -190,7 +235,7 @@ export class ChapterMapEditorScene {
 
   public setToolMode(mode: MapEditorToolMode): void {
     if (
-      this.state.editorTargetKind === 'cutscene' &&
+      this.state.editorTargetKind === 'location' &&
       (mode === 'player_spawn' || mode === 'enemy_spawn' || mode === 'stairs_wave')
     ) {
       this.state.toolMode = 'paint';
@@ -213,7 +258,55 @@ export class ChapterMapEditorScene {
   }
 
   public saveCurrentMapToGame(): DungeonMapDefinition {
+    if (this.state.locationSession) {
+      const map = cloneDungeonMap(this.state.map);
+      this.finishLocationSession(true);
+      return map;
+    }
     return saveEditorMapToGame({ dom: this.dom, state: this.state, saveManager: this.saveManager, syncUiAndInfo: () => this.syncUiAndInfo(), renderFrame: () => this.renderFrame() });
+  }
+
+  /** Writes the current chapter map into its `chapter.json` (dev server only). */
+  public saveCurrentMapToProject(): Promise<void> {
+    return saveEditorMapToProject({ dom: this.dom, state: this.state, syncUiAndInfo: () => this.syncUiAndInfo() });
+  }
+
+  /** Opens a cutscene location's tile layer for painting; Done/Cancel return via the session. */
+  public async openLocationLayer(map: DungeonMapDefinition, session: LocationEditSession): Promise<void> {
+    prepareEditorOpenState({ dom: this.dom, state: this.state, viewportEl: this.viewportEl, audioManager: this.audioManager, startDrawerOpen: true });
+    this.syncViewportDimensions();
+    await openEditorLocationSession({
+      dom: this.dom,
+      state: this.state,
+      signal: this.abortController.signal,
+      map,
+      session,
+      syncUiAndInfo: () => this.syncUiAndInfo(),
+      renderFrame: () => this.renderFrame(),
+    });
+    this.startLoop();
+    this.onLayerStateChanged();
+    this.renderFrame();
+  }
+
+  private finishLocationSession(done: boolean): void {
+    const session = this.state.locationSession;
+    if (!session) return;
+    const map = cloneDungeonMap(this.state.map);
+    this.state.locationSession = null;
+    performEditorCloseState({
+      dom: this.dom,
+      state: this.state,
+      viewportEl: this.viewportEl,
+      audioManager: this.audioManager,
+      stopLoop: () => this.stopLoop(),
+      onLayerStateChanged: () => this.onLayerStateChanged(),
+      onExitCallback: () => {},
+    });
+    this.state.editorTargetKind = 'chapter';
+    this.state.referenceMarkers = [];
+    if (done) session.onDone(map);
+    else session.onCancel();
   }
 
   public resetCurrentMapToDefault(): DungeonMapDefinition {
@@ -248,7 +341,7 @@ export class ChapterMapEditorScene {
 
   private saveAndPlayCurrentLevel(): void {
     this.saveCurrentMapToGame();
-    if (this.state.editorTargetKind === 'cutscene') return;
+    if (this.state.editorTargetKind === 'location') return;
     const targetId = this.state.activeLevelId;
     this.state.openState = false;
     this.stopLoop();

@@ -7,15 +7,17 @@ import type { AudioManager } from '../../audio/AudioManager';
 import {
   CHAPTER_LEVEL_CATALOG,
   cloneDungeonMap,
+  encodeTileRows,
   getChapterCatalogEntry,
-  getCutsceneStageActorMarkers,
-  getCutsceneStageCatalogEntry,
   getEffectiveChapterMap,
   resetChapterMapOverride,
   saveChapterMapOverride,
 } from '../../data/chapterMapRegistry';
+import { applyEditedChapterJson, getRawChapterJson } from '../../data/chapters/index';
+import type { CompactChapterJson } from '../../data/chapters/chapterTypes';
 import type { SaveStateManager } from '../../state/SaveStateManager';
-import type { DungeonMapDefinition } from '../../types/schemas';
+import type { DungeonMapDefinition, DungeonUnitSpawn } from '../../types/schemas';
+import { writeChapterJsonFile } from '../../ui/devtools/projectFileClient';
 import { centerDungeonCameraOnTile } from '../../ui/gridViewportMath';
 import {
   preloadEditorMapAndUnitAssets,
@@ -27,7 +29,113 @@ import {
   renderEditorLevelSelectOptions,
   showEditorToast,
 } from './editorSidebarAndStatus';
-import type { EditorRuntimeState } from './editorTypesAndState';
+import type { EditorRuntimeState, LocationEditSession } from './editorTypesAndState';
+
+/** Loads a cutscene location's tile layer for painting (hand-off from the Cutscene Editor). */
+export async function openEditorLocationSession(params: {
+  dom: EditorDomRefs;
+  state: EditorRuntimeState;
+  signal: AbortSignal;
+  map: DungeonMapDefinition;
+  session: LocationEditSession;
+  syncUiAndInfo: () => void;
+  renderFrame: () => void;
+}): Promise<void> {
+  const { dom, state, signal, session } = params;
+  state.activeLevelId = params.map.id;
+  state.editorTargetKind = 'location';
+  state.locationSession = session;
+  state.referenceMarkers = session.markers;
+  state.map = cloneDungeonMap(params.map);
+  state.undoStack = [];
+  state.dirty = false;
+  if (state.toolMode !== 'stroke' && state.toolMode !== 'eyedropper' && state.toolMode !== 'pan') {
+    state.toolMode = 'paint';
+  }
+  state.brushTilesetId = normalizeTilesetId(session.defaultTilesetId);
+  dom.tilesetSelectEl.value = state.brushTilesetId;
+  state.inspectedTile = { x: Math.floor(state.map.width / 2), y: Math.floor(state.map.height / 2) };
+  params.syncUiAndInfo();
+  centerDungeonCameraOnTile(state.cam, state.map.width, state.map.height, state.inspectedTile.x, state.inspectedTile.y);
+  await Promise.all([
+    preloadEditorMapAndUnitAssets(state),
+    refreshEditorChunkPalette(dom, state, signal, params.syncUiAndInfo),
+  ]);
+  params.renderFrame();
+}
+
+function compactSpawn(spawn: DungeonUnitSpawn): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...spawn };
+  if (out.droppableItemId === null) delete out.droppableItemId;
+  return out;
+}
+
+/** Applies edited spawn fields onto the original JSON object, keeping its key order and extras. */
+function mergeSpawns<T extends { id?: string }>(
+  originals: ReadonlyArray<T> | undefined,
+  edited: ReadonlyArray<DungeonUnitSpawn>
+): Array<Record<string, unknown>> {
+  return edited.map((spawn) => {
+    const original = spawn.id ? originals?.find((o) => o.id === spawn.id) : undefined;
+    const next = compactSpawn(spawn);
+    if (!original) return next;
+    const merged: Record<string, unknown> = JSON.parse(JSON.stringify(original));
+    for (const [k, v] of Object.entries(next)) {
+      if (v === undefined) continue;
+      if (JSON.stringify(merged[k]) !== JSON.stringify(v)) merged[k] = v;
+    }
+    return merged;
+  });
+}
+
+/** Writes the edited battle map into the chapter's `chapter.json` (events and story untouched). */
+export async function saveEditorMapToProject(params: {
+  dom: EditorDomRefs;
+  state: EditorRuntimeState;
+  syncUiAndInfo: () => void;
+}): Promise<void> {
+  const { dom, state } = params;
+  const raw = getRawChapterJson(state.activeLevelId);
+  if (!raw) {
+    showEditorToast(dom, state, 'Only chapter maps can be saved to the project');
+    return;
+  }
+  const map = state.map;
+  const next: CompactChapterJson = {
+    ...JSON.parse(JSON.stringify(raw)),
+    deploymentCap: map.deploymentCap ?? raw.deploymentCap,
+    width: map.width,
+    height: map.height,
+    rows: encodeTileRows(map.tiles, raw.defaultTilesetId),
+    playerSlots: map.playerSpawns.map((p, i) => {
+      const original = raw.playerSlots[i];
+      return original && original.x === p.x && original.y === p.y && (original.speciesId ?? p.speciesId) === p.speciesId
+        ? original
+        : { x: p.x, y: p.y, speciesId: p.speciesId };
+    }),
+    enemySpawns: mergeSpawns(raw.enemySpawns, map.enemySpawns) as unknown as CompactChapterJson['enemySpawns'],
+    ...(map.npcSpawns?.length ? { npcSpawns: mergeSpawns(raw.npcSpawns, map.npcSpawns) as unknown as DungeonUnitSpawn[] } : {}),
+    reinforcements: (map.reinforcements ?? []).map((w) => {
+      const original = raw.reinforcements.find((o) => o.id === w.id);
+      return original && JSON.stringify({ ...original, enemy: undefined }) === JSON.stringify({ ...w, enemy: undefined }) &&
+        original.enemy.speciesId === w.enemy.speciesId && original.enemy.level === w.enemy.level
+        ? original
+        : w;
+    }),
+  };
+  if (!map.npcSpawns?.length) delete next.npcSpawns;
+  try {
+    await writeChapterJsonFile(raw.id, next);
+    applyEditedChapterJson(next);
+    resetChapterMapOverride(raw.id);
+    state.map = getEffectiveChapterMap(raw.id);
+    state.dirty = false;
+    params.syncUiAndInfo();
+    showEditorToast(dom, state, `SAVED TO PROJECT — ${raw.title} (commit & push to go live)`);
+  } catch (err) {
+    showEditorToast(dom, state, err instanceof Error ? err.message : 'Save to project failed');
+  }
+}
 
 export async function selectEditorLevel(params: {
   dom: EditorDomRefs;
@@ -40,28 +148,12 @@ export async function selectEditorLevel(params: {
   renderFrame: () => void;
 }): Promise<void> {
   const { dom, state, audioManager, signal, levelId, recenterCamera } = params;
-  const stageEntry = getCutsceneStageCatalogEntry(levelId);
-  let preferredSheet: string;
-
-  if (stageEntry) {
-    state.activeLevelId = stageEntry.id;
-    state.editorTargetKind = 'cutscene';
-    state.cutsceneActorMarkers = getCutsceneStageActorMarkers(stageEntry.id);
-    if (
-      state.toolMode === 'player_spawn' ||
-      state.toolMode === 'enemy_spawn' ||
-      state.toolMode === 'stairs_wave'
-    ) {
-      state.toolMode = 'paint';
-    }
-    preferredSheet = normalizeTilesetId(stageEntry.primaryTilesetId);
-  } else {
-    const entry = getChapterCatalogEntry(levelId) ?? CHAPTER_LEVEL_CATALOG[0]!;
-    state.activeLevelId = entry.id;
-    state.editorTargetKind = 'chapter';
-    state.cutsceneActorMarkers = [];
-    preferredSheet = normalizeTilesetId(entry.primaryTilesetId);
-  }
+  const entry = getChapterCatalogEntry(levelId) ?? CHAPTER_LEVEL_CATALOG[0]!;
+  state.activeLevelId = entry.id;
+  state.editorTargetKind = 'chapter';
+  state.locationSession = null;
+  state.referenceMarkers = [];
+  const preferredSheet = normalizeTilesetId(entry.primaryTilesetId);
 
   renderEditorLevelSelectOptions(dom, state.activeLevelId);
   dom.levelSelectEl.value = state.activeLevelId;
@@ -73,16 +165,9 @@ export async function selectEditorLevel(params: {
   state.brushTilesetId = preferredSheet;
   dom.tilesetSelectEl.value = preferredSheet;
 
-  const firstMarker = state.cutsceneActorMarkers[0];
   state.inspectedTile = {
-    x:
-      state.editorTargetKind === 'cutscene'
-        ? (firstMarker?.x ?? Math.floor(state.map.width / 2))
-        : (state.map.playerSpawns[0]?.x ?? Math.floor(state.map.width / 2)),
-    y:
-      state.editorTargetKind === 'cutscene'
-        ? (firstMarker?.y ?? Math.floor(state.map.height / 2))
-        : (state.map.playerSpawns[0]?.y ?? Math.floor(state.map.height / 2)),
+    x: state.map.playerSpawns[0]?.x ?? Math.floor(state.map.width / 2),
+    y: state.map.playerSpawns[0]?.y ?? Math.floor(state.map.height / 2),
   };
 
   params.syncUiAndInfo();

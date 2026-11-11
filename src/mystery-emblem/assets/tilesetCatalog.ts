@@ -6,6 +6,8 @@ export const PMD_TILE_NATIVE_PX = 24;
 export const PMD_TILESET_SHEET_COLS = 16;
 export const PMD_TILESET_SHEET_ROWS = 25;
 export const PMD_TILESET_MAX_CHUNKS = PMD_TILESET_SHEET_COLS * PMD_TILESET_SHEET_ROWS;
+/** Placeholder tileset id for see-through cells in cutscene location tile layers */
+export const EMPTY_TILESET_ID = 'empty';
 
 export interface TilesetManifestEntry {
   id: string;

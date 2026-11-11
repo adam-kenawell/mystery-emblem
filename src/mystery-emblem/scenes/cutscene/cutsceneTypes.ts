@@ -1,151 +1,30 @@
 /**
- * Out-of-Dungeon Choreographed PMD Sprite Cutscene Types (`cutsceneTypes.ts`)
+ * Out-of-Dungeon Choreographed PMD Sprite Cutscene Runtime Types (`cutsceneTypes.ts`)
  */
 
 import type {
+  LoadedActionAnimation,
   PmdDirection,
-  PmdDirectionInput,
   PmdSpriteAction,
 } from '../../assets/pmdAssetLoader';
 import type { AudioManager } from '../../audio/AudioManager';
+import type {
+  EmoteKind,
+  LightingMood,
+  LocationDoc,
+  LocationLayer,
+  PropLayer,
+  WeatherKind,
+} from '../../data/cutscenes/cutsceneDocTypes';
+import type { LocationTileGrid } from '../../data/cutscenes/locationCodec';
 import type { SaveStateManager } from '../../state/SaveStateManager';
-import type { DungeonMapTileCell, SaveData } from '../../types/schemas';
-import type { DialogueOverlay, DialogueScript } from '../../ui/DialogueOverlay';
+import type { DialogueOverlay } from '../../ui/DialogueOverlay';
 
-export type CutsceneLightingMood =
-  | 'morning_coast'
-  | 'sanctuary_glow'
-  | 'campfire_dusk'
-  | 'mountain_mist'
-  | 'shrine_courtyard'
-  | 'twilight_festival';
-
-export type CutscenePropKind = 'campfire';
-
-export type CutsceneEmoteKind =
-  | 'exclamation'
-  | 'question'
-  | 'sweat'
-  | 'joy'
-  | 'music'
-  | 'angry'
-  | 'heart';
-
-export interface CutscenePropDef {
-  id: string;
-  kind: CutscenePropKind;
-  x: number;
-  y: number;
-}
-
-export type CutsceneActorRole =
-  | { kind: 'lord' }
-  | { kind: 'partner' }
-  | { kind: 'healer' }
-  | { kind: 'mentor' }
-  | { kind: 'advisor' }
-  | { kind: 'npc'; pmdAssetId: string; name: string }
-  | { kind: 'cameo_recruit'; slotIndex: number };
-
-export interface CutsceneActorSpawnDef {
-  actorId: string;
-  role: CutsceneActorRole;
-  x: number;
-  y: number;
-  direction: PmdDirectionInput;
-  visible?: boolean;
-}
-
-export type CutsceneCueAction =
-  | {
-      type: 'walk';
-      actorId: string;
-      path: ReadonlyArray<{ x: number; y: number }>;
-      speedTilesPerSec?: number;
-      endDirection?: PmdDirectionInput;
-      delayMs?: number;
-    }
-  | {
-      type: 'face';
-      actorId: string;
-      direction?: PmdDirectionInput;
-      targetActorId?: string;
-      delayMs?: number;
-    }
-  | {
-      type: 'hop';
-      actorId: string;
-      count?: 1 | 2;
-      heightPx?: number;
-      delayMs?: number;
-    }
-  | {
-      type: 'shake';
-      actorId: string;
-      durationMs?: number;
-      delayMs?: number;
-    }
-  | {
-      type: 'pose';
-      actorId: string;
-      action: PmdSpriteAction;
-      durationMs?: number;
-      delayMs?: number;
-    }
-  | {
-      type: 'emote';
-      actorId: string;
-      emote: CutsceneEmoteKind;
-      durationMs?: number;
-      delayMs?: number;
-    }
-  | {
-      type: 'visibility';
-      actorId: string;
-      visible: boolean;
-      delayMs?: number;
-    }
-  | {
-      type: 'auraPulse';
-      actorId: string;
-      color?: string;
-      durationMs?: number;
-      delayMs?: number;
-    }
-  | {
-      type: 'camera';
-      x: number;
-      y: number;
-      durationMs?: number;
-      delayMs?: number;
-    }
-  | {
-      type: 'screenShake';
-      durationMs?: number;
-      intensityPx?: number;
-      delayMs?: number;
-    };
-
-export interface StoryCutsceneDefinition {
-  id: string;
-  chapterOrder: number;
-  title: string;
-  locationLabel: string;
-  lightingMood: CutsceneLightingMood;
-  width: number;
-  height: number;
-  tiles: ReadonlyArray<ReadonlyArray<DungeonMapTileCell>>;
-  props?: ReadonlyArray<CutscenePropDef>;
-  initialCamera: { x: number; y: number };
-  actors: ReadonlyArray<CutsceneActorSpawnDef>;
-  openingActions?: ReadonlyArray<CutsceneCueAction>;
-  openingDurationMs?: number;
-  /** Choreographed stage actions keyed by 0-based `DialogueScript.lines` index */
-  lineCues?: Readonly<Record<number, ReadonlyArray<CutsceneCueAction>>>;
-  /** Named stage actions triggered via `DialogueLine.stageCueId` */
-  stageCues?: Readonly<Record<string, ReadonlyArray<CutsceneCueAction>>>;
-  buildScript: (save: SaveData | null) => DialogueScript;
-}
+export type {
+  CutsceneDoc,
+  EmoteKind as CutsceneEmoteKind,
+  LightingMood as CutsceneLightingMood,
+} from '../../data/cutscenes/cutsceneDocTypes';
 
 export interface ActiveWalkSegment {
   waypoints: Array<{ x: number; y: number }>;
@@ -162,7 +41,7 @@ export interface ActiveHopState {
 }
 
 export interface ActiveEmoteState {
-  kind: CutsceneEmoteKind;
+  kind: EmoteKind;
   remainingMs: number;
   totalMs: number;
 }
@@ -174,19 +53,34 @@ export interface ActiveAuraPulse {
   durationMs: number;
 }
 
+export interface ActiveAlphaFade {
+  from: number;
+  to: number;
+  elapsedMs: number;
+  durationMs: number;
+  hideWhenDone: boolean;
+}
+
 export interface RuntimeCutsceneActor {
   actorId: string;
-  roleKind: CutsceneActorRole['kind'];
+  roleKind: string;
   nickname: string;
   speciesId?: string;
   pmdAssetId: string;
   visualAssetKey: string;
+  /** False when this party member doesn't exist in the save (e.g. an empty extra slot) */
   available: boolean;
+  offStage: boolean;
   visible: boolean;
+  alpha: number;
+  alphaFade: ActiveAlphaFade | null;
   x: number;
   y: number;
   direction: PmdDirection;
   action: PmdSpriteAction;
+  /** A named SpriteCollab animation (Sleep, Nod…) overriding `action` while set */
+  poseName: string | null;
+  poseAnim: LoadedActionAnimation | null;
   animElapsedMs: number;
   walk: ActiveWalkSegment | null;
   hop: ActiveHopState | null;
@@ -195,9 +89,56 @@ export interface RuntimeCutsceneActor {
   emote: ActiveEmoteState | null;
 }
 
+export interface RuntimeCutsceneProp {
+  id: string;
+  kind: 'campfire' | 'image';
+  imageName?: string;
+  image: HTMLImageElement | null;
+  x: number;
+  y: number;
+  visible: boolean;
+  layer: PropLayer;
+  walk: ActiveWalkSegment | null;
+}
+
+export type ResolvedLocationLayer = LocationLayer & {
+  grid?: LocationTileGrid;
+  img?: HTMLImageElement | null;
+};
+
+export interface ResolvedLocation {
+  doc: LocationDoc;
+  width: number;
+  height: number;
+  layers: ResolvedLocationLayer[];
+  fillsScreen: boolean;
+}
+
+export interface ScreenFadeState {
+  color: 'black' | 'white';
+  alpha: number;
+  from: number;
+  to: number;
+  elapsedMs: number;
+  durationMs: number;
+}
+
+export interface ScreenFlashState {
+  color: 'white' | 'black';
+  elapsedMs: number;
+  durationMs: number;
+}
+
+export interface LightingState {
+  mood: LightingMood;
+  previous: LightingMood | null;
+  elapsedMs: number;
+  durationMs: number;
+}
+
 export interface CutsceneActorSnapshot {
   actorId: string;
-  roleKind: CutsceneActorRole['kind'];
+  roleKind: string;
   nickname: string;
   speciesId?: string;
   pmdAssetId: string;
@@ -207,19 +148,21 @@ export interface CutsceneActorSnapshot {
   y: number;
   direction: PmdDirection;
   action: PmdSpriteAction;
-  activeEmote: CutsceneEmoteKind | null;
+  pose: string | null;
+  activeEmote: EmoteKind | null;
 }
 
 export interface CutsceneSceneSnapshot {
   isOpen: boolean;
   cutsceneId: string | null;
-  stageId: string | null;
-  isStageCustomized: boolean;
+  locationId: string | null;
   stageWidth: number;
   stageHeight: number;
   title: string | null;
   locationLabel: string | null;
-  lightingMood: CutsceneLightingMood | null;
+  lightingMood: LightingMood | null;
+  weather: WeatherKind;
+  currentBeatIndex: number;
   currentLineIndex: number;
   cameraTile: { x: number; y: number };
   displayScale: number;

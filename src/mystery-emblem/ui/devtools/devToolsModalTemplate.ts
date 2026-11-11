@@ -7,7 +7,7 @@ export function buildDevToolsModalHtml(): string {
     <header class="pmd-devtools-row-between">
       <div>
         <h2 class="pmd-panel-title">DEV TOOLS</h2>
-        <p class="pmd-panel-sub">Admin Cheats &amp; Campaign Map Editor</p>
+        <p class="pmd-panel-sub">Cheats, Map Editor &amp; Cutscene Editor</p>
       </div>
       <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-close-btn">Close</button>
     </header>
@@ -28,6 +28,14 @@ export function buildDevToolsModalHtml(): string {
         data-testid="devtools-tab-maps"
       >
         Map Editor
+      </button>
+      <button
+        type="button"
+        class="pmd-btn pmd-tab-btn"
+        data-devtab-btn="cutscenes"
+        data-testid="devtools-tab-cutscenes"
+      >
+        Cutscenes
       </button>
     </nav>
 
@@ -105,14 +113,14 @@ export function buildDevToolsModalHtml(): string {
     <div class="pmd-tab-panel" data-devtab-panel="maps" hidden>
       <div class="pmd-subcard">
         <div class="pmd-devtools-row-between">
-          <h3 class="pmd-subcard-title">Chapter Maps &amp; Cutscene Stages</h3>
+          <h3 class="pmd-subcard-title">Chapter Maps</h3>
           <span id="devtools-map-status-badge" class="pmd-editor-status-pill" data-testid="devtools-map-status-badge">DEFAULT</span>
         </div>
         <select
           id="devtools-map-level-select"
           class="pmd-select"
           data-testid="devtools-map-level-select"
-          aria-label="Select Chapter Map or Cutscene Stage"
+          aria-label="Select Chapter Map"
         ></select>
         <div class="pmd-devtools-map-preview-wrap">
           <canvas
@@ -136,7 +144,25 @@ export function buildDevToolsModalHtml(): string {
             Reset Default
           </button>
         </div>
+        <p class="pmd-subcard-text">Cutscene locations are painted from the Cutscenes tab.</p>
       </div>
+    </div>
+
+    <div class="pmd-tab-panel" data-devtab-panel="cutscenes" hidden>
+      <div class="pmd-subcard">
+        <div class="pmd-devtools-row-between">
+          <h3 class="pmd-subcard-title">Cutscenes &amp; Battle Dialogue</h3>
+        </div>
+        <p class="pmd-subcard-text" data-testid="devtools-cutscene-status"></p>
+        <div class="pmd-inline-btns">
+          <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="devtools-new-cutscene">+ New cutscene</button>
+        </div>
+        <div class="pmd-devtools-row-between" style="flex-wrap:nowrap;">
+          <select class="pmd-select" data-testid="devtools-new-dialogue-chapter" aria-label="Chapter for the new battle dialogue" style="flex:1;"></select>
+          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-new-dialogue">+ New battle dialogue</button>
+        </div>
+      </div>
+      <div class="pmd-devtools-cutscene-list" data-testid="devtools-cutscene-list"></div>
     </div>
   `;
 }

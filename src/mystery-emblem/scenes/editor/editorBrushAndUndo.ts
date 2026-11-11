@@ -2,6 +2,7 @@
  * Tile Painting, Drag Stroke, Undo & Tap Dispatch for `ChapterMapEditorScene`
  */
 
+import { EMPTY_TILESET_ID } from '../../assets/tilesetLoader';
 import type { AudioManager } from '../../audio/AudioManager';
 import { cloneDungeonMap } from '../../data/chapterMapRegistry';
 import { TERRAIN_METADATA } from '../../engine/terrainAndPathfinding';
@@ -64,7 +65,9 @@ export function paintEditorTileAt(
   };
   state.dirty = true;
   state.inspectedTile = { x: tx, y: ty };
-  void ensureEditorTilesetLoaded(state, state.brushTilesetId).then(() => hooks.renderFrame());
+  if (state.brushTilesetId !== EMPTY_TILESET_ID) {
+    void ensureEditorTilesetLoaded(state, state.brushTilesetId).then(() => hooks.renderFrame());
+  }
   hooks.syncUiAndInfo();
   hooks.renderFrame();
   return true;
@@ -135,7 +138,9 @@ export function handleEditorTileTap(
     state.toolMode = 'paint';
     hooks.syncUiAndInfo();
     hooks.showToast(
-      `PICKED ${TERRAIN_METADATA[cell.terrainType].shortLabel.toUpperCase()} (#${cell.tilesetId}:${cell.chunkIndex})`
+      cell.tilesetId === EMPTY_TILESET_ID
+        ? 'PICKED EMPTY (SEE-THROUGH)'
+        : `PICKED ${TERRAIN_METADATA[cell.terrainType].shortLabel.toUpperCase()} (#${cell.tilesetId}:${cell.chunkIndex})`
     );
     hooks.renderFrame();
     return;

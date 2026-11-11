@@ -1,0 +1,57 @@
+{
+  "id": "intro",
+  "chapter": "chapter_04",
+  "role": "intro",
+  "title": "Berry Orchards",
+  "music": "apple_woods",
+  "cast": [
+    {
+      "id": "quiz_electric",
+      "who": { "kind": "quiz_slot", "slot": "slot3Electric", "fallbackSpeciesId": "elekid" }
+    },
+    { "id": "healer", "who": { "kind": "healer" } },
+    {
+      "id": "raider_morgrem",
+      "who": { "kind": "npc", "pokemon": "0860", "name": "Raider Morgrem", "speciesName": "Morgrem" }
+    },
+    { "id": "mentor", "who": { "kind": "mentor" } }
+  ],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "quiz_electric",
+        "emotion": "Joyous",
+        "side": "right",
+        "text": "{lord}! {partner}! {healer}! I ran all the way from the village. Don’t leave me out!"
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "healer",
+        "emotion": "Happy",
+        "side": "left",
+        "text": "The whole village crew, back together! Just in time, too. Morgrem’s gang is stripping the orchards."
+      }
+    },
+    {
+      "id": "line_3",
+      "say": {
+        "speaker": "raider_morgrem",
+        "emotion": "Angry",
+        "side": "right",
+        "text": "Heh. These berries belong to Ironscale now. One Thunder Wave and you’ll be twitching in the grass."
+      }
+    },
+    {
+      "id": "line_4",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "Mind Morgrem’s lightning, everyone. And welcome back. Your sparks are just what we need."
+      }
+    }
+  ]
+}

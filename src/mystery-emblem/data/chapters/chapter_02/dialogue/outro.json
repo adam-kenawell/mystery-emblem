@@ -1,0 +1,28 @@
+{
+  "id": "outro",
+  "chapter": "chapter_02",
+  "role": "outro",
+  "title": "Cleft Mountain",
+  "music": "calm_cutscene",
+  "cast": [{ "id": "mentor", "who": { "kind": "mentor" } }, { "id": "lord", "who": { "kind": "lord" } }],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Worried",
+        "side": "right",
+        "text": "These tremors aren’t natural, {lord}. Something is stirring under this mountain."
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "Then let’s look around while we’re up here. That old tower first."
+      }
+    }
+  ]
+}

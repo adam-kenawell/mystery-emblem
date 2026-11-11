@@ -4,6 +4,7 @@
 
 import { computePmdTileSpritePlacement } from '../../assets/pmdAssetLoader';
 import {
+  EMPTY_TILESET_ID,
   PMD_TILE_NATIVE_PX,
   drawSpecialTerrainOverlay,
   drawTilesetChunk,
@@ -11,9 +12,17 @@ import {
   normalizeTilesetId,
   type LoadedTilesetSheet,
 } from '../../assets/tilesetLoader';
-import type { CutsceneStageActorMarker } from '../../data/chapterMapRegistry';
 import type { DungeonMapDefinition } from '../../types/schemas';
-import type { EditorRuntimeState } from './editorTypesAndState';
+import type { EditorReferenceMarker, EditorRuntimeState } from './editorTypesAndState';
+
+/** Checkerboard for see-through cells in cutscene location tile layers. */
+export function drawEmptyTileChecker(ctx: CanvasRenderingContext2D, dx: number, dy: number): void {
+  const half = PMD_TILE_NATIVE_PX / 2;
+  for (let i = 0; i < 4; i++) {
+    ctx.fillStyle = (i + (i >> 1)) % 2 === 0 ? '#2a3448' : '#1c2434';
+    ctx.fillRect(dx + (i % 2) * half, dy + (i >> 1) * half, half, half);
+  }
+}
 
 function drawEditorUnitPreviewSprite(
   ctx: CanvasRenderingContext2D,
@@ -84,7 +93,9 @@ export function renderEditorFrame(
       const dy = ty * PMD_TILE_NATIVE_PX - cam.cameraY;
 
       const sheet = state.loadedSheets.get(normalizeTilesetId(cell.tilesetId));
-      if (sheet) {
+      if (cell.tilesetId === EMPTY_TILESET_ID) {
+        drawEmptyTileChecker(ctx, dx, dy);
+      } else if (sheet) {
         drawTilesetChunk(ctx, sheet, cell.chunkIndex, dx, dy, PMD_TILE_NATIVE_PX);
       } else {
         ctx.fillStyle = cell.terrainType === 'wall' ? '#1c2638' : '#2a4234';
@@ -166,8 +177,8 @@ export function renderEditorFrame(
       ctx.fillText(`T${wave.turnNumber}`, dx + 3, dy + 8);
     });
 
-    if (state.editorTargetKind === 'cutscene') {
-      for (const marker of state.cutsceneActorMarkers) {
+    if (state.editorTargetKind === 'location') {
+      for (const marker of state.referenceMarkers) {
         if (marker.x < 0 || marker.y < 0 || marker.x >= map.width || marker.y >= map.height) {
           continue;
         }
@@ -187,7 +198,7 @@ export function renderEditorFrame(
           marker.direction,
           0.68
         );
-        const tag = marker.actorId.slice(0, 6);
+        const tag = marker.label.slice(0, 6);
         const pillW = Math.min(PMD_TILE_NATIVE_PX - 2, Math.max(12, tag.length * 4 + 2));
         ctx.fillStyle = 'rgba(8, 14, 28, 0.86)';
         ctx.fillRect(dx + 1, dy + PMD_TILE_NATIVE_PX - 8, pillW, 7);
@@ -215,12 +226,12 @@ export function renderEditorFrame(
 export async function renderDungeonMapPreviewCanvas(
   canvas: HTMLCanvasElement,
   map: DungeonMapDefinition,
-  actorMarkers?: ReadonlyArray<CutsceneStageActorMarker>
+  actorMarkers?: ReadonlyArray<EditorReferenceMarker>
 ): Promise<void> {
   const sheetIds = new Set<string>();
   for (const row of map.tiles) {
     for (const cell of row) {
-      sheetIds.add(normalizeTilesetId(cell.tilesetId));
+      if (cell.tilesetId !== EMPTY_TILESET_ID) sheetIds.add(normalizeTilesetId(cell.tilesetId));
     }
   }
 
@@ -249,9 +260,8 @@ export async function renderDungeonMapPreviewCanvas(
       const dx = x * PMD_TILE_NATIVE_PX;
       const dy = y * PMD_TILE_NATIVE_PX;
       const sheet = loaded.get(normalizeTilesetId(cell.tilesetId));
-      if (sheet) {
-        drawTilesetChunk(ctx, sheet, cell.chunkIndex, dx, dy, PMD_TILE_NATIVE_PX);
-      }
+      if (cell.tilesetId === EMPTY_TILESET_ID) drawEmptyTileChecker(ctx, dx, dy);
+      else if (sheet) drawTilesetChunk(ctx, sheet, cell.chunkIndex, dx, dy, PMD_TILE_NATIVE_PX);
       drawSpecialTerrainOverlay(
         ctx,
         cell.terrainType,

@@ -1,0 +1,117 @@
+{
+  "id": "cs_06_orchard_celebration",
+  "title": "Lanterns in the Orchard",
+  "music": "at_the_end_of_the_day",
+  "location": "orchard_twilight",
+  "banner": "Berry Orchards Hearth · Twilight",
+  "lighting": "twilight_festival",
+  "camera": { "x": 8.5, "y": 6 },
+  "cast": [
+    { "id": "mentor", "who": { "kind": "mentor" } },
+    { "id": "lord", "who": { "kind": "lord" } },
+    { "id": "partner", "who": { "kind": "partner" } },
+    { "id": "healer", "who": { "kind": "healer" } },
+    { "id": "advisor", "who": { "kind": "advisor" } },
+    { "id": "recruit_0", "who": { "kind": "party_extra", "slotIndex": 0 } },
+    { "id": "recruit_1", "who": { "kind": "party_extra", "slotIndex": 1 } },
+    { "id": "recruit_2", "who": { "kind": "party_extra", "slotIndex": 2 } },
+    { "id": "recruit_3", "who": { "kind": "party_extra", "slotIndex": 3 } }
+  ],
+  "placements": [
+    { "id": "mentor", "x": 8, "y": 4, "facing": "Down" },
+    { "id": "lord", "x": 8, "y": 6, "facing": "Up" },
+    { "id": "partner", "x": 9, "y": 6, "facing": "UpLeft" },
+    { "id": "healer", "x": 7, "y": 6, "facing": "UpRight" },
+    { "id": "advisor", "x": 10, "y": 6, "facing": "Left" },
+    { "id": "recruit_0", "x": 5, "y": 5, "facing": "DownRight" },
+    { "id": "recruit_1", "x": 6, "y": 8, "facing": "UpRight" },
+    { "id": "recruit_2", "x": 11, "y": 8, "facing": "UpLeft" },
+    { "id": "recruit_3", "x": 13, "y": 5, "facing": "DownLeft" }
+  ],
+  "beats": [
+    {
+      "id": "opening",
+      "actions": [
+        { "type": "hop", "who": "partner", "count": 2 },
+        { "type": "emote", "who": "partner", "emote": "joy", "duration": 1.15 },
+        { "type": "hop", "who": "recruit_3", "count": 1, "delay": 0.28 }
+      ],
+      "advance": { "kind": "seconds", "seconds": 0.75 }
+    },
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Joyous",
+        "side": "right",
+        "text": "Harvest saved, and another friend from home joined up! Our crew’s getting big, {lord}."
+      },
+      "actions": [
+        { "type": "hop", "who": "partner", "count": 2 },
+        { "type": "emote", "who": "partner", "emote": "music", "duration": 1.1 }
+      ]
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "healer",
+        "emotion": "Happy",
+        "side": "left",
+        "text": "It’s nice, seeing a familiar face out here. Eat up while the berries are warm."
+      },
+      "actions": [{ "type": "emote", "who": "healer", "emote": "heart", "duration": 1.15 }]
+    },
+    {
+      "id": "line_3",
+      "say": {
+        "speaker": "advisor",
+        "emotion": "Inspired",
+        "side": "right",
+        "text": "And Morgrem dropped a Full Heal! If anyone gets zapped again, I’ve got you covered."
+      },
+      "actions": [
+        { "type": "hop", "who": "advisor", "count": 1 },
+        { "type": "emote", "who": "advisor", "emote": "joy", "duration": 1.1 }
+      ]
+    },
+    {
+      "id": "line_4",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Worried",
+        "side": "left",
+        "text": "Two reports, I’m afraid. First, Master Kecleon’s wagon was attacked in Oran Forest."
+      },
+      "actions": [
+        { "type": "walk", "who": "mentor", "path": [[8, 5]], "speed": 2.5, "facing": "Down" },
+        { "type": "emote", "who": "mentor", "emote": "exclamation", "duration": 0.95 }
+      ]
+    },
+    {
+      "id": "line_5",
+      "say": {
+        "speaker": "advisor",
+        "emotion": "Shouting",
+        "side": "right",
+        "text": "Not Master Kecleon! Where else are we supposed to buy anything?"
+      },
+      "actions": [
+        { "type": "shake", "who": "advisor", "duration": 0.54 },
+        { "type": "emote", "who": "advisor", "emote": "sweat", "duration": 1.2 }
+      ]
+    },
+    {
+      "id": "line_6",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "And Gengar’s scouts are climbing the Northern Mountain Pass. Kecleon first, then the pass."
+      },
+      "actions": [
+        { "type": "aura", "who": "lord", "duration": 1.15 },
+        { "type": "hop", "who": "partner", "count": 1, "delay": 0.26 }
+      ]
+    }
+  ]
+}

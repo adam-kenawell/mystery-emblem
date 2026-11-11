@@ -1,0 +1,53 @@
+{
+  "id": "intro",
+  "chapter": "chapter_03",
+  "role": "intro",
+  "title": "Sparkling River Shrine",
+  "music": "waterfall_cave",
+  "cast": [
+    {
+      "id": "commander_deino",
+      "who": { "kind": "npc", "pokemon": "0633", "name": "Commander Deino", "speciesName": "Deino" }
+    },
+    { "id": "lord", "who": { "kind": "lord" } },
+    { "id": "mentor", "who": { "kind": "mentor" } }
+  ],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "commander_deino",
+        "emotion": "Determined",
+        "side": "right",
+        "text": "Secure the relic! ...Wait. That crest. Another Dragon survivor, fighting for Serperior?"
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Surprised",
+        "side": "left",
+        "text": "You’re a Dragon too. Why are you fighting for Ironscale?"
+      }
+    },
+    {
+      "id": "line_3",
+      "say": {
+        "speaker": "commander_deino",
+        "emotion": "Angry",
+        "side": "right",
+        "text": "Emperor Kingambit pulled me from the ashes. Kindness won’t seal the Abyss. Only order will."
+      }
+    },
+    {
+      "id": "line_4",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "Careful, {lord}. Get too close and he’ll charge. Let the river work for us."
+      }
+    }
+  ]
+}

@@ -36,8 +36,12 @@ export interface DialogueLine {
   /** Supports `{lord}`, `{partner}`, `{healer}`, `{advisor}`, and `{speaker}` custom nickname placeholders */
   text: string;
   clearOppositePortrait?: boolean;
+  /** Narration box: no portrait, no name */
+  narrator?: boolean;
   bgm?: string | null;
   sfx?: PmdUiSfxId;
+  /** Story sound effect file URL played as the line starts */
+  sfxUrl?: string;
   stageCueId?: string;
 }
 
@@ -54,6 +58,8 @@ export type DialogueFinishReason = 'completed' | 'skipped' | 'cancelled';
 export interface PlayDialogueOptions {
   typewriterMsPerChar?: number;
   inCutsceneStage?: boolean;
+  /** Resolve speakers and names against this save instead of the live one (editor previews) */
+  saveOverride?: SaveData | null;
   onLineStart?: (lineIndex: number, line: DialogueLine) => void | Promise<void>;
   onAdvanceInterrupt?: () => void;
 }
@@ -82,6 +88,7 @@ export class DialogueOverlay {
   };
 
   private typewriterMsPerChar = 10;
+  private saveOverride: SaveData | null | undefined = undefined;
   private finishResolver: ((reason: DialogueFinishReason) => void) | null = null;
   private activeOnLineStart?: (lineIndex: number, line: DialogueLine) => void | Promise<void>;
   private activeOnAdvanceInterrupt?: () => void;
@@ -137,6 +144,7 @@ export class DialogueOverlay {
 
     this.typewriterMsPerChar =
       options?.typewriterMsPerChar ?? (prefersReducedMotionEnabled() ? 0 : 10);
+    this.saveOverride = options && 'saveOverride' in options ? options.saveOverride : undefined;
     this.activeOnLineStart = options?.onLineStart;
     this.activeOnAdvanceInterrupt = options?.onAdvanceInterrupt;
     this.rootEl.classList.toggle('is-cutscene-stage', Boolean(options?.inCutsceneStage));
@@ -174,6 +182,7 @@ export class DialogueOverlay {
 
     this.typewriter.stop();
     this.activeScript = null;
+    this.saveOverride = undefined;
     this.activeOnLineStart = undefined;
     this.activeOnAdvanceInterrupt = undefined;
     this.rootEl.classList.remove('is-cutscene-stage');
@@ -244,20 +253,28 @@ export class DialogueOverlay {
         this.audioManager.playBgm(line.bgm, { fadeMs: 320 });
       }
       if (line.sfx) this.audioManager.playSfx(line.sfx);
+      if (line.sfxUrl) this.audioManager.playSfxUrl(line.sfxUrl);
       void this.activeOnLineStart?.(this.currentLineIndex, line);
     }
 
-    const save = this.saveManager.getSave();
+    const save = this.saveOverride !== undefined ? this.saveOverride : this.saveManager.getSave();
+    const isNarrator = Boolean(line.narrator);
+    this.dom.boxEl.classList.toggle('is-narrator', isNarrator);
     const oppositeSide: DialogueSide = line.side === 'left' ? 'right' : 'left';
-    this.activeSides[line.side] = { speaker: line.speaker, emotion: line.emotion };
-    if (line.clearOppositePortrait) this.activeSides[oppositeSide] = null;
+    if (!isNarrator) {
+      this.activeSides[line.side] = { speaker: line.speaker, emotion: line.emotion };
+      if (line.clearOppositePortrait) this.activeSides[oppositeSide] = null;
+    }
 
-    const activeIdentity = this.resolveSpeaker(line.speaker, save);
+    const activeIdentity = isNarrator
+      ? { nickname: '', speciesName: '' }
+      : this.resolveSpeaker(line.speaker, save);
     this.dom.nicknameEl.textContent = activeIdentity.nickname;
     this.dom.speciesBadgeEl.textContent = activeIdentity.speciesName;
     this.dom.speciesBadgeEl.hidden =
+      isNarrator ||
       activeIdentity.nickname.trim().toLowerCase() ===
-      activeIdentity.speciesName.trim().toLowerCase();
+        activeIdentity.speciesName.trim().toLowerCase();
 
     const formattedText = interpolateCampaignText(line.text, save, activeIdentity.nickname);
     if (!opts.preserveTypewriterProgress) {
@@ -279,7 +296,7 @@ export class DialogueOverlay {
       const slotEl = side === 'left' ? this.dom.leftSlotEl : this.dom.rightSlotEl;
       const view = side === 'left' ? this.dom.leftPortrait : this.dom.rightPortrait;
       const state = this.activeSides[side];
-      if (!state) {
+      if (!state || isNarrator) {
         slotEl.hidden = true;
         continue;
       }

@@ -1,0 +1,34 @@
+{
+  "id": "outro",
+  "chapter": "chapter_03",
+  "role": "outro",
+  "title": "Sparkling River Shrine",
+  "music": "calm_cutscene",
+  "cast": [
+    {
+      "id": "commander_deino",
+      "who": { "kind": "npc", "pokemon": "0633", "name": "Commander Deino", "speciesName": "Deino" }
+    },
+    { "id": "partner", "who": { "kind": "partner" } }
+  ],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "commander_deino",
+        "emotion": "Pain",
+        "side": "right",
+        "text": "Tch... Your fangs are sharp, {lord}. Fall back! When the Abyss spreads, you’ll understand."
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Worried",
+        "side": "right",
+        "text": "He’s gone. Come on, {lord}. The King just reached the north bridge."
+      }
+    }
+  ]
+}

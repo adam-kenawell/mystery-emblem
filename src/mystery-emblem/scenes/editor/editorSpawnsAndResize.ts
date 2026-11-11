@@ -2,6 +2,7 @@
  * Player/Enemy Spawn Toggles, Map Resizing & Deployment Cap Controls
  */
 
+import { EMPTY_TILESET_ID } from '../../assets/tilesetLoader';
 import { getSpeciesById } from '../../data/index';
 import type { DungeonMapTileCell } from '../../types/schemas';
 import { clampDungeonCameraPosition } from '../../ui/gridViewportMath';
@@ -14,7 +15,7 @@ export function toggleEditorPlayerSpawnAt(
   ty: number
 ): void {
   const { state, audioManager } = hooks;
-  if (state.editorTargetKind === 'cutscene') return;
+  if (state.editorTargetKind === 'location') return;
   const existingIdx = state.map.playerSpawns.findIndex((s) => s.x === tx && s.y === ty);
   if (existingIdx >= 0) {
     if (state.map.playerSpawns.length <= 1) {
@@ -81,7 +82,7 @@ export function toggleEditorEnemySpawnAt(
   ty: number
 ): void {
   const { state, audioManager } = hooks;
-  if (state.editorTargetKind === 'cutscene') return;
+  if (state.editorTargetKind === 'location') return;
   const existingIdx = state.map.enemySpawns.findIndex((e) => e.x === tx && e.y === ty);
   if (existingIdx >= 0) {
     const existing = state.map.enemySpawns[existingIdx]!;
@@ -157,12 +158,12 @@ export function resizeEditorMap(
   nextHeight: number
 ): void {
   const { state, audioManager } = hooks;
-  const clampedW = Math.max(10, Math.min(36, Math.floor(nextWidth)));
-  const clampedH = Math.max(8, Math.min(26, Math.floor(nextHeight)));
+  const isCutscene = state.editorTargetKind === 'location';
+  const clampedW = Math.max(isCutscene ? 4 : 10, Math.min(isCutscene ? 64 : 36, Math.floor(nextWidth)));
+  const clampedH = Math.max(isCutscene ? 4 : 8, Math.min(isCutscene ? 48 : 26, Math.floor(nextHeight)));
   if (clampedW === state.map.width && clampedH === state.map.height) return;
 
   pushEditorUndoSnapshot(state);
-  const isCutscene = state.editorTargetKind === 'cutscene';
   const newTiles: DungeonMapTileCell[][] = [];
   for (let y = 0; y < clampedH; y++) {
     const row: DungeonMapTileCell[] = [];
@@ -170,13 +171,7 @@ export function resizeEditorMap(
       const isBorder = x === 0 || y === 0 || x === clampedW - 1 || y === clampedH - 1;
       const old = state.map.tiles[y]?.[x];
       if (isCutscene) {
-        row.push(
-          old
-            ? { ...old }
-            : isBorder
-              ? { terrainType: 'wall', tilesetId: state.brushTilesetId, chunkIndex: 1 }
-              : { terrainType: 'floor', tilesetId: state.brushTilesetId, chunkIndex: 28 }
-        );
+        row.push(old ? { ...old } : { terrainType: 'floor', tilesetId: EMPTY_TILESET_ID, chunkIndex: 0 });
       } else if (
         old &&
         !(x === state.map.width - 1 && clampedW > state.map.width && old.terrainType === 'wall') &&
@@ -251,7 +246,7 @@ export function adjustEditorDeploymentCap(
   delta: number
 ): void {
   const { state, audioManager } = hooks;
-  if (state.editorTargetKind === 'cutscene') return;
+  if (state.editorTargetKind === 'location') return;
   const maxCap = Math.min(12, Math.max(1, state.map.playerSpawns.length));
   const current = Math.max(1, Math.min(maxCap, state.map.deploymentCap ?? maxCap));
   const next = Math.max(1, Math.min(maxCap, current + delta));

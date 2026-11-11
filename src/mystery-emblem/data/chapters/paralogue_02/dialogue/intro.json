@@ -1,0 +1,31 @@
+{
+  "id": "intro",
+  "chapter": "paralogue_02",
+  "role": "intro",
+  "title": "Oran Forest",
+  "music": "outlaw",
+  "cast": [
+    { "id": "kecleon", "who": { "kind": "npc", "pokemon": "0352", "name": "Kecleon", "speciesName": "Kecleon" } },
+    { "id": "mentor", "who": { "kind": "mentor" } }
+  ],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "kecleon",
+        "emotion": "Worried",
+        "side": "right",
+        "text": "Help, travelers! Imperial thugs flipped my wagon, and they’re stealing all my stock!"
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "Hold on, Master Kecleon! {lord}, stay close to him. Don’t let them reach him."
+      }
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "id": "outro",
+  "chapter": "paralogue_01",
+  "role": "outro",
+  "title": "Lush Prairie",
+  "music": "calm_cutscene",
+  "cast": [
+    { "id": "slakoth", "who": { "kind": "recruit", "speciesId": "slakoth" } },
+    { "id": "partner", "who": { "kind": "partner" } }
+  ],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "slakoth",
+        "emotion": "Happy",
+        "side": "right",
+        "text": "Whew. That’s a whole week of exercise. Wake me for the next one, {lord}."
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Happy",
+        "side": "left",
+        "text": "Ha! Welcome aboard. Stick with us and you’ll toughen up in no time."
+      }
+    }
+  ]
+}

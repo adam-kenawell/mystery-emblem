@@ -1,0 +1,28 @@
+{
+  "id": "outro",
+  "chapter": "chapter_01",
+  "role": "outro",
+  "title": "Capital Road",
+  "music": "calm_cutscene",
+  "cast": [{ "id": "partner", "who": { "kind": "partner" } }, { "id": "mentor", "who": { "kind": "mentor" } }],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Joyous",
+        "side": "right",
+        "text": "The road’s open! And our two new friends weren’t half bad."
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Normal",
+        "side": "left",
+        "text": "Look ahead, everyone. The spires of King Serperior’s court."
+      }
+    }
+  ]
+}

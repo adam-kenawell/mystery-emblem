@@ -6,6 +6,8 @@
  * scene/cutscene cue aliases that resolve cleanly as tracks are added.
  */
 
+import trackSettings from './trackSettings.json';
+
 export interface PmdBgmTrack {
   /** Normalized 3-digit track number (e.g. `"004"`) or slug if unnumbered */
   id: string;
@@ -29,6 +31,9 @@ const rawAudioModules = import.meta.glob<string>(
 /** Track numbers that are one-shot fanfares/jingles rather than continuous loops */
 const NON_LOOPING_TRACK_IDS = new Set<string>(['007', '010', '013', '028', '075', '146']);
 
+/** Songs marked "Plays once" in the Dev Tools Cutscene Editor */
+const PLAY_ONCE_TRACK_IDS = new Set<string>((trackSettings as { playOnce?: string[] }).playOnce ?? []);
+
 function slugify(value: string): string {
   return value
     .toLowerCase()
@@ -50,7 +55,7 @@ function parseAudioEntry(globPath: string, url: string): PmdBgmTrack {
       title,
       fileName,
       url,
-      loop: !NON_LOOPING_TRACK_IDS.has(trackNumber),
+      loop: !NON_LOOPING_TRACK_IDS.has(trackNumber) && !PLAY_ONCE_TRACK_IDS.has(trackNumber),
     };
   }
 
@@ -60,13 +65,15 @@ function parseAudioEntry(globPath: string, url: string): PmdBgmTrack {
     title: withoutExt.trim(),
     fileName,
     url,
-    loop: true,
+    loop: !PLAY_ONCE_TRACK_IDS.has(slugify(withoutExt)),
   };
 }
 
-export const PMD_BGM_TRACKS: ReadonlyArray<PmdBgmTrack> = Object.entries(rawAudioModules)
+const trackList: PmdBgmTrack[] = Object.entries(rawAudioModules)
   .map(([globPath, url]) => parseAudioEntry(globPath, url))
   .sort((a, b) => a.fileName.localeCompare(b.fileName, undefined, { numeric: true }));
+
+export const PMD_BGM_TRACKS: ReadonlyArray<PmdBgmTrack> = trackList;
 
 const tracksById = new Map<string, PmdBgmTrack>();
 const tracksBySlug = new Map<string, PmdBgmTrack>();
@@ -74,6 +81,29 @@ const tracksBySlug = new Map<string, PmdBgmTrack>();
 for (const track of PMD_BGM_TRACKS) {
   tracksById.set(track.id.toLowerCase(), track);
   tracksBySlug.set(slugify(track.title), track);
+}
+
+/** Adds a song uploaded through the Dev Tools editor this session. */
+export function registerUploadedTrack(fileName: string): PmdBgmTrack {
+  const track = parseAudioEntry(`/assets/audio/${fileName}`, `/assets/audio/${encodeURIComponent(fileName)}`);
+  const existing = tracksById.get(track.id.toLowerCase());
+  if (existing) return existing;
+  trackList.push(track);
+  trackList.sort((a, b) => a.fileName.localeCompare(b.fileName, undefined, { numeric: true }));
+  tracksById.set(track.id.toLowerCase(), track);
+  tracksBySlug.set(slugify(track.title), track);
+  return track;
+}
+
+export function getPlayOnceTrackIds(): string[] {
+  return [...PLAY_ONCE_TRACK_IDS].sort();
+}
+
+export function setTrackPlaysOnce(trackId: string, playsOnce: boolean): void {
+  if (playsOnce) PLAY_ONCE_TRACK_IDS.add(trackId);
+  else PLAY_ONCE_TRACK_IDS.delete(trackId);
+  const track = tracksById.get(trackId.toLowerCase());
+  if (track) track.loop = !playsOnce && !NON_LOOPING_TRACK_IDS.has(track.id);
 }
 
 /**

@@ -6,11 +6,15 @@ import { getAudioManager, type AudioManager } from '../audio/AudioManager';
 import { subscribeChapterMapChanges } from '../data/chapterMapRegistry';
 import type { SaveStateManager } from '../state/SaveStateManager';
 import { DevToolsCheatsController } from './devtools/DevToolsCheatsController';
+import {
+  DevToolsCutscenesController,
+  type CutsceneEditorHostDeps,
+} from './devtools/DevToolsCutscenesController';
 import { DevToolsMapsController } from './devtools/DevToolsMapsController';
 import { buildDevToolsModalHtml } from './devtools/devToolsModalTemplate';
 import { bindPointerTap } from './pointerControls';
 
-export type DevToolsSubTab = 'cheats' | 'maps';
+export type DevToolsSubTab = 'cheats' | 'maps' | 'cutscenes';
 
 export interface DevToolsHarnessOptions {
   modalEl: HTMLElement;
@@ -23,6 +27,9 @@ export interface DevToolsHarnessOptions {
   onLaunchMapEditor: (levelId: string) => void;
   onPlayMapBattle: (levelId: string) => void;
   onRequestRenameUnit: (instanceId: string) => void;
+  getCutsceneEditorHost: () => CutsceneEditorHostDeps;
+  onHideForEditor: () => void;
+  onShowAfterEditor: () => void;
   onClose: () => void;
   signal?: AbortSignal;
 }
@@ -35,6 +42,7 @@ export class DevToolsHarness {
 
   private readonly cheatsController: DevToolsCheatsController;
   private readonly mapsController: DevToolsMapsController;
+  private readonly cutscenesController: DevToolsCutscenesController;
   private activeSubTab: DevToolsSubTab = 'cheats';
   private unsubscribeMapStore: (() => void) | null = null;
 
@@ -68,6 +76,18 @@ export class DevToolsHarness {
       audioManager: this.audioManager,
       onLaunchMapEditor: options.onLaunchMapEditor,
       onPlayMapBattle: options.onPlayMapBattle,
+      signal,
+    });
+    this.cutscenesController = new DevToolsCutscenesController({
+      modalEl: this.modalEl,
+      saveManager: options.saveManager,
+      audioManager: this.audioManager,
+      getHost: options.getCutsceneEditorHost,
+      hideDevTools: options.onHideForEditor,
+      showDevTools: () => {
+        options.onShowAfterEditor();
+        this.switchSubTab('cutscenes');
+      },
       signal,
     });
 
@@ -115,7 +135,8 @@ export class DevToolsHarness {
     });
 
     if (tab === 'cheats') this.refreshCheatsTab();
-    else this.refreshMapPreviewTab();
+    else if (tab === 'maps') this.refreshMapPreviewTab();
+    else this.cutscenesController.refresh();
   }
 
   public onSaveChanged(): void {
@@ -129,6 +150,11 @@ export class DevToolsHarness {
 
   public refreshMapPreviewTab(): void {
     this.mapsController.refresh();
+  }
+
+  /** Re-opens the Cutscene Editor after a page reload, if it was open. */
+  public resumeCutsceneEditorIfNeeded(): void {
+    this.cutscenesController.resumeIfNeeded();
   }
 
   public destroy(): void {

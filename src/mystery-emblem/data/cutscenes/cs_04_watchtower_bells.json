@@ -1,0 +1,119 @@
+{
+  "id": "cs_04_watchtower_bells",
+  "title": "Echoes of the Watchtower",
+  "music": "calm_cutscene",
+  "location": "watchtower_parapet",
+  "banner": "Dragon Watchtower · Cleft Mountain",
+  "lighting": "mountain_mist",
+  "camera": { "x": 7.5, "y": 5.5 },
+  "cast": [
+    { "id": "lord", "who": { "kind": "lord" } },
+    { "id": "mentor", "who": { "kind": "mentor" } },
+    { "id": "partner", "who": { "kind": "partner" } },
+    { "id": "healer", "who": { "kind": "healer" } },
+    { "id": "advisor", "who": { "kind": "advisor" } },
+    { "id": "recruit_0", "who": { "kind": "party_extra", "slotIndex": 0 } },
+    { "id": "recruit_1", "who": { "kind": "party_extra", "slotIndex": 1 } },
+    { "id": "recruit_2", "who": { "kind": "party_extra", "slotIndex": 2 } }
+  ],
+  "placements": [
+    { "id": "lord", "x": 7, "y": 5, "facing": "Up" },
+    { "id": "mentor", "x": 8, "y": 5, "facing": "UpLeft" },
+    { "id": "partner", "x": 9, "y": 6, "facing": "UpLeft" },
+    { "id": "healer", "x": 6, "y": 6, "facing": "UpRight" },
+    { "id": "advisor", "x": 8, "y": 7, "facing": "Up" },
+    { "id": "recruit_0", "x": 4, "y": 6, "facing": "Right" },
+    { "id": "recruit_1", "x": 11, "y": 6, "facing": "Left" },
+    { "id": "recruit_2", "x": 5, "y": 4, "facing": "DownRight" }
+  ],
+  "beats": [
+    {
+      "id": "opening",
+      "actions": [
+        { "type": "walk", "who": "lord", "path": [[7, 4]], "speed": 2.6, "facing": "Up" },
+        { "type": "aura", "who": "lord", "duration": 1.15, "delay": 0.35 }
+      ],
+      "advance": { "kind": "seconds", "seconds": 0.7 }
+    },
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "healer",
+        "emotion": "Worried",
+        "side": "left",
+        "text": "The crest lit up when you touched it, {lord}. How does it feel, being here?"
+      },
+      "actions": [{ "type": "walk", "who": "healer", "path": [[6, 5]], "speed": 2.8, "facing": "UpRight" }]
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Happy",
+        "side": "left",
+        "text": "Like an old lullaby. But home is still {partner} balancing pebbles on his beak."
+      },
+      "actions": [
+        { "type": "face", "who": "lord", "facing": "DownRight" },
+        { "type": "hop", "who": "partner", "count": 2 },
+        { "type": "emote", "who": "partner", "emote": "music", "duration": 1.1 }
+      ]
+    },
+    {
+      "id": "line_3",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Surprised",
+        "side": "right",
+        "text": "Quiet. Hear those bells? Down at Sparkling River Shrine!"
+      },
+      "actions": [
+        { "type": "screenShake", "duration": 0.34, "intensity": 2 },
+        { "type": "emote", "who": "mentor", "emote": "exclamation", "duration": 1 },
+        { "type": "emote", "who": "lord", "emote": "exclamation", "duration": 1 },
+        { "type": "emote", "who": "partner", "emote": "exclamation", "duration": 1 },
+        { "type": "walk", "who": "mentor", "path": [[8, 8]], "speed": 4, "facing": "Down" },
+        { "type": "camera", "x": 7.5, "y": 6.5, "duration": 0.45 }
+      ]
+    },
+    {
+      "id": "line_4",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Angry",
+        "side": "right",
+        "text": "Crimson banners on the bridges. Ironscale’s marching on the shrine!"
+      },
+      "actions": [
+        { "type": "walk", "who": "partner", "path": [[9, 8]], "speed": 4.5, "facing": "Down" },
+        { "type": "hop", "who": "partner", "count": 1, "delay": 0.28 }
+      ]
+    },
+    {
+      "id": "line_5",
+      "say": {
+        "speaker": "advisor",
+        "emotion": "Worried",
+        "side": "left",
+        "text": "And their leader is a Dragon. Commander Deino. That’s... not great."
+      },
+      "actions": [
+        { "type": "shake", "who": "advisor", "duration": 0.52 },
+        { "type": "emote", "who": "advisor", "emote": "sweat", "duration": 1.2 }
+      ]
+    },
+    {
+      "id": "line_6",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "A Dragon, fighting for Ironscale? ...Stay close, everyone. We protect the shrine."
+      },
+      "actions": [
+        { "type": "walk", "who": "lord", "path": [[7, 8]], "speed": 3.8, "facing": "Down" },
+        { "type": "walk", "who": "healer", "path": [[6, 8]], "speed": 3.8, "facing": "Down" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "id": "outro",
+  "chapter": "chapter_05",
+  "role": "outro",
+  "title": "Northern Mountain Pass",
+  "music": "calm_cutscene",
+  "cast": [
+    { "id": "duskull", "who": { "kind": "recruit", "speciesId": "duskull" } },
+    { "id": "partner", "who": { "kind": "partner" } }
+  ],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "duskull",
+        "emotion": "Normal",
+        "side": "right",
+        "text": "The lanterns burn clean again. Thank you, {lord}. The spirits can rest."
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Joyous",
+        "side": "left",
+        "text": "Not bad for a bunch of first-time ghost hunters!"
+      }
+    }
+  ]
+}

@@ -2,11 +2,10 @@
  * Static Controls Population, UI Status Sync, Info Strip & Toast Helper
  */
 
-import { PMD_TILESET_LIST } from '../../assets/tilesetLoader';
+import { EMPTY_TILESET_ID, PMD_TILESET_LIST } from '../../assets/tilesetLoader';
 import type { AudioManager } from '../../audio/AudioManager';
 import {
   CHAPTER_LEVEL_CATALOG,
-  CUTSCENE_STAGE_CATALOG,
   hasChapterMapOverride,
 } from '../../data/chapterMapRegistry';
 import { POKEMON_SPECIES_LIST } from '../../data/index';
@@ -37,18 +36,7 @@ export function renderEditorLevelSelectOptions(
     chapterGroup.appendChild(opt);
   }
 
-  const cutsceneGroup = document.createElement('optgroup');
-  cutsceneGroup.label = 'Cutscene Stages';
-  cutsceneGroup.dataset.testid = 'editor-optgroup-cutscenes';
-  for (const stage of CUTSCENE_STAGE_CATALOG) {
-    const opt = document.createElement('option');
-    opt.value = stage.id;
-    const customizedSuffix = hasChapterMapOverride(stage.id) ? ' ★ [Custom]' : '';
-    opt.textContent = `${stage.label}${customizedSuffix}`;
-    cutsceneGroup.appendChild(opt);
-  }
-
-  dom.levelSelectEl.append(chapterGroup, cutsceneGroup);
+  dom.levelSelectEl.append(chapterGroup);
   if ([...dom.levelSelectEl.options].some((o) => o.value === activeLevelId)) {
     dom.levelSelectEl.value = activeLevelId;
   }
@@ -81,6 +69,23 @@ export function populateEditorStaticControls(
     '[data-editor-biome-presets]'
   )!;
   presetsContainer.innerHTML = '';
+  const emptyBtn = document.createElement('button');
+  emptyBtn.type = 'button';
+  emptyBtn.className = 'pmd-btn pmd-chip-btn';
+  emptyBtn.dataset.testid = 'editor-biome-preset-empty';
+  emptyBtn.dataset.editorLocationOnly = 'true';
+  emptyBtn.textContent = 'Empty (see-through)';
+  bindPointerTap(
+    emptyBtn,
+    () => {
+      audioManager.playSfx('select');
+      if (state.toolMode !== 'paint' && state.toolMode !== 'stroke') state.toolMode = 'paint';
+      onSelectBrush({ terrainType: 'floor', tilesetId: EMPTY_TILESET_ID, chunkIndex: 0 });
+    },
+    { signal }
+  );
+  presetsContainer.appendChild(emptyBtn);
+
   for (const preset of BIOME_BRUSH_PRESETS) {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -172,8 +177,17 @@ export function syncEditorUiControls(
   dom.hudUndoBtnEl.textContent =
     state.undoStack.length > 0 ? `Undo (${state.undoStack.length})` : 'Undo';
 
-  const isCutscene = state.editorTargetKind === 'cutscene';
+  const isCutscene = state.editorTargetKind === 'location';
   dom.rootEl.dataset.editorKind = state.editorTargetKind;
+  dom.locationBarEl.hidden = !isCutscene;
+  dom.chapterOnlyEl.hidden = isCutscene;
+  dom.locationTitleEl.textContent = `Painting location: ${state.locationSession?.locationName ?? state.map.name}`;
+  dom.hudSaveBtnEl.textContent = isCutscene ? 'Done' : 'Save';
+  dom.sysSaveBtnEl.textContent = isCutscene ? 'Done — Back to Cutscene' : 'Save Map to Game';
+  dom.sysSaveProjectBtnEl.hidden = isCutscene || dom.saveProjectBtnEl.hidden;
+  dom.biomePresetsEl.querySelectorAll<HTMLElement>('[data-editor-location-only]').forEach((el) => {
+    el.hidden = !isCutscene;
+  });
 
   dom.hudPlayBtnEl.hidden = isCutscene;
   dom.hudPlayBtnEl.disabled = isCutscene;
@@ -214,7 +228,10 @@ export function syncEditorUiControls(
   dom.spawnsToggleBtnEl.classList.toggle('is-active', state.showSpawns);
 
   const tMeta = TERRAIN_METADATA[state.brushTerrainType];
-  dom.activeBrushSummaryEl.textContent = `Active Brush: ${tMeta.label} · Sheet #${state.brushTilesetId} · Chunk #${state.brushChunkIndex}`;
+  dom.activeBrushSummaryEl.textContent =
+    state.brushTilesetId === EMPTY_TILESET_ID
+      ? 'Active Brush: Empty (see-through)'
+      : `Active Brush: ${tMeta.label} · Sheet #${state.brushTilesetId} · Chunk #${state.brushChunkIndex}`;
 
   dom.mapWidthValEl.textContent = String(state.map.width);
   dom.mapHeightValEl.textContent = String(state.map.height);
@@ -262,12 +279,12 @@ export function updateEditorInfoStrip(
       : '';
 
   const actorsAtTile =
-    state.editorTargetKind === 'cutscene'
-      ? state.cutsceneActorMarkers.filter((m) => m.x === x && m.y === y)
+    state.editorTargetKind === 'location'
+      ? state.referenceMarkers.filter((m) => m.x === x && m.y === y)
       : [];
   const actorDesc =
     actorsAtTile.length > 0
-      ? ` · Actor: ${actorsAtTile.map((m) => `${m.actorId} (${m.roleLabel})`).join(', ')}`
+      ? ` · Cast: ${actorsAtTile.map((m) => m.label).join(', ')}`
       : '';
 
   dom.infoStripEl.textContent = `${state.map.name} (${state.map.width}×${state.map.height}) · Tile (${x},${y}): ${tLabel}${spawnDesc}${waveDesc}${actorDesc} · Brush: ${TERRAIN_METADATA[state.brushTerrainType].shortLabel} (#${state.brushTilesetId}:${state.brushChunkIndex})`;

@@ -3,11 +3,7 @@
  */
 
 import type { AudioManager } from '../../audio/AudioManager';
-import {
-  DEMO_STORY_CUTSCENES,
-  POST_CHAPTER_STORY_CUTSCENE_BY_NODE_ID,
-  PRE_CHAPTER_STORY_CUTSCENE_BY_NODE_ID,
-} from '../../data/storyCutscenes';
+import { findStoryCutsceneLink, listLinkedStoryCutscenes } from '../../data/storyCutscenes';
 import type { SaveData } from '../../types/schemas';
 import { bindPointerTap } from '../../ui/pointerControls';
 
@@ -23,25 +19,20 @@ export function buildStoryReplaySubbox(params: {
 
   const seenSet = new Set(save.campaign.seenStoryCutsceneIds ?? []);
   const completedNodes = new Set(save.campaign.completedChapterIds ?? []);
-  const nodeIdByPreCutscene = new Map<string, string>(
-    Object.entries(PRE_CHAPTER_STORY_CUTSCENE_BY_NODE_ID).map(([nodeId, csId]) => [csId, nodeId])
-  );
-  const nodeIdByPostCutscene = new Map<string, string>(
-    Object.entries(POST_CHAPTER_STORY_CUTSCENE_BY_NODE_ID).map(([nodeId, csId]) => [csId, nodeId])
-  );
 
-  const unlockedCutscenes = DEMO_STORY_CUTSCENES.filter((cs) => {
+  const linkedCutscenes = listLinkedStoryCutscenes();
+  const unlockedCutscenes = linkedCutscenes.filter((cs) => {
     if (seenSet.has(cs.id)) return true;
-    const preNode = nodeIdByPreCutscene.get(cs.id);
-    if (preNode) {
+    const link = findStoryCutsceneLink(cs.id);
+    if (!link) return false;
+    if (link.when === 'before') {
       return (
-        preNode === 'prologue' ||
-        completedNodes.has(preNode) ||
-        Boolean(save.overworld.nodes[preNode]?.unlocked)
+        link.chapterId === 'prologue' ||
+        completedNodes.has(link.chapterId) ||
+        Boolean(save.overworld.nodes[link.chapterId]?.unlocked)
       );
     }
-    const reqNode = nodeIdByPostCutscene.get(cs.id);
-    return Boolean(reqNode && completedNodes.has(reqNode));
+    return completedNodes.has(link.chapterId);
   });
   const creditsUnlocked = Boolean(save.campaign.demoCompleted || save.campaign.creditsSeen);
   if (unlockedCutscenes.length === 0 && !creditsUnlocked) return null;
@@ -65,7 +56,7 @@ export function buildStoryReplaySubbox(params: {
     btn.type = 'button';
     btn.className = 'pmd-btn pmd-chip-btn';
     btn.dataset.testid = `overworld-replay-cutscene-${cs.id}`;
-    btn.textContent = `${cs.chapterOrder}. ${cs.title}`;
+    btn.textContent = `${linkedCutscenes.indexOf(cs) + 1}. ${cs.title}`;
     bindPointerTap(btn, () => {
       audioManager.playSfx('select');
       onCloseSystemMenu();

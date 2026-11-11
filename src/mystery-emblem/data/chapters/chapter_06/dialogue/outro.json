@@ -1,0 +1,34 @@
+{
+  "id": "outro",
+  "chapter": "chapter_06",
+  "role": "outro",
+  "title": "Victory!",
+  "music": "victory_fanfare",
+  "cast": [
+    {
+      "id": "commander_lairon",
+      "who": { "kind": "npc", "pokemon": "0305", "name": "Commander Lairon", "speciesName": "Lairon" }
+    },
+    { "id": "partner", "who": { "kind": "partner" } }
+  ],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "commander_lairon",
+        "emotion": "Pain",
+        "side": "right",
+        "text": "Impossible... Empoleon’s brats broke our siege? Fall back across the dunes!"
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Joyous",
+        "side": "right",
+        "text": "We held it! Look, {lord}. The King’s banners!"
+      }
+    }
+  ]
+}

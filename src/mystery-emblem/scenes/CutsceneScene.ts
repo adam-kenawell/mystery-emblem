@@ -1,29 +1,44 @@
 /**
- * Out-of-Dungeon Choreographed PMD Sprite Cutscene Coordinator (`CutsceneScene.ts`)
+ * Out-of-Dungeon Choreographed PMD Sprite Cutscene Player (`CutsceneScene.ts`)
  *
+ * Plays a `CutsceneDoc` beat by beat: consecutive dialogue beats share one dialogue-box run,
+ * while silent beats (and "wait for actions" beats) hide the box until their actions finish.
  * 100% Unified Pointer Event driven (`pointerdown` / `pointerup` ONLY; ZERO keyboard listeners).
  */
 
-import type { LoadedSpriteBundle } from '../assets/pmdAssetLoader';
-import type { LoadedTilesetSheet } from '../assets/tilesetLoader';
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
+import type { Beat, CutsceneDoc, LocationDoc } from '../data/cutscenes/cutsceneDocTypes';
+import {
+  buildBeatDialogueLine,
+  musicChangeToBgm,
+  resolveBeatSides,
+  showIfPasses,
+} from '../data/cutscenes/dialogueCompiler';
+import { resolveMediaUrl } from '../data/cutscenes/mediaLibrary';
 import type { SaveStateManager } from '../state/SaveStateManager';
-import type { DungeonMapTileCell } from '../types/schemas';
-import type { DialogueFinishReason, DialogueOverlay, DialogueScript } from '../ui/DialogueOverlay';
+import type { DungeonMapTileCell, SaveData } from '../types/schemas';
+import type { DialogueFinishReason, DialogueLine, DialogueOverlay } from '../ui/DialogueOverlay';
 import { prefersReducedMotionEnabled } from '../ui/typewriterController';
 import {
-  buildCutsceneSceneSnapshot,
-  instantiateCutsceneActor,
-  preloadCutsceneStageAssets,
-  resolveEffectiveCutsceneDefinition,
+  createCutsceneAssetCaches,
+  preloadCutsceneAssets,
 } from './cutscene/cutsceneActorResolver';
-import { CutsceneChoreographer } from './cutscene/cutsceneChoreographer';
+import { CutsceneStageRuntime } from './cutscene/cutsceneChoreographer';
 import { buildCutsceneDomShell, type CutsceneDomShell } from './cutscene/cutsceneDomShell';
 import { createAmbientMotes } from './cutscene/cutscenePropsAndMoods';
 import { renderCutsceneStageFrame } from './cutscene/cutsceneRenderer';
-import type { AmbientMote, CutsceneSceneOptions, CutsceneSceneSnapshot, RuntimeCutsceneActor, StoryCutsceneDefinition } from './cutscene/cutsceneTypes';
+import type { AmbientMote, CutsceneSceneOptions, CutsceneSceneSnapshot } from './cutscene/cutsceneTypes';
 
 export * from './cutscene/cutsceneTypes';
+
+export interface PlayCutsceneOptions {
+  /** Play against this save instead of the live one (editor preview party) */
+  saveOverride?: SaveData;
+  /** Start partway through (editor "play from here"); earlier beats are applied instantly */
+  startBeat?: number;
+  /** Unsaved location edits to use instead of the registry copies */
+  locationOverrides?: ReadonlyMap<string, LocationDoc>;
+}
 
 export class CutsceneScene {
   public readonly rootEl: HTMLElement;
@@ -34,26 +49,25 @@ export class CutsceneScene {
   private readonly audioManager: AudioManager;
   private readonly onStateChange?: () => void;
 
-  private readonly tilesetSheets = new Map<string, LoadedTilesetSheet>();
-  private readonly spriteBundles = new Map<string, LoadedSpriteBundle>();
+  private readonly caches = createCutsceneAssetCaches();
   private readonly ambientMotes: AmbientMote[] = createAmbientMotes(22);
-  private readonly choreo = new CutsceneChoreographer();
   private readonly abortController = new AbortController();
 
   private openState = false;
   private fastMode = false;
-  private activeDef: StoryCutsceneDefinition | null = null;
-  private activeStageId: string | null = null;
-  private activeStageCustomized = false;
-  private actors: RuntimeCutsceneActor[] = [];
+  private activeDoc: CutsceneDoc | null = null;
+  private runtime: CutsceneStageRuntime | null = null;
   private viewHeightCss = 540;
   private displayScale = 2;
   private lastRafMs = 0;
   private rafId: number | null = null;
+  private currentBeatIndex = -1;
   private currentLineIndex = -1;
   private skippedEarly = false;
-  private introResolve: (() => void) | null = null;
+  private silentResolve: (() => void) | null = null;
+  private silentTimer: number | null = null;
   private runToken = 0;
+  private usingSaveOverride = false;
 
   constructor(options: CutsceneSceneOptions) {
     this.viewportEl = options.viewportEl;
@@ -70,11 +84,9 @@ export class CutsceneScene {
         this.skipActiveCutscene();
       },
       onStageTapInterrupt: () => {
-        if (!this.openState || !this.introResolve) return;
-        this.choreo.snapAllInFlight(this.actors);
-        const done = this.introResolve;
-        this.introResolve = null;
-        done();
+        if (!this.openState || !this.silentResolve) return;
+        this.runtime?.flush();
+        this.finishSilentWait();
       },
     });
     this.rootEl = this.shell.rootEl;
@@ -87,107 +99,191 @@ export class CutsceneScene {
   public skipActiveCutscene(): void {
     if (!this.openState) return;
     this.skippedEarly = true;
-    this.choreo.snapAllInFlight(this.actors);
-    if (this.introResolve) {
-      const done = this.introResolve;
-      this.introResolve = null;
-      done();
-    }
+    this.runtime?.flush();
+    this.finishSilentWait();
     if (this.dialogueOverlay.isOpen()) this.dialogueOverlay.close('skipped');
   }
 
-  public async play(rawDef: StoryCutsceneDefinition): Promise<DialogueFinishReason> {
+  private finishSilentWait(): void {
+    if (this.silentTimer !== null) window.clearTimeout(this.silentTimer);
+    this.silentTimer = null;
+    const done = this.silentResolve;
+    this.silentResolve = null;
+    done?.();
+  }
+
+  public async play(doc: CutsceneDoc, opts: PlayCutsceneOptions = {}): Promise<DialogueFinishReason> {
     const token = ++this.runToken;
-    this.choreo.clearPendingTimers();
+    this.finishSilentWait();
     if (this.dialogueOverlay.isOpen()) this.dialogueOverlay.close('cancelled');
 
-    const { def, stageId, isStageCustomized } = resolveEffectiveCutsceneDefinition(rawDef);
-    this.activeDef = def;
-    this.activeStageId = stageId;
-    this.activeStageCustomized = isStageCustomized;
+    const save = opts.saveOverride ?? this.saveManager.getSave();
+    this.usingSaveOverride = Boolean(opts.saveOverride);
+    const runtime = new CutsceneStageRuntime(doc, save, this.caches);
+    runtime.onSound = (url) => this.audioManager.playSfxUrl(url);
+    runtime.onBannerChange = (text) => {
+      this.shell.locationBannerEl.textContent = text;
+    };
+    this.activeDoc = doc;
+    this.runtime = runtime;
     this.openState = true;
     this.skippedEarly = false;
+    this.currentBeatIndex = -1;
     this.currentLineIndex = -1;
-    this.choreo.reset(def.initialCamera);
 
-    const save = this.saveManager.getSave();
-    this.actors = def.actors.map((spawn) => instantiateCutsceneActor(spawn, save));
-
-    this.shell.locationBannerEl.textContent = def.locationLabel;
-    this.rootEl.dataset.cutsceneId = def.id;
+    this.rootEl.dataset.cutsceneId = doc.id;
     this.rootEl.hidden = false;
     this.viewportEl.classList.add('is-battle-active');
     this.onStateChange?.();
 
-    await preloadCutsceneStageAssets({ def, actors: this.actors, tilesetSheets: this.tilesetSheets, spriteBundles: this.spriteBundles });
-    if (!this.openState || token !== this.runToken) return 'cancelled';
+    await preloadCutsceneAssets({ doc, actors: runtime.actors, caches: this.caches, locationOverrides: opts.locationOverrides });
+    if (!this.isCurrent(token)) return 'cancelled';
+
+    const startBeat = Math.max(0, Math.min(doc.beats.length, opts.startBeat ?? 0));
+    if (startBeat > 0) runtime.fastForwardTo(startBeat);
+    else runtime.resetToStart();
 
     this.refreshSize();
     this.startLoop();
     this.renderFrame();
 
-    const script = def.buildScript(this.saveManager.getSave());
-    if (script.bgm) this.audioManager.playBgm(script.bgm, { fadeMs: 320 });
-
-    const reducedMotion = prefersReducedMotionEnabled();
-    if (def.openingActions && def.openingActions.length > 0 && !this.skippedEarly) {
-      this.choreo.applyCueActions(def.openingActions, this.actors, this.fastMode, () => this.openState);
-      const waitMs =
-        this.fastMode || reducedMotion ? 0 : Math.max(0, def.openingDurationMs ?? 650);
-      if (waitMs > 0) {
-        this.shell.introSkipBtn.hidden = false;
-        await new Promise<void>((resolve) => {
-          this.introResolve = resolve;
-          this.choreo.scheduleTimeout(() => {
-            if (this.introResolve === resolve) {
-              this.introResolve = null;
-              resolve();
-            }
-          }, waitMs);
-        });
-        this.shell.introSkipBtn.hidden = true;
-      } else {
-        this.choreo.snapAllInFlight(this.actors);
-      }
+    let music: string | null = doc.music;
+    for (let i = 0; i < startBeat; i++) {
+      const beat = doc.beats[i]!;
+      if (!showIfPasses(beat.showIf, doc.cast, save)) continue;
+      const next = musicChangeToBgm(beat.music, doc.music);
+      if (next !== undefined) music = next;
     }
+    this.audioManager.playBgm(music, { fadeMs: 320 });
 
-    if (!this.openState || token !== this.runToken) return 'cancelled';
-    if (this.skippedEarly) {
-      this.closeInternal();
-      return 'skipped';
-    }
-
-    const scriptWithRestoredFlag: DialogueScript = { ...script, restorePreviousBgmOnClose: false };
-
-    const reason = await this.dialogueOverlay.playScript(scriptWithRestoredFlag, {
-      inCutsceneStage: true,
-      typewriterMsPerChar: this.fastMode || reducedMotion ? 0 : 10,
-      onLineStart: (lineIdx, line) => {
-        if (!this.openState || token !== this.runToken) return;
-        if (this.skippedEarly) {
-          this.dialogueOverlay.close('skipped');
-          return;
-        }
-        this.currentLineIndex = lineIdx;
-        const combined = [
-          ...(def.lineCues?.[lineIdx] ?? []),
-          ...(line.stageCueId ? (def.stageCues?.[line.stageCueId] ?? []) : []),
-        ];
-        if (combined.length > 0) {
-          this.choreo.applyCueActions(combined, this.actors, this.fastMode, () => this.openState);
-          if (this.fastMode) this.choreo.snapAllInFlight(this.actors);
-        }
-        this.renderFrame();
-      },
-      onAdvanceInterrupt: () => {
-        if (!this.openState || token !== this.runToken) return;
-        this.choreo.snapAllInFlight(this.actors);
-        this.renderFrame();
-      },
-    });
-
-    if (token === this.runToken) this.closeInternal();
+    const reason = await this.runBeats(doc, runtime, save, startBeat, token);
+    if (this.isCurrent(token)) this.closeInternal();
     return this.skippedEarly ? 'skipped' : reason;
+  }
+
+  private isCurrent(token: number): boolean {
+    return this.openState && token === this.runToken;
+  }
+
+  private async runBeats(
+    doc: CutsceneDoc,
+    runtime: CutsceneStageRuntime,
+    save: SaveData | null,
+    startBeat: number,
+    token: number
+  ): Promise<DialogueFinishReason> {
+    const sides = resolveBeatSides(doc.beats);
+    const reducedMotion = prefersReducedMotionEnabled();
+    let i = startBeat;
+    while (i < doc.beats.length) {
+      if (!this.isCurrent(token)) return 'cancelled';
+      if (this.skippedEarly) return 'skipped';
+      const beat = doc.beats[i]!;
+      if (!showIfPasses(beat.showIf, doc.cast, save)) {
+        i++;
+        continue;
+      }
+
+      let actionsAlreadyRun = false;
+      if (!beat.say || beat.waitForActions) {
+        this.currentBeatIndex = i;
+        this.applyBeatAudio(beat, doc);
+        await this.runSilentBeat(beat, runtime, reducedMotion);
+        actionsAlreadyRun = true;
+        if (!beat.say) {
+          i++;
+          continue;
+        }
+      }
+
+      const segment: Array<{ beat: Beat; index: number; runActions: boolean }> = [];
+      let j = i;
+      while (j < doc.beats.length) {
+        const b = doc.beats[j]!;
+        if (!showIfPasses(b.showIf, doc.cast, save)) {
+          j++;
+          continue;
+        }
+        if (!b.say || (b.waitForActions && j !== i)) break;
+        segment.push({ beat: b, index: j, runActions: !(j === i && actionsAlreadyRun) });
+        j++;
+      }
+
+      const lines: DialogueLine[] = [];
+      const lineBeats: typeof segment = [];
+      for (const entry of segment) {
+        const line = buildBeatDialogueLine({
+          beat: entry.beat,
+          side: sides.get(entry.beat.id) ?? 'left',
+          cast: doc.cast,
+          save,
+          mainSong: doc.music,
+          includeMusicAndSound: entry.runActions,
+        });
+        if (!line) continue;
+        lines.push(line);
+        lineBeats.push(entry);
+      }
+
+      if (lines.length > 0) {
+        const reason = await this.dialogueOverlay.playScript(
+          { id: `${doc.id}_beats_${i}`, lines, restorePreviousBgmOnClose: false },
+          {
+            inCutsceneStage: true,
+            typewriterMsPerChar: this.fastMode || reducedMotion ? 0 : 10,
+            ...(this.usingSaveOverride ? { saveOverride: save } : {}),
+            onLineStart: (lineIdx) => {
+              if (!this.isCurrent(token)) return;
+              if (this.skippedEarly) {
+                this.dialogueOverlay.close('skipped');
+                return;
+              }
+              const entry = lineBeats[lineIdx];
+              if (!entry) return;
+              this.currentBeatIndex = entry.index;
+              this.currentLineIndex += 1;
+              if (entry.runActions) runtime.runBeatActions(entry.beat, this.fastMode);
+              this.renderFrame();
+            },
+            onAdvanceInterrupt: () => {
+              if (!this.isCurrent(token)) return;
+              runtime.flush();
+              this.renderFrame();
+            },
+          }
+        );
+        if (reason !== 'completed') return reason;
+      }
+      i = Math.max(j, i + 1);
+    }
+    return 'completed';
+  }
+
+  private applyBeatAudio(beat: Beat, doc: CutsceneDoc): void {
+    const bgm = musicChangeToBgm(beat.music, doc.music);
+    if (bgm !== undefined) this.audioManager.playBgm(bgm, { fadeMs: 320 });
+    const sfx = resolveMediaUrl('sfx', beat.sound);
+    if (sfx) this.audioManager.playSfxUrl(sfx);
+  }
+
+  private async runSilentBeat(beat: Beat, runtime: CutsceneStageRuntime, reducedMotion: boolean): Promise<void> {
+    const instant = this.fastMode || reducedMotion;
+    const actionsMs = runtime.runBeatActions(beat, instant);
+    const waitMs = instant
+      ? 0
+      : beat.advance?.kind === 'seconds'
+        ? Math.max(0, beat.advance.seconds * 1000)
+        : actionsMs;
+    if (waitMs <= 0) {
+      this.renderFrame();
+      return;
+    }
+    this.shell.introSkipBtn.hidden = false;
+    await new Promise<void>((resolve) => {
+      this.silentResolve = resolve;
+      this.silentTimer = window.setTimeout(() => this.finishSilentWait(), waitMs);
+    });
+    this.shell.introSkipBtn.hidden = true;
   }
 
   public close(): void {
@@ -200,10 +296,10 @@ export class CutsceneScene {
     if (!this.openState) return;
     this.openState = false;
     this.shell.introSkipBtn.hidden = true;
-    this.introResolve = null;
-    this.choreo.clearPendingTimers();
+    this.finishSilentWait();
     this.stopLoop();
     this.rootEl.hidden = true;
+    this.shell.canvas.style.filter = '';
     delete this.rootEl.dataset.cutsceneId;
     this.viewportEl.classList.remove('is-battle-active');
     this.onStateChange?.();
@@ -218,30 +314,58 @@ export class CutsceneScene {
 
   public advanceClockForTest(ms: number): void {
     let rem = Math.max(0, ms);
-    while (rem > 0) {
+    while (rem > 0 && this.runtime) {
       const dt = Math.min(16, rem);
-      this.choreo.stepSimulation(dt, this.actors);
+      this.runtime.step(dt);
       rem -= dt;
     }
     this.renderFrame();
   }
 
   public getTileAt(tx: number, ty: number): DungeonMapTileCell | null {
-    const cell = this.activeDef?.tiles[ty]?.[tx];
+    const layer = this.runtime?.location.layers.find((l) => l.kind === 'tiles' && l.grid);
+    const cell = layer?.grid?.[ty]?.[tx];
     return cell ? { ...cell } : null;
   }
 
   public getSnapshot(): CutsceneSceneSnapshot {
-    return buildCutsceneSceneSnapshot({
+    const rt = this.runtime;
+    return {
       isOpen: this.openState,
-      activeDef: this.activeDef,
-      stageId: this.activeStageId,
-      isStageCustomized: this.activeStageCustomized,
+      cutsceneId: this.activeDoc?.id ?? null,
+      locationId: rt?.location.doc.id ?? null,
+      stageWidth: rt?.location.width ?? 0,
+      stageHeight: rt?.location.height ?? 0,
+      title: this.activeDoc?.title ?? null,
+      locationLabel: rt?.banner ?? null,
+      lightingMood: rt?.lighting.mood ?? null,
+      weather: rt?.weather ?? 'none',
+      currentBeatIndex: this.currentBeatIndex,
       currentLineIndex: this.currentLineIndex,
-      choreo: this.choreo,
+      cameraTile: {
+        x: Math.round((rt?.cameraTileX ?? 0) * 100) / 100,
+        y: Math.round((rt?.cameraTileY ?? 0) * 100) / 100,
+      },
       displayScale: this.displayScale,
-      actors: this.actors,
-    });
+      actors: (rt?.actors ?? [])
+        .filter((a) => a.available && !a.offStage)
+        .map((a) => ({
+          actorId: a.actorId,
+          roleKind: a.roleKind,
+          nickname: a.nickname,
+          speciesId: a.speciesId,
+          pmdAssetId: a.pmdAssetId,
+          visualAssetKey: a.visualAssetKey,
+          visible: a.visible,
+          x: Math.round(a.x * 100) / 100,
+          y: Math.round(a.y * 100) / 100,
+          direction: a.direction,
+          action: a.action,
+          pose: a.poseName,
+          activeEmote: a.emote?.kind ?? null,
+        })),
+      propCount: rt?.props.length ?? 0,
+    };
   }
 
   private refreshSize(): void {
@@ -268,7 +392,7 @@ export class CutsceneScene {
       }
       const dt = Math.min(64, Math.max(0, now - this.lastRafMs));
       this.lastRafMs = now;
-      this.choreo.stepSimulation(dt, this.actors);
+      this.runtime?.step(dt);
       this.renderFrame();
       this.rafId = window.requestAnimationFrame(tick);
     };
@@ -281,18 +405,15 @@ export class CutsceneScene {
   }
 
   private renderFrame(): void {
-    if (!this.openState || !this.activeDef) return;
-    renderCutsceneStageFrame({
+    if (!this.openState || !this.runtime) return;
+    const { cssFilter } = renderCutsceneStageFrame({
       ctx: this.shell.ctx,
       nativeW: this.shell.canvas.width,
       nativeH: this.shell.canvas.height,
       viewHeightCss: this.viewHeightCss,
-      def: this.activeDef,
-      actors: this.actors,
-      choreo: this.choreo,
-      tilesetSheets: this.tilesetSheets,
-      spriteBundles: this.spriteBundles,
+      runtime: this.runtime,
       ambientMotes: this.ambientMotes,
     });
+    if (this.shell.canvas.style.filter !== cssFilter) this.shell.canvas.style.filter = cssFilter;
   }
 }

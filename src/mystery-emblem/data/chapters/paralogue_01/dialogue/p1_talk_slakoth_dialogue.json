@@ -1,0 +1,41 @@
+{
+  "id": "p1_talk_slakoth_dialogue",
+  "chapter": "paralogue_01",
+  "role": "event",
+  "title": "Lush Prairie",
+  "music": "spinda_cafe",
+  "cast": [
+    { "id": "lord", "who": { "kind": "lord" } },
+    { "id": "slakoth", "who": { "kind": "recruit", "speciesId": "slakoth" } },
+    { "id": "advisor", "who": { "kind": "advisor" } }
+  ],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Surprised",
+        "side": "left",
+        "text": "Hey, wake up! There are Ferals right across the grass!"
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "slakoth",
+        "emotion": "Happy",
+        "side": "right",
+        "text": "*Yawn*... Oh, hey. You smell like Oran Berries. Mind if I tag along?"
+      }
+    },
+    {
+      "id": "line_3",
+      "say": {
+        "speaker": "advisor",
+        "emotion": "Happy",
+        "side": "left",
+        "text": "He slept through a raid. Honestly? I respect that."
+      }
+    }
+  ]
+}

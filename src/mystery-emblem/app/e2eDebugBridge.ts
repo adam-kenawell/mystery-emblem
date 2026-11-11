@@ -29,7 +29,7 @@ import {
   PERSONALITY_QUIZ_QUESTIONS,
   evaluatePersonalityQuiz,
 } from '../data/quizData';
-import { DEMO_STORY_CUTSCENES } from '../data/storyCutscenes';
+import { listStoryCutscenesInPlayOrder } from '../data/storyCutscenes';
 import {
   TUTORIAL_TOPICS,
   detectDynamicMapTerrainTutorialIds,
@@ -76,7 +76,9 @@ export function installMysteryEmblemDebugBridge(
     dialogueOverlay: ctx.dialogueOverlay,
     cutsceneScene: ctx.cutsceneScene,
     creditsScene: ctx.creditsScene,
-    DEMO_STORY_CUTSCENES,
+    get DEMO_STORY_CUTSCENES() {
+      return listStoryCutscenesInPlayOrder();
+    },
     tutorialOverlay: ctx.tutorialOverlay,
     quizScene: ctx.quizScene,
     launchDemoChapterBattle: router.launchDemoChapterBattle,

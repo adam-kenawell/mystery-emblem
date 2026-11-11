@@ -32,6 +32,8 @@ export type DialogueSpeakerRef =
   | { kind: 'mentor'; fallbackSpeciesId?: string }
   | { kind: 'advisor'; nickname?: string }
   | { kind: 'quiz_slot'; slot: QuizSeedSlotKey; index?: number; fallbackSpeciesId?: string }
+  /** A fixed story recruit: the roster unit of that species line once recruited, else the species */
+  | { kind: 'recruit'; speciesId: string }
   | { kind: 'unit'; instanceId: string; fallbackSpeciesId?: string }
   | { kind: 'species'; speciesId: string; nickname?: string; cosmeticForm?: UnitCosmeticForm }
   | { kind: 'npc'; pmdAssetId: string; speciesName: string; nickname: string };
@@ -92,6 +94,19 @@ export function findAdvisorRosterUnit(save: SaveData | null): OwnedPokemonInstan
 
 export function isAdvisorInPlayableRoster(save: SaveData | null): boolean {
   return Boolean(findAdvisorRosterUnit(save));
+}
+
+export function findRosterUnitOfSpeciesLine(
+  save: SaveData | null,
+  speciesId: string
+): OwnedPokemonInstance | undefined {
+  if (!save) return undefined;
+  const target = getSpeciesById(speciesId);
+  return save.roster.find((u) => {
+    if (u.speciesId === speciesId) return true;
+    const uSp = getSpeciesById(u.speciesId);
+    return Boolean(target && uSp && uSp.lineId === target.lineId);
+  });
 }
 
 export function resolveRecruitCameoUnits(save: SaveData | null): OwnedPokemonInstance[] {
@@ -212,14 +227,13 @@ export function resolveSpeakerIdentity(
       const seedIds = save?.campaign.quizSeeds?.[speaker.slot] ?? [];
       const seededSpId = seedIds[speaker.index ?? 0] ?? speaker.fallbackSpeciesId ?? 'starly';
       fallbackSpeciesId = seededSpId;
-      const seededSp = getSpeciesById(seededSpId);
-      unit = save?.roster.find((u) => {
-        if (u.speciesId === seededSpId) return true;
-        const uSp = getSpeciesById(u.speciesId);
-        return Boolean(seededSp && uSp && uSp.lineId === seededSp.lineId);
-      });
+      unit = findRosterUnitOfSpeciesLine(save, seededSpId);
       break;
     }
+    case 'recruit':
+      fallbackSpeciesId = speaker.speciesId;
+      unit = findRosterUnitOfSpeciesLine(save, speaker.speciesId);
+      break;
   }
 
   if (unit) {

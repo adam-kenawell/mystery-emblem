@@ -1,54 +1,60 @@
 /**
- * Mystery Emblem — Sharded Out-of-Dungeon Story Cutscene Registry (`storyCutscenes.ts`)
+ * Mystery Emblem — Story Cutscene Lookup & Chapter Links (`storyCutscenes.ts`)
  *
- * Aggregates per-chapter choreographed PMD sprite-stage cutscenes from `data/chapters/*`
- * and derives node -> pre/post cutscene lookup maps directly from self-contained chapter JSONs.
+ * Cutscene documents live in `data/cutscenes/*.json`; which chapter each one plays before or
+ * after is stored in that chapter's `chapter.json` (`preStoryCutsceneId` / `postStoryCutsceneId`).
  */
 
-import type { StoryCutsceneDefinition } from '../scenes/cutscene/cutsceneTypes';
-import { CS_03_BLUFF_CAMPFIRE } from './chapters/chapter_01/cutscene';
-import { CS_04_WATCHTOWER_BELLS } from './chapters/chapter_02/cutscene';
-import { CS_05_SANCTUARY_WAR_ROOM } from './chapters/chapter_03/cutscene';
-import { CS_06_ORCHARD_CELEBRATION } from './chapters/chapter_04/cutscene';
-import { CS_07_LANTERN_PASS } from './chapters/chapter_05/cutscene';
-import { CS_08_FORTRESS_RESOLVE } from './chapters/chapter_06/cutscene';
 import { RAW_CHAPTER_JSON_LIST } from './chapters/defaultCatalog';
-import { CS_02_SANCTUARY_REVEAL } from './chapters/prologue/postCutscene';
-import { CS_01_COASTAL_FRIENDS } from './chapters/prologue/preCutscene';
+import type { CutsceneDoc } from './cutscenes/cutsceneDocTypes';
+import { getCutsceneDoc, listCutsceneDocs } from './cutscenes/cutsceneRegistry';
 
-export const STORY_CUTSCENES: ReadonlyArray<StoryCutsceneDefinition> = [
-  CS_01_COASTAL_FRIENDS,
-  CS_02_SANCTUARY_REVEAL,
-  CS_03_BLUFF_CAMPFIRE,
-  CS_04_WATCHTOWER_BELLS,
-  CS_05_SANCTUARY_WAR_ROOM,
-  CS_06_ORCHARD_CELEBRATION,
-  CS_07_LANTERN_PASS,
-  CS_08_FORTRESS_RESOLVE,
-];
+export function getStoryCutsceneById(id: string): CutsceneDoc | undefined {
+  return getCutsceneDoc(id);
+}
 
-/** Backward-compatible alias */
-export const DEMO_STORY_CUTSCENES = STORY_CUTSCENES;
+export function getPreChapterCutsceneId(nodeId: string): string | undefined {
+  return RAW_CHAPTER_JSON_LIST.find((c) => c.nodeId === nodeId)?.preStoryCutsceneId;
+}
 
-export const STORY_CUTSCENE_BY_ID: Readonly<Record<string, StoryCutsceneDefinition>> =
-  Object.fromEntries(STORY_CUTSCENES.map((c) => [c.id, c]));
+export function getPostChapterCutsceneId(nodeId: string): string | undefined {
+  return RAW_CHAPTER_JSON_LIST.find((c) => c.nodeId === nodeId)?.postStoryCutsceneId;
+}
 
-export const PRE_CHAPTER_STORY_CUTSCENE_BY_NODE_ID: Readonly<Record<string, string>> =
-  Object.fromEntries(
-    RAW_CHAPTER_JSON_LIST.filter((ch) => Boolean(ch.preStoryCutsceneId)).map((ch) => [
-      ch.nodeId,
-      ch.preStoryCutsceneId!,
-    ])
-  );
+export interface StoryCutsceneLink {
+  chapterId: string;
+  when: 'before' | 'after';
+}
 
-export const POST_CHAPTER_STORY_CUTSCENE_BY_NODE_ID: Readonly<Record<string, string>> =
-  Object.fromEntries(
-    RAW_CHAPTER_JSON_LIST.filter((ch) => Boolean(ch.postStoryCutsceneId)).map((ch) => [
-      ch.nodeId,
-      ch.postStoryCutsceneId!,
-    ])
-  );
+export function findStoryCutsceneLink(cutsceneId: string): StoryCutsceneLink | null {
+  for (const ch of RAW_CHAPTER_JSON_LIST) {
+    if (ch.preStoryCutsceneId === cutsceneId) return { chapterId: ch.id, when: 'before' };
+    if (ch.postStoryCutsceneId === cutsceneId) return { chapterId: ch.id, when: 'after' };
+  }
+  return null;
+}
 
-export function getStoryCutsceneById(id: string): StoryCutsceneDefinition | undefined {
-  return STORY_CUTSCENE_BY_ID[id];
+/** Linked cutscenes in story order (by chapter, "before" first), then unlinked ones by title. */
+export function listStoryCutscenesInPlayOrder(): CutsceneDoc[] {
+  const ordered: CutsceneDoc[] = [];
+  const seen = new Set<string>();
+  const chapters = RAW_CHAPTER_JSON_LIST;
+  for (const ch of chapters) {
+    for (const id of [ch.preStoryCutsceneId, ch.postStoryCutsceneId]) {
+      const doc = id ? getCutsceneDoc(id) : undefined;
+      if (doc && !seen.has(doc.id)) {
+        ordered.push(doc);
+        seen.add(doc.id);
+      }
+    }
+  }
+  const unlinked = listCutsceneDocs()
+    .filter((d) => !seen.has(d.id))
+    .sort((a, b) => a.title.localeCompare(b.title));
+  return [...ordered, ...unlinked];
+}
+
+/** Linked cutscenes only (what players can ever see). */
+export function listLinkedStoryCutscenes(): CutsceneDoc[] {
+  return listStoryCutscenesInPlayOrder().filter((d) => findStoryCutsceneLink(d.id));
 }

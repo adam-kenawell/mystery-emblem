@@ -293,3 +293,63 @@ export function loadSpeciesSpriteBundle(speciesIdOrAssetId: string): Promise<Loa
   spriteBundleCache.set(cacheKey, promise);
   return promise;
 }
+
+const animDataCache = new Map<string, ReturnType<typeof fetchDetailedAnimData>>();
+const namedAnimCache = new Map<string, Promise<LoadedActionAnimation | null>>();
+
+function loadAnimDataCached(pmdAssetId: string): ReturnType<typeof fetchDetailedAnimData> {
+  const cached = animDataCache.get(pmdAssetId);
+  if (cached) return cached;
+  const promise = fetchDetailedAnimData(pmdAssetId);
+  animDataCache.set(pmdAssetId, promise);
+  return promise;
+}
+
+/** Every animation name a Pokémon has in SpriteCollab (`Idle`, `Sleep`, `Nod`…). */
+export async function listSpriteAnimationNames(speciesIdOrAssetId: string): Promise<string[]> {
+  const { pmdAssetId } = resolveSpeciesAssetTarget(speciesIdOrAssetId);
+  const data = await loadAnimDataCached(pmdAssetId);
+  return data ? Object.keys(data.anims).sort() : [...PMD_SPRITE_ACTIONS];
+}
+
+/** Loads one named SpriteCollab animation (for cutscene poses); `null` if the Pokémon lacks it. */
+export function loadNamedSpriteAnimation(
+  speciesIdOrAssetId: string,
+  animName: string
+): Promise<LoadedActionAnimation | null> {
+  const { pmdAssetId } = resolveSpeciesAssetTarget(speciesIdOrAssetId);
+  const key = `${pmdAssetId}::${animName}`;
+  const cached = namedAnimCache.get(key);
+  if (cached) return cached;
+  const promise = (async (): Promise<LoadedActionAnimation | null> => {
+    const data = await loadAnimDataCached(pmdAssetId);
+    const entry = data?.anims[animName];
+    if (!entry) return null;
+    const url = spriteUrl(pmdAssetId, entry.resolvedSheetName);
+    const img = await loadImage(url);
+    if (!img) return null;
+    const info = calcFrameInfo(img, { w: entry.w, h: entry.h });
+    return {
+      canonicalAction: 'Idle',
+      xmlAnimName: entry.name,
+      sheetName: entry.resolvedSheetName,
+      source: img,
+      sourceUrl: url,
+      frameWidth: info.w,
+      frameHeight: info.h,
+      frameCount: info.count,
+      rowCount: Math.max(1, Math.floor(img.naturalHeight / info.h)),
+      durationsMs: normalizeDurations(entry.durationsMs, info.count, 'Idle'),
+      hitFrame: entry.hitFrame,
+      synthesizedFallback: false,
+    };
+  })();
+  namedAnimCache.set(key, promise);
+  return promise;
+}
+
+export function getAnimationTotalMs(anim: LoadedActionAnimation): number {
+  let total = 0;
+  for (let i = 0; i < Math.max(1, anim.frameCount); i++) total += Math.max(16, anim.durationsMs[i] ?? 120);
+  return Math.max(80, total);
+}

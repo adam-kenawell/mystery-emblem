@@ -8,13 +8,16 @@
 import type { CustomMapOverrideEntry, DungeonMapDefinition } from '../types/schemas';
 import { cloneDungeonMap } from './chapters/chapterCodec';
 import {
-  getDefaultTargetMap,
-  isCutsceneStageId,
-  validateTargetMapDefinition,
-} from './chapters/cutsceneStageCatalog';
+  getDefaultChapterMap as getDefaultTargetMap,
+  validateDungeonMapDefinition as validateTargetMapDefinition,
+} from './chapters/defaultCatalog';
 import { isCorruptedAllWaterOverride } from './chapters/mapValidator';
 
 export const MAP_OVERRIDES_STORAGE_KEY = 'mystery_emblem_map_overrides_v1';
+
+/** Prefix of retired Map Editor cutscene stages (now cutscene locations saved to the project). */
+export const LEGACY_CUTSCENE_STAGE_PREFIX = 'cutscene_stage_';
+const isLegacyStageId = (id: string) => id.startsWith(LEGACY_CUTSCENE_STAGE_PREFIX);
 
 export interface CustomMapsSyncEnvelope {
   version: 2;
@@ -44,6 +47,8 @@ function normalizeIncomingEnvelope(
 class ChapterMapOverrideStore {
   private overrides = new Map<string, CustomMapOverrideEntry>();
   private resets = new Map<string, number>();
+  /** Old cutscene-stage edits kept verbatim (never synced) until imported or discarded */
+  private legacyStageEntries = new Map<string, CustomMapOverrideEntry>();
   private readonly listeners = new Set<MapStoreListener>();
   private loadedFromStorage = false;
   private lastStamp = 0;
@@ -71,11 +76,15 @@ class ChapterMapOverrideStore {
       let healed = false;
       for (const [id, entry] of Object.entries(overrides)) {
         if (!entry || typeof entry !== 'object') continue;
+        if (isLegacyStageId(id)) {
+          this.legacyStageEntries.set(id, entry);
+          continue;
+        }
         const ts = typeof entry.updatedAt === 'number' && Number.isFinite(entry.updatedAt) && entry.updatedAt > 0 ? entry.updatedAt : Date.now();
         if ((this.resets.get(id) ?? 0) >= ts) continue;
         const v = validateTargetMapDefinition(entry.map, id);
         if (v.valid && v.map) {
-          if (!isCutsceneStageId(id) && isCorruptedAllWaterOverride(v.map)) {
+          if (isCorruptedAllWaterOverride(v.map)) {
             const healTs = Math.max(ts + 1, Date.now());
             this.resets.set(id, healTs);
             if (healTs > this.lastStamp) this.lastStamp = healTs;
@@ -96,11 +105,13 @@ class ChapterMapOverrideStore {
   private persist(): void {
     if (typeof window === 'undefined' || !window.localStorage) return;
     try {
-      if (this.overrides.size === 0 && this.resets.size === 0) {
+      if (this.overrides.size === 0 && this.resets.size === 0 && this.legacyStageEntries.size === 0) {
         window.localStorage.removeItem(MAP_OVERRIDES_STORAGE_KEY);
         return;
       }
-      window.localStorage.setItem(MAP_OVERRIDES_STORAGE_KEY, JSON.stringify(this.getSyncEnvelope()));
+      const envelope = this.getSyncEnvelope();
+      for (const [id, entry] of this.legacyStageEntries) envelope.overrides[id] = entry;
+      window.localStorage.setItem(MAP_OVERRIDES_STORAGE_KEY, JSON.stringify(envelope));
     } catch {
       // Quota fallback
     }
@@ -114,6 +125,7 @@ class ChapterMapOverrideStore {
     this.loadedFromStorage = false;
     this.overrides.clear();
     this.resets.clear();
+    this.legacyStageEntries.clear();
     this.ensureLoaded();
     this.emit(null);
   }
@@ -199,6 +211,7 @@ class ChapterMapOverrideStore {
     let cloudOutdated = false;
 
     for (const id of allIds) {
+      if (isLegacyStageId(id)) continue;
       const locOv = this.overrides.get(id);
       const locOvTs = locOv?.updatedAt ?? 0;
       const locResTs = this.resets.get(id) ?? 0;
@@ -213,7 +226,7 @@ class ChapterMapOverrideStore {
         const v = validateTargetMapDefinition(rawOv.map, id);
         if (v.valid && v.map) {
           const rawTs = typeof rawOv.updatedAt === 'number' && Number.isFinite(rawOv.updatedAt) && rawOv.updatedAt > 0 ? rawOv.updatedAt : 1;
-          if (!isCutsceneStageId(id) && isCorruptedAllWaterOverride(v.map)) {
+          if (isCorruptedAllWaterOverride(v.map)) {
             incResTs = Math.max(incResTs, rawTs + 1, locTs + 1, Date.now());
             cloudOutdated = true;
           } else {
@@ -261,6 +274,16 @@ class ChapterMapOverrideStore {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   }
+
+  public getLegacyStageEntries(): Record<string, CustomMapOverrideEntry> {
+    this.ensureLoaded();
+    return Object.fromEntries(this.legacyStageEntries);
+  }
+
+  public discardLegacyStageEntry(id: string): void {
+    this.ensureLoaded();
+    if (this.legacyStageEntries.delete(id)) this.persist();
+  }
 }
 
 const store = new ChapterMapOverrideStore();
@@ -296,3 +319,5 @@ export function importChapterMapJson(rawJson: string, targetLevelId?: string): D
   return saveChapterMapOverride(resolvedId, parsed as DungeonMapDefinition);
 }
 export const subscribeChapterMapChanges = (listener: MapStoreListener): (() => void) => store.subscribe(listener);
+export const getLegacyCutsceneStageOverrides = (): Record<string, CustomMapOverrideEntry> => store.getLegacyStageEntries();
+export const discardLegacyCutsceneStageOverride = (id: string): void => store.discardLegacyStageEntry(id);

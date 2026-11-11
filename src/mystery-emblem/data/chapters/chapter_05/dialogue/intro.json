@@ -1,0 +1,63 @@
+{
+  "id": "intro",
+  "chapter": "chapter_05",
+  "role": "intro",
+  "title": "Northern Mountain Pass",
+  "music": "foggy_forest",
+  "cast": [
+    { "id": "duskull", "who": { "kind": "recruit", "speciesId": "duskull" } },
+    { "id": "mentor", "who": { "kind": "mentor" } },
+    { "id": "advisor", "who": { "kind": "advisor" } },
+    {
+      "id": "shadowbinder_spiritomb",
+      "who": { "kind": "npc", "pokemon": "0442", "name": "ShadowBinder Spiritomb", "speciesName": "Spiritomb" }
+    }
+  ],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "duskull",
+        "emotion": "Angry",
+        "side": "right",
+        "text": "Begone, shadow thieves! You’ll not touch these graves while my flame still burns!"
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Normal",
+        "side": "left",
+        "text": "Lower your lantern, caretaker. We serve King Serperior, and we honor those who rest here."
+      }
+    },
+    {
+      "id": "line_3",
+      "say": {
+        "speaker": "duskull",
+        "emotion": "Surprised",
+        "side": "right",
+        "text": "Sir Empoleon’s crest... and a Dragon heir! Forgive me. Gengar’s scouts are raiding this shrine."
+      }
+    },
+    {
+      "id": "line_4",
+      "say": {
+        "speaker": "advisor",
+        "emotion": "Worried",
+        "side": "left",
+        "text": "So the creepy ghost is on our side. Great. Then who’s laughing down in the chasm?"
+      }
+    },
+    {
+      "id": "line_5",
+      "say": {
+        "speaker": "shadowbinder_spiritomb",
+        "emotion": "Angry",
+        "side": "right",
+        "text": "Kukuku... Lord Gengar claims every ward on this ridge. Sink into the dark, little sparks."
+      }
+    }
+  ]
+}

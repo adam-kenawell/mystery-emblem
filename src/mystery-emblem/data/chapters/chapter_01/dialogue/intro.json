@@ -1,0 +1,54 @@
+{
+  "id": "intro",
+  "chapter": "chapter_01",
+  "role": "intro",
+  "title": "Capital Road",
+  "music": "drenched_bluff",
+  "cast": [
+    {
+      "id": "captain_aron",
+      "who": { "kind": "npc", "pokemon": "0304", "name": "Captain Aron", "speciesName": "Aron" }
+    },
+    { "id": "mentor", "who": { "kind": "mentor" } },
+    { "id": "advisor", "who": { "kind": "advisor" } },
+    { "id": "lord", "who": { "kind": "lord" } }
+  ],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "captain_aron",
+        "emotion": "Angry",
+        "side": "right",
+        "text": "Halt! By order of the Ironscale Empire, this road is closed."
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "This is Commonwealth land, Captain. Stand aside."
+      }
+    },
+    {
+      "id": "line_3",
+      "say": {
+        "speaker": "advisor",
+        "emotion": "Worried",
+        "side": "left",
+        "text": "An Ironscale captain, on our road? Can we just... take a different road?"
+      }
+    },
+    {
+      "id": "line_4",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "This is the only road to the King. We’re going through."
+      }
+    }
+  ]
+}

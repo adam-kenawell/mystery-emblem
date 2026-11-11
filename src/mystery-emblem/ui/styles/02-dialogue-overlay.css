@@ -251,3 +251,24 @@
     line-height: 1.35;
   }
 }
+
+/* Narration boxes (no portrait or name) and rich text tags from the Cutscene Editor */
+.pmd-dialogue-box.is-narrator .pmd-dialogue-speaker-group {
+  visibility: hidden;
+}
+
+.pmd-dialogue-box.is-narrator .pmd-dialogue-text {
+  text-align: center;
+  font-style: italic;
+}
+
+.pmd-text-shake {
+  display: inline-block;
+  animation: pmd-text-shake 0.14s steps(2) infinite;
+}
+
+@keyframes pmd-text-shake {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(1px, -1px); }
+  100% { transform: translate(-1px, 1px); }
+}

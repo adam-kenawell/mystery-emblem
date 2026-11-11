@@ -56,6 +56,11 @@ export function getDefaultChapterMap(levelId: string): DungeonMapDefinition {
   return cloneDungeonMap(base);
 }
 
+/** Rebuilds the cached default map after a chapter's JSON was edited in Dev Tools. */
+export function refreshDefaultChapterMap(raw: CompactChapterJson): void {
+  defaultMapById.set(raw.id, hydrateChapterDefaultMap(raw));
+}
+
 export function validateDungeonMapDefinition(
   candidate: unknown,
   expectedLevelId?: string

@@ -8,7 +8,6 @@ import type { AudioManager } from '../../audio/AudioManager';
 import {
   getEffectiveChapterMap,
   hasChapterMapOverride,
-  type CutsceneStageActorMarker,
   type MapEditorTargetKind,
 } from '../../data/chapterMapRegistry';
 import type { SaveStateManager } from '../../state/SaveStateManager';
@@ -56,6 +55,24 @@ export const BIOME_BRUSH_PRESETS: ReadonlyArray<BiomeBrushPreset> = [
   { id: 'stairs', label: 'Stairs', terrainType: 'stairs', tilesetId: '110', chunkIndex: 59 },
   { id: 'wonder', label: 'Wonder Tile', terrainType: 'wonder_tile', tilesetId: '142', chunkIndex: 59 },
 ];
+
+/** Faded sprite shown on the map for reference (e.g. a cutscene's cast while painting its location) */
+export interface EditorReferenceMarker {
+  label: string;
+  previewAssetId: string;
+  x: number;
+  y: number;
+  direction: number;
+}
+
+/** Painting a cutscene location's tile layer, handed off from the Cutscene Editor */
+export interface LocationEditSession {
+  locationName: string;
+  defaultTilesetId: string;
+  markers: ReadonlyArray<EditorReferenceMarker>;
+  onDone: (map: DungeonMapDefinition) => void;
+  onCancel: () => void;
+}
 
 export interface ChapterMapEditorSnapshot {
   isOpen: boolean;
@@ -113,7 +130,8 @@ export interface EditorRuntimeState {
 
   activeLevelId: string;
   editorTargetKind: MapEditorTargetKind;
-  cutsceneActorMarkers: ReadonlyArray<CutsceneStageActorMarker>;
+  referenceMarkers: ReadonlyArray<EditorReferenceMarker>;
+  locationSession: LocationEditSession | null;
   map: DungeonMapDefinition;
   undoStack: DungeonMapDefinition[];
   dirty: boolean;
@@ -161,7 +179,8 @@ export function createInitialEditorState(): EditorRuntimeState {
 
     activeLevelId: 'prologue',
     editorTargetKind: 'chapter',
-    cutsceneActorMarkers: [],
+    referenceMarkers: [],
+    locationSession: null,
     map: getEffectiveChapterMap('prologue'),
     undoStack: [],
     dirty: false,
@@ -213,15 +232,15 @@ export function buildEditorSnapshot(
     width: state.map.width,
     height: state.map.height,
     deploymentCap:
-      state.editorTargetKind === 'cutscene'
+      state.editorTargetKind === 'location'
         ? 0
         : (state.map.deploymentCap ?? Math.max(1, state.map.playerSpawns.length)),
     playerSpawnCount: state.map.playerSpawns.length,
     enemySpawnCount: state.map.enemySpawns.length,
     reinforcementWaveCount: state.map.reinforcements?.length ?? 0,
     actorMarkerCount:
-      state.editorTargetKind === 'cutscene'
-        ? state.cutsceneActorMarkers.filter(
+      state.editorTargetKind === 'location'
+        ? state.referenceMarkers.filter(
             (m) => m.x >= 0 && m.y >= 0 && m.x < state.map.width && m.y < state.map.height
           ).length
         : 0,

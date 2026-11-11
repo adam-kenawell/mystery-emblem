@@ -1,0 +1,41 @@
+{
+  "id": "intro",
+  "chapter": "paralogue_01",
+  "role": "intro",
+  "title": "Lush Prairie",
+  "music": "fun_exploration",
+  "cast": [
+    { "id": "slakoth", "who": { "kind": "recruit", "speciesId": "slakoth" } },
+    { "id": "advisor", "who": { "kind": "advisor" } },
+    { "id": "lord", "who": { "kind": "lord" } }
+  ],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "slakoth",
+        "emotion": "Normal",
+        "side": "right",
+        "text": "Zzz... five more minutes... zzz..."
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "advisor",
+        "emotion": "Stunned",
+        "side": "left",
+        "text": "Ferals are charging, and that Slakoth is... napping? Right there?"
+      }
+    },
+    {
+      "id": "line_3",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "Keep them away from Slakoth. I’ll go wake him up."
+      }
+    }
+  ]
+}

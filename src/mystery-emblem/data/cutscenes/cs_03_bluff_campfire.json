@@ -1,0 +1,129 @@
+{
+  "id": "cs_03_bluff_campfire",
+  "title": "King Serperior’s Commission",
+  "music": "one_for_all",
+  "location": "sanctuary_glade",
+  "banner": "Royal Sanctuary Court · Verdant Capital",
+  "lighting": "sanctuary_glow",
+  "camera": { "x": 7.5, "y": 6 },
+  "cast": [
+    {
+      "id": "serperior",
+      "who": { "kind": "npc", "pokemon": "0497", "name": "King Serperior", "speciesName": "Serperior" }
+    },
+    {
+      "id": "milotic",
+      "who": { "kind": "npc", "pokemon": "0350", "name": "Lady Milotic", "speciesName": "Milotic" }
+    },
+    { "id": "mentor", "who": { "kind": "mentor" } },
+    { "id": "lord", "who": { "kind": "lord" } },
+    { "id": "partner", "who": { "kind": "partner" } },
+    { "id": "healer", "who": { "kind": "healer" } },
+    { "id": "advisor", "who": { "kind": "advisor" } },
+    { "id": "recruit_0", "who": { "kind": "party_extra", "slotIndex": 0 } },
+    { "id": "recruit_1", "who": { "kind": "party_extra", "slotIndex": 1 } }
+  ],
+  "placements": [
+    { "id": "serperior", "x": 7, "y": 4, "facing": "Down" },
+    { "id": "milotic", "x": 8, "y": 4, "facing": "Down" },
+    { "id": "mentor", "x": 6, "y": 6, "facing": "UpRight" },
+    { "id": "lord", "x": 7, "y": 7, "facing": "Up" },
+    { "id": "partner", "x": 8, "y": 7, "facing": "Up" },
+    { "id": "healer", "x": 6, "y": 8, "facing": "Up" },
+    { "id": "advisor", "x": 9, "y": 8, "facing": "Up" },
+    { "id": "recruit_0", "x": 6, "y": 9, "facing": "UpRight" },
+    { "id": "recruit_1", "x": 9, "y": 9, "facing": "UpLeft" }
+  ],
+  "beats": [
+    {
+      "id": "opening",
+      "actions": [
+        { "type": "walk", "who": "lord", "path": [[7, 6]], "speed": 2.8, "facing": "Up" },
+        { "type": "walk", "who": "partner", "path": [[8, 6]], "speed": 3, "facing": "Up" }
+      ],
+      "advance": { "kind": "seconds", "seconds": 0.8 }
+    },
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "serperior",
+        "emotion": "Normal",
+        "side": "left",
+        "text": "Welcome, Sir Empoleon. And welcome, young ones. Word of the broken blockade reached us first."
+      },
+      "actions": [{ "type": "pose", "who": "serperior", "anim": "Special", "duration": 0.52 }]
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "milotic",
+        "emotion": "Happy",
+        "side": "right",
+        "text": "So this is {lord}. There’s a warmth about you. Sir Empoleon raised you well."
+      },
+      "actions": [
+        { "type": "walk", "who": "milotic", "path": [[8, 5]], "speed": 2.2, "facing": "DownLeft" },
+        { "type": "aura", "who": "lord", "duration": 1.1, "delay": 0.25 }
+      ]
+    },
+    {
+      "id": "line_3",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Joyous",
+        "side": "right",
+        "text": "We made two new friends on the way, too! So what’s next, Your Majesty?"
+      },
+      "actions": [
+        { "type": "hop", "who": "partner", "count": 2 },
+        { "type": "hop", "who": "recruit_0", "count": 1, "delay": 0.22 }
+      ]
+    },
+    {
+      "id": "line_4",
+      "say": {
+        "speaker": "advisor",
+        "emotion": "Teary-Eyed",
+        "side": "right",
+        "text": "Something quiet, hopefully. A library? I could guard a library."
+      },
+      "actions": [
+        { "type": "shake", "who": "advisor", "duration": 0.52 },
+        { "type": "emote", "who": "advisor", "emote": "sweat", "duration": 1.15 }
+      ]
+    },
+    {
+      "id": "line_5",
+      "say": {
+        "speaker": "serperior",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "If only. Tremors are shaking Cleft Mountain, and Gengar’s scouts are hiding in its crags."
+      },
+      "actions": [{ "type": "walk", "who": "serperior", "path": [[7, 5]], "speed": 2.3, "facing": "Down" }]
+    },
+    {
+      "id": "line_6",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "With your leave, Your Majesty, I’ll take {lord}’s company there myself."
+      },
+      "actions": [{ "type": "pose", "who": "mentor", "anim": "Attack", "duration": 0.48 }]
+    },
+    {
+      "id": "line_7",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "We’ll go. Whatever’s shaking that mountain, we’ll find it."
+      },
+      "actions": [
+        { "type": "aura", "who": "lord", "duration": 1.2 },
+        { "type": "emote", "who": "healer", "emote": "heart", "duration": 1.1, "delay": 0.22 }
+      ]
+    }
+  ]
+}

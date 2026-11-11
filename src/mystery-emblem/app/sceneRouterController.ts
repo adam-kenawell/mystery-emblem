@@ -10,8 +10,8 @@ import {
 } from '../data/campaignRegistry';
 import { DEMO_OVERWORLD_GRAPH } from '../data/overworldMapData';
 import {
-  POST_CHAPTER_STORY_CUTSCENE_BY_NODE_ID,
-  PRE_CHAPTER_STORY_CUTSCENE_BY_NODE_ID,
+  getPostChapterCutsceneId,
+  getPreChapterCutsceneId,
   getStoryCutsceneById,
 } from '../data/storyCutscenes';
 import type { SaveStateManager } from '../state/SaveStateManager';
@@ -22,7 +22,7 @@ import { launchCampaignChapterBattle } from './chapterBattleLauncher';
 export interface SceneRouter {
   showTitleScreen: () => void;
   closeDevToolsOverlay: () => void;
-  openDevToolsOverlay: (tab?: 'cheats' | 'maps') => void;
+  openDevToolsOverlay: (tab?: 'cheats' | 'maps' | 'cutscenes') => void;
   toggleDevTools: () => void;
   openBattleScene: (source?: 'devtools' | 'overworld', levelId?: string) => Promise<void>;
   openOverworldScene: (opts?: {
@@ -63,7 +63,7 @@ export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
     backStack.syncButtonLabel();
   }
 
-  function openDevToolsOverlay(tab?: 'cheats' | 'maps'): void {
+  function openDevToolsOverlay(tab?: 'cheats' | 'maps' | 'cutscenes'): void {
     if (!isAppAdminSignedIn(ctx) || !dom.devToolsBackdrop) return;
     dom.devToolsBackdrop.hidden = false;
     ctx.devToolsHarness?.onSaveChanged();
@@ -128,8 +128,7 @@ export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
   }
 
   async function playPreChapterStoryCutsceneIfNeeded(nodeId: string): Promise<void> {
-    const demoCh = getDemoChapterByNodeId(nodeId);
-    const csId = demoCh?.preStoryCutsceneId ?? PRE_CHAPTER_STORY_CUTSCENE_BY_NODE_ID[nodeId];
+    const csId = getPreChapterCutsceneId(nodeId);
     const def = csId ? getStoryCutsceneById(csId) : undefined;
     if (!def || !ctx.cutsceneScene || manager.hasSeenStoryCutscene(def.id)) return;
     ctx.tutorialOverlay?.closeAll(null);
@@ -148,8 +147,7 @@ export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
     if (dom.devToolsBackdrop) dom.devToolsBackdrop.hidden = true;
 
     const demoCh = getDemoChapterByNodeId(clearedNodeId);
-    const postId =
-      demoCh?.postStoryCutsceneId ?? POST_CHAPTER_STORY_CUTSCENE_BY_NODE_ID[clearedNodeId];
+    const postId = getPostChapterCutsceneId(clearedNodeId);
     const postDef = postId ? getStoryCutsceneById(postId) : undefined;
     if (postDef && ctx.cutsceneScene && !manager.hasSeenStoryCutscene(postDef.id)) {
       await ctx.cutsceneScene.play(postDef);

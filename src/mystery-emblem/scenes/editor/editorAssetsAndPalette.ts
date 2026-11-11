@@ -4,6 +4,7 @@
 
 import { loadSpeciesSpriteBundle } from '../../assets/pmdAssetLoader';
 import {
+  EMPTY_TILESET_ID,
   PMD_TILE_NATIVE_PX,
   drawTilesetChunk,
   loadTilesetSheet,
@@ -42,15 +43,16 @@ export async function ensureEditorSpriteBundle(
 export async function preloadEditorMapAndUnitAssets(
   state: EditorRuntimeState
 ): Promise<void> {
-  const sheetIds = new Set<string>([state.brushTilesetId]);
+  const sheetIds = new Set<string>();
+  if (state.brushTilesetId !== EMPTY_TILESET_ID) sheetIds.add(state.brushTilesetId);
   for (const row of state.map.tiles) {
     for (const cell of row) {
-      sheetIds.add(normalizeTilesetId(cell.tilesetId));
+      if (cell.tilesetId !== EMPTY_TILESET_ID) sheetIds.add(normalizeTilesetId(cell.tilesetId));
     }
   }
   const spIds = new Set<string>(
-    state.editorTargetKind === 'cutscene'
-      ? state.cutsceneActorMarkers.map((m) => m.previewAssetId)
+    state.editorTargetKind === 'location'
+      ? state.referenceMarkers.map((m) => m.previewAssetId)
       : [state.spawnEnemySpeciesId]
   );
   for (const p of state.map.playerSpawns) spIds.add(p.speciesId);
@@ -80,6 +82,10 @@ export async function refreshEditorChunkPalette(
   onChunkSelected: () => void
 ): Promise<void> {
   const requestedId = state.brushTilesetId;
+  if (requestedId === EMPTY_TILESET_ID) {
+    dom.chunkPaletteEl.innerHTML = '<p class="pmd-subcard-text">Empty brush: painted cells become see-through.</p>';
+    return;
+  }
   const sheet = await ensureEditorTilesetLoaded(state, requestedId);
   if (state.brushTilesetId !== requestedId) return;
 

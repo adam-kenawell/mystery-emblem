@@ -1,0 +1,23 @@
+{
+  "id": "outro",
+  "chapter": "prologue",
+  "role": "outro",
+  "title": "Western Beach",
+  "music": "calm_cutscene",
+  "cast": [{ "id": "partner", "who": { "kind": "partner" } }, { "id": "healer", "who": { "kind": "healer" } }],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": { "speaker": "partner", "emotion": "Joyous", "side": "right", "text": "Ha! And stay off our beach!" }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "healer",
+        "emotion": "Worried",
+        "side": "right",
+        "text": "Ironscale soldiers, this close to the village... Sir Empoleon, what’s going on?"
+      }
+    }
+  ]
+}
