@@ -2,32 +2,39 @@
   "id": "outro",
   "chapter": "chapter_03",
   "role": "outro",
-  "title": "Sparkling River Shrine",
-  "music": "calm_cutscene",
+  "title": "Daylight Beyond the Peaks",
+  "music": "proud_accomplishment",
   "cast": [
-    {
-      "id": "commander_deino",
-      "who": { "kind": "npc", "pokemon": "0633", "name": "Commander Deino", "speciesName": "Deino" }
-    },
-    { "id": "partner", "who": { "kind": "partner" } }
+    { "id": "machop", "who": { "kind": "recruit", "speciesId": "machop" } },
+    { "id": "partner", "who": { "kind": "partner" } },
+    { "id": "lord", "who": { "kind": "lord" } }
   ],
   "beats": [
     {
       "id": "line_1",
       "say": {
-        "speaker": "commander_deino",
-        "emotion": "Pain",
-        "side": "right",
-        "text": "Tch... Your fangs are sharp, {lord}. Fall back! When the Abyss spreads, you’ll understand."
+        "speaker": "machop",
+        "emotion": "Joyous",
+        "side": "left",
+        "text": "Told you my shortcut would get us through fast! Look ahead, you can already spot the Emerald Capital spires!"
       }
     },
     {
       "id": "line_2",
       "say": {
         "speaker": "partner",
-        "emotion": "Worried",
+        "emotion": "Happy",
         "side": "right",
-        "text": "He’s gone. Come on, {lord}. The King just reached the north bridge."
+        "text": "Whoa, and check out this gleaming Evolution Stone wedged by the cavern arch! Plus there is a quiet prairie trail branching off to the west."
+      }
+    },
+    {
+      "id": "line_3",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Happy",
+        "side": "left",
+        "text": "Great guiding, Machop! Let's check our gear on the road before we make our final push to the capital."
       }
     }
   ]

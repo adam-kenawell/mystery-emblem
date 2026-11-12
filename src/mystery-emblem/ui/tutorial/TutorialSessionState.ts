@@ -4,12 +4,11 @@
 
 import {
   getTutorialTopicById,
+  type AdvisorTutorialBeat,
   type TutorialActionTriggerId,
   type TutorialBattleTileFilter,
   type TutorialTopicDefinition,
-  type WimpodTutorialBeat,
 } from '../../data/tutorialRegistry';
-import { isAdvisorInPlayableRoster } from '../../engine/speakerResolver';
 import type { SaveStateManager } from '../../state/SaveStateManager';
 import type { TutorialShellElements } from './TutorialShellView';
 
@@ -23,9 +22,9 @@ export type ActiveTutorialModalMode = 'closed' | 'card' | 'compendium';
 export class TutorialSessionState {
   public mode: ActiveTutorialModalMode = 'closed';
   public activeTopic: TutorialTopicDefinition | null = null;
-  public activeBeats: ReadonlyArray<WimpodTutorialBeat> = [];
+  public activeBeats: ReadonlyArray<AdvisorTutorialBeat> = [];
   public activeBeatIndex = 0;
-  /** Furthest beat reached this session; beats behind it are "review" beats (already satisfied). */
+  /** Furthest beat reached this session; beats behind it are review beats (already satisfied). */
   public furthestBeatIndex = 0;
   public activeBeatInteractive = false;
   public returnToCompendiumOnClose = false;
@@ -33,7 +32,7 @@ export class TutorialSessionState {
   public availabilityProvider: TutorialActionAvailabilityContext | null = null;
   private nudgeTimer: number | null = null;
 
-  public getCurrentBeat(): WimpodTutorialBeat | null {
+  public getCurrentBeat(): AdvisorTutorialBeat | null {
     return this.mode === 'card' ? this.activeBeats[this.activeBeatIndex] ?? null : null;
   }
 
@@ -42,8 +41,6 @@ export class TutorialSessionState {
       this.mode === 'card' && !this.returnToCompendiumOnClose
         ? this.activeBeats[this.activeBeatIndex] ?? null
         : null;
-    // Revisited beats (reached via ◀ Back) were already satisfied — show them as plain
-    // read-only beats with Next so the player can never soft-lock on a finished action.
     if (!beat?.awaitAction || this.activeBeatIndex < this.furthestBeatIndex) {
       this.activeBeatInteractive = false;
       return;
@@ -65,7 +62,7 @@ export class TutorialSessionState {
     return spot?.kind === 'battle_tiles' ? spot.tileFilter : null;
   }
 
-  public findFirstPendingBeat(beats: ReadonlyArray<WimpodTutorialBeat>, fromIdx: number): number {
+  public findFirstPendingBeat(beats: ReadonlyArray<AdvisorTutorialBeat>, fromIdx: number): number {
     let idx = fromIdx;
     while (idx < beats.length) {
       const candidate = beats[idx]!;
@@ -90,7 +87,7 @@ export class TutorialSessionState {
     const topic = getTutorialTopicById(topicId);
     if (!save || !topic || topic.beats.length === 0) return null;
     saveManager.unlockTutorial(topic.id);
-    if (isAdvisorInPlayableRoster(save) || !saveManager.areTutorialsEnabled()) return null;
+    if (!saveManager.areTutorialsEnabled()) return null;
     if (saveManager.hasSeenTutorial(topic.id)) return null;
     if (skipForFastMode) {
       saveManager.markTutorialSeen(topic.id);
@@ -113,7 +110,6 @@ export class TutorialSessionState {
     this.activeCardResolver = resolver;
   }
 
-  /** Moves to `idx` (forward or back) and keeps the furthest-reached marker in sync. */
   public goToBeat(idx: number): void {
     this.activeBeatIndex = idx;
     if (idx > this.furthestBeatIndex) this.furthestBeatIndex = idx;

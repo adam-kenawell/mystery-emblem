@@ -75,6 +75,7 @@ function normalizeSpawnFields(
     ...(sp.droppableItemId ? { droppableItemId: String(sp.droppableItemId) } : {}),
     ...(sp.aiMode ? { aiMode: sp.aiMode } : {}),
     ...(sp.sparring ? { sparring: true } : {}),
+    ...(sp.friendlyBout ? { friendlyBout: true } : {}),
     ...(Array.isArray(sp.equippedMoveIds) ? { equippedMoveIds: sp.equippedMoveIds.map(String) } : {}),
   };
 }
@@ -199,7 +200,11 @@ export function validateDungeonMapDefinition(
       }
       const speciesId = String(sp?.speciesId || 'zigzagoon_galar');
       const def = getSpeciesById(speciesId);
-      const allowedPlayable = Boolean(sp?.seedKey) || (Boolean(sp?.id) && convertibleEnemyIds.has(String(sp.id)));
+      const allowedPlayable =
+        Boolean(sp?.sparring) ||
+        Boolean(sp?.friendlyBout) ||
+        Boolean(sp?.seedKey) ||
+        (Boolean(sp?.id) && convertibleEnemyIds.has(String(sp.id)));
       if (!def || def.faction === 'ally_npc' || (def.faction === 'playable' && !allowedPlayable)) {
         errors.push(`Rule 5: Enemy spawn species "${speciesId}" must be an enemy/convertible species.`);
         continue;

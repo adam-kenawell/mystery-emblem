@@ -34,6 +34,8 @@ export function resolveDefaultObjectiveLabel(
       return `Survive ${Math.max(1, surviveTurns ?? 5)} Turns`;
     case 'protect_npc':
       return 'Protect Allied Units & Defeat Foes';
+    case 'seize':
+      return 'Guide the Leader to the Exit';
     default:
       return 'Rout All Enemies';
   }

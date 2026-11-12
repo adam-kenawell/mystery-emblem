@@ -26,13 +26,10 @@ export function bindTitleAndCornerControls(params: {
   ctx: AppRuntimeContext;
   toggleDevTools: () => void;
   closeDevToolsOverlay: () => void;
-  openOverworldScene: (opts?: {
-    preservePosition?: boolean;
-    announceCurrentChapter?: boolean;
-  }) => Promise<void>;
+  continueCampaignFromTitle: () => Promise<void>;
   openDemoQuizFlow: () => void;
 }): { renderAll: () => void } {
-  const { ctx, toggleDevTools, closeDevToolsOverlay, openOverworldScene, openDemoQuizFlow } =
+  const { ctx, toggleDevTools, closeDevToolsOverlay, continueCampaignFromTitle, openDemoQuizFlow } =
     params;
   const { dom, manager, audioManager, backStack, signal } = ctx;
 
@@ -124,7 +121,7 @@ export function bindTitleAndCornerControls(params: {
       audioManager.playSfx('select');
       setStatus('');
       if (manager.getSave() !== null) {
-        void openOverworldScene({ preservePosition: true, announceCurrentChapter: true });
+        void continueCampaignFromTitle();
       } else {
         openDemoQuizFlow();
       }

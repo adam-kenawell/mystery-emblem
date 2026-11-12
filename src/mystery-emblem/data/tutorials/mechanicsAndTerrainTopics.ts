@@ -1,11 +1,7 @@
 /**
- * Mystery Emblem — Campaign Mechanics & Dynamic Terrain Topics 7–16 (`mechanicsAndTerrainTopics.ts`)
+ * Mystery Emblem - Campaign Mechanics & Dynamic Terrain Topics 7-16 (`mechanicsAndTerrainTopics.ts`)
  *
- * Covers Convoy gear, Bosses & Water/Flying, Dungeon Stairs & Talk Recruitment, Vitamins & Drops,
- * Kecleon Shops & TMs, Deployment Caps & Mobile Bosses, Status Conditions, and Special Terrain.
- *
- * Copy rule: 1–2 short sentences per beat in Wimpod's nervous, friendly voice. Explain rules in
- * plain words (no shorthand like R1/R2, `[E]`, BOSS, DROP, KO or stat notation).
+ * Voiced by Quaquaval for live coaching and Quaquaval's Field Notes. Zero em dashes.
  */
 
 import type { TutorialTopicDefinition } from './tutorialTypes';
@@ -15,13 +11,13 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     id: 'prep_items_and_convoy',
     title: 'Shared Convoy & Gear vs Consumables',
     category: 'prep_pokemon',
-    summary: 'Handing out gear, Berries, and Potions from the shared Convoy.',
+    summary: 'Handing out gear, Berries, and medicine from the shared Convoy.',
     beats: [
       {
         id: 'convoy_beat1',
         emotion: 'Happy',
         dialogue:
-          'We all share one bag. Pick a teammate, then tap an item to hand it over. Whatever they had goes back in the bag.',
+          'Our expedition shares one Convoy pack. Pick a teammate in Manage Items, then tap gear or medicine to hand it over.',
         chips: [
           { kind: 'item', itemId: 'muscle_band', label: 'Held Gear' },
           { kind: 'item', itemId: 'x_attack', label: 'X-Item (+3 Stat)' },
@@ -31,15 +27,15 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
   },
   {
     id: 'ch2_boss_and_traversal',
-    title: 'Boss Battles & Water / Flying Traversal',
+    title: 'Outlaw Leaders & Water / Flying Footwork',
     category: 'combat_tactics',
-    summary: 'Defeat Boss maps, bosses that stay put, and crossing water.',
+    summary: 'Crossing water tiles and reading stationary enemy leaders.',
     beats: [
       {
         id: 'ch2_beat1_water_flying',
-        emotion: 'Surprised',
+        emotion: 'Normal',
         dialogue:
-          'Most of us can’t cross water. Flyers go right over it, and swimmers like {partner} just paddle across.',
+          'Most fighters cannot cross deep water, but flyers glide right over it and swimmers like {partner} splash across with ease.',
         chips: [
           { kind: 'type', pokemonType: 'Flying' },
           { kind: 'type', pokemonType: 'Water' },
@@ -48,26 +44,27 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
       },
       {
         id: 'ch2_beat2_stationary_boss',
-        emotion: 'Happy',
+        emotion: 'Determined',
         dialogue:
-          'See Captain Aron? Beat him and his whole squad will run. He won’t leave his post, so there’s no rush.',
+          'Watch the enemy ringleader carefully! Some bosses hold their ground until you step close, so clear their henchmen first.',
         chips: [
-          { kind: 'badge', label: 'Defeat Boss = Instant Win', tone: 'gold' },
-          { kind: 'badge', label: '0 Mov Stationary', tone: 'danger' },
+          { kind: 'badge', label: 'Check Danger Area', tone: 'gold' },
+          { kind: 'badge', label: 'Clear Escorts First', tone: 'danger' },
         ],
       },
     ],
   },
   {
     id: 'ch3_stairs_reinforcements',
-    title: 'Talk Recruitment & Dungeon Stairs',
+    title: 'Cave Stairs & Escape Objectives',
     category: 'combat_tactics',
-    summary: 'Blocking Stairs reinforcements and recruiting foes with Talk.',
+    summary: 'Blocking Stairs reinforcements and guiding your leader to the exit.',
     beats: [
       {
         id: 'ch3_beat1_stairs',
-        emotion: 'Shouting',
-        dialogue: 'More enemies come up those stairs! If one of us stands on them, nobody gets through.',
+        emotion: 'Determined',
+        dialogue:
+          'Wild foes climb up from dungeon stairs between turns! Park a sturdy ally directly on the stairs to seal them shut.',
         chips: [
           { kind: 'badge', label: 'Stand On Stairs = Block Spawns', tone: 'gold' },
           { kind: 'badge', label: '+1 Def/SpD · +10% Avo', tone: 'cyan' },
@@ -75,10 +72,10 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
       },
       {
         id: 'ch3_beat2_talk_recruit',
-        emotion: 'Surprised',
+        emotion: 'Normal',
         dialogue:
-          'Some foes don’t really want to fight. Walk {lord} right up to one and tap Talk. They might join us!',
-        chips: [{ kind: 'badge', label: 'Adjacent Lord -> Talk!', tone: 'green' }],
+          'Keep your eyes on the objective banner too. On escape marches, getting {lord} safely onto the exit tile wins the battle right away!',
+        chips: [{ kind: 'badge', label: 'Reach Exit Tile = Victory', tone: 'green' }],
       },
     ],
   },
@@ -86,16 +83,16 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     id: 'ch4_vitamins',
     title: 'Permanent Stat Vitamins & Rare Drops',
     category: 'world_progression',
-    summary: 'Winning DROP items and using Vitamins for permanent stat boosts.',
+    summary: 'Winning enemy drops and using Vitamins for permanent stat boosts.',
     beats: [
       {
         id: 'ch4_beat1_vitamins',
-        emotion: 'Surprised',
+        emotion: 'Happy',
         dialogue:
-          'Some enemies carry items. Beat them and it’s ours! Vitamins like Protein make someone stronger for good. Use them from the map Menu.',
+          'Foes marked with an item icon drop their treasure when defeated! Vitamins like HP Up permanently strengthen a teammate from the map Menu.',
         chips: [
-          { kind: 'item', itemId: 'protein', label: 'Permanent +Stat' },
-          { kind: 'badge', label: 'KO Enemy w/ DROP', tone: 'gold' },
+          { kind: 'item', itemId: 'hp_up', label: 'Permanent +Stat' },
+          { kind: 'badge', label: 'Defeat Foe w/ Drop', tone: 'gold' },
         ],
       },
     ],
@@ -104,13 +101,13 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     id: 'kecleon_shops_and_tms',
     title: 'Kecleon Shops & Teaching TMs',
     category: 'world_progression',
-    summary: 'Shopping at Kecleon stalls and teaching TM moves.',
+    summary: 'Shopping at Kecleon stalls and teaching permanent TM moves.',
     beats: [
       {
         id: 'shop_beat1_stalls',
         emotion: 'Happy',
         dialogue:
-          'Kecleon’s stalls are popping up in places we’ve cleared. Walk onto one to buy new moves, gear, and medicine!',
+          'Kecleon merchants set up roadside stalls on cleared landmarks. Visit them to stock up on medicine, gear, and TMs!',
         chips: [
           { kind: 'species', speciesId: '0352', label: 'Kecleon Shop' },
           { kind: 'item', itemId: 'full_heal', label: 'Heals & Gear' },
@@ -119,44 +116,45 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
       {
         id: 'shop_beat2_tms',
         emotion: 'Normal',
-        dialogue: 'A TM teaches someone a new move for good. Use it from Menu, under Units or Items.',
+        dialogue:
+          'A TM permanently teaches a compatible teammate a brand-new move. Open Menu on the world map to teach one.',
         chips: [{ kind: 'item', itemId: 'tm13_scald', label: 'Permanent Move Unlock' }],
       },
     ],
   },
   {
     id: 'ch5_deployment_cap_and_mobile_boss',
-    title: 'Deployment Caps & Mobile Bosses',
+    title: 'Deployment Caps & Ferocious Rift Bosses',
     category: 'combat_tactics',
-    summary: 'Picking who fights and baiting bosses that move.',
+    summary: 'Selecting your active strike team and baiting aggressive bosses.',
     beats: [
       {
         id: 'ch5_beat1_cap',
-        emotion: 'Worried',
+        emotion: 'Determined',
         dialogue:
-          'Only some of us can fight here. Pick your team in Manage Units ({lord} always comes) and give them the best gear.',
+          'Our roster is growing! Choose your active lineup in Manage Units ({lord} always leads) and pass spare gear to whoever deploys.',
         chips: [{ kind: 'badge', label: 'Rotate Standby Gear', tone: 'gold' }],
       },
       {
         id: 'ch5_beat2_mobile_boss',
-        emotion: 'Teary-Eyed',
+        emotion: 'Worried',
         dialogue:
-          'Commander Deino doesn’t stay put. He charges anyone who gets close, so lure him out with someone sturdy.',
-        chips: [{ kind: 'species', speciesId: '0633', label: 'Mobile Boss Charges!' }],
+          'Careful! Feral Rift beasts charge the moment anyone enters their range, so lure them forward with a high-defense teammate.',
+        chips: [{ kind: 'species', speciesId: 'great_tusk', label: 'Rift Boss Charges!' }],
       },
     ],
   },
   {
     id: 'status_conditions_and_cures',
-    title: 'Status Conditions & Full Heals',
+    title: 'Status Conditions & Remedies',
     category: 'combat_tactics',
-    summary: 'What Burn, Poison, Paralysis, Sleep, and Freeze do—and how to cure them.',
+    summary: 'How Burn, Poison, Paralysis, Sleep, and Freeze work, and how to cure them.',
     beats: [
       {
         id: 'status_beat1_ailments',
-        emotion: 'Dizzy',
+        emotion: 'Worried',
         dialogue:
-          'Burns and poison hurt a little every turn, and burns weaken physical hits. Paralysis slows you down, and sleep or ice makes you lose turns!',
+          'Burns and poison sap health each turn, and burns halve physical power. Paralysis slows movement to a crawl, while sleep and ice cost turns!',
         chips: [
           { kind: 'badge', label: 'BRN: -50% Atk + Chip', tone: 'danger' },
           { kind: 'badge', label: 'PAR: 1 Mov · -25% Spe', tone: 'gold' },
@@ -165,10 +163,11 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
       {
         id: 'status_beat2_cures',
         emotion: 'Happy',
-        dialogue: 'A Full Heal, a Lum Berry, or a rest on a Wonder Tile will cure any of that.',
+        dialogue:
+          'Carry a Paralyze Heal, Full Heal, or Lum Berry, or step onto a glowing Wonder Tile to cleanse any ailment.',
         chips: [
+          { kind: 'item', itemId: 'paralyze_heal', label: 'Paralyze Heal' },
           { kind: 'item', itemId: 'full_heal', label: 'Full Heal' },
-          { kind: 'item', itemId: 'lum_berry', label: 'Lum Berry (Auto)' },
         ],
       },
     ],
@@ -177,13 +176,13 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     id: 'terrain_cover_woods_crags',
     title: 'Defensive Cover: Trees & Mountains',
     category: 'combat_tactics',
-    summary: 'Trees and Mountains slow you down but give great cover.',
+    summary: 'Trees and Mountains slow movement on foot but grant strong defensive cover.',
     beats: [
       {
         id: 'terrain_woods_beat1',
-        emotion: 'Happy',
+        emotion: 'Determined',
         dialogue:
-          'Trees and mountains are slow to cross but great to hide in. Flyers and floaters drift right over them, but get no cover.',
+          'Trees and rocky crags cost extra steps on foot, yet grant sturdy defense and evasion bonuses. Flyers soar over them without cover.',
         chips: [
           { kind: 'badge', label: 'Trees: +1 Def/SpD · +15% Avo', tone: 'green' },
           { kind: 'badge', label: 'Mountain: +2 Def/SpD · +20% Avo', tone: 'gold' },
@@ -195,13 +194,13 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     id: 'terrain_wonder_tiles',
     title: 'PMD Wonder Tiles',
     category: 'combat_tactics',
-    summary: 'Glowing tiles that give cover, heal HP, and cure status.',
+    summary: 'Glowing dungeon tiles that grant cover, restore HP, and cleanse status.',
     beats: [
       {
         id: 'terrain_wonder_beat1',
-        emotion: 'Surprised',
+        emotion: 'Happy',
         dialogue:
-          'A Wonder Tile! Standing on it protects you, heals you a bit each turn, and cures ailments. Don’t let enemies hog it.',
+          'Spot that glowing Wonder Tile? Holding it boosts your defenses, restores health every turn, and cures status ailments!',
         chips: [
           { kind: 'badge', label: '+2 Def/SpD · +20% Avo', tone: 'gold' },
           { kind: 'badge', label: '20% Heal + Cleanse', tone: 'green' },
@@ -211,18 +210,18 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
   },
   {
     id: 'terrain_hazards_lava_void',
-    title: 'Lava, Chasms & Levitate Shortcuts',
+    title: 'Lava, Chasms & Levitate Footwork',
     category: 'combat_tactics',
-    summary: 'Who can cross Lava, and why only Levitate crosses chasms.',
+    summary: 'Crossing molten ground and deep chasms safely.',
     beats: [
       {
         id: 'terrain_hazards_beat1',
-        emotion: 'Dizzy',
+        emotion: 'Worried',
         dialogue:
-          'Don’t look down! Fire types, flyers, and floaters can cross lava, but only floaters like Duskull can cross a chasm.',
+          'Watch your step near cliffs! Fire types, flyers, and levitating fighters like Honedge can cross hazards where grounded units cannot.',
         chips: [
           { kind: 'type', pokemonType: 'Fire' },
-          { kind: 'badge', label: 'Levitate Only: Void & Barriers', tone: 'gold' },
+          { kind: 'badge', label: 'Levitate: Void & Barriers', tone: 'gold' },
         ],
       },
     ],

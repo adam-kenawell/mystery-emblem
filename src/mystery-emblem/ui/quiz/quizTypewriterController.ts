@@ -57,9 +57,8 @@ export interface QuizSceneSnapshot {
   answers: QuizOptionKey[];
   tutorialsEnabled: boolean;
   selectedLordSpeciesId: DragonLordSpeciesId;
-  selectedPartnerSpeciesId: 'piplup';
+  selectedPartnerSpeciesId: 'quaxly';
   selectedHealerSpeciesId: 'flabebe';
-  selectedAdvisorSpeciesId: 'wimpod';
   flabebeFlowerColor: FlabebeFlowerColor;
 }
 
@@ -93,9 +92,8 @@ export function buildQuizSceneSnapshot(params: {
     answers: [...params.answers],
     tutorialsEnabled: true,
     selectedLordSpeciesId: params.selectedLordSpeciesId,
-    selectedPartnerSpeciesId: 'piplup',
+    selectedPartnerSpeciesId: 'quaxly',
     selectedHealerSpeciesId: 'flabebe',
-    selectedAdvisorSpeciesId: 'wimpod',
     flabebeFlowerColor: lordMeta.flabebeFlowerColor,
   };
 }
@@ -234,18 +232,16 @@ export function finalizeQuizCampaignCreation(params: {
   audioManager: AudioManager;
   activeOptions: OpenQuizSceneOptions;
   lordSpeciesId: DragonLordSpeciesId;
-  quizSeeds: QuizRecruitSeeds;
   preserveNgPlus?: boolean;
   onCloseQuizScene: () => void;
 }): void {
-  const { saveManager, audioManager, activeOptions, lordSpeciesId, quizSeeds, preserveNgPlus = false, onCloseQuizScene } = params;
+  const { saveManager, audioManager, activeOptions, lordSpeciesId, preserveNgPlus = false, onCloseQuizScene } = params;
   audioManager.playSfx('heal');
   const graph = activeOptions.overworldGraph ?? DEMO_OVERWORLD_GRAPH;
   let created = saveManager.createNewCampaignSave({
     lordSpeciesId,
-    partnerSpeciesId: 'piplup',
+    partnerSpeciesId: 'quaxly',
     healerSpeciesId: 'flabebe',
-    quizSeeds,
     tutorialsEnabled: true,
     newGamePlusUnlocked: preserveNgPlus || saveManager.isNewGamePlusUnlocked(),
     startingLevel: activeOptions.startingLevel ?? DEMO_STARTING_LEVEL,

@@ -1,8 +1,8 @@
 /**
- * Mystery Emblem — Tutorial DOM Spotlight & Non-Overlapping Coach Dock (`TutorialSpotlightController.ts`)
+ * Mystery Emblem - Tutorial DOM Spotlight & Non-Overlapping Coach Dock (`TutorialSpotlightController.ts`)
  */
 
-import type { WimpodTutorialBeat } from '../../data/tutorialRegistry';
+import type { AdvisorTutorialBeat } from '../../data/tutorialRegistry';
 
 export class TutorialSpotlightController {
   public readonly domSpotlightEl: HTMLElement;
@@ -23,7 +23,7 @@ export class TutorialSpotlightController {
   public startLoop(
     getState: () => {
       isCardOpen: boolean;
-      beat: WimpodTutorialBeat | null;
+      beat: AdvisorTutorialBeat | null;
       isInteractive: boolean;
     }
   ): void {
@@ -55,7 +55,7 @@ export class TutorialSpotlightController {
     this.domSpotlightEl.hidden = true;
   }
 
-  private findSpotlightDomElement(beat: WimpodTutorialBeat): HTMLElement | null {
+  private findSpotlightDomElement(beat: AdvisorTutorialBeat): HTMLElement | null {
     const spot = beat.spotlight;
     if (!spot || spot.kind === 'none') return null;
 
@@ -71,7 +71,7 @@ export class TutorialSpotlightController {
     return el;
   }
 
-  public sync(beat: WimpodTutorialBeat | null, isInteractive: boolean): void {
+  public sync(beat: AdvisorTutorialBeat | null, isInteractive: boolean): void {
     if (!beat) {
       this.domSpotlightEl.hidden = true;
       return;

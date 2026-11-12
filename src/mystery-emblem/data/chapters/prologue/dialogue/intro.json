@@ -2,12 +2,13 @@
   "id": "intro",
   "chapter": "prologue",
   "role": "intro",
-  "title": "Western Beach",
-  "music": "calm_cutscene",
+  "title": "Hometown Pitch",
+  "music": "do_your_best",
   "cast": [
     { "id": "mentor", "who": { "kind": "mentor" } },
-    { "id": "advisor", "who": { "kind": "advisor" } },
-    { "id": "partner", "who": { "kind": "partner" } }
+    { "id": "partner", "who": { "kind": "partner" } },
+    { "id": "healer", "who": { "kind": "healer" } },
+    { "id": "lord", "who": { "kind": "lord" } }
   ],
   "beats": [
     {
@@ -16,7 +17,7 @@
         "speaker": "mentor",
         "emotion": "Determined",
         "side": "right",
-        "text": "Today you face me, {lord}. Hold nothing back."
+        "text": "Eyes up, all three of you! Tonight we drill the fundamentals of tactical combat right here on the village pitch."
       }
     },
     {
@@ -25,25 +26,16 @@
         "speaker": "mentor",
         "emotion": "Normal",
         "side": "right",
-        "text": "{partner}, {healer}, watch closely for now. You’ll get your chance."
+        "text": "First lesson: spacing and enemy reach. {partner}, step forward into my attack range so you can feel how an opponent closes in!"
       }
     },
     {
       "id": "line_3",
       "say": {
-        "speaker": "advisor",
-        "emotion": "Worried",
-        "side": "left",
-        "text": "I’ll be behind this rock. Taking very careful notes."
-      }
-    },
-    {
-      "id": "line_4",
-      "say": {
         "speaker": "partner",
         "emotion": "Determined",
         "side": "left",
-        "text": "And don’t go easy on us just ’cause you’re my dad!"
+        "text": "You got it, Dad! Watch my footwork, {lord}, {healer}!"
       }
     }
   ]

@@ -115,7 +115,7 @@ function cloneEvents(
 }
 
 export function hydrateChapterDefaultMap(raw: CompactChapterJson): DungeonMapDefinition {
-  const defaultAllies = ['dratini', 'piplup', 'flabebe', 'pidgey', 'sewaddle', 'ralts', 'elekid'];
+  const defaultAllies = ['axew', 'quaxly', 'flabebe', 'mentor_quaquaval', 'smoliv', 'machop', 'starly'];
   return {
     id: raw.id,
     name: raw.label,
@@ -158,6 +158,7 @@ export function hydrateChapterDefaultMap(raw: CompactChapterJson): DungeonMapDef
       droppableItemId: e.droppableItemId ?? null,
       ...(e.aiMode ? { aiMode: e.aiMode } : {}),
       ...(e.sparring ? { sparring: true } : {}),
+      ...(e.friendlyBout ? { friendlyBout: true } : {}),
       ...(e.equippedMoveIds ? { equippedMoveIds: [...e.equippedMoveIds] } : {}),
     })),
     ...(raw.npcSpawns?.length ? { npcSpawns: raw.npcSpawns.map(cloneSpawn) } : {}),

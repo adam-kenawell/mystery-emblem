@@ -1,5 +1,5 @@
 /* ==========================================================================
-   TUTORIAL_OVERLAY — Wimpod Interactive Coach Bar, Spotlight & Ask Wimpod
+   TUTORIAL_OVERLAY - Quaquaval Coach Bar, Spotlight & Field Notes
    Scales cleanly with zero clipping across 1920x1080, 390x844, and 844x390
    ========================================================================== */
 
@@ -21,7 +21,7 @@
   }
 }
 
-@keyframes pmd-wimpod-nudge-shake {
+@keyframes pmd-advisor-nudge-shake {
   0%,
   100% {
     transform: translateX(0);
@@ -104,14 +104,14 @@
   pointer-events: auto;
 }
 
-.pmd-wimpod-coach-bar {
+.pmd-advisor-coach-bar {
   width: min(640px, 100%);
   padding: 7px 11px;
   gap: 6px;
 }
 
-.pmd-wimpod-coach-bar.is-nudged {
-  animation: pmd-wimpod-nudge-shake 0.38s ease;
+.pmd-advisor-coach-bar.is-nudged {
+  animation: pmd-advisor-nudge-shake 0.38s ease;
 }
 
 .pmd-tutorial-compendium {
@@ -123,14 +123,14 @@
   display: none !important;
 }
 
-.pmd-wimpod-coach-row {
+.pmd-advisor-coach-row {
   display: flex;
   align-items: flex-start;
   gap: 10px;
   min-width: 0;
 }
 
-.pmd-wimpod-portrait-slot {
+.pmd-advisor-portrait-slot {
   width: 64px;
   height: 64px;
   flex: 0 0 64px;
@@ -143,8 +143,8 @@
   overflow: hidden;
 }
 
-.pmd-wimpod-portrait-slot canvas,
-.pmd-wimpod-compendium-portrait canvas {
+.pmd-advisor-portrait-slot canvas,
+.pmd-advisor-compendium-portrait canvas {
   max-width: 100%;
   max-height: 100%;
   width: auto;
@@ -152,7 +152,7 @@
   image-rendering: pixelated;
 }
 
-.pmd-wimpod-coach-main {
+.pmd-advisor-coach-main {
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -160,14 +160,14 @@
   min-width: 0;
 }
 
-.pmd-wimpod-speaker-name {
+.pmd-advisor-speaker-name {
   font-size: 15px;
   font-weight: 700;
   color: var(--pmd-text-yellow);
   line-height: 1.15;
 }
 
-.pmd-wimpod-speech-text {
+.pmd-advisor-speech-text {
   margin: 0;
   font-size: 13.5px;
   line-height: 1.38;
@@ -175,7 +175,7 @@
   min-height: 2.5em;
 }
 
-.pmd-wimpod-actions {
+.pmd-advisor-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -193,7 +193,7 @@
   flex-shrink: 0;
 }
 
-.pmd-wimpod-compendium-hero {
+.pmd-advisor-compendium-hero {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -201,7 +201,7 @@
   flex: 1 1 auto;
 }
 
-.pmd-wimpod-compendium-portrait {
+.pmd-advisor-compendium-portrait {
   width: 46px;
   height: 46px;
   flex: 0 0 46px;
@@ -214,7 +214,7 @@
   overflow: hidden;
 }
 
-.pmd-wimpod-compendium-quote {
+.pmd-advisor-compendium-quote {
   font-size: 11.5px;
   line-height: 1.3;
   color: var(--pmd-text-cyan);

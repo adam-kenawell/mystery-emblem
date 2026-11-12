@@ -3,23 +3,21 @@
  */
 
 import {
-  createDefaultQuizSeeds,
   FIXED_HEALER_SPECIES_ID,
+  FIXED_PARTNER_SPECIES_ID,
   type DragonLordSpeciesId,
 } from '../data/campaignConfig';
-import { getSpeciesById } from '../data/index';
 import { DRAGON_LORD_OPTIONS } from '../data/quizLordProfiles';
 import {
   PERSONALITY_QUIZ_QUESTIONS,
   type QuizQuestionDefinition,
 } from '../data/quizQuestions';
-import type { QuizRecruitSeeds } from '../types/schemas';
 
 export interface QuizEvaluationResult {
   assignedLordSpeciesId: DragonLordSpeciesId;
   scoresByDragonId: Record<DragonLordSpeciesId, number>;
   firstPointOrderByDragonId: Record<DragonLordSpeciesId, number>;
-  quizSeeds: QuizRecruitSeeds;
+  partnerSpeciesId: string;
   healerSpeciesId: string;
 }
 
@@ -44,8 +42,6 @@ export function evaluatePersonalityQuiz(
     goomy: Number.POSITIVE_INFINITY,
   };
 
-  const seeds = createDefaultQuizSeeds();
-
   let awardStep = 0;
   for (let idx = 0; idx < PERSONALITY_QUIZ_QUESTIONS.length; idx++) {
     const q = PERSONALITY_QUIZ_QUESTIONS[idx]!;
@@ -64,11 +60,6 @@ export function evaluatePersonalityQuiz(
     scores[chosen.secondaryLord] += 1;
     if (!Number.isFinite(firstOrder[chosen.secondaryLord])) {
       firstOrder[chosen.secondaryLord] = awardStep;
-    }
-
-    const validIds = chosen.recruitSpeciesIds.filter((id) => Boolean(getSpeciesById(id)));
-    if (validIds.length > 0) {
-      seeds[q.seedKey] = [...validIds];
     }
   }
 
@@ -90,7 +81,7 @@ export function evaluatePersonalityQuiz(
     assignedLordSpeciesId: bestLord,
     scoresByDragonId: scores,
     firstPointOrderByDragonId: firstOrder,
-    quizSeeds: seeds,
+    partnerSpeciesId: FIXED_PARTNER_SPECIES_ID,
     healerSpeciesId: FIXED_HEALER_SPECIES_ID,
   };
 }

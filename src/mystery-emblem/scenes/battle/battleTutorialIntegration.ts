@@ -1,10 +1,11 @@
 /**
- * Wimpod Interactive Tutorial Action Availability & Topic Triggers in `BattleScene`
+ * Quaquaval Interactive Tutorial Action Availability & Topic Triggers in `BattleScene`
  */
 
 import { PROLOGUE_LEVEL_ID } from '../../data/chapters/prologue/tutorialStaging';
 import {
   PROLOGUE_HEAL_DRILL_TOPIC_ID,
+  PROLOGUE_ITEM_CURE_DRILL_TOPIC_ID,
   PROLOGUE_RANGED_DRILL_TOPIC_ID,
   evaluatePrepTutorialTopics,
   evaluateTurn1TutorialTopics,
@@ -16,16 +17,18 @@ import {
   getExpectedTutorialAction,
   getHealOrConsumableTutorialUnits,
   getTutorialHealerUnit,
+  getTutorialPartnerUnit,
   resolveTutorialSpotlightTiles,
 } from './battleTutorialSpotlights';
 import type { BattleControllerContext } from './battleTypesAndState';
-import { getLordUnit, getSelectedUnit } from './battleUnitQueries';
+import { canUseUnitEquippedConsumable, getLordUnit, getSelectedUnit } from './battleUnitQueries';
 
 export {
   getAttackableEnemiesForSelectedState,
   getExpectedTutorialAction,
   getHealOrConsumableTutorialUnits,
   getTutorialHealerUnit,
+  getTutorialPartnerUnit,
   resolveTutorialSpotlightTiles,
 };
 
@@ -50,6 +53,14 @@ export function registerBattleTutorialAvailabilityProvider(ctx: BattleController
             state.interactionState === 'unit_selected' &&
             getSelectedUnit(state)?.id === getLordUnit(state)?.id
           );
+        case 'battle_select_partner': {
+          const partner = getTutorialPartnerUnit(state);
+          return (
+            state.phase === 'player_phase' &&
+            state.interactionState === 'unit_selected' &&
+            Boolean(partner && getSelectedUnit(state)?.id === partner.id)
+          );
+        }
         case 'battle_move_to_blue_tile':
           return state.phase === 'player_phase' && state.interactionState === 'action_menu';
         case 'battle_open_attack_forecast':
@@ -113,6 +124,14 @@ export function registerBattleTutorialAvailabilityProvider(ctx: BattleController
             Boolean(lord && !lord.defeated && lord.currentHp > 0 && !lord.waited)
           );
         }
+        case 'battle_select_partner': {
+          const partner = getTutorialPartnerUnit(state);
+          return (
+            state.phase === 'player_phase' &&
+            !state.systemMenuOpen &&
+            Boolean(partner && !partner.defeated && partner.currentHp > 0 && !partner.waited)
+          );
+        }
         case 'battle_move_to_blue_tile':
           return (
             state.phase === 'player_phase' &&
@@ -125,6 +144,16 @@ export function registerBattleTutorialAvailabilityProvider(ctx: BattleController
             state.interactionState === 'action_menu' &&
             !dom.actionMenuEl.hidden
           );
+        case 'battle_confirm_item': {
+          const sel = getSelectedUnit(state);
+          return (
+            state.phase === 'player_phase' &&
+            state.interactionState === 'action_menu' &&
+            !dom.actionMenuEl.hidden &&
+            !dom.cmdItemBtnEl.hidden &&
+            Boolean(sel && canUseUnitEquippedConsumable(sel))
+          );
+        }
         case 'battle_open_attack_forecast':
           return (
             state.phase === 'player_phase' &&
@@ -205,13 +234,11 @@ export function triggerBattleTutorial(
     return Promise.resolve(false);
   }
   const isPrologue = state.activeLevelId === PROLOGUE_LEVEL_ID;
-  // The Prologue teaches combat & healing through its own scripted drills instead.
   if (isPrologue && PROLOGUE_SUPPRESSED_TOPIC_IDS.has(topicId)) {
     return Promise.resolve(false);
   }
   return tutorialOverlay.presentTopicIfNeeded(topicId, {
     sceneFastMode: state.fastMode,
-    // Sir Empoleon coaches the Prologue fight; Wimpod takes over from Chapter 1 onward.
     presenter: isPrologue ? 'mentor' : 'advisor',
   });
 }
@@ -221,7 +248,7 @@ const PROLOGUE_SUPPRESSED_TOPIC_IDS: ReadonlySet<string> = new Set([
   'ch1_healing_and_items',
 ]);
 
-/** Prologue Turn 2: heal the lord, then strike Sir Empoleon from Range 2. */
+/** Prologue Turn 2: heal {partner} with {healer}, then strike Quaquaval from Range 2 with {lord}. */
 export async function triggerPrologueTurn2Drills(
   ctx: BattleControllerContext,
   runGen: number
@@ -233,6 +260,18 @@ export async function triggerPrologueTurn2Drills(
     }
     await triggerBattleTutorial(ctx, topicId);
   }
+}
+
+/** Prologue Turn 3: cure {partner}'s Paralysis using Paralyze Heal. */
+export async function triggerPrologueTurn3ItemDrill(
+  ctx: BattleControllerContext,
+  runGen: number
+): Promise<void> {
+  const { state } = ctx;
+  if (!state.openState || runGen !== state.battleRunGen || state.phase !== 'player_phase') {
+    return;
+  }
+  await triggerBattleTutorial(ctx, PROLOGUE_ITEM_CURE_DRILL_TOPIC_ID);
 }
 
 export function triggerPrepHubTutorials(ctx: BattleControllerContext): void {

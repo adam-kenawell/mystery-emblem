@@ -132,12 +132,14 @@ export function validateSaveData(
     }
   }
 
-  if (!save.campaign?.quizSeeds || typeof save.campaign.quizSeeds !== 'object') {
-    errors.push('SaveData.campaign.quizSeeds is missing.');
-  } else {
-    for (const slotKey of QUIZ_SEED_SLOT_KEYS) {
-      if (!Array.isArray(save.campaign.quizSeeds[slotKey])) {
-        errors.push(`SaveData.campaign.quizSeeds.${slotKey} must be an array.`);
+  if (save.campaign?.quizSeeds !== undefined) {
+    if (!save.campaign.quizSeeds || typeof save.campaign.quizSeeds !== 'object') {
+      errors.push('SaveData.campaign.quizSeeds must be an object when present.');
+    } else {
+      for (const slotKey of QUIZ_SEED_SLOT_KEYS) {
+        if (!Array.isArray(save.campaign.quizSeeds[slotKey])) {
+          errors.push(`SaveData.campaign.quizSeeds.${slotKey} must be an array.`);
+        }
       }
     }
   }

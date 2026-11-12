@@ -996,7 +996,8 @@ export class CutsceneEditorApp {
       removeCutsceneDoc(renamedFrom);
     }
 
-    const oldLink = findStoryCutsceneLink(renamedFrom ?? doc.id);
+    const oldId = renamedFrom ?? doc.id;
+    const oldLink = findStoryCutsceneLink(oldId);
     const newLink = data.link;
     const touched = new Map<string, CompactChapterJson>();
     const editable = (chapterId: string) => {
@@ -1012,13 +1013,32 @@ export class CutsceneEditorApp {
     if (oldLink) {
       const ch = editable(oldLink.chapterId);
       if (ch) {
-        if (oldLink.when === 'before') delete ch.preStoryCutsceneId;
-        else delete ch.postStoryCutsceneId;
+        if (oldLink.when === 'before') {
+          if (ch.preStoryCutsceneIds) {
+            ch.preStoryCutsceneIds = ch.preStoryCutsceneIds.filter((id) => id !== oldId);
+            if (ch.preStoryCutsceneIds.length === 0) delete ch.preStoryCutsceneIds;
+          }
+          if (ch.preStoryCutsceneId === oldId) delete ch.preStoryCutsceneId;
+        } else {
+          if (ch.postStoryCutsceneIds) {
+            ch.postStoryCutsceneIds = ch.postStoryCutsceneIds.filter((id) => id !== oldId);
+            if (ch.postStoryCutsceneIds.length === 0) delete ch.postStoryCutsceneIds;
+          }
+          if (ch.postStoryCutsceneId === oldId) delete ch.postStoryCutsceneId;
+        }
       }
     }
     if (newLink) {
       const ch = editable(newLink.chapterId);
-      if (ch) touched.set(newLink.chapterId, setChapterLink(ch, newLink.when === 'before' ? 'preStoryCutsceneId' : 'postStoryCutsceneId', doc.id));
+      if (ch) {
+        if (newLink.when === 'before' && ch.preStoryCutsceneIds) {
+          if (!ch.preStoryCutsceneIds.includes(doc.id)) ch.preStoryCutsceneIds.push(doc.id);
+        } else if (newLink.when === 'after' && ch.postStoryCutsceneIds) {
+          if (!ch.postStoryCutsceneIds.includes(doc.id)) ch.postStoryCutsceneIds.push(doc.id);
+        } else {
+          touched.set(newLink.chapterId, setChapterLink(ch, newLink.when === 'before' ? 'preStoryCutsceneId' : 'postStoryCutsceneId', doc.id));
+        }
+      }
     }
     for (const [chapterId, next] of touched) {
       if (JSON.stringify(next) !== JSON.stringify(getRawChapterJson(chapterId))) await this.writeChapterJson(next);
@@ -1082,8 +1102,19 @@ export class CutsceneEditorApp {
           const raw = getRawChapterJson(link.chapterId);
           if (raw) {
             const next = clone(raw);
-            if (link.when === 'before') delete next.preStoryCutsceneId;
-            else delete next.postStoryCutsceneId;
+            if (link.when === 'before') {
+              if (next.preStoryCutsceneIds) {
+                next.preStoryCutsceneIds = next.preStoryCutsceneIds.filter((id) => id !== this.originalId);
+                if (next.preStoryCutsceneIds.length === 0) delete next.preStoryCutsceneIds;
+              }
+              if (next.preStoryCutsceneId === this.originalId) delete next.preStoryCutsceneId;
+            } else {
+              if (next.postStoryCutsceneIds) {
+                next.postStoryCutsceneIds = next.postStoryCutsceneIds.filter((id) => id !== this.originalId);
+                if (next.postStoryCutsceneIds.length === 0) delete next.postStoryCutsceneIds;
+              }
+              if (next.postStoryCutsceneId === this.originalId) delete next.postStoryCutsceneId;
+            }
             await this.writeChapterJson(next);
           }
         }

@@ -16,6 +16,7 @@ import {
   getAttackableEnemiesForSelectedState,
   getHealOrConsumableTutorialUnits,
   getTutorialHealerUnit,
+  getTutorialPartnerUnit,
   triggerBattleTutorial,
 } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
@@ -46,6 +47,11 @@ export function selectPlayerUnit(ctx: BattleControllerContext, unit: BattleUnitS
   if (unit.id === getLordUnit(state)?.id) {
     satisfiedTutorialStep =
       Boolean(tutorialOverlay?.notifyActionCompleted('battle_select_lord')) ||
+      satisfiedTutorialStep;
+  }
+  if (unit.id === getTutorialPartnerUnit(state)?.id) {
+    satisfiedTutorialStep =
+      Boolean(tutorialOverlay?.notifyActionCompleted('battle_select_partner')) ||
       satisfiedTutorialStep;
   }
   if (getHealOrConsumableTutorialUnits(state).some((u) => u.id === unit.id)) {

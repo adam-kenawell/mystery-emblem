@@ -3,7 +3,7 @@
  */
 
 import type { AudioManager } from '../../audio/AudioManager';
-import { DEMO_INITIAL_CONVOY, DEMO_STARTING_LEVEL } from '../../data/campaignRegistry';
+import { DEMO_INITIAL_CONVOY, DEMO_STARTING_LEVEL, MENTOR_JAGEN_SPECIES_ID } from '../../data/campaignRegistry';
 import {
   ITEMS_LIST,
   POKEMON_SPECIES_LIST,
@@ -18,7 +18,7 @@ export function seedFreshDemoSaveForCheat(saveManager: SaveStateManager): SaveDa
   return saveManager.createNewCampaignSave({
     campaignMode: 'demo',
     lordSpeciesId: 'axew',
-    partnerSpeciesId: 'piplup',
+    partnerSpeciesId: 'quaxly',
     healerSpeciesId: 'flabebe',
     startingLevel: DEMO_STARTING_LEVEL,
     scaleStatsToLevel: true,
@@ -43,7 +43,10 @@ export function populateDevToolsStaticSelects(
   if (recruitSelectEl) {
     recruitSelectEl.innerHTML = '';
     const recruitable = POKEMON_SPECIES_LIST.filter(
-      (sp) => sp.faction !== 'enemy' && sp.faction !== 'ally_npc' && (sp.stage === 1 || sp.id === 'sir_empoleon')
+      (sp) =>
+        sp.faction !== 'enemy' &&
+        sp.faction !== 'ally_npc' &&
+        (sp.stage === 1 || sp.id === MENTOR_JAGEN_SPECIES_ID || sp.id === 'dragapult' || sp.id === 'hydreigon')
     );
     for (const sp of recruitable) {
       const opt = document.createElement('option');

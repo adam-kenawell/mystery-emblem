@@ -172,7 +172,7 @@ export function buildSkirmishBattlePayload(
   const customMap: DungeonMapDefinition = {
     ...baseMap,
     id: `skirmish_${node.id}`,
-    name: `${node.name} — Skirmish`,
+    name: `${node.name} - Skirmish`,
     objectiveType: 'rout',
     objectiveLabel: 'Rout Feral Raiders',
     npcSpawns: undefined,

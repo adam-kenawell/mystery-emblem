@@ -1,24 +1,24 @@
 /**
- * Central Speaker, Portrait, Nickname & Advisor Lifecycle Resolver (`speakerResolver.ts`)
+ * Central Speaker, Portrait, Nickname & Mentor/Advisor Resolver (`speakerResolver.ts`)
  *
  * Single source of truth used across `DialogueOverlay`, `CutsceneScene`, `TutorialOverlay`,
  * `CreditsScene`, and chapter scripts:
- * - Resolves `{lord | partner | healer | mentor | advisor | quiz_slot | unit | species | npc}`
+ * - Resolves `{lord | partner | healer | healer_parent | mentor | advisor | quiz_slot | recruit | unit | species | npc}`
  * - Honors custom nicknames and live Stage 1 -> Stage 2 -> Stage 3 evolved `speciesId`
- * - Automatically maps 1-to-1 Lord -> Flabébé flower `cosmeticForm` (`0669/000X`..`0671/000X`)
- * - Automatically transitions `{ kind: 'advisor' }` from sideline NPC Wimpod (`0767`) to playable
- *   roster Golisopod (`0768`, w/ custom nickname) once `advisorInstanceId` / `wimpod_line` joins `save.roster`
+ * - Automatically maps 1-to-1 Lord -> Flabebe / Florges flower `cosmeticForm` (`0669/000X`..`0671/000X`)
+ * - Resolves both `{ kind: 'mentor' }` and `{ kind: 'advisor' }` to Quaquaval (`mentor_quaquaval`, `0914`)
  */
 
 import {
-  WIMPOD_PMD_ASSET_ID,
   getFlabebeFlowerColorForLord,
+  getFlowerSubformAssetId,
   resolveSpeciesAssetTarget,
   resolveUnitVisualAssetId,
 } from '../assets/pmdAssetLoader';
 import { MENTOR_JAGEN_SPECIES_ID } from '../data/campaignConfig';
 import { getSpeciesById } from '../data/index';
 import type {
+  FlabebeFlowerColor,
   OwnedPokemonInstance,
   QuizSeedSlotKey,
   SaveData,
@@ -29,6 +29,7 @@ export type DialogueSpeakerRef =
   | { kind: 'lord'; fallbackSpeciesId?: string }
   | { kind: 'partner'; fallbackSpeciesId?: string }
   | { kind: 'healer'; fallbackSpeciesId?: string }
+  | { kind: 'healer_parent'; nickname?: string }
   | { kind: 'mentor'; fallbackSpeciesId?: string }
   | { kind: 'advisor'; nickname?: string }
   | { kind: 'quiz_slot'; slot: QuizSeedSlotKey; index?: number; fallbackSpeciesId?: string }
@@ -44,6 +45,7 @@ export interface ResolvedSpeakerIdentity {
   speciesId?: string;
   visualAssetId?: string;
   pmdAssetId: string;
+  portraitAssetId: string;
   instanceId?: string;
 }
 
@@ -79,21 +81,8 @@ export function findMentorRosterUnit(save: SaveData | null): OwnedPokemonInstanc
   return save.roster.find(
     (u) =>
       u.speciesId === MENTOR_JAGEN_SPECIES_ID ||
-      getSpeciesById(u.speciesId)?.lineId === 'sir_empoleon_line'
+      getSpeciesById(u.speciesId)?.lineId === 'mentor_quaquaval_line'
   );
-}
-
-export function findAdvisorRosterUnit(save: SaveData | null): OwnedPokemonInstance | undefined {
-  if (!save) return undefined;
-  if (save.campaign.advisorInstanceId) {
-    const byId = save.roster.find((u) => u.instanceId === save.campaign.advisorInstanceId);
-    if (byId) return byId;
-  }
-  return save.roster.find((u) => getSpeciesById(u.speciesId)?.lineId === 'wimpod_line');
-}
-
-export function isAdvisorInPlayableRoster(save: SaveData | null): boolean {
-  return Boolean(findAdvisorRosterUnit(save));
 }
 
 export function findRosterUnitOfSpeciesLine(
@@ -116,13 +105,26 @@ export function resolveRecruitCameoUnits(save: SaveData | null): OwnedPokemonIns
   const partner = findPartnerRosterUnit(save);
   const healer = findHealerRosterUnit(save);
   const mentor = findMentorRosterUnit(save);
-  const advisor = findAdvisorRosterUnit(save);
   if (lord) coreIds.add(lord.instanceId);
   if (partner) coreIds.add(partner.instanceId);
   if (healer) coreIds.add(healer.instanceId);
   if (mentor) coreIds.add(mentor.instanceId);
-  if (advisor) coreIds.add(advisor.instanceId);
   return save.roster.filter((u) => !coreIds.has(u.instanceId));
+}
+
+function resolveCampaignFlowerColor(save: SaveData | null): FlabebeFlowerColor {
+  const healer = findHealerRosterUnit(save);
+  if (
+    healer?.cosmeticForm === 'red' ||
+    healer?.cosmeticForm === 'yellow' ||
+    healer?.cosmeticForm === 'orange' ||
+    healer?.cosmeticForm === 'blue' ||
+    healer?.cosmeticForm === 'white'
+  ) {
+    return healer.cosmeticForm;
+  }
+  const lord = findLordRosterUnit(save);
+  return getFlabebeFlowerColorForLord(lord?.speciesId ?? 'axew');
 }
 
 function buildIdentityFromUnit(unit: OwnedPokemonInstance): ResolvedSpeakerIdentity {
@@ -136,6 +138,7 @@ function buildIdentityFromUnit(unit: OwnedPokemonInstance): ResolvedSpeakerIdent
     speciesId: unit.speciesId,
     visualAssetId,
     pmdAssetId: resolvedTarget.pmdAssetId,
+    portraitAssetId: resolvedTarget.pmdAssetId,
     instanceId: unit.instanceId,
   };
 }
@@ -148,10 +151,7 @@ function resolveImplicitCosmeticForm(
   if (explicitForm) return explicitForm;
   const sp = getSpeciesById(speciesId);
   if (sp?.lineId === 'flabebe_line') {
-    const healer = findHealerRosterUnit(save);
-    if (healer?.cosmeticForm) return healer.cosmeticForm;
-    const lord = findLordRosterUnit(save);
-    if (lord) return getFlabebeFlowerColorForLord(lord.speciesId);
+    return resolveCampaignFlowerColor(save);
   }
   return undefined;
 }
@@ -160,17 +160,33 @@ export function resolveSpeakerIdentity(
   speaker: DialogueSpeakerRef,
   save: SaveData | null
 ): ResolvedSpeakerIdentity {
-  if (speaker.kind === 'advisor') {
-    const promotedAdvisor = findAdvisorRosterUnit(save);
-    if (promotedAdvisor) {
-      return buildIdentityFromUnit(promotedAdvisor);
-    }
+  if (speaker.kind === 'healer_parent') {
+    const flowerColor = resolveCampaignFlowerColor(save);
+    const florgesAssetId = getFlowerSubformAssetId('0671', flowerColor);
+    const name = speaker.nickname?.trim() || 'Florges';
     return {
-      nickname: speaker.nickname?.trim() || 'Wimpod',
-      speciesName: 'Wimpod',
-      speciesId: 'wimpod',
-      visualAssetId: WIMPOD_PMD_ASSET_ID,
-      pmdAssetId: WIMPOD_PMD_ASSET_ID,
+      nickname: name,
+      speciesName: 'Florges',
+      speciesId: 'florges',
+      visualAssetId: florgesAssetId,
+      pmdAssetId: florgesAssetId,
+      portraitAssetId: florgesAssetId,
+    };
+  }
+
+  if (speaker.kind === 'advisor') {
+    const mentorUnit = findMentorRosterUnit(save);
+    if (mentorUnit) {
+      return buildIdentityFromUnit(mentorUnit);
+    }
+    const name = speaker.nickname?.trim() || 'Quaquaval';
+    return {
+      nickname: name,
+      speciesName: 'Quaquaval',
+      speciesId: MENTOR_JAGEN_SPECIES_ID,
+      visualAssetId: '0914',
+      pmdAssetId: '0914',
+      portraitAssetId: '0914',
     };
   }
 
@@ -180,6 +196,7 @@ export function resolveSpeakerIdentity(
       speciesName: speaker.speciesName,
       visualAssetId: speaker.pmdAssetId,
       pmdAssetId: speaker.pmdAssetId,
+      portraitAssetId: speaker.pmdAssetId,
     };
   }
 
@@ -190,12 +207,14 @@ export function resolveSpeakerIdentity(
     const form = resolveImplicitCosmeticForm(canonicalId, save, speaker.cosmeticForm);
     const visualAssetId = sp ? resolveUnitVisualAssetId(sp.id, form) : speaker.speciesId;
     const target = resolveSpeciesAssetTarget(visualAssetId);
+    const pmdAssetId = target.pmdAssetId || sp?.pmdAssetId || '0610';
     return {
       nickname: speaker.nickname?.trim() || speciesName,
       speciesName,
       speciesId: sp?.id,
       visualAssetId,
-      pmdAssetId: target.pmdAssetId || sp?.pmdAssetId || '0610',
+      pmdAssetId,
+      portraitAssetId: pmdAssetId,
     };
   }
 
@@ -209,7 +228,7 @@ export function resolveSpeakerIdentity(
       break;
     case 'partner':
       unit = findPartnerRosterUnit(save);
-      fallbackSpeciesId = speaker.fallbackSpeciesId ?? 'piplup';
+      fallbackSpeciesId = speaker.fallbackSpeciesId ?? 'quaxly';
       break;
     case 'healer':
       unit = findHealerRosterUnit(save);
@@ -247,14 +266,18 @@ export function resolveSpeakerIdentity(
     ? resolveUnitVisualAssetId(fallbackSp.id, fallbackForm)
     : fallbackSpeciesId;
   const resolvedTarget = resolveSpeciesAssetTarget(visualAssetId);
+  const pmdAssetId = resolvedTarget.pmdAssetId || fallbackSp?.pmdAssetId || '0610';
   return {
     nickname: fallbackName,
     speciesName: fallbackName,
     speciesId: fallbackSp?.id ?? fallbackSpeciesId,
     visualAssetId,
-    pmdAssetId: resolvedTarget.pmdAssetId || fallbackSp?.pmdAssetId || '0147',
+    pmdAssetId,
+    portraitAssetId: pmdAssetId,
   };
 }
+
+export const resolveDialogueSpeaker = resolveSpeakerIdentity;
 
 export function interpolateCampaignText(
   rawText: string,
@@ -264,6 +287,7 @@ export function interpolateCampaignText(
   const lordName = resolveSpeakerIdentity({ kind: 'lord' }, save).nickname;
   const partnerName = resolveSpeakerIdentity({ kind: 'partner' }, save).nickname;
   const healerName = resolveSpeakerIdentity({ kind: 'healer' }, save).nickname;
+  const healerParentName = resolveSpeakerIdentity({ kind: 'healer_parent' }, save).nickname;
   const mentorName = resolveSpeakerIdentity({ kind: 'mentor' }, save).nickname;
   const advisorName = resolveSpeakerIdentity({ kind: 'advisor' }, save).nickname;
 
@@ -271,6 +295,7 @@ export function interpolateCampaignText(
     .replace(/\{lord\}/g, lordName)
     .replace(/\{partner\}/g, partnerName)
     .replace(/\{healer\}/g, healerName)
+    .replace(/\{healer_parent\}/g, healerParentName)
     .replace(/\{mentor\}/g, mentorName)
     .replace(/\{advisor\}/g, advisorName);
 

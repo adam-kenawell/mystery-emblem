@@ -44,6 +44,7 @@ export function castIdentityToSpeakerRef(
     case 'lord':
     case 'partner':
     case 'healer':
+    case 'healer_parent':
     case 'mentor':
     case 'advisor':
       return { kind: who.kind };
@@ -75,6 +76,7 @@ export function isCastIdentityInParty(who: CastIdentity, save: SaveData | null):
     case 'lord':
     case 'partner':
     case 'healer':
+    case 'healer_parent':
     case 'advisor':
     case 'npc':
       return true;

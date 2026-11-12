@@ -81,9 +81,6 @@ export function directionFromDelta(dx: number, dy: number): PmdDirection {
   return ANGLE_TO_PMD_ROW[Math.round(deg / 45) % 8] ?? 0;
 }
 
-export const WIMPOD_PMD_ASSET_ID = '0767';
-export const GOLISOPOD_PMD_ASSET_ID = '0768';
-
 export const PMD_PORTRAIT_EMOTIONS = [
   'Normal',
   'Happy',

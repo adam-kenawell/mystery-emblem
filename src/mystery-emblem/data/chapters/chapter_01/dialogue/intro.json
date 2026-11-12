@@ -2,52 +2,43 @@
   "id": "intro",
   "chapter": "chapter_01",
   "role": "intro",
-  "title": "Capital Road",
-  "music": "drenched_bluff",
+  "title": "Watering Hole Ambush",
+  "music": "outlaw",
   "cast": [
+    { "id": "partner", "who": { "kind": "partner" } },
+    { "id": "healer", "who": { "kind": "healer" } },
+    { "id": "lord", "who": { "kind": "lord" } },
     {
-      "id": "captain_aron",
-      "who": { "kind": "npc", "pokemon": "0304", "name": "Captain Aron", "speciesName": "Aron" }
-    },
-    { "id": "mentor", "who": { "kind": "mentor" } },
-    { "id": "advisor", "who": { "kind": "advisor" } },
-    { "id": "lord", "who": { "kind": "lord" } }
+      "id": "boss",
+      "who": { "kind": "npc", "pokemon": "0453", "name": "Boss Croagunk", "speciesName": "Croagunk" }
+    }
   ],
   "beats": [
     {
       "id": "line_1",
       "say": {
-        "speaker": "captain_aron",
+        "speaker": "boss",
         "emotion": "Angry",
         "side": "right",
-        "text": "Halt! By order of the Ironscale Empire, this road is closed."
+        "text": "Heh, three village kids all by themselves, no grown-ups in sight! Fan out and corner them by the spring!"
       }
     },
     {
       "id": "line_2",
       "say": {
-        "speaker": "mentor",
+        "speaker": "partner",
         "emotion": "Determined",
         "side": "left",
-        "text": "This is Commonwealth land, Captain. Stand aside."
+        "text": "Keep dreaming! Notice the spring pools, {lord}? As a Water Pokemon, I can cross shallow water tiles that block everyone else!"
       }
     },
     {
       "id": "line_3",
       "say": {
-        "speaker": "advisor",
-        "emotion": "Worried",
-        "side": "left",
-        "text": "An Ironscale captain, on our road? Can we just... take a different road?"
-      }
-    },
-    {
-      "id": "line_4",
-      "say": {
-        "speaker": "lord",
+        "speaker": "healer",
         "emotion": "Determined",
         "side": "left",
-        "text": "This is the only road to the King. We’re going through."
+        "text": "And we have tall forest cover right beside us for extra Dodge! Let's drive these thugs away together!"
       }
     }
   ]

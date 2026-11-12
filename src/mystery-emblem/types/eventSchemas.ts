@@ -178,8 +178,29 @@ export type DungeonEventAction =
       /** Marks player units as already acted this phase (e.g. tutorial turns that lock the team) */
       type: 'rest_player_units';
       exceptLord?: boolean;
+      exceptPartner?: boolean;
       /** Keeps the first non-lord unit that knows a heal move active */
       exceptHealer?: boolean;
+    }
+  | {
+      /** Equips an item directly onto a unit's consumable/held slot (or Convoy if occupied) */
+      type: 'give_unit_item';
+      targetUnitId: string;
+      itemId: string;
+      calloutText?: string;
+    }
+  | {
+      /** Walks an actor to `(destX, destY)` if given and performs a deterministic scripted strike */
+      type: 'scripted_attack';
+      attackerUnitId: string;
+      targetUnitId: string;
+      moveId: string;
+      destX?: number;
+      destY?: number;
+    }
+  | {
+      /** Immediately triggers Player Victory (e.g. Chapter 3 Cave Exit `tile_reached`) */
+      type: 'win_battle';
     };
 
 export interface DungeonEventDefinition {

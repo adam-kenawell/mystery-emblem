@@ -52,7 +52,15 @@ export interface CompactChapterJson {
   skipPrepPhase?: boolean;
   isDemoFinale?: boolean;
   preStoryCutsceneId?: string;
+  preStoryCutsceneIds?: string[];
   postStoryCutsceneId?: string;
+  postStoryCutsceneIds?: string[];
+  chainsDirectlyIntoNodeId?: string;
+  postCutsceneRecruits?: Array<{
+    speciesId: string;
+    level: number;
+    scaleStatsToLevel: boolean;
+  }>;
   width: number;
   height: number;
   rows: string[];
@@ -93,7 +101,15 @@ export interface CampaignChapterConfig {
   deploymentCap: number;
   skipPrepPhase?: boolean;
   preStoryCutsceneId?: string;
+  preStoryCutsceneIds?: ReadonlyArray<string>;
   postStoryCutsceneId?: string;
+  postStoryCutsceneIds?: ReadonlyArray<string>;
+  chainsDirectlyIntoNodeId?: string;
+  postCutsceneRecruits?: ReadonlyArray<{
+    speciesId: string;
+    level: number;
+    scaleStatsToLevel: boolean;
+  }>;
   buildMap: () => DungeonMapDefinition;
   enemySpawns: ReadonlyArray<ManualEnemyBattleSpawn>;
   npcSpawns?: ReadonlyArray<DungeonUnitSpawn>;

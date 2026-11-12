@@ -1,0 +1,126 @@
+{
+  "id": "cs_02_bedtime_and_watering_hole",
+  "title": "Questions in the Dark",
+  "music": "at_the_end_of_the_day",
+  "location": "sanctuary_glade",
+  "banner": "Family Homestead - Night",
+  "lighting": "night",
+  "camera": { "x": 7.5, "y": 5.5 },
+  "cast": [
+    { "id": "lord", "who": { "kind": "lord" } },
+    { "id": "partner", "who": { "kind": "partner" } },
+    { "id": "healer", "who": { "kind": "healer" } },
+    {
+      "id": "thug_leader",
+      "who": { "kind": "npc", "pokemon": "0453", "name": "Croagunk", "speciesName": "Croagunk" }
+    }
+  ],
+  "placements": [
+    { "id": "lord", "x": 7, "y": 5, "facing": "Right" },
+    { "id": "partner", "x": 8, "y": 5, "facing": "Left" },
+    { "id": "healer", "x": 5, "y": 6, "facing": "Right", "hidden": true },
+    { "id": "thug_leader", "x": 12, "y": 5, "facing": "Left", "hidden": true }
+  ],
+  "beats": [
+    {
+      "id": "bedtime_1",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Worried",
+        "side": "right",
+        "text": "Psst... {lord}, are you still awake? Every muscle in my wings aches after Dad's drills."
+      },
+      "actions": [
+        { "type": "emote", "who": "partner", "emote": "sweat", "duration": 1.0 }
+      ]
+    },
+    {
+      "id": "bedtime_2",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Worried",
+        "side": "left",
+        "text": "Wide awake. Did you see his eyes on the pitch today? He was training us like we were marching to war tomorrow."
+      }
+    },
+    {
+      "id": "bedtime_3",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Normal",
+        "side": "right",
+        "text": "Yeah... Dad is always cheerful at dinner, so why is he suddenly pushing us so hard to learn how to fight?"
+      }
+    },
+    {
+      "id": "bedtime_4",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Normal",
+        "side": "left",
+        "text": "Let's get some sleep for now. Tomorrow morning it is our turn to haul fresh water from the watering hole."
+      },
+      "actions": [
+        { "type": "emote", "who": "partner", "emote": "sleep", "duration": 1.0 }
+      ]
+    },
+    {
+      "id": "morning_watering_hole",
+      "waitForActions": true,
+      "music": { "kind": "song", "song": "in_the_morning_sun" },
+      "actions": [
+        {
+          "type": "location",
+          "location": "bluff_camp",
+          "transition": "black",
+          "banner": "Village Watering Hole - Next Morning",
+          "camera": { "x": 8, "y": 5.5 },
+          "placements": [
+            { "id": "lord", "x": 5, "y": 5, "facing": "Right" },
+            { "id": "partner", "x": 6, "y": 4, "facing": "Right" },
+            { "id": "healer", "x": 5, "y": 6, "facing": "Right" },
+            { "id": "thug_leader", "x": 12, "y": 5, "facing": "Left", "hidden": true }
+          ]
+        },
+        { "type": "lighting", "mood": "morning_coast", "duration": 0.3 },
+        { "type": "walk", "who": "lord", "path": [[7, 5]], "speed": 2.6, "facing": "Right" },
+        { "type": "walk", "who": "partner", "path": [[8, 4]], "speed": 2.8, "facing": "Right" },
+        { "type": "walk", "who": "healer", "path": [[7, 6]], "speed": 2.6, "facing": "Right" }
+      ],
+      "say": {
+        "speaker": "healer",
+        "emotion": "Happy",
+        "side": "left",
+        "text": "The spring water is crystal clear this morning! Help me fill the wooden pails, {partner}."
+      }
+    },
+    {
+      "id": "thugs_jump_out",
+      "music": { "kind": "song", "song": "outlaw" },
+      "say": {
+        "speaker": "thug_leader",
+        "emotion": "Angry",
+        "side": "right",
+        "text": "Hold it right there, village runts! Drop the pails and empty your pouches if you want to walk home dry!"
+      },
+      "actions": [
+        { "type": "show", "who": "thug_leader", "visible": true, "fade": true },
+        { "type": "walk", "who": "thug_leader", "path": [[10, 5]], "speed": 3.8, "facing": "Left" },
+        { "type": "emote", "who": "lord", "emote": "exclamation", "duration": 0.9 },
+        { "type": "emote", "who": "partner", "emote": "exclamation", "duration": 0.9 }
+      ]
+    },
+    {
+      "id": "lord_stands_firm",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "Outlaw thugs at our own watering hole?! Stay behind us, {healer}. Looks like Dad's training pays off right now!"
+      },
+      "actions": [
+        { "type": "pose", "who": "lord", "anim": "Attack", "duration": 0.45 }
+      ]
+    }
+  ]
+}

@@ -2,12 +2,12 @@
   "id": "p1_talk_slakoth_dialogue",
   "chapter": "paralogue_01",
   "role": "event",
-  "title": "Lush Prairie",
+  "title": "Waking Up Slakoth",
   "music": "spinda_cafe",
   "cast": [
     { "id": "lord", "who": { "kind": "lord" } },
     { "id": "slakoth", "who": { "kind": "recruit", "speciesId": "slakoth" } },
-    { "id": "advisor", "who": { "kind": "advisor" } }
+    { "id": "mentor", "who": { "kind": "mentor" } }
   ],
   "beats": [
     {
@@ -16,7 +16,7 @@
         "speaker": "lord",
         "emotion": "Surprised",
         "side": "left",
-        "text": "Hey, wake up! There are Ferals right across the grass!"
+        "text": "Hey, wake up! Armed poachers are charging right across the prairie!"
       }
     },
     {
@@ -25,16 +25,16 @@
         "speaker": "slakoth",
         "emotion": "Happy",
         "side": "right",
-        "text": "*Yawn*... Oh, hey. You smell like Oran Berries. Mind if I tag along?"
+        "text": "*Yaaawn*... Oh, morning. Your satchel smells like sweet Oran Berries. Mind if I stretch my claws with your crew?"
       }
     },
     {
       "id": "line_3",
       "say": {
-        "speaker": "advisor",
+        "speaker": "mentor",
         "emotion": "Happy",
         "side": "left",
-        "text": "He slept through a raid. Honestly? I respect that."
+        "text": "Feed this youngster a few careful knockouts and watch how fast his strength blossoms!"
       }
     }
   ]

@@ -4,53 +4,150 @@
   "order": 5,
   "dungeonNumber": 6,
   "shortCode": "Ch. 4",
-  "label": "Chapter 4 — Berry Orchards",
-  "title": "Berry Orchards",
+  "label": "Chapter 4 - Capital Outskirts",
+  "title": "Capital Outskirts",
   "subtitle": "Chapter 4",
-  "defaultTilesetId": "042",
-  "bgmCue": "apple_woods",
+  "defaultTilesetId": "003",
+  "bgmCue": "boss_battle",
   "objectiveType": "defeat_boss",
-  "objectiveLabel": "Defeat Boss: Raider Morgrem",
+  "objectiveLabel": "Defeat Rift Behemoth: Great Tusk",
   "recommendedLevel": 5,
-  "deploymentCap": 7,
-  "postStoryCutsceneId": "cs_06_orchard_celebration",
+  "deploymentCap": 6,
+  "isDemoFinale": true,
+  "postStoryCutsceneId": "cs_06_capital_audience",
+  "postCutsceneRecruits": [
+    { "speciesId": "honedge", "level": 5, "scaleStatsToLevel": true },
+    { "speciesId": "sandile", "level": 5, "scaleStatsToLevel": true }
+  ],
   "width": 20,
   "height": 12,
   "rows": [
-    "X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1",
-    "X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2",
-    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
-    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 W:39 F:28 F:28 F:28 F:28 F:28 F:28 F:126 F:28 F:28",
-    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
-    "F:28 F:28 F:28 F:28 F:28 F:28 F:124 W:39 F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28",
-    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:124 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
-    "F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:126 F:28 F:28",
-    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:45 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 S:28 F:28",
-    "F:28 F:28 F:28 F:124 F:28 F:28 F:28 F:28 F:116 W:117 W:88 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
-    "F:28 F:28 F:28 F:28 W:39 F:28 F:28 F:28 F:28 W:90 F:28 F:28 F:28 F:28 F:28 W:39 F:28 F:124 F:28 F:28",
-    "X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5"
+    "X:34 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:33",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:96 X:21",
+    "X:3 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:41 W:42 F:28 F:28 F:28 F:28 F:28 F:131 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:9 F:28 F:28 F:28 WT:28 F:28 F:28 F:9 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:42 W:43 F:28 F:28 F:28 F:28 F:28 F:131 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:95 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:36 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:48"
   ],
   "playerSlots": [
-    {"x":3,"y":5,"speciesId":"dratini"},
-    {"x":3,"y":3,"speciesId":"piplup"},
-    {"x":3,"y":7,"speciesId":"flabebe"},
-    {"x":2,"y":4,"speciesId":"sir_empoleon"},
-    {"x":2,"y":6,"speciesId":"pidgey"},
-    {"x":2,"y":8,"speciesId":"ralts"},
-    {"x":4,"y":5,"speciesId":"elekid"}
+    { "x": 3, "y": 5, "speciesId": "axew" },
+    { "x": 3, "y": 4, "speciesId": "quaxly" },
+    { "x": 3, "y": 6, "speciesId": "flabebe" },
+    { "x": 2, "y": 4, "speciesId": "mentor_quaquaval" },
+    { "x": 2, "y": 5, "speciesId": "smoliv" },
+    { "x": 2, "y": 6, "speciesId": "machop" }
   ],
-  "recruitment": {"seedKey":"slot3Electric","joinLevel":5,"scaleStatsToLevel":true,"fallbackSpeciesIds":["elekid"]},
   "clearRewardItems": [
-    {"itemId":"super_potion","quantity":1}
+    { "itemId": "super_potion", "quantity": 1 }
   ],
   "enemySpawns": [
-    {"id":"d5_enemy_0","x":12,"y":3,"speciesId":"linoone_galar","nickname":"Forager Linoone","level":5,"stats":{"hp":22,"atk":8,"def":6,"spa":5,"spd":6,"spe":9,"mov":5},"heldItemId":null,"aiMode":"wait_until_in_range"},
-    {"id":"d5_enemy_1","x":13,"y":8,"speciesId":"venipede","nickname":"Thicket Lancer","level":5,"heldItemId":null,"droppableItemId":"sitrus_berry","aiMode":"wait_until_in_range"},
-    {"id":"d5_enemy_2","x":15,"y":4,"speciesId":"corvisquire","nickname":"Canopy Harrier","level":5,"stats":{"hp":22,"atk":8,"def":6,"spa":5,"spd":6,"spe":8,"mov":6},"heldItemId":null,"aiMode":"wait_until_in_range"},
-    {"id":"d5_enemy_3","x":14,"y":6,"speciesId":"rolycoly","nickname":"Orchard Sapper","level":5,"heldItemId":null,"aiMode":"wait_until_in_range"},
-    {"id":"ch4_boss_morgrem","x":17,"y":5,"speciesId":"morgrem","nickname":"Raider Morgrem","level":6,"stats":{"hp":25,"atk":9,"def":7,"spa":9,"spd":8,"spe":8,"mov":5},"moveIds":["spirit_break","snarl","thunder_wave"],"equippedMoveId":"spirit_break","heldItemId":"oran_berry","isBoss":true,"stationary":false,"droppableItemId":"full_heal","aiMode":"wait_until_in_range"}
+    {
+      "id": "ch4_paradox_0",
+      "x": 11,
+      "y": 3,
+      "speciesId": "brute_bonnet",
+      "nickname": "Rift Brute Bonnet",
+      "level": 4,
+      "heldItemId": null,
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch4_paradox_1",
+      "x": 11,
+      "y": 8,
+      "speciesId": "scream_tail",
+      "nickname": "Rift Scream Tail",
+      "level": 4,
+      "heldItemId": null,
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch4_paradox_2",
+      "x": 14,
+      "y": 4,
+      "speciesId": "slither_wing",
+      "nickname": "Rift Slither Wing",
+      "level": 5,
+      "heldItemId": null,
+      "droppableItemId": "sitrus_berry",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch4_paradox_3",
+      "x": 14,
+      "y": 7,
+      "speciesId": "flutter_mane",
+      "nickname": "Rift Flutter Mane",
+      "level": 5,
+      "heldItemId": null,
+      "droppableItemId": "full_heal",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch4_boss_great_tusk",
+      "x": 17,
+      "y": 5,
+      "speciesId": "great_tusk",
+      "nickname": "Rift Great Tusk",
+      "level": 6,
+      "heldItemId": "oran_berry",
+      "isBoss": true,
+      "droppableItemId": "evolution_stone",
+      "aiMode": "wait_until_in_range"
+    }
   ],
-  "reinforcements": [
-    {"id":"d5_reinforce_t2_woods","turnNumber":2,"stairsX":18,"stairsY":8,"enemy":{"id":"d5_reinf_pawniard","x":18,"y":8,"speciesId":"pawniard","nickname":"Imperial Forager","level":5,"heldItemId":null,"aiMode":"wait_until_in_range"}}
+  "reinforcements": [],
+  "events": [
+    {
+      "id": "ev_ch4_hometown_trio_arrives",
+      "once": true,
+      "trigger": { "type": "turn_start", "turnNumber": 2, "phase": "player_phase" },
+      "actions": [
+        {
+          "type": "spawn_units",
+          "faction": "player",
+          "addToPermanentRoster": true,
+          "calloutText": "VILLAGE FRIENDS!",
+          "bannerText": "Starly, Caterpie & Pawmi Joined!",
+          "units": [
+            {
+              "id": "ch4_starly",
+              "x": 4,
+              "y": 2,
+              "speciesId": "starly",
+              "nickname": "Starly",
+              "level": 4
+            },
+            {
+              "id": "ch4_caterpie",
+              "x": 3,
+              "y": 9,
+              "speciesId": "caterpie",
+              "nickname": "Caterpie",
+              "level": 4
+            },
+            {
+              "id": "ch4_pawmi",
+              "x": 5,
+              "y": 8,
+              "speciesId": "pawmi",
+              "nickname": "Pawmi",
+              "level": 4
+            }
+          ]
+        },
+        {
+          "type": "play_dialogue",
+          "scriptId": "ch4_town_trio_join_dialogue",
+          "restorePreviousBgmOnClose": true
+        }
+      ]
+    }
   ]
 }

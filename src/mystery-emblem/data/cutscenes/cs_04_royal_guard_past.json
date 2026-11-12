@@ -1,0 +1,124 @@
+{
+  "id": "cs_04_royal_guard_past",
+  "title": "The Retired Royal Guard",
+  "music": "thoughts_for_friends",
+  "location": "coastal_meadow",
+  "banner": "Foothill Trail - Verdant Kingdom",
+  "lighting": "morning_coast",
+  "camera": { "x": 7.5, "y": 5.5 },
+  "cast": [
+    { "id": "mentor", "who": { "kind": "mentor" } },
+    { "id": "lord", "who": { "kind": "lord" } },
+    { "id": "partner", "who": { "kind": "partner" } },
+    { "id": "healer", "who": { "kind": "healer" } },
+    {
+      "id": "smoliv",
+      "who": { "kind": "recruit", "speciesId": "smoliv" },
+      "offStage": true
+    }
+  ],
+  "placements": [
+    { "id": "mentor", "x": 5, "y": 5, "facing": "Right" },
+    { "id": "lord", "x": 4, "y": 4, "facing": "Right" },
+    { "id": "partner", "x": 4, "y": 6, "facing": "Right" },
+    { "id": "healer", "x": 3, "y": 5, "facing": "Right" }
+  ],
+  "beats": [
+    {
+      "id": "trail_walk",
+      "actions": [
+        { "type": "walk", "who": "mentor", "path": [[8, 5]], "speed": 2.4, "facing": "Right" },
+        { "type": "walk", "who": "lord", "path": [[7, 4]], "speed": 2.4, "facing": "Right" },
+        { "type": "walk", "who": "partner", "path": [[7, 6]], "speed": 2.4, "facing": "Right" },
+        { "type": "walk", "who": "healer", "path": [[6, 5]], "speed": 2.4, "facing": "Right" }
+      ],
+      "advance": { "kind": "seconds", "seconds": 0.9 }
+    },
+    {
+      "id": "quaxly_asks",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Normal",
+        "side": "left",
+        "text": "All right, Dad, we are miles out of the village now. You owe us the truth: why did King Serperior send a courier for you?"
+      }
+    },
+    {
+      "id": "quaquaval_confession_1",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Sad",
+        "side": "right",
+        "text": "You deserve to hear it. Years ago, before we settled in the valley, I served in King Serperior's personal Royal Guard."
+      },
+      "actions": [
+        { "type": "face", "who": "mentor", "facing": "Left" },
+        { "type": "emote", "who": "partner", "emote": "shock", "duration": 0.95 },
+        { "type": "emote", "who": "healer", "emote": "exclamation", "duration": 0.95 }
+      ]
+    },
+    {
+      "id": "quaquaval_confession_2",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Sad",
+        "side": "right",
+        "text": "When you were just a hatchling, {partner}, a terrible accident claimed your mother's life. So I laid down my royal cloak to raise you and {lord} in peace."
+      }
+    },
+    {
+      "id": "quaquaval_confession_3",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Worried",
+        "side": "right",
+        "text": "I never told a soul because if outlaws or rival spies learned my former rank, they would harass or threaten our family for crown secrets. I had to lay low."
+      }
+    },
+    {
+      "id": "quaxly_response",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Teary-Eyed",
+        "side": "left",
+        "text": "Dad... You hid all of that just to keep us safe?"
+      }
+    },
+    {
+      "id": "cry_for_help",
+      "music": { "kind": "song", "song": "oh_no" },
+      "say": {
+        "speaker": "smoliv",
+        "emotion": "Crying",
+        "side": "right",
+        "text": "H-help!! Somebody, please! Raiders have me cornered up the trail!"
+      }
+    },
+    {
+      "id": "lord_hears_smoliv",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Surprised",
+        "side": "left",
+        "text": "Wait! Did you hear that shout up ahead?! Someone is calling for help!"
+      },
+      "actions": [
+        { "type": "face", "who": "lord", "facing": "Right" },
+        { "type": "face", "who": "mentor", "facing": "Right" },
+        { "type": "emote", "who": "lord", "emote": "exclamation", "duration": 0.9 }
+      ]
+    },
+    {
+      "id": "quaquaval_leads_charge",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Determined",
+        "side": "right",
+        "text": "I am fighting right beside you now! Form up on me and let's rescue that traveler!"
+      },
+      "actions": [
+        { "type": "pose", "who": "mentor", "anim": "Attack", "duration": 0.5 }
+      ]
+    }
+  ]
+}

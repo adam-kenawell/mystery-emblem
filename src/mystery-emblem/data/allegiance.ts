@@ -1,68 +1,89 @@
 /**
  * Unit Allegiance Labels (`allegiance.ts`)
  *
- * Shown on the dungeon unit info card. Player units always serve the Verdant Commonwealth.
- * Enemies nicknamed `Feral ...` are Abyss-corrupted wilds; everyone else resolves by species line.
+ * Shown on the dungeon unit info card across the 5 Kingdoms and Space-Time Rift.
  */
 
 import type { UnitBattleFaction } from '../types/schemas';
 import { getSpeciesById } from './index';
 
 export type UnitAllegiance =
-  | 'Verdant Commonwealth'
-  | 'Umbral Canopy'
-  | 'Goldensand Monarchy'
-  | 'Cinderpeak Dominion'
-  | 'Frostspire Enclave'
-  | 'Ironscale Empire'
-  | 'Feral';
+  | 'Verdant Kingdom'
+  | 'Forest Tribe'
+  | 'Sand Kingdom'
+  | 'Fire Kingdom'
+  | 'Ice Kingdom'
+  | 'Steel Kingdom'
+  | 'Space-Time Rift'
+  | 'Outlaws'
+  | 'Wild';
 
 const LINE_ALLEGIANCE: Readonly<Record<string, UnitAllegiance>> = {
-  // Verdant Commonwealth
-  sir_empoleon_line: 'Verdant Commonwealth',
-  piplup_line: 'Verdant Commonwealth',
-  flabebe_line: 'Verdant Commonwealth',
-  wimpod_line: 'Verdant Commonwealth',
-  ralts_line: 'Verdant Commonwealth',
-  abra_line: 'Verdant Commonwealth',
-  solosis_line: 'Verdant Commonwealth',
-  slakoth_line: 'Verdant Commonwealth',
-  // Umbral Canopy
-  seedot_line: 'Umbral Canopy',
-  dreepy_line: 'Umbral Canopy',
-  // Goldensand Monarchy
-  sandile_line: 'Goldensand Monarchy',
-  tinkatink_line: 'Goldensand Monarchy',
-  kecleon_line: 'Goldensand Monarchy',
-  // Cinderpeak Dominion
-  torchic_line: 'Cinderpeak Dominion',
-  chimchar_line: 'Cinderpeak Dominion',
-  // Frostspire Enclave
-  frigibax_line: 'Frostspire Enclave',
-  swinub_line: 'Frostspire Enclave',
-  vanillite_line: 'Frostspire Enclave',
-  // Ironscale Empire
-  aron_line: 'Ironscale Empire',
-  pawniard_line: 'Ironscale Empire',
-  rookidee_line: 'Ironscale Empire',
-  zigzagoon_galar_line: 'Ironscale Empire',
-  impidimp_line: 'Ironscale Empire',
-  rolycoly_line: 'Ironscale Empire',
-  deino_line: 'Ironscale Empire',
-  gothita_line: 'Ironscale Empire',
-  honedge_line: 'Ironscale Empire',
-  skarmory_line: 'Ironscale Empire',
-  spheal_line: 'Ironscale Empire',
-  gastly_line: 'Ironscale Empire',
-  abyssal_tyranitar_line: 'Ironscale Empire',
-  // Feral (Abyss-corrupted wilds)
-  zubat_line: 'Feral',
-  venipede_line: 'Feral',
-  croagunk_line: 'Feral',
-  stufful_line: 'Feral',
-  timburr_line: 'Feral',
-  tynamo_line: 'Feral',
-  spiritomb_line: 'Feral',
+  // Verdant Kingdom
+  mentor_quaquaval_line: 'Verdant Kingdom',
+  quaxly_line: 'Verdant Kingdom',
+  flabebe_line: 'Verdant Kingdom',
+  smoliv_line: 'Verdant Kingdom',
+  machop_line: 'Verdant Kingdom',
+  starly_line: 'Verdant Kingdom',
+  caterpie_line: 'Verdant Kingdom',
+  pawmi_line: 'Verdant Kingdom',
+  slakoth_line: 'Verdant Kingdom',
+  ralts_line: 'Verdant Kingdom',
+  abra_line: 'Verdant Kingdom',
+  solosis_line: 'Verdant Kingdom',
+  // Forest Tribe
+  seedot_line: 'Forest Tribe',
+  dreepy_line: 'Forest Tribe',
+  sewaddle_line: 'Forest Tribe',
+  // Sand Kingdom
+  sandile_line: 'Sand Kingdom',
+  tinkatink_line: 'Sand Kingdom',
+  kecleon_line: 'Sand Kingdom',
+  // Fire Kingdom
+  torchic_line: 'Fire Kingdom',
+  chimchar_line: 'Fire Kingdom',
+  // Ice Kingdom
+  swinub_line: 'Ice Kingdom',
+  vanillite_line: 'Ice Kingdom',
+  // Steel Kingdom
+  honedge_line: 'Steel Kingdom',
+  pawniard_line: 'Steel Kingdom',
+  aron_line: 'Steel Kingdom',
+  rookidee_line: 'Steel Kingdom',
+  rolycoly_line: 'Steel Kingdom',
+  deino_line: 'Steel Kingdom',
+  gothita_line: 'Steel Kingdom',
+  skarmory_line: 'Steel Kingdom',
+  spheal_line: 'Steel Kingdom',
+  gastly_line: 'Steel Kingdom',
+  // Outlaws
+  zigzagoon_galar_line: 'Outlaws',
+  impidimp_line: 'Outlaws',
+  croagunk_line: 'Outlaws',
+  timburr_line: 'Outlaws',
+  // Wild
+  zubat_line: 'Wild',
+  venipede_line: 'Wild',
+  stufful_line: 'Wild',
+  tynamo_line: 'Wild',
+  spiritomb_line: 'Wild',
+  // Space-Time Rift (Paradoxes & Hoopa)
+  great_tusk_line: 'Space-Time Rift',
+  scream_tail_line: 'Space-Time Rift',
+  brute_bonnet_line: 'Space-Time Rift',
+  flutter_mane_line: 'Space-Time Rift',
+  slither_wing_line: 'Space-Time Rift',
+  sandy_shocks_line: 'Space-Time Rift',
+  roaring_moon_line: 'Space-Time Rift',
+  iron_treads_line: 'Space-Time Rift',
+  iron_bundle_line: 'Space-Time Rift',
+  iron_hands_line: 'Space-Time Rift',
+  iron_jugulis_line: 'Space-Time Rift',
+  iron_moth_line: 'Space-Time Rift',
+  iron_thorns_line: 'Space-Time Rift',
+  iron_valiant_line: 'Space-Time Rift',
+  hoopa_line: 'Space-Time Rift',
 };
 
 export function resolveUnitAllegiance(unit: {
@@ -70,10 +91,14 @@ export function resolveUnitAllegiance(unit: {
   speciesId: string;
   nickname?: string;
 }): UnitAllegiance {
-  if (unit.faction === 'player') return 'Verdant Commonwealth';
-  if (unit.faction === 'enemy' && /^feral\b/i.test(unit.nickname?.trim() ?? '')) return 'Feral';
   const lineId = getSpeciesById(unit.speciesId)?.lineId;
+  if (unit.faction === 'player') {
+    if (lineId === 'honedge_line') return 'Steel Kingdom';
+    if (lineId === 'sandile_line') return 'Sand Kingdom';
+    if (lineId === 'dreepy_line') return 'Forest Tribe';
+    return 'Verdant Kingdom';
+  }
   const mapped = lineId ? LINE_ALLEGIANCE[lineId] : undefined;
   if (mapped) return mapped;
-  return unit.faction === 'enemy' ? 'Feral' : 'Verdant Commonwealth';
+  return unit.faction === 'enemy' ? 'Wild' : 'Verdant Kingdom';
 }

@@ -159,7 +159,7 @@ export class DevToolsCheatsController {
         this.ensureActiveSaveForCheat();
         saveManager.unlockAllOverworldNodes(DEMO_OVERWORLD_GRAPH);
         audioManager.playSfx('select');
-        this.setCheatStatus('Unlocked all 9 Demo nodes.');
+        this.setCheatStatus('Unlocked all 6 Act 1 nodes.');
         this.deps.onLiveStateMutated();
       },
       { signal }
@@ -171,7 +171,7 @@ export class DevToolsCheatsController {
         this.ensureActiveSaveForCheat();
         saveManager.resetOverworldToPrologue(DEMO_OVERWORLD_GRAPH);
         audioManager.playSfx('select');
-        this.setCheatStatus('Reset World Map to Prologue: Western Beach.');
+        this.setCheatStatus('Reset World Map to Prologue: Hometown Pitch.');
         this.deps.onLiveStateMutated({ snapOverworld: true });
       },
       { signal }

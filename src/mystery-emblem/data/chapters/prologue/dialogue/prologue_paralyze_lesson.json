@@ -1,0 +1,48 @@
+{
+  "id": "prologue_paralyze_lesson",
+  "chapter": "prologue",
+  "role": "event",
+  "title": "Type Advantage, Status & Items",
+  "cast": [
+    { "id": "mentor", "who": { "kind": "mentor" } },
+    { "id": "partner", "who": { "kind": "partner" } }
+  ],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Pain",
+        "side": "left",
+        "text": "Bzzzt-ow!! My feathers are tingling so hard I can barely lift my feet!"
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Determined",
+        "side": "right",
+        "text": "That is a super-effective hit! Electric strikes deal double damage to Water types like you, {partner}, so always check typing before you trade blows."
+      }
+    },
+    {
+      "id": "line_3",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Normal",
+        "side": "right",
+        "text": "Worse yet, Nuzzle left you Paralyzed, cutting your Speed and Mov! Burns, Poison, Sleep, and Freeze can cripple a squad just as fast."
+      }
+    },
+    {
+      "id": "line_4",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Happy",
+        "side": "right",
+        "text": "Catch this Paralyze Heal! Select {partner} and use your Item to shake off the static, then work together to defeat Starly, Caterpie, and Pawmi!"
+      }
+    }
+  ]
+}

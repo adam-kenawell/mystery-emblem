@@ -1,0 +1,123 @@
+{
+  "id": "cs_03_pidgeotto_summons",
+  "title": "Summons from King Serperior",
+  "music": "heartwarming",
+  "location": "sanctuary_glade",
+  "banner": "Family Homestead - Evening Dinner",
+  "lighting": "sanctuary_glow",
+  "camera": { "x": 7.5, "y": 5.5 },
+  "cast": [
+    { "id": "lord", "who": { "kind": "lord" } },
+    { "id": "partner", "who": { "kind": "partner" } },
+    { "id": "healer", "who": { "kind": "healer" } },
+    { "id": "mentor", "who": { "kind": "mentor" } },
+    { "id": "healer_parent", "who": { "kind": "healer_parent" } },
+    {
+      "id": "messenger",
+      "who": { "kind": "npc", "pokemon": "0017", "name": "Royal Courier", "speciesName": "Pidgeotto" }
+    }
+  ],
+  "placements": [
+    { "id": "mentor", "x": 7, "y": 4, "facing": "Down" },
+    { "id": "healer_parent", "x": 8, "y": 4, "facing": "Down" },
+    { "id": "lord", "x": 7, "y": 6, "facing": "Up" },
+    { "id": "partner", "x": 6, "y": 6, "facing": "UpRight" },
+    { "id": "healer", "x": 9, "y": 6, "facing": "UpLeft" },
+    { "id": "messenger", "x": 7, "y": 10, "facing": "Up", "hidden": true }
+  ],
+  "beats": [
+    {
+      "id": "dinner_calm",
+      "say": {
+        "speaker": "healer_parent",
+        "emotion": "Worried",
+        "side": "right",
+        "text": "Thank goodness none of you were hurt at the watering hole. Bandits have never dared come this close to our village before."
+      }
+    },
+    {
+      "id": "courier_arrives",
+      "music": { "kind": "song", "song": "growing_anxiety" },
+      "say": {
+        "speaker": "messenger",
+        "emotion": "Determined",
+        "side": "right",
+        "text": "Pardon the intrusion! Urgent royal dispatch from the Emerald Capital for Master Quaquaval!"
+      },
+      "actions": [
+        { "type": "show", "who": "messenger", "visible": true, "fade": true },
+        { "type": "walk", "who": "messenger", "path": [[7, 7]], "speed": 4.2, "facing": "Up" },
+        { "type": "face", "who": "lord", "facing": "Down" },
+        { "type": "face", "who": "partner", "facing": "DownRight" },
+        { "type": "face", "who": "healer", "facing": "DownLeft" }
+      ]
+    },
+    {
+      "id": "courier_message",
+      "say": {
+        "speaker": "messenger",
+        "emotion": "Normal",
+        "side": "right",
+        "text": "His Majesty King Serperior summons you to the capital at once. Strange attacks are breaking out along the realm's borders!"
+      }
+    },
+    {
+      "id": "quaxly_shock",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Surprised",
+        "side": "left",
+        "text": "Wait a second... King Serperior himself?! Why on earth would the King of the Verdant Kingdom know your name, Dad?!"
+      },
+      "actions": [
+        { "type": "emote", "who": "partner", "emote": "shock", "duration": 1.0 },
+        { "type": "emote", "who": "lord", "emote": "exclamation", "duration": 1.0 }
+      ]
+    },
+    {
+      "id": "quaquaval_pack_up",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "There is no time to explain tonight. Pack your satchels and rations immediately. All four of us leave at first light."
+      },
+      "actions": [
+        { "type": "show", "who": "messenger", "visible": false, "fade": true }
+      ]
+    },
+    {
+      "id": "florges_blessing",
+      "say": {
+        "speaker": "healer_parent",
+        "emotion": "Normal",
+        "side": "right",
+        "text": "I will watch over the homestead while you travel. Take my salves, {healer}, and keep our family safe on the road."
+      }
+    },
+    {
+      "id": "kids_excited",
+      "music": { "kind": "song", "song": "exploration_theme" },
+      "say": {
+        "speaker": "partner",
+        "emotion": "Inspired",
+        "side": "left",
+        "text": "{lord}, can you believe it?! We are actually going to meet King Serperior in the royal capital! Though I still have no clue how Dad knows him!"
+      },
+      "actions": [
+        { "type": "face", "who": "partner", "toward": "lord" },
+        { "type": "face", "who": "lord", "toward": "partner" },
+        { "type": "hop", "who": "partner", "count": 2 }
+      ]
+    },
+    {
+      "id": "mountain_warning",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Determined",
+        "side": "right",
+        "text": "Reaching the capital will not be easy. We have to cross the treacherous mountain peaks standing between our valley and the crownlands. Let's get ready!"
+      }
+    }
+  ]
+}

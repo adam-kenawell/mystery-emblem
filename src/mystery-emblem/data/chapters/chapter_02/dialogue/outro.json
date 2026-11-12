@@ -2,26 +2,48 @@
   "id": "outro",
   "chapter": "chapter_02",
   "role": "outro",
-  "title": "Cleft Mountain",
-  "music": "calm_cutscene",
-  "cast": [{ "id": "mentor", "who": { "kind": "mentor" } }, { "id": "lord", "who": { "kind": "lord" } }],
+  "title": "Smoliv Joins the Crew",
+  "music": "heartwarming",
+  "cast": [
+    { "id": "smoliv", "who": { "kind": "recruit", "speciesId": "smoliv" } },
+    { "id": "lord", "who": { "kind": "lord" } },
+    { "id": "healer", "who": { "kind": "healer" } }
+  ],
   "beats": [
     {
       "id": "line_1",
       "say": {
-        "speaker": "mentor",
-        "emotion": "Worried",
+        "speaker": "smoliv",
+        "emotion": "Teary-Eyed",
         "side": "right",
-        "text": "These tremors aren’t natural, {lord}. Something is stirring under this mountain."
+        "text": "Y-you chased every single one of those raiders off! I thought I was done for..."
       }
     },
     {
       "id": "line_2",
       "say": {
-        "speaker": "lord",
-        "emotion": "Determined",
+        "speaker": "healer",
+        "emotion": "Happy",
         "side": "left",
-        "text": "Then let’s look around while we’re up here. That old tower first."
+        "text": "You are safe now! Were you traveling these mountain trails all alone?"
+      }
+    },
+    {
+      "id": "line_3",
+      "say": {
+        "speaker": "smoliv",
+        "emotion": "Inspired",
+        "side": "right",
+        "text": "I was trying to reach the capital markets, but the roads have turned so dangerous... Please, {lord}, may I join your team? I feel the safest when I am with all of you!"
+      }
+    },
+    {
+      "id": "line_4",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Happy",
+        "side": "left",
+        "text": "Of course you can, Smoliv! Stick with us and we will cross the mountain together."
       }
     }
   ]

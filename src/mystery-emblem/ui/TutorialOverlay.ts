@@ -1,14 +1,14 @@
 /**
- * Mystery Emblem — Wimpod Interactive Advisor Coordinator (`TutorialOverlay.ts`)
+ * Mystery Emblem - Quaquaval's Field Notes Coordinator (`TutorialOverlay.ts`)
  */
 
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
 import {
   getTutorialTopicById,
+  type AdvisorTutorialBeat,
   type TutorialActionTriggerId,
   type TutorialBattleTileFilter,
   type TutorialPresenter,
-  type WimpodTutorialBeat,
 } from '../data/tutorialRegistry';
 import type { SaveStateManager } from '../state/SaveStateManager';
 import { renderCoachCardWithTypewriter } from './tutorial/TutorialCoachCardRenderer';
@@ -84,7 +84,7 @@ export class TutorialOverlay {
     this.pauseInFastMode = enabled;
   }
 
-  public getCurrentBeat(): WimpodTutorialBeat | null {
+  public getCurrentBeat(): AdvisorTutorialBeat | null {
     return this.session.getCurrentBeat();
   }
 
@@ -191,8 +191,6 @@ export class TutorialOverlay {
   public handleBack(): boolean {
     if (!this.isOpen()) return false;
     if (this.session.mode === 'card') {
-      // Right-click / long-press / corner Back always exits the topic (live: skip & mark seen;
-      // compendium: return to the Ask-Wimpod list). Stepping beats uses the ◀ Back button.
       this.dismissActiveCard('cancel');
       return true;
     }

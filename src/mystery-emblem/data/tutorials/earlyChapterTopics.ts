@@ -1,12 +1,8 @@
 /**
- * Mystery Emblem — Core Hands-On Drill Topics 1–6 (`earlyChapterTopics.ts`)
+ * Mystery Emblem - Core Hands-On Drill Topics 1-6 (`earlyChapterTopics.ts`)
  *
- * Covers Prologue Turn 1 movement, Combat Forecast & counter rule, the one-item slot & Heal Pulse,
- * Level-Ups & Stones, Overworld Menu, and Chapter Prep.
- *
- * Copy rule: 1–2 short sentences per beat in the speaker's natural voice. Explain rules in plain
- * words (no shorthand like R1/R2, `[E]`, BOSS, DROP, KO, STAB). Interactive (`awaitAction`) beats
- * MUST end with a clear instruction — the coach card renders no hint pill or buttons on those beats.
+ * Voiced by Quaquaval for live coaching and Quaquaval's Field Notes.
+ * Zero em dashes; every interactive (`awaitAction`) beat ends with a clear instruction.
  */
 
 import type { TutorialTopicDefinition } from './tutorialTypes';
@@ -16,18 +12,16 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
     id: 'ch1_turn1_controls_phases',
     title: 'Moving & Turn Phases',
     category: 'controls_fusion',
-    summary: 'Move your team and keep your Lord safe.',
+    summary: "Quaquaval's first lesson: stride into position and hold stance.",
     beats: [
       {
-        id: 'ch1_step3_select_lord',
-        emotion: 'Worried',
-        dialogue: 'Here we go! If {lord} goes down, it’s all over, so be careful. Tap {lord} to start.',
-        mentorEmotion: 'Determined',
-        mentorDialogue:
-          'Let us begin. Remember, {lord}: if you fall in a real battle, our journey ends. Tap {lord}.',
-        actionHint: 'Tap {lord}',
-        awaitAction: 'battle_select_lord',
-        spotlight: { kind: 'battle_tiles', tileFilter: 'lord_unit' },
+        id: 'ch1_step3_select_partner',
+        emotion: 'Determined',
+        dialogue:
+          'Eyes up, kids! Good footwork wins every bout before the first swing. Tap {partner} to begin.',
+        actionHint: 'Tap {partner}',
+        awaitAction: 'battle_select_partner',
+        spotlight: { kind: 'battle_tiles', tileFilter: 'partner_unit' },
         chips: [
           { kind: 'badge', label: 'Lord 0 HP = Defeat', tone: 'gold' },
           { kind: 'badge', label: 'Allies Recover Post-Battle', tone: 'green' },
@@ -35,11 +29,10 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
       },
       {
         id: 'ch1_step4_move_blue',
-        emotion: 'Surprised',
-        dialogue: 'The blue squares show how far {lord} can walk. Tap one to move there.',
-        mentorEmotion: 'Normal',
-        mentorDialogue: 'The blue squares show how far you can go. Step onto the glowing one.',
-        actionHint: 'Tap a blue tile',
+        emotion: 'Normal',
+        dialogue:
+          'The blue squares show how far {partner} can stride. Tap the glowing square inside my reach.',
+        actionHint: 'Tap the glowing blue tile',
         awaitAction: 'battle_move_to_blue_tile',
         spotlight: { kind: 'battle_tiles', tileFilter: 'reachable_move' },
         chips: [
@@ -50,8 +43,7 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
       {
         id: 'ch1_step5_wait',
         emotion: 'Happy',
-        dialogue: 'Way braver than me. Tap Wait to finish {lord}’s move.',
-        mentorDialogue: 'Good. Now tap Wait, and brace yourself.',
+        dialogue: 'Clean footwork, {partner}! Tap Wait to finish your move and brace for my strike.',
         actionHint: 'Tap Wait',
         awaitAction: 'battle_confirm_wait',
         spotlight: { kind: 'dom', selector: '[data-testid="dungeon-cmd-wait"]' },
@@ -62,14 +54,13 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
     id: 'ch1_first_combat_forecast',
     title: 'Combat Forecast, Ranges & [E] Counters',
     category: 'combat_tactics',
-    summary: 'Physical vs Special range, the [E] counter rule, and hitting twice.',
+    summary: 'Physical vs Special range, dual [E] counter slots, and follow-up strikes.',
     beats: [
       {
         id: 'combat_step1_open_forecast',
-        emotion: 'Stunned',
-        dialogue: 'Eek, an enemy’s close enough to hit! Tap it to see how the fight would go.',
-        mentorEmotion: 'Determined',
-        mentorDialogue: 'An enemy is within reach. Tap it to see how the exchange would go.',
+        emotion: 'Determined',
+        dialogue:
+          'A foe is within striking distance! Tap the glowing opponent to inspect the battle forecast.',
         actionHint: 'Tap the glowing enemy',
         awaitAction: 'battle_open_attack_forecast',
         spotlight: {
@@ -80,25 +71,20 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
       },
       {
         id: 'combat_step2_equipped_rule',
-        emotion: 'Determined',
+        emotion: 'Normal',
         dialogue:
-          'Physical moves hit up close, and special moves hit from two spaces away. A foe can only hit back with a move marked E that reaches you.',
-        mentorDialogue:
-          'Physical moves strike up close, special moves from two spaces away. A foe can only answer with a move marked E that reaches you.',
+          'Each fighter carries up to four moves: physical strikes hit adjacent foes, special moves reach two spaces out, and you equip one of each to counter.',
         chips: [
           { kind: 'badge', label: 'Physical = R1', tone: 'gold' },
           { kind: 'badge', label: 'Special = R2', tone: 'cyan' },
-          { kind: 'badge', label: '[E] Counter Rule', tone: 'green' },
+          { kind: 'badge', label: '1 Phys + 1 Spec [E]', tone: 'green' },
         ],
       },
       {
         id: 'combat_step3_confirm_attack',
-        emotion: 'Teary-Eyed',
+        emotion: 'Inspired',
         dialogue:
-          'Hitting a weakness hurts more, and if you’re much faster, you hit twice. Pick a move, then tap Attack!',
-        mentorEmotion: 'Inspired',
-        mentorDialogue:
-          'Strike their weakness, and if you’re much faster, you strike twice. Choose a move, then tap Attack.',
+          'Hitting an elemental weakness deals heavy damage, and outspeeding a foe lets you strike twice. Pick your move, then tap Attack!',
         actionHint: 'Tap Attack!',
         awaitAction: 'battle_confirm_attack',
         spotlight: {
@@ -115,31 +101,25 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
   },
   {
     id: 'ch1_healing_and_items',
-    title: 'Healing Allies & The 1-Item Slot',
+    title: 'Healing Allies & Medicine Items',
     category: 'prep_pokemon',
-    summary: 'Your one item slot, auto Berries vs Potions, and healing allies.',
+    summary: 'Using medicine from Item, auto Berries, and healing allies from afar.',
     beats: [
       {
         id: 'heal_step1_item_slot_rule',
-        emotion: 'Crying',
+        emotion: 'Worried',
         dialogue:
-          'Ouch, someone’s hurt! Everyone can hold one item. Berries get eaten on their own, but Potions you use from Item.',
-        mentorEmotion: 'Worried',
-        mentorDialogue:
-          'One of you is wounded. Each of you carries one item. Berries are eaten when needed; Potions you use from Item.',
+          'Someone took a hit! Berries trigger on their own in a pinch, while Potions and status cures are used from Item.',
         chips: [
           { kind: 'item', itemId: 'oran_berry', label: 'Oran Berry (Auto)' },
-          { kind: 'item', itemId: 'potion', label: 'Potion (Manual)' },
+          { kind: 'item', itemId: 'paralyze_heal', label: 'Status Cure (Item)' },
         ],
       },
       {
         id: 'heal_step2_heal_pulse',
-        emotion: 'Worried',
+        emotion: 'Normal',
         dialogue:
-          '{healer} can heal friends from up to two spaces away, and gets stronger doing it. Tap the glowing ally to try.',
-        mentorEmotion: 'Normal',
-        mentorDialogue:
-          '{healer} can mend allies from two spaces away, and grows stronger doing it. Tap the glowing ally to try.',
+          '{healer} can mend allies from up to two spaces away and earns experience every time. Tap the glowing ally to tend the wound.',
         actionHint: 'Tap the glowing ally',
         awaitAction: 'battle_inspect_heal_or_item',
         spotlight: { kind: 'battle_tiles', tileFilter: 'wounded_or_healer' },
@@ -154,19 +134,20 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
     id: 'levelup_and_evolution',
     title: 'Level-Ups & Evolution Stone Promotions',
     category: 'world_progression',
-    summary: 'Level-ups, stat growth, and evolving with Stones at Lv. 10+.',
+    summary: 'Learning moves through level-ups and promoting with Stones at Lv. 10+.',
     beats: [
       {
         id: 'evo_beat1_exp',
-        emotion: 'Surprised',
-        dialogue: 'Whoa, a level up! The more you fight and heal, the stronger everyone gets.',
+        emotion: 'Happy',
+        dialogue:
+          'Well earned! Every battle and heal builds experience, raising stats and unlocking new moves as you level up.',
         chips: [{ kind: 'badge', label: '100 EXP = +1 Lv', tone: 'gold' }],
       },
       {
         id: 'evo_beat2_manual_stone',
-        emotion: 'Happy',
+        emotion: 'Determined',
         dialogue:
-          'Nobody evolves on their own, though. From level 10, an Evolution Stone does it. Use one from Units, Chapter Prep, or Evolve in battle.',
+          'Once a teammate reaches level 10, an Evolution Stone unlocks their next form. Use one from Units, Battle Prep, or Evolve in combat.',
         chips: [
           { kind: 'item', itemId: 'evolution_stone', label: 'Lv. 10+ Stone' },
           { kind: 'item', itemId: 'evolution_gem', label: 'Lv. 20+ Gem' },
@@ -176,14 +157,15 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
   },
   {
     id: 'overworld_and_skirmishes',
-    title: 'The World Map & Party Menu',
+    title: 'The World Map & Expedition Menu',
     category: 'world_progression',
-    summary: 'Traveling the map, the party menu, and bonus Skirmishes.',
+    summary: "Quaquaval's road guide: traveling nodes, managing your squad, and Skirmishes.",
     beats: [
       {
         id: 'ow_step1_open_menu',
-        emotion: 'Happy',
-        dialogue: 'Fresh air at last! Tap a spot on the map to travel there. But first, tap Menu up in the corner.',
+        emotion: 'Determined',
+        dialogue:
+          'The road to the capital stretches ahead! Tap any connected landmark to march there, or tap Menu in the corner first.',
         actionHint: 'Tap Menu',
         awaitAction: 'overworld_open_menu',
         spotlight: { kind: 'dom', selector: '#pmd-corner-menu-btn', preferredDock: 'bottom' },
@@ -193,7 +175,7 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
         id: 'ow_step2_tour_tabs',
         emotion: 'Normal',
         dialogue:
-          'Units and Items let you change moves, hand out gear, and evolve. And watch for Ferals showing up in places we’ve already cleared!',
+          'Use Units and Items to tune your four-move loadouts, swap gear, and read Quaquaval’s Field Notes under System.',
         chips: [
           { kind: 'badge', label: 'Units · Items · System', tone: 'gold' },
           { kind: 'badge', label: 'Bonus Feral Skirmishes', tone: 'danger' },
@@ -203,23 +185,24 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
   },
   {
     id: 'prep_units_and_moves',
-    title: 'Chapter Prep, [E] Loadouts & Positioning',
+    title: 'Battle Prep, Deployment & Starting Spots',
     category: 'prep_pokemon',
-    summary: 'Set moves and your [E] counters, then arrange starting spots.',
+    summary: "Quaquaval's Royal Guard prep checklist: pick your squad, moves, and map spots.",
     beats: [
       {
         id: 'prep_step1_open_units',
-        emotion: 'Happy',
-        dialogue: 'Planning before the danger starts. My favorite part! Tap Manage Units.',
+        emotion: 'Determined',
+        dialogue:
+          'Now that I am marching beside you, we prepare properly before every clash. Tap Manage Units.',
         actionHint: 'Tap Manage Units',
         awaitAction: 'prep_open_manage_units',
         spotlight: { kind: 'dom', selector: '[data-testid="prep-btn-manage-units"]' },
       },
       {
         id: 'prep_step2_check_equipped',
-        emotion: 'Determined',
+        emotion: 'Normal',
         dialogue:
-          'Everyone knows four moves. The ones marked E are what they hit back with: one up close, one from range. Have a look, then tap Done.',
+          'Choose who deploys, customize up to four moves, and check your equipped close and ranged counters. Tap Done when ready.',
         actionHint: 'Tap Done',
         awaitAction: 'prep_close_manage_units',
         spotlight: {
@@ -234,8 +217,9 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
       },
       {
         id: 'prep_step3_open_view_map',
-        emotion: 'Worried',
-        dialogue: 'Never walk into a fight blind. Tap View Map.',
+        emotion: 'Determined',
+        dialogue:
+          'A Royal Guard always scouts the ground before engaging. Tap View Map to inspect the battlefield.',
         actionHint: 'Tap View Map',
         awaitAction: 'prep_open_view_map',
         spotlight: { kind: 'dom', selector: '[data-testid="prep-btn-view-map"]' },
@@ -243,7 +227,8 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
       {
         id: 'prep_step4_swap_blue_tiles',
         emotion: 'Happy',
-        dialogue: 'Tap two blue squares to swap who starts where, or tap Prep when you’re ready.',
+        dialogue:
+          'Tap any two blue starting squares to swap where your teammates begin, or tap Prep when your formation looks sharp.',
         actionHint: 'Swap 2 blue tiles (or tap Prep)',
         awaitAction: 'prep_swap_or_finish_view_map',
         spotlight: {

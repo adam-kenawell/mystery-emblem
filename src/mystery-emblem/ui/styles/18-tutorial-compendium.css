@@ -61,7 +61,7 @@
   padding: 4px 11px;
 }
 
-/* Ask Wimpod — Survival Notes Compendium */
+/* Quaquaval's Field Notes Compendium */
 .pmd-tutorial-empty-note {
   margin: 8px 0;
   font-size: 13px;
@@ -112,7 +112,7 @@
   color: var(--pmd-text-cyan);
 }
 
-/* Reusable Wimpod Tutorial Settings Control (Overworld System + Dungeon Settings) */
+/* Reusable Quaquaval Tutorial Settings Control (Overworld System + Dungeon Settings) */
 .pmd-tutorial-settings-block {
   display: flex;
   flex-direction: column;

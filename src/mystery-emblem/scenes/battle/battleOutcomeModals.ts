@@ -74,7 +74,19 @@ export function checkAndTriggerMatchEnd(ctx: BattleControllerContext): boolean {
     return false;
   }
 
-  if (livingEnemies.length === 0) {
+  if (state.objectiveType === 'seize') {
+    return false;
+  }
+
+  const hasPendingScriptedEnemyWave = state.events.some(
+    (ev) =>
+      ev.trigger.type === 'turn_start' &&
+      ev.trigger.turnNumber > state.turnNumber &&
+      !state.triggeredEventIds.has(ev.id) &&
+      ev.actions.some((a) => a.type === 'spawn_units' && a.faction === 'enemy')
+  );
+
+  if (livingEnemies.length === 0 && !hasPendingScriptedEnemyWave) {
     triggerVictoryModal(ctx);
     return true;
   }

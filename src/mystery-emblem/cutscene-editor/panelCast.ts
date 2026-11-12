@@ -19,22 +19,23 @@ type IdentityKind = CastIdentity['kind'];
 
 const KIND_OPTIONS: Array<{ value: IdentityKind; label: string }> = [
   { value: 'lord', label: 'Hero (your Dragon)' },
-  { value: 'partner', label: 'Partner (Piplup)' },
-  { value: 'healer', label: 'Healer (Flabébé)' },
-  { value: 'mentor', label: 'Sir Empoleon' },
-  { value: 'advisor', label: 'Wimpod / Golisopod' },
+  { value: 'partner', label: 'Partner (Quaxly)' },
+  { value: 'healer', label: 'Healer (Flabebe)' },
+  { value: 'healer_parent', label: 'Florges (Healer Parent)' },
+  { value: 'mentor', label: 'Quaquaval (Mentor)' },
+  { value: 'advisor', label: 'Quaquaval (Field Notes)' },
   { value: 'quiz_slot', label: 'Quiz-chosen recruit' },
   { value: 'recruit', label: 'Story recruit (fixed species)' },
   { value: 'party_extra', label: 'Extra party member #N' },
-  { value: 'npc', label: 'Any Pokémon (NPC with a name)' },
+  { value: 'npc', label: 'Any Pokemon (NPC with a name)' },
 ];
 
 function defaultIdentity(kind: IdentityKind): CastIdentity {
   switch (kind) {
     case 'quiz_slot':
-      return { kind, slot: 'slot1Flying', fallbackSpeciesId: 'pidgey' };
+      return { kind, slot: 'slot1Flying', fallbackSpeciesId: 'starly' };
     case 'recruit':
-      return { kind, speciesId: 'duskull' };
+      return { kind, speciesId: 'smoliv' };
     case 'party_extra':
       return { kind, slotIndex: 0 };
     case 'npc':

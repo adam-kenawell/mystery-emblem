@@ -144,6 +144,9 @@ export function validateItems(
     byId.set(it.id, it);
     if (!VALID_ITEM_CATEGORY_SET.has(it.category)) errors.push(`Item "${it.id}" invalid category "${it.category}".`);
     if (!it.iconSlug?.trim()) errors.push(`Item "${it.id}" missing iconSlug.`);
+    if (it.effect.cureSpecificStatus && !VALID_STATUS_SET.has(it.effect.cureSpecificStatus)) {
+      errors.push(`Item "${it.id}" invalid cureSpecificStatus "${it.effect.cureSpecificStatus}".`);
+    }
     if (it.category === 'tm') {
       tmCount += 1;
       const moveId = it.effect.teachesMoveId;
@@ -203,7 +206,7 @@ export function validateAllRegistries(
       }
       if (sp.stage === 1) {
         if (evo.requiredItemId !== 'evolution_stone') errors.push(`Stage-1 "${sp.id}" must require evolution_stone.`);
-        const expectedLv = sp.id === 'eevee' || sp.id === 'wimpod' ? BRANCHED_PROMOTION_MIN_LEVEL : STONE_PROMOTION_MIN_LEVEL;
+        const expectedLv = sp.id === 'eevee' ? BRANCHED_PROMOTION_MIN_LEVEL : STONE_PROMOTION_MIN_LEVEL;
         if (sp.faction !== 'enemy' && evo.minLevel !== expectedLv) {
           errors.push(`Stage-1 "${sp.id}" expected minLevel ${expectedLv} (got ${evo.minLevel}).`);
         }
@@ -235,7 +238,6 @@ export function validateAllRegistries(
     if (f === 'ally_npc') allyNpcLines.add(lineId);
     if (cat === 'dragon_lord') dragonLines.add(lineId);
     else if (cat === 'story_core') coreLines.add(lineId);
-    else if (cat.startsWith('quiz_slot_')) quizLines.add(lineId);
     else if (cat === 'story_chapter') storyLines.add(lineId);
     else if (cat === 'paralogue') paralogueLines.add(lineId);
   }

@@ -1,19 +1,14 @@
 /**
- * Mystery Emblem — Wimpod / Advisor Coach Bar DOM Renderer (`TutorialCoachCardRenderer.ts`)
+ * Mystery Emblem - Quaquaval Coach Bar DOM Renderer (`TutorialCoachCardRenderer.ts`)
  *
  * Uses central `speakerResolver.ts` (`resolveSpeakerIdentity` & `interpolateCampaignText`)
- * so portraits, flower colors, and advisor identity stay 100% synchronized.
- *
- * Minimal coach card: `[portrait] [name / typewriter text / ◀ Back · Next ▶]`.
- * Interactive (`awaitAction`) beats render zero buttons — the dialogue itself tells the
- * player what to tap. Topic titles, step badges, chips and action-hint pills are
- * intentionally NOT rendered here (the Ask-Wimpod compendium list still shows titles).
+ * so portraits and nicknames stay 100% synchronized.
  */
 
 import type {
+  AdvisorTutorialBeat,
   TutorialPresenter,
   TutorialTopicDefinition,
-  WimpodTutorialBeat,
 } from '../../data/tutorialRegistry';
 import { interpolateCampaignText, resolveSpeakerIdentity } from '../../engine/speakerResolver';
 import type { SaveData } from '../../types/schemas';
@@ -25,13 +20,12 @@ export interface RenderCoachCardParams {
   cardWindowEl: HTMLElement;
   coachPortraitView: PmdPortraitView;
   topic: TutorialTopicDefinition;
-  beat: WimpodTutorialBeat;
+  beat: AdvisorTutorialBeat;
   beatIndex: number;
   totalBeats: number;
   isInteractive: boolean;
   returnToCompendiumOnClose: boolean;
   save: SaveData | null;
-  /** Defaults to the Wimpod/Golisopod advisor */
   presenter?: TutorialPresenter;
   signal: AbortSignal;
   onPrev: () => void;
@@ -46,7 +40,7 @@ function resolvePrimaryNavLabel(isLastBeat: boolean, returnToCompendiumOnClose: 
 function buildNavActionsRow(params: RenderCoachCardParams): HTMLElement {
   const { beatIndex, totalBeats, returnToCompendiumOnClose, signal } = params;
   const actionArea = document.createElement('div');
-  actionArea.className = 'pmd-wimpod-actions';
+  actionArea.className = 'pmd-advisor-actions';
 
   if (beatIndex > 0) {
     actionArea.appendChild(
@@ -90,14 +84,14 @@ export function renderCoachCardDom(params: RenderCoachCardParams): {
   cardWindowEl.dataset.presenter = isMentor ? 'mentor' : 'advisor';
   cardWindowEl.dataset.interactive = isInteractive ? 'true' : 'false';
   cardWindowEl.dataset.awaitAction = isInteractive ? beat.awaitAction ?? '' : '';
-  cardWindowEl.dataset.wimpodEmotion = emotion;
+  cardWindowEl.dataset.advisorEmotion = emotion;
 
   const layoutRow = document.createElement('div');
-  layoutRow.className = 'pmd-wimpod-coach-row';
+  layoutRow.className = 'pmd-advisor-coach-row';
 
   const portraitSlot = document.createElement('div');
-  portraitSlot.className = 'pmd-forecast-portrait-slot pmd-wimpod-portrait-slot';
-  portraitSlot.dataset.testid = 'tutorial-wimpod-portrait-slot';
+  portraitSlot.className = 'pmd-forecast-portrait-slot pmd-advisor-portrait-slot';
+  portraitSlot.dataset.testid = 'tutorial-advisor-portrait-slot';
   portraitSlot.appendChild(coachPortraitView.canvas);
   void coachPortraitView.setPortrait({
     speciesIdOrAssetId: advisor.visualAssetId ?? advisor.pmdAssetId,
@@ -106,10 +100,10 @@ export function renderCoachCardDom(params: RenderCoachCardParams): {
   layoutRow.appendChild(portraitSlot);
 
   const contentCol = document.createElement('div');
-  contentCol.className = 'pmd-wimpod-coach-main';
+  contentCol.className = 'pmd-advisor-coach-main';
 
   const speakerName = document.createElement('span');
-  speakerName.className = 'pmd-dialogue-nickname pmd-wimpod-speaker-name';
+  speakerName.className = 'pmd-dialogue-nickname pmd-advisor-speaker-name';
   speakerName.dataset.testid = 'tutorial-speaker-name';
   speakerName.textContent = advisor.nickname;
   contentCol.appendChild(speakerName);
@@ -119,7 +113,7 @@ export function renderCoachCardDom(params: RenderCoachCardParams): {
     save
   );
   const speechEl = document.createElement('p');
-  speechEl.className = 'pmd-wimpod-speech-text';
+  speechEl.className = 'pmd-advisor-speech-text';
   speechEl.dataset.testid = 'tutorial-dialogue-text';
   contentCol.appendChild(speechEl);
 

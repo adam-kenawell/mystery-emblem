@@ -10,7 +10,13 @@ import { RAW_CHAPTER_JSON_LIST } from '../../data/chapters/defaultCatalog';
 import type { CutsceneDoc, DialogueDoc } from '../../data/cutscenes/cutsceneDocTypes';
 import { listDialogueDocs, subscribeCutsceneRegistry } from '../../data/cutscenes/cutsceneRegistry';
 import { compileDialogueDoc } from '../../data/cutscenes/dialogueCompiler';
-import { getStoryCutsceneById, listStoryCutscenesInPlayOrder, findStoryCutsceneLink } from '../../data/storyCutscenes';
+import {
+  findStoryCutsceneLink,
+  getPostChapterCutsceneIds,
+  getPreChapterCutsceneIds,
+  getStoryCutsceneById,
+  listStoryCutscenesInPlayOrder,
+} from '../../data/storyCutscenes';
 import type { ChapterMapEditorScene } from '../../scenes/ChapterMapEditorScene';
 import type { CutsceneScene } from '../../scenes/CutsceneScene';
 import type { SaveStateManager } from '../../state/SaveStateManager';
@@ -255,13 +261,17 @@ export class DevToolsCutscenesController {
       head.className = 'pmd-subcard-title';
       head.textContent = ch.label;
       group.append(head);
-      const pre = ch.preStoryCutsceneId ? getStoryCutsceneById(ch.preStoryCutsceneId) : undefined;
-      if (pre) group.append(storyRow(pre, 'Before'));
+      for (const csId of getPreChapterCutsceneIds(ch.nodeId)) {
+        const pre = getStoryCutsceneById(csId);
+        if (pre) group.append(storyRow(pre, 'Before'));
+      }
       const dialogues = listDialogueDocs(ch.id);
       const order = (d: DialogueDoc) => (d.role === 'intro' ? 0 : d.role === 'event' ? 1 : 2);
       for (const d of dialogues.sort((a, b) => order(a) - order(b))) group.append(dialogueRow(d));
-      const post = ch.postStoryCutsceneId ? getStoryCutsceneById(ch.postStoryCutsceneId) : undefined;
-      if (post) group.append(storyRow(post, 'After'));
+      for (const csId of getPostChapterCutsceneIds(ch.nodeId)) {
+        const post = getStoryCutsceneById(csId);
+        if (post) group.append(storyRow(post, 'After'));
+      }
       listEl.append(group);
     }
     const unlinked = listStoryCutscenesInPlayOrder().filter((d) => !findStoryCutsceneLink(d.id));

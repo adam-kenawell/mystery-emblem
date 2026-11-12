@@ -1,7 +1,7 @@
 /**
  * Default Preview Party for the Cutscene Editor (`previewSave.ts`)
  *
- * An Axew hero with default names, Sir Empoleon, and every Part 1A recruit already
+ * An Axew hero with default names, Quaquaval, and every Act 1 recruit already
  * joined, with all demo chapters cleared. Never written to storage.
  */
 
@@ -10,19 +10,30 @@ import { buildNewCampaignSaveData } from '../../state/campaignSaveFactory';
 import { createPokemonInstance } from '../../state/saveHelpersAndFactory';
 import type { SaveData } from '../../types/schemas';
 
-const PREVIEW_RECRUIT_SPECIES_IDS = ['pidgey', 'sewaddle', 'ralts', 'elekid', 'slakoth', 'duskull'];
+const PREVIEW_RECRUIT_SPECIES_IDS = [
+  'mentor_quaquaval',
+  'smoliv',
+  'machop',
+  'slakoth',
+  'starly',
+  'caterpie',
+  'pawmi',
+  'honedge',
+  'sandile',
+];
 
 let cached: SaveData | null = null;
 
 export function buildPreviewSave(): SaveData {
   if (cached) return cached;
   const save = buildNewCampaignSaveData(
-    { lordSpeciesId: 'axew', currentChapterId: 'chapter_01', startingLevel: 5 },
+    { lordSpeciesId: 'axew', currentChapterId: 'chapter_02', startingLevel: 5 },
     false
   );
   for (const speciesId of PREVIEW_RECRUIT_SPECIES_IDS) {
     try {
-      save.roster.push(createPokemonInstance({ speciesId, level: 5 }));
+      const level = speciesId === 'mentor_quaquaval' ? 12 : 5;
+      save.roster.push(createPokemonInstance({ speciesId, level }));
     } catch {
       // Species missing from the registry: skip it in the preview
     }

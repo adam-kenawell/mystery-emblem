@@ -20,8 +20,8 @@ import {
 } from '../types/schemas';
 import type { CloudUser } from './firebaseSync';
 
-export const SAVE_STORAGE_KEY = 'mystery_emblem_save_v1';
-export const LEGACY_SAVE_STORAGE_KEY = 'poke_emblem_save_v1';
+export const SAVE_STORAGE_KEY = 'mystery_emblem_save_v2';
+export const LEGACY_SAVE_STORAGE_KEY = 'mystery_emblem_save_v1';
 export const META_STORAGE_KEY = 'mystery_emblem_meta_v1';
 
 export const SUPPORT_LEVEL_THRESHOLDS: readonly [number, number, number, number, number] = [

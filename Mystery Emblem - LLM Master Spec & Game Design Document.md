@@ -4,318 +4,72 @@
 **Platform:** Web Browser (hosted on existing Pokémon Mystery Dungeon sprite/animation API site)  
 **Core Concept:** A tactical RPG fan game that mixes the grid-based combat, growth rates, overworld map, and battle prep of Fire Emblem (specifically Fire Emblem Awakening) with the characters, lore, moves, types, and items of Pokémon (using Pokémon Mystery Dungeon sprites and animations).
 
-# **PART 1: STORY & GAME FLOW (STARTING FOCUS)**
+# **PART 1: STORY & GAME FLOW (5-ACT HOOPA & SPACE-TIME RIFT CANON)**
 
-## **1.1 The "Pokémon Mystery Dungeon" Starting Quiz, Dragon Lord & Partner Selection**
+## **1.1 The Dragon Aura Personality Quiz, Fixed Hometown Family & New Game Plus**
 
-When a player starts a new save file, the game opens with a 9-question personality quiz in the style of *Pokémon Mystery Dungeon*, followed by a Partner selection screen.
+When a player starts a new save file (`Start`), the game opens with an 8-question **Dragon Aura Personality Quiz** in the style of *Pokemon Mystery Dungeon: Explorers of Sky*:
 
-* **Dual-Purpose Quiz Mechanics (Lord Selection \+ Mixed-Group Recruit Seeding):**  
-  * **1\. Determines Your "Dragon Lord":** Each answer adds personality points toward one of the **8 Stage-1 Dragon Pokémon**. At the end of the quiz, the highest-scoring trait assigns your Lord (with an optional manual override). Because the main story revolves around your Lord being the **only Pokémon in the world who possesses the ancient "Dragon Power"** needed to unite the warring kingdoms and stop the world's destruction, no other Dragon-line units appear as standard recruits.  
-  * **2\. Determines Future Chapter Recruits (Singles, Duos & a Trio):** To keep recruitment pacing varied and unpredictable, each quiz question seeds a different group size for a future chapter:  
-    * **Single Recruits:** Your Partner's Best-Friend Healer in the Prologue (Q1), a solo Electric-type in Chapter 4 (Q4), and a solo Fire-type in Chapter 8 (Q7).  
-    * **Paired Duos:** A starting-route Bug & Flying duo in Chapter 1 (Q2), a Ghost & Psychic duo in Chapter 2 (Q3), a Water & Grass duo in Chapter 7 (Q6), a Steel & Fairy duo in Chapter 10 (Q8), and an Ice & Armored duo in Chapter 12 (Q9).  
-    * **Three-Pokémon Trio:** A Fighting, Rock & Ground trio that joins all at once in Chapter 5 (Q5).  
-* **The 8 Dragon Lord Options (All 3-Stage Pseudo-Legendary / Dragon Lines):**  
-  * **Dratini** (Dratini \-\> Dragonair \-\> Dragonite) — *Mystic / Gentle trait*  
-  * **Bagon** (Bagon \-\> Shelgon \-\> Salamence) — *Bold / Determined trait*  
-  * **Gible** (Gible \-\> Gabite \-\> Garchomp) — *Fierce / Impulsive trait*  
-  * **Deino** (Deino \-\> Zweilous \-\> Hydreigon) — *Tenacious / Relentless trait*  
-  * **Goomy** (Goomy \-\> Sliggoo \-\> Goodra) — *Kind / Resilient trait*  
-  * **Jangmo-o** (Jangmo-o \-\> Hakamo-o \-\> Kommo-o) — *Honorable / Disciplined trait*  
-  * **Dreepy** (Dreepy \-\> Drakloak \-\> Dragapult) — *Clever / Swift trait*  
-  * **Frigibax** (Frigibax \-\> Arctibax \-\> Baxcalibur) — *Stoic / Composed trait*  
-* **The 9-Question Personality Quiz Script, Trait Weights & Recruit Seeds:**  
-  * Each question is presented in second-person *Pokémon Mystery Dungeon: Explorers of Sky* style. Question 1 offers 6 choices (seeding the 6 Prologue Healers), while Questions 2 through 9 each offer 3 choices (24 choices across Q2–Q9, where each of the 8 Dragon Lords serves as the primary **\+2 point** trait exactly 3 times and the secondary **\+1 point** trait exactly 3 times).  
-  * **Tie-Breaker & Manual Override Rule:** If two or more Dragon Lords tie for the highest trait score after Question 9, the tie is broken by whichever tied Dragon Lord received points earliest in the quiz. On the Lord reveal screen, the player may either accept their quiz-assigned Dragon Lord or manually override the result to pick any of the 8 Dragon Lords.
+* **Dragon-Lord-Only Quiz:**
+  * Each answer adds personality points toward one of the **5 playable Stage-1 Dragon Lords**:
+    * **Axew** (`Axew -> Fraxure -> Haxorus`) - *Red Flower Flabebe & Florges*
+    * **Bagon** (`Bagon -> Shelgon -> Salamence`) - *Orange Flower Flabebe & Florges*
+    * **Gible** (`Gible -> Gabite -> Garchomp`) - *Yellow Flower Flabebe & Florges*
+    * **Dratini** (`Dratini -> Dragonair -> Dragonite`) - *Blue Flower Flabebe & Florges*
+    * **Goomy** (`Goomy -> Sliggoo -> Goodra`) - *White Flower Flabebe & Florges*
+  * Variable quiz-seeded chapter recruits are retired in favor of a tight, hand-authored story cast across all 5 Acts.
+  * **New Game Plus (`NG+`) Mode:** Replaces the 8-question quiz with a direct **Dragon Lord Picker** while preserving all campaign levels, story cutscenes, and tactical rules.
+* **Fixed Hometown Starting Trio & Mentor:**
+  * **Dragon Lord (`Lv. 1`):** Force-deployed main protagonist; if `{lord}` faints, the map triggers Game Over. Grants `Dragon Aura` (`+10% Hit / +10% Avoid` within 2 tiles).
+  * **Quaxly (`Lv. 1`, `Quaxly -> Quaxwell -> Quaquaval`):** Biological child of **Quaquaval** and loyal foster sibling to `{lord}`.
+  * **Flabebe (`Lv. 1`, `Flabebe -> Floette -> Florges`):** Daughter of **Florges** and childhood best friend with a ranged healing move; her flower color (and her mother Florges's flower color) matches `{lord}` 1-to-1.
+  * **Quaquaval (`mentor_quaquaval`, `Lv. 12` Water/Fighting Jagen):** Retired Royal Guard of **King Serperior**, father to `Quaxly`, and foster father to `{lord}`. Voices live combat coaching in Acts 1-2, authors **"Quaquaval's Field Notes"** (the replayable tactical tutorial compendium), joins your playable squad in Chapter 2, and is killed at the end of Act 2 when the Steel Kingdom betrays your expedition.
+* **Persistent Nicknaming & Renaming Anytime:**
+  * Every newly recruited Pokemon prompts a custom **Nickname** modal (preserved across evolutions and editable anytime from Overworld `Units` or `Battle Prep`).
 
-**Question 1 — Prologue Healer Seed (Partner's Best Friend):**  
-*Prompt: "A fierce storm has just passed over your coastal village, and a weary traveler stumbles into the town square looking exhausted. How do you help them recover?"*
+## **1.2 Opening Sequence & Overworld Unveil (`Fire Emblem Awakening` Style)**
 
-| Option | Player Answer Choice | Dragon Lord Trait Points | Prologue Healer Recruit |
-| :---- | :---- | :---- | :---- |
-| **A** | "Bring them a warm meal and a soft blanket right away." | **Goomy \+2**, **Dratini \+1** | **Happiny** (Chansey \-\> Blissey) |
-| **B** | "Gather soothing herbs and flowers to calm their spirits." | **Dratini \+2**, **Dreepy \+1** | **Flabébé** (Floette \-\> Florges) |
-| **C** | "Rally the neighbors and cheer them up with a lively smile\!" | **Bagon \+2**, **Gible \+1** | **Bounsweet** (Steenee \-\> Tsareena) |
-| **D** | "Lead them somewhere quiet so they can rest in peace and silence." | **Frigibax \+2**, **Deino \+1** | **Hatenna** (Hattrem \-\> Hatterene) |
-| **E** | "Check their supplies and share your own rations for the road ahead." | **Jangmo-o \+2**, **Goomy \+1** | **Smoliv** (Dolliv \-\> Arboliva) |
-| **F** | "Tell them an encouraging story to bring back their luck and hope." | **Dreepy \+2**, **Bagon \+1** | **Togepi** (Togetic \-\> Togekiss) |
+* **Linear Hometown Opening Before Overworld Unveil:**
+  1. `Quiz` / `NG+` -> `cs_00_ancient_dragon_war` (Ancient Dragon Kingdom ruled in peace; **Hoopa** opens a Space-Time Rift summoning **Paradox Pokemon**; **Haxorus**, **Dragonite**, and **Goodra** sacrifice their remaining energy to seal the Rift as Hoopa slips into a portal, sealing away three Dragon Eggs: `Dreepy`, `Deino`, and `{lord}`).
+  2. `cs_01_berry_walk_and_dinner` (`{lord}`, `Quaxly`, and `Flabebe` return from berry-picking to dinner with `Quaquaval` and `Florges`; `Quaquaval` insists on after-dinner sparring).
+  3. `Prologue: Hometown Pitch` (`skipPrepPhase: true`): Two-phase training bout where Phase 1 vs. `Quaquaval` teaches movement, healing, Range-2 `Dragon Breath`, the 4-move cap, and dual Physical + Special `[E]` counter slots, and Phase 2 vs. hometown peers `Starly`, `Caterpie`, and `Pawmi` demonstrates super-effective damage (`Nuzzle`), Status Conditions (`PAR`), and item curing (`Paralyze Heal`) before defeating all three opponents.
+  4. `cs_02_bedtime_and_watering_hole` -> `Chapter 1: Watering Hole` (`skipPrepPhase: true`): Bedtime talk wondering why `Quaquaval` trains them so hard, followed the next morning by fending off outlaw thugs at the watering hole.
+  5. `cs_03_pidgeotto_summons` -> **Overworld Map Unveil**: Royal courier **Pidgeotto** interrupts dinner with word that **King Serperior** summons `Quaquaval` to the capital; as the family packs to cross the treacherous mountain, the node-based **Overworld Map** unveils for the first time.
+* **Overworld Skirmishes & Act 2 Kecleon Shops:**
+  * Occasional one-off Skirmishes may spawn on cleared Overworld nodes after chapter victories (clearing immediately once fought to prevent infinite grinding).
+  * Traveling **Kecleon Shops** (TM, Held Item, Healing/Evolution, and X-Item shops) unlock in **Act 2** after rescuing **Master Merchant Kecleon**.
 
-**Question 2 — Chapter 1 Route-1 Bug & Flying Duo Seed:**  
-*Prompt: "You are setting out on your very first expedition up a misty coastal bluff when the main trail splits into three paths. Which route do you take?"*
+## **1.3 Battle Prep Screen (Introduced in Chapter 2)**
 
-| Option | Player Answer Choice | Dragon Lord Trait Points | Chapter 1 Duo Recruits |
-| :---- | :---- | :---- | :---- |
-| **A** | "The familiar, sunlit dirt road where I can see the horizon clearly." | **Bagon \+2**, **Jangmo-o \+1** | **Caterpie & Pidgey** (Kanto) |
-| **B** | "The winding forest footpath shaded by tall, rustling canopy trees." | **Goomy \+2**, **Dratini \+1** | **Sewaddle & Pidove** (Unova) |
-| **C** | "The steep rocky shortcut climbing straight up the seaside cliffs." | **Gible \+2**, **Deino \+1** | **Grubbin & Pikipek** (Alola) |
+Starting in **Chapter 2 (`Foothill Trail`)** when `Quaquaval` joins your playable team, `Battle Prep` opens before Turn 1:
+1. **Manage Units & Swap Starting Tiles:** Toggle deployed units up to the chapter's deployment cap (`{lord}` mandatory) and tap two blue deployment tiles on `View Map` to swap positions.
+2. **Manage Moves & Dual `[E]` Slots:** Equip up to **4 moves** and mark up to **1 Physical (`Range 1`)** and **1 Special (`Range 2`)** `[E]` move for Enemy Phase counters.
+3. **Manage Items:** Equip **1 Passive Held Item** and **1 Active Consumable** (such as `Potion`, `Paralyze Heal`, `Full Heal`, `Evolution Stone`, or `Evolution Gem`).
 
-**Question 3 — Chapter 2 Ghost & Psychic Duo Seed:**  
-*Prompt: "While exploring an ancient mountain ruin at dusk, you hear eerie footsteps echoing from behind a locked stone door. What is your first instinct?"*
+## **1.4 Five-Act Campaign Chronicle & Kingdom Politics**
 
-| Option | Player Answer Choice | Dragon Lord Trait Points | Chapter 2 Duo Recruits |
-| :---- | :---- | :---- | :---- |
-| **A** | "Study the runes on the doorframe to outsmart whatever is inside." | **Dreepy \+2**, **Frigibax \+1** | **Duskull & Abra** |
-| **B** | "Reach out with empathy—someone inside might be trapped and scared." | **Dratini \+2**, **Goomy \+1** | **Duskull & Ralts** |
-| **C** | "Brace yourself and hold your ground until the mystery reveals itself." | **Frigibax \+2**, **Jangmo-o \+1** | **Duskull & Solosis** |
+See `Mystery Emblem - Lore, Kingdoms & Character Bible.md` for full character bios and realm lore:
+* **Act 1 (`Expedition to Meet with King Serperior` - 100% Playable Deliverable):**
+  * `Prologue` (**Hometown Pitch**): Core Trio (`{lord}`, `Quaxly`, `Flabebe`) sparring vs. `Quaquaval` & Town Trio (`Starly`, `Caterpie`, `Pawmi`).
+  * `Chapter 1` (**Watering Hole**): Core Trio fends off outlaw thugs; `Pidgeotto` delivers Serperior's summons; Overworld unveils.
+  * `Chapter 2` (**Foothill Trail**): `Quaquaval` reveals his secret past in Serperior's Royal Guard; introduces Battle Prep; rescue and recruit **Smoliv**.
+  * `Chapter 3` (**Mountain Caves**): Night campfire & dawn meeting with **Machop** (guiding in place of busy `Machamp`); `"Get {lord} to the Exit"` cave pursuit. Unlocks `Paralogue 1` and `Chapter 4`.
+  * `Paralogue 1` (**Lush Prairie**): Optional side quest recruiting `Lv. 1` Aptitude (`Hidden Potential` `+20%` growths) **Slakoth**.
+  * `Chapter 4` (**Capital Outskirts**): Ambushed outside the capital by feral **Ancient Paradox Pokemon** (`Great Tusk`, `Flutter Mane`, `Slither Wing`, `Scream Tail`, `Brute Bonnet`); mid-battle, **Starly**, **Caterpie**, and **Pawmi** crash in (having trailed you from home) and join your squad.
+  * `cs_06_capital_audience` (**Audience with King Serperior**): Solo **King Serperior** explains the Rift attacks and realm politics (Fire & Ice untouched; Forest Tribe believes they can fight alone; Sand & Steel agree with Verdant to uncover the truth), entrusts you with finding an ancient Pokemon sleeping in the Ice Kingdom, and grants two allies: **Honedge** (Steel Kingdom) and **Sandile** (Sand Kingdom), concluding Act 1 with 12 playable units and Ending Credits.
+* **Act 2 (`Uncovering the Truth of the Past`):** Unlock Kecleon Shops; awaken ancient NPC sage **Baxcalibur** in the Ice Kingdom to learn of **Hoopa** and the three Dragon Eggs; Steel Kingdom backstabs your party, killing **Quaquaval** while disgusted **Honedge** stays permanently loyal.
+* **Act 3 (`The Journey to Meet the Other Dragons`):** Cross the Fire (`Ember-Lord Torkoal`) and Forest (`Chieftain Zoroark`) realms; convince **Drakloak** (`Dreepy` Egg survivor) to lead an allied Forest force against the Rift.
+* **Act 4 (`Marching Against the Steel Kingdom`):** Defeat **Emperor Kingambit**, chase fleeing **Hydreigon** (`Deino` Egg survivor), and discover **Hoopa** is alive and behind it all.
+* **Act 5 (`Sealing the Rift`):** **Dragapult** joins your playable team to descend into the Rift against **Ancient + Future Paradox Pokemon**; defeat and recruit **Hydreigon** in the penultimate battle; defeat **Hoopa Confined** -> **Hoopa Unbound** in the two-phase final boss battle.
 
-**Question 4 — Chapter 4 Solo Electric Attacker Seed:**  
-*Prompt: "Enemy scouts have spotted your camp from the treetops and are about to signal their main force\! How do you react?"*
+## **1.5 Strict Faction Separation & Convertible Exceptions**
 
-| Option | Player Answer Choice | Dragon Lord Trait Points | Chapter 4 Solo Recruit |
-| :---- | :---- | :---- | :---- |
-| **A** | "Dash in with a burst of speed to surprise them before they can move\!" | **Dreepy \+2**, **Bagon \+1** | **Pichu** (Pikachu \-\> Raichu) |
-| **B** | "Lock eyes with their leader and charge straight at them to break their nerve\!" | **Gible \+2**, **Deino \+1** | **Shinx** (Luxio \-\> Luxray) |
-| **C** | "Coordinate with your squad to cut off their escape route from range." | **Jangmo-o \+2**, **Frigibax \+1** | **Mareep** (Flaaffy \-\> Ampharos) |
-
-**Question 5 — Chapter 5 Fighting, Rock & Ground Trio Seed:**  
-*Prompt: "A heavily armed vanguard is marching down a narrow coastal pass toward your allies. What kind of frontline strategy do you trust most?"*
-
-| Option | Player Answer Choice | Dragon Lord Trait Points | Chapter 5 Trio Recruits |
-| :---- | :---- | :---- | :---- |
-| **A** | "A balanced formation that adapts to terrain and strikes from every angle." | **Jangmo-o \+2**, **Dreepy \+1** | **Machop, Geodude & Trapinch** |
-| **B** | "An unbreakable wall of muscle and stone that refuses to yield an inch." | **Deino \+2**, **Frigibax \+1** | **Machop, Roggenrola & Rhyhorn** |
-| **C** | "A relentless, hard-hitting charge that overwhelms their line before they dig in." | **Gible \+2**, **Bagon \+1** | **Mankey, Nacli & Rhyhorn** |
-
-**Question 6 — Chapter 7 Water & Grass Duo Seed:**  
-*Prompt: "After a grueling battle, your team makes camp beside a quiet pond in a foggy forest. How do you spend the evening watch?"*
-
-| Option | Player Answer Choice | Dragon Lord Trait Points | Chapter 7 Duo Recruits |
-| :---- | :---- | :---- | :---- |
-| **A** | "Practicing combat drills by the water's edge to stay sharp for tomorrow." | **Bagon \+2**, **Jangmo-o \+1** | **Poliwag & Bellsprout** |
-| **B** | "Listening to the rain on the lily pads and keeping everyone's spirits light." | **Goomy \+2**, **Dreepy \+1** | **Lotad & Oddish** |
-| **C** | "Standing silent guard on the perimeter so the rest of the squad can sleep." | **Deino \+2**, **Dratini \+1** | **Tympole & Budew** |
-
-**Question 7 — Chapter 8 Solo Fire Attacker Seed:**  
-*Prompt: "Deep inside a volcanic cavern, a river of magma blocks the bridge to the enemy commander. What drives you to push forward through the heat?"*
-
-| Option | Player Answer Choice | Dragon Lord Trait Points | Chapter 8 Solo Recruit |
-| :---- | :---- | :---- | :---- |
-| **A** | "Pure fiery grit—no obstacle is going to stand in my way\!" | **Gible \+2**, **Deino \+1** | **Magby** (Magmar \-\> Magmortar) |
-| **B** | "The thrill of soaring over danger and striking where they least expect it." | **Bagon \+2**, **Dreepy \+1** | **Fletchling** (Fletchinder \-\> Talonflame) |
-| **C** | "A quiet, burning resolve to uncover the truth hidden in the shadows." | **Dratini \+2**, **Frigibax \+1** | **Litwick** (Lampent \-\> Chandelure) |
-
-**Question 8 — Chapter 10 Steel & Fairy Duo Seed:**  
-*Prompt: "While crossing a vast desert, you discover a buried treasure chest half-covered in sand. What do you hope to find inside?"*
-
-| Option | Player Answer Choice | Dragon Lord Trait Points | Chapter 10 Duo Recruits |
-| :---- | :---- | :---- | :---- |
-| **A** | "A giant, custom-forged weapon that can smash through enemy armor\!" | **Deino \+2**, **Gible \+1** | **Tinkatink & Cleffa** |
-| **B** | "A dependable piece of gear that keeps my whole team working in sync." | **Jangmo-o \+2**, **Goomy \+1** | **Klink & Azurill** |
-| **C** | "An ancient, mysterious gadget pulsing with strange energy." | **Dreepy \+2**, **Dratini \+1** | **Magnemite & Igglybuff** |
-
-**Question 9 — Chapter 12 Ice & Armored/Tech Duo Seed:**  
-*Prompt: "You finally stand before the crystal gates of the enemy stronghold as a bitter blizzard howls around you. What final thought crosses your mind before battle?"*
-
-| Option | Player Answer Choice | Dragon Lord Trait Points | Chapter 12 Duo Recruits |
-| :---- | :---- | :---- | :---- |
-| **A** | "Keep a cool head—every move on the grid is a puzzle waiting to be solved." | **Frigibax \+2**, **Dratini \+1** | **Galarian Mime Jr. & Beldum** |
-| **B** | "Trust in the bonds we've built—we'll weather any storm together." | **Goomy \+2**, **Bagon \+1** | **Vanillite & Porygon** |
-| **C** | "No hesitation—press forward until the very last enemy falls\!" | **Deino \+2**, **Gible \+1** | **Swinub & Blipbug** |
-
-* **Partner Pokémon Selection & The Prologue Trio (Lord \+ Partner \+ Best-Friend Healer):**  
-  * Immediately after the quiz reveals your Dragon Lord, you freely select your **Partner Pokémon** from any of the classic **Stage-1 Starter Pokémon** (e.g., Bulbasaur, Charmander, Squirtle, Chikorita, Cyndaquil, Totodile, Treecko, Torchic, Mudkip, Turtwig, Chimchar, Piplup, Rowlet, Litten, Popplio, etc.).  
-  * You begin the Prologue with a balanced **3-Pokémon squad**: your **Dragon Lord**, your **Partner**, and your Partner's **Best Friend (Healer)** seeded by Question 1:  
-    * **Happiny** (Happiny \-\> Chansey \-\> Blissey)  
-    * **Flabébé** (Flabébé \-\> Floette \-\> Florges)  
-    * **Bounsweet** (Bounsweet \-\> Steenee \-\> Tsareena)  
-    * **Hatenna** (Hatenna \-\> Hattrem \-\> Hatterene)  
-    * **Smoliv** (Smoliv \-\> Dolliv \-\> Arboliva)  
-    * **Togepi** (Togepi \-\> Togetic \-\> Togekiss)  
-* **The "Lord" Mechanic & Dragon Power Progression:**  
-  * **Force Deployed & Defeat Condition:** Your Lord must be deployed in every main story battle, and if your Lord faints, it triggers an immediate Game Over for that map.  
-  * **Leader Passive (Dragon Aura):** Allied Pokémon within 2 tiles of your Lord receive \+10% Hit and \+10% Avoid.  
-  * **Unlocking the Dragon Power:** As the campaign progresses through the war between the kingdoms and your Lord uncovers the truth of their royal Dragon lineage, their dormant Dragon Power awakens at key story turning points—granting promotion resonances at Level 10 (Stage 2\) and Level 20 (Stage 3\) and unlocking a signature Dragon move in Act 4 required to pierce the final boss's barrier.  
-* **New Game Plus (NG+) Mode (Manual Roster Selection):**  
-  * Completing the main campaign (clearing Chapter 25\) unlocks **New Game Plus** when starting a new save file.  
-  * **The Only Difference:** Instead of taking the 9-question personality quiz to randomly/trait-seed your units, New Game Plus opens a **Custom Roster Selection Screen** at the start of the run. From this screen, the player manually chooses:  
-    * **1\. Their Dragon Lord** (picking directly from the 8 Stage-1 Dragon options: Dratini, Bagon, Gible, Deino, Goomy, Jangmo-o, Dreepy, or Frigibax).  
-    * **2\. Their Partner Pokémon** (any Stage-1 Starter Pokémon).  
-    * **3\. Every Chapter Recruit Option (Q1–Q9 Slots):** Manually selecting which Prologue Healer (Q1) and which specific single, duo, or trio options (Q2–Q9) will appear in Chapters 1, 2, 4, 5, 7, 8, 10, and 12\.  
-  * All other campaign mechanics, enemy levels, story events, and progression rules remain 100% identical to a standard playthrough.  
-* **Persistent Pokémon Nicknaming & Renaming Anytime:**  
-  * Whenever a Pokémon joins your roster (including your Dragon Lord after the quiz, your Partner, your Prologue Healer, and every chapter or paralogue recruit), the game prompts the player to give that Pokémon a custom **Nickname** (or keep its default species name).  
-  * Custom nicknames are stored persistently in the save state throughout the entire campaign and are preserved when the Pokémon evolves into Stage 2 and Stage 3\.  
-  * The player can **rename any of their Pokémon at any point in the game** via the Units / Roster menu on the Overworld or during the Pre-Battle Prep screen. All dialogue boxes, combat forecasts, and status screens display the Pokémon's nickname alongside its current species name.
-
-## **1.2 The Overworld (Fire Emblem Awakening Style)**
-
-Between battles, the player navigates a node-based Overworld map connected by paths, working the same way as the world map in *Fire Emblem Awakening*.
-
-* **Story Chapter Nodes:** Advancing to the next uncompleted node triggers the next chapter's story dialogue and main battle. Clearing a chapter unlocks the next path on the map.  
-* **Overworld Skirmishes (Occasional Spawns — No Infinite Grinding):**  
-* Wild/Feral Skirmishes **only occasionally appear** on previously cleared map nodes across the Overworld (spawning with a low random chance after clearing a chapter, just like in *Fire Emblem Awakening*).  
-  * Because skirmishes are limited and expire/clear once fought, the player **cannot endlessly grind levels** on the Overworld, keeping the campaign's Level 1–30 difficulty curve tight and meaningful.  
-* **Overworld Kecleon Shops (Unlocked in Paralogue 2 — Random Spawns & 4 Shop Types):**  
-  * After rescuing **Master Merchant Kecleon** and his supply caravan from Imperial poachers in **Paralogue 2 (Oran Forest)**, **Kecleon Shops** (represented by a Kecleon sprite) permanently unlock and appear randomly at different cleared nodes across the Overworld map.  
-  * Whenever a Kecleon sprite spawns on a node, it opens one of **four distinct shop types**:  
-2. **TM Shop:** Sells single-use, general-purpose Technical Machines (TMs) for teaching coverage and utility moves.  
-3. **Held Item Shop:** Sells passive Held Items (type boosters, berries, combat gear) for a Pokémon's Held Item slot.  
-4. **Healing Item Shop:** Sells active recovery and curing items (Potions, Super Potions, Hyper Potions, Full Heals, Revives/Seeds) as well as **Evolution Stones** and **Evolution Gems** at key story milestones.  
-5. **X-Item Shop:** Sells single-battle stat-boosting consumables (*X Attack*, *X Defense*, *X Sp. Atk*, *X Sp. Def*, *X Speed*, *Dire Hit*).
-
-## **1.3 The Pre-Battle Sequence (Battle Prep Screen)**
-
-Once the player enters a Chapter or Skirmish node, the game loads the Battle Prep screen before Turn 1 starts. From here, the player can:
-
-6. **View the Map:** Freely pan around the battlefield grid to check terrain types, choke points, Wonder Tiles, and enemy starting positions. Clicking an enemy shows their level, stats, type, movement range, and equipped moves.  
-7. **Select Units (Scaling Fire Emblem Deployment Slots):** Pick Pokémon from your roster to bring to the fight and swap their starting positions on the blue deployment tiles. Rather than a flat 6-unit cap, map deployment limits scale across the campaign just like traditional *Fire Emblem* games:  
-   * **Prologue:** 3 Deployment Slots (Lord, Partner, and Partner's Friend)  
-   * **Act 1 (Chapters 1 – 6):** 5 to 8 Deployment Slots  
-   * **Act 2 (Chapters 7 – 13):** 8 to 10 Deployment Slots  
-   * **Act 3 & Act 4 (Chapters 14 – 25):** 10 to 12 Deployment Slots  
-8. **Equip Moves (4-Move Loadout & Dual Active Moves):** Each Pokémon can equip up to **4 moves** for the upcoming battle from all the moves it has unlocked so far (via level-up or TMs). You also choose which **Physical move and which Special move** start as that Pokémon's equipped moves for Enemy Phase counter-attacks.  
-9. **Manage Items:** Each Pokémon has 2 item slots:  
-   * **1 Held Item Slot (Passive):** Items like Leftovers, Oran Berry, or Mystic Water that grant passive stat boosts or automatic effects in combat.  
-   * **1 Consumable / Utility Slot (Active):** Items like Potions, Full Heals, **Evolution Stones**, or **Evolution Gems** that use the unit's action for the turn when activated.
-
-## **1.4 Campaign Storyline, Warring Kingdoms, Mixed Quiz Recruits & 25-Chapter Progression**
-
-**World & Premise (The Five Kingdoms & The Lost Dragon Lineage):**   
-In a world inhabited solely by Pokémon, the continent is divided into five major realms: the coastal **Verdant Commonwealth** led by **Chancellor Serperior**, the mountain-dwelling **Cragforge Clans** of **High Thane Copperajah**, the secluded **Mistveil Enclave** guided by **High Seeress Milotic**, the desert **Mirage Sultanate** ruled by **Sultan Hippowdon**, and the militaristic **Ironscale Kingdom** under **Emperor Kingambit** (with **Royal Protector Aegislash**, **General Krookodile**, and **Royal Tactician Gengar**). Decades ago, the five realms knew peace under the mediation of the royal **Dragon Clan**, until the Dragon lineage vanished in a sudden night of betrayal.  
-Now, the Ironscale Kingdom has launched a sudden, ruthless war of conquest to overthrow all the neighboring kingdoms—unleashing terrifying "Feral" shock troops (Pokémon driven into mindless, glowing-eyed berserker rage by Gengar's forbidden shadow experiments). You wake up washed ashore in the Verdant Commonwealth with no memory of your past, rescued by your chosen **Partner Starter Pokémon** and their healer best friend. When an Ironscale scouting party attacks, your dormant **Dragon Power** flares to life—revealing you to **Chancellor Serperior** as the last surviving heir of the Dragon Lineage, the only leader capable of rallying the fractured kingdoms and uncovering the dark conspiracy behind the war.  
-**Zero Player/Enemy Roster Overlap & Strict 3-Stage Playable Rule:**   
-Every standard playable Pokémon on the player's roster must belong to a **3-stage evolution line** (evolving via an Evolution Stone at Level 10+ and an Evolution Gem at Level 20+, with Paralogue 2's **Eevee** serving as a special Level 15 branching exception). Enemy Pokémon do not need to adhere to the 3-stage evolution rule (and may include 1-stage, 2-stage, and 3-stage Pokémon). To strictly preserve distinct faction identities between the player's liberation alliance and the Ironscale Kingdom, **no Pokémon evolutionary line appearing in the enemy army may ever be recruited or used by the player**, with the **sole exception of a single defecting Gastly in Paralogue 6** (meaning **Aron \-\> Lairon \-\> Aggron**, **Spheal \-\> Sealeo \-\> Walrein**, **Timburr \-\> Gurdurr \-\> Conkeldurr**, **Seedot \-\> Nuzleaf \-\> Shiftry**, and **Venipede \-\> Whirlipede \-\> Scolipede** are strictly enemy lines and never playable).  
-**Key Non-Playable Rulers & Allied Story Characters:**
-
-* **Chancellor Serperior (Verdant Commonwealth):** The wise statesperson of the coastal republic who recognizes your royal Dragon crest in Chapter 1, sponsors your liberation militia, and coordinates naval logistics in Act 3 and Act 4\.  
-* **High Thane Copperajah (Cragforge Clans):** The honorable, ancient forge-lord of the central mountains who stayed loyal to the old Dragon Clan treaties. Betrayed and imprisoned by his warmongering lieutenant **Clan Warlord Aggron** in Act 1, and liberated by your army in Chapter 18 to awaken your Lord's final promotion resonance.  
-* **High Seeress Milotic (Mistveil Enclave):** The mystic ruler of the eastern wetlands and Foggy Forest. Initially suspecting the Mirage Sultanate of staging Feral border raids, she joins your coalition once you expose Gengar's false-flag saboteurs in Chapters 7 through 9 and helps your Lord channel the First Dragon Resonance.  
-* **Sultan Hippowdon (Mirage Sultanate):** The boisterous ruler of the southern desert oasis. After you save him from Gengar's subterranean sappers beneath his palace in Chapter 11, he commits the Sultanate's treasury and desert garrisons to your liberation army.  
-* **Master Merchant Kecleon (Traveling Shopkeeper):** A resourceful merchant ambushed by Imperial poachers in **Paralogue 2 (Oran Forest)**. Rescuing Kecleon and his supply caravan during that Paralogue permanently unlocks random **Kecleon Shops** (TM, Held Item, Healing/Evolution, and X-Item shops) across cleared Overworld nodes.
-
-**Major Story Twists & Act Arcs:**
-
-* **Act 1 Twist (Warlord Aggron's Mountain Betrayal):** After pushing Ironscale raiders off the Verdant coast for **Chancellor Serperior**, your militia marches to Mt. Horn (Ch. 6\) expecting to join forces with **High Thane Copperajah**—only to discover that **Clan Warlord Aggron** has overthrown and imprisoned Copperajah, secretly selling out the mountain pass to **Siege Warden Coalossal** and **Sky Marshal Corviknight** and forcing your army into a desperate retreat east.  
-* **Act 2 Twist (The False-Flag Conspiracy):** Escaping into the Mistveil Enclave, you prove to **High Seeress Milotic** and **Sultan Hippowdon** that **Royal Tactician Gengar** and **Grand Oracle Gothitelle** have been staging fake Feral attacks to trick the eastern kingdoms into blaming each other. When you defeat **General Krookodile** at Crystal Crossing (Ch. 13), the proud general warns you that **Emperor Kingambit** is no longer in control: Gengar's shadow cabal is using the bloodshed of the war—and hunting your Dragon Power—to unseal an ancient abyssal entity beneath the continent.  
-* **Act 3 Twist (The Ancestral Murals & The Liberation of Cragforge):** Crossing into the occupied north to spark a liberation rebellion, you hold the Sealed Ruin (Ch. 16\) where ancient murals reveal that Gengar orchestrated the massacre of your Dragon family years ago and that you were smuggled out to sea as an infant to survive. You then strike back into the mountains to defeat **Clan Warlord Aggron** and **Siege Warden Coalossal** (Ch. 17–18), freeing **High Thane Copperajah** to unite the Cragforge Clans behind your banner before storming Blizzard Island (Ch. 20).  
-* **Act 4 Twist (The Fall of Gengar & The Abyssal Awakening):** Launching a naval assault with **Chancellor Serperior**'s fleet across Miracle Sea (Ch. 21\) and breaching Aegis Cave (Ch. 22), you strike down **Royal Tactician Gengar** in his volcanic sanctum at Dark Crater (Ch. 23), but his dying ritual unseals the abyssal rift. After defeating **Royal Protector Aegislash** at Temporal Spire (Ch. 24), your fully awakened Dragon Lord leads the united alliance of **Serperior**, **Copperajah**, **Milotic**, and **Hippowdon** to confront **Emperor Kingambit** at the Throne Pinnacle in Spatial Rift (Ch. 25\) to save the world.
-
-**Mixed-Group Quiz Recruitment Table (Singles, Duos & a Trio — All 3-Stage Playable Lines):**   
-Recruitment is front-loaded into Acts 1 and 2, mixing up solo recruits, iconic pairs (starting with a Route-1 Bug & Flying duo), and a 3-unit trio:
-
-| Quiz Question | Group Size & Theme | Chapter | Option A Recruit(s) | Option B Recruit(s) | Option C (+ D/E/F for Q1) Recruit(s) |
-| :---- | :---- | :---- | :---- | :---- | :---- |
-| **Q1** | **Single:** Partner's Healer Friend | **Prologue** | **Happiny** / **Flabébé** | **Bounsweet** / **Hatenna** | **Smoliv** / **Togepi** |
-| **Q2** | **Duo:** Route-1 Bug & Flying Pair | **Chapter 1** | **Caterpie & Pidgey** (Kanto) | **Sewaddle & Pidove** (Unova) | **Grubbin & Pikipek** (Alola) |
-| **Q3** | **Duo:** Ghost & Psychic Pair | **Chapter 2** | **Duskull & Abra** | **Duskull & Ralts** | **Duskull & Solosis** |
-| **Q4** | **Single:** Solo Electric Attacker | **Chapter 4** | **Pichu** (Electric) | **Shinx** (Electric) | **Mareep** (Electric) |
-| **Q5** | **Trio:** Fighting, Rock & Ground | **Chapter 5** | **Machop, Geodude & Trapinch** | **Machop, Roggenrola & Rhyhorn** | **Mankey, Nacli & Rhyhorn** |
-| **Q6** | **Duo:** Water & Grass Pair | **Chapter 7** | **Poliwag & Bellsprout** | **Lotad & Oddish** | **Tympole & Budew** |
-| **Q7** | **Single:** Solo Fire Attacker | **Chapter 8** | **Magby** (Fire) | **Fletchling** (Fire/Flying) | **Litwick** (Ghost/Fire) |
-| **Q8** | **Duo:** Steel & Fairy Pair | **Chapter 10** | **Tinkatink & Cleffa** | **Klink & Azurill** | **Magnemite & Igglybuff** |
-| **Q9** | **Duo:** Ice & Armored Pair | **Chapter 12** | **Galarian Mime Jr. & Beldum** | **Vanillite & Porygon** | **Swinub & Blipbug** |
-
-**Main Campaign (Prologue \+ 25 Chapters across 4 Acts):**  
-Every map uses authentic dungeon tilesets from *Pokémon Mystery Dungeon: Explorers of Sky*.
-
-### **Act 1: The Invasion of the Verdant Coast (Prologue – Chapter 6\) — *Varied Early Pacing***
-
-| Chapter (Deploy Cap) | PMD: EoS Dungeon Tileset | Map & Story Progression | Recruitable Stage-1 Pokémon (Mixed Group Sizes) |
-| :---- | :---- | :---- | :---- |
-| **Prologue** (3 Units) | **Beach Cave** (Sand & shallow water) | Your Partner and their healer best friend find you washed ashore; your Dragon Aura awakens as Ironscale scouts attack the beach. | **Your Dragon Lord**, **Your Partner**, and **Q1 Healer Friend (Single)** (Happiny / Flabébé / Bounsweet / Hatenna / Smoliv / Togepi) |
-| **Chapter 1** (5 Units) | **Drenched Bluff** (Rocky bluffs & water pools) | Travelling up the coastal route to meet **Chancellor Serperior** in the Commonwealth capital, a local Bug and Flying pair joins your cause. Unlocks Overworld. | **Q2 Route-1 Bug & Flying (Duo)** (Caterpie & Pidgey / Sewaddle & Pidove / Grubbin & Pikipek) |
-| **Chapter 2** (6 Units) | **Mt. Bristle** (Mountain crags & trees) | Sent by **Chancellor Serperior** toward the mountain border fort, a wandering Ghost and Psychic duo helps you fend off **Gothita**'s Ironscale raiders. | **Q3 Ghost & Psychic (Duo)** (Duskull & Abra / Duskull & Ralts / Duskull & Solosis) |
-| **Chapter 3** (6 Units) | **Waterfall Cave** (Underground streams & bridges) | You infiltrate the cavern behind the falls to rescue Commonwealth envoys held by an Ironscale garrison captain. | **None** (Early tactical test using your 7-unit squad across water and bridges) |
-| **Chapter 4** (7 Units) | **Apple Woods** (Dense trees & Wonder Tiles) | Ambushed in the woods by **Seedot** guerillas and Feral shock troops climbing **Dungeon Stairs** tiles; a lone Electric attacker steps in to help zap enemy fliers. | **Q4 Electric Attacker (Single)** (Pichu / Shinx / Mareep) |
-| **Chapter 5** (8 Units) | **Craggy Coast** (High coastal cliffs & sea water) | A three-unit mercenary band (Fighting, Rock, and Ground) helps you hold the coastal road against **Sandile**, **Galarian Zigzagoon**, and **Impidimp**. | **Q5 Fighting, Rock & Ground (Trio)** (Machop, Geodude & Trapinch / Machop, Roggenrola & Rhyhorn / Mankey, Nacli & Rhyhorn) |
-| **Chapter 6** (8 Units) | **Mt. Horn** (Steep mountain switchbacks) | **Act 1 Twist:** You reach Mt. Horn expecting to join **High Thane Copperajah**, but **Clan Warlord Aggron** has imprisoned Copperajah and betrayed the pass to **Siege Warden Coalossal** and **Sky Marshal Corviknight**, forcing a fighting escape east. | None (Lets your newly expanded squad shine after the Ch. 5 Trio) |
-
-### **Act 2: The Eastern Coalition & The False Flag (Chapters 7 – 13\) — *Core Roster Completion***
-
-| Chapter (Deploy Cap) | PMD: EoS Dungeon Tileset | Map & Story Progression | Recruitable Stage-1 Pokémon (Mixed Group Sizes) |
-| :---- | :---- | :---- | :---- |
-| **Chapter 7** (9 Units) | **Foggy Forest** (Misty trees & shallow ponds) | Escaping into the Mistveil Enclave to seek an audience with **High Seeress Milotic** as Feral Skirmishes unlock on the Overworld and the first **Evolution Stones** (Lv. 10 promotion) appear. | **Q6 Water & Grass (Duo)** (Poliwag & Bellsprout / Lotad & Oddish / Tympole & Budew) |
-| **Chapter 8** (9 Units) | **Steam Cave** (Volcanic rock & Lava rivers) | Guided by **High Seeress Milotic** to the border volcano; your Lord awakens their First Dragon Resonance as a lone Fire-type joins to fight Boss Carkol. | **Q7 Fire Attacker (Single)** (Magby / Fletchling / Litwick) |
-| **Chapter 9** (9 Units) | **Amp Plains** (Savannah plains & tree clusters) | Exposing **Gothorita**'s false-flag saboteurs on the open plains to prove the Mirage Sultanate's innocence to **High Seeress Milotic** while plugging three **Stairs** tiles. | **Starly (Single)** (Flying border scout, Turn 1\) |
-| **Chapter 10** (10 Units) | **Northern Desert** (Sand dunes & high rock walls) | Entering the Mirage Sultanate and breaking Boss Krokorok's desert siege outside **Sultan Hippowdon**'s oasis. | **Q8 Steel & Fairy (Duo)** (Tinkatink & Cleffa / Klink & Azurill / Magnemite & Igglybuff) |
-| **Chapter 11** (10 Units) | **Quicksand Cave** (Sand pits & subterranean chasms) | Descending beneath the desert palace to stop Gengar's sappers from assassinating **Sultan Hippowdon** and framing the Mistveil Enclave. | **Lillipup (Single)** (Normal 3-stage loyal palace guard, Turn 1\) |
-| **Chapter 12** (10 Units) | **Crystal Cave** (Crystal pillars & narrow corridors) | An indoor maze backed by **Sultan Hippowdon**'s alliance where crystal barriers block Grounded and Flying units, testing your positioning against Boss Doublade / Aegislash. | **Q9 Ice & Armored/Tech (Duo)** (Galarian Mime Jr. & Beldum / Vanillite & Porygon / Swinub & Blipbug) |
-| **Chapter 13** (10 Units) | **Crystal Crossing** (Frozen lake, ice trees & water) | **Act 2 Twist:** Defeating General Krookodile at the frozen crossing; he reveals Gengar is manipulating Emperor Kingambit to unseal an abyssal calamity. | None (Boss milestone chapter) |
-
-### **Act 3: The Northern Rebellion & The Imperial Schism (Chapters 14 – 20\) — *Tapering Recruitment***
-
-| Chapter (Deploy Cap) | PMD: EoS Dungeon Tileset | Map & Story Progression | Recruitable Stage-1 Pokémon |
-| :---- | :---- | :---- | :---- |
-| **Chapter 14** (10 Units) | **Chasm Cave** (Deep Void chasms & rope bridges) | Crossing the northern abyss back into occupied Cragforge territory where **Void** tiles block both Grounded and Flying units across narrow bridges. | None (Focuses on promoting your core squad) |
-| **Chapter 15** (11 Units) | **Dark Hill** (Dead trees, cliffs & stairs) | Night battle on a haunted hill overrun by **Gothitelle** and Gengar's Feral Ghost and Dark experiments pouring out of Stairs tiles. | None |
-| **Chapter 16** (11 Units) | **Sealed Ruin** (Ancient stone walls & Wonder Tiles) | **Act 3 Twist:** Holding the ancestral Dragon Ruin for 10 turns; murals reveal Gengar wiped out your Dragon clan, awakening your Lord's Lv. 20 **Evolution Gem** power. | None (First Evolution Gems awarded on clear) |
-| **Chapter 17** (11 Units) | **Dusk Forest** (Autumn trees & narrow choke points) | Defeating the traitor **Clan Warlord Aggron** in the autumn mountain woods as you march to liberate the Cragforge capital. | **Whismur (Single)** (Normal sound-based ranged support, Turn 1\) |
-| **Chapter 18** (11 Units) | **Treeshroud Forest** (Overgrown ancient woods & pools) | Toppling Siege Warden Coalossal in Treeshroud Forest and liberating **High Thane Copperajah**, uniting the Cragforge Clans behind your coalition. | None |
-| **Chapter 19** (12 Units) | **Brine Cave** (Saltwater caverns & coastal cliffs) | Linking up with **Chancellor Serperior**'s Commonwealth fleet at the seaside staging port to capture the imperial flagship and sail for the heartland. | None |
-| **Chapter 20** (12 Units) | **Blizzard Island** (Snowy mountains & ice chasms) | Storming **Grand Oracle Gothitelle**'s northern citadel in a blizzard as northern resistance forces rally against Gengar's shadow cabal, splitting the Empire in two. | **Pawmi (Single)** (Electric/Fighting northern rebel scout, Turn 1\) |
-
-### **Act 4: The Fall of Ironscale & The Abyssal Awakening (Chapters 21 – 25\) — *Endgame Gauntlet***
-
-| Chapter (Deploy Cap) | PMD: EoS Dungeon Tileset | Map & Story Progression | Recruitable Stage-1 Pokémon |
-| :---- | :---- | :---- | :---- |
-| **Chapter 21** (12 Units) | **Miracle Sea** (Island chain, deep water & bridges) | Island-hopping naval assault with **Chancellor Serperior**'s fleet across the outer sea defenses of the Ironscale Capital against **Sky Marshal Corviknight**. | None |
-| **Chapter 22** (12 Units) | **Aegis Cave** (Ancient rune chambers & stone pillars) | Breaching the subterranean gatehouse of the capital guarded by **Siege Warden Coalossal**, **Aggron**'s armor remnants, and active Stairs tiles. | **Larvitar (Single)** (Low-level Rock/Dark prisoner in a royal dungeon cell; classic late-game "Est" unit) |
-| **Chapter 23** (12 Units) | **Dark Crater** (Volcanic caldera & Lava rivers) | **Act 4 Twist:** Defeating Shadow Tactician Gengar in the volcanic sanctum, whose sacrificial ritual shatters the seal on the abyssal rift. | None |
-| **Chapter 24** (12 Units) | **Temporal Tower / Spire** (Floating clockwork ruins & Void) | Climbing the collapsing spire to defeat Royal Protector Aegislash as your Lord unlocks their ultimate Dragon Power. | None (Penultimate gauntlet) |
-| **Chapter 25** (12 Units) | **Spatial Rift / Sky Peak Pinnacle** (Void chasms, Lava vents, Trees & Wonder Tiles) | Backed by the united armies of **Serperior**, **Copperajah**, **Milotic**, and **Hippowdon**, your fully awakened Dragon Lord leads your 12-unit squad to defeat Emperor Kingambit at the Throne Pinnacle and restore peace to the kingdoms. | None (Final Boss Map) |
-
-### **Optional Paralogue Chapters (Special Mechanics Units, Kecleon Rescue & Extra Recruits)**
-
-Clearing certain main chapters unlocks optional **Paralogue nodes** branching off the Overworld map, featuring two signature special-mechanic recruits (**Slakoth** and **Eevee**), the rescue of **Master Merchant Kecleon**, and extra side-story units:
-
-| Paralogue | Unlocks After | PMD: EoS Dungeon Tileset | Mission Hook & Special Recruit Mechanics |
-| :---- | :---- | :---- | :---- |
-| **Paralogue 1 (The Aptitude Slacker)** | Chapter 3 | **Lush Prairie** (Tall grass & trees) | Wake up and protect a lazy, under-leveled **Slakoth** cornered by feral bandits. **Special Mechanic (Donnel Archetype):** Slakoth starts at Level 1 with awful sleepy base stats (18 HP / 4 Atk / 4 Def / 4 SpA / 4 SpD / 4 Spe, 4 Mov), but its unique passive ability **Hidden Potential** permanently adds **\+20% to all six of its stat growth rates**, turning it into an unstoppable late-game juggernaut as Vigoroth (Lv. 10\) and Slaking (Lv. 20\) if you invest the time to train it. |
-| **Paralogue 2 (The Merchant & The Shrine)** | Chapter 6 | **Oran Forest** (Berry woods & ancient shrine) | Imperial poachers have cornered a lone **Eevee** at an elemental forest shrine and captured **Master Merchant Kecleon**'s supply caravan. **Dual Reward (Kecleon Shop Unlock \+ Branching Lv. 15 Evolution):** Clearing the map rescues **Kecleon** (permanently unlocking random **Kecleon Shops** across cleared Overworld nodes) and recruits **Eevee**, a unique 2-stage exception that **evolves only once at Level 15+** using an Evolution Stone into **any of the 8 Eeveelutions** (**Vaporeon, Jolteon, Flareon, Espeon, Umbreon, Leafeon, Glaceon, or Sylveon**) with a doubled promotion stat bonus. |
-| **Paralogue 3 (The Twin Horns)** | Chapter 8 | **Serenity River** (Lush riverbanks & water) | Rescue and recruit either **Nidoran Male (Nidoran♂ \-\> Nidorino \-\> Nidoking)** or **Nidoran Female (Nidoran♀ \-\> Nidorina \-\> Nidoqueen)** depending on which one your Lord talks to during the battle; rewards an **Evolution Stone**. |
-| **Paralogue 4 (The Cave Pass)** | Chapter 11 | **Labyrinth Cave** (Winding rock maze) | Help a lone **Teddiursa** (Teddiursa \-\> Ursaring \-\> Ursaluna) fight off **Lairon** raiders blocking the cave pass; rewards an **Evolution Stone**. |
-| **Paralogue 5 (The Peak Wind)** | Chapter 15 | **Mt. Travail** (Steep rocky peaks) | Climb the mountain peaks to calm and recruit **Hoppip** (Hoppip \-\> Skiploom \-\> Jumpluff) and earn a rare Held Item. |
-| **Paralogue 6 (The Defecting Phantom)** | Chapter 18 | **Concealed Ruins** (Locked rooms & stairs) | A disillusioned **Gastly** in the enemy ranks wants to leave the Ironscale army and switch sides. Moving your Dragon Lord to talk to Gastly mid-battle causes it to defect and join your team (and rewards an **Evolution Gem**). **This Gastly is the ONLY Pokémon in the entire game that is part of the enemy's Pokémon pool and can also join your team.** |
-
-## **1.5 Enemy Hierarchy, Recurring Commanders & Infantry Roster**
-
-### **1.5.1 The Imperial High Command & Traitor Bosses**
-
-The Ironscale Kingdom's military (alongside its Cragforge traitor allies) is led by a recurring cast of commanders whose evolutionary lines also supply the core infantry of the enemy army:
-
-* **Emperor Kingambit (Supreme Ruler & Chapter 25 Final Boss):** Overarching antagonist of the campaign and Final Boss at the Throne Pinnacle in Chapter 25\. A towering Steel/Dark warlord who seeks to conquer the five kingdoms and extinguish the Dragon Lineage. Wields Supreme Overlord (boosting his stats for each defeated royal guard squad until your Dragon Lord breaks his barrier) with 1-range Kowtow Cleave and 2-range Flash Cannon / Dark Pulse.  
-* **Royal Protector Aegislash (Kingambit's Right-Hand Man & Main Protector):** The Emperor's unyielding bodyguard and second-in-command. Appears as an intimidating mid-game boss in Chapter 12 (Crystal Cave) and Chapter 16 (Sealed Ruin) before serving as the penultimate boss in Chapter 24 (Temporal Spire) and guarding Kingambit's throne room. Uses Stance Change to shift to Shield Forme (+4 Def/SpD) on Player Phase and Blade Forme (+4 Atk/SpA) when attacking.  
-* **Royal Tactician Gengar (Shadow Mastermind & Chapter 23 Boss):** Leader of the shadow cabal who orchestrated the massacre of the Dragon Clan decades ago, runs the forbidden "Feral" berserker experiments, and manipulates Emperor Kingambit into unsealing the abyssal rift before falling at Dark Crater in Chapter 23\.  
-* **The Recurring Raider Trio — General Krookodile, Captain Obstagoon & Captain Grimmsnarl (Acts 1–4 Rivals):** A recurring group of rowdy Imperial captains led by General Krookodile who act as persistent rivals throughout the entire game, evolving alongside your squad across the four acts:  
-  * **Act 1 (Chapters 0, 1, 4, 5):** Sandile (Ground/Dark), Galarian Zigzagoon (Dark/Normal), and Impidimp (Dark/Fairy) — Lv. 3 to Lv. 9\.  
-  * **Act 2 (Chapters 8, 10, 13):** Krokorok, Galarian Linoone, and Morgrem — Lv. 11 to Lv. 17\.  
-  * **Act 3 & Act 4 (Chapters 13, 17, 23):** Krookodile, Obstagoon, and Grimmsnarl — Lv. 21 to Lv. 28\.  
-  * **Story & Tactical Synergy:** Obstagoon uses Obstruct and Parting Shot to debuff and block lanes, Grimmsnarl sets up Reflect/Light Screen or Spirit Break debuffs, and Krookodile sweeps in with high-Attack Earthquake and Crunch. Proud of his martial honor, Krookodile despises Gengar's Feral experiments and warns your Lord of Gengar's conspiracy after his defeat in Chapter 13\.  
-* **Grand Oracle Gothitelle (Gothita \-\> Gothorita \-\> Gothitelle):** The Empire's psychic spymaster and strategist who engineers the false-flag war in Act 2 and commands the northern citadel on Blizzard Island (Ch. 20). Appears as Gothita (Ch. 2), Gothorita (Ch. 9), and Gothitelle (Ch. 15 & Ch. 20).  
-* **Sky Marshal Corviknight (Rookidee \-\> Corvisquire \-\> Corviknight):** Commander of the Ironscale Sky Fleet. Leads the mountain ambush at Mt. Horn (Ch. 6), harries your army across Chasm Cave (Ch. 14\) and Brine Cave (Ch. 19), and serves as the Chapter 21 boss at Miracle Sea.  
-* **Siege Warden Coalossal (Rolycoly \-\> Carkol \-\> Coalossal):** Commander of the Empire's heavy armor and forge legions. Leads the Mt. Horn blockade (Ch. 6), commands Boss Carkol's garrison in Steam Cave (Ch. 8), oversees the Treeshroud occupation (Ch. 18), and guards the subterranean gatehouse of Aegis Cave (Ch. 22).  
-* **Clan Warlord Aggron (Aron \-\> Lairon \-\> Aggron):** The treacherous Cragforge warlord who overthrows and imprisons **High Thane Copperajah**, selling out the Commonwealth to the Ironscale Kingdom at Mt. Horn (Ch. 6\) before being defeated when your coalition returns to liberate the Cragforge mountains in Chapter 17 (Dusk Forest).
-
-### **1.5.2 Standard Enemy Infantry, Dungeon Stairs Reinforcements & Specialist Units (All 17 Non-Dragon Types)**
-
-Unlike the player's roster (which is strictly limited to 3-stage lines for growth balance), enemy units do not need to adhere to the 3-stage evolution rule. Standard 3-stage Ironscale infantry scale from Stage 1 (Act 1: Lv. 1–9) to Stage 2 (Act 2: Lv. 10–19) and Stage 3 (Acts 3–4: Lv. 20–30), supplemented by 1-stage and 2-stage regional specialists to cover all 17 non-Dragon elemental types:
-
-* **Blade Infantry (Mercenary / Hero equivalent):** Pawniard \-\> Bisharp \-\> Kingambit (Elite Guard). Balanced 5-Mov Steel/Dark physical frontline infantry.  
-* **Cragforge Heavy Guard (Mountain Armor equivalent):** Aron \-\> Lairon \-\> Aggron. 4-Mov Steel/Rock high-Defense mountain infantry with *Sturdy* loyal to Traitor Warlord Aggron. *(Strictly enemy-only; Aron is not playable).*  
-* **Sky Lancers (Pegasus / Wyvern Rider equivalent):** Rookidee \-\> Corvisquire \-\> Corviknight. 6-Mov Flying flankers that ignore Trees, Water, and Mountains; weak to Electric and Fire.  
-* **Siege Armor (Armor Knight / General equivalent):** Rolycoly \-\> Carkol \-\> Coalossal. 4-Mov Rock/Fire heavy tanks that lock down choke points and walk across Lava tiles at 1 Mov.  
-* **Outrider Raiders (Brigand / Berserker equivalent):** Galarian Zigzagoon \-\> Galarian Linoone \-\> Obstagoon. Fast 6-Mov Dark/Normal shock troops that frequently climb up from Dungeon Stairs tiles.  
-* **Hex Tricksters (Thief / Trickster equivalent):** Impidimp \-\> Morgrem \-\> Grimmsnarl. 5-Mov Dark/Fairy disruptors with 1-range physical attacks and 2-range status/stat debuffs.  
-* **Dune Breakers (Cavalier / Great Knight equivalent):** Sandile \-\> Krokorok \-\> Krookodile. High-Attack 5–6 Mov Ground/Dark physical sweepers immune to Electric and Psychic.  
-* **Shadow Oracles (Mage / Sage equivalent):** Gothita \-\> Gothorita \-\> Gothitelle. 5-Mov Psychic 2-range Special artillery that punish low-Sp. Def physical tanks.  
-* **Royal Sentinels (Swordmaster / Baron equivalent):** Honedge \-\> Doublade \-\> Aegislash. High-Defense Steel/Ghost elite guards stationed in ruin, temple, and capital chapters.  
-* **Phantom Mages (Dark Flier / Sorcerer equivalent):** Gastly \-\> Haunter \-\> Gengar. 6-Mov Levitate Ghost/Poison ranged units that float across Void, Water, and Lava tiles. *(Strictly enemy-only, except for the single Gastly that switches sides in Paralogue 6).*  
-* **Volt Gunners (Archer / Sniper equivalent):** Elekid \-\> Electabuzz \-\> Electivire. Electric 2-range anti-flier specialists deployed behind enemy lines to cover Rookidee/Corviknight squads.  
-* **Nightwing Raiders (Wyvern / Assassin equivalent):** Zubat \-\> Golbat \-\> Crobat. Fast 6-Mov Poison/Flying flankers used in cave and night chapters.  
-* **Abyssal Dragoons (Pirate / Naval equivalent):** Tynamo \-\> Eelektrik \-\> Eelektross. Levitate Electric units used on river, swamp, and naval maps.  
-* **Glacial Marines (Amphibious Tank equivalent):** Spheal \-\> Sealeo \-\> Walrein. Bulky 4–5 Mov Ice/Water frontline units deployed on coastal, river, frozen lake, and blizzard maps (Ch. 5, 13, 19, 20, 21). *(Strictly enemy-only).*  
-* **Venom Outriders (Poison Cavalry equivalent):** Venipede \-\> Whirlipede \-\> Scolipede. Fast 6-Mov Bug/Poison flankers that pressure Grass and Fairy healers.  
-* **Siege Brawlers (Fighter / Warrior equivalent):** Timburr \-\> Gurdurr \-\> Conkeldurr. High-HP, high-Attack Fighting wall-breakers with *Guts* deployed to smash player Rock, Steel, and Ice tanks. *(Strictly enemy-only).*  
-* **Briar Ambushers (Forest Guerilla equivalent):** Seedot \-\> Nuzleaf \-\> Shiftry. Agile Grass/Dark woodland ambushers in forest chapters (Apple Woods, Foggy Forest, Dusk Forest, Treeshroud Forest). *(Strictly enemy-only).*  
-* **Regional 1-Stage & 2-Stage Specialists:** **Skarmory** (1-stage Steel/Flying high-Defense mountain air-tanks), **Croagunk \-\> Toxicroak** (2-stage Poison/Fighting desert and swamp saboteurs), **Stufful \-\> Bewear** (2-stage Normal/Fighting "Feral" shock berserkers), and **Spiritomb** (1-stage Ghost/Dark abyssal temple guardians).
+* Playable units follow a manual Lv. 1-40 progression curve (`Evolution Stone` at Lv. 10+, `Evolution Gem` at Lv. 20+, `Eevee` branching Stone at Lv. 15+, `Slakoth` `Hidden Potential` `+20%` growths).
+* Enemy lines (`Outlaws`, `Steel Kingdom` legions, `Ancient & Future Paradox Pokemon`, and `Hoopa`) never overlap with playable lines, except for explicitly flagged `convertible` story defectors (`deino_line` for Act 5 Hydreigon, `gastly_line` for Paralogue 6 Gastly, and `seedot_line` for Forest Tribe Seedot) plus `friendlyBout` / `sparring` hometown training bouts in the Prologue.
 
 ## **1.6 Cutscenes, Dialogue & PMD Character Portraits**
 
-All story cutscenes, chapter introductions, boss battle pre-combat banters, and mid-battle recruitment conversations (when using the "Talk" command on the grid) use authentic **Pokémon Mystery Dungeon character portraits**.
-
-* **Asset Source:** Character portraits (including full facial expression sheets such as Normal, Happy, Determined, Angry, Pain, Worried, Surprised, and Sad) are pulled directly from the same online Git repository (PMD Collab / SpriteCollab repo) that provides the Pokémon map sprites and animations.  
-* **Presentation Style:** Dialogue boxes render at the bottom of the screen with the speaking Pokémon's emotion portrait framed on the left or right (matching the classic *Pokémon Mystery Dungeon: Explorers of Sky* dialogue layout), dynamically swapping portrait expressions to match the tone of each line and updating automatically as your Lord, Partner, and recruits evolve into Stage 2 and Stage 3\.
+All story cutscenes, chapter introductions, boss battle pre-combat banters, and mid-battle recruitment conversations use authentic **Pokemon Mystery Dungeon character portraits** and 8-directional SpriteCollab map sprites.
 
 # **PART 2: CORE GAME & BATTLE MECHANICS**
 

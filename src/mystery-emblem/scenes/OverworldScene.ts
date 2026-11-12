@@ -149,7 +149,7 @@ export class OverworldScene {
     this.openState = true;
 
     if (!this.saveManager.getSave()) {
-      this.saveManager.createNewCampaignSave({ lordSpeciesId: 'dratini', partnerSpeciesId: 'piplup', healerSpeciesId: 'flabebe' });
+      this.saveManager.createNewCampaignSave({ lordSpeciesId: 'axew', partnerSpeciesId: 'quaxly', healerSpeciesId: 'flabebe' });
     }
     this.saveManager.ensureOverworldInitialized(this.graph);
     this.modals.resetModals();

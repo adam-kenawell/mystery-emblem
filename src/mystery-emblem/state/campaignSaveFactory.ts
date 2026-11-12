@@ -86,14 +86,12 @@ export function buildNewCampaignSaveData(
     scaleStatsToLevel: scaleStats,
   });
 
-  const seeds: QuizRecruitSeeds = cfg.quizSeeds
-    ? createDefaultQuizSeeds(cfg.quizSeeds)
-    : createDefaultQuizSeeds();
   const initialChapterId = cfg.currentChapterId?.trim() || 'prologue';
   const defaultConvoy: ConvoyEntry[] = INITIAL_CAMPAIGN_CONVOY.map((c) => ({ ...c }));
 
   const roster: OwnedPokemonInstance[] = [lord, partner, healer];
-  if (initialChapterId.toLowerCase() !== 'prologue' && SPECIES_MAP.has(MENTOR_JAGEN_SPECIES_ID)) {
+  const preMentorChapters = new Set(['prologue', 'chapter_01']);
+  if (!preMentorChapters.has(initialChapterId.toLowerCase()) && SPECIES_MAP.has(MENTOR_JAGEN_SPECIES_ID)) {
     roster.push(
       createPokemonInstance({
         speciesId: MENTOR_JAGEN_SPECIES_ID,
@@ -114,7 +112,7 @@ export function buildNewCampaignSaveData(
       lordInstanceId: lord.instanceId,
       partnerInstanceId: partner.instanceId,
       healerInstanceId: healer.instanceId,
-      quizSeeds: seeds,
+      ...(cfg.quizSeeds ? { quizSeeds: createDefaultQuizSeeds(cfg.quizSeeds) } : {}),
       kecleonShopsUnlocked: false,
       completedChapterIds: [],
       ...(cfg.campaignMode ? { campaignMode: cfg.campaignMode } : {}),

@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Scene Router & Campaign Cutscene/Battle Sequencer (`sceneRouterController.ts`)
+ * Mystery Emblem - Scene Router & Campaign Cutscene/Battle Sequencer (`sceneRouterController.ts`)
  */
 
 import {
@@ -8,10 +8,11 @@ import {
   getDemoChapterByNodeId,
   type CampaignChapterConfig,
 } from '../data/campaignRegistry';
+import { getSpeciesById } from '../data/index';
 import { DEMO_OVERWORLD_GRAPH } from '../data/overworldMapData';
 import {
-  getPostChapterCutsceneId,
-  getPreChapterCutsceneId,
+  getPostChapterCutsceneIds,
+  getPreChapterCutsceneIds,
   getStoryCutsceneById,
 } from '../data/storyCutscenes';
 import type { SaveStateManager } from '../state/SaveStateManager';
@@ -29,6 +30,7 @@ export interface SceneRouter {
     preservePosition?: boolean;
     announceCurrentChapter?: boolean;
   }) => Promise<void>;
+  continueCampaignFromTitle: () => Promise<void>;
   openDemoQuizFlow: (opts?: { skipNicknamePrompts?: boolean }) => void;
   playPreChapterStoryCutsceneIfNeeded: (nodeId: string) => Promise<void>;
   runPostChapterStoryFlowAndOpenOverworld: (clearedNodeId: string) => Promise<void>;
@@ -128,18 +130,25 @@ export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
   }
 
   async function playPreChapterStoryCutsceneIfNeeded(nodeId: string): Promise<void> {
-    const csId = getPreChapterCutsceneId(nodeId);
-    const def = csId ? getStoryCutsceneById(csId) : undefined;
-    if (!def || !ctx.cutsceneScene || manager.hasSeenStoryCutscene(def.id)) return;
-    ctx.tutorialOverlay?.closeAll(null);
-    if (ctx.overworldScene?.isOpen()) {
-      ctx.overworldReturnTarget = 'suppress';
-      ctx.overworldScene.close();
+    if (!ctx.cutsceneScene) return;
+    const csIds = getPreChapterCutsceneIds(nodeId);
+    let preparedStage = false;
+    for (const csId of csIds) {
+      const def = getStoryCutsceneById(csId);
+      if (!def || manager.hasSeenStoryCutscene(def.id)) continue;
+      if (!preparedStage) {
+        ctx.tutorialOverlay?.closeAll(null);
+        if (ctx.overworldScene?.isOpen()) {
+          ctx.overworldReturnTarget = 'suppress';
+          ctx.overworldScene.close();
+        }
+        if (dom.titleScreen) dom.titleScreen.hidden = true;
+        if (dom.devToolsBackdrop) dom.devToolsBackdrop.hidden = true;
+        preparedStage = true;
+      }
+      await ctx.cutsceneScene.play(def);
+      manager.markStoryCutsceneSeen(def.id);
     }
-    if (dom.titleScreen) dom.titleScreen.hidden = true;
-    if (dom.devToolsBackdrop) dom.devToolsBackdrop.hidden = true;
-    await ctx.cutsceneScene.play(def);
-    manager.markStoryCutsceneSeen(def.id);
   }
 
   async function runPostChapterStoryFlowAndOpenOverworld(clearedNodeId: string): Promise<void> {
@@ -147,17 +156,71 @@ export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
     if (dom.devToolsBackdrop) dom.devToolsBackdrop.hidden = true;
 
     const demoCh = getDemoChapterByNodeId(clearedNodeId);
-    const postId = getPostChapterCutsceneId(clearedNodeId);
-    const postDef = postId ? getStoryCutsceneById(postId) : undefined;
-    if (postDef && ctx.cutsceneScene && !manager.hasSeenStoryCutscene(postDef.id)) {
-      await ctx.cutsceneScene.play(postDef);
-      manager.markStoryCutsceneSeen(postDef.id);
+    for (const postId of getPostChapterCutsceneIds(clearedNodeId)) {
+      const postDef = getStoryCutsceneById(postId);
+      if (postDef && ctx.cutsceneScene && !manager.hasSeenStoryCutscene(postDef.id)) {
+        await ctx.cutsceneScene.play(postDef);
+        manager.markStoryCutsceneSeen(postDef.id);
+      }
     }
+
+    if (demoCh?.postCutsceneRecruits?.length) {
+      for (const spec of demoCh.postCutsceneRecruits) {
+        const sp = getSpeciesById(spec.speciesId);
+        if (!sp) continue;
+        const alreadyOwned = manager.getSave()?.roster.some(
+          (u) => getSpeciesById(u.speciesId)?.lineId === sp.lineId
+        );
+        if (alreadyOwned) continue;
+        manager.recruitPokemon({
+          speciesId: spec.speciesId,
+          level: spec.level,
+          scaleStatsToLevel: spec.scaleStatsToLevel,
+        });
+      }
+    }
+
+    if (demoCh?.chainsDirectlyIntoNodeId) {
+      const nextNodeId = demoCh.chainsDirectlyIntoNodeId;
+      const nextChapter = getDemoChapterByNodeId(nextNodeId);
+      if (nextChapter && !manager.getSave()?.campaign.completedChapterIds.includes(nextNodeId)) {
+        await playPreChapterStoryCutsceneIfNeeded(nextNodeId);
+        await launchDemoChapterBattle(nextChapter);
+        return;
+      }
+    }
+
     if (demoCh?.isDemoFinale && ctx.creditsScene && !manager.hasSeenCredits()) {
       await ctx.creditsScene.play();
       manager.markCreditsSeen();
     }
     await openOverworldScene({ preservePosition: true });
+  }
+
+  async function continueCampaignFromTitle(): Promise<void> {
+    const save = manager.getSave();
+    if (!save) {
+      openDemoQuizFlow();
+      return;
+    }
+    const completed = new Set(save.campaign.completedChapterIds);
+    if (!completed.has('prologue')) {
+      const prologueCh = getDemoChapterByNodeId('prologue');
+      if (prologueCh) {
+        await playPreChapterStoryCutsceneIfNeeded('prologue');
+        await launchDemoChapterBattle(prologueCh);
+        return;
+      }
+    }
+    if (!completed.has('chapter_01')) {
+      const ch1 = getDemoChapterByNodeId('chapter_01');
+      if (ch1) {
+        await playPreChapterStoryCutsceneIfNeeded('chapter_01');
+        await launchDemoChapterBattle(ch1);
+        return;
+      }
+    }
+    await openOverworldScene({ preservePosition: true, announceCurrentChapter: true });
   }
 
   async function replayStoryCutsceneFromOverworld(cutsceneId: string): Promise<void> {
@@ -260,6 +323,7 @@ export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
     toggleDevTools,
     openBattleScene,
     openOverworldScene,
+    continueCampaignFromTitle,
     openDemoQuizFlow,
     playPreChapterStoryCutsceneIfNeeded,
     runPostChapterStoryFlowAndOpenOverworld,

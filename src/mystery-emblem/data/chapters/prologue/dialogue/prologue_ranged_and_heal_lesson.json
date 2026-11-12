@@ -1,0 +1,49 @@
+{
+  "id": "prologue_ranged_and_heal_lesson",
+  "chapter": "prologue",
+  "role": "event",
+  "title": "Healing & Ranged Loadouts",
+  "cast": [
+    { "id": "mentor", "who": { "kind": "mentor" } },
+    { "id": "healer", "who": { "kind": "healer" } },
+    { "id": "lord", "who": { "kind": "lord" } }
+  ],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Normal",
+        "side": "right",
+        "text": "Good! You stayed on your feet, {partner}. Now {healer}, mend {partner}'s bruises with Heal Pulse before the next exchange."
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "healer",
+        "emotion": "Happy",
+        "side": "left",
+        "text": "Leave it to me! One warm pulse and {partner} will be good as new!"
+      }
+    },
+    {
+      "id": "line_3",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Determined",
+        "side": "right",
+        "text": "And {lord}, watch my stance! Every Pokemon can carry up to four moves and learns stronger ones by leveling up."
+      }
+    },
+    {
+      "id": "line_4",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Normal",
+        "side": "right",
+        "text": "You can mark one Physical move [E] for Range 1 counters and one Special move [E] for Range 2 counters. Right now I only have a Physical move equipped, so strike me from two spaces away with Dragon Breath and I cannot hit back!"
+      }
+    }
+  ]
+}

@@ -4,7 +4,7 @@
 
 import { getDemoChapterByNodeId } from '../data/campaignRegistry';
 import { DEMO_OVERWORLD_GRAPH } from '../data/overworldMapData';
-import { getPreChapterCutsceneId } from '../data/storyCutscenes';
+import { getPreChapterCutsceneIds } from '../data/storyCutscenes';
 import { BattleScene } from '../scenes/BattleScene';
 import { ChapterMapEditorScene } from '../scenes/ChapterMapEditorScene';
 import { OverworldScene } from '../scenes/OverworldScene';
@@ -101,7 +101,7 @@ export function mountGameplayScenesAndDevTools(ctx: AppRuntimeContext, router: S
         const demoChapter = getDemoChapterByNodeId(nodeId);
         if (demoChapter) {
           void (async () => {
-            if (demoChapter.nodeId !== 'prologue' && getPreChapterCutsceneId(demoChapter.nodeId)) {
+            if (getPreChapterCutsceneIds(demoChapter.nodeId).length > 0) {
               await router.playPreChapterStoryCutsceneIfNeeded(demoChapter.nodeId);
             }
             await router.launchDemoChapterBattle(demoChapter);

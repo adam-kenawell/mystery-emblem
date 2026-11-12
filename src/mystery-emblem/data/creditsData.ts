@@ -1,18 +1,16 @@
 /**
- * Mystery Emblem — Data-Driven Credits Metadata & Cast Resolvers (`creditsData.ts`)
+ * Mystery Emblem: Data-Driven Credits Metadata & Cast Resolvers (`creditsData.ts`)
  *
- * Separates static credits copy, role labels, and Wimpod -> Golisopod deduplication
- * from `CreditsScene.ts` DOM/canvas scrolling logic.
+ * Separates static credits copy and cast role labels from `CreditsScene.ts` DOM/canvas scrolling logic.
  */
 
-import { WIMPOD_PMD_ASSET_ID } from '../assets/pmdAssetLoader';
 import {
+  FLORGES_PARENT_BASE_PMD_ASSET_ID,
+  KECLEON_PMD_ASSET_ID,
   KING_SERPERIOR_PMD_ASSET_ID,
-  LADY_MILOTIC_PMD_ASSET_ID,
+  PIDGEOTTO_MESSENGER_PMD_ASSET_ID,
 } from './campaignRegistry';
 import { getSpeciesById } from './index';
-import { KECLEON_PMD_ASSET_ID } from './overworldMapData';
-import { isAdvisorInPlayableRoster } from '../engine/speakerResolver';
 import type { OwnedPokemonInstance, SaveData } from '../types/schemas';
 
 export interface CreditsEntryItem {
@@ -44,9 +42,9 @@ export interface CreditsEndCardCopy {
 export const CREDITS_HERO_META = {
   eyebrow: 'POKÉMON MYSTERY DUNGEON × FIRE EMBLEM',
   mainTitle: 'MYSTERY EMBLEM',
-  actSubtitleDemo: 'The Verdant Heartland',
-  actSubtitleFull: 'Chronicles of the Five Kingdoms',
-  castSectionHeading: 'HEROES OF THE VERDANT HEARTLAND',
+  actSubtitleDemo: 'Act 1: Expedition to King Serperior',
+  actSubtitleFull: 'Chronicles of the Space-Time Rift',
+  castSectionHeading: 'HEROES OF THE VERDANT EXPEDITION',
 } as const;
 
 export const CREDITS_STATIC_SECTIONS: ReadonlyArray<CreditsSectionBlock> = [
@@ -88,75 +86,76 @@ export const CREDITS_LEGAL_DISCLAIMER =
   'Mystery Emblem is a free, non-commercial fan project. Pokémon and Fire Emblem are trademarks of Nintendo, Creatures Inc., GAME FREAK inc., Spike Chunsoft, and Intelligent Systems.';
 
 const LINE_ROLE_LABELS: Readonly<Record<string, string>> = {
-  piplup_line: 'Headstrong Vanguard & Foster Brother',
-  flabebe_line: 'Sanctuary Healer & Childhood Friend',
-  sir_empoleon_line: 'Veteran Royal Guard & Foster Mentor',
-  sewaddle_line: 'Capital Road Brush Scout',
-  duskull_line: 'Lantern Keeper of Northern Pass',
+  quaxly_line: 'Steadfast Vanguard & Foster Brother',
+  flabebe_line: 'Village Healer & Childhood Friend',
+  mentor_quaquaval_line: 'Retired Royal Guard & Foster Father',
+  smoliv_line: 'Rescued Foothill Trail Companion',
+  machop_line: 'Mountain Cave Pathfinder',
   slakoth_line: 'Sleepy Lush Prairie Powerhouse',
-  wimpod_line: 'Armored Tactician & Reformed Hazard Scholar',
-  oricorio_line: 'Inspiring Dancer of the Five Kingdoms',
+  starly_line: 'Hometown Sky Scout',
+  caterpie_line: 'Hometown Trailblazer',
+  pawmi_line: 'Hometown Spark Brawler',
+  honedge_line: 'Valiant Steel Kingdom Envoy',
+  sandile_line: 'Sharp-Eyed Sand Kingdom Envoy',
+  dreepy_line: 'Sealed Scion of the Ancient Dragons',
+  deino_line: 'Redeemed Scion of the Ancient Dragons',
 };
 
 export function resolveUnitCreditsRoleLabel(unit: OwnedPokemonInstance, index: number): string {
   if (index === 0 || unit.isLord) {
-    return 'Dragon Kingdom Scion & Foster Strategist';
+    return 'Sealed Scion of the Ancient Dragon Kingdom';
   }
   const sp = getSpeciesById(unit.speciesId);
   if (sp?.lineId && LINE_ROLE_LABELS[sp.lineId]) {
     return LINE_ROLE_LABELS[sp.lineId]!;
   }
-  return 'Ally of the Verdant Commonwealth';
+  return 'Ally of the Verdant Expedition';
 }
 
-export function getCreditsNpcShowcaseList(save: SaveData | null): CreditsNpcCastSpec[] {
-  const npcs: CreditsNpcCastSpec[] = [];
-  if (!isAdvisorInPlayableRoster(save)) {
-    npcs.push({
-      id: 'wimpod',
-      assetId: WIMPOD_PMD_ASSET_ID,
-      name: 'Wimpod',
-      subtitle: 'Tactical Coward & Hazard Scholar',
-    });
-  }
-  npcs.push(
+export function getCreditsNpcShowcaseList(_save: SaveData | null): CreditsNpcCastSpec[] {
+  return [
     {
       id: 'serperior',
       assetId: KING_SERPERIOR_PMD_ASSET_ID,
       name: 'King Serperior',
-      subtitle: 'Sovereign of the Verdant Commonwealth',
+      subtitle: 'Sovereign of the Verdant Kingdom',
     },
     {
-      id: 'milotic',
-      assetId: LADY_MILOTIC_PMD_ASSET_ID,
-      name: 'Lady Milotic',
-      subtitle: 'Royal Advisor of the Verdant Commonwealth',
+      id: 'florges',
+      assetId: FLORGES_PARENT_BASE_PMD_ASSET_ID,
+      name: 'Florges',
+      subtitle: 'Village Matriarch & Sanctuary Keeper',
+    },
+    {
+      id: 'pidgeotto',
+      assetId: PIDGEOTTO_MESSENGER_PMD_ASSET_ID,
+      name: 'Pidgeotto',
+      subtitle: 'Royal Courier of the Capital',
     },
     {
       id: 'kecleon',
       assetId: KECLEON_PMD_ASSET_ID,
       name: 'Kecleon',
       subtitle: 'Master Traveling Merchant',
-    }
-  );
-  return npcs;
+    },
+  ];
 }
 
 export function resolveCreditsEndCardCopy(save: SaveData | null): CreditsEndCardCopy {
   const rosterLen = save?.roster.length ?? 0;
-  const clearedCount = save?.campaign.completedChapterIds.length ?? 7;
+  const clearedCount = save?.campaign.completedChapterIds.length ?? 5;
   const isFullCampaign = save?.campaign.campaignMode === 'main';
-  const totalChapterTarget = isFullCampaign ? Math.max(26, clearedCount) : 9;
+  const totalChapterTarget = isFullCampaign ? Math.max(25, clearedCount) : 6;
 
   return {
-    eyebrow: isFullCampaign ? 'CAMPAIGN COMPLETE' : 'DEMO COMPLETE',
+    eyebrow: isFullCampaign ? 'CAMPAIGN COMPLETE' : 'ACT 1 COMPLETE',
     thankTitle: isFullCampaign
       ? 'Thank You for Playing Mystery Emblem!'
-      : 'Thank You for Playing the Mystery Emblem Demo!',
+      : 'Thank You for Playing Mystery Emblem: Act 1!',
     teaserLine: isFullCampaign
-      ? 'Peace returns across the Five Kingdoms — New Game Plus awaits!'
-      : 'Into the Goldensand Diarchy · Coming Soon!',
-    statsLine: `Chapters Cleared: ${clearedCount} / ${totalChapterTarget}  ·  Allies Recruited: ${Math.max(4, rosterLen)}`,
+      ? 'The Space-Time Rift is sealed at last. New Game Plus awaits!'
+      : 'Act 2: Uncovering the Truth in the Ice Kingdom · Coming Soon!',
+    statsLine: `Chapters Cleared: ${clearedCount} / ${totalChapterTarget}  ·  Allies Recruited: ${Math.max(3, rosterLen)}`,
     finishButtonLabel: 'Return to World Map ▶',
   };
 }

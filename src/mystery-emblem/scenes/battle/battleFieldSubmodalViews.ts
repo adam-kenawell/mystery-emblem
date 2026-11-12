@@ -1,5 +1,5 @@
 /**
- * Dungeon Field Menu Submodal Views (`Objective`, `Settings` w/ Audio & `Ask Wimpod`, Exit Confirm)
+ * Dungeon Field Menu Submodal Views (`Objective`, `Settings` w/ Audio & Quaquaval's Field Notes, Exit Confirm)
  */
 
 import { bindPointerTap } from '../../ui/pointerControls';

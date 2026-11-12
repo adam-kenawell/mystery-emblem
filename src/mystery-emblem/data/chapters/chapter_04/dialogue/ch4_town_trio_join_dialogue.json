@@ -1,0 +1,61 @@
+{
+  "id": "ch4_town_trio_join_dialogue",
+  "chapter": "chapter_04",
+  "role": "event",
+  "title": "Hometown Friends Crash In",
+  "music": "one_for_all",
+  "cast": [
+    { "id": "starly", "who": { "kind": "recruit", "speciesId": "starly" } },
+    { "id": "caterpie", "who": { "kind": "recruit", "speciesId": "caterpie" } },
+    { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } },
+    { "id": "partner", "who": { "kind": "partner" } },
+    { "id": "lord", "who": { "kind": "lord" } }
+  ],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "starly",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "Incoming from above! Need three extra sets of wings and paws, {lord}?!"
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Surprised",
+        "side": "right",
+        "text": "Starly?! Caterpie?! Pawmi?! What on earth are you three doing all the way at the capital?!"
+      }
+    },
+    {
+      "id": "line_3",
+      "say": {
+        "speaker": "pawmi",
+        "emotion": "Joyous",
+        "side": "left",
+        "text": "We trailed your footprints over the mountain the whole way! You didn't think you could sneak off on a royal expedition without telling us what was going on, did you?!"
+      }
+    },
+    {
+      "id": "line_4",
+      "say": {
+        "speaker": "caterpie",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "Whatever those terrifying Rift monsters are, our hometown squad fights together! Count us in!"
+      }
+    },
+    {
+      "id": "line_5",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Happy",
+        "side": "right",
+        "text": "Best timing we could ever ask for! Form up on our flank, everyone, and let's drive these Rift beasts back!"
+      }
+    }
+  ]
+}

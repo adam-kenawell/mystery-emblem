@@ -1,0 +1,59 @@
+{
+  "id": "prologue_town_trio_intro",
+  "chapter": "prologue",
+  "role": "event",
+  "title": "Town Trio Enters the Pitch",
+  "cast": [
+    { "id": "mentor", "who": { "kind": "mentor" } },
+    { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } },
+    { "id": "starly", "who": { "kind": "recruit", "speciesId": "starly" } },
+    { "id": "caterpie", "who": { "kind": "recruit", "speciesId": "caterpie" } }
+  ],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Happy",
+        "side": "right",
+        "text": "Clean shot from range, {lord}! Now step into a live team bout. Starly, Caterpie, Pawmi, onto the field!"
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "starly",
+        "emotion": "Happy",
+        "side": "right",
+        "text": "We have been waiting on the sidelines all evening! Don't blink or we will sweep the pitch!"
+      }
+    },
+    {
+      "id": "line_3",
+      "say": {
+        "speaker": "caterpie",
+        "emotion": "Determined",
+        "side": "right",
+        "text": "Friendly bout rules, right, Master Quaquaval? Nobody holds back!"
+      }
+    },
+    {
+      "id": "line_4",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Determined",
+        "side": "right",
+        "text": "First, watch what happens when an unfavorable type matchup connects. Pawmi, spark {partner} with Nuzzle!"
+      }
+    },
+    {
+      "id": "line_5",
+      "say": {
+        "speaker": "pawmi",
+        "emotion": "Joyous",
+        "side": "right",
+        "text": "Cheeks charged! Coming right at you, {partner}!"
+      }
+    }
+  ]
+}

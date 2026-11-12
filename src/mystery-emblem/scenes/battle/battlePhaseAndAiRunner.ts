@@ -31,7 +31,11 @@ import {
   playStatusHexActionAsync,
   runFactionPhaseStartStatusTicks,
 } from './battleStatusHexController';
-import { triggerBattleTutorial, triggerPrologueTurn2Drills } from './battleTutorialIntegration';
+import {
+  triggerBattleTutorial,
+  triggerPrologueTurn2Drills,
+  triggerPrologueTurn3ItemDrill,
+} from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
   getLivingAlliedUnits,
@@ -222,6 +226,7 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
     }
     if (state.activeLevelId === PROLOGUE_LEVEL_ID) {
       if (state.turnNumber === 2) void triggerPrologueTurn2Drills(ctx, runGen);
+      else if (state.turnNumber === 3) void triggerPrologueTurn3ItemDrill(ctx, runGen);
       return;
     }
     if (getLivingPlayers(state).some((u) => u.currentHp < u.maxHp)) {

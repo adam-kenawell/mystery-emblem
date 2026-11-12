@@ -9,7 +9,6 @@ import {
   type DragonLordSpeciesId, type QuizOptionKey,
 } from '../data/quizData';
 import type { SaveStateManager } from '../state/SaveStateManager';
-import type { QuizRecruitSeeds } from '../types/schemas';
 import { PmdPortraitView } from './PmdSpriteCanvas';
 import { RecruitNicknameOverlay, type PromptRecruitsOptions } from './RecruitNicknameOverlay';
 import { bindBackGestureSurface, bindPointerTap } from './pointerControls';
@@ -51,7 +50,6 @@ export class QuizScene {
   private questionOptionsRevealed = false;
   private answers: QuizOptionKey[] = [];
   private selectedLordSpeciesId: DragonLordSpeciesId = 'axew';
-  private computedQuizSeeds: QuizRecruitSeeds | null = null;
   private activeQuestionTextEl: HTMLElement | null = null;
   private activeRevealTextEl: HTMLElement | null = null;
 
@@ -119,7 +117,6 @@ export class QuizScene {
     this.questionOptionsRevealed = false;
     this.answers = [];
     this.selectedLordSpeciesId = DRAGON_LORD_OPTIONS[0]?.speciesId ?? 'axew';
-    this.computedQuizSeeds = null;
 
     this.waveEngine.reset();
     delete this.rootEl.dataset.auraFlowerColor;
@@ -211,7 +208,6 @@ export class QuizScene {
     } else {
       const result = evaluatePersonalityQuiz(this.answers);
       this.selectedLordSpeciesId = result.assignedLordSpeciesId;
-      this.computedQuizSeeds = result.quizSeeds;
       this.step = 'lord_reveal';
       this.revealBeat = 0;
     }
@@ -242,7 +238,7 @@ export class QuizScene {
       this.render();
       return;
     }
-    this.finalize(this.selectedLordSpeciesId, this.computedQuizSeeds ?? evaluatePersonalityQuiz(this.answers).quizSeeds);
+    this.finalize(this.selectedLordSpeciesId);
   }
 
   private render(): void {
@@ -261,13 +257,12 @@ export class QuizScene {
     } else if (this.step === 'ng_plus') {
       renderNgPlusRosterSelectorView(this.stageEl, {
         initialLordSpeciesId: this.selectedLordSpeciesId,
-        initialSeeds: this.computedQuizSeeds,
         onSelectLordChange: (lordId) => {
           this.selectedLordSpeciesId = lordId;
           applyQuizBackdropForStep(this.rootEl, this.waveEngine, this.step, this.revealBeat, this.selectedLordSpeciesId);
         },
         onTakeAuraQuizInstead: () => { this.audioManager.playSfx('select'); this.step = 'questions'; this.questionIndex = 0; this.questionOptionsRevealed = false; this.render(); },
-        onConfirmNgPlus: (lordId, seeds) => { this.selectedLordSpeciesId = lordId; this.computedQuizSeeds = seeds; this.finalize(lordId, seeds, true); },
+        onConfirmNgPlus: (lordId) => { this.selectedLordSpeciesId = lordId; this.finalize(lordId, true); },
       });
     } else if (this.step === 'questions') {
       const { promptEl } = renderQuizQuestionWindow(this.stageEl, this.getCurrentQuestionDescriptor(), {
@@ -285,17 +280,17 @@ export class QuizScene {
         onStartTypewriter: (target, prompt, prefix, roll) => this.startTypewriter(target, prompt, prefix, roll),
         onAcceptAdventure: () => {
           this.typewriter.clear();
-          this.finalize(this.selectedLordSpeciesId, this.computedQuizSeeds ?? evaluatePersonalityQuiz(this.answers).quizSeeds);
+          this.finalize(this.selectedLordSpeciesId);
         },
       });
       this.activeRevealTextEl = revealTextEl;
     }
   }
 
-  private finalize(lordId: DragonLordSpeciesId, seeds: QuizRecruitSeeds, preserveNgPlus = false): void {
+  private finalize(lordId: DragonLordSpeciesId, preserveNgPlus = false): void {
     finalizeQuizCampaignCreation({
       saveManager: this.saveManager, audioManager: this.audioManager, activeOptions: this.activeOptions,
-      lordSpeciesId: lordId, quizSeeds: seeds, preserveNgPlus, onCloseQuizScene: () => this.close(),
+      lordSpeciesId: lordId, preserveNgPlus, onCloseQuizScene: () => this.close(),
     });
   }
 

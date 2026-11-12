@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — "Ask Wimpod" Survival Notes & Settings Control (`TutorialCompendiumRenderer.ts`)
+ * Mystery Emblem - Quaquaval's Field Notes & Settings Control (`TutorialCompendiumRenderer.ts`)
  */
 
 import type { AudioManager } from '../../audio/AudioManager';
@@ -36,17 +36,17 @@ export function renderTutorialCompendiumDom(params: {
   const unlockedTopics = TUTORIAL_TOPICS.filter((t) => unlockedSet.has(t.id));
 
   const headerEl = document.createElement('div');
-  headerEl.className = 'pmd-tutorial-header pmd-wimpod-compendium-header';
+  headerEl.className = 'pmd-tutorial-header pmd-advisor-compendium-header';
 
   const heroLeft = document.createElement('div');
-  heroLeft.className = 'pmd-wimpod-compendium-hero';
+  heroLeft.className = 'pmd-advisor-compendium-hero';
 
   const portraitBox = document.createElement('div');
-  portraitBox.className = 'pmd-forecast-portrait-slot pmd-wimpod-compendium-portrait';
+  portraitBox.className = 'pmd-forecast-portrait-slot pmd-advisor-compendium-portrait';
   portraitBox.appendChild(compendiumPortraitView.canvas);
   void compendiumPortraitView.setPortrait({
     speciesIdOrAssetId: advisor.visualAssetId ?? advisor.pmdAssetId,
-    emotion: unlockedTopics.length > 0 ? 'Happy' : 'Worried',
+    emotion: unlockedTopics.length > 0 ? 'Happy' : 'Determined',
   });
 
   const titleCol = document.createElement('div');
@@ -63,12 +63,12 @@ export function renderTutorialCompendiumDom(params: {
 
   const titleEl = document.createElement('h3');
   titleEl.className = 'pmd-tutorial-title';
-  titleEl.textContent = 'Ask Wimpod — Survival Notes';
+  titleEl.textContent = "Quaquaval's Field Notes";
 
   const subQuote = document.createElement('span');
-  subQuote.className = 'pmd-wimpod-compendium-quote';
+  subQuote.className = 'pmd-advisor-compendium-quote';
   subQuote.textContent =
-    '“Forget how something works? I wrote it all down. Mostly so I’d stop panicking.”';
+    '“You can never be too prepared. Review any Royal Guard drill whenever you need a refresher.”';
 
   titleCol.append(metaRow, titleEl, subQuote);
   heroLeft.append(portraitBox, titleCol);
@@ -93,7 +93,7 @@ export function renderTutorialCompendiumDom(params: {
     emptyEl.className = 'pmd-tutorial-empty-note';
     emptyEl.dataset.testid = 'tutorial-compendium-empty';
     emptyEl.textContent =
-      'Wimpod hasn’t scribbled any survival notes yet—new notes unlock automatically as you encounter each mechanic!';
+      "Quaquaval's Field Notes unlock automatically as you encounter each battle mechanic on your journey!";
     bodyEl.appendChild(emptyEl);
   } else {
     for (const category of TUTORIAL_CATEGORY_ORDER) {
@@ -117,7 +117,7 @@ export function renderTutorialCompendiumDom(params: {
           menuRow: true,
           className: 'pmd-tutorial-topic-row',
           testId: `tutorial-guide-topic-${topic.id}`,
-          ariaLabel: `Ask Wimpod about ${topic.title}`,
+          ariaLabel: `Review ${topic.title} in Quaquaval's Field Notes`,
           onTap: () => params.onOpenTopic(topic.id),
           tapOptions: { signal },
         });
@@ -164,7 +164,7 @@ export function renderTutorialSettingsControlDom(params: {
 
   const lbl = document.createElement('span');
   lbl.className = 'pmd-tutorial-pref-label';
-  lbl.textContent = "Wimpod's Tutorials";
+  lbl.textContent = "Quaquaval's Coaching";
 
   const chipGroup = document.createElement('div');
   chipGroup.className = 'pmd-tutorial-pref-chips';
@@ -174,7 +174,7 @@ export function renderTutorialSettingsControlDom(params: {
     variant: enabled ? 'primary' : 'default',
     className: `pmd-tutorial-pref-chip${enabled ? ' is-active' : ''}`,
     testId: 'tutorial-toggle-on',
-    ariaLabel: "Wimpod's Tutorials: On",
+    ariaLabel: "Quaquaval's Coaching: On",
     onTap: () => {
       if (!saveManager.getSave()) return;
       audioManager.playSfx('select');
@@ -190,7 +190,7 @@ export function renderTutorialSettingsControlDom(params: {
     variant: !enabled ? 'primary' : 'default',
     className: `pmd-tutorial-pref-chip${!enabled ? ' is-active' : ''}`,
     testId: 'tutorial-toggle-off',
-    ariaLabel: "Wimpod's Tutorials: Off",
+    ariaLabel: "Quaquaval's Coaching: Off",
     onTap: () => {
       if (!saveManager.getSave()) return;
       audioManager.playSfx('select');
@@ -225,11 +225,11 @@ export function renderTutorialSettingsControlDom(params: {
   const noteEl = document.createElement('span');
   noteEl.className = 'pmd-tutorial-settings-note';
   noteEl.textContent = hasSave
-    ? 'Wimpod coaches new mechanics from cover.'
+    ? 'Quaquaval shares tactical pointers on new mechanics.'
     : 'Start a campaign save to customize tutorials.';
 
   const guideBtn = createPmdButton({
-    label: `Ask Wimpod (${unlockedCount})`,
+    label: `Quaquaval's Field Notes (${unlockedCount})`,
     className: 'pmd-tutorial-open-guide-btn',
     testId: 'btn-open-tutorial-guide',
     onTap: () => {

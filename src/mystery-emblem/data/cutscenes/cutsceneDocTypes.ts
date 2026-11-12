@@ -66,15 +66,16 @@ export type CastIdentity =
   | { kind: 'lord' }
   | { kind: 'partner' }
   | { kind: 'healer' }
+  | { kind: 'healer_parent' }
   | { kind: 'mentor' }
   | { kind: 'advisor' }
-  /** A quiz-chosen recruit, e.g. the Ch. 1 bird (`slot1Flying`) */
+  /** A quiz-chosen recruit */
   | { kind: 'quiz_slot'; slot: QuizSeedSlotKey; index?: number; fallbackSpeciesId?: string }
-  /** A fixed recruit (Duskull, Slakoth…): their roster unit once recruited, else the species */
+  /** A fixed story recruit (Smoliv, Machop, Slakoth...): their roster unit once recruited, else the species */
   | { kind: 'recruit'; speciesId: string }
-  /** The Nth extra party member beyond the core five; hidden when the party is smaller */
+  /** The Nth extra party member beyond the core four; hidden when the party is smaller */
   | { kind: 'party_extra'; slotIndex: number }
-  /** Any Pokémon with a fixed display name. `pokemon` is a SpriteCollab id like `0497` */
+  /** Any Pokemon with a fixed display name. `pokemon` is a SpriteCollab id like `0497` */
   | { kind: 'npc'; pokemon: string; name: string; speciesName?: string };
 
 export interface CastMember {

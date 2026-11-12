@@ -74,7 +74,10 @@ export async function useEquippedBattleConsumable(ctx: BattleControllerContext):
       healed = nextHp - unit.currentHp;
       unit.currentHp = nextHp;
     }
-    if (item.effect.cureStatus && unit.status !== null) {
+    if (
+      (item.effect.cureStatus && unit.status !== null) ||
+      (item.effect.cureSpecificStatus && unit.status === item.effect.cureSpecificStatus)
+    ) {
       unit.status = null;
       unit.statusTurns = 0;
     }
@@ -109,6 +112,7 @@ export async function useEquippedBattleConsumable(ctx: BattleControllerContext):
     item.category === 'promotion' ? 1150 : 820
   );
   clearBattleSelection(state, dom, prepOverlay);
+  ctx.tutorialOverlay?.notifyActionCompleted('battle_confirm_item');
   await runTileReachedEvents(ctx, unit, runGen);
   if (!state.openState || runGen !== state.battleRunGen) return;
   if (checkAndTriggerMatchEnd(ctx)) return;

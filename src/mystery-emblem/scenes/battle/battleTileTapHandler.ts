@@ -29,6 +29,7 @@ import {
   getExpectedTutorialAction,
   getHealOrConsumableTutorialUnits,
   getTutorialHealerUnit,
+  getTutorialPartnerUnit,
 } from './battleTutorialSpotlights';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
@@ -77,7 +78,10 @@ export function handleBattleTileTap(
   const expectedTutorialAction = getExpectedTutorialAction(tutorialOverlay);
 
   if (state.interactionState === 'action_menu') {
-    if (expectedTutorialAction === 'battle_confirm_wait') {
+    if (
+      expectedTutorialAction === 'battle_confirm_wait' ||
+      expectedTutorialAction === 'battle_confirm_item'
+    ) {
       tutorialOverlay?.nudgeActiveStep();
       return;
     }
@@ -165,6 +169,16 @@ export function handleBattleTileTap(
     if (expectedTutorialAction === 'battle_select_lord') {
       const lord = getLordUnit(state);
       if (!occupant || occupant.id !== lord?.id || occupant.waited) {
+        tutorialOverlay?.nudgeActiveStep();
+        return;
+      }
+      selectPlayerUnit(ctx, occupant);
+      return;
+    }
+
+    if (expectedTutorialAction === 'battle_select_partner') {
+      const partner = getTutorialPartnerUnit(state);
+      if (!occupant || occupant.id !== partner?.id || occupant.waited) {
         tutorialOverlay?.nudgeActiveStep();
         return;
       }

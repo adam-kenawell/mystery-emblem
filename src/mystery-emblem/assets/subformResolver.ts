@@ -50,8 +50,20 @@ export function getFlabebeFlowerColorForLord(
 }
 
 /**
+ * Maps a 4-digit National Dex base asset ID (e.g. `0669` Flabebe or `0671` Florges)
+ * and a `FlabebeFlowerColor` to its SpriteCollab subform path (`0671` or `0671/0003`).
+ */
+export function getFlowerSubformAssetId(
+  baseDex4: string,
+  flowerColor: FlabebeFlowerColor
+): string {
+  const subform = FLABEBE_SUBFORM_BY_COLOR[flowerColor] ?? '';
+  return subform ? `${baseDex4}/${subform}` : baseDex4;
+}
+
+/**
  * Resolves the PMD visual asset identifier for a unit (`speciesId` or `XXXX/YYYY` subform path),
- * preserving Flabébé -> Floette -> Florges flower color and Oricorio dance style.
+ * preserving Flabebe -> Floette -> Florges flower color and Oricorio dance style.
  */
 export function resolveUnitVisualAssetId(
   speciesId: string,

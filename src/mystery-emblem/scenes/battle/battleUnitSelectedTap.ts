@@ -62,7 +62,7 @@ export function handleSelectedUnitTileTap(
     const isOriginTap = tx === selected.x && ty === selected.y;
     const forced = getForcedTutorialMoveTile(state);
     if (
-      occupant ||
+      (occupant && occupant.id !== selected.id) ||
       !state.currentRange.reachableTiles.has(targetKey) ||
       (hasNonOriginMove && isOriginTap) ||
       (forced && (tx !== forced.x || ty !== forced.y))
@@ -71,8 +71,7 @@ export function handleSelectedUnitTileTap(
       return;
     }
   } else if (expectedTutorialAction === 'battle_open_heal_forecast') {
-    const lord = livingUnits.find((u) => u.isLord && u.faction === 'player');
-    if (!occupant || occupant.id !== lord?.id) {
+    if (!occupant || occupant.faction !== 'player' || occupant.currentHp >= occupant.maxHp) {
       tutorialOverlay?.nudgeActiveStep();
       return;
     }

@@ -32,13 +32,15 @@ export function describeIdentity(who: CastIdentity): string {
     case 'lord':
       return 'Hero (your Dragon)';
     case 'partner':
-      return 'Partner (Piplup)';
+      return 'Partner (Quaxly)';
     case 'healer':
-      return 'Healer (Flabébé)';
+      return 'Healer (Flabebe)';
+    case 'healer_parent':
+      return 'Florges (Healer Parent)';
     case 'mentor':
-      return 'Sir Empoleon';
+      return 'Quaquaval (Mentor)';
     case 'advisor':
-      return 'Wimpod / Golisopod';
+      return 'Quaquaval (Field Notes)';
     case 'quiz_slot':
       return QUIZ_SLOT_LABELS[who.slot] ?? `Quiz recruit (${who.slot})`;
     case 'recruit':

@@ -53,8 +53,8 @@ export function toggleEditorPlayerSpawnAt(
     };
   }
 
-  const defaultPool = ['dratini', 'piplup', 'flabebe', 'sewaddle', 'pidgey', 'duskull'];
-  const spId = defaultPool[state.map.playerSpawns.length % defaultPool.length] ?? 'dratini';
+  const defaultPool = ['axew', 'quaxly', 'flabebe', 'smoliv', 'machop', 'starly'];
+  const spId = defaultPool[state.map.playerSpawns.length % defaultPool.length] ?? 'axew';
   const sp = getSpeciesById(spId);
 
   state.map.playerSpawns.push({

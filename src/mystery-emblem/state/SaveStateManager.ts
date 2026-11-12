@@ -33,7 +33,7 @@ import {
   mutateSpawnOverworldSkirmish, mutateUnlockAllOverworldNodes,
 } from './overworldAndShopMutators';
 import {
-  mutateClearEquippedMove, mutateEvolveUnitToSpecies, mutatePromoteAdvisorToPlayableRoster, mutateRecruitPokemon,
+  mutateClearEquippedMove, mutateEvolveUnitToSpecies, mutateRecruitPokemon,
   mutateRenamePokemon, mutateSetActiveMoves, mutateSetEquippedMove,
   mutateSetUnitLevelForTest, mutateUnlockUnitMove,
 } from './rosterAndMoveMutators';
@@ -122,7 +122,6 @@ export class SaveStateManager {
   public teachTmMove(id: string, tmItemId: string): OwnedPokemonInstance { return this.mutateUnit((s) => mutateTeachTmMove(s, id, tmItemId)); }
   public setUnitLevelForTest(id: string, level: number, rescaleStats = false): OwnedPokemonInstance { return this.mutateUnit((s) => mutateSetUnitLevelForTest(s, id, level, rescaleStats)); }
   public useEvolutionItemOnUnit(id: string, itemId: 'evolution_stone' | 'evolution_gem', targetSpeciesId?: string): OwnedPokemonInstance { return this.mutateUnit((s) => mutateUseEvolutionItemOnUnit(s, id, itemId, targetSpeciesId)); }
-  public promoteAdvisorToPlayableRoster(opts?: { speciesId?: 'wimpod' | 'golisopod'; level?: number; nickname?: string; scaleStatsToLevel?: boolean }): OwnedPokemonInstance { return this.mutateUnit((s) => mutatePromoteAdvisorToPlayableRoster(s, opts)); }
   public evolveUnitToSpecies(id: string, targetSpeciesId: string): OwnedPokemonInstance { const s = this.requireActiveSave(); const { unit, mutated } = mutateEvolveUnitToSpecies(s, id, targetSpeciesId); if (mutated) this.commitSave(s); return cloneUnit(unit); }
   public equipItemToUnit(id: string, itemId: string | null, sourceUnitId?: string): OwnedPokemonInstance { const s = this.requireActiveSave(); const { unit, mutated } = mutateEquipItemToUnit(s, id, itemId, sourceUnitId); if (mutated) this.commitSave(s); return cloneUnit(unit); }
   public addSupportPoints(idA: string, idB: string, delta = 1): SupportPairProgress { const s = this.requireActiveSave(); const p = mutateAddSupportPoints(s, idA, idB, delta); this.commitSave(s); return p; }

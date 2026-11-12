@@ -46,8 +46,9 @@
   {"id":"prankster","name":"Prankster","description":"Grants +15% Hit on Status/Support moves and +10% Avoid.","trigger":"combat_stat_mod","params":{"supportHitBonus":15,"avoidBonus":10}},
   {"id":"shadow_tag","name":"Shadow Tag","description":"Grants +2 Sp. Atk and +10% Hit against enemies within 2 tiles.","trigger":"combat_stat_mod","params":{"spaBonus":2,"hitBonus":10}},
   {"id":"no_guard","name":"No Guard","description":"Ensures 100% Hit accuracy for this unit's attacks and grants +1 Attack.","trigger":"combat_stat_mod","params":{"alwaysHit":true,"atkBonus":1}},
-  {"id":"emergency_resolve","name":"Emergency Resolve","description":"Grants +2 Defense while bracing and +2 Attack when below 75% HP.","trigger":"combat_stat_mod","params":{"defBonus":2,"atkBonusDamaged":2}},
   {"id":"dancer_grace","name":"Dancer's Grace","description":"Grants +10% Avoid and empowers Feather Step to refresh an adjacent ally.","trigger":"combat_stat_mod","params":{"avoidBonus":10}},
   {"id":"color_change_guard","name":"Color Change Guard","description":"Reduces incoming Super Effective damage by 2 while guarding merchant wares.","trigger":"combat_stat_mod","params":{"superEffectiveDamageReduction":2}},
-  {"id":"abyssal_dread","name":"Abyssal Dread","description":"At Player Phase start, inflicts -2 Attack for 1 turn on foes within 2 tiles.","trigger":"phase_start_debuff","params":{"radius":2,"atkDelta":-2,"durationTurns":1}}
+  {"id":"protosynthesis","name":"Protosynthesis","description":"Ancient Rift vigor: grants +2 Attack and +1 Defense in combat.","trigger":"combat_stat_mod","params":{"atkBonus":2,"defBonus":1}},
+  {"id":"quark_drive","name":"Quark Drive","description":"Future Rift core: grants +2 Sp. Atk and +10% Hit in combat.","trigger":"combat_stat_mod","params":{"spaBonus":2,"hitBonus":10}},
+  {"id":"magician_rift","name":"Rift Magician","description":"Dimensional mastery: grants +2 Sp. Atk, +2 Sp. Def, and +10% Avoid.","trigger":"combat_stat_mod","params":{"spaBonus":2,"spdBonus":2,"avoidBonus":10}}
 ]

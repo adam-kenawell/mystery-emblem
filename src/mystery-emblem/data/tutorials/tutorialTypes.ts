@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Wimpod Advisor Tutorial & Trigger Schema Types (`tutorialTypes.ts`)
+ * Mystery Emblem - Quaquaval's Field Notes Tutorial & Trigger Schema Types (`tutorialTypes.ts`)
  */
 
 import type { PmdPortraitEmotion } from '../../assets/pmdAssetLoader';
@@ -12,7 +12,7 @@ export type TutorialCompendiumCategory =
   | 'world_progression';
 
 export const TUTORIAL_CATEGORY_LABELS: Readonly<Record<TutorialCompendiumCategory, string>> = {
-  controls_fusion: 'Survival Basics & Controls',
+  controls_fusion: 'Footwork & Turn Basics',
   combat_tactics: 'Combat, Ranges & Terrain',
   prep_pokemon: 'Battle Prep, Moves & Items',
   world_progression: 'World Map, Evolutions & Shops',
@@ -29,6 +29,7 @@ export type TutorialActionTriggerId =
   | 'battle_open_field_menu'
   | 'battle_toggle_danger_area'
   | 'battle_select_lord'
+  | 'battle_select_partner'
   | 'battle_move_to_blue_tile'
   | 'battle_confirm_wait'
   | 'battle_open_attack_forecast'
@@ -37,6 +38,7 @@ export type TutorialActionTriggerId =
   | 'battle_select_healer'
   | 'battle_open_heal_forecast'
   | 'battle_confirm_heal'
+  | 'battle_confirm_item'
   | 'overworld_open_menu'
   | 'prep_open_manage_units'
   | 'prep_close_manage_units'
@@ -46,6 +48,7 @@ export type TutorialActionTriggerId =
 export type TutorialBattleTileFilter =
   | 'empty_floor'
   | 'lord_unit'
+  | 'partner_unit'
   | 'healer_unit'
   | 'reachable_move'
   | 'attackable_enemy'
@@ -74,24 +77,24 @@ export interface TutorialVisualChip {
   tone?: 'gold' | 'green' | 'cyan' | 'danger';
 }
 
-export interface WimpodTutorialBeat {
+export interface AdvisorTutorialBeat {
   id: string;
   emotion: PmdPortraitEmotion;
-  /** Supports `{lord}`, `{partner}`, `{healer}`, `{advisor}` custom nickname interpolation */
+  /** Supports `{lord}`, `{partner}`, `{healer}`, `{mentor}`, `{advisor}` custom nickname interpolation */
   dialogue: string;
-  /** Concise prompt displayed in Wimpod's action pill during hands-on steps */
+  /** Concise prompt for hands-on steps */
   actionHint?: string;
-  /** When set during live play, Wimpod's coach bar stays non-blocking and awaits this action */
+  /** When set during live play, Quaquaval's coach bar stays non-blocking and awaits this action */
   awaitAction?: TutorialActionTriggerId;
   spotlight?: TutorialSpotlightTarget;
   chips?: ReadonlyArray<TutorialVisualChip>;
-  /** Alternate line when Sir Empoleon presents this beat (Prologue fight); falls back to `dialogue` */
+  /** Optional alternate line when presented in live mentor drill mode */
   mentorDialogue?: string;
-  /** Alternate portrait emotion when Sir Empoleon presents this beat; falls back to `emotion` */
+  /** Optional alternate portrait emotion in live mentor drill mode */
   mentorEmotion?: PmdPortraitEmotion;
 }
 
-/** Who voices the coach card: Wimpod/Golisopod advisor (default) or Sir Empoleon (Prologue fight). */
+/** Who voices the coach card: Quaquaval advisor (default) or live sparring mentor. */
 export type TutorialPresenter = 'advisor' | 'mentor';
 
 export interface TutorialTopicDefinition {
@@ -99,7 +102,7 @@ export interface TutorialTopicDefinition {
   title: string;
   category: TutorialCompendiumCategory;
   summary: string;
-  beats: ReadonlyArray<WimpodTutorialBeat>;
+  beats: ReadonlyArray<AdvisorTutorialBeat>;
 }
 
 export type TutorialTriggerHook = 'battle_prep' | 'battle_turn1';

@@ -2,26 +2,30 @@
   "id": "outro",
   "chapter": "chapter_01",
   "role": "outro",
-  "title": "Capital Road",
-  "music": "calm_cutscene",
-  "cast": [{ "id": "partner", "who": { "kind": "partner" } }, { "id": "mentor", "who": { "kind": "mentor" } }],
+  "title": "Thugs Driven Off",
+  "music": "proud_accomplishment",
+  "cast": [
+    { "id": "partner", "who": { "kind": "partner" } },
+    { "id": "healer", "who": { "kind": "healer" } },
+    { "id": "lord", "who": { "kind": "lord" } }
+  ],
   "beats": [
     {
       "id": "line_1",
       "say": {
         "speaker": "partner",
         "emotion": "Joyous",
-        "side": "right",
-        "text": "The road’s open! And our two new friends weren’t half bad."
+        "side": "left",
+        "text": "Look at them run! Maybe Dad knew what he was talking about with all those evening drills after all!"
       }
     },
     {
       "id": "line_2",
       "say": {
-        "speaker": "mentor",
-        "emotion": "Normal",
-        "side": "left",
-        "text": "Look ahead, everyone. The spires of King Serperior’s court."
+        "speaker": "healer",
+        "emotion": "Worried",
+        "side": "right",
+        "text": "Still, why were rough thugs lurking so close to our village? Let's haul the water home and tell Quaquaval and Mom right away."
       }
     }
   ]

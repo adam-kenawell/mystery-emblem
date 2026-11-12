@@ -1,0 +1,165 @@
+{
+  "id": "cs_00_ancient_dragon_war",
+  "title": "Fall of the Dragon Kingdom",
+  "music": "rising_fear",
+  "location": "watchtower_parapet",
+  "banner": "Ancient Dragon Kingdom - Ages Past",
+  "lighting": "flashback",
+  "weather": "embers",
+  "camera": { "x": 7.5, "y": 5.5 },
+  "cast": [
+    {
+      "id": "haxorus",
+      "who": { "kind": "npc", "pokemon": "0612", "name": "Haxorus", "speciesName": "Haxorus" }
+    },
+    {
+      "id": "dragonite",
+      "who": { "kind": "npc", "pokemon": "0149", "name": "Dragonite", "speciesName": "Dragonite" }
+    },
+    {
+      "id": "goodra",
+      "who": { "kind": "npc", "pokemon": "0706", "name": "Goodra", "speciesName": "Goodra" }
+    },
+    {
+      "id": "hoopa",
+      "who": { "kind": "npc", "pokemon": "0720", "name": "Hoopa", "speciesName": "Hoopa" }
+    },
+    {
+      "id": "great_tusk",
+      "who": { "kind": "npc", "pokemon": "0984", "name": "Great Tusk", "speciesName": "Great Tusk" }
+    },
+    {
+      "id": "flutter_mane",
+      "who": { "kind": "npc", "pokemon": "0987", "name": "Flutter Mane", "speciesName": "Flutter Mane" }
+    }
+  ],
+  "placements": [
+    { "id": "haxorus", "x": 5, "y": 5, "facing": "Right" },
+    { "id": "dragonite", "x": 4, "y": 4, "facing": "Right" },
+    { "id": "goodra", "x": 4, "y": 6, "facing": "Right" },
+    { "id": "hoopa", "x": 11, "y": 5, "facing": "Left" },
+    { "id": "great_tusk", "x": 10, "y": 4, "facing": "Left" },
+    { "id": "flutter_mane", "x": 10, "y": 6, "facing": "Left" }
+  ],
+  "beats": [
+    {
+      "id": "narration_peace",
+      "say": {
+        "speaker": "narrator",
+        "emotion": "Normal",
+        "side": "auto",
+        "text": "In an ancient age long forgotten, the Dragon Kingdom ruled the world in lasting peace."
+      }
+    },
+    {
+      "id": "narration_rift",
+      "say": {
+        "speaker": "narrator",
+        "emotion": "Normal",
+        "side": "auto",
+        "text": "Until Hoopa, hungering to overthrow the dragons, tore open a Rift in space and time and summoned monstrous Pokemon from beyond."
+      },
+      "actions": [
+        { "type": "flash", "color": "white", "duration": 0.35 },
+        { "type": "screenShake", "duration": 0.6, "intensity": 4 },
+        { "type": "pose", "who": "hoopa", "anim": "Special", "duration": 0.65 }
+      ]
+    },
+    {
+      "id": "hoopa_taunt",
+      "say": {
+        "speaker": "hoopa",
+        "emotion": "Joyous",
+        "side": "right",
+        "text": "Hoopa's rings open every age at once! Bow before the Rift, proud dragons, or be swept into nothing!"
+      },
+      "actions": [
+        { "type": "hop", "who": "hoopa", "count": 2 },
+        { "type": "pose", "who": "great_tusk", "anim": "Attack", "duration": 0.5, "delay": 0.2 }
+      ]
+    },
+    {
+      "id": "dragonite_report",
+      "say": {
+        "speaker": "dragonite",
+        "emotion": "Pain",
+        "side": "left",
+        "text": "Haxorus! Our outer flights have fallen. Every time we strike one beast down, two more pour through the sky!"
+      },
+      "actions": [
+        { "type": "shake", "who": "dragonite", "duration": 0.45 }
+      ]
+    },
+    {
+      "id": "goodra_plea",
+      "say": {
+        "speaker": "goodra",
+        "emotion": "Sad",
+        "side": "left",
+        "text": "Our kind is on the verge of extinction... If the Rift stays open any longer, the entire world will fall with us."
+      }
+    },
+    {
+      "id": "haxorus_resolve",
+      "say": {
+        "speaker": "haxorus",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "Then we pour every last spark of our lifeforce into sealing that tear! Dragonite, Goodra, stand with me!"
+      },
+      "actions": [
+        { "type": "walk", "who": "haxorus", "path": [[6, 5]], "speed": 3, "facing": "Right" },
+        { "type": "aura", "who": "haxorus", "duration": 1.1 },
+        { "type": "aura", "who": "dragonite", "duration": 1.1, "delay": 0.15 },
+        { "type": "aura", "who": "goodra", "duration": 1.1, "delay": 0.3 }
+      ]
+    },
+    {
+      "id": "hoopa_escape",
+      "say": {
+        "speaker": "hoopa",
+        "emotion": "Surprised",
+        "side": "right",
+        "text": "What?! That blinding Dragon Aura is crushing Hoopa's rings! Back through the portal, quick!"
+      },
+      "actions": [
+        { "type": "flash", "color": "white", "duration": 0.45 },
+        { "type": "screenShake", "duration": 0.75, "intensity": 5 },
+        { "type": "show", "who": "great_tusk", "visible": false, "fade": true },
+        { "type": "show", "who": "flutter_mane", "visible": false, "fade": true },
+        { "type": "show", "who": "hoopa", "visible": false, "fade": true, "delay": 0.25 }
+      ]
+    },
+    {
+      "id": "goodra_aftermath",
+      "say": {
+        "speaker": "goodra",
+        "emotion": "Pain",
+        "side": "left",
+        "text": "The Rift is closing... Hoopa vanished into the light. We defeated him, didn't we?"
+      },
+      "music": { "kind": "song", "song": "a_wish_for_peace" },
+      "actions": [
+        { "type": "weather", "weather": "none" }
+      ]
+    },
+    {
+      "id": "haxorus_eggs",
+      "say": {
+        "speaker": "haxorus",
+        "emotion": "Sad",
+        "side": "left",
+        "text": "Our strength is spent, old friends. Before we fade, we seal away three surviving Dragon Eggs: Dreepy, Deino, and one final heir."
+      }
+    },
+    {
+      "id": "narration_end",
+      "say": {
+        "speaker": "narrator",
+        "emotion": "Normal",
+        "side": "auto",
+        "text": "Unbeknownst to the fallen dragons, Hoopa had slipped alive through a closing portal... while three hidden eggs slumbered across the ages."
+      }
+    }
+  ]
+}

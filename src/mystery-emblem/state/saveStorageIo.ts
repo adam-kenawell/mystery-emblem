@@ -24,15 +24,7 @@ import {
 
 export function readValidLocalSaveFromStorage(storage: StorageLike): SaveData | null {
   try {
-    let raw = storage.getItem(SAVE_STORAGE_KEY);
-    if (!raw) {
-      const legacy = storage.getItem(LEGACY_SAVE_STORAGE_KEY);
-      if (legacy) {
-        storage.setItem(SAVE_STORAGE_KEY, legacy);
-        storage.removeItem(LEGACY_SAVE_STORAGE_KEY);
-        raw = legacy;
-      }
-    }
+    const raw = storage.getItem(SAVE_STORAGE_KEY);
     if (!raw) return null;
     const check = validateSaveData(
       normalizeLegacySingleItemSlots(JSON.parse(raw)),

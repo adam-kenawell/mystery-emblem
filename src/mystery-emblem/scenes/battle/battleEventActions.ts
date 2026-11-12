@@ -3,17 +3,26 @@
  *
  * Executes `DungeonEventAction[]` (`show_banner`, `play_dialogue`, `spawn_units`,
  * `convert_unit`, `despawn_units`, `recruit_choice`, `set_tiles`, `set_objective`,
- * `grant_items`, `unlock_kecleon_shop`, `recruit_post_battle`).
+ * `grant_items`, `unlock_kecleon_shop`, `recruit_post_battle`, `move_unit`,
+ * `rest_player_units`, `give_unit_item`, `scripted_attack`, `win_battle`).
  */
 
-import { loadSpeciesSpriteBundle } from '../../assets/pmdAssetLoader';
+import { directionFromDelta, loadSpeciesSpriteBundle } from '../../assets/pmdAssetLoader';
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
 import { DEFAULT_TERRAIN_PALETTE } from '../../data/chapterMapRegistry';
+import { getItemById, getMoveById } from '../../data/index';
 import { resolveDefaultObjectiveLabel } from '../../engine/battleEvents';
 import {
   buildSpawnedBattleUnit,
   findNearestFreeSpawnTile,
 } from '../../engine/battleSpawnHelpers';
+import {
+  STATUS_ACTION_CALLOUTS,
+  STATUS_BADGE_COLORS,
+  applyInflictedStatusToUnit,
+  computeCombatForecast,
+  type BattleUnitState,
+} from '../../engine/combatEngine';
 import { interpolateCampaignText } from '../../engine/speakerResolver';
 import { coordKey, findShortestPathAStar, isInMapBounds } from '../../engine/terrainAndPathfinding';
 import type { DungeonEventAction } from '../../types/schemas';
@@ -26,16 +35,30 @@ import {
 import { recomputeDangerArea } from './battleDangerAndViewportState';
 import { spawnFloatingText } from './battleFloatingCallouts';
 import { updateBattleInfoStrip } from './battleHudCards';
+import { triggerVictoryModal } from './battleOutcomeModals';
 import { preloadMapTilesets } from './battlePrepAndAssets';
 import { presentTalkChoiceModalAsync } from './battleTalkChoiceModal';
-import type { BattleControllerContext } from './battleTypesAndState';
-import { getTutorialHealerUnit } from './battleTutorialSpotlights';
+import type { BattleControllerContext, BattleRuntimeState } from './battleTypesAndState';
+import { getTutorialHealerUnit, getTutorialPartnerUnit } from './battleTutorialSpotlights';
 import { playWalkPathAsync } from './battleWalkAndHealAnimator';
 import {
   getLivingUnits,
+  getLordUnit,
   getUnitVisualKey,
   recomputeSelectedUnitRange,
 } from './battleUnitQueries';
+
+function resolveEventTargetUnit(
+  state: BattleRuntimeState,
+  targetRef: string
+): BattleUnitState | undefined {
+  if (targetRef === 'lord' || targetRef === '{lord}') return getLordUnit(state);
+  if (targetRef === 'partner' || targetRef === '{partner}') return getTutorialPartnerUnit(state);
+  if (targetRef === 'healer' || targetRef === '{healer}') return getTutorialHealerUnit(state);
+  return getLivingUnits(state).find(
+    (u) => u.id === targetRef || u.speciesId === targetRef
+  );
+}
 
 export function resolveDialogueScriptFromAction(
   ctx: BattleControllerContext,
@@ -139,9 +162,7 @@ export async function executeEventActionsAsync(
       recomputeDangerArea(ctx);
       updateBattleInfoStrip(ctx);
     } else if (action.type === 'convert_unit') {
-      const target = state.units.find(
-        (u) => u.id === action.targetUnitId && !u.defeated && u.currentHp > 0
-      );
+      const target = resolveEventTargetUnit(state, action.targetUnitId);
       if (target) {
         target.faction = action.toFaction;
         target.sparring = false;
@@ -155,8 +176,6 @@ export async function executeEventActionsAsync(
         }
         if (action.toFaction === 'player') {
           target.isBoss = false;
-          // Clear BOTH immobility flags: `getEffectiveMovementPoints` returns 0 Mov while
-          // `aiMode === 'stationary'`, which previously froze converted Empoleon / Slakoth.
           target.stationary = false;
           target.aiMode = 'wait_until_in_range';
           target.waited = !(action.readyToAct ?? true);
@@ -256,11 +275,8 @@ export async function executeEventActionsAsync(
       });
       if (action.bannerText) showPhaseBanner(state, dom, action.bannerText);
     } else if (action.type === 'move_unit') {
-      const mover = state.units.find(
-        (u) => u.id === action.targetUnitId && !u.defeated && u.currentHp > 0
-      );
+      const mover = resolveEventTargetUnit(state, action.targetUnitId);
       if (mover) {
-        // Scripted footwork ignores Mov / stationary anchoring.
         const path = findShortestPathAStar(
           state.map,
           { ...mover, stationary: false, aiMode: 'aggressive', mov: 99 },
@@ -280,14 +296,137 @@ export async function executeEventActionsAsync(
       }
     } else if (action.type === 'rest_player_units') {
       const keepHealerId = action.exceptHealer ? getTutorialHealerUnit(state)?.id : undefined;
+      const keepPartnerId = action.exceptPartner ? getTutorialPartnerUnit(state)?.id : undefined;
       for (const u of getLivingUnits(state)) {
-        if (u.faction !== 'player' || (action.exceptLord && u.isLord) || u.id === keepHealerId) {
+        if (
+          u.faction !== 'player' ||
+          (action.exceptLord && u.isLord) ||
+          u.id === keepHealerId ||
+          u.id === keepPartnerId
+        ) {
           continue;
         }
         u.waited = true;
         u.action = 'Idle';
       }
       ctx.renderNow();
+    } else if (action.type === 'give_unit_item') {
+      const recipient = resolveEventTargetUnit(state, action.targetUnitId);
+      const itemDef = getItemById(action.itemId);
+      if (recipient && itemDef) {
+        if (itemDef.category === 'held_berry' || itemDef.category === 'held_gear') {
+          if (recipient.heldItemId) {
+            state.eventBonusItems.push({ itemId: recipient.heldItemId, quantity: 1 });
+          }
+          recipient.heldItemId = itemDef.id;
+        } else {
+          if (recipient.consumableItemId) {
+            state.eventBonusItems.push({ itemId: recipient.consumableItemId, quantity: 1 });
+          }
+          recipient.consumableItemId = itemDef.id;
+        }
+        ensureTilePairVisible(state, recipient.x, recipient.y, recipient.x, recipient.y);
+        audioManager.playSfx('heal');
+        spawnFloatingText(
+          state,
+          dom,
+          recipient.x,
+          Math.max(0, recipient.y - 1),
+          action.calloutText ?? `Got ${itemDef.name}!`,
+          '#ffd860',
+          1050
+        );
+        updateBattleInfoStrip(ctx);
+        ctx.renderNow();
+        await waitBattleMs(state, 220);
+      }
+    } else if (action.type === 'scripted_attack') {
+      const actor = resolveEventTargetUnit(state, action.attackerUnitId);
+      const target = resolveEventTargetUnit(state, action.targetUnitId);
+      const mv = getMoveById(action.moveId);
+      if (actor && target && mv) {
+        if (action.destX !== undefined && action.destY !== undefined) {
+          const path = findShortestPathAStar(
+            state.map,
+            { ...actor, stationary: false, aiMode: 'aggressive', mov: 99 },
+            action.destX,
+            action.destY,
+            getLivingUnits(state)
+          );
+          if (path && path.length > 1) {
+            ensureTilePairVisible(state, actor.x, actor.y, action.destX, action.destY);
+            await playWalkPathAsync(state, actor, path, true);
+            if (!state.openState || runGen !== state.battleRunGen) return { aborted: true };
+          }
+        }
+        ensureTilePairVisible(state, actor.x, actor.y, target.x, target.y);
+        actor.direction = directionFromDelta(target.x - actor.x, target.y - actor.y);
+        target.direction = directionFromDelta(actor.x - target.x, actor.y - target.y);
+
+        const forecast = computeCombatForecast(state.map, actor, target, mv.id);
+        const rawDamage = forecast ? Math.max(1, forecast.attackerSide.damage) : Math.max(1, mv.mt);
+        const dealt = Math.min(Math.max(0, target.currentHp - 1), rawDamage);
+        const isPhysical = mv.category === 'Physical';
+        const dxNorm = Math.sign(target.x - actor.x);
+        const dyNorm = Math.sign(target.y - actor.y);
+
+        actor.action = isPhysical ? 'Attack' : 'Special';
+        actor.frameIndex = 0;
+        if (isPhysical) {
+          actor.renderWorldX = actor.x * PMD_TILE_NATIVE_PX + dxNorm * 6;
+          actor.renderWorldY = actor.y * PMD_TILE_NATIVE_PX + dyNorm * 6;
+        }
+        state.activeStrikeVfx = {
+          kind: isPhysical ? 'melee' : 'ranged',
+          fromWorldX: actor.x * PMD_TILE_NATIVE_PX + 12,
+          fromWorldY: actor.y * PMD_TILE_NATIVE_PX + 12,
+          toWorldX: target.x * PMD_TILE_NATIVE_PX + 12,
+          toWorldY: target.y * PMD_TILE_NATIVE_PX + 12,
+          color: '#f8d048',
+          startedAtMs: performance.now(),
+          durationMs: state.fastMode ? 45 : 220,
+        };
+        await waitBattleMs(state, 200);
+        if (!state.openState || runGen !== state.battleRunGen) return { aborted: true };
+
+        actor.renderWorldX = actor.x * PMD_TILE_NATIVE_PX;
+        actor.renderWorldY = actor.y * PMD_TILE_NATIVE_PX;
+        target.currentHp = Math.max(1, target.currentHp - dealt);
+        target.action = 'Hurt';
+        target.hitFlashUntilMs = performance.now() + (state.fastMode ? 60 : 230);
+        audioManager.playSfx('attack_hit');
+        const effTag = forecast && forecast.attackerSide.typeMultiplier > 1 ? 'SUPER EFFECTIVE! ' : '';
+        spawnFloatingText(state, dom, target.x, target.y, `${effTag}-${dealt}`, '#ff7888', 950);
+        updateBattleInfoStrip(ctx);
+        ctx.renderNow();
+        await waitBattleMs(state, 280);
+        if (!state.openState || runGen !== state.battleRunGen) return { aborted: true };
+
+        actor.action = 'Idle';
+        target.action = 'Idle';
+        state.activeStrikeVfx = null;
+
+        if (mv.secondaryEffect?.status) {
+          const st = mv.secondaryEffect.status;
+          applyInflictedStatusToUnit(target, st);
+          spawnFloatingText(
+            state,
+            dom,
+            target.x,
+            Math.max(0, target.y - 1),
+            STATUS_ACTION_CALLOUTS[st],
+            STATUS_BADGE_COLORS[st],
+            950
+          );
+        }
+        recomputeDangerArea(ctx);
+        updateBattleInfoStrip(ctx);
+        ctx.renderNow();
+        await waitBattleMs(state, 220);
+      }
+    } else if (action.type === 'win_battle') {
+      triggerVictoryModal(ctx);
+      return { aborted: true };
     }
   }
   return { aborted: false };

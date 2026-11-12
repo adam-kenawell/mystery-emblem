@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Campaign Cutscene, Recruitment & Wimpod Tutorial Flag Mutators
+ * Mystery Emblem - Campaign Cutscene, Recruitment & Quaquaval Field Notes Flag Mutators
  */
 
 import type {

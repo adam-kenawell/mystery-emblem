@@ -1,12 +1,12 @@
 /**
- * Wimpod Interactive Tutorial Canvas Tile Spotlight Queries for `BattleScene`
+ * Quaquaval Interactive Tutorial Canvas Tile Spotlight Queries for `BattleScene`
  */
 
 import {
   PROLOGUE_LEVEL_ID,
-  PROLOGUE_LORD_TUTORIAL_TILE,
+  PROLOGUE_PARTNER_TUTORIAL_TILE,
 } from '../../data/chapters/prologue/tutorialStaging';
-import { getItemById } from '../../data/index';
+import { getItemById, getSpeciesById } from '../../data/index';
 import type {
   TutorialActionTriggerId,
   TutorialBattleTileFilter,
@@ -36,28 +36,41 @@ export function getTutorialHealerUnit(state: BattleRuntimeState): BattleUnitStat
   );
 }
 
+/** The partner (Quaxly line) for scripted Prologue footwork & Paralyze Heal drills. */
+export function getTutorialPartnerUnit(state: BattleRuntimeState): BattleUnitState | undefined {
+  const players = getLivingPlayers(state);
+  const byLine = players.find((u) => getSpeciesById(u.speciesId)?.lineId === 'quaxly_line');
+  if (byLine) return byLine;
+  const healerId = getTutorialHealerUnit(state)?.id;
+  return players.find((u) => !u.isLord && u.id !== healerId) ?? players[1];
+}
+
 /**
- * Prologue lord tutorial moves are forced onto one tile:
- * - Turn 1: the staged tile just inside Sir Empoleon's reach (he then advances and strikes).
- * - Turn 2: the cheapest free tile exactly 2 away from the sparring partner (Special R2 strike,
- *   which his Physical-only [E] cannot counter).
- * Returns null everywhere else (or if no such tile is reachable).
+ * Prologue tutorial moves are forced onto exact tiles when appropriate:
+ * - Turn 1 ({partner}): `PROLOGUE_PARTNER_TUTORIAL_TILE` inside Quaquaval's reach.
+ * - Turn 2 ({lord}): cheapest free tile exactly 2 spaces from sparring Quaquaval (Range-2 Dragon Breath).
+ * - Turn 3 ({partner} holding Paralyze Heal): stay on current tile `{ x: selected.x, y: selected.y }` to open Item menu immediately.
  */
 export function getForcedTutorialMoveTile(
   state: BattleRuntimeState
 ): { x: number; y: number } | null {
   if (state.activeLevelId !== PROLOGUE_LEVEL_ID) return null;
   const selected = getSelectedUnit(state);
-  if (!selected?.isLord || !state.currentRange) return null;
+  if (!selected || !state.currentRange) return null;
   const reachable = state.currentRange.reachableTiles;
 
   if (state.turnNumber === 1) {
-    const tile = PROLOGUE_LORD_TUTORIAL_TILE;
-    return reachable.has(coordKey(tile.x, tile.y)) ? { ...tile } : null;
+    const partner = getTutorialPartnerUnit(state);
+    if (partner && selected.id === partner.id) {
+      const tile = PROLOGUE_PARTNER_TUTORIAL_TILE;
+      return reachable.has(coordKey(tile.x, tile.y)) ? { ...tile } : null;
+    }
+    return null;
   }
-  if (state.turnNumber === 2) {
-    const partner = getLivingEnemies(state).find((e) => e.sparring);
-    if (!partner) return null;
+
+  if (state.turnNumber === 2 && selected.isLord) {
+    const mentor = getLivingEnemies(state).find((e) => e.sparring);
+    if (!mentor) return null;
     const occupied = new Set(
       getLivingUnits(state)
         .filter((u) => u.id !== selected.id)
@@ -67,11 +80,16 @@ export function getForcedTutorialMoveTile(
     for (const [key, info] of reachable) {
       if (occupied.has(key)) continue;
       const pt = parseCoordKey(key);
-      if (manhattanDistance(pt.x, pt.y, partner.x, partner.y) !== 2) continue;
+      if (manhattanDistance(pt.x, pt.y, mentor.x, mentor.y) !== 2) continue;
       if (!best || info.cost < best.cost) best = { ...pt, cost: info.cost };
     }
     return best ? { x: best.x, y: best.y } : null;
   }
+
+  if (state.turnNumber === 3 && selected.consumableItemId === 'paralyze_heal') {
+    return { x: selected.x, y: selected.y };
+  }
+
   return null;
 }
 
@@ -138,6 +156,12 @@ export function resolveTutorialSpotlightTiles(
     const lord = getLordUnit(state);
     if (!lord || lord.defeated || lord.currentHp <= 0) return [];
     return [{ x: lord.x, y: lord.y }];
+  }
+
+  if (filter === 'partner_unit') {
+    const partner = getTutorialPartnerUnit(state);
+    if (!partner || partner.defeated || partner.currentHp <= 0) return [];
+    return [{ x: partner.x, y: partner.y }];
   }
 
   if (filter === 'healer_unit') {

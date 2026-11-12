@@ -2,21 +2,40 @@
   "id": "outro",
   "chapter": "prologue",
   "role": "outro",
-  "title": "Western Beach",
-  "music": "calm_cutscene",
-  "cast": [{ "id": "partner", "who": { "kind": "partner" } }, { "id": "healer", "who": { "kind": "healer" } }],
+  "title": "Training Complete",
+  "music": "proud_accomplishment",
+  "cast": [
+    { "id": "mentor", "who": { "kind": "mentor" } },
+    { "id": "partner", "who": { "kind": "partner" } },
+    { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } },
+    { "id": "lord", "who": { "kind": "lord" } }
+  ],
   "beats": [
     {
       "id": "line_1",
-      "say": { "speaker": "partner", "emotion": "Joyous", "side": "right", "text": "Ha! And stay off our beach!" }
+      "say": {
+        "speaker": "pawmi",
+        "emotion": "Happy",
+        "side": "right",
+        "text": "Phew, you three really held your formation! Next rematch is ours, {lord}!"
+      }
     },
     {
       "id": "line_2",
       "say": {
-        "speaker": "healer",
-        "emotion": "Worried",
+        "speaker": "mentor",
+        "emotion": "Happy",
         "side": "right",
-        "text": "Ironscale soldiers, this close to the village... Sir Empoleon, what’s going on?"
+        "text": "Well fought, everyone. Remember those lessons on spacing, types, and remedies, and head inside for some rest."
+      }
+    },
+    {
+      "id": "line_3",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Normal",
+        "side": "left",
+        "text": "Good bout, guys! Come on, {lord}, my legs are ready to collapse into bed."
       }
     }
   ]

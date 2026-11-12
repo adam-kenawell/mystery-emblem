@@ -2,7 +2,7 @@
  * Isolated In-Memory Fallback `SaveStateManager` for Map Editor `Test Battle`
  */
 
-import { STARTING_CAMPAIGN_LEVEL } from '../data/campaignConfig';
+import { MENTOR_JAGEN_SPECIES_ID, STARTING_CAMPAIGN_LEVEL } from '../data/campaignConfig';
 import { InMemoryCloudSyncAdapter } from '../state/firebaseSync';
 import { SaveStateManager, type StorageLike } from '../state/SaveStateManager';
 
@@ -23,19 +23,31 @@ export function createFallbackBattlePrepManager(minSquadSize = 5): SaveStateMana
   };
   const mgr = new SaveStateManager(memStorage, new InMemoryCloudSyncAdapter(new Map()));
   mgr.createNewCampaignSave({
-    lordSpeciesId: 'dratini',
-    partnerSpeciesId: 'piplup',
+    lordSpeciesId: 'axew',
+    partnerSpeciesId: 'quaxly',
     healerSpeciesId: 'flabebe',
     startingLevel: STARTING_CAMPAIGN_LEVEL,
     scaleStatsToLevel: false,
     campaignMode: 'demo',
   });
 
-  const extraPool = ['sir_empoleon', 'pidgey', 'sewaddle', 'ralts', 'elekid', 'duskull', 'starly'];
+  const extraPool = [
+    MENTOR_JAGEN_SPECIES_ID,
+    'smoliv',
+    'machop',
+    'slakoth',
+    'starly',
+    'caterpie',
+    'pawmi',
+  ];
   let idx = 0;
   while ((mgr.getSave()?.roster.length ?? 0) < Math.min(8, minSquadSize) && idx < extraPool.length) {
     const spId = extraPool[idx]!;
-    mgr.recruitPokemon({ speciesId: spId, level: spId === 'sir_empoleon' ? 12 : 2, scaleStatsToLevel: spId !== 'sir_empoleon' });
+    mgr.recruitPokemon({
+      speciesId: spId,
+      level: spId === MENTOR_JAGEN_SPECIES_ID ? 12 : 3,
+      scaleStatsToLevel: spId !== MENTOR_JAGEN_SPECIES_ID,
+    });
     idx += 1;
   }
 

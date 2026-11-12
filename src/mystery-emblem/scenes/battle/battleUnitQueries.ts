@@ -130,8 +130,10 @@ export function canUseUnitEquippedConsumable(unit: BattleUnitState): boolean {
   if (item.category === 'consumable') {
     const canHeal =
       Boolean(item.effect.healFlat || item.effect.healFull) && unit.currentHp < unit.maxHp;
-    const canCure = Boolean(item.effect.cureStatus) && unit.status !== null;
-    return canHeal || canCure;
+    const canCureAny = Boolean(item.effect.cureStatus) && unit.status !== null;
+    const canCureSpecific =
+      Boolean(item.effect.cureSpecificStatus) && unit.status === item.effect.cureSpecificStatus;
+    return canHeal || canCureAny || canCureSpecific;
   }
   return false;
 }

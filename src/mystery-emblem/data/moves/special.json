@@ -46,5 +46,6 @@
   {"id":"fairy_wind","name":"Disarming Voice","type":"Fairy","category":"Special","range":[2,2],"targetType":"enemy","mt":5,"hit":100,"crit":0,"pp":25,"description":"Lets out an enchanting cry at Range 2 that never misses."},
   {"id":"dazzling_gleam","name":"Dazzling Gleam","type":"Fairy","category":"Special","range":[2,2],"targetType":"enemy","mt":9,"hit":100,"crit":0,"pp":15,"description":"Flashes a brilliant fey radiance at Range 2."},
   {"id":"moonblast","name":"Moonblast","type":"Fairy","category":"Special","range":[2,2],"targetType":"enemy","mt":11,"hit":95,"crit":5,"pp":12,"description":"Calls down lunar power at Range 2. 25% chance to lower target Sp. Atk by 2.","secondaryEffect":{"chance":25,"statTarget":"defender","statChanges":{"spa":-2},"durationTurns":2}},
-  {"id":"revelation_dance","name":"Revelation Dance","type":"Flying","category":"Special","range":[2,2],"targetType":"enemy","mt":8,"hit":100,"crit":5,"pp":15,"description":"Spirited elemental dance wave projected across 2 tiles."}
+  {"id":"revelation_dance","name":"Revelation Dance","type":"Flying","category":"Special","range":[2,2],"targetType":"enemy","mt":8,"hit":100,"crit":5,"pp":15,"description":"Spirited elemental dance wave projected across 2 tiles."},
+  {"id":"hyperspace_hole","name":"Hyperspace Hole","type":"Psychic","category":"Special","range":[2,2],"targetType":"enemy","mt":11,"hit":100,"crit":5,"pp":12,"description":"Warps space at Range 2 to strike directly beside the target."}
 ]

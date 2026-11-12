@@ -4,8 +4,6 @@
 
 import { getFlabebeFlowerColorForLord } from '../assets/pmdAssetLoader';
 import {
-  ADVISOR_EVOLVED_SPECIES_ID,
-  BRANCHED_PROMOTION_MIN_LEVEL,
   MAX_UNIT_LEVEL,
   MIN_UNIT_LEVEL,
 } from '../data/campaignConfig';
@@ -196,45 +194,7 @@ export function mutateRecruitPokemon(
     isLord: false,
   });
   save.roster.push(created);
-  if (sp?.lineId === 'wimpod_line' && !save.campaign.advisorInstanceId) {
-    save.campaign.advisorInstanceId = created.instanceId;
-  }
   return created;
-}
-
-export function mutatePromoteAdvisorToPlayableRoster(
-  save: SaveData,
-  opts?: {
-    speciesId?: 'wimpod' | 'golisopod';
-    level?: number;
-    nickname?: string;
-    scaleStatsToLevel?: boolean;
-  }
-): OwnedPokemonInstance {
-  const targetSpeciesId = opts?.speciesId ?? ADVISOR_EVOLVED_SPECIES_ID;
-  const existing = save.roster.find(
-    (u) =>
-      u.instanceId === save.campaign.advisorInstanceId ||
-      SPECIES_MAP.get(u.speciesId)?.lineId === 'wimpod_line'
-  );
-  if (existing) {
-    save.campaign.advisorInstanceId = existing.instanceId;
-    if (opts?.nickname) {
-      const sp = SPECIES_MAP.get(existing.speciesId);
-      existing.nickname = sanitizeNickname(opts.nickname, sp?.name ?? existing.speciesId);
-    }
-    if (existing.speciesId !== targetSpeciesId) {
-      return mutateEvolveUnitToSpecies(save, existing.instanceId, targetSpeciesId).unit;
-    }
-    return existing;
-  }
-
-  return mutateRecruitPokemon(save, {
-    speciesId: targetSpeciesId,
-    level: opts?.level ?? BRANCHED_PROMOTION_MIN_LEVEL,
-    nickname: opts?.nickname,
-    scaleStatsToLevel: opts?.scaleStatsToLevel ?? true,
-  });
 }
 
 export function mutateUnlockUnitMove(

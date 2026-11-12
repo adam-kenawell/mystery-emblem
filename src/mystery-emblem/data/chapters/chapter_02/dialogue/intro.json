@@ -2,55 +2,48 @@
   "id": "intro",
   "chapter": "chapter_02",
   "role": "intro",
-  "title": "Cleft Mountain",
-  "music": "mt_bristle",
+  "title": "Battle Prep & Smoliv's Plea",
+  "music": "growing_anxiety",
   "cast": [
-    {
-      "id": "hexer_gothita",
-      "who": { "kind": "npc", "pokemon": "0574", "name": "Hexer Gothita", "speciesName": "Gothita" }
-    },
-    {
-      "id": "quiz_psychic",
-      "who": { "kind": "quiz_slot", "slot": "slot2Psychic", "fallbackSpeciesId": "ralts" }
-    },
-    { "id": "advisor", "who": { "kind": "advisor" } },
-    { "id": "mentor", "who": { "kind": "mentor" } }
+    { "id": "mentor", "who": { "kind": "mentor" } },
+    { "id": "smoliv", "who": { "kind": "recruit", "speciesId": "smoliv" } },
+    { "id": "lord", "who": { "kind": "lord" } }
   ],
   "beats": [
     {
       "id": "line_1",
       "say": {
-        "speaker": "hexer_gothita",
-        "emotion": "Angry",
+        "speaker": "smoliv",
+        "emotion": "Crying",
         "side": "right",
-        "text": "Turn back, intruders. And that stray psychic is ours."
+        "text": "Stay back! Please, I only have berry oil in my basket!"
       }
     },
     {
       "id": "line_2",
       "say": {
-        "speaker": "quiz_psychic",
-        "emotion": "Worried",
-        "side": "right",
-        "text": "S-stay back! The tremors scrambled every aura up here. Come closer and I’ll attack!"
+        "speaker": "mentor",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "Hold steady, little Smoliv! Before we charge in, {lord}, take a moment in Battle Prep."
       }
     },
     {
       "id": "line_3",
       "say": {
-        "speaker": "advisor",
-        "emotion": "Worried",
+        "speaker": "mentor",
+        "emotion": "Normal",
         "side": "left",
-        "text": "Wait, don’t hurt that one. They’re just scared. Maybe {lord} could talk to them?"
+        "text": "Now that I am fighting alongside you, use Battle Prep before each clash to choose who deploys, View Map to swap starting spots, and organize everyone's moves and items!"
       }
     },
     {
       "id": "line_4",
       "say": {
         "speaker": "mentor",
-        "emotion": "Normal",
+        "emotion": "Worried",
         "side": "left",
-        "text": "Go gently, {lord}. And watch those stairs. More of Gothita’s scouts may come up."
+        "text": "Mind my veteran restraint too: if I take every knockout myself, you youngsters will miss out on vital battle experience. Let me soften tough foes while you finish them!"
       }
     }
   ]

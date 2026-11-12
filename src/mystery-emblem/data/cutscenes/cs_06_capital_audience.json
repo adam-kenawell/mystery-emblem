@@ -1,0 +1,141 @@
+{
+  "id": "cs_06_capital_audience",
+  "title": "Audience with King Serperior",
+  "music": "thoughts_for_friends",
+  "location": "shrine_courtyard",
+  "banner": "Royal Throne Room - Emerald Capital",
+  "lighting": "shrine_courtyard",
+  "camera": { "x": 7.5, "y": 5.5 },
+  "cast": [
+    {
+      "id": "serperior",
+      "who": { "kind": "npc", "pokemon": "0497", "name": "King Serperior", "speciesName": "Serperior" }
+    },
+    { "id": "mentor", "who": { "kind": "mentor" } },
+    { "id": "lord", "who": { "kind": "lord" } },
+    { "id": "partner", "who": { "kind": "partner" } },
+    { "id": "healer", "who": { "kind": "healer" } },
+    { "id": "honedge", "who": { "kind": "recruit", "speciesId": "honedge" } },
+    { "id": "sandile", "who": { "kind": "recruit", "speciesId": "sandile" } }
+  ],
+  "placements": [
+    { "id": "serperior", "x": 7, "y": 3, "facing": "Down" },
+    { "id": "honedge", "x": 6, "y": 4, "facing": "Down" },
+    { "id": "sandile", "x": 9, "y": 4, "facing": "Down" },
+    { "id": "mentor", "x": 7, "y": 6, "facing": "Up" },
+    { "id": "lord", "x": 8, "y": 6, "facing": "Up" },
+    { "id": "partner", "x": 6, "y": 7, "facing": "Up" },
+    { "id": "healer", "x": 9, "y": 7, "facing": "Up" }
+  ],
+  "beats": [
+    {
+      "id": "serperior_greeting",
+      "say": {
+        "speaker": "serperior",
+        "emotion": "Determined",
+        "side": "right",
+        "text": "Welcome home to the Emerald Capital, old friend. And well fought at our gates, young {lord}."
+      },
+      "actions": [
+        { "type": "walk", "who": "serperior", "path": [[7, 4]], "speed": 2.0, "facing": "Down" }
+      ]
+    },
+    {
+      "id": "quaquaval_kneels",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "Your Majesty. Those feral beasts outside the capital walls were unlike any Pokemon in our natural world."
+      }
+    },
+    {
+      "id": "serperior_rift_news",
+      "say": {
+        "speaker": "serperior",
+        "emotion": "Worried",
+        "side": "right",
+        "text": "They pour from tears in the sky that scholars call the Rift. Every week more of those savage creatures strike our border towns."
+      }
+    },
+    {
+      "id": "serperior_politics_1",
+      "say": {
+        "speaker": "serperior",
+        "emotion": "Normal",
+        "side": "right",
+        "text": "The realms are divided in their response. Neither the Fire Kingdom nor the Ice Kingdom has been touched by Rift attacks yet, so they remain aloof."
+      }
+    },
+    {
+      "id": "serperior_politics_2",
+      "say": {
+        "speaker": "serperior",
+        "emotion": "Normal",
+        "side": "right",
+        "text": "Meanwhile, the proud Forest Tribe believes their own warriors can fight the Rift beasts off without outside aid."
+      }
+    },
+    {
+      "id": "serperior_politics_3",
+      "say": {
+        "speaker": "serperior",
+        "emotion": "Determined",
+        "side": "right",
+        "text": "However, both the Sand Kingdom and the Steel Kingdom stand in agreement with our Verdant Kingdom: we must uncover the truth behind the Rift before it consumes us all."
+      }
+    },
+    {
+      "id": "serperior_mission",
+      "say": {
+        "speaker": "serperior",
+        "emotion": "Determined",
+        "side": "right",
+        "text": "Our shared archives speak of an ancient Pokemon slumbering deep within the Ice Kingdom who remembers the Dawn Era. Quaquaval, {lord}, I entrust your expedition with waking him and learning the truth."
+      },
+      "actions": [
+        { "type": "emote", "who": "lord", "emote": "exclamation", "duration": 0.9 },
+        { "type": "emote", "who": "partner", "emote": "sparkle", "duration": 0.9 }
+      ]
+    },
+    {
+      "id": "honedge_pledge",
+      "music": { "kind": "song", "song": "one_for_all" },
+      "say": {
+        "speaker": "honedge",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "By envoy pact, my blade is yours! I am Honedge, warrior of the Steel Kingdom, sworn to guard your northern march!"
+      },
+      "actions": [
+        { "type": "walk", "who": "honedge", "path": [[6, 5]], "speed": 2.6, "facing": "DownRight" },
+        { "type": "pose", "who": "honedge", "anim": "Attack", "duration": 0.45 }
+      ]
+    },
+    {
+      "id": "sandile_pledge",
+      "say": {
+        "speaker": "sandile",
+        "emotion": "Happy",
+        "side": "right",
+        "text": "And I am Sandile from the Sand Kingdom! Stick with me and not a single ambush will sneak past our tracks!"
+      },
+      "actions": [
+        { "type": "walk", "who": "sandile", "path": [[9, 5]], "speed": 2.8, "facing": "DownLeft" },
+        { "type": "hop", "who": "sandile", "count": 2 }
+      ]
+    },
+    {
+      "id": "lord_finale_vow",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "Honedge, Sandile, welcome to the squad! Next stop: the frozen peaks of the Ice Kingdom to uncover the truth of the past!"
+      },
+      "actions": [
+        { "type": "aura", "who": "lord", "duration": 1.1 }
+      ]
+    }
+  ]
+}

@@ -7,6 +7,7 @@ import supportMovesRaw from './moves/support.json';
 import skillsRaw from './personal_skills.json';
 import enemiesCommonwealthSandRaw from './species/enemies_commonwealth_sand.json';
 import enemiesEmpireAbyssRaw from './species/enemies_empire_abyss.json';
+import enemiesRiftParadoxRaw from './species/enemies_rift_paradox.json';
 import lineLearnsetsRaw from './species/line_learnsets.json';
 import playableCoreRaw from './species/playable_core.json';
 import playableParaloguesRaw from './species/playable_paralogues.json';
@@ -57,6 +58,7 @@ const RAW_SPECIES_SHARDS: readonly RawSpeciesShardEntry[] = [
   ...(playableParaloguesRaw as unknown as RawSpeciesShardEntry[]),
   ...(enemiesCommonwealthSandRaw as unknown as RawSpeciesShardEntry[]),
   ...(enemiesEmpireAbyssRaw as unknown as RawSpeciesShardEntry[]),
+  ...(enemiesRiftParadoxRaw as unknown as RawSpeciesShardEntry[]),
 ];
 
 export const POKEMON_SPECIES_LIST: PokemonSpeciesDefinition[] =

@@ -2,55 +2,52 @@
   "id": "intro",
   "chapter": "chapter_04",
   "role": "intro",
-  "title": "Berry Orchards",
-  "music": "apple_woods",
+  "title": "Ambush from the Rift",
+  "music": "rising_fear",
   "cast": [
+    { "id": "partner", "who": { "kind": "partner" } },
+    { "id": "mentor", "who": { "kind": "mentor" } },
+    { "id": "lord", "who": { "kind": "lord" } },
     {
-      "id": "quiz_electric",
-      "who": { "kind": "quiz_slot", "slot": "slot3Electric", "fallbackSpeciesId": "elekid" }
-    },
-    { "id": "healer", "who": { "kind": "healer" } },
-    {
-      "id": "raider_morgrem",
-      "who": { "kind": "npc", "pokemon": "0860", "name": "Raider Morgrem", "speciesName": "Morgrem" }
-    },
-    { "id": "mentor", "who": { "kind": "mentor" } }
+      "id": "tusk",
+      "who": { "kind": "npc", "pokemon": "0984", "name": "Rift Great Tusk", "speciesName": "Great Tusk" }
+    }
   ],
   "beats": [
     {
       "id": "line_1",
       "say": {
-        "speaker": "quiz_electric",
-        "emotion": "Joyous",
-        "side": "right",
-        "text": "{lord}! {partner}! {healer}! I ran all the way from the village. Don’t leave me out!"
+        "speaker": "partner",
+        "emotion": "Surprised",
+        "side": "left",
+        "text": "Look up! The sky right outside the Emerald Capital just split open like shattered glass!"
       }
     },
     {
       "id": "line_2",
       "say": {
-        "speaker": "healer",
-        "emotion": "Happy",
-        "side": "left",
-        "text": "The whole village crew, back together! Just in time, too. Morgrem’s gang is stripping the orchards."
+        "speaker": "tusk",
+        "emotion": "Shouting",
+        "side": "right",
+        "text": "GRAAAOOHHH!!"
       }
     },
     {
       "id": "line_3",
       "say": {
-        "speaker": "raider_morgrem",
-        "emotion": "Angry",
-        "side": "right",
-        "text": "Heh. These berries belong to Ironscale now. One Thunder Wave and you’ll be twitching in the grass."
+        "speaker": "mentor",
+        "emotion": "Surprised",
+        "side": "left",
+        "text": "By the crown... Nobody in the Verdant Kingdom has ever laid eyes on Pokemon like these! They are completely wild and feral!"
       }
     },
     {
       "id": "line_4",
       "say": {
-        "speaker": "mentor",
+        "speaker": "lord",
         "emotion": "Determined",
         "side": "left",
-        "text": "Mind Morgrem’s lightning, everyone. And welcome back. Your sparks are just what we need."
+        "text": "If they break past us, they will rampage straight through the capital gates! Stand firm and bring down that giant Great Tusk!"
       }
     }
   ]

@@ -103,7 +103,15 @@ function hydrateChapterConfig(raw: CompactChapterJson): CampaignChapterConfig {
     ...(raw.skipPrepPhase ? { skipPrepPhase: true } : {}),
     ...(raw.isDemoFinale ? { isDemoFinale: true } : {}),
     ...(raw.preStoryCutsceneId ? { preStoryCutsceneId: raw.preStoryCutsceneId } : {}),
+    ...(raw.preStoryCutsceneIds?.length ? { preStoryCutsceneIds: raw.preStoryCutsceneIds } : {}),
     ...(raw.postStoryCutsceneId ? { postStoryCutsceneId: raw.postStoryCutsceneId } : {}),
+    ...(raw.postStoryCutsceneIds?.length ? { postStoryCutsceneIds: raw.postStoryCutsceneIds } : {}),
+    ...(raw.chainsDirectlyIntoNodeId
+      ? { chainsDirectlyIntoNodeId: raw.chainsDirectlyIntoNodeId }
+      : {}),
+    ...(raw.postCutsceneRecruits?.length
+      ? { postCutsceneRecruits: raw.postCutsceneRecruits }
+      : {}),
     enemySpawns: raw.enemySpawns,
     ...(raw.npcSpawns?.length ? { npcSpawns: raw.npcSpawns } : {}),
     reinforcements: raw.reinforcements,

@@ -30,18 +30,18 @@ export function buildTutorialShellView(opts: {
   backdropEl.hidden = true;
 
   const cardWindowEl = createPmdWindow({
-    className: 'pmd-tutorial-card pmd-wimpod-coach-bar',
+    className: 'pmd-tutorial-card pmd-advisor-coach-bar',
     testId: 'tutorial-card-modal',
     role: 'dialog',
-    ariaLabel: "Wimpod's Tactical Guidance",
+    ariaLabel: "Quaquaval's Tactical Guidance",
   });
   cardWindowEl.hidden = true;
 
   const compendiumWindowEl = createPmdWindow({
     className: 'pmd-tutorial-compendium',
-    testId: 'tutorial-compendium-modal',
+    testId: 'tutorial-compendium-window',
     role: 'dialog',
-    ariaLabel: 'Ask Wimpod — Survival Notes',
+    ariaLabel: "Quaquaval's Field Notes",
   });
   compendiumWindowEl.hidden = true;
 
@@ -49,11 +49,11 @@ export function buildTutorialShellView(opts: {
 
   const coachPortraitView = new PmdPortraitView({
     pixelScale: 1.5,
-    testId: 'tutorial-wimpod-portrait',
+    testId: 'tutorial-advisor-portrait',
   });
   const compendiumPortraitView = new PmdPortraitView({
     pixelScale: 1,
-    testId: 'tutorial-compendium-wimpod-portrait',
+    testId: 'tutorial-compendium-advisor-portrait',
   });
 
   backdropEl.append(spotlight.domSpotlightEl, cardWindowEl, compendiumWindowEl);

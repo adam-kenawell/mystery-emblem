@@ -149,7 +149,7 @@ export async function initMysteryEmblemApp(): Promise<void> {
     ctx,
     toggleDevTools: router.toggleDevTools,
     closeDevToolsOverlay: router.closeDevToolsOverlay,
-    openOverworldScene: router.openOverworldScene,
+    continueCampaignFromTitle: router.continueCampaignFromTitle,
     openDemoQuizFlow: () => router.openDemoQuizFlow(),
   });
 

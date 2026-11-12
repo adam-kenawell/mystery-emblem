@@ -1,8 +1,7 @@
 /**
- * Mystery Emblem — Declarative Tutorial Trigger Rules & Terrain Detector (`tutorialTriggers.ts`)
+ * Mystery Emblem - Declarative Tutorial Trigger Rules & Terrain Detector (`tutorialTriggers.ts`)
  *
- * Replaces hardcoded chapter-ID `if/else` chains in `BattleScene.ts` with declarative
- * `TutorialTriggerRule` hooks so tutorials span Acts 1–2 cleanly before Wimpod's Ch. 13 promotion.
+ * Maps Quaquaval's Field Notes coaching hooks across Act 1 (`prologue`..`chapter_04` + `paralogue_01`).
  */
 
 import type { DungeonMapDefinition, SaveData } from '../../types/schemas';
@@ -13,25 +12,26 @@ export const TUTORIAL_TRIGGER_RULES: ReadonlyArray<TutorialTriggerRule> = [
     id: 'rule_prep_units_and_moves',
     hook: 'battle_prep',
     topicId: 'prep_units_and_moves',
+    excludeLevelIds: ['prologue', 'chapter_01'],
   },
   {
     id: 'rule_prep_deployment_cap',
     hook: 'battle_prep',
     topicId: 'ch5_deployment_cap_and_mobile_boss',
-    excludeLevelIds: ['prologue'],
+    excludeLevelIds: ['prologue', 'chapter_01'],
     when: (ctx) =>
       Boolean(
         (ctx.save &&
           ctx.deploymentCap !== undefined &&
           ctx.save.roster.length > ctx.deploymentCap) ||
-          ctx.levelId === 'chapter_03'
+          ctx.levelId === 'chapter_04'
       ),
   },
   {
     id: 'rule_prep_evolution_ready',
     hook: 'battle_prep',
     topicId: 'levelup_and_evolution',
-    excludeLevelIds: ['prologue'],
+    excludeLevelIds: ['prologue', 'chapter_01'],
     when: (ctx) => Boolean(ctx.anyUnitCanPromoteNow),
   },
   {
@@ -41,34 +41,34 @@ export const TUTORIAL_TRIGGER_RULES: ReadonlyArray<TutorialTriggerRule> = [
     levelIds: ['prologue'],
   },
   {
-    id: 'rule_turn1_ch1_boss_and_water',
+    id: 'rule_turn1_ch1_water_and_outlaws',
     hook: 'battle_turn1',
     topicId: 'ch2_boss_and_traversal',
     levelIds: ['chapter_01'],
   },
   {
-    id: 'rule_turn1_ch2_stairs_and_talk',
+    id: 'rule_turn1_ch2_convoy',
     hook: 'battle_turn1',
-    topicId: 'ch3_stairs_reinforcements',
+    topicId: 'prep_items_and_convoy',
     levelIds: ['chapter_02'],
   },
   {
-    id: 'rule_turn1_ch3_mobile_boss',
+    id: 'rule_turn1_ch3_caves_and_stairs',
     hook: 'battle_turn1',
-    topicId: 'ch5_deployment_cap_and_mobile_boss',
+    topicId: 'ch3_stairs_reinforcements',
     levelIds: ['chapter_03'],
   },
   {
-    id: 'rule_turn1_ch4_vitamins',
+    id: 'rule_turn1_par1_vitamins',
     hook: 'battle_turn1',
     topicId: 'ch4_vitamins',
-    levelIds: ['chapter_04'],
+    levelIds: ['paralogue_01'],
   },
   {
-    id: 'rule_turn1_ch5_status',
+    id: 'rule_turn1_ch4_rift_boss',
     hook: 'battle_turn1',
-    topicId: 'status_conditions_and_cures',
-    levelIds: ['chapter_05'],
+    topicId: 'ch5_deployment_cap_and_mobile_boss',
+    levelIds: ['chapter_04'],
   },
 ];
 
@@ -145,9 +145,11 @@ export function evaluateTurn1TutorialTopics(opts: {
     map: opts.map,
     save: opts.save,
   });
-  for (const terrainTopicId of detectDynamicMapTerrainTutorialIds(opts.map)) {
-    if (!result.includes(terrainTopicId)) {
-      result.push(terrainTopicId);
+  if (opts.levelId !== 'prologue') {
+    for (const terrainTopicId of detectDynamicMapTerrainTutorialIds(opts.map)) {
+      if (!result.includes(terrainTopicId)) {
+        result.push(terrainTopicId);
+      }
     }
   }
   return result;

@@ -1,0 +1,124 @@
+{
+  "id": "cs_05_campfire_and_machop",
+  "title": "Campfire Beneath the Peaks",
+  "music": "beach_at_dusk",
+  "location": "bluff_camp",
+  "banner": "Mountain Base Camp - Night",
+  "lighting": "campfire_dusk",
+  "camera": { "x": 7.5, "y": 5.5 },
+  "cast": [
+    { "id": "lord", "who": { "kind": "lord" } },
+    { "id": "partner", "who": { "kind": "partner" } },
+    { "id": "healer", "who": { "kind": "healer" } },
+    { "id": "mentor", "who": { "kind": "mentor" } },
+    { "id": "smoliv", "who": { "kind": "recruit", "speciesId": "smoliv" } },
+    { "id": "machop", "who": { "kind": "recruit", "speciesId": "machop" } }
+  ],
+  "placements": [
+    { "id": "lord", "x": 6, "y": 5, "facing": "Right" },
+    { "id": "partner", "x": 8, "y": 5, "facing": "Left" },
+    { "id": "healer", "x": 6, "y": 6, "facing": "UpRight" },
+    { "id": "smoliv", "x": 8, "y": 6, "facing": "UpLeft" },
+    { "id": "mentor", "x": 7, "y": 4, "facing": "Down" },
+    { "id": "machop", "x": 12, "y": 5, "facing": "Left", "hidden": true }
+  ],
+  "props": [
+    { "id": "fire", "kind": "campfire", "x": 7, "y": 5 }
+  ],
+  "beats": [
+    {
+      "id": "campfire_1",
+      "say": {
+        "speaker": "smoliv",
+        "emotion": "Happy",
+        "side": "right",
+        "text": "Warming my leaves by a real campfire with all of you feels like a dream... Thank you again for letting me tag along!"
+      },
+      "actions": [
+        { "type": "emote", "who": "smoliv", "emote": "heart", "duration": 1.0 }
+      ]
+    },
+    {
+      "id": "campfire_2",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Happy",
+        "side": "right",
+        "text": "The more the merrier, Smoliv! Especially once we see whatever grand mission King Serperior has waiting for Dad."
+      }
+    },
+    {
+      "id": "campfire_3",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Normal",
+        "side": "left",
+        "text": "What do you think it is, Dad? For the King to call back a retired Royal Guard after all these years, it has to be huge."
+      }
+    },
+    {
+      "id": "campfire_4",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Normal",
+        "side": "left",
+        "text": "We will have our answers soon enough. Rest up tonight; my old contact Machamp promised a mountain guide at dawn."
+      }
+    },
+    {
+      "id": "morning_machop",
+      "waitForActions": true,
+      "music": { "kind": "song", "song": "fun_exploration" },
+      "actions": [
+        { "type": "fade", "to": "black", "duration": 0.45 },
+        { "type": "prop", "prop": "fire", "visible": false },
+        { "type": "lighting", "mood": "mountain_mist", "duration": 0.2 },
+        { "type": "show", "who": "machop", "visible": true },
+        { "type": "place", "who": "mentor", "x": 7, "y": 5, "facing": "Right" },
+        { "type": "place", "who": "lord", "x": 6, "y": 4, "facing": "Right" },
+        { "type": "place", "who": "partner", "x": 6, "y": 6, "facing": "Right" },
+        { "type": "place", "who": "healer", "x": 5, "y": 5, "facing": "Right" },
+        { "type": "place", "who": "smoliv", "x": 5, "y": 6, "facing": "Right" },
+        { "type": "fade", "to": "clear", "duration": 0.45 },
+        { "type": "walk", "who": "machop", "path": [[9, 5]], "speed": 3.5, "facing": "Left" },
+        { "type": "hop", "who": "machop", "count": 2 }
+      ],
+      "say": {
+        "speaker": "machop",
+        "emotion": "Determined",
+        "side": "right",
+        "text": "Hup-hup! Morning, travelers! You must be Master Quaquaval's crew!"
+      }
+    },
+    {
+      "id": "quaquaval_asks_machamp",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Surprised",
+        "side": "left",
+        "text": "Well met, young fighter. Where is Machamp? He wrote that he would meet us at the trailhead."
+      }
+    },
+    {
+      "id": "machop_explains",
+      "say": {
+        "speaker": "machop",
+        "emotion": "Happy",
+        "side": "right",
+        "text": "Boss Machamp got tied up clearing a rockslide on the high ridge! So I am guiding you through the mountain instead. I know a shortcut tunnel that gets us through fast!"
+      },
+      "actions": [
+        { "type": "pose", "who": "machop", "anim": "Attack", "duration": 0.45 }
+      ]
+    },
+    {
+      "id": "lord_welcomes_machop",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "Glad to have you on the squad, Machop! Lead the way into the caves and stay sharp for wild Pokemon!"
+      }
+    }
+  ]
+}

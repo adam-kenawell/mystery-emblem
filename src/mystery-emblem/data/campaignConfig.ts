@@ -1,7 +1,7 @@
 /**
- * Mystery Emblem — Central Campaign Progression, Roster & Label Configuration (`campaignConfig.ts`)
+ * Mystery Emblem - Central Campaign Progression, Roster & Label Configuration (`campaignConfig.ts`)
  *
- * Single source of truth for the continuous Lv. 1–40 campaign (`Prologue` + `Chapters 1–25` + `Paralogues 1–7`)
+ * Single source of truth for the continuous Lv. 1-40 5-Act Hoopa & Space-Time Rift campaign
  * aligned with `Mystery Emblem - Lore, Kingdoms & Character Bible.md`.
  */
 
@@ -17,56 +17,60 @@ export const STONE_PROMOTION_MIN_LEVEL = 10;
 export const BRANCHED_PROMOTION_MIN_LEVEL = 15;
 export const GEM_PROMOTION_MIN_LEVEL = 20;
 
-/** Canonical starting cast & NPC species identifiers */
+/** Canonical starting cast & mentor species identifiers */
 export const DRAGON_LORD_SPECIES_IDS = ['axew', 'bagon', 'gible', 'dratini', 'goomy'] as const;
 export type DragonLordSpeciesId = (typeof DRAGON_LORD_SPECIES_IDS)[number];
 
-export const FIXED_PARTNER_SPECIES_ID = 'piplup' as const;
+export const FIXED_PARTNER_SPECIES_ID = 'quaxly' as const;
 export const FIXED_HEALER_SPECIES_ID = 'flabebe' as const;
-export const MENTOR_JAGEN_SPECIES_ID = 'sir_empoleon' as const;
-export const ADVISOR_SPECIES_ID = 'wimpod' as const;
-export const ADVISOR_EVOLVED_SPECIES_ID = 'golisopod' as const;
+export const MENTOR_JAGEN_SPECIES_ID = 'mentor_quaquaval' as const;
 
 /** NPC / Boss PMDCollab National Dex asset IDs */
 export const KING_SERPERIOR_PMD_ASSET_ID = '0497';
-export const LADY_MILOTIC_PMD_ASSET_ID = '0350';
 export const CHANCELLOR_SERPERIOR_PMD_ASSET_ID = KING_SERPERIOR_PMD_ASSET_ID;
-export const HIGH_SEERESS_MILOTIC_PMD_ASSET_ID = LADY_MILOTIC_PMD_ASSET_ID;
-export const SIR_EMPOLEON_PMD_ASSET_ID = '0395';
+export const MENTOR_QUAQUAVAL_PMD_ASSET_ID = '0914';
+export const FLORGES_PARENT_BASE_PMD_ASSET_ID = '0671';
+export const PIDGEOTTO_MESSENGER_PMD_ASSET_ID = '0017';
+export const BAXCALIBUR_ELDER_PMD_ASSET_ID = '0998';
+export const HAXORUS_ANCIENT_PMD_ASSET_ID = '0612';
+export const DRAGONITE_ANCIENT_PMD_ASSET_ID = '0149';
+export const GOODRA_ANCIENT_PMD_ASSET_ID = '0706';
+export const HOOPA_CONFINED_PMD_ASSET_ID = '0720';
+export const HOOPA_UNBOUND_PMD_ASSET_ID = '0720/0001';
 export const KECLEON_PMD_ASSET_ID = '0352';
 export const COMMANDER_DEINO_PMD_ASSET_ID = '0633';
+export const DRAKLOAK_ALLY_PMD_ASSET_ID = '0886';
 
 /** Lore-Bible lines that begin hostile and defect/convert to the player army */
 export const CONVERTIBLE_FACTION_LINE_IDS = [
+  'deino_line',
   'gastly_line',
-  'sandile_line',
   'seedot_line',
 ] as const;
 
 export const ALLY_NPC_LINE_IDS = ['kecleon_line'] as const;
 
-/** Milestone nodes for Act I Vertical Slice Credits & Full Campaign NG+ unlock */
+/** Milestone nodes for Act 1 Credits & Full Campaign NG+ unlock */
 export const START_CAMPAIGN_NODE_ID = 'prologue';
-export const ACT1_CREDITS_NODE_ID = 'chapter_06';
+export const ACT1_CREDITS_NODE_ID = 'chapter_04';
 export const FINAL_CAMPAIGN_NODE_ID = 'chapter_25';
 
 export const INITIAL_CAMPAIGN_CONVOY: ReadonlyArray<ConvoyEntry> = [
   { itemId: 'potion', quantity: 4 },
-  { itemId: 'super_potion', quantity: 1 },
+  { itemId: 'paralyze_heal', quantity: 2 },
   { itemId: 'full_heal', quantity: 2 },
   { itemId: 'oran_berry', quantity: 2 },
   { itemId: 'muscle_band', quantity: 1 },
   { itemId: 'x_attack', quantity: 1 },
 ];
 
-/** Backward-compatible aliases during Demo -> Unified Campaign transition */
 export const DEMO_STARTING_LEVEL = STARTING_CAMPAIGN_LEVEL;
 export const DEMO_INITIAL_CONVOY = INITIAL_CAMPAIGN_CONVOY;
 
 export const DEFAULT_QUIZ_SEEDS: QuizRecruitSeeds = {
-  slot1Flying: ['pidgey'],
+  slot1Flying: ['starly'],
   slot2Psychic: ['ralts'],
-  slot3Electric: ['elekid'],
+  slot3Electric: ['pawmi'],
   slot4Rock: ['geodude'],
   slot5Fire: ['combusken'],
   slot6Grass: ['bellsprout'],

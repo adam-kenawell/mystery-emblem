@@ -4,51 +4,153 @@
   "order": 3,
   "dungeonNumber": 4,
   "shortCode": "Ch. 3",
-  "label": "Chapter 3 — Sparkling River Shrine",
-  "title": "Sparkling River Shrine",
+  "label": "Chapter 3 - Mountain Caves",
+  "title": "Mountain Caves",
   "subtitle": "Chapter 3",
-  "defaultTilesetId": "016",
-  "bgmCue": "waterfall_cave",
-  "objectiveType": "defeat_boss",
-  "objectiveLabel": "Defeat Boss: Commander Deino",
+  "defaultTilesetId": "014",
+  "bgmCue": "mt_bristle",
+  "objectiveType": "seize",
+  "objectiveLabel": "Guide Your Leader to the Cave Exit",
   "recommendedLevel": 4,
   "deploymentCap": 6,
-  "postStoryCutsceneId": "cs_05_sanctuary_war_room",
-  "width": 19,
-  "height": 15,
+  "preStoryCutsceneId": "cs_05_campfire_and_machop",
+  "width": 24,
+  "height": 12,
   "rows": [
-    "X:39 X:2 X:2 X:11 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:11 X:2 X:2 X:50",
-    "X:18 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:47 X:32",
-    "X:18 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 X:28 F:9 F:9 F:9 F:9 F:9 X:28 F:9 F:9 X:32",
-    "X:18 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 S:9 F:9 F:9 X:32",
-    "X:18 F:9 F:9 F:9 F:9 F:9 F:64 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:64 F:9 F:9 X:32",
-    "X:18 F:9 F:9 F:9 F:9 W:42 F:9 F:9 X:28 F:9 T:142:1 F:9 F:9 F:9 F:9 F:9 F:9 F:9 X:32",
-    "X:18 F:9 F:9 F:9 F:9 W:42 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 X:32",
-    "X:18 F:9 F:9 F:9 F:9 F:9 F:9 F:9 WT:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 X:32",
-    "X:18 F:9 F:9 F:9 F:9 W:42 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 W:42 F:9 X:30",
-    "X:18 F:9 F:9 F:9 F:9 W:42 F:9 F:9 F:9 F:9 T:142:1 F:9 F:9 F:9 F:63 F:9 F:9 F:9 X:32",
-    "X:18 F:9 F:9 F:9 F:9 F:9 W:42 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 X:32",
-    "X:18 F:9 F:9 X:28 F:9 F:9 F:9 F:9 F:9 X:28 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 X:32",
-    "X:18 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 W:42 F:9 F:9 F:9 F:9 X:32",
-    "X:18 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 F:9 X:32",
-    "X:37 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:49"
+    "X:55 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:54",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
+    "X:3 F:29 S:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:15 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:15 F:29 F:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:15 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:15 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 F:29 F:29 F:47 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 X:22 F:29 F:29 WT:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:15 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:15 F:29 F:29 F:29 F:29 F:29 WT:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:47 F:29 X:22",
+    "X:3 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:15 F:29 F:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 X:22 X:22 F:29 F:29 S:29 F:29 F:15 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
+    "X:37 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:49"
   ],
   "playerSlots": [
-    {"x":3,"y":7,"speciesId":"dratini"},
-    {"x":3,"y":5,"speciesId":"piplup"},
-    {"x":3,"y":9,"speciesId":"flabebe"},
-    {"x":2,"y":6,"speciesId":"sir_empoleon"},
-    {"x":2,"y":8,"speciesId":"pidgey"},
-    {"x":2,"y":4,"speciesId":"ralts"}
+    { "x": 3, "y": 5, "speciesId": "axew" },
+    { "x": 4, "y": 5, "speciesId": "machop" },
+    { "x": 3, "y": 4, "speciesId": "quaxly" },
+    { "x": 3, "y": 6, "speciesId": "flabebe" },
+    { "x": 2, "y": 5, "speciesId": "mentor_quaquaval" },
+    { "x": 2, "y": 6, "speciesId": "smoliv" }
+  ],
+  "recruitment": {
+    "fixedSpeciesIds": ["machop"],
+    "joinLevel": 4,
+    "scaleStatsToLevel": true,
+    "fallbackSpeciesIds": []
+  },
+  "clearRewardItems": [
+    { "itemId": "evolution_stone", "quantity": 1 }
   ],
   "enemySpawns": [
-    {"id":"d4_enemy_0","x":10,"y":6,"speciesId":"spheal","nickname":"Shrine Vanguard","level":4,"heldItemId":null,"aiMode":"wait_until_in_range"},
-    {"id":"d4_enemy_1","x":11,"y":9,"speciesId":"tynamo","nickname":"Current Spark","level":4,"heldItemId":null,"aiMode":"wait_until_in_range"},
-    {"id":"d4_enemy_2","x":13,"y":5,"speciesId":"pawniard","nickname":"Ironscale Blade","level":5,"heldItemId":null,"aiMode":"wait_until_in_range"},
-    {"id":"d4_enemy_3","x":13,"y":10,"speciesId":"croagunk","nickname":"Shrine Striker","level":5,"heldItemId":null,"droppableItemId":"protein","aiMode":"wait_until_in_range"},
-    {"id":"ch3_boss_deino","x":16,"y":7,"speciesId":"deino","nickname":"Commander Deino","level":6,"stats":{"hp":25,"atk":9,"def":8,"spa":9,"spd":8,"spe":7,"mov":5},"heldItemId":"oran_berry","isBoss":true,"stationary":false,"droppableItemId":"evolution_stone","aiMode":"wait_until_in_range"}
+    {
+      "id": "ch3_enemy_0",
+      "x": 9,
+      "y": 4,
+      "speciesId": "zubat",
+      "nickname": "Cavern Zubat",
+      "level": 3,
+      "heldItemId": null,
+      "aiMode": "aggressive"
+    },
+    {
+      "id": "ch3_enemy_1",
+      "x": 10,
+      "y": 7,
+      "speciesId": "rolycoly",
+      "nickname": "Tunnel Rolycoly",
+      "level": 4,
+      "heldItemId": null,
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch3_enemy_2",
+      "x": 15,
+      "y": 4,
+      "speciesId": "venipede",
+      "nickname": "Crevice Venipede",
+      "level": 4,
+      "heldItemId": null,
+      "droppableItemId": "potion",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch3_enemy_3",
+      "x": 16,
+      "y": 7,
+      "speciesId": "zubat",
+      "nickname": "Screech Flier",
+      "level": 4,
+      "heldItemId": null,
+      "aiMode": "aggressive"
+    },
+    {
+      "id": "ch3_exit_warden",
+      "x": 20,
+      "y": 5,
+      "speciesId": "stufful",
+      "nickname": "Wild Stufful",
+      "level": 5,
+      "heldItemId": "oran_berry",
+      "isBoss": true,
+      "droppableItemId": "sitrus_berry",
+      "aiMode": "wait_until_in_range"
+    }
   ],
   "reinforcements": [
-    {"id":"d4_reinforce_t2_falls","turnNumber":2,"stairsX":15,"stairsY":3,"enemy":{"id":"d4_reinf_zubat","x":15,"y":3,"speciesId":"zubat","nickname":"Shrine Diver","level":4,"heldItemId":null,"aiMode":"wait_until_in_range"}}
+    {
+      "id": "ch3_chase_t2",
+      "turnNumber": 2,
+      "stairsX": 2,
+      "stairsY": 2,
+      "enemy": {
+        "id": "ch3_reinf_zubat_t2",
+        "x": 2,
+        "y": 2,
+        "speciesId": "zubat",
+        "nickname": "Pursuing Zubat",
+        "level": 3,
+        "heldItemId": null,
+        "aiMode": "aggressive"
+      }
+    },
+    {
+      "id": "ch3_chase_t3",
+      "turnNumber": 3,
+      "stairsX": 8,
+      "stairsY": 9,
+      "enemy": {
+        "id": "ch3_reinf_venipede_t3",
+        "x": 8,
+        "y": 9,
+        "speciesId": "venipede",
+        "nickname": "Pursuing Venipede",
+        "level": 4,
+        "heldItemId": null,
+        "aiMode": "aggressive"
+      }
+    }
+  ],
+  "events": [
+    {
+      "id": "ev_ch3_reach_exit",
+      "once": true,
+      "trigger": {
+        "type": "tile_reached",
+        "by": "lord",
+        "tiles": [
+          { "x": 21, "y": 5 },
+          { "x": 21, "y": 6 }
+        ]
+      },
+      "actions": [
+        { "type": "win_battle" }
+      ]
+    }
   ]
 }

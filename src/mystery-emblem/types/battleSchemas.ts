@@ -48,6 +48,7 @@ export const BATTLE_OBJECTIVE_TYPES = [
   'defeat_boss',
   'survive_turns',
   'protect_npc',
+  'seize',
 ] as const;
 
 export type BattleObjectiveType = (typeof BATTLE_OBJECTIVE_TYPES)[number];
@@ -81,6 +82,8 @@ export interface DungeonUnitSpawn {
    * can drop a unit below 1 HP. Cleared when converted to the player.
    */
   sparring?: boolean;
+  /** Friendly hometown bout: permits playable species on the opposing side that yield at 0 HP */
+  friendlyBout?: boolean;
   /** Exact [E] slots to equip (overrides `equippedMoveId` seeding and Physical/Special auto-fill) */
   equippedMoveIds?: string[];
 }
@@ -138,6 +141,7 @@ export interface ManualEnemyBattleSpawn {
   droppableItemId?: string | null;
   aiMode?: EnemyAiMode;
   sparring?: boolean;
+  friendlyBout?: boolean;
   equippedMoveIds?: string[];
 }
 

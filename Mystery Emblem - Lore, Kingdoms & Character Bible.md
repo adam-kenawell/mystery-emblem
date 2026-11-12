@@ -1,228 +1,117 @@
-# **Poké Emblem — Lore, Kingdoms & Character Bible**
+# **Mystery Emblem: Lore, Kingdoms & Character Bible**
 
-# **1\. World Premise, The Abyss & Kingdom Politics**
+# **1. Ancient Mythos, Hoopa's Space-Time Rift & Kingdom Politics**
 
-## **1.1 The Ancient Dragon Kingdom & The Emergence of the Abyss**
+## **1.1 The Fall of the Ancient Dragon Kingdom & The Three Sealed Eggs**
 
-Generations ago, the continent lived in harmony under the mediation of the **Ancient Dragon Kingdom**, whose watchtowers—including the **Western Island Spire** and the **Cleft Mountain Sanctuary**—kept a primordial subterranean rift in the far southeast sealed. Decades before the story begins, the Dragon Kingdom was wiped out in a night of betrayal orchestrated by **Royal Tactician Gengar**, leaving only a handful of scattered survivors.
+Ages ago, the Ancient Dragon Kingdom ruled the continent in peace and stewardship. That era shattered when the mythical Pokemon **Hoopa** sought to overthrow the dragons by tearing open a catastrophic **Rift in Space and Time**, summoning ferocious **Paradox Pokemon** from twisted past and future eras to lay waste to the land.
 
-Without the Dragon Clan to maintain the seal, the southeastern rift split open into **The Abyss**—the jagged crack in the ground at the bottom-right tip of the continent. Vicious, shadow-corrupted "Feral" Pokémon have begun crawling out of the Abyss in greater and greater numbers. Every kingdom on the continent has a different political philosophy on how to keep the Abyss at bay:
+The dragons fought back valiantly, yet their kingdom was pushed to the brink of total extinction. In a final sacrifice, the three strongest surviving champions, **Dragonite**, **Goodra**, and their supreme leader **Haxorus**, poured every drop of their remaining life force into sealing the Rift. During that blinding clash, Hoopa slipped into one of his own portals and escaped, leaving the dying dragons believing he had been destroyed.
 
-* **The Verdant Commonwealth (Middle):** Believes in diplomacy, healing the corrupted land, and uniting the realms around the surviving Dragon lineage.  
-* **The Umbral Canopy / Forest Tribe (Top-Right):** Fierce survivalists who distrust outsiders and believe only ruthless strength and strict border culling can keep the corruption out of their woods.  
-* **The Goldensand Diarchy / Sand Kingdom (Top-Left Mainland):** Pragmatic builders and merchants who want to fortify the mountain passes and fund an industrial bulwark.  
-* **The Cinderpeak Dominion / Fire Kingdom (Top-Left Volcanic Island):** Traditionalist master smiths who seek to rekindle the ancient volcanic dragon-forges to forge weapons capable of sealing the rift.  
-* **The Frostspire Enclave / Ice Kingdom (Bottom-Left Glacial Island):** Starts out strictly isolationist beneath frozen borders, though **Queen Froslass** proves warm, benevolent, and immediately responsive once your Dragon Lord reaches her island to ask for help.  
-* **The Ironscale Empire (Bottom-Right Peninsula):** At the beginning of the game, Ironscale claims its aggressive military expansion and martial law are necessary measures to contain the Abyss. Mid-way through the campaign, however, you uncover the truth: **Emperor Kingambit** is not trying to seal the Abyss at all—he is building a dark harness to control and weaponize the Abyss's power for himself, culminating in him summoning a terrifying **Abyssal Tyranitar** in the endgame.
+To ensure their bloodline would not vanish forever, Haxorus, Dragonite, and Goodra hid and sealed away **three surviving Dragon Eggs** across the world:
+1. **A Dreepy Egg** (later hatching in the northeastern Forest Tribe, growing into **Drakloak** and **Dragapult**).
+2. **A Deino Egg** (later hatching inside the southeastern Steel Kingdom, growing into **Zweilous** and **Hydreigon**).
+3. **The Protagonist's Egg**: determined by the opening Dragon Aura Personality Quiz (`Axew`, `Gible`, `Dratini`, `Bagon`, or `Goomy`).
 
-# **2\. Core Protagonists & The Surviving Dragons**
+## **1.2 The Reawakening Rift & The Six Realms**
 
-## **2.1 The Starting Protagonist Trio (Fixed Core)**
+Centuries later, hairline fractures in the southeastern Space-Time Rift have begun leaking wild, feral **Paradox Pokemon** back into the world. **King Serperior** of the Verdant Kingdom summons his retired former Royal Guard, **Quaquaval**, to the capital as the continent debates how to respond:
 
-* **The Dragon Lord (Axew / Gible / Goomy / Bagon / Dratini):** One of the few surviving heirs of the wiped-out Dragon Kingdom, determined by the starting personality quiz. Quietly sheltered as a tiny hatchling by Chancellor Serperior and High Seeress Milotic and raised alongside Piplup, Flabébé, and Wimpod in the same Verdant Commonwealth coastal tribe with no memory or knowledge of any royal title, they grow from a calm, observant tribe friend into the unifying leader of all six realms.  
-* **Wimpod (Non-Combatant Tactical Advisor):** Your Dragon Lord, Piplup, and Flabébé's timid childhood friend from the same coastal tribe—a self-proclaimed coward whose terror of getting squished drove him to obsessively study enemy hazards, attack ranges, and terrain mechanics.  
-* **Piplup (Piplup \-\> Prinplup \-\> Empoleon):** Your Dragon Lord's proud, headstrong frontline best friend from the Verdant Commonwealth who dreams of becoming a royal knight under Serperior and Milotic.  
-* **Flabébé (Flabébé \-\> Floette \-\> Florges — Purely Cosmetic Flower Color Tied to Dragon Lord):** Your Dragon Lord and Piplup's compassionate, level-headed childhood friend and dedicated healer who tends the Commonwealth's flower sanctuaries and keeps the squad alive from the backline. As a purely cosmetic visual touch (affecting only her map sprites and dialogue portraits across Flabébé, Floette, and Florges with no stat or move changes), her flower color is tied directly 1-to-1 to whichever of the five Dragon Lords you receive from the personality quiz:  
-  * **Axew** \-\> **Red Flower** Flabébé  
-  * **Bagon** \-\> **Orange Flower** Flabébé  
-  * **Gible** \-\> **Yellow Flower** Flabébé  
-  * **Dratini** \-\> **Blue Flower** Flabébé  
-  * **Goomy** \-\> **White Flower** Flabébé
+* **The Verdant Kingdom (Central Heartland - Grass & Water Types):** Ruled solo by **King Serperior**. Believes in diplomacy, protecting frontier villages, and uncovering the ancient truth behind the Rift before panic fractures the continent.
+* **The Sand Kingdom (Northwestern Desert Mainland - Ground & Rock Types):** Ruled by **Sultan Hippowdon**. Agrees with King Serperior that the realms must investigate the Rift together and sends the desert warrior **Sandile** to join your expedition at the end of Act 1.
+* **The Steel Kingdom (Southeastern Peninsula - Steel & Dark Types):** Ruled by **Emperor Kingambit** alongside his Dragon general **Hydreigon** (`Deino -> Zweilous -> Hydreigon`). Publicly agrees with the Verdant and Sand Kingdoms in Act 1 and dispatches the noble blade **Honedge** to accompany your party. Secretly, however, Kingambit is manipulating the crisis for imperial domination (while Hoopa pulls the strings from the shadows), culminating in the Steel Kingdom's brutal betrayal at the end of Act 2.
+* **The Ice Kingdom (Southwestern Glacial Island - Ice Types):** Ruled by **Queen Froslass**. Untouched by the Rift during Act 1. Deep beneath its glaciers slumbers **Baxcalibur**, an ancient elder who witnessed the fall of the Dragon Kingdom and holds the truth of the past.
+* **The Fire Kingdom (Northwestern Volcanic Island - Fire & Rock Types):** Led by **Ember-Lord Torkoal**. Untouched by the Rift during Act 1; becomes a pivotal battleground and crossing point in Act 3 as your party journeys to rally the other surviving dragons.
+* **The Forest Tribe (Northeastern Canopy - Grass, Dark & Ghost Types):** Led by **Chieftain Zoroark**. Proud survivalists who believe their warriors can fight off any Rift beasts on their own without outside alliances. Shelters **Drakloak**, who initially doubts your warnings in Act 3 until Steel Kingdom legions and Rift Paradox monsters threaten the canopy.
 
-* ## **2.2 Other Key Dragon Characters**
+---
 
-* **Dreepy (Dreepy \-\> Drakloak \-\> Dragapult) — The Surprise Forest Ally:** A lingering Dragon/Ghost spirit living in the northeastern **Forest Tribe** woods. When **Leader Zoroark** and the Forest Tribe initially oppose your party as trespassers, you unexpectedly meet Dreepy in the canopy. Dreepy immediately connects with your Dragon Lord, serving as a surprise supporting character throughout the story who bridges the divide to band the Forest Tribe and the Verdant Commonwealth together—and officially joins your playable roster\!  
-* **Baxcalibur — The Ice Kingdom Savior:** A battle-scarred veteran of the old Dragon Royal Guard living in exile inside the central ice cavern of the bottom-left **Ice Kingdom**. In Chapter 17, when an Imperial ambush corners your army in the jaws of defeat on the frozen plains, Baxcalibur crashes onto the battlefield to shatter the enemy encirclement, saving your squad and awakening your Lord's full ancestral Dragon power.  
-* **Deino (Deino \-\> Zweilous \-\> Hydreigon) — The Noble Foil:** Another young survivor of the Dragon Kingdom raised inside the Ironscale Empire by Kingambit. Deino is not a bad person—he fights for Ironscale because he genuinely believes their military order is the only thing keeping the Abyss from swallowing the continent. As he evolves into Zweilous and Hydreigon, he begins to question Kingambit's obsession with harnessing the Abyss, leading to an emotional final duel in Act 4 where he finally steps aside to help you reach the rift.
+# **2. Core Cast, Family Bonds & The Surviving Dragons**
 
-# **3\. The Six Kingdoms, Rulers & Retainers**
+## **2.1 The Hometown Family & Tutorial Voice**
 
-## **3.1 The Verdant Commonwealth (Middle Area — Water & Grass Types)**
+* **The Dragon Lord (`Axew` / `Gible` / `Dratini` / `Bagon` / `Goomy`):** Selected via the 8-question Dragon Aura Personality Quiz (or chosen directly in New Game Plus). Raised in a quiet Verdant Kingdom village by foster father **Quaquaval** alongside foster sibling **Quaxly** and neighbor best friend **Flabebe**.
+* **Quaxly (`Quaxly -> Quaxwell -> Quaquaval`):** Biological child of **Quaquaval** and loyal sibling to `{lord}`. Energetic, earnest frontline Water partner from Turn 1 of the Prologue.
+* **Flabebe (`Flabebe -> Floette -> Florges`):** Daughter of **Florges** and `{lord}` and `Quaxly`'s gentle childhood friend. Starts with a ranged healing move in the Prologue. Her flower color (and her mother **Florges**'s flower color) matches `{lord}` 1-to-1 purely cosmetically:
+  * **Axew** -> **Red Flower** (`0669` / `0671`)
+  * **Bagon** -> **Orange Flower** (`0669/0002` / `0671/0002`)
+  * **Gible** -> **Yellow Flower** (`0669/0001` / `0671/0001`)
+  * **Dratini** -> **Blue Flower** (`0669/0003` / `0671/0003`)
+  * **Goomy** -> **White Flower** (`0669/0004` / `0671/0004`)
+* **Quaquaval (`mentor_quaquaval`, Lv. 12 Water/Fighting Jagen Mentor):** Father of `Quaxly` and foster father of `{lord}`. Once served as one of **King Serperior**'s elite Royal Guards; after his wife died in a tragic accident when `Quaxly` was a baby, he laid down his royal garb and went into quiet retirement so nobody would harass or threaten his family for crown secrets. Knowing `{lord}` is tied to a greater destiny, he drills the children after dinner ("you can never be too prepared"), joins your playable squad in Chapter 2, authors **"Quaquaval's Field Notes"** (the game's tactical tutorial manual), and tragically falls at the end of Act 2 when the Steel Kingdom betrays your expedition.
+* **Florges (`0671`, Non-Playable Hometown Mother):** Warm, perceptive mother of `Flabebe` and close family friend to `Quaquaval`, hosting lively shared dinners with the children in the village.
 
-* **Map Anchor:** Central-western beach, waterfall river, hot-spring town, sparkling forest spring, and berry orchards.  
-* **Benevolent Co-Rulers:** **Chancellor Serperior** & **High Seeress Milotic**. Together they govern the peaceful heartland with wisdom and grace, sheltering your Dragon Lord from the start and spearheading the diplomatic effort to unite the continent against the Abyss.  
-* **Retainers:** **Harbormaster Pelipper** (coordinates the western ferry docks and naval transport to the Fire and Ice islands) alongside your starting trio (**Lord, Piplup, Flabébé**).
+## **2.2 Ancient & Surviving Dragon Figures**
 
-## **3.2 The Umbral Canopy — Forest Tribe (Top-Right Area — Dark & Grass Types)**
+* **Haxorus (`0612`), Dragonite (`0149`), and Goodra (`0706`):** Ancient Dragon Kingdom heroes seen in the opening flashback (`cs_00_ancient_dragon_war`) who sacrificed their remaining energy to seal Hoopa's Rift and preserve the three Dragon Eggs.
+* **Baxcalibur (`0998`, Non-Playable Ancient Sage):** Slumbering ancient elder deep inside the Ice Kingdom. Awakened near the end of Act 2 to reveal the true history of Hoopa, the Paradox Rift, and the three Dragon Eggs.
+* **Drakloak -> Dragapult (`0886 -> 0887`):** Hatched from the Dreepy Egg in the Forest Tribe. In Act 3, `Drakloak` joins your cause as a non-playable allied commander leading a second front against the Rift; in Act 5, now fully evolved into **Dragapult**, he joins your playable squad for the descent into the Rift.
+* **Deino -> Zweilous -> Hydreigon (`0633 -> 0634 -> 0635`):** Hatched from the Deino Egg inside the Steel Kingdom. Serves Emperor Kingambit as a formidable rival general until Act 4's climax, flees when Kingambit falls, and fights you one last time in the penultimate battle of Act 5 before realizing Hoopa intends to annihilate the entire world and joining your playable roster for the final battle.
 
-* **Map Anchor:** Dense dark-green northeastern forest, horned village hut by the northern river stepping-stones, northern white cape shrine, and northeastern flower cliff.  
-* **De Facto Leader:** **Chieftain Zoroark**. Chosen as leader of the Forest Tribe through sheer strength, cunning, and combat skill. Fiercely protective of the woodland borders, Zoroark initially fights your expedition until your sudden connection with **Dreepy** proves your sincerity and unites the Forest Tribe with Serperior and Milotic's Commonwealth.  
-* **Retainers & Key Characters:** **Dreepy** (surprise supporting character & playable recruit), **Seedot \-\> Nuzleaf \-\> Shiftry** (proud Forest Tribe border scout who joins in Ch. 18 as a Grass/Dark playable recruit), and **Night-Stalker Absol** (chief border scout).
+---
 
-## **3.3 The Goldensand Diarchy — Sand Kingdom (Top-Left Mainland — Ground, Rock & Steel Types)**
+# **3. Five-Act Story Structure**
 
-* **Map Anchor:** Northwestern yellow desert dunes, quicksand sinkholes, rocky mesas, coastal cliffside oasis, and southern stone ruins.  
-* **Co-Rulers:** **Sultan Hippowdon** (boisterous lord of the oasis and desert caravans) & **High Thane Copperajah** (honorable patriarch of the canyon mining and metalworking clans).  
-* **Retainers & Key Characters:**  
-  * **Krokorok \-\> Krookodile (Sandile Line — Boss-Turned-Playable Recruit):** Sultan Hippowdon's fiercely loyal desert border captain. In Chapter 8, Krokorok mistakes your expedition for Ironscale-backed invaders and serves as the chapter boss you must defeat to cross the dunes. Once you reach Sultan Hippowdon at the oasis in Chapter 9, Krokorok realizes you are actually the good guys and eagerly joins your team to make up for attacking you.  
-  * **Tinkatink (Playable Recruit):** A spirited young smith from the Sand Kingdom and apprentice to Copperajah who joins your squad in the early/mid-game because she is determined to test her oversized hammer against the monsters pouring out of the Abyss.  
-  * **Clan Warlord Aggron (Traitor General):** Overthrows and imprisons Copperajah in the southern desert ruins, attempting to hand the Sand Kingdom's mines over to Emperor Kingambit.  
-  * **Master Merchant Kecleon:** Rescued in an early side quest, unlocking traveling shops across the map.
+## **3.1 Act 1: Expedition to Meet with King Serperior (Playable Deliverable)**
 
-## **3.4 The Cinderpeak Dominion — Fire Kingdom (Top-Left Volcanic Island — Fire & Rock Types)**
+1. **Opening Aura Quiz & Ancient Flashback (`cs_00_ancient_dragon_war`):** The 8-question Dragon Aura Quiz selects `{lord}` (`Axew`, `Gible`, `Dratini`, `Bagon`, or `Goomy`). A flashback depicts peaceful Dragon rule, **Hoopa** opening the Space-Time Rift to unleash evil **Paradox Pokemon**, **Haxorus**, **Dragonite**, and **Goodra** sacrificing their last strength to seal the Rift as Hoopa slips through a portal, and the sealing of the three eggs (`Dreepy`, `Deino`, `{lord}`).
+2. **Berry Walk & Family Dinner (`cs_01_berry_walk_and_dinner`):** `{lord}`, `Quaxly`, and `Flabebe` walk home from berry-picking in the Verdant Kingdom to eat dinner with **Quaquaval** and **Florges**. Lively dinner banter establishes everyone's personalities before Quaquaval insists on evening combat practice ("you can never be too prepared").
+3. **Prologue: Hometown Pitch (`prologue`, No Battle Prep):**
+   * **Phase 1 (Core Basics vs. Quaquaval):** Move `Quaxly` into `Quaquaval`'s range -> `Quaquaval` strikes `Quaxly` -> `Flabebe` heals `Quaxly` -> `{lord}` attacks from Range 2 with `Dragon Breath` without taking a counterattack (`Quaquaval` explains the 4-move limit, level-up move learning, and equipping 1 Physical `[E]` + 1 Special `[E]` move).
+   * **Phase 2 (Town Bout vs. Starly, Caterpie & Pawmi):** `Quaquaval` pits your trio against village peers `Starly`, `Caterpie`, and `Pawmi`. `Pawmi` strikes `Quaxly` with super-effective `Nuzzle`, inflicting `PAR` -> `Quaquaval` explains type effectiveness and Status Conditions, hands `Quaxly` a `Paralyze Heal`, teaches item usage, and lets you finish the bout by defeating all three opponents.
+4. **Bedtime & Watering Hole Ambush (`cs_02_bedtime_and_watering_hole` -> `chapter_01`, No Battle Prep):** That night, `{lord}` and `Quaxly` wonder why their father is pushing combat training so hard. The next morning, `{lord}`, `Quaxly`, and `Flabebe` head to the local watering hole to fetch water and are jumped by a gang of outlaw thugs.
+5. **The Royal Summons & Overworld Unveil (`cs_03_pidgeotto_summons`):** At dinner that evening, royal courier **Pidgeotto** (`0017`) arrives with urgent word that **King Serperior** requests an audience with `Quaquaval`. Saying there is no time to explain, `Quaquaval` tells everyone to pack up for the perilous journey over the mountains to the capital. `{lord}` and `Quaxly` share their excitement and confusion, and the **Overworld Map** unveils as the expedition sets out.
+6. **Royal Guard Past & Foothill Rescue (`cs_04_royal_guard_past` -> `chapter_02`, Introduces Battle Prep):** Along the foothill trail, `Quaquaval` confesses he once served in Serperior's Royal Guard, retiring in secret after `Quaxly`'s mother died in an accident when `Quaxly` was an infant so his family would never be hunted for crown intelligence. Suddenly, `{lord}` hears **Smoliv** (`0928`) cry for help! **Quaquaval** joins your playable roster (`Lv. 12`) and introduces the **Battle Prep** menu (deploying units, swapping starting tiles, and managing moves/items). After rescuing `Smoliv`, they ask to join your squad because they feel safest at your side.
+7. **Mountain Base Campfire & Cave Escape (`cs_05_campfire_and_machop` -> `chapter_03`):** Around a nighttime campfire at the mountain's base, the expanded group chats warmly and speculates on Serperior's summons. At dawn, **Machop** (`0066`) greets them; `Machamp` is tied up elsewhere, so `Machop` joins your squad to guide you swiftly through the caverns. Chapter 3 is a long `"Get {lord} to the Exit"` pursuit map where wild cave Pokemon chase and harass your party.
+8. **Paralogue 1: Lush Prairie (`paralogue_01`, Optional Post-Mountain Side Quest):** Exiting the mountain unlocks a quiet prairie detour where you can wake and recruit Level 1 **Slakoth** (`0287`), the classic *Fire Emblem* Aptitude (`Hidden Potential` `+20%` to all growths) trainee who blossoms into a late-game powerhouse.
+9. **Capital Outskirts Rift Ambush (`chapter_04`, Act 1 Finale Battle):** Just outside the Verdant Capital, eerie **Ancient Paradox Pokemon** (`Brute Bonnet`, `Scream Tail`, `Slither Wing`, `Flutter Mane`, led by boss `Great Tusk`) ambush your party from a dimensional tear. Nobody has ever seen creatures so primal and feral. Mid-battle on Turn 2, **Starly**, **Caterpie**, and **Pawmi** crash onto the field, revealing they trailed your group all the way from home out of curiosity, and join your playable squad!
+10. **Audience with King Serperior (`cs_06_capital_audience` -> Act 1 Ending Credits):** Inside the Capital Throne Room, **King Serperior** (`0497`) explains the emerging Rift attacks and the stance of every realm: the **Fire** and **Ice** Kingdoms remain untouched so far, the **Forest Tribe** insists they can repel the beasts alone, and the **Sand** and **Steel** Kingdoms stand with Verdant to uncover the origin of the Rift. Entrusting your party to seek out an ancient Pokemon sleeping deep in the Ice Kingdom, Serperior introduces two envoy allies who join your roster immediately: **Honedge** (`0679`), a valiant warrior of the Steel Kingdom, and **Sandile** (`0551`), a sharp-eyed fighter from the Sand Kingdom. Act 1 concludes with Ending Credits and returns to the Overworld with all 12 Act 1 playable units.
 
-* **Map Anchor:** Northwestern volcanic island with the central active volcano, top-left smoking great-forge furnace, top-right lava caldera, and southwestern steam vents.  
-* **Leaders:** **Ember-Lord Torkoal** (keeper of the ancient Great Furnace) & **Captain Arcanine** (commander of the volcano guard). Closely allied with Hippowdon and Copperajah across the strait, refining Sand Kingdom ore in their volcanic forges until Ironscale's **Siege Warden Coalossal** invades.
+## **3.2 Act 2: Uncovering the Truth of the Past**
+* Your expedition travels toward the **Ice Kingdom** (unlocking traveling **Kecleon Shops** along the route).
+* Deep within the glacial sanctuary, you awaken **Baxcalibur**, who recounts the ancient war against **Hoopa**, the sacrifice of **Haxorus**, **Dragonite**, and **Goodra**, and the three hidden Dragon Eggs.
+* **Act 2 Climax:** As you emerge with the truth, the **Steel Kingdom** treacherously backstabs your expedition. **Quaquaval** sacrifices himself defending `{lord}` and `Quaxly` and is killed. Disgusted by Emperor Kingambit's dishonor, **Honedge** renounces the crown and remains permanently loyal to your squad.
 
-## **3.5 The Frostspire Enclave — Ice Kingdom (Bottom-Left Glacial Island — Ice Types)**
+## **3.3 Act 3: The Journey to Meet the Other Dragons**
+* Forced to rally new allies, your party crosses the **Fire Kingdom** and enters the **Forest Tribe** canopy.
+* You locate **Drakloak** (`0886`) living among **Chieftain Zoroark**'s warriors. Though skeptical at first, `Drakloak` witnesses the combined threat of Steel Kingdom invaders and Rift Paradox monsters firsthand and pledges to lead an allied Forest force against the Rift from a second direction (remaining non-playable during Acts 3 and 4).
 
-* **Map Anchor:** Southwestern snow-and-ice island featuring jagged frozen peaks, central ice cavern, and the ancient dark-spire island just to its north.  
-* **Benevolent Ruler:** **Queen Froslass**. Starts the story as an isolationist monarch who sealed her island's ports to keep her citizens safe from the Abyss. However, when your Dragon Lord travels to her court for help in Act 3, she is deeply sympathetic and immediately responsive, committing her forces to your cause right before **Baxcalibur** saves your combined army from an Imperial trap.
+## **3.4 Act 4: Marching Against the Steel Kingdom**
+* Leading a united coalition into the southeastern peninsula, your army storms the Steel capital, topples **Emperor Kingambit**, and forces **Hydreigon** (`0635`) to flee.
+* Pursuing Hydreigon toward the tear in reality, you uncover the shocking truth: the **Hoopa** of Baxcalibur's legends survived inside the dimensional void and has been orchestrating the entire catastrophe.
 
-## **3.6 The Ironscale Empire & The Abyss (Bottom-Right Area — Steel & Militaristic Types)**
+## **3.5 Act 5: Sealing the Rift**
+* Now evolved into **Dragapult** (`0887`), the Forest Dragon joins your playable squad as you descend directly into the **Space-Time Rift**, battling waves of both **Ancient** and **Future Paradox Pokemon**.
+* **Penultimate Battle:** You clash with **Hydreigon**. Realizing at last that Hoopa seeks total annihilation rather than order, Hydreigon defects and joins your playable team for the finale.
+* **Final Boss:** A two-stage showdown where you must first defeat **Hoopa Confined** (`0720`), triggering his transformation into **Hoopa Unbound** (`0720/0001`) to seal the Rift forever.
 
-* **Map Anchor:** Southeastern peninsula with waterfall garrison, fortified hill bunkers, rocky badlands, and the **Abyss / Crack in the Ground** at the bottom-right tip.  
-* **Leaders & Commanders:**  
-  * **Emperor Kingambit (Final Boss):** Masks his ambition behind the excuse of containing the Abyss, while secretly seeking to harness its dark power for himself.  
-* **Abyssal Tyranitar (Late-Game Abyss Summon Boss):** A colossal, void-infused powerhouse that Emperor Kingambit summons straight out of the Abyss in the final chapters to crush your alliance.  
-  * **Royal Tactician Gengar (Shadow Mastermind):** Wiped out the Dragon Kingdom decades ago and runs the Abyssal experiments for Kingambit.  
-  * **Royal Protector Aegislash:** Kingambit's sworn bodyguard.  
-  * **Commander Deino \-\> Zweilous \-\> Hydreigon:** Your noble Dragon foil.  
-  * **Theater Commanders & Raider Duo:** **Sky Marshal Corviknight**, **Siege Warden Coalossal**, **Grand Oracle Gothitelle**, and the recurring soldier duo of **Captain Obstagoon** (Galarian Zigzagoon line) and **Captain Grimmsnarl** (Impidimp line).
+---
 
-# **4\. Tightened Role-Matched Quiz Recruits (8 Slots)**
+# **4. Playable Roster & Faction Separation**
 
-Around Chapter 10, Pokémon unlock the ability to evolve from Stage 1 to Stage 2\. Every Pokémon recruited after Chapter 10 joins already in their Second Stage:
+## **4.1 Act 1 Fixed Story & Paralogue Roster (12 Playable Units)**
 
-* **Prologue Lord-Linked Cosmetic — Flabébé Flower Color (Verdant Commonwealth):** Purely cosmetic sprite/portrait variant (**Red, Orange, Yellow, Blue, or White Flower** across **Flabébé \-\> Floette \-\> Florges**) tied directly 1-to-1 to which of the 5 Dragon Lords (**Axew, Bagon, Gible, Dratini, or Goomy**) you get from the personality quiz.  
-* **Quiz Slot 1 — Chapter 1 (Verdant Commonwealth):** **Pidgey** / **Starly** / **Pikipek** (3-Stage Flying Physical Scout)  
-* **Quiz Slot 2 — Chapter 2 (Cleft Mountain):** **Abra** / **Ralts** / **Solosis** (3-Stage Psychic Special Mage)  
-* **Quiz Slot 3 — Chapter 4 (Berry Orchards):** **Elekid** / **Pawmi** (Strictly 2 options — 3-Stage Electric Physical Striker)  
-* **Quiz Slot 4 — Chapter 8 (Sand Kingdom Dunes):** **Geodude** / **Roggenrola** (Strictly 2 options — 3-Stage Rock Physical Tank)  
-* **Quiz Slot 5 — Chapter 11 (Fire Kingdom Coast):** **Combusken** / **Monferno** (Stage 2 Fire/Fighting Offensive Attacker)  
-* **Quiz Slot 6 — Chapter 14 (Ancient Spire Island):** **Gloom** (Oddish line) / **Weepinbell** (Bellsprout line) (Stage 2 Grass/Poison Specialist)  
-* **Quiz Slot 7 — Chapter 15 (Inside Dragon Spire):** **Clefairy** / **Jigglypuff** (Wigglytuff line) (Stage 2 Fairy Support)  
-* **Quiz Slot 8 — Chapter 16 (Ice Kingdom Shore):** **Piloswine** (Swinub line) / **Vanillish** (Vanillite line) (Stage 2 Ice Specialist)
+1. **Dragon Lord (`Axew` / `Gible` / `Dratini` / `Bagon` / `Goomy`):** Force-deployed main protagonist (`Lv. 1`).
+2. **Quaxly (`0912 -> 0913 -> 0914`):** Hometown sibling & balanced physical Water striker (`Lv. 1`, Prologue).
+3. **Flabebe (`0669 -> 0670 -> 0671`):** Hometown friend & Fairy ranged healer/mage (`Lv. 1`, Prologue; flower color matched to `{lord}`).
+4. **Quaquaval (`mentor_quaquaval`, `0914`):** Retired Royal Guard father & `Lv. 12` Water/Fighting Jagen mentor (joins Chapter 2; falls at end of Act 2).
+5. **Smoliv (`0928 -> 0929 -> 0930`):** Rescued Grass/Normal ranged mage & off-healer (`Lv. 2`, joins Chapter 2).
+6. **Machop (`0066 -> 0067 -> 0068`):** Mountain cave guide & high-HP Fighting brawler (`Lv. 3`, joins Chapter 3).
+7. **Slakoth (`0287 -> 0288 -> 0289`):** Optional Paralogue 1 `Lv. 1` Aptitude (`Hidden Potential` `+20%` growths) trainee.
+8. **Starly (`0396 -> 0397 -> 0398`):** Hometown Flying physical scout who followed your expedition (`Lv. 4`, joins mid-battle in Chapter 4).
+9. **Caterpie (`0010 -> 0011 -> 0012`):** Hometown Bug -> Bug/Flying status & special mage who followed your expedition (`Lv. 4`, joins mid-battle in Chapter 4).
+10. **Pawmi (`0921 -> 0922 -> 0923`):** Hometown Electric -> Electric/Fighting striker who followed your expedition (`Lv. 4`, joins mid-battle in Chapter 4).
+11. **Honedge (`0679 -> 0680 -> 0681`):** Valiant Steel/Ghost envoy granted by King Serperior after Chapter 4; stays loyal after Act 2's betrayal (`Lv. 5`).
+12. **Sandile (`0551 -> 0552 -> 0553`):** Sharp-eyed Ground/Dark envoy from the Sand Kingdom granted after Chapter 4 (`Lv. 5`).
 
-# **5\. Complete Chapter-by-Chapter Story & Recruitment Roadmap**
+## **4.2 Acts 2-5 Regional, Paralogue & Endgame Recruits**
+* **Acts 2-4 Curated Regional & Paralogue Pool:** Includes `Eevee` (Lv. 15 branching Stone evolution in Act 2 alongside rescuing `Kecleon` to unlock Overworld Kecleon Shops), `Tinkatink`, `Duskull`, `Magnemite`, `Poliwag`, `Geodude`, `Abra`, `Ralts`, `Torchic`/`Chimchar`, `Swinub`, `Vanillite`, `Nidoran` lines, `Teddiursa`, `Hoppip`, `Oricorio` (Dancer), `Seedot` (convertible Forest scout), and `Gastly` (convertible Paralogue defector).
+* **Act 5 Rift Recruits:** **Dragapult** (`dreepy_line`, Stage 3) and **Hydreigon** (`deino_line`, `convertible` Stage 3).
 
-## **Main Story Recruits by Chapter**
-
-* **Prologue (Western Beach):** Dragon Lord (**Axew / Gible / Goomy / Bagon / Dratini**), **Piplup**, and **Flabébé** (purely cosmetic **Red / Orange / Yellow / Blue / White Flower** tied directly to your Dragon Lord)  
-* **Chapter 1 (Verdant Commonwealth):** **Pidgey / Starly / Pikipek** (Quiz Slot 1\) & **Sewaddle**  
-* **Chapter 2 (Cleft Mountain):** **Abra / Ralts / Solosis** (Quiz Slot 2\)  
-* **Chapter 3 (River Shrine):** None (Poliwag moved later in the story)  
-* **Chapter 4 (Berry Orchards):** **Elekid / Pawmi** (Quiz Slot 3\)  
-* **Chapter 5 (Northern Mountain Pass):** **Duskull**  
-* **Chapter 6 (Border Fortress Defense):** None (Forest Tribe & Dreepy saga moved later to Act 3\)  
-* **Chapter 7 (Sand Kingdom Ruins):** **Tinkatink** & **Machop**  
-* **Chapter 8 (Sand Kingdom Dunes — Boss: Krokorok):** **Geodude / Roggenrola** (Quiz Slot 4). You must defeat Sand Kingdom border captain **Krokorok** to clear the dunes and reach the oasis.  
-* **Chapter 9 (Sand Kingdom Oasis):** **Krokorok** (Sandile line — joins after reaching Sultan Hippowdon and realizing you are the good guys) & **Poliwag**  
-* **Chapter 10 (Sand Kingdom Fortress — Stage 2 Evolutions Unlock):** **Magnemite**  
-* **Chapter 11 (Fire Kingdom Coast — Post-Ch. 10 Stage 2 Joins Begin):** **Combusken / Monferno** (Quiz Slot 5\)  
-* **Chapter 12 (Volcano Ridge):** None (Machop line kept exclusively in Chapter 7\)  
-* **Chapter 13 (Great Furnace):** None  
-* **Chapter 14 (Ancient Spire Island):** **Gloom / Weepinbell** (Stage 2 of Oddish / Bellsprout — Quiz Slot 6\)  
-* **Chapter 15 (Inside Dragon Spire):** **Clefairy / Jigglypuff (Wigglytuff)** (Stage 2 — Quiz Slot 7\)  
-* **Chapter 16 (Ice Kingdom Shore):** **Piloswine / Vanillish** (Stage 2 of Swinub / Vanillite — Quiz Slot 8\)  
-* **Chapter 17 (Frozen Peaks — Baxcalibur Rescue):** None (Beldum removed)  
-* **Chapter 18 (Forest Tribe Border — Moved Dreepy Saga Begins):** **Seedot / Nuzleaf** (Seedot line — joins when you first enter the Forest Tribe, evolving into Dark-type **Shiftry** by the end of the game)  
-* **Chapter 19 (Forest White Shrine — Forest Tribe Unites):** **Drakloak** (Stage 2 of **Dreepy**)  
-* **Chapters 20–25 (Mountain Pass to The Abyss Finale):** None
-
-## **Optional Paralogue Recruits**
-
-* **Paralogue 1 (After Ch. 3):** **Slakoth**  
-* **Paralogue 2 (After Ch. 6 — Dedicated Kecleon Rescue):** Rescue **Master Merchant Kecleon** to unlock Overworld Shops (standalone mission)  
-* **Paralogue 3 (After Ch. 7):** **Eevee**  
-* **Paralogue 4 (After Ch. 8):** **Nidoran♂** OR **Nidoran♀**  
-* **Paralogue 5 (Early Act 3, After Ch. 14 — Dancer Paralogue):** **Oricorio** (Special "Dancer" Pokémon that refreshes an ally to act again; replaces removed Teddiursa)  
-* **Paralogue 6 (After Ch. 15):** **Skiploom** (Stage 2 of Hoppip)  
-* **Paralogue 7 (After Ch. 19):** **Haunter** (Stage 2 of Gastly)
-
-# **6\. Single-Playthrough Playable Roster Summary & Typing Dispersion**
-
-## **6.1 Total Playable Lines in a Single Playthrough (24 Total Units)**
-
-In a single playthrough, a player can recruit up to **26 playable Pokémon lines** (20 from the Main Story \+ 6 from Optional Paralogues):
-
-* **Fixed Main Story Recruits (11 Units):**  
-  * **Piplup** \-\> Prinplup \-\> Empoleon (Prologue — Water / Steel)  
-  * **Flabébé** \-\> Floette \-\> Florges (Prologue — Fairy)  
-  * **Sewaddle** \-\> Swadloon \-\> Leavanny (Ch. 1 — Bug / Grass)  
-  * **Duskull** \-\> Dusclops \-\> Dusknoir (Ch. 5 — Ghost)  
-  * **Tinkatink** \-\> Tinkatuff \-\> Tinkaton (Ch. 7 — Steel / Fairy)  
-  * **Machop** \-\> Machoke \-\> Machamp (Ch. 7 — Fighting)  
-  * **Krokorok** \-\> Krookodile (Ch. 9 — Ground / Dark)  
-  * **Poliwag** \-\> Poliwhirl \-\> Poliwrath (Ch. 9 — Water / Fighting)  
-  * **Magnemite** \-\> Magneton \-\> Magnezone (Ch. 10 — Electric / Steel)  
-  * **Drakloak** \-\> Dragapult (Ch. 19 — Dragon / Ghost)  
-  * **Seedot / Nuzleaf** \-\> Shiftry (Ch. 18 — Grass / Dark)  
-* **Personality Quiz Main Story Recruits (9 Units — 1 Dragon Lord \+ 8 Quiz Slots):**  
-  * **Dragon Lord (Prologue):Axew** (Dragon) OR **Gible** (Dragon/Ground) OR **Goomy** (Dragon) OR **Bagon** (Dragon/Flying) OR **Dratini** (Dragon/Flying)  
-  * **Quiz Slot 1 (Ch. 1):Pidgey** OR **Starly** OR **Pikipek** (Normal / Flying)  
-  * **Quiz Slot 2 (Ch. 2):Abra** (Psychic) OR **Ralts** (Psychic/Fairy) OR **Solosis** (Psychic)  
-  * **Quiz Slot 3 (Ch. 4):Elekid** (Electric) OR **Pawmi** (Electric / Fighting)  
-  * **Quiz Slot 4 (Ch. 8):Geodude** (Rock / Ground) OR **Roggenrola** (Rock)  
-  * **Quiz Slot 5 (Ch. 11):Combusken** OR **Monferno** (Fire / Fighting)  
-  * **Quiz Slot 6 (Ch. 14):Gloom** OR **Weepinbell** (Grass / Poison)  
-  * **Quiz Slot 7 (Ch. 15):Clefairy** (Fairy) OR **Jigglypuff** (Normal / Fairy)  
-  * **Quiz Slot 8 (Ch. 16):Piloswine** (Ice / Ground) OR Vanillish (Ice)  
-* **Optional Paralogue Recruits (6 Units — Note: Paralogue 2 is the standalone Kecleon Shop Rescue):**  
-  * **Slakoth** \-\> Vigoroth \-\> Slaking (Paralogue 1 — Normal)  
-  * **Eevee** \-\> 8-Way Eeveelution (Paralogue 3 — Normal \-\> Water / Electric / Fire / Psychic / Dark / Grass / Ice / Fairy)  
-  * **Nidoran♂** \-\> Nidoking OR **Nidoran♀** \-\> Nidoqueen (Paralogue 4 — Poison / Ground)  
-  * **Oricorio** (Paralogue 5 — Fire/Flying, Electric/Flying, Psychic/Flying, or Ghost/Flying Dancer)  
-  * **Skiploom** \-\> Jumpluff (Paralogue 6 — Grass / Flying)  
-  * **Haunter** \-\> Gengar (Paralogue 7 — Ghost / Poison)
-
-## **6.2 Typing Dispersion Across a Single Playthrough (Final Evolution Stages)**
-
-* **Fairy (3–5 Units):** Flabébé (Fairy), Tinkatink (Steel/Fairy), Clefairy/Jigglypuff (Fairy or Normal/Fairy); plus optional Ralts (Psychic/Fairy) and Sylveon.  
-* **Flying (3–5 Units):** Pidgey/Starly/Pikipek (Normal/Flying), Oricorio (Flying \+ Style), Skiploom (Grass/Flying); plus optional Bagon/Dratini (Dragon/Flying).  
-* **Steel (3 Units):** Piplup \-\> Empoleon (Water/Steel), Tinkatink (Steel/Fairy), Magnemite (Electric/Steel).  
-* **Ghost (3–4 Units):** Duskull (Ghost), Drakloak (Dragon/Ghost), Haunter (Ghost/Poison); plus optional Sensu Oricorio (Ghost/Flying).  
-* **Grass (4–5 Units):** Sewaddle (Bug/Grass), Gloom/Weepinbell (Grass/Poison), Skiploom (Grass/Flying), and Seedot \-\> Shiftry (Grass/Dark); plus optional Leafeon.  
-* **Poison (3 Units):** Gloom/Weepinbell (Grass/Poison), Nidoran♂/♀ \-\> Nidoking/Nidoqueen (Poison/Ground), Haunter (Ghost/Poison).  
-* **Fighting (2–4 Units):** Machop (Fighting), Combusken/Monferno (Fire/Fighting); plus Poliwag \-\> Poliwrath (Water/Fighting) and optional Pawmi (Electric/Fighting).  
-* **Normal (2–3 Units):** Pidgey/Starly/Pikipek (Normal/Flying), Slakoth (Normal); plus optional Jigglypuff (Normal/Fairy) and base Eevee.  
-* **Dragon (2 Units):** Dragon Lord (Axew/Gible/Goomy/Bagon/Dratini) and Drakloak (Dragon/Ghost).  
-* **Water (2–3 Units):** Piplup (Water/Steel), Poliwag (Water/Fighting); plus optional Vaporeon.  
-* **Electric (2–4 Units):** Elekid/Pawmi (Electric or Electric/Fighting), Magnemite (Electric/Steel); plus optional Jolteon and Pom-Pom Oricorio.  
-* **Ground (2–5 Units):** Krokorok \-\> Krookodile (Ground/Dark) and Nidoran♂/♀ \-\> Nidoking/Nidoqueen (Poison/Ground); plus optional Gible (Dragon/Ground), Geodude (Rock/Ground), and Piloswine (Ice/Ground).  
-* **Psychic (1–3 Units):** Abra/Ralts/Solosis (Psychic); plus optional Espeon and Pa'u Oricorio.  
-* **Fire (1–3 Units):** Combusken/Monferno (Fire/Fighting); plus optional Flareon and Baile Oricorio.  
-* **Ice (1–2 Units):** Piloswine/Vanillish (Ice/Ground or Ice); plus optional Glaceon.  
-* **Rock (1 Unit):** Geodude/Roggenrola (Rock/Ground or Rock).  
-* **Bug (1 Unit):** Sewaddle (Bug/Grass).  
-* **Dark (2–3 Units):** **Krokorok \-\> Krookodile** (Ground/Dark) and **Seedot \-\> Nuzleaf \-\> Shiftry** (Grass/Dark) (2 guaranteed Dark units in every playthrough, plus optional **Umbreon**).
-
-## **6.3 Unit Archetypes & Tactical Roles Breakdown**
-
-### **Starting Trio (Prologue Core)**
-
-* **Dragon Lord (Axew / Gible / Goomy / Bagon / Dratini):** **Frontline Physical Attacker / All-Rounder Lord** (5–6 Mov). High Attack and dependable bulk; leads the charge at 1-range and unlocks Dragon resonance skills to pierce boss barriers (Axew, Gible, and Bagon are pure physical powerhouses, while Dratini and Goomy can also flex into mixed offense and special tanking).  
-* **Piplup (-\> Prinplup \-\> Empoleon):** **Special Tank / 2-Range Special Attacker** (5 Mov, Water \-\> Water/Steel). High Sp. Atk and Sp. Def paired with 10 resistances upon reaching Empoleon; shrugs off enemy ranged magic and retaliates at 2-range.  
-* **Flabébé (-\> Floette \-\> Florges):** **Dedicated Healer / Cleric & Special Wall** (5 Mov, Fairy). Pure backline white mage with massive Sp. Def and a full toolkit of single-target, 2-range, AoE, and status-curing heals.
-
-### **Fixed Main Story Recruits (9 Units)**
-
-* **Sewaddle (-\> Swadloon \-\> Leavanny — Ch. 1):** **Fast Physical Flanker & Speed Debuffer** (5 Mov, Bug/Grass). Agile 1-range striker that uses forest terrain for evasion and slows enemies with String Shot / Sticky Web.  
-* **Duskull (-\> Dusclops \-\> Dusknoir — Ch. 5):** **Levitate Defensive Tank & Status Hexer** (5 Mov, Ghost). High-Defense/Sp. Def choke-point blocker that floats over hazards and cripples physical bruisers with Will-O-Wisp burns.  
-* **Tinkatink (-\> Tinkatuff \-\> Tinkaton — Ch. 7):** **Anti-Armor Physical Bruiser** (5 Mov, Steel/Fairy). Elite defensive typing (2 immunities, 9 resistances) paired with her high-Might Gigaton Hammer to crack Rock, Ice, and Dark foes.  
-* **Machop (-\> Machoke \-\> Machamp — Ch. 7):** **Pure Physical Wall-Breaker** (5 Mov, Fighting). High HP and massive Attack built to smash through Ironscale\&apos;s Steel, Rock, and Normal heavy armor at 1-range.  
-* **Krokorok (-\> Krookodile — Ch. 9):** **Mobile Physical Sweeper** (5–6 Mov, Ground/Dark). High-Attack, solid-Speed offensive frontliner with dual immunities to Electric and Psychic.  
-* **Poliwag (-\> Poliwhirl \-\> Poliwrath — Ch. 9):** **Amphibious Physical Tank / Brawler** (5 Mov, Water \-\> Water/Fighting). Crosses water at 1 Mov cost; unlike Piplup (who is a Special tank/attacker), Poliwag promotes into a bulky 1-range physical Fighting/Water bruiser with Drain Punch.  
-* **Magnemite (-\> Magneton \-\> Magnezone — Ch. 10):** **Armored 2-Range Special Artillery** (4–5 Mov, Electric/Steel). High Defense and Sp. Atk with 11 resistances; acts as a tanky 2-range turret that shoots down enemy fliers and armor.  
-* **Seedot / Nuzleaf (-\> Shiftry — Ch. 18):** **Woodland Mixed Ambusher** (5–6 Mov, Grass/Dark). Fast offensive striker capable of hitting at both 1-range (Leaf Blade, Knock Off) and 2-range (Dark Pulse, Hurricane).  
-* **Drakloak (-\> Dragapult — Ch. 19):** **Hyper-Speed Mixed Assassin** (6–7 Mov, Dragon/Ghost). Fastest unit on the roster; phases through terrain to double-attack and snipe enemy backline mages.
-
-### **Personality Quiz Main Story Recruits (8 Slots)**
-
-* **Quiz Slot 1 — Pidgey / Starly / Pikipek (Ch. 1):** **6-Mov Flying Physical Scout** (Normal/Flying). Classic Pegasus Knight equivalent; ignores ground terrain penalties to flank mages, rescue allies, and block distant stairs.  
-* **Quiz Slot 2 — Abra / Ralts / Solosis (Ch. 2):** **2-Range Psychic Special Mage** (Psychic or Psychic/Fairy). High-Sp. Atk ranged magic nuker that melts low-Sp. Def physical tanks (Abra is a fast glass cannon, Ralts adds Fairy/secondary heal utility, Solosis is a high-HP magic tank).  
-* **Quiz Slot 3 — Elekid / Pawmi (Ch. 4):** **Fast Physical Electric Striker** (5–6 Mov, Electric or Electric/Fighting). Melee-focused Electric brawlers that outspeed and double-attack enemy Flying and Water units at 1-range.  
-* **Quiz Slot 4 — Geodude / Roggenrola (Ch. 8):** **4-Mov Heavy Physical Tank** (Rock/Ground or Rock). Classic Armor Knight / General; slow and vulnerable to Special moves, but boasts massive Defense and Sturdy to wall physical choke points.  
-* **Quiz Slot 5 — Combusken / Monferno (Ch. 11):** **Fast Mixed Offensive Striker** (5–6 Mov, Fire/Fighting). High-Speed glass-cannon martial artists that can seamlessly counter at 1-range (Fighting/Fire physical) and 2-range (Fire special).  
-* **Quiz Slot 6 — Gloom / Weepinbell (Ch. 14):** **Status Inflictor & Drain Specialist** (5 Mov, Grass/Poison). Tactical utility units that spread Sleep Powder, Stun Spore, and Poison while sustaining themselves with Giga Drain.  
-* **Quiz Slot 7 — Clefairy / Jigglypuff (Ch. 15):** **Bulky Fairy Support & Secondary Cleric** (5 Mov, Fairy or Normal/Fairy). High-HP mid-line supports with secondary heals (Moonlight, Wish), Sing sleep control, and Encore buffs.  
-* **Quiz Slot 8 — Piloswine / Vanillish (Ch. 16):** **Anti-Dragon & Anti-Flier Ice Specialist** (4–5 Mov, Ice/Ground or Ice). Late-game dragon/flier counters (Piloswine \-\> Mamoswine is a bulky physical tank-buster; Vanillish \-\> Vanilluxe is a 2-range Special blizzard cannon).
-
-### **Optional Paralogue Recruits (6 Units)**
-
-* **Slakoth (-\> Vigoroth \-\> Slaking — Paralogue 1):** **"Aptitude" Trainee Juggernaut** (4–5 Mov, Normal). Starts weak at Lv. 1, but its \+20% growth rate passive turns it into the highest-stat physical boss-killer in the game if trained.  
-* **Eevee (-\> 8-Way Eeveelution — Paralogue 3):** **Customizable Flex Wildcard** (5–6 Mov). Evolves at Lv. 15 to patch any missing team role or elemental type (Vaporeon/Umbreon for tanking, Jolteon/Espeon/Glaceon for 2-range sweeping, Flareon/Leafeon for physical offense, Sylveon for special support).  
-* **Nidoran♂ / Nidoran♀ (-\> Nidoking / Nidoqueen — Paralogue 4):** **Versatile Mixed Bruiser** (5 Mov, Poison/Ground). Balanced frontline all-rounders with deep elemental TM coverage (Nidoking leans offensive mixed sweeper; Nidoqueen leans bulky tank).  
-* **Oricorio (Paralogue 5):** **Dedicated "Dancer" / Turn Refresher** (6 Mov, Flying \+ Fire/Electric/Psychic/Ghost). Uses dance moves to refresh an adjacent ally so they can move and act a second time on the same Player Phase.  
-* **Skiploom (-\> Jumpluff — Paralogue 6):** **High-Avoid Flying Support Scout** (6 Mov, Grass/Flying). Ultra-fast utility flier that drops Leech Seed, Sleep Powder, and Tailwind buffs while dodging attacks.  
-* **Haunter (-\> Gengar — Paralogue 7):** **Levitate 2-Range Special Glass Cannon** (6 Mov, Ghost/Poison). High Speed and Sp. Atk with Levitate omni-traversal across chasms, lava, and water; the pure offensive counterpart to Duskull.
+## **4.3 Strict Enemy Factions**
+* **Outlaws & Wild Beasts (Act 1 Early Maps):** `Galarian Zigzagoon`, `Impidimp`, `Zubat`, `Venipede`, `Rolycoly`, `Timburr`, `Croagunk`, `Stufful`, `Skarmory`.
+* **Steel Kingdom Legions (Acts 2-4):** `Pawniard -> Bisharp -> Kingambit`, `Aron -> Lairon -> Aggron`, `Rookidee -> Corvisquire -> Corviknight`, `Gothita -> Gothorita -> Gothitelle`, `Spheal -> Sealeo -> Walrein`, `Elekid -> Electabuzz -> Electivire`, `Tynamo -> Eelektrik -> Eelektross`, `Spiritomb`, and convertible rival `Deino -> Zweilous -> Hydreigon`.
+* **Space-Time Rift Forces (Chapter 4 Ambush & Act 5 Endgame):**
+  * **Ancient Paradox Pokemon:** `Great Tusk` (`0984`), `Scream Tail` (`0985`), `Brute Bonnet` (`0986`), `Flutter Mane` (`0987`), `Slither Wing` (`0988`), `Sandy Shocks` (`0989`), `Roaring Moon` (`1005`).
+  * **Future Paradox Pokemon:** `Iron Treads` (`0990`), `Iron Bundle` (`0991`), `Iron Hands` (`0992`), `Iron Jugulis` (`0993`), `Iron Moth` (`0994`), `Iron Thorns` (`0995`), `Iron Valiant` (`1006`).
+  * **Rift Masterminds:** **Hoopa Confined** (`0720`) -> **Hoopa Unbound** (`0720/0001`).

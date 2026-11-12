@@ -164,6 +164,7 @@ export interface ItemEffectPayload {
   healFlat?: number;
   healFull?: boolean;
   cureStatus?: boolean;
+  cureSpecificStatus?: StatusCondition;
   revivePercentHp?: number;
   promotionMinLevel?: number;
   promotionFromStage?: 1 | 2;
@@ -195,15 +196,8 @@ export const RECRUIT_CATEGORIES = [
   'dragon_lord',
   'story_core',
   'story_chapter',
-  'quiz_slot_1',
-  'quiz_slot_2',
-  'quiz_slot_3',
-  'quiz_slot_4',
-  'quiz_slot_5',
-  'quiz_slot_6',
-  'quiz_slot_7',
-  'quiz_slot_8',
   'paralogue',
+  'convertible_enemy',
   'ally_npc',
   'enemy_only',
 ] as const;

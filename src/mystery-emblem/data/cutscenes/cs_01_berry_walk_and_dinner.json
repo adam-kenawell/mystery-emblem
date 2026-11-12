@@ -1,0 +1,179 @@
+{
+  "id": "cs_01_berry_walk_and_dinner",
+  "title": "Dinner in the Verdant Village",
+  "music": "in_the_morning_sun",
+  "location": "orchard_twilight",
+  "banner": "Orchard Trail - Verdant Kingdom",
+  "lighting": "sunset",
+  "camera": { "x": 8.5, "y": 6 },
+  "cast": [
+    { "id": "lord", "who": { "kind": "lord" } },
+    { "id": "partner", "who": { "kind": "partner" } },
+    { "id": "healer", "who": { "kind": "healer" } },
+    { "id": "mentor", "who": { "kind": "mentor" } },
+    { "id": "healer_parent", "who": { "kind": "healer_parent" } }
+  ],
+  "placements": [
+    { "id": "lord", "x": 6, "y": 6, "facing": "Right" },
+    { "id": "partner", "x": 5, "y": 5, "facing": "Right" },
+    { "id": "healer", "x": 5, "y": 7, "facing": "Right" },
+    { "id": "mentor", "x": 8, "y": 4, "facing": "Down", "hidden": true },
+    { "id": "healer_parent", "x": 9, "y": 4, "facing": "Down", "hidden": true }
+  ],
+  "beats": [
+    {
+      "id": "walk_in",
+      "actions": [
+        { "type": "walk", "who": "lord", "path": [[9, 6]], "speed": 2.8, "facing": "Right" },
+        { "type": "walk", "who": "partner", "path": [[8, 5]], "speed": 3.1, "facing": "DownRight" },
+        { "type": "walk", "who": "healer", "path": [[8, 7]], "speed": 2.8, "facing": "UpRight" }
+      ],
+      "advance": { "kind": "seconds", "seconds": 0.85 }
+    },
+    {
+      "id": "quaxly_berries",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Joyous",
+        "side": "left",
+        "text": "Look at the sheen on these Oran Berries! Not a single bruise in the whole basket, {lord}!"
+      },
+      "actions": [
+        { "type": "hop", "who": "partner", "count": 2 },
+        { "type": "emote", "who": "partner", "emote": "music", "duration": 1.1 }
+      ]
+    },
+    {
+      "id": "flabebe_tease",
+      "say": {
+        "speaker": "healer",
+        "emotion": "Happy",
+        "side": "right",
+        "text": "Only because {lord} caught the branch before you shook half of them onto your own crest, {partner}."
+      }
+    },
+    {
+      "id": "lord_hungry",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Happy",
+        "side": "left",
+        "text": "Come on, you two. Dad and Florges will have the stewpot boiling by the time we reach home."
+      }
+    },
+    {
+      "id": "arrive_home",
+      "waitForActions": true,
+      "music": { "kind": "song", "song": "heartwarming" },
+      "actions": [
+        {
+          "type": "location",
+          "location": "sanctuary_glade",
+          "transition": "black",
+          "banner": "Family Homestead - Verdant Kingdom",
+          "camera": { "x": 7.5, "y": 5.5 },
+          "placements": [
+            { "id": "mentor", "x": 7, "y": 4, "facing": "Down" },
+            { "id": "healer_parent", "x": 8, "y": 4, "facing": "Down" },
+            { "id": "lord", "x": 7, "y": 6, "facing": "Up" },
+            { "id": "partner", "x": 6, "y": 6, "facing": "UpRight" },
+            { "id": "healer", "x": 9, "y": 6, "facing": "UpLeft" }
+          ]
+        }
+      ],
+      "say": {
+        "speaker": "healer_parent",
+        "emotion": "Happy",
+        "side": "right",
+        "text": "Welcome home, little blossoms! Wash up and sit down while the sweet-berry stew is piping hot."
+      }
+    },
+    {
+      "id": "quaxly_dinner_brag",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Happy",
+        "side": "left",
+        "text": "Wait till you taste the ones I picked from the top bough, Dad! Florges, save me the biggest bowl!"
+      },
+      "actions": [
+        { "type": "hop", "who": "partner", "count": 1 }
+      ]
+    },
+    {
+      "id": "quaquaval_warmth",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Happy",
+        "side": "left",
+        "text": "Haha, pace yourself, {partner}. Plenty for all five of us, though {lord} looks ready to eat the ladle too."
+      }
+    },
+    {
+      "id": "flabebe_dinner",
+      "say": {
+        "speaker": "healer",
+        "emotion": "Joyous",
+        "side": "right",
+        "text": "Mom's herb bread makes everything better! Even {partner}'s bragging."
+      },
+      "actions": [
+        { "type": "emote", "who": "healer_parent", "emote": "heart", "duration": 1.0 }
+      ]
+    },
+    {
+      "id": "after_dinner_shift",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Determined",
+        "side": "right",
+        "text": "Now that every bowl is clean, grab your gear and meet me out on the training pitch, all three of you."
+      },
+      "actions": [
+        { "type": "walk", "who": "mentor", "path": [[7, 5]], "speed": 2.4, "facing": "Down" }
+      ]
+    },
+    {
+      "id": "quaxly_surprised",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Surprised",
+        "side": "left",
+        "text": "Combat drills right after dinner?! Why the sudden rush, Dad?"
+      },
+      "actions": [
+        { "type": "emote", "who": "partner", "emote": "question", "duration": 0.9 }
+      ]
+    },
+    {
+      "id": "quaquaval_excuse",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Normal",
+        "side": "right",
+        "text": "You can never be too prepared, {partner}. Keep your footwork sharp and you will never be caught off guard."
+      }
+    },
+    {
+      "id": "florges_knowing_glance",
+      "say": {
+        "speaker": "healer_parent",
+        "emotion": "Worried",
+        "side": "right",
+        "text": "Go on, {healer}. Stay close to {lord} and {partner}, and practice your healing light well."
+      }
+    },
+    {
+      "id": "quaquaval_aside",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Worried",
+        "side": "right",
+        "text": "(I have known since the day I found {lord}'s egg... Something ancient stirs inside that child, and {lord} must know how to fight.)"
+      },
+      "actions": [
+        { "type": "face", "who": "mentor", "toward": "lord" }
+      ]
+    }
+  ]
+}

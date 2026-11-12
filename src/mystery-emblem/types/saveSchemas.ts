@@ -125,8 +125,7 @@ export interface CampaignState {
   lordInstanceId: string | null;
   partnerInstanceId: string | null;
   healerInstanceId?: string | null;
-  advisorInstanceId?: string | null;
-  quizSeeds: QuizRecruitSeeds;
+  quizSeeds?: QuizRecruitSeeds;
   kecleonShopsUnlocked: boolean;
   completedChapterIds: string[];
   campaignMode?: CampaignMode;
@@ -142,7 +141,7 @@ export interface CampaignState {
   demoCompleted?: boolean;
 }
 
-export const CURRENT_SAVE_SCHEMA_VERSION = 1 as const;
+export const CURRENT_SAVE_SCHEMA_VERSION = 2 as const;
 
 export interface SaveData {
   schemaVersion: typeof CURRENT_SAVE_SCHEMA_VERSION;

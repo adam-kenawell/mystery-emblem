@@ -144,6 +144,7 @@ export function resolveEnemySpawnsForMap(
       droppableItemId: spawn.droppableItemId ?? null,
       aiMode: spawn.aiMode,
       ...(spawn.sparring ? { sparring: true } : {}),
+      ...(spawn.friendlyBout ? { friendlyBout: true } : {}),
       ...(!spawn.seedKey && spawn.equippedMoveIds
         ? { equippedMoveIds: [...spawn.equippedMoveIds] }
         : {}),
