@@ -22,9 +22,7 @@
     { "id": "mentor", "x": 7, "y": 4, "facing": "Down" },
     { "id": "machop", "x": 12, "y": 5, "facing": "Left", "hidden": true }
   ],
-  "props": [
-    { "id": "fire", "kind": "campfire", "x": 7, "y": 5 }
-  ],
+  "props": [{ "id": "fire", "kind": "campfire", "x": 7, "y": 5 }],
   "beats": [
     {
       "id": "campfire_1",
@@ -34,9 +32,7 @@
         "side": "right",
         "text": "Warming my leaves by a real campfire with all of you feels like a dream... Thank you again for letting me tag along!"
       },
-      "actions": [
-        { "type": "emote", "who": "smoliv", "emote": "heart", "duration": 1.0 }
-      ]
+      "actions": [{ "type": "emote", "who": "smoliv", "emote": "heart", "duration": 1 }]
     },
     {
       "id": "campfire_2",
@@ -107,9 +103,7 @@
         "side": "right",
         "text": "Boss Machamp got tied up clearing a rockslide on the high ridge! So I am guiding you through the mountain instead. I know a shortcut tunnel that gets us through fast!"
       },
-      "actions": [
-        { "type": "pose", "who": "machop", "anim": "Attack", "duration": 0.45 }
-      ]
+      "actions": [{ "type": "pose", "who": "machop", "anim": "Attack", "duration": 0.45 }]
     },
     {
       "id": "lord_welcomes_machop",

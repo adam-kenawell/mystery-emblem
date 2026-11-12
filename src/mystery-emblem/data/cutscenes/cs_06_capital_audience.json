@@ -36,9 +36,7 @@
         "side": "right",
         "text": "Welcome home to the Emerald Capital, old friend. And well fought at our gates, young {lord}."
       },
-      "actions": [
-        { "type": "walk", "who": "serperior", "path": [[7, 4]], "speed": 2.0, "facing": "Down" }
-      ]
+      "actions": [{ "type": "walk", "who": "serperior", "path": [[7, 4]], "speed": 2, "facing": "Down" }]
     },
     {
       "id": "quaquaval_kneels",
@@ -133,9 +131,7 @@
         "side": "left",
         "text": "Honedge, Sandile, welcome to the squad! Next stop: the frozen peaks of the Ice Kingdom to uncover the truth of the past!"
       },
-      "actions": [
-        { "type": "aura", "who": "lord", "duration": 1.1 }
-      ]
+      "actions": [{ "type": "aura", "who": "lord", "duration": 1.1 }]
     }
   ]
 }

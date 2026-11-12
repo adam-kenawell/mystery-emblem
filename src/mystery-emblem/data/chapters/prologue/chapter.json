@@ -14,150 +14,105 @@
   "recommendedLevel": 1,
   "deploymentCap": 3,
   "skipPrepPhase": true,
-  "preStoryCutsceneIds": [
-    "cs_00_ancient_dragon_war",
-    "cs_01_berry_walk_and_dinner"
-  ],
+  "preStoryCutsceneIds": ["cs_00_ancient_dragon_war","cs_01_berry_walk_and_dinner"],
   "chainsDirectlyIntoNodeId": "chapter_01",
   "width": 18,
   "height": 12,
   "rows": [
-    "X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1",
+    "X:1 X:1 X:1 X:1 F:15 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 F:10 X:1 X:1 X:1",
     "X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2",
-    "T:2 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:2",
-    "T:2 F:28 F:28 F:124 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:124 F:28 F:28 T:2",
-    "T:2 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:2",
-    "T:2 F:28 F:28 F:28 F:28 F:28 F:126 F:126 F:126 F:126 F:126 F:126 F:28 F:28 F:28 F:28 F:28 T:2",
-    "T:2 F:28 F:28 F:28 F:28 F:28 F:126 F:126 F:126 F:126 F:126 F:126 F:28 F:28 F:28 F:28 F:28 T:2",
-    "T:2 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:2",
-    "T:2 F:28 F:28 F:124 F:28 F:28 F:28 T:2 F:28 F:28 T:2 F:28 F:28 F:28 F:124 F:28 F:28 T:2",
-    "T:2 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:2",
-    "T:2 F:28 F:28 F:28 W:39 W:39 F:28 F:28 F:28 F:28 F:28 F:28 W:39 W:39 F:28 F:28 F:28 T:2",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:124 F:28 F:28 F:28 F:28 F:28 F:27 F:28 F:28 F:28 F:28 F:124 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:14 F:28 F:28 F:28 F:28 F:126 F:126 F:126 F:126 F:126 F:126 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:126 F:126 F:126 F:126 F:126 F:126 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:14 F:28 F:28",
+    "F:28 F:28 F:28 F:124 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:124 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:14 F:28 F:28 F:28 F:27 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
     "X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5"
   ],
   "playerSlots": [
-    { "x": 5, "y": 4, "speciesId": "axew" },
-    { "x": 5, "y": 5, "speciesId": "quaxly" },
-    { "x": 4, "y": 6, "speciesId": "flabebe" }
+    {"x":5,"y":4,"speciesId":"axew"},
+    {"x":5,"y":5,"speciesId":"quaxly"},
+    {"x":4,"y":6,"speciesId":"flabebe"}
   ],
   "enemySpawns": [
-    {
-      "id": "prologue_quaquaval",
-      "x": 13,
-      "y": 5,
-      "speciesId": "mentor_quaquaval",
-      "level": 12,
-      "moveIds": ["aqua_jet", "brick_break"],
-      "equippedMoveId": "aqua_jet",
-      "equippedMoveIds": ["aqua_jet"],
-      "heldItemId": null,
-      "aiMode": "wait_until_in_range",
-      "sparring": true
-    }
+    {"id":"prologue_quaquaval","x":13,"y":5,"speciesId":"mentor_quaquaval","level":12,"moveIds":["aqua_jet","brick_break"],"equippedMoveId":"aqua_jet","equippedMoveIds":["aqua_jet"],"heldItemId":null,"aiMode":"wait_until_in_range","sparring":true,"nickname":"Quaquaval"}
   ],
   "reinforcements": [],
   "events": [
     {
-      "id": "ev_prologue_rest_team_turn1",
-      "once": true,
-      "trigger": { "type": "turn_start", "turnNumber": 1, "phase": "player_phase" },
-      "actions": [
-        { "type": "rest_player_units", "exceptPartner": true }
+      "id":"ev_prologue_rest_team_turn1",
+      "once":true,
+      "trigger":{"type":"turn_start","turnNumber":1,"phase":"player_phase"},
+      "actions":[
+        {"type":"rest_player_units","exceptPartner":true}
       ]
     },
     {
-      "id": "ev_prologue_rest_team_turn2",
-      "once": true,
-      "trigger": { "type": "turn_start", "turnNumber": 2, "phase": "player_phase" },
-      "actions": [
-        { "type": "rest_player_units", "exceptLord": true, "exceptHealer": true },
+      "id":"ev_prologue_rest_team_turn2",
+      "once":true,
+      "trigger":{"type":"turn_start","turnNumber":2,"phase":"player_phase"},
+      "actions":[
+        {"type":"rest_player_units","exceptLord":true,"exceptHealer":true},
         {
-          "type": "play_dialogue",
-          "scriptId": "prologue_ranged_and_heal_lesson",
-          "restorePreviousBgmOnClose": true
+          "type":"play_dialogue",
+          "scriptId":"prologue_ranged_and_heal_lesson",
+          "restorePreviousBgmOnClose":true
         }
       ]
     },
     {
-      "id": "ev_prologue_quaquaval_steps_back",
-      "once": true,
-      "trigger": { "type": "turn_start", "turnNumber": 2, "phase": "enemy_phase" },
-      "actions": [
-        { "type": "despawn_units", "unitIds": ["prologue_quaquaval"] }
+      "id":"ev_prologue_quaquaval_steps_back",
+      "once":true,
+      "trigger":{"type":"turn_start","turnNumber":2,"phase":"enemy_phase"},
+      "actions":[
+        {"type":"despawn_units","unitIds":["prologue_quaquaval"]}
       ]
     },
     {
-      "id": "ev_prologue_town_trio_wave",
-      "once": true,
-      "trigger": { "type": "turn_start", "turnNumber": 3, "phase": "player_phase" },
-      "actions": [
+      "id":"ev_prologue_town_trio_wave",
+      "once":true,
+      "trigger":{"type":"turn_start","turnNumber":3,"phase":"player_phase"},
+      "actions":[
         {
-          "type": "spawn_units",
-          "faction": "enemy",
-          "calloutText": "ROUND TWO!",
-          "bannerText": "Village Sparring Squad!",
-          "units": [
-            {
-              "id": "prologue_pawmi",
-              "x": 9,
-              "y": 5,
-              "speciesId": "pawmi",
-              "level": 1,
-              "moveIds": ["nuzzle", "thunder_shock"],
-              "equippedMoveId": "nuzzle",
-              "equippedMoveIds": ["nuzzle"],
-              "heldItemId": null,
-              "aiMode": "wait_until_in_range",
-              "friendlyBout": true
-            },
-            {
-              "id": "prologue_starly",
-              "x": 12,
-              "y": 3,
-              "speciesId": "starly",
-              "level": 1,
-              "heldItemId": null,
-              "aiMode": "wait_until_in_range",
-              "friendlyBout": true
-            },
-            {
-              "id": "prologue_caterpie",
-              "x": 12,
-              "y": 7,
-              "speciesId": "caterpie",
-              "level": 1,
-              "heldItemId": null,
-              "aiMode": "wait_until_in_range",
-              "friendlyBout": true
-            }
+          "type":"spawn_units",
+          "faction":"enemy",
+          "calloutText":"ROUND TWO!",
+          "bannerText":"Village Sparring Squad!",
+          "units":[
+            {"id":"prologue_pawmi","x":9,"y":5,"speciesId":"pawmi","level":1,"moveIds":["nuzzle","thunder_shock"],"equippedMoveId":"nuzzle","equippedMoveIds":["nuzzle"],"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true},
+            {"id":"prologue_starly","x":12,"y":3,"speciesId":"starly","level":1,"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true},
+            {"id":"prologue_caterpie","x":12,"y":7,"speciesId":"caterpie","level":1,"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true}
           ]
         },
         {
-          "type": "play_dialogue",
-          "scriptId": "prologue_town_trio_intro",
-          "restorePreviousBgmOnClose": true
+          "type":"play_dialogue",
+          "scriptId":"prologue_town_trio_intro",
+          "restorePreviousBgmOnClose":true
         },
         {
-          "type": "scripted_attack",
-          "attackerUnitId": "prologue_pawmi",
-          "targetUnitId": "partner",
-          "moveId": "nuzzle"
+          "type":"scripted_attack",
+          "attackerUnitId":"prologue_pawmi",
+          "targetUnitId":"partner",
+          "moveId":"nuzzle"
         },
         {
-          "type": "play_dialogue",
-          "scriptId": "prologue_paralyze_lesson",
-          "restorePreviousBgmOnClose": true
+          "type":"play_dialogue",
+          "scriptId":"prologue_paralyze_lesson",
+          "restorePreviousBgmOnClose":true
         },
         {
-          "type": "give_unit_item",
-          "targetUnitId": "partner",
-          "itemId": "paralyze_heal",
-          "calloutText": "PARALYZE HEAL!"
+          "type":"give_unit_item",
+          "targetUnitId":"partner",
+          "itemId":"paralyze_heal",
+          "calloutText":"PARALYZE HEAL!"
         },
         {
-          "type": "set_objective",
-          "objectiveType": "rout",
-          "objectiveLabel": "Defeat Starly, Caterpie & Pawmi"
+          "type":"set_objective",
+          "objectiveType":"rout",
+          "objectiveLabel":"Defeat Starly, Caterpie & Pawmi"
         }
       ]
     }

@@ -30,9 +30,7 @@
         "side": "right",
         "text": "Psst... {lord}, are you still awake? Every muscle in my wings aches after Dad's drills."
       },
-      "actions": [
-        { "type": "emote", "who": "partner", "emote": "sweat", "duration": 1.0 }
-      ]
+      "actions": [{ "type": "emote", "who": "partner", "emote": "sweat", "duration": 1 }]
     },
     {
       "id": "bedtime_2",
@@ -60,9 +58,7 @@
         "side": "left",
         "text": "Let's get some sleep for now. Tomorrow morning it is our turn to haul fresh water from the watering hole."
       },
-      "actions": [
-        { "type": "emote", "who": "partner", "emote": "sleep", "duration": 1.0 }
-      ]
+      "actions": [{ "type": "emote", "who": "partner", "emote": "sleep", "duration": 1 }]
     },
     {
       "id": "morning_watering_hole",
@@ -118,9 +114,7 @@
         "side": "left",
         "text": "Outlaw thugs at our own watering hole?! Stay behind us, {healer}. Looks like Dad's training pays off right now!"
       },
-      "actions": [
-        { "type": "pose", "who": "lord", "anim": "Attack", "duration": 0.45 }
-      ]
+      "actions": [{ "type": "pose", "who": "lord", "anim": "Attack", "duration": 0.45 }]
     }
   ]
 }

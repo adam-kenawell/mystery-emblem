@@ -11,9 +11,7 @@
   "bgmCue": "apple_woods",
   "objectiveType": "rout",
   "objectiveLabel": "Rescue Smoliv & Rout Raiders",
-  "defeatIfUnitIdsFall": [
-    "ch2_smoliv"
-  ],
+  "defeatIfUnitIdsFall": ["ch2_smoliv"],
   "recommendedLevel": 3,
   "deploymentCap": 4,
   "preStoryCutsceneId": "cs_04_royal_guard_past",
@@ -22,174 +20,54 @@
   "rows": [
     "X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1",
     "X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2",
-    "T:2 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 W:39 F:28 T:142:1 F:28 T:2",
-    "T:2 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:2",
-    "T:2 F:28 F:28 F:124 F:28 F:28 F:28 F:28 F:28 F:28 F:126 F:126 F:126 F:126 F:126 F:126 F:126 F:126 F:126 F:126 F:126 F:126 F:126 T:2",
-    "T:2 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:126 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 T:2",
-    "T:2 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:126 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 T:2",
-    "T:2 F:126 F:126 F:126 F:126 F:126 F:126 F:126 F:126 F:126 F:126 F:28 F:28 T:142:1 F:28 F:28 T:142:1 F:28 F:28 F:28 T:142:1 F:28 F:28 T:2",
-    "T:2 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:126 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 T:2",
-    "T:2 F:28 F:28 F:28 F:124 F:28 F:28 F:28 F:28 F:28 F:126 F:28 F:28 W:39 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:2",
-    "T:2 F:28 F:28 F:28 F:28 F:28 F:28 W:39 F:28 F:28 F:126 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:2",
-    "T:2 F:28 F:28 F:28 F:28 F:28 F:28 W:39 F:28 F:28 F:126 F:126 F:126 F:126 F:126 F:126 F:126 F:126 F:126 F:126 F:126 F:126 F:126 T:2",
-    "T:2 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:124 F:28 F:28 F:28 F:28 F:28 F:28 T:2",
-    "T:2 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 W:39 F:28 T:142:1 F:28 T:2",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 T:74 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:60 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 T:58 F:28 F:28 F:28 T:58 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:58 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:60 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:58 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:58 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 T:58 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:74 T:58 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:60 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 T:74 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:58 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:58 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:58 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
     "X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5"
   ],
   "playerSlots": [
-    {
-      "x": 3,
-      "y": 7,
-      "speciesId": "axew"
-    },
-    {
-      "x": 3,
-      "y": 6,
-      "speciesId": "mentor_quaquaval"
-    },
-    {
-      "x": 2,
-      "y": 7,
-      "speciesId": "quaxly"
-    },
-    {
-      "x": 2,
-      "y": 8,
-      "speciesId": "flabebe"
-    }
+    {"x":3,"y":7,"speciesId":"axew"},
+    {"x":3,"y":6,"speciesId":"mentor_quaquaval"},
+    {"x":2,"y":7,"speciesId":"quaxly"},
+    {"x":2,"y":8,"speciesId":"flabebe"}
   ],
-  "recruitment": {
-    "fixedSpeciesIds": [
-      "mentor_quaquaval"
-    ],
-    "joinLevel": 12,
-    "scaleStatsToLevel": false,
-    "fallbackSpeciesIds": []
-  },
-  "guaranteesKecleonShopOnClear": {
-    "nodeId": "chapter_02",
-    "shopType": "healing_shop"
-  },
+  "recruitment": {"fixedSpeciesIds":["mentor_quaquaval"],"joinLevel":12,"scaleStatsToLevel":false,"fallbackSpeciesIds":[]},
+  "guaranteesKecleonShopOnClear": {"nodeId":"chapter_02","shopType":"healing_shop"},
   "npcSpawns": [
-    {
-      "id": "ch2_smoliv",
-      "x": 9,
-      "y": 7,
-      "speciesId": "smoliv",
-      "level": 3,
-      "stationary": true,
-      "mustSurvive": true
-    }
+    {"id":"ch2_smoliv","x":9,"y":7,"speciesId":"smoliv","level":3,"stationary":true,"mustSurvive":true,"nickname":"Smoliv","heldItemId":null}
   ],
   "enemySpawns": [
-    {
-      "id": "ch2_enemy_0",
-      "x": 14,
-      "y": 4,
-      "speciesId": "zigzagoon_galar",
-      "level": 3,
-      "heldItemId": null,
-      "squadId": "ch2_north_trail",
-      "aiMode": "wait_until_in_range"
-    },
-    {
-      "id": "ch2_enemy_1",
-      "x": 15,
-      "y": 3,
-      "speciesId": "rookidee",
-      "level": 3,
-      "heldItemId": null,
-      "squadId": "ch2_north_trail",
-      "aiMode": "wait_until_in_range"
-    },
-    {
-      "id": "ch2_enemy_2",
-      "x": 14,
-      "y": 11,
-      "speciesId": "zigzagoon_galar",
-      "level": 3,
-      "heldItemId": null,
-      "squadId": "ch2_south_trail",
-      "aiMode": "wait_until_in_range"
-    },
-    {
-      "id": "ch2_enemy_3",
-      "x": 15,
-      "y": 12,
-      "speciesId": "venipede",
-      "level": 3,
-      "heldItemId": null,
-      "squadId": "ch2_south_trail",
-      "droppableItemId": "potion",
-      "aiMode": "wait_until_in_range"
-    },
-    {
-      "id": "ch2_enemy_4",
-      "x": 19,
-      "y": 4,
-      "speciesId": "venipede",
-      "level": 3,
-      "heldItemId": null,
-      "squadId": "ch2_ridge_rear",
-      "aiMode": "wait_until_in_range"
-    },
-    {
-      "id": "ch2_enemy_5",
-      "x": 19,
-      "y": 11,
-      "speciesId": "impidimp",
-      "level": 3,
-      "heldItemId": null,
-      "squadId": "ch2_ridge_rear",
-      "aiMode": "wait_until_in_range"
-    },
-    {
-      "id": "ch2_outrider_0",
-      "x": 17,
-      "y": 6,
-      "speciesId": "rookidee",
-      "level": 3,
-      "heldItemId": null,
-      "aiMode": "aggressive"
-    },
-    {
-      "id": "ch2_outrider_1",
-      "x": 17,
-      "y": 9,
-      "speciesId": "zigzagoon_galar",
-      "level": 3,
-      "heldItemId": null,
-      "aiMode": "aggressive"
-    },
-    {
-      "id": "ch2_boss_impidimp",
-      "x": 21,
-      "y": 7,
-      "speciesId": "impidimp",
-      "level": 4,
-      "heldItemId": "oran_berry",
-      "isBoss": true,
-      "droppableItemId": "super_potion",
-      "aiMode": "wait_until_in_range"
-    }
+    {"id":"ch2_enemy_0","x":14,"y":4,"speciesId":"zigzagoon_galar","level":3,"heldItemId":null,"squadId":"ch2_north_trail","aiMode":"wait_until_in_range","nickname":"Galarian Zigzagoon"},
+    {"id":"ch2_enemy_1","x":15,"y":3,"speciesId":"rookidee","level":3,"heldItemId":null,"squadId":"ch2_north_trail","aiMode":"wait_until_in_range","nickname":"Rookidee"},
+    {"id":"ch2_enemy_2","x":14,"y":11,"speciesId":"zigzagoon_galar","level":3,"heldItemId":null,"squadId":"ch2_south_trail","aiMode":"wait_until_in_range","nickname":"Galarian Zigzagoon"},
+    {"id":"ch2_enemy_3","x":15,"y":12,"speciesId":"venipede","level":3,"heldItemId":null,"squadId":"ch2_south_trail","droppableItemId":"potion","aiMode":"wait_until_in_range","nickname":"Venipede"},
+    {"id":"ch2_enemy_4","x":19,"y":4,"speciesId":"venipede","level":3,"heldItemId":null,"squadId":"ch2_ridge_rear","aiMode":"wait_until_in_range","nickname":"Venipede"},
+    {"id":"ch2_enemy_5","x":19,"y":11,"speciesId":"impidimp","level":3,"heldItemId":null,"squadId":"ch2_ridge_rear","aiMode":"wait_until_in_range","nickname":"Impidimp"},
+    {"id":"ch2_outrider_0","x":17,"y":6,"speciesId":"rookidee","level":3,"heldItemId":null,"aiMode":"aggressive","nickname":"Rookidee"},
+    {"id":"ch2_outrider_1","x":17,"y":9,"speciesId":"zigzagoon_galar","level":3,"heldItemId":null,"aiMode":"aggressive","nickname":"Galarian Zigzagoon"},
+    {"id":"ch2_boss_impidimp","x":21,"y":7,"speciesId":"impidimp","level":4,"heldItemId":"oran_berry","isBoss":true,"droppableItemId":"super_potion","aiMode":"wait_until_in_range","nickname":"Impidimp"}
   ],
   "reinforcements": [],
   "events": [
     {
-      "id": "ev_ch2_recruit_smoliv",
-      "once": true,
-      "trigger": {
-        "type": "battle_victory",
-        "requireSurvivedUnitIds": [
-          "ch2_smoliv"
-        ]
-      },
-      "actions": [
+      "id":"ev_ch2_recruit_smoliv",
+      "once":true,
+      "trigger":{"type":"battle_victory","requireSurvivedUnitIds":["ch2_smoliv"]},
+      "actions":[
         {
-          "type": "recruit_post_battle",
-          "speciesId": "smoliv",
-          "level": 3,
-          "scaleStatsToLevel": true
+          "type":"recruit_post_battle",
+          "speciesId":"smoliv",
+          "level":3,
+          "scaleStatsToLevel":true
         }
       ]
     }

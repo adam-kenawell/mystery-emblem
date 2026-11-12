@@ -96,9 +96,7 @@
         "side": "left",
         "text": "Wait till you taste the ones I picked from the top bough, Dad! Florges, save me the biggest bowl!"
       },
-      "actions": [
-        { "type": "hop", "who": "partner", "count": 1 }
-      ]
+      "actions": [{ "type": "hop", "who": "partner", "count": 1 }]
     },
     {
       "id": "quaquaval_warmth",
@@ -117,9 +115,7 @@
         "side": "right",
         "text": "Mom's herb bread makes everything better! Even {partner}'s bragging."
       },
-      "actions": [
-        { "type": "emote", "who": "healer_parent", "emote": "heart", "duration": 1.0 }
-      ]
+      "actions": [{ "type": "emote", "who": "healer_parent", "emote": "heart", "duration": 1 }]
     },
     {
       "id": "after_dinner_shift",
@@ -129,9 +125,7 @@
         "side": "right",
         "text": "Now that every bowl is clean, grab your gear and meet me out on the training pitch, all three of you."
       },
-      "actions": [
-        { "type": "walk", "who": "mentor", "path": [[7, 5]], "speed": 2.4, "facing": "Down" }
-      ]
+      "actions": [{ "type": "walk", "who": "mentor", "path": [[7, 5]], "speed": 2.4, "facing": "Down" }]
     },
     {
       "id": "quaxly_surprised",
@@ -141,9 +135,7 @@
         "side": "left",
         "text": "Combat drills right after dinner?! Why the sudden rush, Dad?"
       },
-      "actions": [
-        { "type": "emote", "who": "partner", "emote": "question", "duration": 0.9 }
-      ]
+      "actions": [{ "type": "emote", "who": "partner", "emote": "question", "duration": 0.9 }]
     },
     {
       "id": "quaquaval_excuse",
@@ -171,9 +163,7 @@
         "side": "right",
         "text": "(I have known since the day I found {lord}'s egg... Something ancient stirs inside that child, and {lord} must know how to fight.)"
       },
-      "actions": [
-        { "type": "face", "who": "mentor", "toward": "lord" }
-      ]
+      "actions": [{ "type": "face", "who": "mentor", "toward": "lord" }]
     }
   ]
 }
