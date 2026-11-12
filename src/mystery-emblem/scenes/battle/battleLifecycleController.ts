@@ -33,6 +33,7 @@ import {
 } from './battleTutorialIntegration';
 import type { BattleControllerContext, BattleRuntimeState } from './battleTypesAndState';
 import { getLordUnit } from './battleUnitQueries';
+import { applyBattleSuspendSnapshot, parseBattleSuspendJson } from './battleSuspend';
 
 function hydrateBattleRulesFromMap(state: BattleRuntimeState): void {
   state.objectiveType = state.explicitObjectiveType ?? state.map.objectiveType ?? 'rout';
@@ -84,6 +85,9 @@ export async function openBattleScene(
   state.currentOnDungeonEnteredBeforePrep = options?.onDungeonEnteredBeforePrep;
   state.currentOnVictory = options?.onVictory;
   state.currentOnBeforeVictoryModal = options?.onBeforeVictoryModal;
+  state.suspendSource = options?.suspendSource ?? null;
+  const resumeSnap = parseBattleSuspendJson(options?.resumeSuspendJson);
+  if (resumeSnap) state.currentOnDungeonEnteredBeforePrep = undefined;
   state.cutsceneInProgress = Boolean(state.currentOnDungeonEnteredBeforePrep);
   state.victoryCallbackFired = false;
 
@@ -126,7 +130,7 @@ export async function openBattleScene(
   registerBattleTutorialAvailabilityProvider(ctx);
 
   await setupFreshBattleState(ctx, {
-    showPrepOverlay: !state.cutsceneInProgress && !state.skipPrepPhase,
+    showPrepOverlay: !resumeSnap && !state.cutsceneInProgress && !state.skipPrepPhase,
     preferredDeployInstanceIds: options?.preferredDeployInstanceIds,
   });
   if (!state.openState || runGen !== state.battleRunGen) return;
@@ -139,6 +143,11 @@ export async function openBattleScene(
   ctx.startLoop();
   ctx.onLayerStateChanged();
   ctx.renderNow();
+
+  if (resumeSnap) {
+    await applyBattleSuspendSnapshot(ctx, resumeSnap);
+    return;
+  }
 
   if (!state.currentOnDungeonEnteredBeforePrep && state.skipPrepPhase) {
     confirmEnterDungeonFromPrep(ctx);
@@ -173,8 +182,12 @@ export function closeBattleScene(
   ctx: BattleControllerContext,
   destination: BattleExitDestination = 'default'
 ): void {
-  const { state, dom, prepOverlay, audioManager, viewportEl } = ctx;
+  const { state, dom, prepOverlay, audioManager, viewportEl, saveManager } = ctx;
   if (!state.openState) return;
+  // Leaving a battle for anywhere but the title abandons it, so its mid-battle save is stale.
+  if (destination !== 'title' && state.suspendSource && saveManager.getSave()) {
+    saveManager.clearBattleSuspend();
+  }
   state.battleRunGen += 1;
   state.openState = false;
   state.cutsceneInProgress = false;
@@ -204,8 +217,9 @@ export function closeBattleScene(
 }
 
 export async function restartBattleMatch(ctx: BattleControllerContext): Promise<void> {
-  const { state, audioManager } = ctx;
+  const { state, audioManager, saveManager } = ctx;
   if (!state.openState) return;
+  if (state.suspendSource && saveManager.getSave()) saveManager.clearBattleSuspend();
   state.battleRunGen += 1;
   audioManager.playSfx('select');
   state.map = state.explicitCustomMap

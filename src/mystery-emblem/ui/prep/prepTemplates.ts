@@ -80,6 +80,9 @@ export function createPrepDomElements(
         <button type="button" class="pmd-btn pmd-menu-row pmd-prep-option-btn" data-testid="prep-btn-view-map">
           <span class="pmd-prep-opt-title">View Map</span>
         </button>
+        <button type="button" class="pmd-btn pmd-menu-row pmd-prep-option-btn" data-testid="prep-btn-save-progress">
+          <span class="pmd-prep-opt-title">Save Progress</span>
+        </button>
         <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row pmd-prep-option-btn is-enter-cta" data-testid="prep-btn-enter-dungeon">
           <span class="pmd-prep-opt-title">Fight!</span>
         </button>

@@ -23,6 +23,19 @@ import type { CloudUser } from './firebaseSync';
 export const SAVE_STORAGE_KEY = 'mystery_emblem_save_v2';
 export const LEGACY_SAVE_STORAGE_KEY = 'mystery_emblem_save_v1';
 export const META_STORAGE_KEY = 'mystery_emblem_meta_v1';
+export const ACTIVE_SLOT_STORAGE_KEY = 'mystery_emblem_active_slot_v1';
+export const SAVE_SLOT_COUNT = 3;
+export const SAVE_SLOT_INDICES: readonly number[] = [1, 2, 3];
+
+/** Slot 1 keeps the pre-slot key so existing single-file saves become Slot 1 with no migration. */
+export function getSaveSlotStorageKey(slot: number): string {
+  return slot === 1 ? SAVE_STORAGE_KEY : `${SAVE_STORAGE_KEY}_slot${slot}`;
+}
+
+export function normalizeSaveSlot(slot: unknown): number {
+  const n = Math.floor(Number(slot));
+  return n >= 1 && n <= SAVE_SLOT_COUNT ? n : 1;
+}
 
 export const SUPPORT_LEVEL_THRESHOLDS: readonly [number, number, number, number, number] = [
   5, 12, 22, 35, 50,

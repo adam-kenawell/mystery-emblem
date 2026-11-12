@@ -3,7 +3,6 @@
  */
 
 import { getDemoChapterByNodeId } from '../data/campaignRegistry';
-import { DEMO_OVERWORLD_GRAPH } from '../data/overworldMapData';
 import { getPreChapterCutsceneIds } from '../data/storyCutscenes';
 import { BattleScene } from '../scenes/BattleScene';
 import { ChapterMapEditorScene } from '../scenes/ChapterMapEditorScene';
@@ -12,6 +11,7 @@ import { DevToolsHarness } from '../ui/DevToolsHarness';
 import { QuizScene } from '../ui/QuizScene';
 import type { AppRuntimeContext } from './appContext';
 import { isAppAdminSignedIn } from './authAndTitleController';
+import { launchOverworldNodeBattle, launchSkirmishBattle } from './chapterBattleLauncher';
 import type { SceneRouter } from './sceneRouterController';
 
 export function mountGameplayScenesAndDevTools(ctx: AppRuntimeContext, router: SceneRouter): void {
@@ -108,38 +108,10 @@ export function mountGameplayScenesAndDevTools(ctx: AppRuntimeContext, router: S
           })();
           return;
         }
-        ctx.overworldReturnTarget = 'suppress';
-        ctx.overworldScene?.close();
-        ctx.battleReturnTarget = 'overworld';
-        if (dom.titleScreen) dom.titleScreen.hidden = true;
-        if (dom.devToolsBackdrop) dom.devToolsBackdrop.hidden = true;
-        void ctx.battleScene
-          .open({
-            levelId,
-            commitToSaveOnVictory: true,
-            exitButtonLabel: 'Return to World Map',
-            hideReplayOnVictory: true,
-            onVictory: () => manager.completeOverworldChapter(nodeId, { graph: DEMO_OVERWORLD_GRAPH }),
-          })
-          .then(() => backStack.syncButtonLabel());
+        void launchOverworldNodeBattle(ctx, { nodeId, levelId });
       },
       onLaunchSkirmishBattle: ({ nodeId, customMap, enemyOverrides, goldBounty }) => {
-        if (!ctx.battleScene) return;
-        ctx.overworldReturnTarget = 'suppress';
-        ctx.overworldScene?.close();
-        ctx.battleReturnTarget = 'overworld';
-        if (dom.titleScreen) dom.titleScreen.hidden = true;
-        if (dom.devToolsBackdrop) dom.devToolsBackdrop.hidden = true;
-        void ctx.battleScene
-          .open({
-            customMap,
-            enemyOverrides,
-            commitToSaveOnVictory: true,
-            exitButtonLabel: 'Return to World Map',
-            hideReplayOnVictory: true,
-            onVictory: () => manager.clearOverworldSkirmish(nodeId, goldBounty, DEMO_OVERWORLD_GRAPH),
-          })
-          .then(() => backStack.syncButtonLabel());
+        void launchSkirmishBattle(ctx, { nodeId, customMap, enemyOverrides, goldBounty });
       },
     });
   }

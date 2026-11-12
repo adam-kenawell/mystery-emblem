@@ -4,9 +4,14 @@ rules_version = '2';
 // Deploy via Firebase Console -> Firestore Database -> Rules, or `firebase deploy --only firestore:rules`.
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Each authenticated Google user may ONLY read and write their own save document at saves/{uid}.
+    // Each authenticated Google user may ONLY read and write their own save document at saves/{uid}
+    // (Save Slot 1 + custom maps envelope) and their extra save slots at saves/{uid}/slots/{slotId}.
     match /saves/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      match /slots/{slotId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
     }
 
     // Deny all other paths by default.

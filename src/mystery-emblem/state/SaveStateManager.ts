@@ -38,9 +38,9 @@ import {
   mutateSetUnitLevelForTest, mutateUnlockUnitMove,
 } from './rosterAndMoveMutators';
 import {
-  computeSupportLevel, createPokemonInstance, getDefaultStorage, getUnitEquippedItemId,
-  LEGACY_SAVE_STORAGE_KEY, makeSupportPairKey, META_STORAGE_KEY, sanitizeNickname,
-  SAVE_STORAGE_KEY, SUPPORT_LEVEL_THRESHOLDS,
+  ACTIVE_SLOT_STORAGE_KEY, computeSupportLevel, createPokemonInstance, getDefaultStorage, getSaveSlotStorageKey,
+  getUnitEquippedItemId, LEGACY_SAVE_STORAGE_KEY, makeSupportPairKey, META_STORAGE_KEY, normalizeSaveSlot,
+  sanitizeNickname, SAVE_SLOT_COUNT, SAVE_SLOT_INDICES, SAVE_STORAGE_KEY, SUPPORT_LEVEL_THRESHOLDS,
   type CloudSyncResolution, type CreatePokemonOptions, type StorageLike, type SyncStatusSnapshot,
 } from './saveHelpersAndFactory';
 import {
@@ -51,12 +51,38 @@ import {
 export {
   DEFAULT_QUIZ_SEEDS, formatCampaignChapterLabel, SAVE_STORAGE_KEY, META_STORAGE_KEY,
   SUPPORT_LEVEL_THRESHOLDS, makeSupportPairKey, computeSupportLevel, sanitizeNickname,
-  getUnitEquippedItemId, createPokemonInstance,
+  getUnitEquippedItemId, createPokemonInstance, SAVE_SLOT_COUNT, ACTIVE_SLOT_STORAGE_KEY, getSaveSlotStorageKey,
 };
 export type {
   CloudSyncResolution, SyncStatusSnapshot, StorageLike, CreatePokemonOptions,
   NewCampaignConfig, BattleUnitSaveSyncEntry, CommitBattleResultsPayload,
 };
+
+export interface SaveSlotSummary {
+  slot: number;
+  isActive: boolean;
+  isEmpty: boolean;
+  lordName: string | null;
+  chapterLabel: string | null;
+  lastUpdated: number | null;
+  rosterCount: number;
+  gold: number;
+  hasBattleSuspend: boolean;
+}
+
+function summarizeSlot(slot: number, isActive: boolean, save: SaveData | null): SaveSlotSummary {
+  if (!save) return { slot, isActive, isEmpty: true, lordName: null, chapterLabel: null, lastUpdated: null, rosterCount: 0, gold: 0, hasBattleSuspend: false };
+  const lord = save.roster.find((u) => u.instanceId === save.campaign.lordInstanceId) ?? save.roster.find((u) => u.isLord) ?? save.roster[0];
+  return {
+    slot, isActive, isEmpty: false,
+    lordName: lord?.nickname ?? null,
+    chapterLabel: formatCampaignChapterLabel(save.campaign.currentChapterId),
+    lastUpdated: save.lastUpdated,
+    rosterCount: save.roster.length,
+    gold: save.gold,
+    hasBattleSuspend: typeof save.battleSuspendJson === 'string' && save.battleSuspendJson.length > 0,
+  };
+}
 
 const cloneUnit = (u: OwnedPokemonInstance): OwnedPokemonInstance => JSON.parse(JSON.stringify(u)) as OwnedPokemonInstance;
 
@@ -65,6 +91,7 @@ export class SaveStateManager {
   private readonly isBrowserPrimaryStorage: boolean;
   private readonly cloud: CloudSyncAdapter;
   private currentSave: SaveData | null = null;
+  private activeSlot = 1;
   private syncStatus: SyncStatusSnapshot;
   private readonly changeListeners = new Set<(save: SaveData | null, status: SyncStatusSnapshot) => void>();
   private unsubscribeAuth: (() => void) | null = null;
@@ -74,7 +101,8 @@ export class SaveStateManager {
     this.storage = storage ?? getDefaultStorage();
     this.isBrowserPrimaryStorage = typeof window !== 'undefined' && Boolean(window.localStorage) && this.storage === window.localStorage;
     this.cloud = cloudAdapter ?? new FirestoreSyncAdapter();
-    this.currentSave = readValidLocalSaveFromStorage(this.storage);
+    this.activeSlot = normalizeSaveSlot(this.storage.getItem(ACTIVE_SLOT_STORAGE_KEY));
+    this.currentSave = readValidLocalSaveFromStorage(this.storage, this.activeSlot);
     if (this.isBrowserPrimaryStorage && this.currentSave?.customMaps) mergeCustomMapsRecord(this.currentSave.customMaps);
     this.syncStatus = { isFirebaseConfigured: this.cloud.isConfigured, user: this.cloud.getCurrentUser(), lastResolution: null, lastSyncedAt: null, errorMessage: null };
     this.unsubscribeAuth = this.cloud.onAuthStateChanged((user) => {
@@ -87,6 +115,54 @@ export class SaveStateManager {
   public dispose(): void { this.unsubscribeAuth?.(); this.unsubscribeAuth = null; this.changeListeners.clear(); }
   public getSave(): SaveData | null { return this.currentSave ? (JSON.parse(JSON.stringify(this.currentSave)) as SaveData) : null; }
   public getSyncStatus(): SyncStatusSnapshot { return { ...this.syncStatus }; }
+
+  public getActiveSlot(): number { return this.activeSlot; }
+  public getSaveSlotSummaries(): SaveSlotSummary[] {
+    return SAVE_SLOT_INDICES.map((slot) => summarizeSlot(
+      slot, slot === this.activeSlot,
+      slot === this.activeSlot ? this.currentSave : readValidLocalSaveFromStorage(this.storage, slot),
+    ));
+  }
+  public hasAnySave(): boolean { return this.getSaveSlotSummaries().some((s) => !s.isEmpty); }
+  /** Switch the active slot and load whatever it holds (null when empty, e.g. before a New Game). */
+  public loadSlot(slot: number): SaveData | null {
+    this.setActiveSlot(slot);
+    this.currentSave = readValidLocalSaveFromStorage(this.storage, this.activeSlot);
+    if (this.isBrowserPrimaryStorage && this.currentSave?.customMaps) mergeCustomMapsRecord(this.currentSave.customMaps);
+    this.emitChange();
+    return this.getSave();
+  }
+  /** Manual "Save Progress": copies the in-memory campaign (plus optional mid-battle snapshot) into `slot` and makes it active. */
+  public saveProgressToSlot(slot: number, opts?: { battleSuspendJson?: string | null }): SaveData {
+    const save = this.requireActiveSave();
+    const next: SaveData = JSON.parse(JSON.stringify(save)) as SaveData;
+    if (opts && 'battleSuspendJson' in opts) {
+      if (opts.battleSuspendJson) next.battleSuspendJson = opts.battleSuspendJson;
+      else delete next.battleSuspendJson;
+    }
+    this.setActiveSlot(slot);
+    this.commitSave(next);
+    return this.getSave()!;
+  }
+  public getBattleSuspendJson(): string | null { return this.currentSave?.battleSuspendJson ?? null; }
+  public clearBattleSuspend(): void {
+    if (!this.currentSave?.battleSuspendJson) return;
+    this.mutateAndCommit((s) => { delete s.battleSuspendJson; });
+  }
+  public async deleteSaveSlot(slot: number): Promise<{ deletedLocal: boolean; deletedCloud: boolean }> {
+    const target = normalizeSaveSlot(slot);
+    const isActive = target === this.activeSlot;
+    if (isActive) this.currentSave = null;
+    return performDeleteSaveFromAccount({
+      storage: this.storage, isBrowserPrimaryStorage: this.isBrowserPrimaryStorage, cloud: this.cloud,
+      hadCurrentSave: isActive, slot: target,
+      onUpdateSyncStatus: (p) => { this.syncStatus = { ...this.syncStatus, ...p }; this.emitChange(); },
+    }).finally(() => this.emitChange());
+  }
+  private setActiveSlot(slot: number): void {
+    this.activeSlot = normalizeSaveSlot(slot);
+    this.storage.setItem(ACTIVE_SLOT_STORAGE_KEY, String(this.activeSlot));
+  }
 
   public subscribe(listener: (save: SaveData | null, status: SyncStatusSnapshot) => void): () => void {
     this.changeListeners.add(listener);
@@ -126,7 +202,7 @@ export class SaveStateManager {
   public equipItemToUnit(id: string, itemId: string | null, sourceUnitId?: string): OwnedPokemonInstance { const s = this.requireActiveSave(); const { unit, mutated } = mutateEquipItemToUnit(s, id, itemId, sourceUnitId); if (mutated) this.commitSave(s); return cloneUnit(unit); }
   public addSupportPoints(idA: string, idB: string, delta = 1): SupportPairProgress { const s = this.requireActiveSave(); const p = mutateAddSupportPoints(s, idA, idB, delta); this.commitSave(s); return p; }
   public addGold(amount: number): SaveData { return this.mutateAndCommit((s) => { s.gold = Math.max(0, Math.floor(s.gold + amount)); }); }
-  public commitBattleResults(payload: CommitBattleResultsPayload): SaveData { return this.mutateAndCommit((s) => mutateCommitBattleResults(s, payload)); }
+  public commitBattleResults(payload: CommitBattleResultsPayload): SaveData { return this.mutateAndCommit((s) => { mutateCommitBattleResults(s, payload); delete s.battleSuspendJson; }); }
 
   public hasRecruitedChapter(id: string): boolean { return Boolean(this.currentSave?.campaign.recruitedChapterIds?.includes(id)); }
   public markChapterRecruited(id: string): SaveData { return this.pushCampaignFlag('recruitedChapterIds', id); }
@@ -197,19 +273,14 @@ export class SaveStateManager {
   }
 
   public clearLocalSave(): void {
-    this.storage.removeItem(SAVE_STORAGE_KEY);
-    this.storage.removeItem(LEGACY_SAVE_STORAGE_KEY);
+    this.storage.removeItem(getSaveSlotStorageKey(this.activeSlot));
+    if (this.activeSlot === 1) this.storage.removeItem(LEGACY_SAVE_STORAGE_KEY);
     this.currentSave = null;
     this.emitChange();
   }
 
   public deleteSaveFromLinkedAccount(): Promise<{ deletedLocal: boolean; deletedCloud: boolean }> {
-    const hadCurrent = Boolean(this.currentSave);
-    this.currentSave = null;
-    return performDeleteSaveFromAccount({
-      storage: this.storage, isBrowserPrimaryStorage: this.isBrowserPrimaryStorage, cloud: this.cloud, hadCurrentSave: hadCurrent,
-      onUpdateSyncStatus: (p) => { this.syncStatus = { ...this.syncStatus, ...p }; this.emitChange(); },
-    });
+    return this.deleteSaveSlot(this.activeSlot);
   }
 
   public exportSaveJson(): string { return JSON.stringify(this.requireActiveSave(), null, 2); }
@@ -239,7 +310,8 @@ export class SaveStateManager {
   public syncCustomMapsWithActiveSave(): Promise<CloudSyncResolution> {
     return performSyncCustomMapsWithSave({
       isBrowserPrimaryStorage: this.isBrowserPrimaryStorage, cloud: this.cloud, getCurrentSave: () => this.currentSave,
-      writeLocalOnly: (s) => { this.currentSave = writeLocalSaveToStorage(this.storage, this.isBrowserPrimaryStorage, s); this.emitChange(); },
+      slot: this.activeSlot,
+      writeLocalOnly: (s) => { this.currentSave = writeLocalSaveToStorage(this.storage, this.isBrowserPrimaryStorage, s, this.activeSlot); this.emitChange(); },
       onUpdateSyncStatus: (p) => { this.syncStatus = { ...this.syncStatus, ...p }; this.emitChange(); },
     });
   }
@@ -248,15 +320,26 @@ export class SaveStateManager {
     const user = this.cloud.getCurrentUser();
     if (!user) { this.syncStatus = { ...this.syncStatus, user: null, lastResolution: 'unauthenticated' }; this.emitChange(); return 'unauthenticated'; }
     try {
-      this.currentSave = readValidLocalSaveFromStorage(this.storage);
-      const resolution = await performCloudSaveReconciliation({
-        cloud: this.cloud, user, isBrowserPrimaryStorage: this.isBrowserPrimaryStorage, localSave: this.currentSave,
-        writeLocalOnly: (s) => { this.currentSave = writeLocalSaveToStorage(this.storage, this.isBrowserPrimaryStorage, s); },
-        getCurrentSave: () => this.currentSave,
-      });
-      this.syncStatus = { ...this.syncStatus, user, lastResolution: resolution, lastSyncedAt: Date.now(), errorMessage: null };
+      let activeResolution: CloudSyncResolution = 'already_in_sync';
+      // Active slot runs first so its custom-map/envelope reconciliation wins ties; every slot resolves by its own `lastUpdated`.
+      const order = [this.activeSlot, ...SAVE_SLOT_INDICES.filter((s) => s !== this.activeSlot)];
+      for (const slot of order) {
+        const isActive = slot === this.activeSlot;
+        let slotSave = readValidLocalSaveFromStorage(this.storage, slot);
+        if (isActive) this.currentSave = slotSave;
+        const resolution = await performCloudSaveReconciliation({
+          cloud: this.cloud, user, isBrowserPrimaryStorage: this.isBrowserPrimaryStorage, localSave: slotSave, slot,
+          writeLocalOnly: (s) => {
+            slotSave = writeLocalSaveToStorage(this.storage, this.isBrowserPrimaryStorage, s, slot);
+            if (isActive) this.currentSave = slotSave;
+          },
+          getCurrentSave: () => slotSave,
+        });
+        if (isActive) activeResolution = resolution;
+      }
+      this.syncStatus = { ...this.syncStatus, user, lastResolution: activeResolution, lastSyncedAt: Date.now(), errorMessage: null };
       this.emitChange();
-      return resolution;
+      return activeResolution;
     } catch (err) {
       this.syncStatus = { ...this.syncStatus, user, lastResolution: 'cloud_error', errorMessage: err instanceof Error ? err.message : 'Cloud Firestore sync failed.' };
       this.emitChange();
@@ -279,12 +362,13 @@ export class SaveStateManager {
   }
   private commitSave(save: SaveData, keepExistingTimestamp = false): void {
     const validated = stampAndValidateSaveForCommit({ save, previousLastUpdated: this.currentSave?.lastUpdated ?? 0, isBrowserPrimaryStorage: this.isBrowserPrimaryStorage, keepExistingTimestamp });
-    this.currentSave = writeLocalSaveToStorage(this.storage, this.isBrowserPrimaryStorage, validated);
+    this.currentSave = writeLocalSaveToStorage(this.storage, this.isBrowserPrimaryStorage, validated, this.activeSlot);
     this.emitChange();
     const user = this.cloud.getCurrentUser();
     if (user) {
-      const envelopeJson = serializeCustomMapsEnvelope(this.isBrowserPrimaryStorage, this.currentSave);
-      void this.cloud.pushCloudSave(user.uid, this.currentSave, envelopeJson)
+      const slot = this.activeSlot;
+      const envelopeJson = slot === 1 ? serializeCustomMapsEnvelope(this.isBrowserPrimaryStorage, this.currentSave) : null;
+      void this.cloud.pushCloudSave(user.uid, this.currentSave, envelopeJson, slot)
         .then(() => { this.syncStatus = { ...this.syncStatus, lastResolution: 'pushed_newer_local', lastSyncedAt: Date.now(), errorMessage: null }; this.emitChange(); })
         .catch((err: unknown) => { this.syncStatus = { ...this.syncStatus, lastResolution: 'cloud_error', errorMessage: err instanceof Error ? err.message : 'Failed to push save to Firestore.' }; this.emitChange(); });
     }

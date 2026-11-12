@@ -10,6 +10,7 @@ import {
   createInitialPrepDeploymentSlots,
   resolveEnemySpawnsForMap,
 } from '../../engine/battleSetup';
+import { createRandomRngSeed } from '../../engine/seededRng';
 import type { SaveStateManager } from '../../state/SaveStateManager';
 import {
   clearOpeningAndPhaseAnimations,
@@ -157,6 +158,7 @@ export async function setupFreshBattleState(
   clearBattleSelection(state, dom, prepOverlay);
 
   state.turnNumber = 1;
+  state.rngState = createRandomRngSeed();
   state.victoryCallbackFired = false;
   state.phase = 'dungeon_prep';
   state.interactionState = 'idle';

@@ -8,9 +8,28 @@ import type { SaveData } from '../../types/schemas';
 import type { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { escapeUiHtml } from '../../ui/inspector/UnitDetailCard';
 import { bindPointerTap } from '../../ui/pointerControls';
+import { openSaveSlotOverlay } from '../../ui/SaveSlotOverlay';
 import { buildStoryReplaySubbox } from './overworldStoryReplayBox';
 
 export type PendingSystemConfirm = 'new_game' | 'delete_save' | null;
+
+/** Overworld "Save Progress": no battle is running, so any stale mid-battle snapshot is dropped. */
+export function openOverworldSaveProgressOverlay(
+  saveManager: SaveStateManager,
+  audioManager: AudioManager,
+  onAfterClose?: () => void
+): void {
+  openSaveSlotOverlay({
+    manager: saveManager,
+    audioManager,
+    mode: 'save',
+    blockedReason: saveManager.getSave() ? null : 'No campaign file is loaded.',
+    onSaveToSlot: (slot) => {
+      saveManager.saveProgressToSlot(slot, { battleSuspendJson: null });
+    },
+    onClose: onAfterClose,
+  });
+}
 
 export interface OverworldSystemTabParams {
   menuPanelBodyEl: HTMLElement;
@@ -95,16 +114,25 @@ export function renderOverworldSystemTab(params: OverworldSystemTabParams): void
     <p class="pmd-overworld-subbox-title">Save Data</p>
     <div class="pmd-overworld-action-row">
       <div class="pmd-overworld-action-meta">
-        <strong>${escapeUiHtml(sync.user?.email ?? 'Local Save')}</strong>
+        <strong>File ${saveManager.getActiveSlot()} · ${escapeUiHtml(sync.user?.email ?? 'Local Save')}</strong>
         <span>Saved ${escapeUiHtml(new Date(save.lastUpdated).toLocaleTimeString())}</span>
       </div>
       <div class="pmd-inline-btns">
+        <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="overworld-save-progress-btn">Save Progress</button>
         <button type="button" class="pmd-btn pmd-chip-btn" data-testid="overworld-export-save-btn">Export</button>
         <button type="button" class="pmd-btn pmd-chip-btn" data-testid="overworld-import-save-btn">Import</button>
         <input type="file" accept=".json,application/json" hidden data-ow-import-input />
       </div>
     </div>
   `;
+
+  bindPointerTap(
+    saveBox.querySelector<HTMLElement>('[data-testid="overworld-save-progress-btn"]'),
+    () => {
+      audioManager.playSfx('select');
+      openOverworldSaveProgressOverlay(saveManager, audioManager, onRefreshSystemMenu);
+    }
+  );
 
   bindPointerTap(
     saveBox.querySelector<HTMLElement>('[data-testid="overworld-export-save-btn"]'),
@@ -203,7 +231,7 @@ export function renderOverworldSystemTab(params: OverworldSystemTabParams): void
     } else {
       confirmSlot.innerHTML = `
         <div class="pmd-overworld-action-row">
-          <span style="color:#ff9aa2;font-size:0.78rem;">Delete your save file permanently?</span>
+          <span style="color:#ff9aa2;font-size:0.78rem;">Delete File ${saveManager.getActiveSlot()} permanently?</span>
           <div class="pmd-inline-btns">
             <button type="button" class="pmd-btn pmd-btn-danger pmd-chip-btn" data-testid="overworld-confirm-delete-save-btn">Confirm Delete</button>
             <button type="button" class="pmd-btn pmd-chip-btn" data-ow-cancel-confirm>Cancel</button>

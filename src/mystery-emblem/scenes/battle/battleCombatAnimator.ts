@@ -18,7 +18,7 @@ import { ensureTilePairVisible, waitBattleMs } from './battleBannersAndTransitio
 import { spawnFloatingText } from './battleFloatingCallouts';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { grantExpAndHandleLevelUps } from './battleLevelUpModal';
-import type { BattleControllerContext } from './battleTypesAndState';
+import { getBattleRng, type BattleControllerContext } from './battleTypesAndState';
 
 export async function playCombatExchangeAsync(
   ctx: BattleControllerContext,
@@ -28,7 +28,7 @@ export async function playCombatExchangeAsync(
   runGen = ctx.state.battleRunGen
 ): Promise<void> {
   const { state, dom, audioManager } = ctx;
-  const rng = state.customRng ?? Math.random;
+  const rng = getBattleRng(state);
   const outcome = resolveCombatExchange(forecast, attacker, defender, rng);
 
   ensureTilePairVisible(state, attacker.x, attacker.y, defender.x, defender.y);

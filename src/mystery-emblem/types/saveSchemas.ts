@@ -161,4 +161,6 @@ export interface SaveData {
   };
   /** Optional Dev Tools custom chapter/level map overrides synced with Cloud Firestore */
   customMaps?: Record<string, CustomMapOverrideEntry>;
+  /** Mid-battle suspend snapshot, stored as a JSON string so Firestore never sees nested arrays */
+  battleSuspendJson?: string;
 }

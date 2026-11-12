@@ -35,14 +35,20 @@ export interface CloudSyncAdapter {
   onAuthStateChanged(listener: (user: CloudUser | null) => void): () => void;
   signInWithGoogle(): Promise<CloudUser>;
   signOut(): Promise<void>;
-  fetchCloudSave(uid: string): Promise<unknown | null>;
+  fetchCloudSave(uid: string, slot?: number): Promise<unknown | null>;
   pushCloudSave(
     uid: string,
     save: SaveData,
-    customMapsEnvelopeJson?: string | null
+    customMapsEnvelopeJson?: string | null,
+    slot?: number
   ): Promise<void>;
   pushCustomMapsOnly?(uid: string, customMapsEnvelopeJson: string): Promise<void>;
-  deleteCloudSave(uid: string): Promise<void>;
+  deleteCloudSave(uid: string, slot?: number): Promise<void>;
+}
+
+/** Slot 1 keeps the original `saves/{uid}` doc (which also carries the custom-maps envelope); slots 2+ live in a subcollection. */
+export function cloudSaveDocPath(uid: string, slot = 1): string[] {
+  return slot === 1 ? ['saves', uid] : ['saves', uid, 'slots', `slot${slot}`];
 }
 
 function toCloudUser(user: User | null): CloudUser | null {
@@ -102,19 +108,27 @@ export class FirestoreSyncAdapter implements CloudSyncAdapter {
     if (this.auth) await fbSignOut(this.auth);
   }
 
-  public async fetchCloudSave(uid: string): Promise<unknown | null> {
+  public async fetchCloudSave(uid: string, slot = 1): Promise<unknown | null> {
     if (!this.db) return null;
-    const snap = await getDoc(doc(this.db, 'saves', uid));
+    const [col, ...rest] = cloudSaveDocPath(uid, slot);
+    const snap = await getDoc(doc(this.db, col!, ...rest));
     return snap.exists() ? snap.data() : null;
   }
 
   public async pushCloudSave(
     uid: string,
     save: SaveData,
-    customMapsEnvelopeJson?: string | null
+    customMapsEnvelopeJson?: string | null,
+    slot = 1
   ): Promise<void> {
     if (!this.db) return;
-    await setDoc(doc(this.db, 'saves', uid), serializeSaveForFirestore(save, customMapsEnvelopeJson));
+    const [col, ...rest] = cloudSaveDocPath(uid, slot);
+    const payload = serializeSaveForFirestore(save, slot === 1 ? customMapsEnvelopeJson : null);
+    if (slot !== 1) {
+      delete payload.customMapsEnvelopeJson;
+      delete payload.customMapsUpdatedAt;
+    }
+    await setDoc(doc(this.db, col!, ...rest), payload);
   }
 
   public async pushCustomMapsOnly(uid: string, customMapsEnvelopeJson: string): Promise<void> {
@@ -124,8 +138,10 @@ export class FirestoreSyncAdapter implements CloudSyncAdapter {
     await setDoc(doc(this.db, 'saves', uid), mergePayload, { merge: true });
   }
 
-  public async deleteCloudSave(uid: string): Promise<void> {
-    if (this.db) await deleteDoc(doc(this.db, 'saves', uid));
+  public async deleteCloudSave(uid: string, slot = 1): Promise<void> {
+    if (!this.db) return;
+    const [col, ...rest] = cloudSaveDocPath(uid, slot);
+    await deleteDoc(doc(this.db, col!, ...rest));
   }
 }
 
@@ -171,17 +187,23 @@ export class InMemoryCloudSyncAdapter implements CloudSyncAdapter {
     for (const fn of this.listeners) fn(null);
   }
 
-  public async fetchCloudSave(uid: string): Promise<unknown | null> {
-    const found = this.cloudDocs.get(uid);
+  public async fetchCloudSave(uid: string, slot = 1): Promise<unknown | null> {
+    const found = this.cloudDocs.get(cloudSaveDocPath(uid, slot).slice(1).join('/'));
     return found ? (JSON.parse(JSON.stringify(found)) as Record<string, unknown>) : null;
   }
 
   public async pushCloudSave(
     uid: string,
     save: SaveData,
-    customMapsEnvelopeJson?: string | null
+    customMapsEnvelopeJson?: string | null,
+    slot = 1
   ): Promise<void> {
-    this.cloudDocs.set(uid, serializeSaveForFirestore(save, customMapsEnvelopeJson));
+    const payload = serializeSaveForFirestore(save, slot === 1 ? customMapsEnvelopeJson : null);
+    if (slot !== 1) {
+      delete payload.customMapsEnvelopeJson;
+      delete payload.customMapsUpdatedAt;
+    }
+    this.cloudDocs.set(cloudSaveDocPath(uid, slot).slice(1).join('/'), payload);
   }
 
   public async pushCustomMapsOnly(uid: string, customMapsEnvelopeJson: string): Promise<void> {
@@ -195,7 +217,7 @@ export class InMemoryCloudSyncAdapter implements CloudSyncAdapter {
     this.cloudDocs.set(uid, merged);
   }
 
-  public async deleteCloudSave(uid: string): Promise<void> {
-    this.cloudDocs.delete(uid);
+  public async deleteCloudSave(uid: string, slot = 1): Promise<void> {
+    this.cloudDocs.delete(cloudSaveDocPath(uid, slot).slice(1).join('/'));
   }
 }

@@ -15,16 +15,17 @@ import type { CloudSyncAdapter } from './firebaseSync';
 import {
   LEGACY_SAVE_STORAGE_KEY,
   META_STORAGE_KEY,
-  SAVE_STORAGE_KEY,
+  SAVE_SLOT_INDICES,
+  getSaveSlotStorageKey,
   normalizeLegacySingleItemSlots,
   type CloudSyncResolution,
   type StorageLike,
   type SyncStatusSnapshot,
 } from './saveHelpersAndFactory';
 
-export function readValidLocalSaveFromStorage(storage: StorageLike): SaveData | null {
+export function readValidLocalSaveFromStorage(storage: StorageLike, slot = 1): SaveData | null {
   try {
-    const raw = storage.getItem(SAVE_STORAGE_KEY);
+    const raw = storage.getItem(getSaveSlotStorageKey(slot));
     if (!raw) return null;
     const check = validateSaveData(
       normalizeLegacySingleItemSlots(JSON.parse(raw)),
@@ -41,13 +42,14 @@ export function readValidLocalSaveFromStorage(storage: StorageLike): SaveData | 
 export function writeLocalSaveToStorage(
   storage: StorageLike,
   isBrowserPrimaryStorage: boolean,
-  save: SaveData
+  save: SaveData,
+  slot = 1
 ): SaveData {
   const cloned = JSON.parse(JSON.stringify(save)) as SaveData;
   if (isBrowserPrimaryStorage && cloned.customMaps) {
     mergeCustomMapsRecord(cloned.customMaps);
   }
-  storage.setItem(SAVE_STORAGE_KEY, JSON.stringify(cloned));
+  storage.setItem(getSaveSlotStorageKey(slot), JSON.stringify(cloned));
   if (cloned.newGamePlusUnlocked) {
     storage.setItem(META_STORAGE_KEY, JSON.stringify({ newGamePlusUnlocked: true }));
   }
@@ -113,17 +115,22 @@ export async function performDeleteSaveFromAccount(params: {
   isBrowserPrimaryStorage: boolean;
   cloud: CloudSyncAdapter;
   hadCurrentSave: boolean;
+  slot?: number;
   onUpdateSyncStatus: (patch: Partial<SyncStatusSnapshot>) => void;
 }): Promise<{ deletedLocal: boolean; deletedCloud: boolean }> {
   const { storage, isBrowserPrimaryStorage, cloud, hadCurrentSave, onUpdateSyncStatus } = params;
+  const slot = params.slot ?? 1;
+  const slotKey = getSaveSlotStorageKey(slot);
   const hadLocal = Boolean(
     hadCurrentSave ||
-      storage.getItem(SAVE_STORAGE_KEY) ||
-      storage.getItem(LEGACY_SAVE_STORAGE_KEY)
+      storage.getItem(slotKey) ||
+      (slot === 1 && storage.getItem(LEGACY_SAVE_STORAGE_KEY))
   );
-  storage.removeItem(SAVE_STORAGE_KEY);
-  storage.removeItem(LEGACY_SAVE_STORAGE_KEY);
-  storage.removeItem(META_STORAGE_KEY);
+  storage.removeItem(slotKey);
+  if (slot === 1) storage.removeItem(LEGACY_SAVE_STORAGE_KEY);
+  if (SAVE_SLOT_INDICES.every((s) => !storage.getItem(getSaveSlotStorageKey(s)))) {
+    storage.removeItem(META_STORAGE_KEY);
+  }
 
   const user = cloud.getCurrentUser();
   if (!user || typeof cloud.deleteCloudSave !== 'function') {
@@ -132,8 +139,9 @@ export async function performDeleteSaveFromAccount(params: {
   }
 
   try {
-    await cloud.deleteCloudSave(user.uid);
+    await cloud.deleteCloudSave(user.uid, slot);
     if (
+      slot === 1 &&
       isBrowserPrimaryStorage &&
       Object.keys(getAllCustomMapOverrides()).length > 0 &&
       typeof cloud.pushCustomMapsOnly === 'function'
@@ -164,6 +172,7 @@ export async function performSyncCustomMapsWithSave(params: {
   getCurrentSave: () => SaveData | null;
   writeLocalOnly: (save: SaveData) => void;
   onUpdateSyncStatus: (patch: Partial<SyncStatusSnapshot>) => void;
+  slot?: number;
 }): Promise<CloudSyncResolution> {
   const { isBrowserPrimaryStorage, cloud, getCurrentSave, writeLocalOnly, onUpdateSyncStatus } =
     params;
@@ -190,7 +199,10 @@ export async function performSyncCustomMapsWithSave(params: {
   try {
     const latest = getCurrentSave();
     if (latest) {
-      await cloud.pushCloudSave(user.uid, latest, envelopeJson);
+      await cloud.pushCloudSave(user.uid, latest, envelopeJson, params.slot ?? 1);
+      if ((params.slot ?? 1) !== 1 && envelopeJson && typeof cloud.pushCustomMapsOnly === 'function') {
+        await cloud.pushCustomMapsOnly(user.uid, envelopeJson);
+      }
     } else if (envelopeJson && typeof cloud.pushCustomMapsOnly === 'function') {
       await cloud.pushCustomMapsOnly(user.uid, envelopeJson);
     }

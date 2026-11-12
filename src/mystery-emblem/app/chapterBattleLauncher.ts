@@ -9,11 +9,13 @@ import {
 import { hasChapterMapOverride } from '../data/chapterMapRegistry';
 import { getSpeciesById } from '../data/index';
 import { DEMO_OVERWORLD_GRAPH } from '../data/overworldMapData';
+import type { DungeonMapDefinition, ManualEnemyBattleSpawn } from '../types/schemas';
 import type { AppRuntimeContext } from './appContext';
 
 export async function launchCampaignChapterBattle(
   ctx: AppRuntimeContext,
-  demoChapter: CampaignChapterConfig
+  demoChapter: CampaignChapterConfig,
+  opts?: { resumeSuspendJson?: string }
 ): Promise<void> {
   const { dom, manager, backStack } = ctx;
   if (!ctx.battleScene || ctx.demoLaunchInProgress) return;
@@ -78,6 +80,8 @@ export async function launchCampaignChapterBattle(
       skipPrepPhase: Boolean(demoChapter.skipPrepPhase),
       exitButtonLabel: 'Return to World Map',
       hideReplayOnVictory: true,
+      suspendSource: { kind: 'chapter', nodeId: demoChapter.nodeId },
+      resumeSuspendJson: opts?.resumeSuspendJson,
       onDungeonEnteredBeforePrep: shouldPlayIntro
         ? async () => {
             if (
@@ -126,4 +130,64 @@ export async function launchCampaignChapterBattle(
   } finally {
     ctx.demoLaunchInProgress = false;
   }
+}
+
+function prepareStageForOverworldBattle(ctx: AppRuntimeContext): void {
+  const { dom } = ctx;
+  if (ctx.overworldScene?.isOpen()) {
+    ctx.overworldReturnTarget = 'suppress';
+    ctx.overworldScene.close();
+  }
+  if (ctx.quizScene?.isOpen()) ctx.quizScene.close();
+  ctx.battleReturnTarget = 'overworld';
+  if (dom.titleScreen) dom.titleScreen.hidden = true;
+  if (dom.devToolsBackdrop) dom.devToolsBackdrop.hidden = true;
+}
+
+/** Plain overworld node battle (no campaign chapter config). */
+export async function launchOverworldNodeBattle(
+  ctx: AppRuntimeContext,
+  params: { nodeId: string; levelId: string },
+  opts?: { resumeSuspendJson?: string }
+): Promise<void> {
+  if (!ctx.battleScene) return;
+  prepareStageForOverworldBattle(ctx);
+  const { nodeId, levelId } = params;
+  await ctx.battleScene.open({
+    levelId,
+    commitToSaveOnVictory: true,
+    exitButtonLabel: 'Return to World Map',
+    hideReplayOnVictory: true,
+    suspendSource: { kind: 'node', nodeId, levelId },
+    resumeSuspendJson: opts?.resumeSuspendJson,
+    onVictory: () => ctx.manager.completeOverworldChapter(nodeId, { graph: DEMO_OVERWORLD_GRAPH }),
+  });
+  ctx.backStack.syncButtonLabel();
+}
+
+/** Randomly generated overworld skirmish; its map travels inside the suspend source. */
+export async function launchSkirmishBattle(
+  ctx: AppRuntimeContext,
+  params: {
+    nodeId: string;
+    customMap: DungeonMapDefinition;
+    enemyOverrides?: ReadonlyArray<ManualEnemyBattleSpawn>;
+    goldBounty: number;
+  },
+  opts?: { resumeSuspendJson?: string }
+): Promise<void> {
+  if (!ctx.battleScene) return;
+  prepareStageForOverworldBattle(ctx);
+  const { nodeId, customMap, enemyOverrides, goldBounty } = params;
+  await ctx.battleScene.open({
+    customMap,
+    enemyOverrides,
+    commitToSaveOnVictory: true,
+    exitButtonLabel: 'Return to World Map',
+    hideReplayOnVictory: true,
+    suspendSource: { kind: 'skirmish', nodeId, goldBounty, customMap, enemyOverrides },
+    resumeSuspendJson: opts?.resumeSuspendJson,
+    onVictory: () => ctx.manager.clearOverworldSkirmish(nodeId, goldBounty, DEMO_OVERWORLD_GRAPH),
+  });
+  ctx.backStack.syncButtonLabel();
 }

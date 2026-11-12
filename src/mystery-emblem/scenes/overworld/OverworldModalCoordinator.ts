@@ -11,7 +11,7 @@ import type { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { bindPointerTap } from '../../ui/pointerControls';
 import { renderOverworldConvoyTab } from './OverworldItemsTabRenderer';
 import { renderOverworldKecleonShop } from './OverworldKecleonShopRenderer';
-import { renderOverworldSystemTab, type PendingSystemConfirm } from './OverworldSystemTabRenderer';
+import { openOverworldSaveProgressOverlay, renderOverworldSystemTab, type PendingSystemConfirm } from './OverworldSystemTabRenderer';
 import { renderOverworldUnitsTab } from './OverworldUnitsTabRenderer';
 import type { OverworldDomElements, OverworldMenuTab } from './overworldDomTemplates';
 import { getOverworldArrivalTutorialTopicIds } from './overworldSnapshot';
@@ -219,6 +219,10 @@ export class OverworldModalCoordinator {
     bindPointerTap(this.deps.dom.kecleonBackdropEl.querySelector<HTMLElement>('[data-testid="kecleon-shop-close-btn"]'), () => this.closeKecleonShop(), { signal });
     bindPointerTap(this.deps.dom.kecleonBackdropEl.querySelector<HTMLElement>('[data-testid="kecleon-open-units-btn"]'), () => { this.closeKecleonShop(); this.openSystemMenu('units'); }, { signal });
     bindPointerTap(this.deps.dom.systemMenuBackdropEl.querySelector<HTMLElement>('[data-testid="overworld-menu-close-btn"]'), () => this.closeSystemMenu(), { signal });
+    bindPointerTap(this.deps.dom.systemMenuBackdropEl.querySelector<HTMLElement>('[data-testid="overworld-menu-save-btn"]'), () => {
+      this.deps.audioManager.playSfx('select');
+      openOverworldSaveProgressOverlay(this.deps.saveManager, this.deps.audioManager, () => this.renderSystemMenuBody());
+    }, { signal });
     this.deps.dom.systemMenuBackdropEl.querySelectorAll<HTMLElement>('[data-ow-tab]').forEach((tabBtn) => {
       bindPointerTap(tabBtn, () => {
         const tab = tabBtn.dataset.owTab as OverworldMenuTab | undefined;

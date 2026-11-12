@@ -15,10 +15,15 @@ import {
   getPreChapterCutsceneIds,
   getStoryCutsceneById,
 } from '../data/storyCutscenes';
+import { parseBattleSuspendJson } from '../scenes/battle/battleSuspend';
 import type { SaveStateManager } from '../state/SaveStateManager';
 import type { AppRuntimeContext } from './appContext';
 import { isAppAdminSignedIn, isAppDevToolsOpen } from './authAndTitleController';
-import { launchCampaignChapterBattle } from './chapterBattleLauncher';
+import {
+  launchCampaignChapterBattle,
+  launchOverworldNodeBattle,
+  launchSkirmishBattle,
+} from './chapterBattleLauncher';
 
 export interface SceneRouter {
   showTitleScreen: () => void;
@@ -203,6 +208,7 @@ export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
       openDemoQuizFlow();
       return;
     }
+    if (await resumeSuspendedBattleIfAny()) return;
     const completed = new Set(save.campaign.completedChapterIds);
     if (!completed.has('prologue')) {
       const prologueCh = getDemoChapterByNodeId('prologue');
@@ -221,6 +227,29 @@ export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
       }
     }
     await openOverworldScene({ preservePosition: true, announceCurrentChapter: true });
+  }
+
+  async function resumeSuspendedBattleIfAny(): Promise<boolean> {
+    const raw = manager.getBattleSuspendJson();
+    if (!raw || !ctx.battleScene) return false;
+    const snap = parseBattleSuspendJson(raw);
+    const source = snap?.source;
+    if (source?.kind === 'chapter') {
+      const chapter = getDemoChapterByNodeId(source.nodeId);
+      if (chapter) {
+        await launchCampaignChapterBattle(ctx, chapter, { resumeSuspendJson: raw });
+        return true;
+      }
+    } else if (source?.kind === 'node') {
+      await launchOverworldNodeBattle(ctx, source, { resumeSuspendJson: raw });
+      return true;
+    } else if (source?.kind === 'skirmish') {
+      await launchSkirmishBattle(ctx, source, { resumeSuspendJson: raw });
+      return true;
+    }
+    // Unreadable or orphaned snapshot (e.g. chapter removed): drop it and continue normally.
+    manager.clearBattleSuspend();
+    return false;
   }
 
   async function replayStoryCutsceneFromOverworld(cutsceneId: string): Promise<void> {

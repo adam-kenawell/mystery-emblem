@@ -156,7 +156,10 @@ export function createOverworldDomElements(
     <div class="pmd-window pmd-overworld-modal-dialog" role="dialog" aria-modal="true" aria-label="Overworld Menu">
       <div class="pmd-devtools-row-between">
         <h3 class="pmd-panel-title" style="margin:0;">MENU</h3>
-        <button type="button" class="pmd-btn pmd-chip-btn" data-testid="overworld-menu-close-btn">Close</button>
+        <div class="pmd-inline-btns">
+          <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="overworld-menu-save-btn">Save Progress</button>
+          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="overworld-menu-close-btn">Close</button>
+        </div>
       </div>
       <nav class="pmd-inline-btns" aria-label="Overworld Menu Sections">
         <button type="button" class="pmd-btn pmd-chip-btn is-active" data-ow-tab="units" data-testid="overworld-menu-tab-units">Units</button>

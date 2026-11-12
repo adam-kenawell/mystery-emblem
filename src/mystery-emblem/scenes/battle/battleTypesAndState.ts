@@ -7,6 +7,7 @@ import type { LoadedTilesetSheet } from '../../assets/tilesetLoader';
 import type { AudioManager } from '../../audio/AudioManager';
 import { getEffectiveChapterMap } from '../../data/chapterMapRegistry';
 import { resolveEnemySpawnsForMap } from '../../engine/battleSetup';
+import { createRandomRngSeed, nextSeededRandom } from '../../engine/seededRng';
 import type { BattleUnitState, CombatForecast, HealForecast } from '../../engine/combatEngine';
 import type { LevelUpResult } from '../../engine/progressionEngine';
 import type {
@@ -41,6 +42,7 @@ import type {
   BattleFieldMenuSubView,
   BattleInteractionState,
   BattlePhase,
+  BattleSuspendSource,
 } from './battlePublicTypes';
 
 export const BATTLE_DRAG_THRESHOLD_PX = 8;
@@ -48,6 +50,11 @@ export const BATTLE_LONG_PRESS_MS = 520;
 export const WALK_MS_PER_TILE_NORMAL = 85;
 export const WALK_MS_PER_TILE_FAST = 16;
 export const RANGE_PULSE_PERIOD_MS = 1500;
+
+/** Battle RNG: a test-injected `customRng` wins, otherwise the persisted seeded stream. */
+export function getBattleRng(state: Pick<BattleRuntimeState, 'customRng' | 'rngState'>): () => number {
+  return state.customRng ?? (() => nextSeededRandom(state));
+}
 
 export interface FloatingBattleText {
   id: number;
@@ -171,6 +178,9 @@ export interface BattleRuntimeState {
   lastFieldMenuAnchorClient: { x: number; y: number } | null;
   fastMode: boolean;
   customRng: (() => number) | null;
+  /** mulberry32 state; persisted in mid-battle saves so reloads replay identical rolls */
+  rngState: number;
+  suspendSource: BattleSuspendSource | null;
   tilesetSheets: Map<string, LoadedTilesetSheet>;
   spriteBundles: Map<string, LoadedSpriteBundle>;
   phaseBannerTimer: number | null;
@@ -273,6 +283,8 @@ export function createInitialBattleRuntimeState(): BattleRuntimeState {
     lastFieldMenuAnchorClient: null,
     fastMode: false,
     customRng: null,
+    rngState: createRandomRngSeed(),
+    suspendSource: null,
     tilesetSheets: new Map(),
     spriteBundles: new Map(),
     phaseBannerTimer: null,

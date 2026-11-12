@@ -40,6 +40,7 @@ export interface DungeonPrepOverlayOptions {
   onExitViewMap: () => void;
   onToggleGlobalDanger: () => void;
   onConfirmEnterDungeon: () => void;
+  onSaveProgress?: () => void;
   onSubLayerChanged: () => void;
   onSubModeEntered?: (subMode: PrepSubMode) => void;
 }
@@ -81,6 +82,7 @@ export class DungeonPrepOverlay {
       onEnterViewMap: () => this.opts.onEnterViewMap(),
       onExitViewMap: () => this.opts.onExitViewMap(),
       onConfirmEnterDungeon: () => this.opts.onConfirmEnterDungeon(),
+      onSaveProgress: () => this.opts.onSaveProgress?.(),
       onToggleGlobalDanger: () => this.opts.onToggleGlobalDanger(),
       onSyncMapHudState: () => this.syncMapHudState(),
       onSelectItemFilter: (filter) => { this.itemFilter = filter; this.renderManageItems(); },

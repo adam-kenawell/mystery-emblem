@@ -55,22 +55,27 @@ export interface ReconcileContext {
   localSave: SaveData | null;
   writeLocalOnly: (save: SaveData) => void;
   getCurrentSave: () => SaveData | null;
+  slot?: number;
 }
 
 export async function performCloudSaveReconciliation(
   ctx: ReconcileContext
 ): Promise<CloudSyncResolution> {
-  const { cloud, user, isBrowserPrimaryStorage, localSave, writeLocalOnly, getCurrentSave } = ctx;
+  const { cloud, user, localSave, writeLocalOnly, getCurrentSave } = ctx;
+  const slot = ctx.slot ?? 1;
+  const isBrowserPrimaryStorage = ctx.isBrowserPrimaryStorage;
+  // Custom-map envelope sync only rides along with the slot-1 root doc.
+  const syncMaps = isBrowserPrimaryStorage && slot === 1;
 
   if (isBrowserPrimaryStorage && localSave?.customMaps) {
     mergeCustomMapsRecord(localSave.customMaps);
   }
 
-  const rawCloud = await cloud.fetchCloudSave(user.uid);
+  const rawCloud = await cloud.fetchCloudSave(user.uid, slot);
   const { saveCandidate, customMapsEnvelope } = extractCloudPayloadParts(rawCloud);
 
   let mapSync = { localChanged: false, cloudOutdated: false };
-  if (isBrowserPrimaryStorage) {
+  if (syncMaps) {
     mapSync = reconcileCustomMapsEnvelope(customMapsEnvelope as CustomMapsSyncEnvelope | null);
   }
 
@@ -83,7 +88,9 @@ export async function performCloudSaveReconciliation(
     }
   }
 
-  const getEnvJson = () => serializeCustomMapsEnvelope(isBrowserPrimaryStorage, getCurrentSave());
+  const getEnvJson = () =>
+    slot === 1 ? serializeCustomMapsEnvelope(isBrowserPrimaryStorage, getCurrentSave()) : null;
+  const push = (save: SaveData) => cloud.pushCloudSave(user.uid, save, getEnvJson(), slot);
 
   if (!localSave && !cloudSave) {
     if (mapSync.cloudOutdated) {
@@ -99,28 +106,28 @@ export async function performCloudSaveReconciliation(
   if (!localSave && cloudSave) {
     writeLocalOnly(attachMergedCustomMaps(cloudSave, isBrowserPrimaryStorage));
     if (mapSync.cloudOutdated) {
-      await cloud.pushCloudSave(user.uid, getCurrentSave()!, getEnvJson());
+      await push(getCurrentSave()!);
     }
     return 'pulled_newer_cloud';
   }
 
   if (localSave && !cloudSave) {
     writeLocalOnly(attachMergedCustomMaps(localSave, isBrowserPrimaryStorage));
-    await cloud.pushCloudSave(user.uid, getCurrentSave()!, getEnvJson());
+    await push(getCurrentSave()!);
     return 'pushed_newer_local';
   }
 
   if (cloudSave!.lastUpdated > localSave!.lastUpdated) {
     writeLocalOnly(attachMergedCustomMaps(cloudSave!, isBrowserPrimaryStorage));
     if (mapSync.cloudOutdated) {
-      await cloud.pushCloudSave(user.uid, getCurrentSave()!, getEnvJson());
+      await push(getCurrentSave()!);
     }
     return 'pulled_newer_cloud';
   }
 
   if (localSave!.lastUpdated > cloudSave!.lastUpdated) {
     writeLocalOnly(attachMergedCustomMaps(localSave!, isBrowserPrimaryStorage));
-    await cloud.pushCloudSave(user.uid, getCurrentSave()!, getEnvJson());
+    await push(getCurrentSave()!);
     return 'pushed_newer_local';
   }
 
@@ -129,7 +136,7 @@ export async function performCloudSaveReconciliation(
   }
   if (mapSync.cloudOutdated) {
     writeLocalOnly(attachMergedCustomMaps(localSave!, isBrowserPrimaryStorage));
-    await cloud.pushCloudSave(user.uid, getCurrentSave()!, getEnvJson());
+    await push(getCurrentSave()!);
     return mapSync.localChanged ? 'pulled_newer_cloud' : 'pushed_newer_local';
   }
 

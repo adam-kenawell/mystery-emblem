@@ -6,6 +6,7 @@ import { computeEnemyDangerArea } from '../../engine/terrainAndPathfinding';
 import type { DungeonPrepOverlay } from '../../ui/DungeonPrepOverlay';
 import type { TutorialOverlay } from '../../ui/TutorialOverlay';
 import type { BattleDomRefs } from './battleDomShell';
+import { getBattleSaveBlockReason } from './battleSuspend';
 import type { BattleControllerContext, BattleRuntimeState } from './battleTypesAndState';
 import { getLivingEnemies, getLivingUnits } from './battleUnitQueries';
 
@@ -64,6 +65,10 @@ export function syncHudControls(state: BattleRuntimeState, dom: BattleDomRefs): 
     state.phase === 'player_phase' &&
     (state.interactionState === 'idle' || state.interactionState === 'unit_selected');
   dom.fieldEndPhaseBtnEl.disabled = !canEndPhase;
+  dom.fieldSaveBtnEl.hidden = !state.suspendSource;
+  const saveBlock = getBattleSaveBlockReason(state);
+  dom.fieldSaveBtnEl.disabled = saveBlock !== null;
+  dom.fieldSaveBtnEl.title = saveBlock ?? '';
 }
 
 export function clearBattleSelection(

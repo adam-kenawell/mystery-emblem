@@ -33,6 +33,7 @@ export interface BattleDomRefs extends BattleModalsDomRefs {
   cmdCancelBtnEl: HTMLButtonElement;
   talkChoiceBackdropEl: HTMLElement;
   fieldUnitsBtnEl: HTMLButtonElement;
+  fieldSaveBtnEl: HTMLButtonElement;
   forecastModalBackdropEl: HTMLElement;
   attackerPortraitView: PmdPortraitView;
   defenderPortraitView: PmdPortraitView;
@@ -200,6 +201,13 @@ export function createBattleDomShell(): BattleDomRefs {
   fieldUnitsBtnEl.textContent = 'Units';
   modalsDom.fieldMenuCardEl.insertBefore(fieldUnitsBtnEl, modalsDom.fieldSettingsBtnEl);
 
+  const fieldSaveBtnEl = document.createElement('button');
+  fieldSaveBtnEl.type = 'button';
+  fieldSaveBtnEl.className = 'pmd-btn pmd-menu-row';
+  fieldSaveBtnEl.dataset.testid = 'battle-field-save';
+  fieldSaveBtnEl.textContent = 'Save Progress';
+  modalsDom.fieldMenuCardEl.insertBefore(fieldSaveBtnEl, modalsDom.fieldSettingsBtnEl);
+
   rootEl.append(
     canvasStageEl,
     floatingCalloutLayerEl,
@@ -243,6 +251,7 @@ export function createBattleDomShell(): BattleDomRefs {
     cmdCancelBtnEl: actionMenuEl.querySelector('[data-testid="dungeon-cmd-cancel"]')!,
     talkChoiceBackdropEl,
     fieldUnitsBtnEl,
+    fieldSaveBtnEl,
     ...forecastDom,
     ...modalsDom,
   };

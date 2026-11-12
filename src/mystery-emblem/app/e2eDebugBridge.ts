@@ -82,6 +82,7 @@ export function installMysteryEmblemDebugBridge(
     tutorialOverlay: ctx.tutorialOverlay,
     quizScene: ctx.quizScene,
     launchDemoChapterBattle: router.launchDemoChapterBattle,
+    continueCampaignFromTitle: router.continueCampaignFromTitle,
     battleScene: ctx.battleScene,
     mapEditorScene: ctx.mapEditorScene,
     overworldScene: ctx.overworldScene,

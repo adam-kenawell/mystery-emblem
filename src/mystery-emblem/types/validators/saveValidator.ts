@@ -41,6 +41,9 @@ export function validateSaveData(
   if (typeof save.lastUpdated !== 'number' || !Number.isFinite(save.lastUpdated) || save.lastUpdated <= 0) {
     errors.push('SaveData.lastUpdated must be a positive UTC epoch timestamp (ms).');
   }
+  if (save.battleSuspendJson !== undefined && typeof save.battleSuspendJson !== 'string') {
+    errors.push('SaveData.battleSuspendJson must be a JSON string when present.');
+  }
   if (typeof save.gold !== 'number' || save.gold < 0) {
     errors.push('SaveData.gold must be >= 0.');
   }

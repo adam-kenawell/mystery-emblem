@@ -33,7 +33,7 @@ import { renderForecastMoveList, setForecastStatLabels } from './battleForecastM
 import { updateBattleInfoStrip } from './battleHudCards';
 import { grantExpAndHandleLevelUps } from './battleLevelUpModal';
 import { checkAndTriggerMatchEnd } from './battleOutcomeModals';
-import type { BattleControllerContext } from './battleTypesAndState';
+import { getBattleRng, type BattleControllerContext } from './battleTypesAndState';
 import {
   areAllLivingPlayersWaited,
   getAttackableEnemiesFromCurrentTile,
@@ -197,7 +197,7 @@ export async function playStatusHexActionAsync(
   await waitBattleMs(state, 220);
   if (!state.openState || runGen !== state.battleRunGen) return false;
 
-  const r = (state.customRng ?? Math.random)();
+  const r = getBattleRng(state)();
   const roll = Math.floor(Math.max(0, Math.min(0.999999, Number.isFinite(r) ? r : 0.5)) * 100) + 1;
   const didHit = !forecast.blockedReason && roll <= forecast.hitRate;
 

@@ -7,6 +7,7 @@
 
 import { formatCampaignChapterLabel } from '../state/SaveStateManager';
 import { bindBackGestureSurface, bindPointerTap } from '../ui/pointerControls';
+import { openSaveSlotOverlay } from '../ui/SaveSlotOverlay';
 import type { AppRuntimeContext } from './appContext';
 import {
   createAppBackStack,
@@ -120,17 +121,28 @@ export function bindTitleAndCornerControls(params: {
     () => {
       audioManager.playSfx('select');
       setStatus('');
-      if (manager.getSave() !== null) {
-        void continueCampaignFromTitle();
-      } else {
+      if (!manager.hasAnySave()) {
         openDemoQuizFlow();
+        return;
       }
+      openSaveSlotOverlay({
+        manager,
+        audioManager,
+        mode: 'load',
+        onPickSlot: (slot, summary) => {
+          manager.loadSlot(slot);
+          if (summary.isEmpty || manager.getSave() === null) openDemoQuizFlow();
+          else void continueCampaignFromTitle();
+        },
+        onClose: () => renderAll(),
+      });
     },
     { signal }
   );
 
   const renderAll = (): void => {
     const save = manager.getSave();
+    const hasAnySave = manager.hasAnySave();
     const adminActive = isAppAdminSignedIn(ctx);
     if (!audioManager.getCurrentTrackId()) {
       audioManager.playBgm('top_menu', { fadeMs: 350 });
@@ -150,16 +162,16 @@ export function bindTitleAndCornerControls(params: {
       if (ctx.mapEditorScene?.isOpen()) ctx.mapEditorScene.close();
       if (isAppDevToolsOpen(ctx)) closeDevToolsOverlay();
     }
-    if (save) {
+    if (hasAnySave) {
       if (dom.btnContinueLabel) dom.btnContinueLabel.textContent = 'Continue';
       if (dom.btnContinueChapter) {
-        dom.btnContinueChapter.textContent = formatCampaignChapterLabel(
-          save.campaign.currentChapterId
-        );
-        dom.btnContinueChapter.hidden = false;
+        dom.btnContinueChapter.textContent = save
+          ? `File ${manager.getActiveSlot()} · ${formatCampaignChapterLabel(save.campaign.currentChapterId)}`
+          : '';
+        dom.btnContinueChapter.hidden = !save;
       }
     } else {
-      if (dom.btnContinueLabel) dom.btnContinueLabel.textContent = 'Start';
+      if (dom.btnContinueLabel) dom.btnContinueLabel.textContent = 'New Game';
       if (dom.btnContinueChapter) {
         dom.btnContinueChapter.textContent = '';
         dom.btnContinueChapter.hidden = true;

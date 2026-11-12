@@ -29,6 +29,7 @@ import {
 } from './battleLifecycleController';
 import { requestManualEndPhase } from './battlePhaseAndAiRunner';
 import { cancelUncommittedMove } from './battleSelectionAndMenu';
+import { openBattleSaveProgressOverlay } from './battleSuspend';
 import { getExpectedTutorialAction } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
 
@@ -221,6 +222,20 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
   bindFieldSubViewBtn(dom.fieldSettingsBtnEl, 'settings');
   bindFieldSubViewBtn(dom.fieldOverworldBtnEl, 'confirm_overworld');
   bindFieldSubViewBtn(dom.fieldTitleBtnEl, 'confirm_title');
+
+  bindPointerTap(
+    dom.fieldSaveBtnEl,
+    () => {
+      if (getExpectedTutorialAction(tutorialOverlay)) {
+        tutorialOverlay?.nudgeActiveStep();
+        return;
+      }
+      audioManager.playSfx('select');
+      closeSystemMenu(ctx);
+      openBattleSaveProgressOverlay(ctx);
+    },
+    { signal }
+  );
 
   bindPointerTap(
     dom.victoryModalBackdropEl.querySelector<HTMLElement>('[data-testid="victory-replay-btn"]'),

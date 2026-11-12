@@ -56,6 +56,18 @@ export type BattleFieldMenuSubView =
   | 'confirm_overworld'
   | 'confirm_title';
 
+/** Identifies how to rebuild a battle's rules/callbacks when resuming a mid-battle save. */
+export type BattleSuspendSource =
+  | { kind: 'chapter'; nodeId: string }
+  | { kind: 'node'; nodeId: string; levelId: string }
+  | {
+      kind: 'skirmish';
+      nodeId: string;
+      goldBounty: number;
+      customMap: DungeonMapDefinition;
+      enemyOverrides?: ReadonlyArray<ManualEnemyBattleSpawn>;
+    };
+
 export interface BattleSceneOptions {
   viewportEl: HTMLElement;
   saveManager: SaveStateManager;
@@ -88,6 +100,10 @@ export interface BattleOpenOptions {
   onBeforeVictoryModal?: () => Promise<void>;
   exitButtonLabel?: string;
   hideReplayOnVictory?: boolean;
+  /** Enables in-battle "Save Progress" and tells Continue how to rebuild this battle. */
+  suspendSource?: BattleSuspendSource;
+  /** Raw `battleSuspendJson` to restore instead of starting fresh (skips intro + prep). */
+  resumeSuspendJson?: string;
 }
 
 export interface BattleSceneSnapshot {

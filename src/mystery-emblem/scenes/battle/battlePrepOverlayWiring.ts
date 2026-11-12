@@ -26,6 +26,7 @@ import {
 } from './battlePrepAndAssets';
 import { togglePrepDeployUnit } from './battlePrepSlotActions';
 import type { BattleSceneOptions } from './battlePublicTypes';
+import { openBattleSaveProgressOverlay } from './battleSuspend';
 import { triggerBattleTutorial } from './battleTutorialIntegration';
 import type { BattleControllerContext, BattleRuntimeState } from './battleTypesAndState';
 import { getLivingEnemies } from './battleUnitQueries';
@@ -67,6 +68,7 @@ export function createBattlePrepOverlay(
     onExitViewMap: clearPrepViewMapSelection,
     onToggleGlobalDanger: () => toggleGlobalDangerArea(getCtx()),
     onConfirmEnterDungeon: () => confirmEnterDungeonFromPrep(getCtx()),
+    onSaveProgress: () => openBattleSaveProgressOverlay(getCtx()),
     onSubLayerChanged: () => {
       const ctx = getCtx();
       syncPrepChromeVisibility(state, dom, overlayRef);

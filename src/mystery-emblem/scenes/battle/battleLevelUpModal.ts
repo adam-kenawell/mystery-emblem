@@ -9,7 +9,7 @@ import { waitBattleMs } from './battleBannersAndTransitions';
 import { spawnFloatingText } from './battleFloatingCallouts';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { triggerBattleTutorial } from './battleTutorialIntegration';
-import type { BattleControllerContext } from './battleTypesAndState';
+import { getBattleRng, type BattleControllerContext } from './battleTypesAndState';
 import { getUnitVisualKey } from './battleUnitQueries';
 
 export function dismissLevelUpModal(ctx: BattleControllerContext): void {
@@ -145,7 +145,7 @@ export async function grantExpAndHandleLevelUps(
     return;
   }
 
-  const rng = state.customRng ?? Math.random;
+  const rng = getBattleRng(state);
   const { expAdded, levelUps } = awardBattleUnitExp(unit, expGain, rng);
   if (expAdded <= 0) return;
 

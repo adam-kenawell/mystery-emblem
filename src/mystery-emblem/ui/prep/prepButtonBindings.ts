@@ -22,6 +22,7 @@ export function bindPrepStaticButtons(params: {
   onEnterViewMap: () => void;
   onExitViewMap: () => void;
   onConfirmEnterDungeon: () => void;
+  onSaveProgress?: () => void;
   onToggleGlobalDanger: () => void;
   onSyncMapHudState: () => void;
   onSelectItemFilter: (filter: ItemFilterTab) => void;
@@ -71,6 +72,20 @@ export function bindPrepStaticButtons(params: {
       params.onEnterViewMap();
       params.onSetSubMode('view_map');
       tutorial?.notifyActionCompleted('prep_open_view_map');
+    },
+    { signal }
+  );
+
+  bindPointerTap(
+    dom.hubBackdropEl.querySelector<HTMLElement>('[data-testid="prep-btn-save-progress"]'),
+    () => {
+      const tutorial = getTutorialOverlay?.();
+      if (tutorial?.getExpectedAction()) {
+        tutorial.nudgeActiveStep();
+        return;
+      }
+      audioManager.playSfx('select');
+      params.onSaveProgress?.();
     },
     { signal }
   );
