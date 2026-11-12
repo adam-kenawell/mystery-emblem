@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — 3-Slot Save File Picker (`SaveSlotOverlay`)
+ * Mystery Emblem - 3-Slot Save File Picker (`SaveSlotOverlay`)
  *
  * `load` mode backs the title screen's "Continue" file select (load / new game / delete).
  * `save` mode backs every in-game "Save Progress" button (pick a slot, confirm overwrites).
@@ -133,7 +133,7 @@ export function openSaveSlotOverlay(opts: OpenSaveSlotOverlayOptions): void {
     }
     main.appendChild(heading);
     if (summary.isEmpty) {
-      main.appendChild(el('span', 'pmd-save-slot-meta', mode === 'load' ? 'Empty — Start a New Game' : 'Empty'));
+      main.appendChild(el('span', 'pmd-save-slot-meta', mode === 'load' ? 'Empty - Start a New Game' : 'Empty'));
     } else {
       main.appendChild(
         el('span', 'pmd-save-slot-meta', `${summary.lordName ?? '???'} · ${summary.chapterLabel ?? ''}`)

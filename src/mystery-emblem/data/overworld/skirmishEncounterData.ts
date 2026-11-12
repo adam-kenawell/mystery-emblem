@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Manual Feral Skirmish Encounter Tiers (Rule 1 & Rule 5 Compliant)
+ * Mystery Emblem - Manual Feral Skirmish Encounter Tiers (Rule 1 & Rule 5 Compliant)
  */
 
 import type {
@@ -10,10 +10,10 @@ import type {
 } from '../../types/schemas';
 import { cloneDungeonMap, getEffectiveChapterMap } from '../chapterMapRegistry';
 import type { OverworldNodeDefinition } from './overworldGraphData';
+import { getSpeciesById } from '../index';
 
 export interface ManualSkirmishMemberTemplate {
   speciesId: string;
-  nickname: string;
   level: number;
   stats: StatBlockSeven;
   moveIds: string[];
@@ -31,7 +31,6 @@ export const FERAL_SKIRMISH_SQUADS_BY_TIER: ReadonlyArray<{
     members: [
       {
         speciesId: 'zigzagoon_galar',
-        nickname: 'Feral Outrider',
         level: 2,
         stats: { hp: 16, atk: 5, def: 4, spa: 3, spd: 4, spe: 6, mov: 5 },
         moveIds: ['tackle'],
@@ -39,7 +38,6 @@ export const FERAL_SKIRMISH_SQUADS_BY_TIER: ReadonlyArray<{
       },
       {
         speciesId: 'venipede',
-        nickname: 'Feral Stalker',
         level: 2,
         stats: { hp: 16, atk: 5, def: 5, spa: 3, spd: 4, spe: 5, mov: 5 },
         moveIds: ['poison_sting', 'bug_bite'],
@@ -47,7 +45,6 @@ export const FERAL_SKIRMISH_SQUADS_BY_TIER: ReadonlyArray<{
       },
       {
         speciesId: 'impidimp',
-        nickname: 'Feral Hexer',
         level: 2,
         stats: { hp: 15, atk: 5, def: 4, spa: 5, spd: 4, spe: 5, mov: 5 },
         moveIds: ['bite', 'fairy_wind'],
@@ -61,7 +58,6 @@ export const FERAL_SKIRMISH_SQUADS_BY_TIER: ReadonlyArray<{
     members: [
       {
         speciesId: 'zigzagoon_galar',
-        nickname: 'Feral Outrider',
         level: 9,
         stats: { hp: 20, atk: 8, def: 6, spa: 4, spd: 6, spe: 9, mov: 5 },
         moveIds: ['tackle'],
@@ -69,7 +65,6 @@ export const FERAL_SKIRMISH_SQUADS_BY_TIER: ReadonlyArray<{
       },
       {
         speciesId: 'venipede',
-        nickname: 'Feral Stalker',
         level: 9,
         stats: { hp: 20, atk: 8, def: 7, spa: 5, spd: 6, spe: 7, mov: 5 },
         moveIds: ['poison_sting', 'bug_bite'],
@@ -77,7 +72,6 @@ export const FERAL_SKIRMISH_SQUADS_BY_TIER: ReadonlyArray<{
       },
       {
         speciesId: 'impidimp',
-        nickname: 'Feral Hexer',
         level: 9,
         stats: { hp: 19, atk: 7, def: 5, spa: 8, spd: 6, spe: 8, mov: 5 },
         moveIds: ['assurance', 'snarl'],
@@ -91,7 +85,6 @@ export const FERAL_SKIRMISH_SQUADS_BY_TIER: ReadonlyArray<{
     members: [
       {
         speciesId: 'pawniard',
-        nickname: 'Feral Vanguard',
         level: 10,
         stats: { hp: 23, atk: 10, def: 9, spa: 5, spd: 6, spe: 8, mov: 5 },
         moveIds: ['metal_claw', 'assurance'],
@@ -99,7 +92,6 @@ export const FERAL_SKIRMISH_SQUADS_BY_TIER: ReadonlyArray<{
       },
       {
         speciesId: 'rookidee',
-        nickname: 'Feral Harrier',
         level: 10,
         stats: { hp: 21, atk: 8, def: 6, spa: 5, spd: 6, spe: 10, mov: 6 },
         moveIds: ['peck'],
@@ -107,7 +99,6 @@ export const FERAL_SKIRMISH_SQUADS_BY_TIER: ReadonlyArray<{
       },
       {
         speciesId: 'aron',
-        nickname: 'Feral Cragbreaker',
         level: 10,
         stats: { hp: 25, atk: 9, def: 11, spa: 5, spd: 6, spe: 5, mov: 4 },
         moveIds: ['metal_claw', 'rock_tomb'],
@@ -115,7 +106,6 @@ export const FERAL_SKIRMISH_SQUADS_BY_TIER: ReadonlyArray<{
       },
       {
         speciesId: 'gothita',
-        nickname: 'Feral Channeler',
         level: 10,
         stats: { hp: 20, atk: 5, def: 7, spa: 10, spd: 9, spe: 7, mov: 5 },
         moveIds: ['confusion', 'psybeam'],
@@ -160,12 +150,13 @@ export function buildSkirmishBattlePayload(
       x: coord.x,
       y: coord.y,
       speciesId: tpl.speciesId,
-      nickname: tpl.nickname,
+      nickname: getSpeciesById(tpl.speciesId)?.name ?? tpl.speciesId,
       level: Math.max(tpl.level, skirmish.recommendedLevel),
       stats: skirmish.recommendedLevel > tpl.level ? undefined : { ...tpl.stats },
       moveIds: [...tpl.moveIds],
       equippedMoveId: tpl.equippedMoveId,
       heldItemId: null,
+      aiMode: 'aggressive',
     };
   });
 

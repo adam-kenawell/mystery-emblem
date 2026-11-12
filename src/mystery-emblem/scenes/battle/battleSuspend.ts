@@ -47,6 +47,7 @@ export interface BattleSuspendSnapshot {
   deploymentSlots: PrepDeploymentSlot[];
   triggeredEventIds: string[];
   spawnedReinforcementIds: string[];
+  activatedSquadIds?: string[];
   blockedReinforcementIds: string[];
   collectedDrops: string[];
   eventBonusItems: ConvoyEntry[];
@@ -99,6 +100,7 @@ export function buildBattleSuspendJson(state: BattleRuntimeState): string | null
     deploymentSlots: state.deploymentSlots,
     triggeredEventIds: [...state.triggeredEventIds],
     spawnedReinforcementIds: [...state.spawnedReinforcementIds],
+    activatedSquadIds: [...state.activatedSquadIds],
     blockedReinforcementIds: [...state.blockedReinforcementIds],
     collectedDrops: state.collectedDrops,
     eventBonusItems: state.eventBonusItems,
@@ -179,6 +181,7 @@ export async function applyBattleSuspendSnapshot(
   state.deploymentSlots = snap.deploymentSlots;
   state.triggeredEventIds = new Set(snap.triggeredEventIds);
   state.spawnedReinforcementIds = new Set(snap.spawnedReinforcementIds);
+  state.activatedSquadIds = new Set(snap.activatedSquadIds ?? []);
   state.blockedReinforcementIds = new Set(snap.blockedReinforcementIds);
   state.collectedDrops = [...snap.collectedDrops];
   state.eventBonusItems = snap.eventBonusItems.map((e) => ({ ...e }));

@@ -13,7 +13,7 @@ import type {
 import { interpolateCampaignText, resolveSpeakerIdentity } from '../../engine/speakerResolver';
 import type { SaveData } from '../../types/schemas';
 import type { PmdPortraitView } from '../PmdSpriteCanvas';
-import { createPmdButton } from '../PmdWindow';
+import { createPmdButton, createPmdWindow } from '../PmdWindow';
 import { TypewriterController, prefersReducedMotionEnabled } from '../typewriterController';
 
 export interface RenderCoachCardParams {
@@ -32,13 +32,30 @@ export interface RenderCoachCardParams {
   onNext: () => void;
 }
 
-function resolvePrimaryNavLabel(isLastBeat: boolean, returnToCompendiumOnClose: boolean): string {
-  if (!isLastBeat) return 'Next ▶';
-  return returnToCompendiumOnClose ? 'Done' : 'Got It!';
+const ACTION_PROMPT_LABELS: Partial<Record<string, string>> = {
+  battle_confirm_item: 'Tap Item',
+  battle_open_heal_forecast: 'Tap Heal',
+  battle_open_attack_forecast: 'Tap Attack',
+  battle_confirm_wait: 'Tap Wait',
+  battle_toggle_danger_area: 'Tap Danger Area',
+  overworld_open_menu: 'Tap Menu',
+};
+
+function resolveActionPromptLabel(awaitAction: string | undefined): string {
+  return (awaitAction && ACTION_PROMPT_LABELS[awaitAction]) || 'Your Move!';
+}
+
+function buildActionPromptBadge(beat: AdvisorTutorialBeat): HTMLElement {
+  const badge = document.createElement('span');
+  badge.className = 'pmd-tutorial-action-badge';
+  badge.dataset.testid = 'tutorial-action-badge';
+  badge.innerHTML = '<span></span><span class="pmd-dialogue-caret" aria-hidden="true">▼</span>';
+  badge.firstElementChild!.textContent = resolveActionPromptLabel(beat.awaitAction);
+  return badge;
 }
 
 function buildNavActionsRow(params: RenderCoachCardParams): HTMLElement {
-  const { beatIndex, totalBeats, returnToCompendiumOnClose, signal } = params;
+  const { beatIndex, totalBeats, signal } = params;
   const actionArea = document.createElement('div');
   actionArea.className = 'pmd-advisor-actions';
 
@@ -55,16 +72,20 @@ function buildNavActionsRow(params: RenderCoachCardParams): HTMLElement {
     );
   }
 
-  actionArea.appendChild(
-    createPmdButton({
-      label: resolvePrimaryNavLabel(beatIndex >= totalBeats - 1, returnToCompendiumOnClose),
-      variant: 'primary',
-      className: 'pmd-tutorial-nav-btn is-primary is-compact',
-      testId: 'tutorial-next-btn',
-      onTap: () => params.onNext(),
-      tapOptions: { signal, stopPropagation: true },
-    })
-  );
+  const isLastBeat = beatIndex >= totalBeats - 1;
+  const nextBtn = createPmdButton({
+    label: isLastBeat ? 'Done' : 'Next',
+    variant: 'primary',
+    className: 'pmd-dialogue-advance-btn pmd-tutorial-nav-btn is-primary',
+    testId: 'tutorial-next-btn',
+    ariaLabel: isLastBeat ? 'Finish tip' : 'Next tip',
+    onTap: () => params.onNext(),
+    tapOptions: { signal, stopPropagation: true },
+  });
+  nextBtn.innerHTML = `<span>${
+    isLastBeat ? 'Done' : 'Next'
+  }</span><span class="pmd-dialogue-caret" aria-hidden="true">▼</span>`;
+  actionArea.appendChild(nextBtn);
   return actionArea;
 }
 
@@ -86,41 +107,49 @@ export function renderCoachCardDom(params: RenderCoachCardParams): {
   cardWindowEl.dataset.awaitAction = isInteractive ? beat.awaitAction ?? '' : '';
   cardWindowEl.dataset.advisorEmotion = emotion;
 
-  const layoutRow = document.createElement('div');
-  layoutRow.className = 'pmd-advisor-coach-row';
-
-  const portraitSlot = document.createElement('div');
-  portraitSlot.className = 'pmd-forecast-portrait-slot pmd-advisor-portrait-slot';
-  portraitSlot.dataset.testid = 'tutorial-advisor-portrait-slot';
+  const portraitSlot = createPmdWindow({
+    variant: 'compact-translucent',
+    className:
+      'pmd-dialogue-portrait-slot pmd-dialogue-portrait-slot--left pmd-advisor-portrait-slot is-speaking',
+    testId: 'tutorial-advisor-portrait-slot',
+  });
   portraitSlot.appendChild(coachPortraitView.canvas);
   void coachPortraitView.setPortrait({
     speciesIdOrAssetId: advisor.visualAssetId ?? advisor.pmdAssetId,
     emotion,
   });
-  layoutRow.appendChild(portraitSlot);
 
-  const contentCol = document.createElement('div');
-  contentCol.className = 'pmd-advisor-coach-main';
+  const boxEl = createPmdWindow({
+    variant: 'translucent',
+    className: 'pmd-dialogue-box pmd-tutorial-dialogue-box',
+    testId: 'tutorial-dialogue-box',
+  });
 
+  const headerEl = document.createElement('div');
+  headerEl.className = 'pmd-dialogue-header';
+  const speakerGroup = document.createElement('div');
+  speakerGroup.className = 'pmd-dialogue-speaker-group';
   const speakerName = document.createElement('span');
   speakerName.className = 'pmd-dialogue-nickname pmd-advisor-speaker-name';
   speakerName.dataset.testid = 'tutorial-speaker-name';
   speakerName.textContent = advisor.nickname;
-  contentCol.appendChild(speakerName);
+  speakerGroup.appendChild(speakerName);
+  headerEl.appendChild(speakerGroup);
 
   const formattedDialogue = interpolateCampaignText(
     (isMentor && beat.mentorDialogue) || beat.dialogue,
     save
   );
+  const bodyEl = document.createElement('div');
+  bodyEl.className = 'pmd-dialogue-body';
   const speechEl = document.createElement('p');
-  speechEl.className = 'pmd-advisor-speech-text';
+  speechEl.className = 'pmd-dialogue-text pmd-advisor-speech-text';
   speechEl.dataset.testid = 'tutorial-dialogue-text';
-  contentCol.appendChild(speechEl);
+  bodyEl.appendChild(speechEl);
+  bodyEl.appendChild(isInteractive ? buildActionPromptBadge(beat) : buildNavActionsRow(params));
 
-  if (!isInteractive) contentCol.appendChild(buildNavActionsRow(params));
-
-  layoutRow.appendChild(contentCol);
-  cardWindowEl.appendChild(layoutRow);
+  boxEl.append(headerEl, bodyEl);
+  cardWindowEl.append(portraitSlot, boxEl);
 
   return { speechEl, formattedDialogue };
 }

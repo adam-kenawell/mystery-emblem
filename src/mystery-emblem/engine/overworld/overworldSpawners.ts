@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Awakening-Style Feral Skirmish & Kecleon Shop Spawners
+ * Mystery Emblem - Awakening-Style Feral Skirmish & Kecleon Shop Spawners
  */
 
 import {
@@ -11,6 +11,7 @@ import {
   type OverworldNodeDefinition,
 } from '../../data/overworldMapData';
 import type {
+  CampaignMode,
   KecleonShopSpawnState,
   KecleonShopType,
   OverworldNodeState,
@@ -57,6 +58,8 @@ export interface PostBattleSpawnOptions {
   justClearedNodeId?: string;
   kecleonShopsUnlocked: boolean;
   completedChapterIds?: ReadonlyArray<string>;
+  campaignMode?: CampaignMode;
+  skirmishesUnlocked?: boolean;
   skirmishChance?: number;
   maxActiveSkirmishes?: number;
   shopChance?: number;
@@ -69,6 +72,15 @@ export interface PostBattleSpawnResult {
   spawnedSkirmishNodeId: string | null;
   spawnedShopNodeId: string | null;
   spawnedShopType: KecleonShopType | null;
+}
+
+export function areSkirmishesUnlocked(options: {
+  campaignMode?: CampaignMode;
+  completedChapterIds?: ReadonlyArray<string>;
+  skirmishesUnlocked?: boolean;
+}): boolean {
+  if (options.campaignMode === 'demo') return false;
+  return Boolean(options.skirmishesUnlocked) || Boolean(options.completedChapterIds?.includes('chapter_05'));
 }
 
 export function rollPostBattleOverworldSpawns(
@@ -89,15 +101,21 @@ export function rollPostBattleOverworldSpawns(
 
   const clearedDefs = graph.nodes.filter((def) => nodes[def.id]?.unlocked && nodes[def.id]?.cleared);
 
-  const activeSkirmishCount = clearedDefs.filter((def) => Boolean(nodes[def.id]?.activeSkirmish)).length;
-  if (activeSkirmishCount < maxActiveSkirmishes && clearedDefs.length > 0 && rng() < skirmishChance) {
-    const preferred = clearedDefs.filter(
+  const skirmishDefs = clearedDefs.filter((def) => def.id !== 'prologue');
+  const activeSkirmishCount = skirmishDefs.filter((def) => Boolean(nodes[def.id]?.activeSkirmish)).length;
+  if (
+    areSkirmishesUnlocked(options) &&
+    activeSkirmishCount < maxActiveSkirmishes &&
+    skirmishDefs.length > 0 &&
+    rng() < skirmishChance
+  ) {
+    const preferred = skirmishDefs.filter(
       (def) => !nodes[def.id]?.activeSkirmish && def.id !== options.justClearedNodeId
     );
     const pool =
       preferred.length > 0
         ? preferred
-        : clearedDefs.filter((def) => !nodes[def.id]?.activeSkirmish);
+        : skirmishDefs.filter((def) => !nodes[def.id]?.activeSkirmish);
 
     if (pool.length > 0) {
       const picked = pool[Math.floor(rng() * pool.length) % pool.length]!;

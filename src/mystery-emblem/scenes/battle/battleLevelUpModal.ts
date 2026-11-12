@@ -99,9 +99,6 @@ export function presentLevelUpModalAsync(
         .join(', ');
       notes.push(`Learned ${moveNames}!`);
     }
-    if (roll.canPromoteWithStoneNow) {
-      notes.push(`★ Evolution Stone Ready at Lv. ${roll.newLevel}!`);
-    }
     if (notes.length > 0) {
       extraNotesEl.textContent = notes.join(' · ');
       extraNotesEl.hidden = false;
@@ -164,6 +161,6 @@ export async function grantExpAndHandleLevelUps(
   }
 
   if (levelUps.length > 0) {
-    await triggerBattleTutorial(ctx, 'levelup_and_evolution');
+    await triggerBattleTutorial(ctx, 'levelup_and_growth');
   }
 }

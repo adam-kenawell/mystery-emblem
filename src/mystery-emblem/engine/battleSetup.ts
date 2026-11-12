@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Battle Deployment & Unit Instantiation Helpers
+ * Mystery Emblem - Battle Deployment & Unit Instantiation Helpers
  *
  * Converts `DungeonMapDefinition` spawns (`playerSpawns`, `enemySpawns`, `npcSpawns`),
  * `PrepDeploymentSlot` selections, and `OwnedPokemonInstance` save entries into live
@@ -143,6 +143,7 @@ export function resolveEnemySpawnsForMap(
       mustSurvive: spawn.mustSurvive,
       droppableItemId: spawn.droppableItemId ?? null,
       aiMode: spawn.aiMode,
+      ...(spawn.squadId ? { squadId: spawn.squadId } : {}),
       ...(spawn.sparring ? { sparring: true } : {}),
       ...(spawn.friendlyBout ? { friendlyBout: true } : {}),
       ...(!spawn.seedKey && spawn.equippedMoveIds

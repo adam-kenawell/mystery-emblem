@@ -9,6 +9,7 @@ import {
   PROLOGUE_RANGED_DRILL_TOPIC_ID,
   evaluatePrepTutorialTopics,
   evaluateTurn1TutorialTopics,
+  isQuaquavalAbsentFromLevel,
 } from '../../data/tutorialRegistry';
 import { getMapDeploymentCap } from '../../engine/battleSetup';
 import { getEligibleEvolutionBranches } from '../../engine/progressionEngine';
@@ -234,7 +235,10 @@ export function triggerBattleTutorial(
     return Promise.resolve(false);
   }
   const isPrologue = state.activeLevelId === PROLOGUE_LEVEL_ID;
-  if (isPrologue && PROLOGUE_SUPPRESSED_TOPIC_IDS.has(topicId)) {
+  if (DUPLICATE_PROLOGUE_LESSON_TOPIC_IDS.has(topicId)) {
+    return Promise.resolve(false);
+  }
+  if (isQuaquavalAbsentFromLevel(state.activeLevelId)) {
     return Promise.resolve(false);
   }
   return tutorialOverlay.presentTopicIfNeeded(topicId, {
@@ -243,7 +247,8 @@ export function triggerBattleTutorial(
   });
 }
 
-const PROLOGUE_SUPPRESSED_TOPIC_IDS: ReadonlySet<string> = new Set([
+/** Already taught live by the Prologue drills, so never auto-trigger them again. */
+const DUPLICATE_PROLOGUE_LESSON_TOPIC_IDS: ReadonlySet<string> = new Set([
   'ch1_first_combat_forecast',
   'ch1_healing_and_items',
 ]);

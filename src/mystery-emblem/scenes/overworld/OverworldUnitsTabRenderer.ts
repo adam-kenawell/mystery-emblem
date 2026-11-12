@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Overworld System Menu `Units` Tab Renderer (`OverworldUnitsTabRenderer.ts`)
+ * Mystery Emblem - Overworld System Menu `Units` Tab Renderer (`OverworldUnitsTabRenderer.ts`)
  */
 
 import { resolveUnitVisualAssetId } from '../../assets/pmdAssetLoader';
@@ -33,7 +33,6 @@ export interface OverworldUnitsTabParams {
   selectedUnitVitaminId: string | null;
   selectedUnitTmId: string | null;
   onSelectUnit: (instanceId: string) => void;
-  onRequestRenameUnit?: (instanceId: string) => Promise<void> | void;
   onSelectVitamin: (itemId: string) => void;
   onSelectTm: (itemId: string) => void;
   onEvolvedPreloadSprites: () => void;
@@ -55,7 +54,6 @@ export function renderOverworldUnitsTab(params: OverworldUnitsTabParams): {
     selectedUnitVitaminId,
     selectedUnitTmId,
     onSelectUnit,
-    onRequestRenameUnit,
     onSelectVitamin,
     onSelectTm,
     onEvolvedPreloadSprites,
@@ -111,11 +109,6 @@ export function renderOverworldUnitsTab(params: OverworldUnitsTabParams): {
     const skill = sp ? getPersonalSkillById(sp.personalSkillId) : undefined;
     const equippedItemId = getUnitEquippedItemId(selected);
     const equippedItem = equippedItemId ? getItemById(equippedItemId) : undefined;
-    const showSpeciesMeta =
-      sp && selected.nickname.trim().toLowerCase() !== sp.name.trim().toLowerCase()
-        ? `${sp.name} · `
-        : '';
-
     const headerRow = document.createElement('div');
     headerRow.className = 'pmd-devtools-row-between';
     headerRow.innerHTML = `
@@ -123,27 +116,15 @@ export function renderOverworldUnitsTab(params: OverworldUnitsTabParams): {
         <div class="pmd-forecast-portrait-slot" data-ow-unit-portrait></div>
         <div class="pmd-forecast-unit-id">
           <strong class="pmd-forecast-unit-name" data-testid="overworld-unit-detail-name">${escapeUiHtml(selected.nickname)}</strong>
-          <span class="pmd-forecast-unit-meta">${escapeUiHtml(showSpeciesMeta)}Lv. ${selected.level} · ${sp ? renderColoredTypesHtml(sp.types, '/') : ''} · ${escapeUiHtml(sp?.traversalClass ?? 'Grounded')}</span>
+          <span class="pmd-forecast-unit-meta">Lv. ${selected.level} · ${sp ? renderColoredTypesHtml(sp.types, '/') : ''} · ${escapeUiHtml(sp?.traversalClass ?? 'Grounded')}</span>
         </div>
       </div>
-      <button type="button" class="pmd-btn pmd-chip-btn" data-testid="overworld-unit-rename-btn">Rename</button>
     `;
     headerRow.querySelector('[data-ow-unit-portrait]')!.appendChild(portraitView.canvas);
     void portraitView.setPortrait({
       speciesIdOrAssetId: resolveUnitVisualAssetId(selected.speciesId, selected.cosmeticForm),
       emotion: 'Normal',
     });
-
-    bindPointerTap(
-      headerRow.querySelector<HTMLElement>('[data-testid="overworld-unit-rename-btn"]'),
-      () => {
-        if (!onRequestRenameUnit) return;
-        audioManager.playSfx('select');
-        void Promise.resolve(onRequestRenameUnit(selected.instanceId)).then(() => {
-          if (isSystemMenuOpen()) onFeedbackAndRefresh('');
-        });
-      }
-    );
 
     const statStrip = document.createElement('div');
     statStrip.className = 'pmd-overworld-stat-strip';

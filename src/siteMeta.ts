@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Public Site Metadata (`siteMeta.ts`)
+ * Mystery Emblem - Public Site Metadata (`siteMeta.ts`)
  *
  * Shared by the SEO head, the info-page nav, and `sitemap.xml`.
  */

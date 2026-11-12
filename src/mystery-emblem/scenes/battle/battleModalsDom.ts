@@ -86,7 +86,7 @@ export function createBattleModalsDom(): BattleModalsDomRefs {
       <div class="pmd-forecast-unit-head" style="justify-content:center; margin:0.35rem 0 0.5rem;">
         <div class="pmd-forecast-portrait-slot" data-levelup-portrait-slot></div>
         <div class="pmd-forecast-unit-id" style="text-align:left;">
-          <strong class="pmd-forecast-unit-name" data-testid="levelup-unit-title">—</strong>
+          <strong class="pmd-forecast-unit-name" data-testid="levelup-unit-title">-</strong>
           <span class="pmd-forecast-unit-meta" data-testid="levelup-level-line">Lv. 9 → Lv. 10</span>
         </div>
       </div>

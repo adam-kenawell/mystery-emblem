@@ -77,6 +77,8 @@ export interface DungeonUnitSpawn {
   droppableItemId?: string | null;
   /** AI movement behavior (defaults to `'wait_until_in_range'`) */
   aiMode?: EnemyAiMode;
+  /** Linked squad tag: once any member is engaged or threatens a hostile, the whole squad turns aggressive */
+  squadId?: string;
   /**
    * Training sparring partner: its strikes always hit (no crits), and no strike to or from it
    * can drop a unit below 1 HP. Cleared when converted to the player.
@@ -140,6 +142,7 @@ export interface ManualEnemyBattleSpawn {
   mustSurvive?: boolean;
   droppableItemId?: string | null;
   aiMode?: EnemyAiMode;
+  squadId?: string;
   sparring?: boolean;
   friendlyBout?: boolean;
   equippedMoveIds?: string[];

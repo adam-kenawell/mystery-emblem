@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Dev Tools Roster & Select Population Helpers (`devToolsRosterActions.ts`)
+ * Mystery Emblem - Dev Tools Roster & Select Population Helpers (`devToolsRosterActions.ts`)
  */
 
 import type { AudioManager } from '../../audio/AudioManager';

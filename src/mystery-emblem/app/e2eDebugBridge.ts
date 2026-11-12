@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Dev / E2E Test Telemetry Bridge (`e2eDebugBridge.ts`)
+ * Mystery Emblem - Dev / E2E Test Telemetry Bridge (`e2eDebugBridge.ts`)
  *
  * Strictly gated on DEV / WebDriver / localhost / `?debug`.
  */

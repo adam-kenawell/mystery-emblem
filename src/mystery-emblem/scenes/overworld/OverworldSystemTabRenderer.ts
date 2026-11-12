@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Overworld System Menu `System` Tab Renderer (`OverworldSystemTabRenderer.ts`)
+ * Mystery Emblem - Overworld System Menu `System` Tab Renderer (`OverworldSystemTabRenderer.ts`)
  */
 
 import type { AudioManager } from '../../audio/AudioManager';

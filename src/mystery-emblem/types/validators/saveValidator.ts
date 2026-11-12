@@ -66,7 +66,9 @@ export function validateSaveData(
         );
       }
 
-      if (!unit.nickname || unit.nickname.trim().length === 0) {
+      if (sp) {
+        unit.nickname = sp.name;
+      } else if (!unit.nickname || unit.nickname.trim().length === 0) {
         errors.push(`Roster unit "${unit.instanceId}" must have a non-empty nickname.`);
       }
       if (unit.cosmeticForm !== undefined && !VALID_COSMETIC_SET.has(unit.cosmeticForm)) {

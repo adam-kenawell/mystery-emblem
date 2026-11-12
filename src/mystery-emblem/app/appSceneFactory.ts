@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Gameplay Scene & DevTools Factory (`appSceneFactory.ts`)
+ * Mystery Emblem - Gameplay Scene & DevTools Factory (`appSceneFactory.ts`)
  */
 
 import { getDemoChapterByNodeId } from '../data/campaignRegistry';
@@ -33,7 +33,6 @@ export function mountGameplayScenesAndDevTools(ctx: AppRuntimeContext, router: S
       audioManager,
       dialogueOverlay: ctx.dialogueOverlay ?? undefined,
       tutorialOverlay: tutorialOverlay ?? undefined,
-      onRequestRenameUnit: (id) => router.promptRenameUnit(id, ctx.battleScene?.getPrepSaveManager()),
       onExit: (destination = 'default') => {
         if (destination === 'overworld') {
           ctx.pendingPostVictoryDemoNodeId = null;
@@ -92,7 +91,6 @@ export function mountGameplayScenesAndDevTools(ctx: AppRuntimeContext, router: S
       tutorialOverlay: tutorialOverlay ?? undefined,
       onExit: () => { if (ctx.overworldReturnTarget !== 'suppress') router.showTitleScreen(); },
       onLayerStateChanged: () => backStack.syncButtonLabel(),
-      onRequestRenameUnit: (id) => void router.promptRenameUnit(id),
       onRequestNewGame: () => router.openDemoQuizFlow(),
       onReplayCutscene: (csId) => void router.replayStoryCutsceneFromOverworld(csId),
       onReplayCredits: () => void router.replayCreditsFromOverworld(),
@@ -130,7 +128,6 @@ export function mountGameplayScenesAndDevTools(ctx: AppRuntimeContext, router: S
       },
       onLaunchMapEditor: (levelId) => void router.openMapEditor(levelId),
       onPlayMapBattle: (levelId) => void router.openBattleScene('devtools', levelId),
-      onRequestRenameUnit: (id) => void router.promptRenameUnit(id),
       getCutsceneEditorHost: () => ({
         audioManager,
         cutsceneScene: ctx.cutsceneScene,

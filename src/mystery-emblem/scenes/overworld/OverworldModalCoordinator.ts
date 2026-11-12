@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Overworld Kecleon Shop, 3-Tab System Menu & Tutorial Coordinator (`OverworldModalCoordinator.ts`)
+ * Mystery Emblem - Overworld Kecleon Shop, 3-Tab System Menu & Tutorial Coordinator (`OverworldModalCoordinator.ts`)
  */
 
 import type { AudioManager } from '../../audio/AudioManager';
@@ -47,7 +47,6 @@ export class OverworldModalCoordinator {
       onImportedSaveSnapLordAndCamera: () => void;
       onConfirmNewGame: () => void;
       onExitToTitle: () => void;
-      onRequestRenameUnit?: (instanceId: string) => Promise<void> | void;
       onReplayCutscene?: (cutsceneId: string) => void;
       onReplayCredits?: () => void;
     },
@@ -150,7 +149,6 @@ export class OverworldModalCoordinator {
         selectedUnitVitaminId: this.selectedUnitVitaminId,
         selectedUnitTmId: this.selectedUnitTmId,
         onSelectUnit: (id) => { this.selectedUnitInstanceId = id; this.menuFeedbackMessage = ''; this.renderSystemMenuBody(); },
-        onRequestRenameUnit: this.deps.onRequestRenameUnit,
         onSelectVitamin: (id) => { this.selectedUnitVitaminId = id; this.renderSystemMenuBody(); },
         onSelectTm: (id) => { this.selectedUnitTmId = id; this.renderSystemMenuBody(); },
         onEvolvedPreloadSprites: () => this.deps.onPreloadActiveSprites(),

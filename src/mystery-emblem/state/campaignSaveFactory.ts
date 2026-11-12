@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — New Campaign Save Factory (`campaignSaveFactory.ts`)
+ * Mystery Emblem - New Campaign Save Factory (`campaignSaveFactory.ts`)
  */
 
 import { getFlabebeFlowerColorForLord } from '../assets/pmdAssetLoader';

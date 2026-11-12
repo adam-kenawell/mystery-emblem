@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Overworld Scene Options, Snapshot & Tutorial Trigger Helpers (`overworldSnapshot.ts`)
+ * Mystery Emblem - Overworld Scene Options, Snapshot & Tutorial Trigger Helpers (`overworldSnapshot.ts`)
  */
 
 import type { PmdDirection } from '../../assets/pmdAssetLoader';
@@ -7,7 +7,6 @@ import type { AudioManager } from '../../audio/AudioManager';
 import { getItemById } from '../../data/index';
 import type { OverworldGraphDefinition, OverworldPoint } from '../../data/overworldMapData';
 import { ensureOverworldGraphState } from '../../engine/overworldEngine';
-import { getEligibleEvolutionBranches } from '../../engine/progressionEngine';
 import type { SaveStateManager } from '../../state/SaveStateManager';
 import type {
   DungeonMapDefinition,
@@ -30,7 +29,6 @@ export interface OverworldSceneOptions {
   onExit: () => void;
   onRequestNewGame?: () => void;
   onLayerStateChanged: () => void;
-  onRequestRenameUnit?: (instanceId: string) => Promise<void> | void;
   onLaunchChapterBattle?: (payload: { nodeId: string; levelId: string }) => void;
   onReplayCutscene?: (cutsceneId: string) => void;
   onReplayCredits?: () => void;
@@ -80,21 +78,16 @@ export function getActiveLordUnit(save: SaveData | null): OwnedPokemonInstance |
 
 export function getOverworldArrivalTutorialTopicIds(save: SaveData): string[] {
   const topics = ['overworld_and_skirmishes'];
+  if (save.campaign.completedChapterIds.includes('chapter_02')) {
+    topics.push('overworld_expedition_menu');
+  }
   if (save.campaign.kecleonShopsUnlocked) topics.push('kecleon_shops_and_tms');
+  if (Object.values(save.overworld?.nodes ?? {}).some((n) => Boolean(n?.activeSkirmish))) {
+    topics.push('rift_tremors_wild_pokemon');
+  }
   if (save.convoy.some((c) => c.quantity > 0 && getItemById(c.itemId)?.category === 'vitamin')) {
     topics.push('ch4_vitamins');
   }
-  const hasStone = save.convoy.some((c) => c.itemId === 'evolution_stone' && c.quantity > 0);
-  const hasGem = save.convoy.some((c) => c.itemId === 'evolution_gem' && c.quantity > 0);
-  const anyCanPromote = save.roster.some((u) => {
-    const s = getEligibleEvolutionBranches(u.speciesId, u.level, 'evolution_stone');
-    const g = getEligibleEvolutionBranches(u.speciesId, u.level, 'evolution_gem');
-    return (
-      s.some((b) => u.consumableItemId === b.requiredItemId || hasStone) ||
-      g.some((b) => u.consumableItemId === b.requiredItemId || hasGem)
-    );
-  });
-  if (anyCanPromote) topics.push('levelup_and_evolution');
   return topics;
 }
 

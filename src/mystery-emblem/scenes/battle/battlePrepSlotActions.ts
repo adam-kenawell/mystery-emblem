@@ -87,7 +87,7 @@ export function handlePrepViewMapTileTap(
 
     if (clickedSlot) {
       audioManager.playSfx('dialogue_advance');
-      state.prepMapStatusNotice = 'Open blue tile — tap a unit first.';
+      state.prepMapStatusNotice = 'Open blue tile - tap a unit first.';
       updateBattleInfoStrip(ctx);
       ctx.renderNow();
       return;

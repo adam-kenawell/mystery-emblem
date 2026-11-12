@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Mystical Aura Wave Personality Quiz & NG+ Coordinator (`QuizScene.ts`)
+ * Mystery Emblem - Mystical Aura Wave Personality Quiz & NG+ Coordinator (`QuizScene.ts`)
  */
 
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';

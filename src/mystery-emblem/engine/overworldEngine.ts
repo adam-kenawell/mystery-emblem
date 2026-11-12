@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Overworld Traversal, Pathfinding & Event Spawner Engine Barrel
+ * Mystery Emblem - Overworld Traversal, Pathfinding & Event Spawner Engine Barrel
  */
 
 export * from './overworld/overworldGraphState';

@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — WebAudio PMD UI & Combat SFX Synthesizer
+ * Mystery Emblem - WebAudio PMD UI & Combat SFX Synthesizer
  *
  * Synthesizes Explorers-of-Sky-styled crisp triangle/sine/square/sawtooth UI & combat
  * chimes through a 3x compressor-boosted WebAudio chain.

@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Overworld Graph, Kecleon Shop & Skirmish Save Mutators
+ * Mystery Emblem - Overworld Graph, Kecleon Shop & Skirmish Save Mutators
  */
 
 import { ITEM_MAP } from '../data/index';
@@ -222,6 +222,8 @@ export function mutateCompleteOverworldChapter(
     justClearedNodeId: nodeId,
     kecleonShopsUnlocked: save.campaign.kecleonShopsUnlocked,
     completedChapterIds: save.campaign.completedChapterIds,
+    campaignMode: save.campaign.campaignMode,
+    skirmishesUnlocked: save.campaign.skirmishesUnlocked,
     skirmishChance: opts?.skirmishChance,
     shopChance: opts?.shopChance,
     rng: opts?.rng,

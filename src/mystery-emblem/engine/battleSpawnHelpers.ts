@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Non-Player & Scripted Event Spawn Instantiation Helpers (`battleSpawnHelpers.ts`)
+ * Mystery Emblem - Non-Player & Scripted Event Spawn Instantiation Helpers (`battleSpawnHelpers.ts`)
  */
 
 import { PMD_TILE_NATIVE_PX } from '../assets/tilesetLoader';
@@ -87,11 +87,7 @@ export function buildSpawnedBattleUnit(
   const resolvedSpeciesId = resolveSeededSpawnSpeciesId(spawn, opts?.save);
   const sp = getSpeciesById(resolvedSpeciesId) ?? getSpeciesById(spawn.speciesId);
   if (!sp) return null;
-  const fallbackOriginalName = getSpeciesById(spawn.speciesId)?.name;
-  const resolvedNickname =
-    !spawn.nickname || (spawn.seedKey && spawn.nickname === fallbackOriginalName)
-      ? sp.name
-      : spawn.nickname;
+  const resolvedNickname = sp.name;
   const allLearnedMoveIds = sp.learnset
     .filter((l) => l.level <= Math.max(spawn.level, sp.defaultJoinLevel))
     .map((l) => l.moveId);
@@ -129,6 +125,7 @@ export function buildSpawnedBattleUnit(
     ...(spawn.sparring ? { sparring: true } : {}),
     ...(opts?.addToPermanentRoster ? { recruitedMidBattle: true } : {}),
     aiMode: spawn.stationary ? 'stationary' : (spawn.aiMode ?? 'wait_until_in_range'),
+    ...(spawn.squadId ? { squadId: spawn.squadId } : {}),
     droppableItemId: spawn.droppableItemId ?? null,
     speciesId: sp.id,
     speciesName: sp.name,

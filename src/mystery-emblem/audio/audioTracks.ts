@@ -1,8 +1,8 @@
 /**
- * Mystery Emblem — PMD: Explorers of Sky Audio Track Manifest
+ * Mystery Emblem - PMD: Explorers of Sky Audio Track Manifest
  *
  * Auto-discovers all audio tracks dropped into `/assets/audio/` via Vite `import.meta.glob`
- * (streamed lazily on demand via URL—zero upfront bundle memory bloat) and provides semantic
+ * (streamed lazily on demand via URL-zero upfront bundle memory bloat) and provides semantic
  * scene/cutscene cue aliases that resolve cleanly as tracks are added.
  */
 

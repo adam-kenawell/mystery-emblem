@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Overworld Graph State & Unlock Synchronization
+ * Mystery Emblem - Overworld Graph State & Unlock Synchronization
  */
 
 import {
@@ -150,7 +150,7 @@ export function ensureOverworldGraphState(
 }
 
 /**
- * Pure helper: resolves the current story chapter node — the first unlocked, uncleared,
+ * Pure helper: resolves the current story chapter node - the first unlocked, uncleared,
  * non-paralogue (`kind: 'story'`) node in graph/campaign order. Returns `null` once every
  * unlocked main chapter is cleared.
  */

@@ -1,7 +1,7 @@
 /**
- * Mystery Emblem — Unified Pointer, Wheel Zoom & Pinch Bindings for Overworld Canvas (`overworldCanvasPointers.ts`)
+ * Mystery Emblem - Unified Pointer, Wheel Zoom & Pinch Bindings for Overworld Canvas (`overworldCanvasPointers.ts`)
  *
- * Strictly obeys Rule 2 (Unified Pointer Events ONLY — zero keyboard listeners,
+ * Strictly obeys Rule 2 (Unified Pointer Events ONLY - zero keyboard listeners,
  * PC right-click + mobile long-press parity).
  */
 

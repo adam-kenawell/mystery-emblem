@@ -270,11 +270,6 @@ export class DialogueOverlay {
       ? { nickname: '', speciesName: '' }
       : this.resolveSpeaker(line.speaker, save);
     this.dom.nicknameEl.textContent = activeIdentity.nickname;
-    this.dom.speciesBadgeEl.textContent = activeIdentity.speciesName;
-    this.dom.speciesBadgeEl.hidden =
-      isNarrator ||
-      activeIdentity.nickname.trim().toLowerCase() ===
-        activeIdentity.speciesName.trim().toLowerCase();
 
     const formattedText = interpolateCampaignText(line.text, save, activeIdentity.nickname);
     if (!opts.preserveTypewriterProgress) {

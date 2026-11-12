@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Lightweight PMD Audio Engine (`AudioManager`)
+ * Mystery Emblem - Lightweight PMD Audio Engine (`AudioManager`)
  *
  * Strictly obeys Rule 2 (`pointerdown` / `click` unlock ONLY; zero keyboard listeners).
  */

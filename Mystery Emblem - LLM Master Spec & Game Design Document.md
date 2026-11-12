@@ -1,4 +1,4 @@
-# **Mystery Emblem — LLM Master Spec & Game Design Document**
+# **Mystery Emblem - LLM Master Spec & Game Design Document**
 
 **Author:** Adam Kenawell  
 **Platform:** Web Browser (hosted on existing Pokémon Mystery Dungeon sprite/animation API site)  
@@ -107,7 +107,7 @@ Each Pokémon stage has a manually assigned **Movement (`Mov`)** stat (typically
 
 10. **Grounded:** Standard movement costs and terrain Defense/Avoid bonuses. (Water-types cross Water tiles at 1 Mov; Fire-types cross Lava tiles at 1 Mov without taking burn damage; Rock/Ground/Fighting-types cross Mountains at 2 Mov instead of 3).  
 11. **Flying (Flying-Types):** Works like flyers in Fire Emblem. Pays 1 Mov across Trees, Water, Lava, and Mountains, gets 0 terrain Defense/Avoid bonuses, and cannot cross **Void / Chasm** tiles or thick **Dungeon Walls**.  
-12. **Levitate (Units with the Levitate Personal Skill):** True omni-traversal. Bypasses almost all tiles at 1 Mov cost—including **Void / Chasm** tiles, **Lava**, **Water**, and low **Barriers** that block other units. Gets 0 terrain bonuses except on Wonder Tiles and Stairs.
+12. **Levitate (Units with the Levitate Personal Skill):** True omni-traversal. Bypasses almost all tiles at 1 Mov cos - ncluding **Void / Chasm** tiles, **Lava**, **Water**, and low **Barriers** that block other units. Gets 0 terrain bonuses except on Wonder Tiles and Stairs.
 
 | PMD: EoS Tile Type | Grounded Mov | Flying Mov | Levitate Mov | Tile Effect & Bonuses (Grounded Only unless noted) |
 | :---- | :---- | :---- | :---- | :---- |
@@ -196,12 +196,12 @@ Pokémon build their move pools through a combination of **unique, irregular lev
 * **Bespoke Level-Up Learnsets (Non-Uniform Pacing):**  
   * Pokémon **do not** learn a new move every single level or on a rigid universal schedule.  
   * Instead, each Pokémon has a manually curated level-up learnset table where it learns specific moves at varied, character-defining levels (for example, one Pokémon might learn moves at Levels `1, 4, 9, 13, 18, 23, 28`, while another learns moves at Levels `1, 3, 7, 10, 16, 20, 26`).  
-  * This makes every character's leveling journey and power spikes feel distinct—some units unlock their signature high-Might or status-inflicting move early, while others unlock a game-changing move right after promoting.  
+  * This makes every character's leveling journey and power spikes feel distinc - ome units unlock their signature high-Might or status-inflicting move early, while others unlock a game-changing move right after promoting.  
 * **Unlocked Move Pool vs. 4-Move Active Loadout:**  
   * Whenever a Pokémon learns a new move (via level-up or TM), that move is permanently added to that unit's **Unlocked Move Pool**.  
   * If a Pokémon learns a 5th+ move mid-battle, the player can either swap it into one of the unit's 4 active slots immediately or send it to the unit's Unlocked Move Pool.  
   * During the **Pre-Battle (Battle Prep) Screen**, the player can freely swap any **4 moves** in and out of the unit's active loadout from its full Unlocked Move Pool at no cost.  
-* **Technical Machines (TMs) — Single-Use & General Purpose:**  
+* **Technical Machines (TMs) - Single-Use & General Purpose:**  
   * **Consumable One-Time Use:** TMs are single-use items found in dungeon chests, dropped by commanders, or purchased in Overworld shops. **Once a TM is used to teach a move to a Pokémon, the TM is consumed and disappears from your inventory** (working like classic Pokémon TMs and *Fire Emblem* skill scrolls).  
   * **General-Purpose Move Pool:** While level-up learnsets focus on a Pokémon's unique signature moves, TMs provide **broader, general-purpose offensive and utility moves** (e.g., *Protect*, *Swift*, *Return*, *Dig*, *Aerial Ace*, *Brick Break*, *Flamethrower*, *Ice Beam*, *Thunderbolt*, *Shadow Ball*, *Reflect*, *Light Screen*, *Toxic*, *Rest*).  
   * **Compatibility:** Each TM specifies which Pokémon (by Type or explicit compatibility list) can learn it, letting players spend scarce TMs to patch a favorite unit's range or elemental coverage (such as giving a pure 1-range physical brawler a 2-range Special TM so it can fight at range when needed).
@@ -237,7 +237,7 @@ Purchased from **Kecleon X-Item Shops** or found in dungeon chests, **X-Items** 
 * **X Speed:** Grants `+3 Speed` (and `+6% Avoid`) for the rest of the battle.  
 * **Dire Hit:** Grants `+20% Critical Hit Rate` for the rest of the battle.
 
-### **2.7.2 Permanent Stat-Boosting Items (Vitamins — Very Rare)**
+### **2.7.2 Permanent Stat-Boosting Items (Vitamins - Very Rare)**
 
 Working just like stat-boosting items in *Fire Emblem* (Energy Drop, Spirit Dust, Speedwing, Dracoshield, Angelic Robe), **Vitamins** are **very rare, single-use items** obtained only from major boss drops, hidden dungeon chests, or Paralogue rewards. Using one permanently increases a Pokémon's base stat:
 
@@ -279,7 +279,7 @@ Each Pokémon can equip **1 Held Item** in its passive slot. Reusable gear persi
 
 ## **2.8 Character Support System (Levels 1–5 & Up to 3 Adjacent Allies)**
 
-Inspired by the Support system in *Fire Emblem Awakening*—but streamlined so it focuses purely on tactical grid positioning without requiring hundreds of separate support cutscene scripts—Pokémon build **Support Levels (1 through 5\)** by fighting side-by-side.
+Inspired by the Support system in *Fire Emblem Awakening - ut streamlined so it focuses purely on tactical grid positioning without requiring hundreds of separate support cutscene script - okémon build **Support Levels (1 through 5\)** by fighting side-by-side.
 
 * **How Support Grows in Battle:**  
   * Whenever a player Pokémon engages in combat (initiating an attack on Player Phase, defending/counter-attacking on Enemy Phase, or using a healing/support move) while **orthogonally adjacent (1 tile away)** to one or more allied Pokémon, a small bond/heart visual effect triggers over the adjacent allies and each pair gains **\+1 Support Point**.  
@@ -363,13 +363,13 @@ The agent must structure the game's menu flows after *Fire Emblem Awakening*, st
 The following system instructions must be read and strictly obeyed by the coding LLM agent on every prompt, file edit, and feature implementation:
 
 * **1\. Role & Core Mandate:** You are the Lead Game Engineer building *Mystery Emblem*, a browser-based tactical RPG combining *Fire Emblem Awakening* gameplay systems with *Pokémon Mystery Dungeon: Explorers of Sky* visuals, dungeon tilesets, sprites, and character portraits.  
-* **2\. Rule 1 — 100% Data-Driven Manual Balance (Zero Automated Stat Formulas):** Never use automated formulas to calculate stats or growth rates from PokéAPI base stats. Every Pokémon's Base Stats (`HP`, `Atk`, `Def`, `SpA`, `SpD`, `Spe`), `Mov`, Join Level, 6 Percentage Growth Rates, Promotion Bonuses, Learnset levels, and Personal Skill must be read from human-editable JSON/TypeScript data files so the developer can manually tune every unit.  
-* **3\. Rule 2 — Strict PC & Mobile Parity (Unified Pointer Events Only):** Every screen, canvas interaction, and menu modal must work cleanly on both Desktop (Mouse) and Mobile (Touchscreen) browsers. Never bind or require keyboard keys (`WASD`, arrow keys, `Space`, `Enter`, `Esc`). Use unified Pointer Events (`pointerdown`, `pointermove`, `pointerup`) for clicking/tapping and click-and-drag/touch-drag camera panning. Always render an on-screen PMD-styled **Menu / Back** button (and support long-press) on mobile to mirror PC right-click behavior.  
-* **4\. Rule 3 — Authentic PMD Visual Skin & Asset Pipeline:** All UI windows, menus, combat forecasts, and dialogue boxes must use the *Pokémon Mystery Dungeon: Explorers of Sky* aesthetic (deep navy translucent backgrounds, double-layered pixel borders, and bitmap RPG typography). Pull all 8-directional unit animations and multi-emotion character portraits directly from the existing site's PMD Git repository endpoints.  
-* **5\. Rule 4 — Dual-Equipped (Physical + Special) Enemy Phase & Clean Tactical Math:** Enforce the 4-move battle loadout where Physical moves are Range 1, Special moves are Range 2, and **each unit may mark one Physical AND one Special move `[E] Equipped` for Enemy Phase** (a unit counter-attacks only if it has an `[E]` move for the attacker's range; either slot may be left empty). Exclude all pure stat-changing moves (like *Growl* or *Swords Dance*); stat buffs and debuffs may only occur as random-chance secondary effects on damaging moves, or via X-Items, Personal Skills, and Held Items.  
-* **6\. Rule 5 — Strict Faction Separation & 3-Stage Promotion Curve:** Never allow enemy Pokémon lines to appear in the player's recruitable pool, with the **sole exception of the single defecting Gastly in Paralogue 6**. Enforce the continuous Level 1–40 curve (targeting \~Level 30 by Chapter 25\) with **Evolution Stones** at Level 10+ and **Evolution Gems** at Level 20+ (plus the Paralogue exceptions for Level 15 branching Eevee and Hidden Potential \+20% growth Slakoth).  
-* **7\. Rule 6 — Incremental Step-by-Step Execution & Verification Gates:** Implement the game one step at a time following the roadmap in Section 3.6. Do **not** skip ahead to the next step until every item in the current step's **Verification Checklist** has been tested and confirmed working on both Desktop and Mobile viewports.  
-* **8\. Rule 7 — Cross-Device Save Sync via Google Sign-In (Firebase Auth \+ Firestore) & localStorage:** Because the game is hosted as a static site on GitHub Pages, implement a hybrid `SaveStateManager` that writes immediately to `localStorage` (with a `lastUpdated` UTC timestamp) for instant offline-capable saving, and automatically syncs the save JSON to **Cloud Firestore** (`saves/{uid}`) whenever the player is signed in with their **Google Account** via **Firebase Authentication**. On startup or sign-in, compare `lastUpdated` timestamps between `localStorage` and Firestore so switching between desktop and mobile always loads the most recent campaign state.
+* **2\. Rule 1 - 100% Data-Driven Manual Balance (Zero Automated Stat Formulas):** Never use automated formulas to calculate stats or growth rates from PokéAPI base stats. Every Pokémon's Base Stats (`HP`, `Atk`, `Def`, `SpA`, `SpD`, `Spe`), `Mov`, Join Level, 6 Percentage Growth Rates, Promotion Bonuses, Learnset levels, and Personal Skill must be read from human-editable JSON/TypeScript data files so the developer can manually tune every unit.  
+* **3\. Rule 2 - Strict PC & Mobile Parity (Unified Pointer Events Only):** Every screen, canvas interaction, and menu modal must work cleanly on both Desktop (Mouse) and Mobile (Touchscreen) browsers. Never bind or require keyboard keys (`WASD`, arrow keys, `Space`, `Enter`, `Esc`). Use unified Pointer Events (`pointerdown`, `pointermove`, `pointerup`) for clicking/tapping and click-and-drag/touch-drag camera panning. Always render an on-screen PMD-styled **Menu / Back** button (and support long-press) on mobile to mirror PC right-click behavior.  
+* **4\. Rule 3 - Authentic PMD Visual Skin & Asset Pipeline:** All UI windows, menus, combat forecasts, and dialogue boxes must use the *Pokémon Mystery Dungeon: Explorers of Sky* aesthetic (deep navy translucent backgrounds, double-layered pixel borders, and bitmap RPG typography). Pull all 8-directional unit animations and multi-emotion character portraits directly from the existing site's PMD Git repository endpoints.  
+* **5\. Rule 4 - Dual-Equipped (Physical + Special) Enemy Phase & Clean Tactical Math:** Enforce the 4-move battle loadout where Physical moves are Range 1, Special moves are Range 2, and **each unit may mark one Physical AND one Special move `[E] Equipped` for Enemy Phase** (a unit counter-attacks only if it has an `[E]` move for the attacker's range; either slot may be left empty). Exclude all pure stat-changing moves (like *Growl* or *Swords Dance*); stat buffs and debuffs may only occur as random-chance secondary effects on damaging moves, or via X-Items, Personal Skills, and Held Items.  
+* **6\. Rule 5 - Strict Faction Separation & 3-Stage Promotion Curve:** Never allow enemy Pokémon lines to appear in the player's recruitable pool, with the **sole exception of the single defecting Gastly in Paralogue 6**. Enforce the continuous Level 1–40 curve (targeting \~Level 30 by Chapter 25\) with **Evolution Stones** at Level 10+ and **Evolution Gems** at Level 20+ (plus the Paralogue exceptions for Level 15 branching Eevee and Hidden Potential \+20% growth Slakoth).  
+* **7\. Rule 6 - Incremental Step-by-Step Execution & Verification Gates:** Implement the game one step at a time following the roadmap in Section 3.6. Do **not** skip ahead to the next step until every item in the current step's **Verification Checklist** has been tested and confirmed working on both Desktop and Mobile viewports.  
+* **8\. Rule 7 - Cross-Device Save Sync via Google Sign-In (Firebase Auth \+ Firestore) & localStorage:** Because the game is hosted as a static site on GitHub Pages, implement a hybrid `SaveStateManager` that writes immediately to `localStorage` (with a `lastUpdated` UTC timestamp) for instant offline-capable saving, and automatically syncs the save JSON to **Cloud Firestore** (`saves/{uid}`) whenever the player is signed in with their **Google Account** via **Firebase Authentication**. On startup or sign-in, compare `lastUpdated` timestamps between `localStorage` and Firestore so switching between desktop and mobile always loads the most recent campaign state.
 
 ---
 
@@ -496,7 +496,7 @@ The LLM agent must implement *Mystery Emblem* in the following 10 sequential ste
 * **What to Implement:**  
   * Build the CPU Enemy AI controller (scoring legal attacks by damage dealt vs. counter damage taken, prioritizing free hits against player units with no `[E]` move for that range, and executing Boss/Commander behaviors).  
   * Populate all map layouts (using *Explorers of Sky* dungeon tilesets), enemy placements, Stairs reinforcement schedules, and PMD portrait cutscene/recruitment scripts across the **Prologue, 25 Main Chapters, and 6 Paralogues**.  
-  * Implement mid-battle **Talk** recruitment events on the grid (including choosing between Nidoran♂ and Nidoran♀ in Paralogue 3, and recruiting the defecting enemy **Gastly** in Paralogue 6—the only enemy-line Pokémon that can join the player's team).  
+  * Implement mid-battle **Talk** recruitment events on the grid (including choosing between Nidoran♂ and Nidoran♀ in Paralogue 3, and recruiting the defecting enemy **Gastly** in Paralogue  - he only enemy-line Pokémon that can join the player's team).  
   * Implement victory and defeat flows (Lord fainting triggers immediate Game Over; clearing Chapter 25 against Final Boss Emperor Kingambit unlocks **New Game Plus**).  
 * **Step 10 Verification Checklist:**  
   * \[ \] Confirm the `Talk` command recruits mid-battle allies (including Paralogue 3 Nidoran and Paralogue 6 Gastly) and opens the Nickname Modal.  

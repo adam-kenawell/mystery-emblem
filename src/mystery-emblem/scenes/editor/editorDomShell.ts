@@ -163,7 +163,7 @@ export function createEditorDomShell(viewportEl: HTMLElement): EditorDomRefs {
       <div class="pmd-inline-btns" data-editor-biome-presets></div>
       <span class="pmd-subcard-text">Gameplay Terrain Rule (keeps selected chunk):</span>
       <div class="pmd-inline-btns" data-editor-terrain-chips></div>
-      <p class="pmd-subcard-text pmd-editor-brush-readout" data-testid="editor-active-brush-summary">—</p>
+      <p class="pmd-subcard-text pmd-editor-brush-readout" data-testid="editor-active-brush-summary">-</p>
       <select class="pmd-select" data-testid="editor-tileset-select" aria-label="Select EoS 24x24 Tileset Sheet"></select>
       <div class="pmd-battle-chunk-palette" data-testid="editor-chunk-grid"></div>
     </div>

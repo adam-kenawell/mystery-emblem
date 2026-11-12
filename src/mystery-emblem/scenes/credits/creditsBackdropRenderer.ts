@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Pixel-Art Starry Twilight & Dragon Aura Backdrop (`creditsBackdropRenderer.ts`)
+ * Mystery Emblem - Pixel-Art Starry Twilight & Dragon Aura Backdrop (`creditsBackdropRenderer.ts`)
  *
  * Crisp `1x` low-resolution pixel sky canvas (`imageSmoothingEnabled = false` + CSS pixelated)
  * with twinkling pixel stars, forest/mountain ridge silhouette, and rising golden embers.

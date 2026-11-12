@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Playable Tactical Dungeon Battle Scene (`BattleScene`)
+ * Mystery Emblem - Playable Tactical Dungeon Battle Scene (`BattleScene`)
  * Thin public orchestrator delegating to modular controllers in `scenes/battle/*`.
  */
 
@@ -108,7 +108,6 @@ export class BattleScene {
       abortSignal: this.abortController.signal,
       onExitCallback: options.onExit,
       onLayerStateChanged: options.onLayerStateChanged,
-      onRequestRenameUnit: options.onRequestRenameUnit,
       startLoop: () => this.startLoop(),
       stopLoop: () => this.stopLoop(),
       renderNow: () => this.renderNow(),

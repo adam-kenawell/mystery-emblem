@@ -29,12 +29,12 @@ export function buildTutorialShellView(opts: {
   backdropEl.dataset.testid = 'tutorial-overlay-backdrop';
   backdropEl.hidden = true;
 
-  const cardWindowEl = createPmdWindow({
-    className: 'pmd-tutorial-card pmd-advisor-coach-bar',
-    testId: 'tutorial-card-modal',
-    role: 'dialog',
-    ariaLabel: "Quaquaval's Tactical Guidance",
-  });
+  const cardWindowEl = document.createElement('div');
+  cardWindowEl.className =
+    'pmd-dialogue-stage pmd-tutorial-dialogue-stage pmd-tutorial-card pmd-advisor-coach-bar';
+  cardWindowEl.dataset.testid = 'tutorial-card-modal';
+  cardWindowEl.setAttribute('role', 'dialog');
+  cardWindowEl.setAttribute('aria-label', "Quaquaval's Tactical Guidance");
   cardWindowEl.hidden = true;
 
   const compendiumWindowEl = createPmdWindow({
@@ -48,7 +48,6 @@ export function buildTutorialShellView(opts: {
   const spotlight = new TutorialSpotlightController({ backdropEl, cardWindowEl });
 
   const coachPortraitView = new PmdPortraitView({
-    pixelScale: 1.5,
     testId: 'tutorial-advisor-portrait',
   });
   const compendiumPortraitView = new PmdPortraitView({

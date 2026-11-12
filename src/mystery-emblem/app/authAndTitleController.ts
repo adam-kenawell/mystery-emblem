@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Title Screen & Google Auth Corner Button Controls (`authAndTitleController.ts`)
+ * Mystery Emblem - Title Screen & Google Auth Corner Button Controls (`authAndTitleController.ts`)
  *
  * Strictly binds Google `signInWithPopup` to native `'click'` (never `'pointerup'`)
  * so iOS Safari & Android Chrome never popup-block authentication.

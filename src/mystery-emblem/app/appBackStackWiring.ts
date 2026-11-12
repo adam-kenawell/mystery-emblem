@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — LIFO BackStack & Corner Button State Wiring (`appBackStackWiring.ts`)
+ * Mystery Emblem - LIFO BackStack & Corner Button State Wiring (`appBackStackWiring.ts`)
  */
 
 import { hasAdminDevToolsAccess } from '../data/accessControl';
@@ -81,7 +81,7 @@ export function createAppBackStack(
           const who = sync.user.email ?? sync.user.displayName ?? 'Google Account';
           btn.innerHTML = `${GOOGLE_G_SVG_MARKUP}<span>Log Out</span>`;
           btn.dataset.cornerMode = 'logout';
-          btn.setAttribute('aria-label', `Signed in as ${who} — Log out`);
+          btn.setAttribute('aria-label', `Signed in as ${who} - Log out`);
           btn.setAttribute('title', `Signed in as ${who}`);
         } else {
           btn.innerHTML = `${GOOGLE_G_SVG_MARKUP}<span>Log In</span>`;

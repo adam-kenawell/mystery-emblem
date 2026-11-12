@@ -140,9 +140,9 @@ export function renderStatusHexForecastModalDom(
   setTxt('[data-testid="forecast-defender-name"]', `${defender.nickname}${defender.isBoss ? ' [BOSS]' : ''}`);
   setTxt('[data-testid="forecast-defender-weapon"]', 'No Counter');
   setTxt('[data-testid="forecast-defender-hp"]', `${defender.currentHp} → ${defender.currentHp}`);
-  setTxt('[data-testid="forecast-defender-dmg"]', '—');
-  setTxt('[data-testid="forecast-defender-hit"]', '—');
-  setTxt('[data-testid="forecast-defender-crit"]', '—');
+  setTxt('[data-testid="forecast-defender-dmg"]', '-');
+  setTxt('[data-testid="forecast-defender-hit"]', '-');
+  setTxt('[data-testid="forecast-defender-crit"]', '-');
 
   const defMetaEl = q('[data-defender-meta]');
   if (defMetaEl) {
@@ -171,6 +171,9 @@ export async function playStatusHexActionAsync(
   runGen = ctx.state.battleRunGen
 ): Promise<boolean> {
   const { state, dom, audioManager } = ctx;
+  if (caster.faction !== 'enemy' && target.faction === 'enemy' && target.squadId) {
+    state.activatedSquadIds.add(target.squadId);
+  }
   ensureTilePairVisible(state, caster.x, caster.y, target.x, target.y);
 
   caster.direction = directionFromDelta(target.x - caster.x, target.y - caster.y);

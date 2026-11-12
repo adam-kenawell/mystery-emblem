@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Rule 7 Hybrid localStorage + Cloud Firestore Timestamp Reconciler
+ * Mystery Emblem - Rule 7 Hybrid localStorage + Cloud Firestore Timestamp Reconciler
  */
 
 import {

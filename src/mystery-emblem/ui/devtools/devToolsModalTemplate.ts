@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Admin Dev Tools Modal HTML Template
+ * Mystery Emblem - Admin Dev Tools Modal HTML Template
  */
 
 export function buildDevToolsModalHtml(): string {
@@ -45,7 +45,6 @@ export function buildDevToolsModalHtml(): string {
       <div class="pmd-subcard">
         <div class="pmd-devtools-row-between">
           <h3 class="pmd-subcard-title">Unit Level &amp; Stage</h3>
-          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-rename-unit">Rename</button>
         </div>
         <select class="pmd-select" data-testid="devtools-unit-select" aria-label="Select Active Unit"></select>
         <div class="pmd-inline-btns">
@@ -129,7 +128,7 @@ export function buildDevToolsModalHtml(): string {
             data-testid="devtools-map-preview-canvas"
           ></canvas>
         </div>
-        <p id="devtools-map-meta" class="pmd-subcard-text" data-testid="devtools-map-meta">—</p>
+        <p id="devtools-map-meta" class="pmd-subcard-text" data-testid="devtools-map-meta">-</p>
         <div class="pmd-inline-btns">
           <button type="button" id="devtools-open-map-editor" class="pmd-btn pmd-btn-primary" data-testid="devtools-open-map-editor">
             Open Map Editor

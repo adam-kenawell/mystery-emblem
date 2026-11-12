@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Dungeon Prep Phase Overlay Coordinator (`DungeonPrepOverlay.ts`)
+ * Mystery Emblem - Dungeon Prep Phase Overlay Coordinator (`DungeonPrepOverlay.ts`)
  */
 
 import type { AudioManager } from '../audio/AudioManager';
@@ -35,7 +35,6 @@ export interface DungeonPrepOverlayOptions {
   getSelectedSwapSlotIndex: () => number | null;
   onToggleDeployUnit: (instanceId: string) => { ok: boolean; message: string };
   onRosterOrLoadoutMutated: () => void;
-  onRequestRenameUnit?: (instanceId: string) => Promise<void> | void;
   onEnterViewMap: () => void;
   onExitViewMap: () => void;
   onToggleGlobalDanger: () => void;
@@ -71,7 +70,6 @@ export class DungeonPrepOverlay {
       signal: this.abortController.signal,
       getTutorialOverlay: this.opts.getTutorialOverlay,
       getSelectedUnitInstanceId: () => this.selectedUnitInstanceId,
-      onRequestRenameUnit: this.opts.onRequestRenameUnit,
       onRosterOrLoadoutMutated: () => this.opts.onRosterOrLoadoutMutated(),
       onRefreshAll: () => this.refreshAll(),
       onSetSubMode: (mode, clearStatus) => {

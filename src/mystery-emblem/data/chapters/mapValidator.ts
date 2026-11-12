@@ -64,7 +64,7 @@ function normalizeSpawnFields(
     ...(sp.id ? { id: String(sp.id) } : {}),
     ...(sp.seedKey ? { seedKey: sp.seedKey } : {}),
     level: Math.max(MIN_UNIT_LEVEL, Math.min(MAX_UNIT_LEVEL, Math.floor(Number(sp.level ?? 1)))),
-    nickname: sp.nickname ? String(sp.nickname).slice(0, 22) : fallbackName,
+    nickname: fallbackName,
     ...(sp.stats ? { stats: { ...sp.stats } } : {}),
     ...(Array.isArray(sp.moveIds) ? { moveIds: sp.moveIds.map(String) } : {}),
     ...(sp.equippedMoveId ? { equippedMoveId: String(sp.equippedMoveId) } : {}),
@@ -74,6 +74,7 @@ function normalizeSpawnFields(
     ...(sp.mustSurvive ? { mustSurvive: true } : {}),
     ...(sp.droppableItemId ? { droppableItemId: String(sp.droppableItemId) } : {}),
     ...(sp.aiMode ? { aiMode: sp.aiMode } : {}),
+    ...(sp.squadId ? { squadId: String(sp.squadId) } : {}),
     ...(sp.sparring ? { sparring: true } : {}),
     ...(sp.friendlyBout ? { friendlyBout: true } : {}),
     ...(Array.isArray(sp.equippedMoveIds) ? { equippedMoveIds: sp.equippedMoveIds.map(String) } : {}),
@@ -174,7 +175,7 @@ export function validateDungeonMapDefinition(
         y,
         speciesId: def.id,
         level: Math.max(MIN_UNIT_LEVEL, Math.min(MAX_UNIT_LEVEL, Math.floor(Number(sp?.level ?? 1)))),
-        nickname: sp?.nickname ? String(sp.nickname).slice(0, 16) : def.name,
+        nickname: def.name,
         heldItemId: sp?.heldItemId ?? null,
       });
     }
@@ -259,7 +260,7 @@ export function validateDungeonMapDefinition(
           x: sx,
           y: sy,
           speciesId: def.id,
-          nickname: normFields.nickname ?? def.name,
+          nickname: def.name,
         },
       });
     }

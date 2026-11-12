@@ -76,7 +76,6 @@ export interface BattleSceneOptions {
   tutorialOverlay?: TutorialOverlay;
   onExit: (destination?: BattleExitDestination) => void;
   onLayerStateChanged: () => void;
-  onRequestRenameUnit?: (instanceId: string) => Promise<void> | void;
 }
 
 export interface BattleOpenOptions {

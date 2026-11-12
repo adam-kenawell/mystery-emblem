@@ -15,7 +15,6 @@ export interface DialogueDomElements {
   rightPortrait: PmdPortraitView;
   boxEl: HTMLElement;
   nicknameEl: HTMLElement;
-  speciesBadgeEl: HTMLElement;
   skipBtn: HTMLButtonElement;
   textEl: HTMLElement;
   advanceBtn: HTMLButtonElement;
@@ -74,11 +73,7 @@ export function buildDialogueDomView(opts: {
   nicknameEl.className = 'pmd-dialogue-nickname';
   nicknameEl.dataset.testid = 'dialogue-speaker-nickname';
 
-  const speciesBadgeEl = document.createElement('span');
-  speciesBadgeEl.className = 'pmd-dialogue-species-badge';
-  speciesBadgeEl.dataset.testid = 'dialogue-speaker-species';
-
-  speakerGroup.append(nicknameEl, speciesBadgeEl);
+  speakerGroup.append(nicknameEl);
 
   const controlsGroup = document.createElement('div');
   controlsGroup.className = 'pmd-dialogue-controls';
@@ -144,7 +139,6 @@ export function buildDialogueDomView(opts: {
     rightPortrait,
     boxEl,
     nicknameEl,
-    speciesBadgeEl,
     skipBtn,
     textEl,
     advanceBtn,

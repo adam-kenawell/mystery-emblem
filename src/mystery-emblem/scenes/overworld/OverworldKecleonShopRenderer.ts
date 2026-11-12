@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Overworld Kecleon Shop Shelf & Inspector Renderer (`OverworldKecleonShopRenderer.ts`)
+ * Mystery Emblem - Overworld Kecleon Shop Shelf & Inspector Renderer (`OverworldKecleonShopRenderer.ts`)
  */
 
 import { resolveUnitVisualAssetId } from '../../assets/pmdAssetLoader';
@@ -52,7 +52,7 @@ export function renderOverworldKecleonShop(params: OverworldKecleonRenderParams)
   dom.kecleonShelfEl.innerHTML = '';
 
   if (!shop) {
-    dom.kecleonTitleEl.textContent = 'KECLEON SHOP — SOLD OUT';
+    dom.kecleonTitleEl.textContent = 'KECLEON SHOP - SOLD OUT';
     dom.kecleonSpeechNameEl.textContent = 'Kecleon';
     dom.kecleonSpeechTextEl.textContent = 'Sold out! Safe travels!';
     return selectedShopItemId;
@@ -72,7 +72,7 @@ export function renderOverworldKecleonShop(params: OverworldKecleonRenderParams)
   }
 
   if (shopItems.length === 0) {
-    dom.kecleonTitleEl.textContent = 'KECLEON SHOP — SOLD OUT';
+    dom.kecleonTitleEl.textContent = 'KECLEON SHOP - SOLD OUT';
     dom.kecleonSpeechNameEl.textContent = 'Kecleon';
     dom.kecleonSpeechTextEl.textContent = 'Sold out! Safe travels!';
     return selectedShopItemId;

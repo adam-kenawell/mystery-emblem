@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Roster, Nickname, Loadout, Evolution & Advisor Mutators
+ * Mystery Emblem - Roster, Nickname, Loadout, Evolution & Advisor Mutators
  */
 
 import { getFlabebeFlowerColorForLord } from '../assets/pmdAssetLoader';
@@ -101,9 +101,7 @@ export function mutateEvolveUnitToSpecies(
     unit.currentStats = computeManualScaledStatsForJoinLevel(targetSp, unit.level);
   }
 
-  if (unit.nickname === currentSp.name) {
-    unit.nickname = targetSp.name;
-  }
+  unit.nickname = targetSp.name;
   unit.speciesId = targetSp.id;
 
   for (const entry of targetSp.learnset) {

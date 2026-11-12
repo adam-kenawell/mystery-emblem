@@ -28,6 +28,9 @@ export async function playCombatExchangeAsync(
   runGen = ctx.state.battleRunGen
 ): Promise<void> {
   const { state, dom, audioManager } = ctx;
+  if (attacker.faction !== 'enemy' && defender.faction === 'enemy' && defender.squadId) {
+    state.activatedSquadIds.add(defender.squadId);
+  }
   const rng = getBattleRng(state);
   const outcome = resolveCombatExchange(forecast, attacker, defender, rng);
 

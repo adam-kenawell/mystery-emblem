@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Overworld System Menu `Items` (`convoy`) Tab Renderer (`OverworldItemsTabRenderer.ts`)
+ * Mystery Emblem - Overworld System Menu `Items` (`convoy`) Tab Renderer (`OverworldItemsTabRenderer.ts`)
  */
 
 import { resolveUnitVisualAssetId } from '../../assets/pmdAssetLoader';

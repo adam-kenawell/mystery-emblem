@@ -7,6 +7,7 @@ import {
   CREDITS_HERO_META,
   CREDITS_LEGAL_DISCLAIMER,
   CREDITS_STATIC_SECTIONS,
+  DEMO_FEEDBACK_FORM_URL,
   getCreditsNpcShowcaseList,
   resolveCreditsEndCardCopy,
   resolveUnitCreditsRoleLabel,
@@ -17,6 +18,10 @@ import { getSpeciesById } from '../../data/index';
 import type { OwnedPokemonInstance, SaveData } from '../../types/schemas';
 import { PmdSpriteActor } from '../../ui/PmdSpriteCanvas';
 import { createPmdButton, createPmdWindow } from '../../ui/PmdWindow';
+
+export function openDemoFeedbackForm(url: string = DEMO_FEEDBACK_FORM_URL): void {
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
 
 function mountWalkingSpriteSlot(assetId: string, actorsOut: PmdSpriteActor[]): HTMLElement {
   const actor = new PmdSpriteActor({
@@ -53,15 +58,8 @@ function createUnitCastCard(
 
   const nickEl = document.createElement('span');
   nickEl.className = 'pmd-credits-cast-nick';
-  nickEl.textContent = unit.nickname;
+  nickEl.textContent = speciesName;
   nameRow.appendChild(nickEl);
-
-  if (unit.nickname !== speciesName) {
-    const spEl = document.createElement('span');
-    spEl.className = 'pmd-credits-cast-species';
-    spEl.textContent = `(${speciesName})`;
-    nameRow.appendChild(spEl);
-  }
 
   const lvEl = document.createElement('span');
   lvEl.className = 'pmd-credits-cast-level';
@@ -131,6 +129,7 @@ export function buildCreditsScrollDom(opts: {
   scrollTrackEl: HTMLElement;
   save: SaveData | null;
   onFinishTap: () => void;
+  openFeedbackForm?: (url: string) => void;
 }): PmdSpriteActor[] {
   const { scrollTrackEl, save } = opts;
   scrollTrackEl.innerHTML = '';
@@ -212,8 +211,17 @@ export function buildCreditsScrollDom(opts: {
     variant: 'primary',
     className: 'pmd-credits-finish-btn',
     testId: 'credits-finish-btn',
-    onTap: () => opts.onFinishTap(),
+    onTap: endCopy.feedbackFormUrl ? undefined : () => opts.onFinishTap(),
   });
+  const feedbackUrl = endCopy.feedbackFormUrl;
+  if (feedbackUrl) {
+    finishBtn.dataset.feedbackUrl = feedbackUrl;
+    // Real 'click' keeps window.open inside the user gesture so mobile browsers never block the popup.
+    finishBtn.addEventListener('click', () => {
+      (opts.openFeedbackForm ?? openDemoFeedbackForm)(feedbackUrl);
+      opts.onFinishTap();
+    });
+  }
 
   endCard.append(endEyebrow, thankTitle, teaserLine, statsLine, finishBtn);
   endWrap.appendChild(endCard);

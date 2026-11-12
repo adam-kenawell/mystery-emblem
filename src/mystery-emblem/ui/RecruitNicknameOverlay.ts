@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Reusable PMD Rename Modal (`RecruitNicknameOverlay`)
+ * Mystery Emblem - Reusable PMD Rename Modal (`RecruitNicknameOverlay`)
  */
 
 import { resolveUnitVisualAssetId } from '../assets/pmdAssetLoader';

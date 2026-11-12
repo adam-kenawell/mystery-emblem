@@ -44,18 +44,27 @@
   position: fixed;
   inset: 0;
   z-index: 98;
-  background: rgba(4, 10, 20, 0.4);
+  background: rgba(4, 8, 16, 0.36);
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 0.65rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 3.8rem 1rem 1rem;
   user-select: none;
   touch-action: manipulation;
   box-sizing: border-box;
 }
 
-.pmd-tutorial-backdrop[data-coach-dock='bottom'] {
-  align-items: flex-end;
+.pmd-tutorial-backdrop[data-coach-dock='top'] {
+  justify-content: flex-start;
+  padding: 3.6rem 1rem 1rem;
+}
+
+/* Overworld: lift story & coaching dialogue above the bottom location dock */
+.pmd-tutorial-backdrop[data-coach-dock='bottom'][data-overworld-open='true'],
+body:has(#pmd-overworld-scene:not([hidden])) .pmd-tutorial-backdrop[data-coach-dock='bottom'],
+body:has(#pmd-overworld-scene:not([hidden])) .pmd-dialogue-overlay {
+  padding-bottom: calc(var(--pmd-overworld-dock-offset, 88px));
 }
 
 .pmd-tutorial-backdrop.is-interactive-passthrough {
@@ -65,7 +74,8 @@
 
 .pmd-tutorial-backdrop.is-compendium-mode {
   background: rgba(4, 10, 20, 0.58);
-  align-items: center;
+  justify-content: center;
+  padding: 0.65rem;
   pointer-events: auto;
 }
 
@@ -91,7 +101,6 @@
   display: none !important;
 }
 
-.pmd-tutorial-card,
 .pmd-tutorial-compendium {
   width: min(620px, 100%);
   max-height: calc(100dvh - 1.3rem);
@@ -104,10 +113,20 @@
   pointer-events: auto;
 }
 
-.pmd-advisor-coach-bar {
-  width: min(640px, 100%);
-  padding: 7px 11px;
-  gap: 6px;
+/* Live coaching reuses the story cutscene stage (`02-dialogue-overlay.css`) */
+.pmd-tutorial-dialogue-stage {
+  pointer-events: none;
+}
+
+.pmd-tutorial-dialogue-stage > * {
+  pointer-events: auto;
+}
+
+.pmd-tutorial-dialogue-stage[data-coach-dock='top'] {
+  grid-template-areas:
+    'box box box'
+    'left . right';
+  align-items: start;
 }
 
 .pmd-advisor-coach-bar.is-nudged {
@@ -123,27 +142,6 @@
   display: none !important;
 }
 
-.pmd-advisor-coach-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  min-width: 0;
-}
-
-.pmd-advisor-portrait-slot {
-  width: 64px;
-  height: 64px;
-  flex: 0 0 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--pmd-fill-well-deep);
-  border: 2px solid var(--pmd-border-mid);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.pmd-advisor-portrait-slot canvas,
 .pmd-advisor-compendium-portrait canvas {
   max-width: 100%;
   max-height: 100%;
@@ -152,35 +150,39 @@
   image-rendering: pixelated;
 }
 
-.pmd-advisor-coach-main {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.pmd-advisor-speaker-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--pmd-text-yellow);
-  line-height: 1.15;
-}
-
-.pmd-advisor-speech-text {
-  margin: 0;
-  font-size: 13.5px;
-  line-height: 1.38;
-  color: var(--pmd-text-white);
-  min-height: 2.5em;
-}
-
 .pmd-advisor-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-  padding-top: 2px;
+  flex-shrink: 0;
+}
+
+.pmd-tutorial-action-badge {
+  min-height: 46px;
+  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--pmd-text-yellow);
+  border: 2px solid #f8f858;
+  border-radius: 4px;
+  background: rgba(248, 248, 88, 0.12);
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+@media (max-height: 500px) {
+  .pmd-tutorial-backdrop {
+    padding: 3.35rem 0.65rem 0.45rem;
+  }
+
+  .pmd-tutorial-dialogue-stage[data-coach-dock='top'] {
+    grid-template-areas: 'left box right';
+  }
 }
 
 .pmd-tutorial-header {

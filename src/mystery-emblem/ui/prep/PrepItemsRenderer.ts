@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Chapter Prep `Manage Items` Renderer (`PrepItemsRenderer.ts`)
+ * Mystery Emblem - Chapter Prep `Manage Items` Renderer (`PrepItemsRenderer.ts`)
  */
 
 import { resolveUnitVisualAssetId } from '../../assets/pmdAssetLoader';

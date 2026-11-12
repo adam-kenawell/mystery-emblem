@@ -11,43 +11,74 @@
   "bgmCue": "fun_exploration",
   "objectiveType": "rout",
   "objectiveLabel": "Protect Slakoth & Rout Poachers",
-  "defeatIfUnitIdsFall": ["p1_slakoth"],
+  "defeatIfUnitIdsFall": [
+    "p1_slakoth"
+  ],
   "recommendedLevel": 4,
   "deploymentCap": 6,
-  "width": 18,
-  "height": 12,
+  "width": 24,
+  "height": 15,
   "rows": [
-    "X:003:34 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:33",
-    "X:003:3 F:59 F:59 F:59 T:1 F:59 F:59 F:59 F:59 F:59 F:59 W:88 W:88 F:59 F:59 T:1 F:59 X:003:21",
-    "X:003:3 F:59 T:1 F:59 F:59 F:59 F:59 F:59 F:59 T:1 F:59 F:59 W:88 F:59 F:59 F:59 F:59 X:003:21",
-    "X:003:3 F:59 F:59 F:59 F:59 F:59 T:1 F:59 F:59 F:59 F:59 F:59 F:59 F:59 T:1 F:59 F:59 X:003:21",
-    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 X:003:21",
-    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 F:59 WT:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 X:003:21",
-    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 T:1 F:59 F:59 F:59 T:1 F:59 F:59 F:59 F:59 F:59 X:003:21",
-    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 T:1 F:59 X:003:21",
-    "X:003:3 F:59 T:1 F:59 F:59 W:88 W:88 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 X:003:21",
-    "X:003:3 F:59 F:59 F:59 F:59 W:88 F:59 F:59 T:1 F:59 F:59 F:59 T:1 F:59 F:59 F:59 F:59 X:003:21",
-    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 X:003:21",
-    "X:003:36 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:48"
+    "X:003:34 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:2 X:003:33",
+    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 X:003:21",
+    "X:003:3 F:59 F:59 F:59 T:1 F:59 F:59 F:59 F:59 F:59 T:1 F:59 F:59 F:59 F:59 F:59 F:59 T:1 F:59 F:59 F:59 F:59 F:59 X:003:21",
+    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 T:1 F:59 X:003:21",
+    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 T:1 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 X:003:21",
+    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 T:1 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 X:003:21",
+    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 W:88 F:59 F:59 F:59 F:59 F:59 F:59 F:59 X:003:21",
+    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 W:88 W:88 F:59 F:59 F:59 F:59 F:59 F:59 W:88 X:003:21",
+    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 X:003:21",
+    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 T:1 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 X:003:21",
+    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 T:1 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 X:003:21",
+    "X:003:3 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 T:1 F:59 X:003:21",
+    "X:003:3 F:59 T:1 F:59 F:59 F:59 F:59 F:59 F:59 F:59 T:1 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 X:003:21",
+    "X:003:3 F:59 F:59 F:59 F:59 W:88 W:88 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 F:59 T:1 F:59 F:59 F:59 F:59 X:003:21",
+    "X:003:36 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:5 X:003:48"
   ],
   "playerSlots": [
-    { "x": 3, "y": 5, "speciesId": "axew" },
-    { "x": 3, "y": 3, "speciesId": "quaxly" },
-    { "x": 3, "y": 7, "speciesId": "flabebe" },
-    { "x": 2, "y": 4, "speciesId": "mentor_quaquaval" },
-    { "x": 2, "y": 6, "speciesId": "smoliv" },
-    { "x": 2, "y": 8, "speciesId": "machop" }
+    {
+      "x": 3,
+      "y": 7,
+      "speciesId": "axew"
+    },
+    {
+      "x": 3,
+      "y": 5,
+      "speciesId": "quaxly"
+    },
+    {
+      "x": 3,
+      "y": 9,
+      "speciesId": "flabebe"
+    },
+    {
+      "x": 2,
+      "y": 6,
+      "speciesId": "mentor_quaquaval"
+    },
+    {
+      "x": 2,
+      "y": 8,
+      "speciesId": "smoliv"
+    },
+    {
+      "x": 2,
+      "y": 10,
+      "speciesId": "machop"
+    }
   ],
   "clearRewardItems": [
-    { "itemId": "hp_up", "quantity": 1 }
+    {
+      "itemId": "hp_up",
+      "quantity": 1
+    }
   ],
   "npcSpawns": [
     {
       "id": "p1_slakoth",
-      "x": 8,
-      "y": 5,
+      "x": 10,
+      "y": 7,
       "speciesId": "slakoth",
-      "nickname": "Slakoth",
       "level": 1,
       "stationary": true,
       "mustSurvive": true
@@ -56,40 +87,97 @@
   "enemySpawns": [
     {
       "id": "p1_enemy_0",
-      "x": 12,
+      "x": 15,
       "y": 3,
       "speciesId": "zigzagoon_galar",
-      "nickname": "Prairie Poacher",
+      "level": 4,
+      "heldItemId": null,
+      "squadId": "p1_north_pack",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "p1_enemy_1",
+      "x": 16,
+      "y": 2,
+      "speciesId": "rookidee",
+      "level": 4,
+      "heldItemId": null,
+      "squadId": "p1_north_pack",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "p1_enemy_2",
+      "x": 17,
+      "y": 7,
+      "speciesId": "timburr",
+      "level": 4,
+      "heldItemId": null,
+      "squadId": "p1_east_pack",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "p1_enemy_3",
+      "x": 18,
+      "y": 8,
+      "speciesId": "venipede",
+      "level": 4,
+      "heldItemId": null,
+      "squadId": "p1_east_pack",
+      "droppableItemId": "potion",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "p1_enemy_4",
+      "x": 15,
+      "y": 11,
+      "speciesId": "venipede",
+      "level": 4,
+      "heldItemId": null,
+      "squadId": "p1_south_pack",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "p1_enemy_5",
+      "x": 16,
+      "y": 12,
+      "speciesId": "zigzagoon_galar",
+      "level": 4,
+      "heldItemId": null,
+      "squadId": "p1_south_pack",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "p1_flanker_0",
+      "x": 19,
+      "y": 1,
+      "speciesId": "rookidee",
       "level": 4,
       "heldItemId": null,
       "aiMode": "aggressive"
     },
     {
-      "id": "p1_enemy_1",
-      "x": 13,
-      "y": 5,
-      "speciesId": "venipede",
-      "nickname": "Grass Stalker",
+      "id": "p1_flanker_1",
+      "x": 19,
+      "y": 13,
+      "speciesId": "zigzagoon_galar",
       "level": 4,
       "heldItemId": null,
-      "aiMode": "wait_until_in_range"
+      "aiMode": "aggressive"
     },
     {
-      "id": "p1_enemy_2",
-      "x": 12,
-      "y": 8,
-      "speciesId": "rookidee",
-      "nickname": "Meadow Harrier",
-      "level": 4,
+      "id": "p1_enemy_6",
+      "x": 20,
+      "y": 5,
+      "speciesId": "timburr",
+      "level": 5,
       "heldItemId": null,
       "aiMode": "wait_until_in_range"
     },
     {
       "id": "p1_boss_stufful",
-      "x": 15,
-      "y": 6,
+      "x": 20,
+      "y": 7,
       "speciesId": "stufful",
-      "nickname": "Bruiser Stufful",
       "level": 5,
       "heldItemId": null,
       "isBoss": true,
@@ -102,7 +190,11 @@
     {
       "id": "ev_p1_talk_slakoth",
       "once": true,
-      "trigger": { "type": "talk", "targetUnitId": "p1_slakoth", "initiator": "lord" },
+      "trigger": {
+        "type": "talk",
+        "targetUnitId": "p1_slakoth",
+        "initiator": "lord"
+      },
       "actions": [
         {
           "type": "play_dialogue",
@@ -123,7 +215,12 @@
     {
       "id": "ev_p1_survive_recruit",
       "once": true,
-      "trigger": { "type": "battle_victory", "requireSurvivedUnitIds": ["p1_slakoth"] },
+      "trigger": {
+        "type": "battle_victory",
+        "requireSurvivedUnitIds": [
+          "p1_slakoth"
+        ]
+      },
       "actions": [
         {
           "type": "recruit_post_battle",

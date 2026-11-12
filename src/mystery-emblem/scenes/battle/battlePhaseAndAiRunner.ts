@@ -8,7 +8,11 @@ import { loadSpeciesSpriteBundle } from '../../assets/pmdAssetLoader';
 import { buildSingleEnemyBattleUnit } from '../../engine/battleSetup';
 import { computeCombatForecast, computeStatusMoveForecast } from '../../engine/combatEngine';
 import { chooseEnemyAction } from '../../engine/enemyAi';
-import { getMapTerrainAt } from '../../engine/terrainAndPathfinding';
+import {
+  computeUnitMovementAndAttackRange,
+  coordKey,
+  getMapTerrainAt,
+} from '../../engine/terrainAndPathfinding';
 import type { ManualEnemyBattleSpawn } from '../../types/schemas';
 import { runAllyNpcPhase } from './battleAllyPhaseRunner';
 import {
@@ -32,7 +36,6 @@ import {
   runFactionPhaseStartStatusTicks,
 } from './battleStatusHexController';
 import {
-  triggerBattleTutorial,
   triggerPrologueTurn2Drills,
   triggerPrologueTurn3ItemDrill,
 } from './battleTutorialIntegration';
@@ -59,6 +62,18 @@ export async function requestManualEndPhase(ctx: BattleControllerContext): Promi
   audioManager.playSfx('select');
   clearBattleSelection(state, dom, prepOverlay);
   await runEnemyPhase(ctx);
+}
+
+function activateThreatenedSquads(state: BattleControllerContext['state']): void {
+  const living = getLivingUnits(state);
+  const hostiles = living.filter((u) => u.faction === 'player' || u.faction === 'npc');
+  for (const enemy of getLivingEnemies(state)) {
+    if (!enemy.squadId || state.activatedSquadIds.has(enemy.squadId)) continue;
+    const { allAttackableTiles } = computeUnitMovementAndAttackRange(state.map, enemy, living);
+    if (hostiles.some((h) => allAttackableTiles.has(coordKey(h.x, h.y)))) {
+      state.activatedSquadIds.add(enemy.squadId);
+    }
+  }
 }
 
 export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void> {
@@ -90,6 +105,7 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
   if (!state.openState || runGen !== state.battleRunGen) return;
 
   const protectedSet = new Set(state.defeatIfUnitIdsFall);
+  activateThreatenedSquads(state);
   const enemiesOrder = [...getLivingEnemies(state)];
   for (const enemy of enemiesOrder) {
     if (!state.openState || runGen !== state.battleRunGen) return;
@@ -99,7 +115,13 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
     ensureTilePairVisible(state, enemy.x, enemy.y, enemy.x, enemy.y);
     updateBattleInfoStrip(ctx);
 
-    const decision = chooseEnemyAction(state.map, enemy, getLivingUnits(state), protectedSet);
+    const decision = chooseEnemyAction(
+      state.map,
+      enemy,
+      getLivingUnits(state),
+      protectedSet,
+      state.activatedSquadIds
+    );
 
     if (decision.path.length > 1) {
       await playWalkPathAsync(state, enemy, decision.path, true);
@@ -228,9 +250,6 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
       if (state.turnNumber === 2) void triggerPrologueTurn2Drills(ctx, runGen);
       else if (state.turnNumber === 3) void triggerPrologueTurn3ItemDrill(ctx, runGen);
       return;
-    }
-    if (getLivingPlayers(state).some((u) => u.currentHp < u.maxHp)) {
-      void triggerBattleTutorial(ctx, 'ch1_healing_and_items');
     }
   });
 }

@@ -51,7 +51,8 @@ function chooseAiUnitAction(
   map: DungeonMapDefinition,
   actor: BattleUnitState,
   allLivingUnits: ReadonlyArray<BattleUnitState>,
-  priorityTargetIds?: ReadonlySet<string>
+  priorityTargetIds?: ReadonlySet<string>,
+  activatedSquadIds?: ReadonlySet<string>
 ): EnemyTurnDecision {
   const stayPath: AStarPathStep[] = [{ x: actor.x, y: actor.y, cumulativeCost: 0 }];
 
@@ -235,7 +236,9 @@ function chooseAiUnitAction(
   const effectiveAiMode =
     actor.stationary || actor.aiMode === 'stationary'
       ? 'stationary'
-      : (actor.aiMode ?? 'wait_until_in_range');
+      : actor.squadId && activatedSquadIds?.has(actor.squadId)
+        ? 'aggressive'
+        : (actor.aiMode ?? 'wait_until_in_range');
 
   if (effectiveAiMode !== 'aggressive') {
     return {
@@ -293,9 +296,10 @@ export function chooseEnemyAction(
   map: DungeonMapDefinition,
   enemy: BattleUnitState,
   allLivingUnits: ReadonlyArray<BattleUnitState>,
-  protectedUnitIds?: ReadonlySet<string>
+  protectedUnitIds?: ReadonlySet<string>,
+  activatedSquadIds?: ReadonlySet<string>
 ): EnemyTurnDecision {
-  return chooseAiUnitAction(map, enemy, allLivingUnits, protectedUnitIds);
+  return chooseAiUnitAction(map, enemy, allLivingUnits, protectedUnitIds, activatedSquadIds);
 }
 
 export function chooseNpcAllyAction(

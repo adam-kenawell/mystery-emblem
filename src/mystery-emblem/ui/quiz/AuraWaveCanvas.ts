@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — GBA/DS-Styled Bayer-Dithered Mystical Aura Wave Canvas Engine
+ * Mystery Emblem - GBA/DS-Styled Bayer-Dithered Mystical Aura Wave Canvas Engine
  */
 
 import { MYSTICAL_QUIZ_WAVE_PALETTE, type AuraWavePalette } from '../../data/quizData';

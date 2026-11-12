@@ -119,6 +119,8 @@ export interface BattleRuntimeState {
   triggeredEventIds: Set<string>;
   talkChoiceResolver: ((option: DungeonTalkChoiceOption | null) => void) | null;
   spawnedReinforcementIds: Set<string>;
+  /** Linked enemy squads permanently switched to aggressive for the rest of the battle */
+  activatedSquadIds: Set<string>;
   blockedReinforcementIds: Set<string>;
   collectedDrops: string[];
   eventBonusItems: ConvoyEntry[];
@@ -220,6 +222,7 @@ export function createInitialBattleRuntimeState(): BattleRuntimeState {
     triggeredEventIds: new Set(),
     talkChoiceResolver: null,
     spawnedReinforcementIds: new Set(),
+    activatedSquadIds: new Set(),
     blockedReinforcementIds: new Set(),
     collectedDrops: [],
     eventBonusItems: [],
@@ -308,7 +311,6 @@ export interface BattleControllerContext {
   abortSignal: AbortSignal;
   onExitCallback: (destination?: BattleExitDestination) => void;
   onLayerStateChanged: () => void;
-  onRequestRenameUnit?: (instanceId: string) => Promise<void> | void;
   startLoop: () => void;
   stopLoop: () => void;
   renderNow: () => void;

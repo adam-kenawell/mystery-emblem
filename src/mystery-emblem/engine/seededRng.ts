@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Serializable Seeded PRNG (mulberry32)
+ * Mystery Emblem - Serializable Seeded PRNG (mulberry32)
  *
  * The whole generator state is one uint32, so a mid-battle save can store it and a reload
  * replays identical hit/crit/status/level-up rolls for identical player actions.

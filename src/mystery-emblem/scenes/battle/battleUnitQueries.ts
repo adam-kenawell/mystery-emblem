@@ -15,6 +15,7 @@ import {
 import { getEligibleEvolutionBranches } from '../../engine/progressionEngine';
 import {
   computeUnitMovementAndAttackRange,
+  coordKey,
   getEffectiveMovementPoints,
 } from '../../engine/terrainAndPathfinding';
 import type { DungeonPrepOverlay } from '../../ui/DungeonPrepOverlay';
@@ -22,6 +23,23 @@ import { computeDungeonCameraBounds } from '../../ui/gridViewportMath';
 import type { BattleDomRefs } from './battleDomShell';
 import type { BattleSceneSnapshot } from './battlePublicTypes';
 import type { BattleRuntimeState } from './battleTypesAndState';
+
+/** `"x,y"` keys of every `seize` objective tile (`tile_reached` events that `win_battle`) */
+export function getSeizeObjectiveCoords(state: BattleRuntimeState): Set<string> {
+  const coords = new Set<string>();
+  if (state.objectiveType !== 'seize') return coords;
+  for (const ev of state.events) {
+    const trig = ev.trigger;
+    if (trig.type !== 'tile_reached') continue;
+    if (!ev.actions.some((a) => a.type === 'win_battle')) continue;
+    for (let y = Math.min(trig.y1, trig.y2); y <= Math.max(trig.y1, trig.y2); y++) {
+      for (let x = Math.min(trig.x1, trig.x2); x <= Math.max(trig.x1, trig.x2); x++) {
+        coords.add(coordKey(x, y));
+      }
+    }
+  }
+  return coords;
+}
 
 export function getUnitVisualKey(
   unit: Pick<BattleUnitState, 'speciesId' | 'cosmeticForm'>

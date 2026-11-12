@@ -129,6 +129,8 @@ export interface CampaignState {
   kecleonShopsUnlocked: boolean;
   completedChapterIds: string[];
   campaignMode?: CampaignMode;
+  /** Unlocked in Act 2 after the audience with King Serperior; gates wild Rift-tremor encounters. */
+  skirmishesUnlocked?: boolean;
   tutorialsEnabled?: boolean;
   tutorialPreferences?: TutorialFamiliarityPreferences;
   seenTutorialIds?: string[];

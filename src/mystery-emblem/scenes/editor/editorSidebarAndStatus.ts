@@ -183,7 +183,7 @@ export function syncEditorUiControls(
   dom.chapterOnlyEl.hidden = isCutscene;
   dom.locationTitleEl.textContent = `Painting location: ${state.locationSession?.locationName ?? state.map.name}`;
   dom.hudSaveBtnEl.textContent = isCutscene ? 'Done' : 'Save';
-  dom.sysSaveBtnEl.textContent = isCutscene ? 'Done — Back to Cutscene' : 'Save Map to Game';
+  dom.sysSaveBtnEl.textContent = isCutscene ? 'Done - Back to Cutscene' : 'Save Map to Game';
   dom.sysSaveProjectBtnEl.hidden = isCutscene || dom.saveProjectBtnEl.hidden;
   dom.biomePresetsEl.querySelectorAll<HTMLElement>('[data-editor-location-only]').forEach((el) => {
     el.hidden = !isCutscene;
@@ -236,7 +236,7 @@ export function syncEditorUiControls(
   dom.mapWidthValEl.textContent = String(state.map.width);
   dom.mapHeightValEl.textContent = String(state.map.height);
   if (isCutscene) {
-    dom.deployCapValEl.textContent = '—';
+    dom.deployCapValEl.textContent = '-';
   } else {
     const cap = Math.max(
       1,

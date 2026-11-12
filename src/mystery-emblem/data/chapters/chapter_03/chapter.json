@@ -14,87 +14,195 @@
   "recommendedLevel": 4,
   "deploymentCap": 6,
   "preStoryCutsceneId": "cs_05_campfire_and_machop",
-  "width": 24,
-  "height": 12,
+  "width": 36,
+  "height": 14,
   "rows": [
-    "X:55 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:54",
-    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
-    "X:3 F:29 S:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:15 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:15 F:29 F:29 F:29 X:22",
-    "X:3 F:29 F:29 F:29 F:15 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:15 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
-    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 F:29 F:29 F:47 F:29 X:22",
-    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 X:22 F:29 F:29 WT:29 F:29 X:22",
-    "X:3 F:29 F:29 F:29 F:29 F:15 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:15 F:29 F:29 F:29 F:29 F:29 WT:29 F:29 X:22",
-    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:47 F:29 X:22",
-    "X:3 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:15 F:29 F:29 F:29 X:22",
-    "X:3 F:29 F:29 F:29 X:22 X:22 F:29 F:29 S:29 F:29 F:15 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
-    "X:3 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
-    "X:37 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:49"
+    "X:55 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:54",
+    "X:3 F:29 F:29 F:29 F:29 X:22 F:29 F:29 F:29 X:22 X:22 F:29 S:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 X:22 F:29 F:29 F:29 F:29 X:22",
+    "X:3 F:29 S:29 F:29 F:29 X:22 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 X:22 F:29 F:29 F:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:15 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:15 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:15 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 F:47 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 X:22 X:22 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:15 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 F:47 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:15 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:15 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:15 F:29 F:29 F:29 X:22",
+    "X:3 F:29 S:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22",
+    "X:3 F:29 F:29 F:29 F:29 F:29 X:22 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 F:29 X:22 X:22 F:29 F:29 F:29 X:22 F:29 F:29 F:29 F:29 F:29 F:29 X:22 F:29 F:29 F:29 F:29 F:29 X:22",
+    "X:37 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:49"
   ],
   "playerSlots": [
-    { "x": 3, "y": 5, "speciesId": "axew" },
-    { "x": 4, "y": 5, "speciesId": "machop" },
-    { "x": 3, "y": 4, "speciesId": "quaxly" },
-    { "x": 3, "y": 6, "speciesId": "flabebe" },
-    { "x": 2, "y": 5, "speciesId": "mentor_quaquaval" },
-    { "x": 2, "y": 6, "speciesId": "smoliv" }
+    {
+      "x": 3,
+      "y": 6,
+      "speciesId": "axew"
+    },
+    {
+      "x": 4,
+      "y": 6,
+      "speciesId": "machop"
+    },
+    {
+      "x": 3,
+      "y": 5,
+      "speciesId": "quaxly"
+    },
+    {
+      "x": 3,
+      "y": 7,
+      "speciesId": "flabebe"
+    },
+    {
+      "x": 2,
+      "y": 6,
+      "speciesId": "mentor_quaquaval"
+    },
+    {
+      "x": 2,
+      "y": 7,
+      "speciesId": "smoliv"
+    }
   ],
   "recruitment": {
-    "fixedSpeciesIds": ["machop"],
+    "fixedSpeciesIds": [
+      "machop"
+    ],
     "joinLevel": 4,
     "scaleStatsToLevel": true,
     "fallbackSpeciesIds": []
   },
   "clearRewardItems": [
-    { "itemId": "evolution_stone", "quantity": 1 }
+    {
+      "itemId": "iron",
+      "quantity": 1
+    }
   ],
   "enemySpawns": [
     {
       "id": "ch3_enemy_0",
-      "x": 9,
-      "y": 4,
+      "x": 12,
+      "y": 11,
       "speciesId": "zubat",
-      "nickname": "Cavern Zubat",
+      "level": 3,
+      "heldItemId": null,
+      "squadId": "ch3_tunnel_a",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch3_enemy_1",
+      "x": 14,
+      "y": 10,
+      "speciesId": "rolycoly",
+      "level": 4,
+      "heldItemId": null,
+      "squadId": "ch3_tunnel_a",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch3_flier_0",
+      "x": 13,
+      "y": 3,
+      "speciesId": "zubat",
       "level": 3,
       "heldItemId": null,
       "aiMode": "aggressive"
     },
     {
-      "id": "ch3_enemy_1",
-      "x": 10,
-      "y": 7,
-      "speciesId": "rolycoly",
-      "nickname": "Tunnel Rolycoly",
-      "level": 4,
-      "heldItemId": null,
-      "aiMode": "wait_until_in_range"
-    },
-    {
       "id": "ch3_enemy_2",
       "x": 15,
-      "y": 4,
+      "y": 2,
       "speciesId": "venipede",
-      "nickname": "Crevice Venipede",
       "level": 4,
       "heldItemId": null,
+      "squadId": "ch3_tunnel_b",
       "droppableItemId": "potion",
       "aiMode": "wait_until_in_range"
     },
     {
       "id": "ch3_enemy_3",
       "x": 16,
+      "y": 4,
+      "speciesId": "aron",
+      "level": 4,
+      "heldItemId": null,
+      "squadId": "ch3_tunnel_b",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch3_enemy_4",
+      "x": 20,
+      "y": 6,
+      "speciesId": "phanpy",
+      "level": 4,
+      "heldItemId": null,
+      "squadId": "ch3_tunnel_c",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch3_enemy_5",
+      "x": 22,
       "y": 7,
+      "speciesId": "rolycoly",
+      "level": 4,
+      "heldItemId": null,
+      "squadId": "ch3_tunnel_c",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch3_enemy_6",
+      "x": 21,
+      "y": 9,
+      "speciesId": "venipede",
+      "level": 4,
+      "heldItemId": null,
+      "squadId": "ch3_tunnel_c",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch3_flier_1",
+      "x": 22,
+      "y": 3,
       "speciesId": "zubat",
-      "nickname": "Screech Flier",
+      "level": 4,
+      "heldItemId": null,
+      "aiMode": "aggressive"
+    },
+    {
+      "id": "ch3_enemy_7",
+      "x": 28,
+      "y": 10,
+      "speciesId": "aron",
+      "level": 4,
+      "heldItemId": null,
+      "squadId": "ch3_warden_guard",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch3_enemy_8",
+      "x": 29,
+      "y": 4,
+      "speciesId": "phanpy",
+      "level": 5,
+      "heldItemId": null,
+      "squadId": "ch3_warden_guard",
+      "droppableItemId": "oran_berry",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch3_flier_2",
+      "x": 31,
+      "y": 2,
+      "speciesId": "zubat",
       "level": 4,
       "heldItemId": null,
       "aiMode": "aggressive"
     },
     {
       "id": "ch3_exit_warden",
-      "x": 20,
-      "y": 5,
+      "x": 31,
+      "y": 6,
       "speciesId": "stufful",
-      "nickname": "Wild Stufful",
       "level": 5,
       "heldItemId": "oran_berry",
       "isBoss": true,
@@ -109,11 +217,10 @@
       "stairsX": 2,
       "stairsY": 2,
       "enemy": {
-        "id": "ch3_reinf_zubat_t2",
+        "id": "ch3_chase_t2_unit",
         "x": 2,
         "y": 2,
         "speciesId": "zubat",
-        "nickname": "Pursuing Zubat",
         "level": 3,
         "heldItemId": null,
         "aiMode": "aggressive"
@@ -122,14 +229,28 @@
     {
       "id": "ch3_chase_t3",
       "turnNumber": 3,
-      "stairsX": 8,
-      "stairsY": 9,
+      "stairsX": 2,
+      "stairsY": 11,
       "enemy": {
-        "id": "ch3_reinf_venipede_t3",
-        "x": 8,
-        "y": 9,
+        "id": "ch3_chase_t3_unit",
+        "x": 2,
+        "y": 11,
         "speciesId": "venipede",
-        "nickname": "Pursuing Venipede",
+        "level": 4,
+        "heldItemId": null,
+        "aiMode": "aggressive"
+      }
+    },
+    {
+      "id": "ch3_chase_t4",
+      "turnNumber": 4,
+      "stairsX": 12,
+      "stairsY": 1,
+      "enemy": {
+        "id": "ch3_chase_t4_unit",
+        "x": 12,
+        "y": 1,
+        "speciesId": "zubat",
         "level": 4,
         "heldItemId": null,
         "aiMode": "aggressive"
@@ -144,12 +265,20 @@
         "type": "tile_reached",
         "by": "lord",
         "tiles": [
-          { "x": 21, "y": 5 },
-          { "x": 21, "y": 6 }
+          {
+            "x": 33,
+            "y": 6
+          },
+          {
+            "x": 33,
+            "y": 7
+          }
         ]
       },
       "actions": [
-        { "type": "win_battle" }
+        {
+          "type": "win_battle"
+        }
       ]
     }
   ]

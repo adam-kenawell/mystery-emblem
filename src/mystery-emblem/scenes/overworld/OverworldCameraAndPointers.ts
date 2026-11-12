@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Overworld Camera Bounds & Zoom Controller (`OverworldCameraAndPointers.ts`)
+ * Mystery Emblem - Overworld Camera Bounds & Zoom Controller (`OverworldCameraAndPointers.ts`)
  */
 
 import type {

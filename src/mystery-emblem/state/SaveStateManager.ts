@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Persistent SaveStateManager (`localStorage` + Cloud Firestore Sync)
+ * Mystery Emblem - Persistent SaveStateManager (`localStorage` + Cloud Firestore Sync)
  */
 
 import { mergeCustomMapsRecord } from '../data/chapterMapRegistry';

@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Dungeon Prep DOM Templates & Hub/Map HUD Sync (`prepTemplates.ts`)
+ * Mystery Emblem - Dungeon Prep DOM Templates & Hub/Map HUD Sync (`prepTemplates.ts`)
  */
 
 import type { DungeonMapDefinition, OwnedPokemonInstance, PrepDeploymentSlot } from '../../types/schemas';
@@ -115,13 +115,12 @@ export function createPrepDomElements(
             </div>
             <div class="pmd-prep-unit-title-col">
               <div class="pmd-prep-name-row">
-                <strong class="pmd-prep-unit-big-name" data-testid="prep-detail-nickname">—</strong>
+                <strong class="pmd-prep-unit-big-name" data-testid="prep-detail-nickname">-</strong>
                 <div class="pmd-inline-btns">
                   <span data-prep-deploy-slot></span>
-                  <button type="button" class="pmd-btn pmd-chip-btn" data-testid="prep-unit-rename-btn">Rename</button>
                 </div>
               </div>
-              <span class="pmd-prep-unit-meta-line" data-testid="prep-detail-meta">—</span>
+              <span class="pmd-prep-unit-meta-line" data-testid="prep-detail-meta">-</span>
               <div class="pmd-prep-badges-row" data-testid="prep-unit-types"></div>
             </div>
           </div>

@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Overworld Sprite Footline & Crisp DOM Node Pill Helpers (`overworldSpriteAndLabelDraw.ts`)
+ * Mystery Emblem - Overworld Sprite Footline & Crisp DOM Node Pill Helpers (`overworldSpriteAndLabelDraw.ts`)
  */
 
 import {

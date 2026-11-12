@@ -160,7 +160,7 @@ export function createBattleDomShell(): BattleDomRefs {
       </div>
     </div>
     <div class="pmd-unit-popup-stats-row">
-      <span class="pmd-unit-popup-stat"><em>MGT</em><strong data-testid="unit-popup-might">—</strong></span>
+      <span class="pmd-unit-popup-stat"><em>MGT</em><strong data-testid="unit-popup-might">-</strong></span>
       <span class="pmd-unit-popup-stat"><em>DEF</em><strong data-testid="unit-popup-def">0</strong></span>
       <span class="pmd-unit-popup-stat"><em>SPDEF</em><strong data-testid="unit-popup-spdef"><span data-testid="unit-popup-spd">0</span></strong></span>
       <span class="pmd-unit-popup-stat"><em>SPE</em><strong data-testid="unit-popup-spe">0</strong></span>

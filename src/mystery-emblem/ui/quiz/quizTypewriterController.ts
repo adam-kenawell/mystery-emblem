@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Quiz Typewriter, Snapshot & Campaign Finalizer Helpers (`quizTypewriterController.ts`)
+ * Mystery Emblem - Quiz Typewriter, Snapshot & Campaign Finalizer Helpers (`quizTypewriterController.ts`)
  */
 
 import type { AudioManager } from '../../audio/AudioManager';

@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Admin Dev Tools Map Editor Preview Tab Controller
+ * Mystery Emblem - Admin Dev Tools Map Editor Preview Tab Controller
  */
 
 import type { AudioManager } from '../../audio/AudioManager';

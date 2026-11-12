@@ -16,89 +16,184 @@
   "isDemoFinale": true,
   "postStoryCutsceneId": "cs_06_capital_audience",
   "postCutsceneRecruits": [
-    { "speciesId": "honedge", "level": 5, "scaleStatsToLevel": true },
-    { "speciesId": "sandile", "level": 5, "scaleStatsToLevel": true }
+    {
+      "speciesId": "honedge",
+      "level": 5,
+      "scaleStatsToLevel": true
+    },
+    {
+      "speciesId": "sandile",
+      "level": 5,
+      "scaleStatsToLevel": true
+    }
   ],
-  "width": 20,
-  "height": 12,
+  "width": 26,
+  "height": 16,
   "rows": [
-    "X:34 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:33",
-    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:96 X:21",
-    "X:3 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 X:21",
-    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:41 W:42 F:28 F:28 F:28 F:28 F:28 F:131 F:28 F:28 X:21",
-    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
-    "X:3 F:28 F:28 F:28 F:28 F:28 F:9 F:28 F:28 F:28 WT:28 F:28 F:28 F:9 F:28 F:28 F:28 F:28 F:28 X:21",
-    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
-    "X:3 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
-    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:42 W:43 F:28 F:28 F:28 F:28 F:28 F:131 F:28 F:28 F:28 X:21",
-    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
-    "X:3 F:95 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
-    "X:36 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:48"
+    "X:34 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:33",
+    "X:3 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 W:41 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:96 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:42 W:43 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:131 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:9 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:9 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:131 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:131 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:9 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 W:42 W:43 F:28 F:28 T:142:1 F:28 X:21",
+    "X:3 F:95 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:41 F:28 F:28 F:28 F:28 X:21",
+    "X:36 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:48"
   ],
   "playerSlots": [
-    { "x": 3, "y": 5, "speciesId": "axew" },
-    { "x": 3, "y": 4, "speciesId": "quaxly" },
-    { "x": 3, "y": 6, "speciesId": "flabebe" },
-    { "x": 2, "y": 4, "speciesId": "mentor_quaquaval" },
-    { "x": 2, "y": 5, "speciesId": "smoliv" },
-    { "x": 2, "y": 6, "speciesId": "machop" }
+    {
+      "x": 3,
+      "y": 7,
+      "speciesId": "axew"
+    },
+    {
+      "x": 3,
+      "y": 6,
+      "speciesId": "quaxly"
+    },
+    {
+      "x": 3,
+      "y": 8,
+      "speciesId": "flabebe"
+    },
+    {
+      "x": 2,
+      "y": 6,
+      "speciesId": "mentor_quaquaval"
+    },
+    {
+      "x": 2,
+      "y": 7,
+      "speciesId": "smoliv"
+    },
+    {
+      "x": 2,
+      "y": 8,
+      "speciesId": "machop"
+    }
   ],
   "clearRewardItems": [
-    { "itemId": "super_potion", "quantity": 1 }
+    {
+      "itemId": "super_potion",
+      "quantity": 1
+    }
   ],
   "enemySpawns": [
     {
-      "id": "ch4_paradox_0",
-      "x": 11,
-      "y": 3,
-      "speciesId": "brute_bonnet",
-      "nickname": "Rift Brute Bonnet",
+      "id": "ch4_stampede_0",
+      "x": 9,
+      "y": 6,
+      "speciesId": "phanpy",
       "level": 4,
       "heldItemId": null,
-      "aiMode": "wait_until_in_range"
+      "aiMode": "aggressive"
     },
     {
-      "id": "ch4_paradox_1",
-      "x": 11,
+      "id": "ch4_stampede_1",
+      "x": 9,
+      "y": 9,
+      "speciesId": "phanpy",
+      "level": 4,
+      "heldItemId": null,
+      "aiMode": "aggressive"
+    },
+    {
+      "id": "ch4_stampede_2",
+      "x": 13,
       "y": 8,
-      "speciesId": "scream_tail",
-      "nickname": "Rift Scream Tail",
-      "level": 4,
-      "heldItemId": null,
-      "aiMode": "wait_until_in_range"
-    },
-    {
-      "id": "ch4_paradox_2",
-      "x": 14,
-      "y": 4,
-      "speciesId": "slither_wing",
-      "nickname": "Rift Slither Wing",
+      "speciesId": "rhyhorn",
       "level": 5,
       "heldItemId": null,
+      "aiMode": "aggressive"
+    },
+    {
+      "id": "ch4_herd_n0",
+      "x": 12,
+      "y": 4,
+      "speciesId": "phanpy",
+      "level": 4,
+      "heldItemId": null,
+      "squadId": "ch4_north_herd",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch4_herd_n1",
+      "x": 13,
+      "y": 5,
+      "speciesId": "rhyhorn",
+      "level": 5,
+      "heldItemId": null,
+      "squadId": "ch4_north_herd",
       "droppableItemId": "sitrus_berry",
       "aiMode": "wait_until_in_range"
     },
     {
-      "id": "ch4_paradox_3",
-      "x": 14,
-      "y": 7,
-      "speciesId": "flutter_mane",
-      "nickname": "Rift Flutter Mane",
+      "id": "ch4_herd_s0",
+      "x": 12,
+      "y": 11,
+      "speciesId": "rolycoly",
+      "level": 4,
+      "heldItemId": null,
+      "squadId": "ch4_south_herd",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch4_herd_s1",
+      "x": 13,
+      "y": 12,
+      "speciesId": "aron",
       "level": 5,
       "heldItemId": null,
+      "squadId": "ch4_south_herd",
       "droppableItemId": "full_heal",
       "aiMode": "wait_until_in_range"
     },
     {
-      "id": "ch4_boss_great_tusk",
-      "x": 17,
+      "id": "ch4_tusk_guard_0",
+      "x": 19,
       "y": 5,
+      "speciesId": "rhyhorn",
+      "level": 5,
+      "heldItemId": null,
+      "squadId": "ch4_tusk_guard",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch4_tusk_guard_1",
+      "x": 19,
+      "y": 10,
+      "speciesId": "aron",
+      "level": 5,
+      "heldItemId": null,
+      "squadId": "ch4_tusk_guard",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch4_tusk_guard_2",
+      "x": 20,
+      "y": 8,
+      "speciesId": "rolycoly",
+      "level": 5,
+      "heldItemId": null,
+      "squadId": "ch4_tusk_guard",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch4_boss_great_tusk",
+      "x": 22,
+      "y": 7,
       "speciesId": "great_tusk",
-      "nickname": "Rift Great Tusk",
       "level": 6,
       "heldItemId": "oran_berry",
       "isBoss": true,
-      "droppableItemId": "evolution_stone",
+      "droppableItemId": "protein",
       "aiMode": "wait_until_in_range"
     }
   ],
@@ -107,7 +202,11 @@
     {
       "id": "ev_ch4_hometown_trio_arrives",
       "once": true,
-      "trigger": { "type": "turn_start", "turnNumber": 2, "phase": "player_phase" },
+      "trigger": {
+        "type": "turn_start",
+        "turnNumber": 2,
+        "phase": "player_phase"
+      },
       "actions": [
         {
           "type": "spawn_units",
@@ -118,26 +217,23 @@
           "units": [
             {
               "id": "ch4_starly",
-              "x": 4,
+              "x": 3,
               "y": 2,
               "speciesId": "starly",
-              "nickname": "Starly",
               "level": 4
             },
             {
               "id": "ch4_caterpie",
-              "x": 3,
-              "y": 9,
+              "x": 2,
+              "y": 13,
               "speciesId": "caterpie",
-              "nickname": "Caterpie",
               "level": 4
             },
             {
               "id": "ch4_pawmi",
-              "x": 5,
-              "y": 8,
+              "x": 4,
+              "y": 13,
               "speciesId": "pawmi",
-              "nickname": "Pawmi",
               "level": 4
             }
           ]

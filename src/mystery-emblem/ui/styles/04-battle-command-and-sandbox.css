@@ -1,4 +1,4 @@
-/* Floating In-Dungeon Command Menu (`▶Moves/Attack`, `Heal`, `Item`, `Wait`, `Cancel` — Image 1 style) */
+/* Floating In-Dungeon Command Menu (`▶Moves/Attack`, `Heal`, `Item`, `Wait`, `Cancel` - Image 1 style) */
 .pmd-battle-action-menu {
   position: absolute;
   z-index: 68;
@@ -132,7 +132,7 @@
   gap: 8px;
 }
 
-/* Narrow Mobile Portrait (e.g., 390x844) — place HUD bar below corner buttons so nothing collides */
+/* Narrow Mobile Portrait (e.g., 390x844) - place HUD bar below corner buttons so nothing collides */
 @media (max-width: 720px) {
   .pmd-viewport.is-battle-active {
     height: 100dvh;
@@ -185,7 +185,7 @@
   }
 }
 
-/* Short Mobile Landscape (e.g., 844x390) — maximize vertical canvas area & zero clipping */
+/* Short Mobile Landscape (e.g., 844x390) - maximize vertical canvas area & zero clipping */
 @media (max-height: 500px) {
   .pmd-viewport.is-battle-active {
     height: 100dvh;

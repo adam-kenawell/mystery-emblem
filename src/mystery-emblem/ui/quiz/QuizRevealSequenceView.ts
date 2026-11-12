@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — 4-Beat Sequential Dragon Lord Aura Reveal View
+ * Mystery Emblem - 4-Beat Sequential Dragon Lord Aura Reveal View
  */
 
 import { getSpeciesById } from '../../data/index';

@@ -109,7 +109,7 @@ export function emotionGrid(
         cell.prepend(clone);
         if (missing) {
           cell.classList.add('is-missing');
-          cell.title = `${emotion} — this Pokémon has no ${emotion} portrait (shows Normal)`;
+          cell.title = `${emotion} - this Pokémon has no ${emotion} portrait (shows Normal)`;
         }
       });
     }
@@ -177,7 +177,7 @@ export function songPicker(
     const ext = file.name.match(/\.[^.]+$/)?.[0] ?? '.webm';
     const once = window.confirm('Should this song loop?\n\nOK = Loops (background music)\nCancel = Plays once (jingle / fanfare)') === false;
     if (file.size > 6 * 1024 * 1024) {
-      notifier.toast(`Heads up: ${Math.round(file.size / 1024 / 1024)} MB is large — players download the whole song. WebM/OGG are much smaller than WAV.`);
+      notifier.toast(`Heads up: ${Math.round(file.size / 1024 / 1024)} MB is large - players download the whole song. WebM/OGG are much smaller than WAV.`);
     }
     void uploadProjectAsset('audio', file, `${title.trim() || suggested}${ext}`)
       .then(async (savedName) => {
@@ -214,7 +214,7 @@ export function mediaPicker(
   notifier: UploadNotifier
 ): HTMLElement {
   const files = listMediaFiles(folder);
-  const options = [{ value: '', label: files.length ? '— pick a file —' : '— no files yet: upload one —' }, ...files.map((f) => ({ value: f, label: f }))];
+  const options = [{ value: '', label: files.length ? '- pick a file -' : '- no files yet: upload one -' }, ...files.map((f) => ({ value: f, label: f }))];
   if (value && !files.includes(value)) options.push({ value, label: `${value} (missing)` });
   const select = selectInput(ui, options, value ?? '', (v) => onPick(v), `cse-media-${folder}`);
   const wrap = h('div', { class: 'cse-row cse-row--wrap' }, select);

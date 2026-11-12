@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Overworld Multi-Waypoint Road Dijkstra & Polyline Sampler
+ * Mystery Emblem - Overworld Multi-Waypoint Road Dijkstra & Polyline Sampler
  */
 
 import { directionFromDelta, type PmdDirection } from '../../assets/pmdAssetLoader';

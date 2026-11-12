@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Shared Prep Move Loadout & TM Strip Inspector (`MoveLoadoutEditor.ts`)
+ * Mystery Emblem - Shared Prep Move Loadout & TM Strip Inspector (`MoveLoadoutEditor.ts`)
  */
 
 import type { AudioManager } from '../../audio/AudioManager';
@@ -102,7 +102,7 @@ export function renderPrepMoveLoadout(params: PrepMoveLoadoutRenderParams): void
             if (isEquipped) {
               saveManager.clearEquippedMove(unit.instanceId, mv.category as EquipCategory);
               audioManager.playSfx('cancel');
-              onMutated(`${mv.category} [E] cleared — no counter at Range ${mv.range[0]}.`);
+              onMutated(`${mv.category} [E] cleared - no counter at Range ${mv.range[0]}.`);
               return;
             }
             saveManager.setEquippedMove(unit.instanceId, mv.id);

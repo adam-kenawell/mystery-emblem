@@ -16,65 +16,117 @@
   "skipPrepPhase": true,
   "preStoryCutsceneId": "cs_02_bedtime_and_watering_hole",
   "postStoryCutsceneId": "cs_03_pidgeotto_summons",
-  "width": 18,
-  "height": 12,
+  "width": 24,
+  "height": 14,
   "rows": [
-    "X:34 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:33",
-    "X:3 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:96 X:21",
-    "X:3 F:28 F:92 F:28 T:142:1 F:9 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:27 F:131 F:28 X:21",
-    "X:3 F:28 F:28 F:28 F:131 F:28 F:28 W:41 W:42 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
-    "X:3 F:28 F:28 F:28 F:28 F:28 T:142:1 W:42 W:43 F:28 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 X:21",
-    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:9 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
-    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 W:42 W:43 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
-    "X:3 F:28 F:28 F:28 F:28 F:9 F:28 W:58 W:59 F:28 T:142:1 F:28 F:28 F:9 F:28 F:28 F:28 X:21",
-    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 W:93 W:74 F:28 F:28 F:28 F:28 F:28 F:28 F:131 F:28 X:21",
-    "X:3 F:28 F:131 F:28 W:41 F:28 F:28 F:131 F:28 F:28 X:27 F:28 F:28 F:28 W:41 F:28 F:28 X:21",
-    "X:3 F:95 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
-    "X:36 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:48"
+    "X:34 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:33",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:42 W:43 F:28 F:28 T:142:1 F:28 F:28 W:42 W:43 F:28 F:28 F:28 F:28 F:96 X:21",
+    "X:3 F:28 F:28 F:28 F:131 T:142:1 F:28 F:28 F:28 W:42 W:43 F:28 F:28 F:28 F:28 F:28 W:42 W:43 F:28 F:28 T:142:1 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:42 W:43 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:9 F:28 F:28 W:42 W:43 F:28 F:28 F:28 F:28 F:28 W:42 W:43 F:28 F:28 F:28 F:28 W:41 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:42 W:43 F:28 F:131 F:28 F:28 F:28 W:42 W:43 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 W:42 W:43 F:28 T:142:1 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:42 W:43 F:28 F:28 T:142:1 F:28 F:28 W:42 W:43 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:42 W:43 F:28 F:28 F:28 F:28 F:28 W:42 W:43 F:28 F:9 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 F:28 W:41 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:42 W:43 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:131 F:28 F:28 F:28 F:28 F:28 W:42 W:43 F:28 F:28 F:28 F:9 F:28 W:42 W:43 F:28 F:28 F:28 F:28 F:28 X:21",
+    "X:3 F:28 F:28 F:28 F:28 T:142:1 F:28 F:28 F:28 W:42 W:43 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 T:142:1 F:28 X:21",
+    "X:3 F:95 F:28 F:28 F:28 F:28 F:28 F:28 F:28 W:42 W:43 F:28 F:28 F:28 T:142:1 F:28 W:42 W:43 F:28 F:28 F:131 F:28 F:28 X:21",
+    "X:36 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:48"
   ],
   "playerSlots": [
-    { "x": 3, "y": 5, "speciesId": "axew" },
-    { "x": 3, "y": 3, "speciesId": "quaxly" },
-    { "x": 3, "y": 7, "speciesId": "flabebe" }
+    {
+      "x": 3,
+      "y": 6,
+      "speciesId": "axew"
+    },
+    {
+      "x": 3,
+      "y": 5,
+      "speciesId": "quaxly"
+    },
+    {
+      "x": 3,
+      "y": 7,
+      "speciesId": "flabebe"
+    }
   ],
   "enemySpawns": [
     {
       "id": "ch1_thug_0",
       "x": 11,
-      "y": 4,
+      "y": 3,
       "speciesId": "zigzagoon_galar",
-      "nickname": "Spring Cutpurse",
       "level": 2,
       "heldItemId": null,
+      "squadId": "ch1_north_ford",
       "aiMode": "wait_until_in_range"
     },
     {
       "id": "ch1_thug_1",
-      "x": 11,
-      "y": 7,
+      "x": 12,
+      "y": 4,
       "speciesId": "impidimp",
-      "nickname": "sneering Impidimp",
       "level": 2,
       "heldItemId": null,
+      "squadId": "ch1_north_ford",
       "aiMode": "wait_until_in_range"
     },
     {
       "id": "ch1_thug_2",
-      "x": 13,
-      "y": 3,
-      "speciesId": "zigzagoon_galar",
-      "nickname": "Brush Bandit",
+      "x": 11,
+      "y": 9,
+      "speciesId": "venipede",
       "level": 2,
       "heldItemId": null,
+      "squadId": "ch1_south_ford",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch1_thug_3",
+      "x": 12,
+      "y": 10,
+      "speciesId": "zigzagoon_galar",
+      "level": 2,
+      "heldItemId": null,
+      "squadId": "ch1_south_ford",
       "droppableItemId": "potion",
       "aiMode": "wait_until_in_range"
     },
     {
-      "id": "ch1_boss_croagunk",
-      "x": 15,
+      "id": "ch1_scout_0",
+      "x": 14,
       "y": 5,
+      "speciesId": "rookidee",
+      "level": 2,
+      "heldItemId": null,
+      "aiMode": "aggressive"
+    },
+    {
+      "id": "ch1_den_0",
+      "x": 19,
+      "y": 4,
+      "speciesId": "rookidee",
+      "level": 2,
+      "heldItemId": null,
+      "squadId": "ch1_boss_den",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch1_den_1",
+      "x": 19,
+      "y": 9,
+      "speciesId": "impidimp",
+      "level": 2,
+      "heldItemId": null,
+      "squadId": "ch1_boss_den",
+      "aiMode": "wait_until_in_range"
+    },
+    {
+      "id": "ch1_boss_croagunk",
+      "x": 20,
+      "y": 6,
       "speciesId": "croagunk",
-      "nickname": "Boss Croagunk",
       "level": 3,
       "heldItemId": null,
       "isBoss": true,

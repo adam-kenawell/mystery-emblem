@@ -1,5 +1,5 @@
 /**
- * Dancer Turn-Refresh Controller (`Oricorio` — `battleDanceController.ts`)
+ * Dancer Turn-Refresh Controller (`Oricorio` - `battleDanceController.ts`)
  *
  * Executes adjacent ally turn-refresh (`target.waited = false` + `'AGAIN!'`),
  * awards support EXP, and strictly blocks Dancer-on-Dancer refresh loops.

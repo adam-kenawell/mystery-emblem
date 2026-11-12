@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Overworld `Story & Credits` Replay Subbox (`overworldStoryReplayBox.ts`)
+ * Mystery Emblem - Overworld `Story & Credits` Replay Subbox (`overworldStoryReplayBox.ts`)
  */
 
 import type { AudioManager } from '../../audio/AudioManager';

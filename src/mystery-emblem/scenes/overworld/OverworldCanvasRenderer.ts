@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Crisp Pixel-Art Overworld Canvas Renderer (`OverworldCanvasRenderer.ts`)
+ * Mystery Emblem - Crisp Pixel-Art Overworld Canvas Renderer (`OverworldCanvasRenderer.ts`)
  */
 
 import type {

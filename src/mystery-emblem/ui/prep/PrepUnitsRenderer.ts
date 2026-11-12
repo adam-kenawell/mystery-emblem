@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Chapter Prep `Manage Units` Renderer (`PrepUnitsRenderer.ts`)
+ * Mystery Emblem - Chapter Prep `Manage Units` Renderer (`PrepUnitsRenderer.ts`)
  */
 
 import { resolveUnitVisualAssetId } from '../../assets/pmdAssetLoader';
@@ -127,8 +127,7 @@ export function renderPrepManageUnits(ctx: PrepUnitsRenderContext): string | nul
 
   const metaEl = unitsBackdropEl.querySelector('[data-testid="prep-detail-meta"]');
   if (metaEl) {
-    const speciesPrefix = selected.nickname.trim().toLowerCase() !== sp.name.trim().toLowerCase() ? `${sp.name} · ` : '';
-    metaEl.textContent = `${speciesPrefix}Lv. ${selected.level} (EXP ${selected.exp}/100)`;
+    metaEl.textContent = `Lv. ${selected.level} (EXP ${selected.exp}/100)`;
   }
 
   const badgesEl = unitsBackdropEl.querySelector<HTMLElement>('[data-testid="prep-unit-types"]');
@@ -145,7 +144,7 @@ export function renderPrepManageUnits(ctx: PrepUnitsRenderContext): string | nul
   const skill = getPersonalSkillById(sp.personalSkillId);
   const abilityEl = unitsBackdropEl.querySelector<HTMLElement>('[data-testid="prep-unit-ability"]');
   if (abilityEl) {
-    abilityEl.innerHTML = `<span class="pmd-prep-ability-title"><strong>${escapeUiHtml(skill?.name ?? sp.personalSkillId)}</strong> — ${escapeUiHtml(skill?.description ?? '—')}</span>`;
+    abilityEl.innerHTML = `<span class="pmd-prep-ability-title"><strong>${escapeUiHtml(skill?.name ?? sp.personalSkillId)}</strong> - ${escapeUiHtml(skill?.description ?? '-')}</span>`;
   }
 
   const eqItemId = getUnitEquippedItemId(selected);

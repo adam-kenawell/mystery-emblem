@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Dev Tools "Cutscenes" Tab (`DevToolsCutscenesController.ts`)
+ * Mystery Emblem - Dev Tools "Cutscenes" Tab (`DevToolsCutscenesController.ts`)
  *
  * Lists every story cutscene and battle dialogue in play order, chapter by chapter, and opens
  * the (lazy-loaded) Cutscene Editor. "Play" runs a cutscene with your real save.

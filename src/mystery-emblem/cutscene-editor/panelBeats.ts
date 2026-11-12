@@ -241,7 +241,7 @@ function dialogueSection(ctx: EditorContext, beat: Beat, beatIndex: number): HTM
   const counter = h('span', { class: 'cse-hint', 'data-testid': 'cse-length-counter' });
   const syncCounter = (text: string) => {
     const len = measureDialogueLength(text);
-    counter.textContent = `${len}/${DIALOGUE_SOFT_LIMIT} characters (names counted at full length)${len > DIALOGUE_SOFT_LIMIT ? ' — too long for a phone, split it into two boxes' : ''}`;
+    counter.textContent = `${len}/${DIALOGUE_SOFT_LIMIT} characters (names counted at full length)${len > DIALOGUE_SOFT_LIMIT ? ' - too long for a phone, split it into two boxes' : ''}`;
     counter.classList.toggle('is-warning', len > DIALOGUE_SOFT_LIMIT);
   };
   const textarea = textInput(ui, say.text, (v) => {
@@ -560,7 +560,7 @@ function actionEditor(ctx: EditorContext, action: StageAction, beatIndex: number
     case 'prop': {
       const propIds = new Set((story.doc.props ?? []).map((p) => p.id));
       for (const b of story.doc.beats) for (const a2 of b.actions ?? []) if (a2.type === 'location') for (const p of a2.props ?? []) propIds.add(p.id);
-      box.append(field('Prop', selectInput(ui, [{ value: '', label: '— pick a prop —' }, ...[...propIds].map((id) => ({ value: id, label: id }))], action.prop, (v) => set((a) => { (a as { prop: string }).prop = v; }))));
+      box.append(field('Prop', selectInput(ui, [{ value: '', label: '- pick a prop -' }, ...[...propIds].map((id) => ({ value: id, label: id }))], action.prop, (v) => set((a) => { (a as { prop: string }).prop = v; }))));
       box.append(field('Visibility', selectInput(ui, [
         { value: 'same', label: 'Leave as is' },
         { value: 'show', label: 'Show' },

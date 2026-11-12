@@ -131,7 +131,7 @@ export async function saveEditorMapToProject(params: {
     state.map = getEffectiveChapterMap(raw.id);
     state.dirty = false;
     params.syncUiAndInfo();
-    showEditorToast(dom, state, `SAVED TO PROJECT — ${raw.title} (commit & push to go live)`);
+    showEditorToast(dom, state, `SAVED TO PROJECT - ${raw.title} (commit & push to go live)`);
   } catch (err) {
     showEditorToast(dom, state, err instanceof Error ? err.message : 'Save to project failed');
   }
@@ -210,13 +210,13 @@ export function saveEditorMapToGame(params: {
     dom,
     state,
     isSignedIn
-      ? `SAVED — ${state.map.name} (Syncing to Cloud...)`
-      : `SAVED LOCALLY — ${state.map.name}`
+      ? `SAVED - ${state.map.name} (Syncing to Cloud...)`
+      : `SAVED LOCALLY - ${state.map.name}`
   );
   void saveManager.syncCustomMapsWithActiveSave().then((res) => {
     if (!state.openState) return;
     if (res === 'pushed_newer_local') {
-      showEditorToast(dom, state, `SAVED & SYNCED TO CLOUD — ${state.map.name}`);
+      showEditorToast(dom, state, `SAVED & SYNCED TO CLOUD - ${state.map.name}`);
     } else if (res === 'cloud_error') {
       const err = saveManager.getSyncStatus().errorMessage ?? 'Sync error';
       showEditorToast(dom, state, `SAVED LOCALLY (Cloud Error: ${err})`);

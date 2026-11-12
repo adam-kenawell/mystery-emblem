@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Dev "Save to Project" Client (`projectFileClient.ts`)
+ * Mystery Emblem - Dev "Save to Project" Client (`projectFileClient.ts`)
  *
  * Talks to the dev-only endpoints in `scripts/devProjectWriterPlugin.mjs`. Available only while
  * running `npm run dev` on this computer; on the live site every call reports "unavailable".

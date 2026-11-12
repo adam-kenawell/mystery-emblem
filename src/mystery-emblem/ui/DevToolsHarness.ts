@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Lean Admin Dev Tools Overlay Coordinator (`DevToolsHarness`)
+ * Mystery Emblem - Lean Admin Dev Tools Overlay Coordinator (`DevToolsHarness`)
  */
 
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
@@ -26,7 +26,6 @@ export interface DevToolsHarnessOptions {
   onLiveStateMutated: (opts?: { snapOverworld?: boolean }) => void;
   onLaunchMapEditor: (levelId: string) => void;
   onPlayMapBattle: (levelId: string) => void;
-  onRequestRenameUnit: (instanceId: string) => void;
   getCutsceneEditorHost: () => CutsceneEditorHostDeps;
   onHideForEditor: () => void;
   onShowAfterEditor: () => void;
@@ -66,7 +65,6 @@ export class DevToolsHarness {
       onCheatFullHealSquad: options.onCheatFullHealSquad,
       onCheatInstantWin: options.onCheatInstantWin,
       onLiveStateMutated: options.onLiveStateMutated,
-      onRequestRenameUnit: options.onRequestRenameUnit,
       onClose: options.onClose,
       signal,
     });

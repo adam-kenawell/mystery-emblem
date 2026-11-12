@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Shared Acquired-Item Action Inspector (`ItemActionInspector.ts`)
+ * Mystery Emblem - Shared Acquired-Item Action Inspector (`ItemActionInspector.ts`)
  */
 
 import { resolveUnitVisualAssetId } from '../../assets/pmdAssetLoader';

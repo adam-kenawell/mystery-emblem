@@ -8,6 +8,7 @@ import { resolveUnitAllegiance } from '../../data/allegiance';
 import { STATUS_BADGE_COLORS, computeUnitPopupStats, type BattleUnitState } from '../../engine/combatEngine';
 import {
   TERRAIN_METADATA,
+  coordKey,
   getMapTerrainAt,
   getTerrainBonuses,
   getTerrainMoveCost,
@@ -22,6 +23,7 @@ import type { BattleControllerContext } from './battleTypesAndState';
 import {
   escapeHudHtml,
   getLivingUnits,
+  getSeizeObjectiveCoords,
   getSelectedUnit,
   getUnitVisualKey,
 } from './battleUnitQueries';
@@ -49,20 +51,24 @@ export function updateBattleInfoStrip(ctx: BattleControllerContext): void {
     if (terrain === 'water') movChip = 'Water/Fly';
     else if (terrain === 'lava') movChip = 'Fire/Fly';
     else if (terrain === 'void' || terrain === 'barrier') movChip = 'Lev Only';
-    else movChip = 'Mov —';
+    else movChip = 'Mov -';
   } else {
-    movChip = 'Mov —';
+    movChip = 'Mov -';
   }
 
   const defChip = `Def +${bonuses.defBonus}`;
   const avoChip = `Avo +${bonuses.avoidBonus}%`;
+  const isSeizeExit = getSeizeObjectiveCoords(state).has(coordKey(cursor.x, cursor.y));
+  const tileName = isSeizeExit ? 'Cave Exit (Objective)' : meta.label;
   const specialChip =
     terrain === 'wonder_tile' ? '+20% HP' : terrain === 'stairs' ? 'Stairs' : null;
 
   dom.infoStripEl.dataset.terrain = terrain;
+  if (isSeizeExit) dom.infoStripEl.dataset.seizeExit = 'true';
+  else delete dom.infoStripEl.dataset.seizeExit;
   dom.infoStripEl.innerHTML = `
     <div class="pmd-tile-box-head">
-      <strong class="pmd-tile-box-name" data-testid="dungeon-tile-name">${escapeHudHtml(meta.label)}</strong>
+      <strong class="pmd-tile-box-name" data-testid="dungeon-tile-name">${escapeHudHtml(tileName)}</strong>
       ${specialChip ? `<span class="pmd-tile-chip is-special">${escapeHudHtml(specialChip)}</span>` : ''}
     </div>
     <div class="pmd-tile-box-chips">
@@ -161,8 +167,7 @@ export function updateUnitHoverPopup(ctx: BattleControllerContext): void {
   }
   const nameEl = dom.unitPopupEl.querySelector<HTMLElement>('[data-testid="unit-popup-name"]');
   if (nameEl) {
-    nameEl.textContent =
-      unit.faction === 'player' ? unit.nickname || unit.speciesName : unit.speciesName;
+    nameEl.textContent = unit.speciesName;
   }
   const allegianceEl = dom.unitPopupEl.querySelector<HTMLElement>(
     '[data-testid="unit-popup-allegiance"]'

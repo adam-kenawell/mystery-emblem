@@ -150,7 +150,7 @@ export function renderBattleUnitsRosterPanel(
       <div class="pmd-dungeon-units-subbox">
         <div class="pmd-dungeon-units-kv" data-testid="dungeon-units-detail-skill">
           <strong>${escapeUiHtml(skill?.name ?? 'Ability')}</strong>
-          <span>${escapeUiHtml(skill?.description ?? '—')}</span>
+          <span>${escapeUiHtml(skill?.description ?? '-')}</span>
         </div>
         <div class="pmd-dungeon-units-kv" data-testid="dungeon-units-detail-item"></div>
       </div>
@@ -231,7 +231,7 @@ export function renderBattleUnitsRosterPanel(
         row.className = 'pmd-inline-item-row';
         row.appendChild(createMiniItemIcon(def.id, { sizePx: 18, cropped: true }));
         const txt = document.createElement('span');
-        txt.innerHTML = `<strong>${escapeUiHtml(def.name)}</strong> — ${escapeUiHtml(def.description)}`;
+        txt.innerHTML = `<strong>${escapeUiHtml(def.name)}</strong> - ${escapeUiHtml(def.description)}`;
         row.appendChild(txt);
         itemSlotEl.appendChild(row);
       }
@@ -241,7 +241,7 @@ export function renderBattleUnitsRosterPanel(
     movesEl.innerHTML = unit.activeMoves
       .map((slot) => {
         const isEq = isMoveEquipped(unit, slot.id) && isOffensiveMove(slot.move);
-        const mtLbl = isOffensiveMove(slot.move) ? String(slot.move.mt) : '—';
+        const mtLbl = isOffensiveMove(slot.move) ? String(slot.move.mt) : '-';
         return `
           <div class="pmd-dungeon-units-move${isEq ? ' is-equipped' : ''}" data-testid="dungeon-units-move-${escapeUiHtml(slot.id)}">
             <div class="pmd-dungeon-units-move-top">

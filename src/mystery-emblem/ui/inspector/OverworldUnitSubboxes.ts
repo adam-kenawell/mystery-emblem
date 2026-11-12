@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Overworld `Units` Tab Vitamin & Move-Loadout Subboxes (`OverworldUnitSubboxes.ts`)
+ * Mystery Emblem - Overworld `Units` Tab Vitamin & Move-Loadout Subboxes (`OverworldUnitSubboxes.ts`)
  */
 
 import type { AudioManager } from '../../audio/AudioManager';
@@ -135,7 +135,7 @@ export function buildOverworldMoveLoadoutSubbox(params: {
     bindPointerTap(row.querySelector<HTMLElement>(`[data-clear-eq="${mId}"]`), () => {
       audioManager.playSfx('cancel');
       saveManager.clearEquippedMove(unit.instanceId, mv.category as EquipCategory);
-      onFeedbackAndRefresh(`${mv.category} [E] cleared — no counter at Range ${mv.range[0]}.`);
+      onFeedbackAndRefresh(`${mv.category} [E] cleared - no counter at Range ${mv.range[0]}.`);
     });
     bindPointerTap(row.querySelector<HTMLElement>(`[data-add-active="${mId}"]`), () => {
       audioManager.playSfx('select');

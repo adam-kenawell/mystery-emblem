@@ -1,5 +1,5 @@
 /**
- * Dancer Turn-Refresh Engine (`Oricorio` — `SupportMoveSubkind: 'dance'`)
+ * Dancer Turn-Refresh Engine (`Oricorio` - `SupportMoveSubkind: 'dance'`)
  *
  * Enforces Lore Bible Dancer rules:
  * - Refreshes an adjacent (`range [1, 1]`) living `'player'` ally who has already waited (`waited === true`)

@@ -74,7 +74,8 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
   bindPointerTap(
     dom.cmdHealBtnEl,
     () => {
-      if (getExpectedTutorialAction(tutorialOverlay)) {
+      const expected = getExpectedTutorialAction(tutorialOverlay);
+      if (expected && expected !== 'battle_open_heal_forecast') {
         tutorialOverlay?.nudgeActiveStep();
         return;
       }
@@ -96,7 +97,8 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
   bindPointerTap(
     dom.cmdItemBtnEl,
     () => {
-      if (getExpectedTutorialAction(tutorialOverlay)) {
+      const expected = getExpectedTutorialAction(tutorialOverlay);
+      if (expected && expected !== 'battle_confirm_item') {
         tutorialOverlay?.nudgeActiveStep();
         return;
       }

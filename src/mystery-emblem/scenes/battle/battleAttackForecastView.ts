@@ -266,9 +266,9 @@ export function refreshCombatForecastModalDom(ctx: BattleControllerContext): voi
     if (defCritEl) defCritEl.textContent = `${ds.critRate}%`;
   } else {
     if (defWpnEl) defWpnEl.textContent = 'No Counter';
-    if (defDmgEl) defDmgEl.textContent = '—';
-    if (defHitEl) defHitEl.textContent = '—';
-    if (defCritEl) defCritEl.textContent = '—';
+    if (defDmgEl) defDmgEl.textContent = '-';
+    if (defHitEl) defHitEl.textContent = '-';
+    if (defCritEl) defCritEl.textContent = '-';
   }
 
   if (defCurBar) {

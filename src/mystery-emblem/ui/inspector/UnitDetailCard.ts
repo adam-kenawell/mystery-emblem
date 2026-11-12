@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Shared Unit Detail & Slot Inspector Helpers (`UnitDetailCard.ts`)
+ * Mystery Emblem - Shared Unit Detail & Slot Inspector Helpers (`UnitDetailCard.ts`)
  *
  * Shared UI helpers for rendering unit stats, elemental typing, 1-item-slot banners,
  * and branched Evolution Stone / Gem promotion rows across Overworld & Chapter Prep.

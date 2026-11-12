@@ -131,55 +131,77 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
     ],
   },
   {
-    id: 'levelup_and_evolution',
-    title: 'Level-Ups & Evolution Stone Promotions',
+    id: 'levelup_and_growth',
+    title: 'Level-Ups & Growth',
     category: 'world_progression',
-    summary: 'Learning moves through level-ups and promoting with Stones at Lv. 10+.',
+    summary: 'Raising stats and learning moves through level-ups.',
     beats: [
       {
-        id: 'evo_beat1_exp',
+        id: 'levelup_beat1_exp',
         emotion: 'Happy',
         dialogue:
           'Well earned! Every battle and heal builds experience, raising stats and unlocking new moves as you level up.',
         chips: [{ kind: 'badge', label: '100 EXP = +1 Lv', tone: 'gold' }],
       },
-      {
-        id: 'evo_beat2_manual_stone',
-        emotion: 'Determined',
-        dialogue:
-          'Once a teammate reaches level 10, an Evolution Stone unlocks their next form. Use one from Units, Battle Prep, or Evolve in combat.',
-        chips: [
-          { kind: 'item', itemId: 'evolution_stone', label: 'Lv. 10+ Stone' },
-          { kind: 'item', itemId: 'evolution_gem', label: 'Lv. 20+ Gem' },
-        ],
-      },
     ],
   },
   {
     id: 'overworld_and_skirmishes',
-    title: 'The World Map & Expedition Menu',
+    title: 'The World Map & Foothill Trail',
     category: 'world_progression',
-    summary: "Quaquaval's road guide: traveling nodes, managing your squad, and Skirmishes.",
+    summary: "Quaquaval's road guide: marching between connected landmarks on the world map.",
     beats: [
       {
-        id: 'ow_step1_open_menu',
+        id: 'ow_step1_march_landmarks',
         emotion: 'Determined',
         dialogue:
-          'The road to the capital stretches ahead! Tap any connected landmark to march there, or tap Menu in the corner first.',
+          'The road to the capital stretches ahead! Tap any connected landmark to march there. The Foothill Trail is our next stop.',
+        chips: [{ kind: 'badge', label: 'Tap Nodes to Travel', tone: 'cyan' }],
+      },
+    ],
+  },
+  {
+    id: 'overworld_expedition_menu',
+    title: 'The Expedition Menu',
+    category: 'world_progression',
+    summary: "Quaquaval's road guide: managing your squad, items, and Field Notes between battles.",
+    beats: [
+      {
+        id: 'ow_menu_step1_open_menu',
+        emotion: 'Determined',
+        dialogue:
+          'Before we march on, tap Menu in the corner. Our expedition gear lives there.',
         actionHint: 'Tap Menu',
         awaitAction: 'overworld_open_menu',
         spotlight: { kind: 'dom', selector: '#pmd-corner-menu-btn', preferredDock: 'bottom' },
-        chips: [{ kind: 'badge', label: 'Tap Nodes to Travel', tone: 'cyan' }],
       },
       {
-        id: 'ow_step2_tour_tabs',
+        id: 'ow_menu_step2_tour_tabs',
         emotion: 'Normal',
         dialogue:
           'Use Units and Items to tune your four-move loadouts, swap gear, and read Quaquaval’s Field Notes under System.',
-        chips: [
-          { kind: 'badge', label: 'Units · Items · System', tone: 'gold' },
-          { kind: 'badge', label: 'Bonus Feral Skirmishes', tone: 'danger' },
-        ],
+        chips: [{ kind: 'badge', label: 'Units · Items · System', tone: 'gold' }],
+      },
+    ],
+  },
+  {
+    id: 'rift_tremors_wild_pokemon',
+    title: 'Rift Tremors on the Roads',
+    category: 'world_progression',
+    summary: "Quaquaval's warning: Rift tremors stir restless wild Pokemon along roads we have already cleared.",
+    beats: [
+      {
+        id: 'rift_tremors_step1_warning',
+        emotion: 'Worried',
+        dialogue:
+          'Feel that rumble underfoot? The Rift is stirring again. Its tremors are agitating the wild Pokemon along the roads we already cleared, and a restless pack has gathered up ahead.',
+        chips: [{ kind: 'badge', label: 'Restless Wild Pack', tone: 'danger' }],
+      },
+      {
+        id: 'rift_tremors_step2_advice',
+        emotion: 'Determined',
+        dialogue:
+          'Frightened Pokemon charge without hesitation, so brace your front line from the first turn. Calm them and the road is safe again, with a little gold for our trouble. Or march past if we are in a hurry.',
       },
     ],
   },

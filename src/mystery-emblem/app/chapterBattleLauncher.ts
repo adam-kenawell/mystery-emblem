@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Campaign Chapter Battle Launcher (`chapterBattleLauncher.ts`)
+ * Mystery Emblem - Campaign Chapter Battle Launcher (`chapterBattleLauncher.ts`)
  */
 
 import {

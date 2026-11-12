@@ -51,7 +51,6 @@ export function createFallbackBattlePrepManager(minSquadSize = 5): SaveStateMana
     idx += 1;
   }
 
-  mgr.addConvoyItem('evolution_stone', 1);
   mgr.addConvoyItem('super_potion', 1);
   return mgr;
 }

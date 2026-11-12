@@ -37,7 +37,10 @@ export interface CreditsEndCardCopy {
   teaserLine: string;
   statsLine: string;
   finishButtonLabel: string;
+  feedbackFormUrl?: string;
 }
+
+export const DEMO_FEEDBACK_FORM_URL = 'https://forms.gle/PYsmgZfim4Lkob1g8';
 
 export const CREDITS_HERO_META = {
   eyebrow: 'POKÉMON MYSTERY DUNGEON × FIRE EMBLEM',
@@ -156,6 +159,7 @@ export function resolveCreditsEndCardCopy(save: SaveData | null): CreditsEndCard
       ? 'The Space-Time Rift is sealed at last. New Game Plus awaits!'
       : 'Act 2: Uncovering the Truth in the Ice Kingdom · Coming Soon!',
     statsLine: `Chapters Cleared: ${clearedCount} / ${totalChapterTarget}  ·  Allies Recruited: ${Math.max(3, rosterLen)}`,
-    finishButtonLabel: 'Return to World Map ▶',
+    finishButtonLabel: isFullCampaign ? 'Return to World Map ▶' : 'Share Feedback & Shape Act 2',
+    feedbackFormUrl: isFullCampaign ? undefined : DEMO_FEEDBACK_FORM_URL,
   };
 }

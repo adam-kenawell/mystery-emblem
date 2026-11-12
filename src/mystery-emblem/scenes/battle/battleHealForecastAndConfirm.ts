@@ -33,9 +33,8 @@ import {
   openFloatingCommandMenu,
 } from './battleSelectionAndMenu';
 import { confirmForecastStatusHex } from './battleStatusHexController';
-import { triggerBattleTutorial } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
-import { areAllLivingPlayersWaited, getLivingPlayers, getSelectedUnit } from './battleUnitQueries';
+import { areAllLivingPlayersWaited, getSelectedUnit } from './battleUnitQueries';
 import { playHealActionAsync } from './battleWalkAndHealAnimator';
 
 export function openCombatForecastModal(
@@ -69,7 +68,6 @@ export function openCombatForecastModal(
   ctx.onLayerStateChanged();
   tutorialOverlay?.notifyActionCompleted('battle_open_attack_forecast');
   ctx.renderNow();
-  void triggerBattleTutorial(ctx, 'ch1_first_combat_forecast');
 }
 
 export function openHealForecastModal(
@@ -103,7 +101,6 @@ export function openHealForecastModal(
   ctx.onLayerStateChanged();
   ctx.renderNow();
   tutorialOverlay?.notifyActionCompleted('battle_open_heal_forecast');
-  void triggerBattleTutorial(ctx, 'ch1_healing_and_items');
 }
 
 export function cancelCombatForecast(ctx: BattleControllerContext): void {
@@ -192,11 +189,6 @@ async function confirmForecastAttack(ctx: BattleControllerContext): Promise<void
   updateBattleInfoStrip(ctx);
   ctx.onLayerStateChanged();
   ctx.renderNow();
-
-  if (getLivingPlayers(state).some((u) => u.currentHp < u.maxHp)) {
-    // e.g. the Prologue sparring counter: teach healing right after the first hit lands.
-    void triggerBattleTutorial(ctx, 'ch1_healing_and_items');
-  }
 
   if (areAllLivingPlayersWaited(state)) {
     await waitBattleMs(state, 240);

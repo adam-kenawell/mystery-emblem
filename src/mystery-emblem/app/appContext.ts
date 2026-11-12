@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Shared App Shell Runtime Context (`appContext.ts`)
+ * Mystery Emblem - Shared App Shell Runtime Context (`appContext.ts`)
  */
 
 import type { AudioManager } from '../audio/AudioManager';

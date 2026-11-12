@@ -13,11 +13,9 @@ import { syncHudControls, syncPrepChromeVisibility } from './battleDangerAndView
 import { getTalkableTargetsFromCurrentTile } from './battleEventRunner';
 import { updateBattleInfoStrip } from './battleHudCards';
 import {
-  getAttackableEnemiesForSelectedState,
   getHealOrConsumableTutorialUnits,
   getTutorialHealerUnit,
   getTutorialPartnerUnit,
-  triggerBattleTutorial,
 } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
@@ -43,32 +41,19 @@ export function selectPlayerUnit(ctx: BattleControllerContext, unit: BattleUnitS
   updateBattleInfoStrip(ctx);
   ctx.onLayerStateChanged();
 
-  let satisfiedTutorialStep = false;
   if (unit.id === getLordUnit(state)?.id) {
-    satisfiedTutorialStep =
-      Boolean(tutorialOverlay?.notifyActionCompleted('battle_select_lord')) ||
-      satisfiedTutorialStep;
+    tutorialOverlay?.notifyActionCompleted('battle_select_lord');
   }
   if (unit.id === getTutorialPartnerUnit(state)?.id) {
-    satisfiedTutorialStep =
-      Boolean(tutorialOverlay?.notifyActionCompleted('battle_select_partner')) ||
-      satisfiedTutorialStep;
+    tutorialOverlay?.notifyActionCompleted('battle_select_partner');
   }
   if (getHealOrConsumableTutorialUnits(state).some((u) => u.id === unit.id)) {
-    satisfiedTutorialStep =
-      Boolean(tutorialOverlay?.notifyActionCompleted('battle_inspect_heal_or_item')) ||
-      satisfiedTutorialStep;
+    tutorialOverlay?.notifyActionCompleted('battle_inspect_heal_or_item');
   }
   if (unit.id === getTutorialHealerUnit(state)?.id) {
-    satisfiedTutorialStep =
-      Boolean(tutorialOverlay?.notifyActionCompleted('battle_select_healer')) ||
-      satisfiedTutorialStep;
+    tutorialOverlay?.notifyActionCompleted('battle_select_healer');
   }
   ctx.renderNow();
-
-  if (!satisfiedTutorialStep && getAttackableEnemiesForSelectedState(state).length > 0) {
-    void triggerBattleTutorial(ctx, 'ch1_first_combat_forecast');
-  }
 }
 
 export function startInteractiveWalk(
@@ -196,14 +181,8 @@ export function openFloatingCommandMenu(
   syncHudControls(state, dom);
   updateBattleInfoStrip(ctx);
   ctx.onLayerStateChanged();
-  const completedMoveStep = Boolean(
-    tutorialOverlay?.notifyActionCompleted('battle_move_to_blue_tile')
-  );
+  tutorialOverlay?.notifyActionCompleted('battle_move_to_blue_tile');
   ctx.renderNow();
-
-  if (!completedMoveStep && targets.length > 0) {
-    void triggerBattleTutorial(ctx, 'ch1_first_combat_forecast');
-  }
 }
 
 export function cancelUncommittedMove(ctx: BattleControllerContext): void {

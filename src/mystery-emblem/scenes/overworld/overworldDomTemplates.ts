@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Overworld DOM Shell, Map Loader & HUD Sync (`overworldDomTemplates.ts`)
+ * Mystery Emblem - Overworld DOM Shell, Map Loader & HUD Sync (`overworldDomTemplates.ts`)
  */
 
 import { loadImage } from '../../../utils/sprite-utils';
@@ -108,7 +108,7 @@ export function createOverworldDomElements(
   dockEl.innerHTML = `
     <div class="pmd-overworld-dock-info">
       <div class="pmd-overworld-dock-title-row">
-        <h3 class="pmd-overworld-dock-title" data-testid="overworld-current-node-title">—</h3>
+        <h3 class="pmd-overworld-dock-title" data-testid="overworld-current-node-title">-</h3>
         <div class="pmd-inline-btns" data-dock-badges></div>
       </div>
     </div>
@@ -207,6 +207,19 @@ export function createOverworldDomElements(
   };
 }
 
+const OVERWORLD_NODE_CODE_PREFIXES: ReadonlyArray<[RegExp, string]> = [
+  [/^Ch\.\s*/i, 'Chapter '],
+  [/^Par\.\s*/i, 'Paralogue '],
+];
+
+/** `"Ch. 3"` -> `"Chapter 3"`, `"Par. 1"` -> `"Paralogue 1"`, `"Prologue"` unchanged. */
+export function expandOverworldNodeCode(code: string): string {
+  for (const [pattern, replacement] of OVERWORLD_NODE_CODE_PREFIXES) {
+    if (pattern.test(code)) return code.replace(pattern, replacement);
+  }
+  return code;
+}
+
 export function syncOverworldHudAndDock(
   dom: OverworldDomElements,
   save: SaveData,
@@ -220,7 +233,7 @@ export function syncOverworldHudAndDock(
   const nodeState = nodeDef ? reconciled.nodes[nodeDef.id] : undefined;
   if (!nodeDef) return;
 
-  dom.dockTitleEl.textContent = `(${nodeDef.code}) ${nodeDef.name}`;
+  dom.dockTitleEl.textContent = `${expandOverworldNodeCode(nodeDef.code)}: ${nodeDef.name}`;
   dom.dockBadgesEl.innerHTML = '';
 
   if (nodeState?.cleared) {

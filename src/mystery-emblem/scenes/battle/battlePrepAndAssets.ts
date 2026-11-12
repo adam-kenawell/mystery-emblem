@@ -146,6 +146,7 @@ export async function setupFreshBattleState(
   state.suppressedHoverEnemyId = null;
   state.triggeredEventIds.clear();
   state.spawnedReinforcementIds.clear();
+  state.activatedSquadIds.clear();
   state.blockedReinforcementIds.clear();
   state.collectedDrops = [];
   state.eventBonusItems = [];

@@ -199,7 +199,7 @@
   }
 }
 
-/* Short Mobile Landscape (`<= 500px` height, e.g., `844x390`) — zero clipping */
+/* Short Mobile Landscape (`<= 500px` height, e.g., `844x390`) - zero clipping */
 @media (max-height: 500px) {
   .pmd-prep-hub-dialog {
     max-width: 720px;

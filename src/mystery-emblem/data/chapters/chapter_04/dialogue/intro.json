@@ -2,7 +2,7 @@
   "id": "intro",
   "chapter": "chapter_04",
   "role": "intro",
-  "title": "Ambush from the Rift",
+  "title": "Stampede from the Rift",
   "music": "rising_fear",
   "cast": [
     { "id": "partner", "who": { "kind": "partner" } },
@@ -20,7 +20,7 @@
         "speaker": "partner",
         "emotion": "Surprised",
         "side": "left",
-        "text": "Look up! The sky right outside the Emerald Capital just split open like shattered glass!"
+        "text": "Look up! The sky outside the Emerald Capital just split open like shattered glass, and the whole hillside is shaking!"
       }
     },
     {
@@ -29,7 +29,7 @@
         "speaker": "tusk",
         "emotion": "Shouting",
         "side": "right",
-        "text": "GRAAAOOHHH!!"
+        "text": "GRAAAOOHHH!! *The ground quakes as the frightened herd surges forward*"
       }
     },
     {
@@ -38,7 +38,7 @@
         "speaker": "mentor",
         "emotion": "Surprised",
         "side": "left",
-        "text": "By the crown... Nobody in the Verdant Kingdom has ever laid eyes on Pokemon like these! They are completely wild and feral!"
+        "text": "By the crown... Those are wild Phanpy, Rhyhorn, Aron, and Rolycoly from the foothills, stampeding in a blind panic. Something came out of that Rift and drove them here!"
       }
     },
     {
@@ -47,7 +47,7 @@
         "speaker": "lord",
         "emotion": "Determined",
         "side": "left",
-        "text": "If they break past us, they will rampage straight through the capital gates! Stand firm and bring down that giant Great Tusk!"
+        "text": "That ancient behemoth is herding them like a storm! If the stampede breaks past us, it will crash straight through the capital gates. Stand firm and bring down the Great Tusk!"
       }
     }
   ]

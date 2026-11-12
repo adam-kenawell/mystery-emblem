@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Quiz Welcome Popup & 8-Question Typewriter Options View
+ * Mystery Emblem - Quiz Welcome Popup & 8-Question Typewriter Options View
  */
 
 import type { QuizOptionKey } from '../../data/quizData';

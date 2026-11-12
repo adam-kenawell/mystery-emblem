@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Overworld Sprite Preloading, 8-Dir Travel & Node Action Helpers (`OverworldTravelAndSprites.ts`)
+ * Mystery Emblem - Overworld Sprite Preloading, 8-Dir Travel & Node Action Helpers (`OverworldTravelAndSprites.ts`)
  */
 
 import {
@@ -40,8 +40,8 @@ export function formatOverworldChapterAnnouncement(
   const curNode =
     graph.nodes.find((n) => n.levelId === save.campaign.currentChapterId) ??
     getOverworldNodeById(rec.currentNodeId, graph);
-  if (save.campaign.demoCompleted) return `${chLabel} — All Chapters Complete`;
-  return curNode ? `${chLabel} — ${curNode.name}` : chLabel;
+  if (save.campaign.demoCompleted) return `${chLabel} - All Chapters Complete`;
+  return curNode ? `${chLabel} - ${curNode.name}` : chLabel;
 }
 
 export class OverworldTravelAndSpritesController {

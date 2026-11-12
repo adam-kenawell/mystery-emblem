@@ -89,9 +89,14 @@ export function decodeTileRows(
   );
 }
 
+function speciesName(speciesId: string): string {
+  return getSpeciesById(speciesId)?.name ?? speciesId;
+}
+
 function cloneSpawn(s: DungeonUnitSpawn): DungeonUnitSpawn {
   return {
     ...s,
+    nickname: speciesName(s.speciesId),
     ...(s.stats ? { stats: { ...s.stats } } : {}),
     ...(s.moveIds ? { moveIds: [...s.moveIds] } : {}),
   };
@@ -102,6 +107,7 @@ function cloneReinforcement(w: ReinforcementWaveDefinition): ReinforcementWaveDe
     ...w,
     enemy: {
       ...w.enemy,
+      nickname: speciesName(w.enemy.speciesId),
       ...(w.enemy.stats ? { stats: { ...w.enemy.stats } } : {}),
       ...(w.enemy.moveIds ? { moveIds: [...w.enemy.moveIds] } : {}),
     },
@@ -147,7 +153,7 @@ export function hydrateChapterDefaultMap(raw: CompactChapterJson): DungeonMapDef
       speciesId: e.speciesId,
       ...(e.seedKey ? { seedKey: e.seedKey } : {}),
       level: e.level,
-      nickname: e.nickname,
+      nickname: getSpeciesById(e.speciesId)?.name ?? e.speciesId,
       ...(e.stats ? { stats: { ...e.stats } } : {}),
       ...(e.moveIds ? { moveIds: [...e.moveIds] } : {}),
       ...(e.equippedMoveId ? { equippedMoveId: e.equippedMoveId } : {}),
@@ -157,6 +163,7 @@ export function hydrateChapterDefaultMap(raw: CompactChapterJson): DungeonMapDef
       ...(e.mustSurvive ? { mustSurvive: true } : {}),
       droppableItemId: e.droppableItemId ?? null,
       ...(e.aiMode ? { aiMode: e.aiMode } : {}),
+      ...(e.squadId ? { squadId: e.squadId } : {}),
       ...(e.sparring ? { sparring: true } : {}),
       ...(e.friendlyBout ? { friendlyBout: true } : {}),
       ...(e.equippedMoveIds ? { equippedMoveIds: [...e.equippedMoveIds] } : {}),

@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Audio Settings Persistence, Crossfade & Browser Unlock Helpers (`audioFadeAndSettings.ts`)
+ * Mystery Emblem - Audio Settings Persistence, Crossfade & Browser Unlock Helpers (`audioFadeAndSettings.ts`)
  *
  * Strictly obeys Rule 2 (`pointerdown` / `click` unlock ONLY; zero keyboard listeners).
  */

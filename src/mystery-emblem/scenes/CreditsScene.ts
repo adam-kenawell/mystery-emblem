@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Ending Credits Scroll Coordinator (`CreditsScene.ts`)
+ * Mystery Emblem - Ending Credits Scroll Coordinator (`CreditsScene.ts`)
  */
 
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
@@ -11,7 +11,7 @@ import {
   CreditsPointerHoldController,
 } from './credits/creditsAudioAndHold';
 import { CreditsBackdropRenderer } from './credits/creditsBackdropRenderer';
-import { buildCreditsScrollDom } from './credits/creditsDomBuilder';
+import { buildCreditsScrollDom, openDemoFeedbackForm } from './credits/creditsDomBuilder';
 
 export type CreditsFinishReason = 'completed' | 'skipped' | 'cancelled';
 
@@ -179,6 +179,7 @@ export class CreditsScene {
         this.audioManager.playSfx('select');
         this.finish('completed');
       },
+      openFeedbackForm: (url) => openDemoFeedbackForm(url),
     });
 
     this.rootEl.hidden = false;

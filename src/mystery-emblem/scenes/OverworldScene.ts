@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Fire Emblem Awakening Overworld Map Coordinator (`OverworldScene.ts`)
+ * Mystery Emblem - Fire Emblem Awakening Overworld Map Coordinator (`OverworldScene.ts`)
  */
 
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
@@ -99,7 +99,6 @@ export class OverworldScene {
           this.opts.onRequestNewGame?.();
         },
         onExitToTitle: () => this.close(),
-        onRequestRenameUnit: this.opts.onRequestRenameUnit,
         onReplayCutscene: this.opts.onReplayCutscene,
         onReplayCredits: this.opts.onReplayCredits,
       },

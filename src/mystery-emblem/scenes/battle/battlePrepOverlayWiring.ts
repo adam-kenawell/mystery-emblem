@@ -63,7 +63,6 @@ export function createBattlePrepOverlay(
     getSelectedSwapSlotIndex: () => state.prepSwapSlotIndex,
     onToggleDeployUnit: (id) => togglePrepDeployUnit(getCtx(), id),
     onRosterOrLoadoutMutated: () => rebuildPrepBattleUnits(getCtx()),
-    onRequestRenameUnit: (id) => options.onRequestRenameUnit?.(id),
     onEnterViewMap: clearPrepViewMapSelection,
     onExitViewMap: clearPrepViewMapSelection,
     onToggleGlobalDanger: () => toggleGlobalDangerArea(getCtx()),

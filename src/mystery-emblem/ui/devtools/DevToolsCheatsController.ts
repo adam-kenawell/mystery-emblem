@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Admin Dev Tools Cheats Tab Controller (`DevToolsCheatsController.ts`)
+ * Mystery Emblem - Admin Dev Tools Cheats Tab Controller (`DevToolsCheatsController.ts`)
  */
 
 import type { AudioManager } from '../../audio/AudioManager';
@@ -24,7 +24,6 @@ export interface DevToolsCheatsDeps {
   onCheatFullHealSquad: () => void;
   onCheatInstantWin: () => void;
   onLiveStateMutated: (opts?: { snapOverworld?: boolean }) => void;
-  onRequestRenameUnit: (instanceId: string) => void;
   onClose: () => void;
   signal: AbortSignal;
 }
@@ -77,16 +76,6 @@ export class DevToolsCheatsController {
       () => {
         this.selectedUnitInstanceId = this.unitSelectEl?.value ?? null;
         this.renderStageButtons();
-      },
-      { signal }
-    );
-
-    bindPointerTap(
-      modalEl.querySelector('[data-testid="devtools-rename-unit"]'),
-      () => {
-        if (!this.selectedUnitInstanceId) return;
-        audioManager.playSfx('select');
-        this.deps.onRequestRenameUnit(this.selectedUnitInstanceId);
       },
       { signal }
     );

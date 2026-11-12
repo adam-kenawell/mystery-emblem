@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Cloud Firestore Flat Wire Codec (`firestoreCodec.ts`)
+ * Mystery Emblem - Cloud Firestore Flat Wire Codec (`firestoreCodec.ts`)
  *
  * Enforces Cloud Firestore's wire constraint: zero nested 2D arrays (`tiles[][]`),
  * zero `undefined` fields, and flat `customMapsEnvelopeJson` serialization.

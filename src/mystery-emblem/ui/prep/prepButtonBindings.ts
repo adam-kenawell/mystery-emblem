@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Chapter Prep Static Pointer Button Bindings (`prepButtonBindings.ts`)
+ * Mystery Emblem - Chapter Prep Static Pointer Button Bindings (`prepButtonBindings.ts`)
  */
 
 import type { AudioManager } from '../../audio/AudioManager';
@@ -15,7 +15,6 @@ export function bindPrepStaticButtons(params: {
   signal: AbortSignal;
   getTutorialOverlay?: () => TutorialOverlay | undefined;
   getSelectedUnitInstanceId: () => string | null;
-  onRequestRenameUnit?: (instanceId: string) => Promise<void> | void;
   onRosterOrLoadoutMutated: () => void;
   onRefreshAll: () => void;
   onSetSubMode: (mode: PrepSubMode, clearStatus?: 'units' | 'items') => void;
@@ -116,20 +115,6 @@ export function bindPrepStaticButtons(params: {
       audioManager.playSfx('cancel');
       params.onSetSubMode('hub');
       tutorial?.notifyActionCompleted('prep_close_manage_units');
-    },
-    { signal }
-  );
-
-  bindPointerTap(
-    dom.unitsBackdropEl.querySelector<HTMLElement>('[data-testid="prep-unit-rename-btn"]'),
-    () => {
-      const targetId = params.getSelectedUnitInstanceId();
-      if (!targetId || !params.onRequestRenameUnit) return;
-      audioManager.playSfx('select');
-      void Promise.resolve(params.onRequestRenameUnit(targetId)).then(() => {
-        params.onRosterOrLoadoutMutated();
-        params.onRefreshAll();
-      });
     },
     { signal }
   );

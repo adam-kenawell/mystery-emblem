@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Support Matrix & Atomic Post-Battle Save Commit Mutators (`battleCommitMutators.ts`)
+ * Mystery Emblem - Support Matrix & Atomic Post-Battle Save Commit Mutators (`battleCommitMutators.ts`)
  */
 
 import { MAX_UNIT_LEVEL, MIN_UNIT_LEVEL } from '../data/campaignConfig';

@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Kecleon Shop Types & Curated Inventory Builder
+ * Mystery Emblem - Kecleon Shop Types & Curated Inventory Builder
  */
 
 import type { ItemDefinition, KecleonShopType } from '../../types/schemas';

@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Tutorial Registry Barrel (`tutorialRegistry.ts`)
+ * Mystery Emblem - Tutorial Registry Barrel (`tutorialRegistry.ts`)
  *
  * Re-exports sharded tutorial topics, types, and declarative trigger rules.
  */

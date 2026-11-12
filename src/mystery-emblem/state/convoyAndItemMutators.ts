@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Convoy, Single-Item Equip, Vitamin, TM & Stone/Gem Mutators (`convoyAndItemMutators.ts`)
+ * Mystery Emblem - Convoy, Single-Item Equip, Vitamin, TM & Stone/Gem Mutators (`convoyAndItemMutators.ts`)
  */
 
 import { autoEquipNewMoveIfSlotEmpty } from '../data/equippedMoves';

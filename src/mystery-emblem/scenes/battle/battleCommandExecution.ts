@@ -21,7 +21,6 @@ import {
 import { updateBattleInfoStrip } from './battleHudCards';
 import { checkAndTriggerMatchEnd } from './battleOutcomeModals';
 import { runEnemyPhase } from './battlePhaseAndAiRunner';
-import { triggerBattleTutorial } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
   areAllLivingPlayersWaited,
@@ -130,11 +129,6 @@ export async function useEquippedBattleConsumable(ctx: BattleControllerContext):
     }
   }
 
-  if (item.category === 'promotion') {
-    await triggerBattleTutorial(ctx, 'levelup_and_evolution');
-  } else {
-    await triggerBattleTutorial(ctx, 'ch1_healing_and_items');
-  }
   if (!state.openState || runGen !== state.battleRunGen) return;
   if (item.category === 'consumable') {
     await runUnitHealedEvents(ctx, runGen);

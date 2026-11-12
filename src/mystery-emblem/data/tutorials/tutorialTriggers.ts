@@ -28,23 +28,10 @@ export const TUTORIAL_TRIGGER_RULES: ReadonlyArray<TutorialTriggerRule> = [
       ),
   },
   {
-    id: 'rule_prep_evolution_ready',
-    hook: 'battle_prep',
-    topicId: 'levelup_and_evolution',
-    excludeLevelIds: ['prologue', 'chapter_01'],
-    when: (ctx) => Boolean(ctx.anyUnitCanPromoteNow),
-  },
-  {
     id: 'rule_turn1_prologue_basics',
     hook: 'battle_turn1',
     topicId: 'ch1_turn1_controls_phases',
     levelIds: ['prologue'],
-  },
-  {
-    id: 'rule_turn1_ch1_water_and_outlaws',
-    hook: 'battle_turn1',
-    topicId: 'ch2_boss_and_traversal',
-    levelIds: ['chapter_01'],
   },
   {
     id: 'rule_turn1_ch2_convoy',
@@ -72,8 +59,16 @@ export const TUTORIAL_TRIGGER_RULES: ReadonlyArray<TutorialTriggerRule> = [
   },
 ];
 
+/** Levels where Quaquaval is away from the party, so his Field Notes coaching stays silent. */
+export const QUAQUAVAL_ABSENT_LEVEL_IDS: ReadonlySet<string> = new Set(['chapter_01']);
+
+export function isQuaquavalAbsentFromLevel(levelId: string): boolean {
+  return QUAQUAVAL_ABSENT_LEVEL_IDS.has(levelId);
+}
+
 function evaluateHookRules(ctx: TutorialTriggerContext): string[] {
   const matched: string[] = [];
+  if (isQuaquavalAbsentFromLevel(ctx.levelId)) return matched;
   for (const rule of TUTORIAL_TRIGGER_RULES) {
     if (rule.hook !== ctx.hook) continue;
     if (rule.levelIds && !rule.levelIds.includes(ctx.levelId)) continue;
@@ -145,7 +140,7 @@ export function evaluateTurn1TutorialTopics(opts: {
     map: opts.map,
     save: opts.save,
   });
-  if (opts.levelId !== 'prologue') {
+  if (opts.levelId !== 'prologue' && !isQuaquavalAbsentFromLevel(opts.levelId)) {
     for (const terrainTopicId of detectDynamicMapTerrainTutorialIds(opts.map)) {
       if (!result.includes(terrainTopicId)) {
         result.push(terrainTopicId);

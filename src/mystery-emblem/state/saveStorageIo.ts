@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — LocalStorage IO, JSON Backup Import/Export & Cloud Push Helpers (`saveStorageIo.ts`)
+ * Mystery Emblem - LocalStorage IO, JSON Backup Import/Export & Cloud Push Helpers (`saveStorageIo.ts`)
  */
 
 import {

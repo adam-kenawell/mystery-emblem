@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Application Bootstrap & Scene Lifecycle Coordinator (`bootstrapApp.ts`)
+ * Mystery Emblem - Application Bootstrap & Scene Lifecycle Coordinator (`bootstrapApp.ts`)
  */
 
 import { getAudioManager } from '../audio/AudioManager';

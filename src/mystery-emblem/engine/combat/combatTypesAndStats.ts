@@ -48,6 +48,8 @@ export interface BattleUnitState extends PathfindingUnitContext, EquippedMoveSlo
   isLord: boolean;
   isBoss?: boolean;
   sparring?: boolean;
+  /** Linked enemy squad tag (see `BattleRuntimeState.activatedSquadIds`) */
+  squadId?: string;
   mustSurvive?: boolean;
   recruitedMidBattle?: boolean;
   droppableItemId?: string | null;

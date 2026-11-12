@@ -163,7 +163,7 @@
   text-overflow: ellipsis;
 }
 
-/* Crisp PMD Pixel HP Bar (White 2px outer frame, `#50F850` emerald fill — Reference Image 1) */
+/* Crisp PMD Pixel HP Bar (White 2px outer frame, `#50F850` emerald fill - Reference Image 1) */
 .pmd-forecast-hp-bar-track {
   position: relative;
   width: 100%;

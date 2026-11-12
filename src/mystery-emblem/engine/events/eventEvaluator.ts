@@ -1,7 +1,7 @@
 /**
  * Pure Declarative Dungeon Event Evaluator & `Talk` Path Planner (`eventEvaluator.ts`)
  *
- * Zero DOM dependencies — evaluates `DungeonEventDefinition` triggers and conditions
+ * Zero DOM dependencies - evaluates `DungeonEventDefinition` triggers and conditions
  * against live `BattleUnitState[]` for `turn_start`, `talk`, `unit_defeated`,
  * `tile_reached`, and `battle_victory`.
  */

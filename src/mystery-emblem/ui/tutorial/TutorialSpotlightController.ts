@@ -85,9 +85,9 @@ export class TutorialSpotlightController {
     const vpH = window.innerHeight || 768;
 
     let preferredDock: 'top' | 'bottom' =
-      beat.spotlight?.kind === 'dom' && beat.spotlight.preferredDock
-        ? beat.spotlight.preferredDock
-        : 'top';
+      isInteractive && beat.spotlight?.kind === 'dom' && beat.spotlight.preferredDock === 'top'
+        ? 'top'
+        : 'bottom';
 
     if (targetEl) {
       const r = targetEl.getBoundingClientRect();
@@ -103,23 +103,13 @@ export class TutorialSpotlightController {
       this.domSpotlightEl.style.height = `${height}px`;
       this.domSpotlightEl.hidden = false;
 
-      const coachH = this.cardWindowEl.offsetHeight || 116;
-      const topZoneBottom = 10 + coachH;
-      const bottomZoneTop = vpH - 10 - coachH;
-      const overlapsTop = r.top < topZoneBottom + 6;
-      const overlapsBottom = r.bottom > bottomZoneTop - 6;
-
-      if (overlapsTop && !overlapsBottom) {
-        preferredDock = 'bottom';
-      } else if (overlapsBottom && !overlapsTop) {
-        preferredDock = 'top';
-      } else if (overlapsTop && overlapsBottom) {
-        preferredDock = r.top + r.height / 2 < vpH / 2 ? 'bottom' : 'top';
-      }
+      if (r.bottom > vpH * 0.66) preferredDock = 'top';
     } else {
       this.domSpotlightEl.hidden = true;
     }
 
+    const overworldEl = document.querySelector<HTMLElement>('#pmd-overworld-scene:not([hidden])');
+    this.backdropEl.dataset.overworldOpen = overworldEl ? 'true' : 'false';
     this.backdropEl.dataset.coachDock = preferredDock;
     this.cardWindowEl.dataset.coachDock = preferredDock;
   }

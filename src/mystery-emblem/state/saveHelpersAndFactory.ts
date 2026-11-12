@@ -1,5 +1,5 @@
 /**
- * Mystery Emblem — Save Constants, Legacy Migration Sanitizer & Pokemon Instance Factory
+ * Mystery Emblem - Save Constants, Legacy Migration Sanitizer & Pokemon Instance Factory
  */
 
 import {
@@ -104,9 +104,9 @@ export function computeSupportLevel(points: number): SupportLevel {
   return 0;
 }
 
-export function sanitizeNickname(rawNickname: string | undefined, fallbackSpeciesName: string): string {
-  const trimmed = (rawNickname ?? '').trim().slice(0, 16);
-  return trimmed.length > 0 ? trimmed : fallbackSpeciesName;
+/** Species-only naming: every unit is always called by its species name. */
+export function sanitizeNickname(_rawNickname: string | undefined, fallbackSpeciesName: string): string {
+  return fallbackSpeciesName;
 }
 
 export function getUnitEquippedItemId(
@@ -230,7 +230,7 @@ export function createPokemonInstance(opts: CreatePokemonOptions): OwnedPokemonI
 
   if (opts.heldItemId && opts.consumableItemId) {
     throw new Error(
-      `Unit "${sp.name}" cannot start with both heldItemId ("${opts.heldItemId}") and consumableItemId ("${opts.consumableItemId}") — each unit has 1 item slot.`
+      `Unit "${sp.name}" cannot start with both heldItemId ("${opts.heldItemId}") and consumableItemId ("${opts.consumableItemId}") - each unit has 1 item slot.`
     );
   }
 
@@ -241,7 +241,7 @@ export function createPokemonInstance(opts: CreatePokemonOptions): OwnedPokemonI
   return {
     instanceId: generateSaveId('unit'),
     speciesId: sp.id,
-    nickname: sanitizeNickname(opts.nickname, sp.name),
+    nickname: sp.name,
     ...(opts.cosmeticForm ? { cosmeticForm: opts.cosmeticForm } : {}),
     isLord: Boolean(opts.isLord),
     level,
