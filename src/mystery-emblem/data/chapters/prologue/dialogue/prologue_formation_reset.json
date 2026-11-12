@@ -1,0 +1,20 @@
+{
+  "id": "prologue_formation_reset",
+  "chapter": "prologue",
+  "role": "event",
+  "title": "Round Two",
+  "cast": [
+    { "id": "mentor", "who": { "kind": "mentor" } }
+  ],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Happy",
+        "side": "right",
+        "text": "Now that you have the basics, use what you've learned to defeat Pawmi, Starly, and Caterpie!"
+      }
+    }
+  ]
+}

@@ -173,6 +173,8 @@ export type DungeonEventAction =
       targetUnitId: string;
       x: number;
       y: number;
+      /** Direction the unit faces once it arrives */
+      face?: 'left' | 'right' | 'up' | 'down';
     }
   | {
       /** Marks player units as already acted this phase (e.g. tutorial turns that lock the team) */

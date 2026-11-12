@@ -48,6 +48,13 @@ import {
   recomputeSelectedUnitRange,
 } from './battleUnitQueries';
 
+const FACE_DELTAS: Record<'left' | 'right' | 'up' | 'down', [number, number]> = {
+  left: [-1, 0],
+  right: [1, 0],
+  up: [0, -1],
+  down: [0, 1],
+};
+
 function resolveEventTargetUnit(
   state: BattleRuntimeState,
   targetRef: string
@@ -291,6 +298,11 @@ export async function executeEventActionsAsync(
           if (state.selectedUnitId) recomputeSelectedUnitRange(state);
           recomputeDangerArea(ctx);
           updateBattleInfoStrip(ctx);
+          ctx.renderNow();
+        }
+        if (action.face) {
+          const [fdx, fdy] = FACE_DELTAS[action.face];
+          mover.direction = directionFromDelta(fdx, fdy);
           ctx.renderNow();
         }
       }

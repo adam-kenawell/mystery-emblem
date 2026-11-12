@@ -108,6 +108,25 @@
           "targetUnitId":"partner",
           "itemId":"paralyze_heal",
           "calloutText":"PARALYZE HEAL!"
+        }
+      ]
+    },
+    {
+      "id":"ev_prologue_formation_reset",
+      "once":true,
+      "trigger":{"type":"unit_healed"},
+      "conditions":[{"kind":"event_triggered","eventId":"ev_prologue_town_trio_wave"}],
+      "actions":[
+        {"type":"move_unit","targetUnitId":"lord","x":3,"y":5,"face":"right"},
+        {"type":"move_unit","targetUnitId":"partner","x":2,"y":4,"face":"right"},
+        {"type":"move_unit","targetUnitId":"healer","x":2,"y":6,"face":"right"},
+        {"type":"move_unit","targetUnitId":"prologue_pawmi","x":14,"y":5,"face":"left"},
+        {"type":"move_unit","targetUnitId":"prologue_starly","x":15,"y":4,"face":"left"},
+        {"type":"move_unit","targetUnitId":"prologue_caterpie","x":15,"y":6,"face":"left"},
+        {
+          "type":"play_dialogue",
+          "scriptId":"prologue_formation_reset",
+          "restorePreviousBgmOnClose":true
         },
         {
           "type":"set_objective",
