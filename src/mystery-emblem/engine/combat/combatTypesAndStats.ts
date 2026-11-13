@@ -42,6 +42,13 @@ export interface TempBattleBoosts {
   crit: number;
 }
 
+export interface ActiveShield {
+  moveId: string;
+  reduction: number;
+  category?: 'Physical' | 'Special';
+  turnsLeft: number;
+}
+
 export interface BattleUnitState extends PathfindingUnitContext, EquippedMoveSlots {
   slotIndex: number;
   rosterInstanceId?: string;
@@ -70,6 +77,10 @@ export interface BattleUnitState extends PathfindingUnitContext, EquippedMoveSlo
   consumableItemId: string | null;
   status: StatusCondition | null;
   statusTurns?: number;
+  /** HP restored at the start of this unit's next phase (Wish). */
+  pendingWishHeal?: number;
+  /** Active damage-reduction shields (Protect, Reflect, Light Screen). */
+  activeShields?: ActiveShield[];
   tempBattleBoosts?: TempBattleBoosts;
   activeMoves: BattleMoveSlot[];
   waited: boolean;
@@ -113,6 +124,8 @@ export interface CombatForecast {
   defenderSide: CombatSideForecast | null;
   projectedAttackerHp: number;
   projectedDefenderHp: number;
+  /** True when the defender's priority counter lands before the attacker's first strike. */
+  defenderStrikesFirst: boolean;
 }
 
 export function isOffensiveMove(
@@ -125,8 +138,14 @@ export function isHealingMove(move: MoveDefinition | undefined | null): move is 
   return Boolean(
     move &&
       move.category === 'Support/Heal' &&
-      (move.supportSubkind === 'heal' || move.supportSubkind === 'self_heal')
+      (move.supportSubkind === 'heal' ||
+        move.supportSubkind === 'self_heal' ||
+        move.supportSubkind === 'shield')
   );
+}
+
+export function isShieldMove(move: MoveDefinition | undefined | null): boolean {
+  return Boolean(move && move.category === 'Support/Heal' && move.supportSubkind === 'shield');
 }
 
 export function manhattanDistance(ax: number, ay: number, bx: number, by: number): number {

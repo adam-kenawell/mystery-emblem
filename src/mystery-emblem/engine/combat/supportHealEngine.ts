@@ -13,6 +13,7 @@ import {
 } from '../terrainAndPathfinding';
 import {
   isHealingMove,
+  isShieldMove,
   manhattanDistance,
   type BattleMoveSlot,
   type BattleUnitState,
@@ -22,8 +23,11 @@ export function doesUnitNeedHealing(
   target: Pick<BattleUnitState, 'currentHp' | 'maxHp' | 'status'>,
   move: MoveDefinition
 ): boolean {
-  if (target.currentHp < target.maxHp) return true;
-  if (move.supportPayload?.cureStatus && target.status !== null) return true;
+  if (isShieldMove(move)) return true;
+  const payload = move.supportPayload;
+  const curesOnly = Boolean(payload?.cureStatus && !payload.healAmount && !payload.healPercentMaxHp);
+  if (!curesOnly && target.currentHp < target.maxHp) return true;
+  if (payload?.cureStatus && target.status !== null) return true;
   return false;
 }
 
@@ -63,6 +67,8 @@ export interface HealForecast {
   actualHeal: number;
   projectedTargetHp: number;
   curesStatus: boolean;
+  /** Set for shield moves: damage reduction applied instead of HP. */
+  shield: { reduction: number; turns: number; category?: 'Physical' | 'Special' } | null;
 }
 
 export function computeHealForecast(
@@ -81,11 +87,16 @@ export function computeHealForecast(
   if (!slot) return null;
 
   const payload = slot.move.supportPayload;
+  const isShield = isShieldMove(slot.move);
   let healPower = 10;
-  if (payload?.healPercentMaxHp) {
+  if (isShield) {
+    healPower = 0;
+  } else if (payload?.healPercentMaxHp) {
     healPower = Math.max(1, Math.round((target.maxHp * payload.healPercentMaxHp) / 100));
   } else if (payload?.healAmount) {
     healPower = Math.max(1, payload.healAmount + Math.floor(healer.stats.spa / 2));
+  } else if (payload?.cureStatus) {
+    healPower = 0;
   }
 
   const actualHeal = Math.max(0, Math.min(target.maxHp - target.currentHp, healPower));
@@ -106,6 +117,13 @@ export function computeHealForecast(
     actualHeal,
     projectedTargetHp,
     curesStatus: Boolean(payload?.cureStatus && target.status !== null),
+    shield: isShield
+      ? {
+          reduction: payload?.shieldDamageReduction ?? 0,
+          turns: Math.max(1, payload?.durationTurns ?? 1),
+          category: payload?.shieldCategory,
+        }
+      : null,
   };
 }
 

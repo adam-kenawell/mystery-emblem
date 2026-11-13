@@ -39,13 +39,18 @@ export function refreshHealForecastModalDom(ctx: BattleControllerContext): void 
   if (!healForecast) return;
   state.currentHealForecast = healForecast;
 
+  const shield = healForecast.shield;
+  const gainText = shield
+    ? `-${shield.reduction}${shield.category ? ` ${shield.category === 'Physical' ? 'PHYS' : 'SPEC'}` : ''} DMG / ${shield.turns} turn${shield.turns === 1 ? '' : 's'}`
+    : `+${healForecast.actualHeal} HP`;
+
   const backdrop = dom.forecastModalBackdropEl;
   const titleEl = backdrop.querySelector('[data-forecast-title]');
-  if (titleEl) titleEl.textContent = 'HEAL FORECAST';
+  if (titleEl) titleEl.textContent = shield ? 'SHIELD FORECAST' : 'HEAL FORECAST';
   const defCardEl = backdrop.querySelector<HTMLElement>('[data-testid="forecast-defender-card"]');
   if (defCardEl) defCardEl.className = 'pmd-fe-enemy-box is-ally-heal';
   const confirmBtnEl = backdrop.querySelector<HTMLElement>('[data-testid="forecast-attack-btn"]');
-  if (confirmBtnEl) { confirmBtnEl.textContent = 'Heal!'; (confirmBtnEl as HTMLButtonElement).disabled = false; }
+  if (confirmBtnEl) { confirmBtnEl.textContent = shield ? 'Shield!' : 'Heal!'; (confirmBtnEl as HTMLButtonElement).disabled = false; }
 
   renderForecastMoveList(ctx, healer, validMoves, activeSlot.id, () =>
     refreshHealForecastModalDom(ctx)
@@ -74,7 +79,7 @@ export function refreshHealForecastModalDom(ctx: BattleControllerContext): void 
     '[data-testid="forecast-effectiveness-badge"]'
   );
   if (effBadgeEl) {
-    effBadgeEl.textContent = `+${healForecast.actualHeal} HP`;
+    effBadgeEl.textContent = gainText;
     effBadgeEl.className = 'pmd-forecast-eff-badge is-super';
     effBadgeEl.hidden = false;
   }
@@ -139,7 +144,8 @@ export function refreshHealForecastModalDom(ctx: BattleControllerContext): void 
         ? `${healer.currentHp} → ${healerProjectedHp}`
         : `${healer.currentHp}/${healer.maxHp}`;
   }
-  if (atkDmgEl) atkDmgEl.textContent = `+${healForecast.actualHeal}`;
+  const gainShort = shield ? `-${shield.reduction}` : `+${healForecast.actualHeal}`;
+  if (atkDmgEl) atkDmgEl.textContent = gainShort;
   if (atkHitEl) atkHitEl.textContent = '100%';
   if (atkCritEl) atkCritEl.textContent = `${healForecast.ppAfter}/${activeSlot.maxPp}`;
   if (atkCurBar) {
@@ -165,9 +171,9 @@ export function refreshHealForecastModalDom(ctx: BattleControllerContext): void 
     defMetaEl.textContent = '';
     defMetaEl.hidden = true;
   }
-  if (defWpnEl) defWpnEl.textContent = `+${healForecast.actualHeal} HP`;
+  if (defWpnEl) defWpnEl.textContent = gainText;
   if (defHpEl) defHpEl.textContent = `${target.currentHp} → ${healForecast.projectedTargetHp}`;
-  if (defDmgEl) defDmgEl.textContent = `+${healForecast.actualHeal}`;
+  if (defDmgEl) defDmgEl.textContent = gainShort;
   if (defHitEl) defHitEl.textContent = `${target.maxHp}`;
   if (defCritEl) {
     defCritEl.textContent = healForecast.curesStatus ? 'Cured!' : (target.status ?? 'OK');

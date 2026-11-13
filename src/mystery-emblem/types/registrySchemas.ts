@@ -114,12 +114,18 @@ export interface MoveDefinition {
     healAmount?: number;
     healPercentMaxHp?: number;
     cureStatus?: boolean;
+    /** Heal lands at the start of the target's next phase instead of immediately (Wish). */
+    delayedHeal?: boolean;
     inflictStatus?: StatusCondition;
     shieldDamageReduction?: number;
+    /** Shield only reduces damage of this category; absent = all damage. */
+    shieldCategory?: 'Physical' | 'Special';
     durationTurns?: number;
     refreshAllyTurn?: boolean;
   };
   secondaryEffect?: MoveSecondaryEffect;
+  /** Defender counter with priority strikes before a non-priority attacker. */
+  priority?: boolean;
 }
 
 export const ITEM_CATEGORIES = [

@@ -260,7 +260,9 @@ export function refreshCombatForecastModalDom(ctx: BattleControllerContext): voi
 
   if (forecast.defenderCanCounter && forecast.defenderSide) {
     const ds = forecast.defenderSide;
-    if (defWpnEl) defWpnEl.textContent = `[E] ${ds.move.name}`;
+    if (defWpnEl) {
+      defWpnEl.textContent = `[E] ${ds.move.name}${forecast.defenderStrikesFirst ? ' (FIRST)' : ''}`;
+    }
     if (defDmgEl) defDmgEl.textContent = ds.strikes === 2 ? `${ds.damage} ×2` : `${ds.damage}`;
     if (defHitEl) defHitEl.textContent = `${ds.hitRate}%`;
     if (defCritEl) defCritEl.textContent = `${ds.critRate}%`;

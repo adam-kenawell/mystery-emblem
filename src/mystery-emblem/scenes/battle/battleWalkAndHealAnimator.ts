@@ -83,7 +83,24 @@ export async function playHealActionAsync(
   if (!state.openState || runGen !== state.battleRunGen) return;
 
   audioManager.playSfx('heal');
-  target.currentHp = healForecast.projectedTargetHp;
+  const isDelayedHeal = Boolean(healForecast.move.supportPayload?.delayedHeal);
+  const shield = healForecast.shield;
+  if (shield) {
+    const others = (target.activeShields ?? []).filter((s) => s.moveId !== healForecast.move.id);
+    target.activeShields = [
+      ...others,
+      {
+        moveId: healForecast.move.id,
+        reduction: shield.reduction,
+        category: shield.category,
+        turnsLeft: shield.turns,
+      },
+    ];
+  } else if (isDelayedHeal) {
+    target.pendingWishHeal = healForecast.healPower;
+  } else {
+    target.currentHp = healForecast.projectedTargetHp;
+  }
   if (healForecast.curesStatus) {
     target.status = null;
     target.statusTurns = 0;
@@ -100,7 +117,13 @@ export async function playHealActionAsync(
     durationMs: state.fastMode ? 80 : 300,
   };
 
-  const healMsg = healForecast.actualHeal > 0 ? `+${healForecast.actualHeal} HP${healForecast.curesStatus ? ' · CURED!' : ''}` : 'CURED!';
+  const healMsg = shield
+    ? `${healForecast.move.name.toUpperCase()}!`
+    : isDelayedHeal
+    ? 'WISH!'
+    : healForecast.actualHeal > 0
+      ? `+${healForecast.actualHeal} HP${healForecast.curesStatus ? ' · CURED!' : ''}`
+      : 'CURED!';
   spawnFloatingText(state, dom, target.x, target.y, healMsg, '#68f8a8');
   updateBattleInfoStrip(ctx);
 

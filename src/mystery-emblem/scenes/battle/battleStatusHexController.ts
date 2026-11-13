@@ -298,6 +298,18 @@ export function runFactionPhaseStartStatusTicks(
 ): void {
   const { state, dom } = ctx;
   for (const unit of units) {
+    const wishHeal = unit.pendingWishHeal ?? 0;
+    if (wishHeal > 0 && !unit.defeated && unit.currentHp > 0) {
+      const healed = Math.min(unit.maxHp - unit.currentHp, wishHeal);
+      unit.currentHp += healed;
+      unit.pendingWishHeal = 0;
+      spawnFloatingText(state, dom, unit.x, unit.y, `WISH +${healed} HP`, '#68f8a8', 880);
+    }
+    if (unit.activeShields?.length) {
+      unit.activeShields = unit.activeShields
+        .map((s) => ({ ...s, turnsLeft: s.turnsLeft - 1 }))
+        .filter((s) => s.turnsLeft > 0);
+    }
     const tick = applyPhaseStartStatusTick(unit);
     if (tick.calloutText) {
       spawnFloatingText(state, dom, unit.x, unit.y, tick.calloutText, tick.calloutColor, 880);

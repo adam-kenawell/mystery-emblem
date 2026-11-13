@@ -11,6 +11,7 @@ export {
 export {
   isOffensiveMove,
   isHealingMove,
+  isShieldMove,
   manhattanDistance,
   getOffensiveMovesAtDistance,
   getEnemyTargetingMovesAtDistance,

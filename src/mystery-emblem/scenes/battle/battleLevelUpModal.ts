@@ -48,6 +48,9 @@ export function buildMoveLearnedModalDetails(
     } else if (move.supportPayload?.inflictStatus) {
       damageLabel = 'EFF';
       damageText = move.supportPayload.inflictStatus;
+    } else if (move.supportPayload?.shieldDamageReduction) {
+      damageLabel = 'EFF';
+      damageText = `-${move.supportPayload.shieldDamageReduction} DMG`;
     } else {
       damageLabel = 'EFF';
       damageText = '--';
@@ -57,7 +60,7 @@ export function buildMoveLearnedModalDetails(
     headline: `${unitNickname} learned ${move.name}!`,
     moveName: move.name,
     type: move.type,
-    categoryLabel: move.category,
+    categoryLabel: move.priority ? `${move.category} · Priority` : move.category,
     damageLabel,
     damageText,
     hitText: `${move.hit}%`,

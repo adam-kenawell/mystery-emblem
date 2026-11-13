@@ -171,19 +171,25 @@ export function resolveCombatExchange(
     });
   };
 
+  const runOpeningCounter = () => {
+    if (
+      defenderStatus !== 'SLP' &&
+      attackerHp > 0 &&
+      defenderHp > 0 &&
+      forecast.defenderCanCounter &&
+      forecast.defenderSide
+    ) {
+      runSingleStrike(defender, attacker, forecast.defenderSide, true, false);
+    }
+  };
+
+  if (forecast.defenderStrikesFirst) runOpeningCounter();
+
   if (attackerStatus !== 'SLP' && attackerHp > 0 && defenderHp > 0) {
     runSingleStrike(attacker, defender, forecast.attackerSide, false, false);
   }
 
-  if (
-    defenderStatus !== 'SLP' &&
-    attackerHp > 0 &&
-    defenderHp > 0 &&
-    forecast.defenderCanCounter &&
-    forecast.defenderSide
-  ) {
-    runSingleStrike(defender, attacker, forecast.defenderSide, true, false);
-  }
+  if (!forecast.defenderStrikesFirst) runOpeningCounter();
 
   if (
     attackerStatus !== 'SLP' &&

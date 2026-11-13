@@ -90,6 +90,11 @@ export function buildSideForecast(
     critDamage =
       Math.max(1, Math.floor(rawBaseDamage * stabMultiplier * typeMultiplier * 2.0)) +
       itemFlatDamageBonus;
+    const shieldReduction = (target.activeShields ?? [])
+      .filter((s) => s.turnsLeft > 0 && (!s.category || s.category === move.category))
+      .reduce((sum, s) => sum + s.reduction, 0);
+    damage = Math.max(0, damage - shieldReduction);
+    critDamage = Math.max(0, critDamage - shieldReduction);
   }
 
   const rawHit =
@@ -189,9 +194,19 @@ export function computeCombatForecast(
   let projAttackerHp = attacker.currentHp;
   let projDefenderHp = defender.currentHp;
 
-  projDefenderHp = applyHit(projDefenderHp, attackerSide.damage);
+  const defenderStrikesFirst = Boolean(
+    defenderCanCounter && defenderSide?.move.priority && !attackerSide.move.priority
+  );
 
-  if (projDefenderHp > 0 && defenderCanCounter && defenderSide) {
+  if (defenderStrikesFirst && defenderSide) {
+    projAttackerHp = applyHit(projAttackerHp, defenderSide.damage);
+  }
+
+  if (projAttackerHp > 0) {
+    projDefenderHp = applyHit(projDefenderHp, attackerSide.damage);
+  }
+
+  if (!defenderStrikesFirst && projDefenderHp > 0 && defenderCanCounter && defenderSide) {
     projAttackerHp = applyHit(projAttackerHp, defenderSide.damage);
   }
 
@@ -223,5 +238,6 @@ export function computeCombatForecast(
     defenderSide,
     projectedAttackerHp: projAttackerHp,
     projectedDefenderHp: projDefenderHp,
+    defenderStrikesFirst,
   };
 }

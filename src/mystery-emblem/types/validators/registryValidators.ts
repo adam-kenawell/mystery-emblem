@@ -106,8 +106,8 @@ export function validateMoves(moves: readonly MoveDefinition[]): {
         errors.push(`Special move "${mv.id}" must be Range [2,2], Mt>=1, targetType='enemy'.`);
       }
     } else if (mv.category === 'Support/Heal') {
-      if (mv.mt !== 0 || minR !== 1 || (maxR !== 1 && maxR !== 2)) {
-        errors.push(`Support/Heal move "${mv.id}" must have Mt=0 and Range [1,1] or [1,2].`);
+      if (mv.mt !== 0 || minR !== maxR || (minR !== 1 && minR !== 2)) {
+        errors.push(`Support/Heal move "${mv.id}" must have Mt=0 and Range [1,1] or [2,2].`);
       }
       if (!mv.supportSubkind || !VALID_SUPPORT_SUBKIND_SET.has(mv.supportSubkind)) {
         errors.push(`Support/Heal move "${mv.id}" has invalid supportSubkind.`);
