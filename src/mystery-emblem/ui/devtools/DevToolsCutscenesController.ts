@@ -67,7 +67,9 @@ function describeTrigger(chapterId: string, dialogueId: string): string {
     case 'unit_defeated':
       return `${t.targetUnitId} defeated`;
     case 'tile_reached':
-      return `area (${t.x1},${t.y1})–(${t.x2},${t.y2}) reached`;
+      return t.tiles?.length
+        ? `${t.tiles.length} target tile(s) reached`
+        : `area (${t.x1 ?? 0},${t.y1 ?? 0})–(${t.x2 ?? 0},${t.y2 ?? 0}) reached`;
     case 'battle_victory':
       return 'battle won';
     case 'unit_healed':

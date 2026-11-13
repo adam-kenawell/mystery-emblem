@@ -17,7 +17,7 @@ import {
   lerpRgba,
 } from './battleRangeZonePainter';
 import { resolveTutorialSpotlightTiles } from './battleTutorialIntegration';
-import type { BattleControllerContext } from './battleTypesAndState';
+import { RANGE_PULSE_PERIOD_MS, type BattleControllerContext } from './battleTypesAndState';
 import { getSeizeObjectiveCoords } from './battleUnitQueries';
 import { renderUnitsAndStrikeVfx } from './battleUnitSpriteRenderer';
 
@@ -68,39 +68,6 @@ export function renderBattleFrame(ctxObj: BattleControllerContext, now: number):
   }
 
   const visibleBounds = { startCol, endCol, startRow, endRow };
-
-  const seizeTiles = getSeizeObjectiveCoords(state);
-  if (seizeTiles.size > 0) {
-    const seizePulse = (Math.sin(now / 420) + 1) / 2;
-    drawConnectedRangeZone(
-      ctx,
-      cameraX,
-      cameraY,
-      seizeTiles,
-      seizeTiles,
-      {
-        fillRgba: lerpRgba([16, 168, 88, 0.24], [88, 248, 152, 0.48], seizePulse),
-        outerBorderRgba: lerpRgba([48, 216, 120, 0.92], [208, 255, 224, 1.0], seizePulse),
-        innerGlowRgba: lerpRgba([32, 192, 104, 0.36], [136, 255, 184, 0.7], seizePulse),
-      },
-      visibleBounds
-    );
-    const beaconAlpha = 0.55 + seizePulse * 0.45;
-    ctx.fillStyle = `rgba(224, 255, 232, ${beaconAlpha.toFixed(3)})`;
-    const last = PMD_TILE_NATIVE_PX - 3;
-    const beaconY = Math.round(4 - seizePulse * 2);
-    for (const key of seizeTiles) {
-      const [sx, sy] = key.split(',').map(Number) as [number, number];
-      if (sx < startCol || sx > endCol || sy < startRow || sy > endRow) continue;
-      const px = sx * PMD_TILE_NATIVE_PX - cameraX;
-      const py = sy * PMD_TILE_NATIVE_PX - cameraY;
-      ctx.fillRect(px + 2, py + 2, 1, 1);
-      ctx.fillRect(px + last, py + 2, 1, 1);
-      ctx.fillRect(px + 2, py + last, 1, 1);
-      ctx.fillRect(px + last, py + last, 1, 1);
-      ctx.fillRect(px + 11, py + beaconY, 2, 2);
-    }
-  }
 
   if (state.currentDanger.combinedDangerTiles.size > 0) {
     const dangerPulse = getSelectionRangePulse(state, now);
@@ -227,6 +194,25 @@ export function renderBattleFrame(ctxObj: BattleControllerContext, now: number):
         fillRgba: lerpRgba([24, 128, 236, 0.16], [132, 232, 255, 0.38], pulse),
         outerBorderRgba: lerpRgba([64, 184, 252, 0.88], [216, 252, 255, 1.0], pulse),
         innerGlowRgba: lerpRgba([44, 156, 248, 0.3], [164, 242, 255, 0.62], pulse),
+      },
+      visibleBounds
+    );
+  }
+
+  const seizeTiles = getSeizeObjectiveCoords(state);
+  if (seizeTiles.size > 0) {
+    const seizePulse =
+      0.5 - 0.5 * Math.cos(((now % RANGE_PULSE_PERIOD_MS) / RANGE_PULSE_PERIOD_MS) * Math.PI * 2);
+    drawConnectedRangeZone(
+      ctx,
+      cameraX,
+      cameraY,
+      seizeTiles,
+      seizeTiles,
+      {
+        fillRgba: lerpRgba([28, 184, 96, 0.15], [132, 255, 188, 0.36], seizePulse),
+        outerBorderRgba: lerpRgba([72, 228, 140, 0.88], [212, 255, 232, 1.0], seizePulse),
+        innerGlowRgba: lerpRgba([48, 212, 120, 0.28], [168, 255, 208, 0.6], seizePulse),
       },
       visibleBounds
     );

@@ -34,7 +34,25 @@
   ],
   "beats": [
     {
+      "id": "distant_past",
+      "music": { "kind": "silence" },
+      "say": {
+        "speaker": "narrator",
+        "emotion": "Normal",
+        "side": "auto",
+        "text": "Somewhere in the distant past..."
+      },
+      "actions": [
+        { "type": "fade", "to": "black", "duration": 0 }
+      ]
+    },
+    {
       "id": "narration_peace",
+      "waitForActions": true,
+      "music": { "kind": "main" },
+      "actions": [
+        { "type": "fade", "to": "clear", "duration": 0.85 }
+      ],
       "say": {
         "speaker": "narrator",
         "emotion": "Normal",

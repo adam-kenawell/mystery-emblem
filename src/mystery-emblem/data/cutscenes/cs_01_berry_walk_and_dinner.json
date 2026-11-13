@@ -22,13 +22,28 @@
   ],
   "beats": [
     {
-      "id": "walk_in",
+      "id": "present_day",
+      "music": { "kind": "silence" },
+      "say": {
+        "speaker": "narrator",
+        "emotion": "Normal",
+        "side": "auto",
+        "text": "Present day..."
+      },
       "actions": [
+        { "type": "fade", "to": "black", "duration": 0 }
+      ]
+    },
+    {
+      "id": "walk_in",
+      "music": { "kind": "main" },
+      "actions": [
+        { "type": "fade", "to": "clear", "duration": 0.75 },
         { "type": "walk", "who": "lord", "path": [[9, 6]], "speed": 2.8, "facing": "Right" },
         { "type": "walk", "who": "partner", "path": [[8, 5]], "speed": 3.1, "facing": "DownRight" },
         { "type": "walk", "who": "healer", "path": [[8, 7]], "speed": 2.8, "facing": "UpRight" }
       ],
-      "advance": { "kind": "seconds", "seconds": 0.85 }
+      "advance": { "kind": "seconds", "seconds": 1.1 }
     },
     {
       "id": "quaxly_berries",

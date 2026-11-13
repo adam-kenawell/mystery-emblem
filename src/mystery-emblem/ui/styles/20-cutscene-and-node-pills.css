@@ -11,7 +11,7 @@
   position: fixed;
   inset: 0;
   z-index: 86;
-  background: #050a14;
+  background: #000000;
   overflow: hidden;
   user-select: none;
   touch-action: manipulation;
@@ -28,7 +28,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  background: #050a14;
+  background: #000000;
 }
 
 .pmd-cutscene-canvas {

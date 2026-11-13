@@ -202,10 +202,10 @@ function triggerSection(ctx: EditorContext, dlg: DialogueSessionData, hooks: Dia
     sec.append(field('Unit', unitSelect(t.targetUnitId, (v) => setEvent((e) => { (e.trigger as typeof t).targetUnitId = v; }))));
   } else if (t.type === 'tile_reached') {
     sec.append(row(
-      field('From X', numberInput(ui, t.x1, (n) => setEvent((e) => { (e.trigger as typeof t).x1 = Math.round(n); }))),
-      field('From Y', numberInput(ui, t.y1, (n) => setEvent((e) => { (e.trigger as typeof t).y1 = Math.round(n); }))),
-      field('To X', numberInput(ui, t.x2, (n) => setEvent((e) => { (e.trigger as typeof t).x2 = Math.round(n); }))),
-      field('To Y', numberInput(ui, t.y2, (n) => setEvent((e) => { (e.trigger as typeof t).y2 = Math.round(n); })))
+      field('From X', numberInput(ui, t.x1 ?? 1, (n) => setEvent((e) => { (e.trigger as typeof t).x1 = Math.round(n); }))),
+      field('From Y', numberInput(ui, t.y1 ?? 1, (n) => setEvent((e) => { (e.trigger as typeof t).y1 = Math.round(n); }))),
+      field('To X', numberInput(ui, t.x2 ?? 2, (n) => setEvent((e) => { (e.trigger as typeof t).x2 = Math.round(n); }))),
+      field('To Y', numberInput(ui, t.y2 ?? 2, (n) => setEvent((e) => { (e.trigger as typeof t).y2 = Math.round(n); })))
     ));
     sec.append(row(
       field('Reached by', selectInput(ui, [{ value: 'any_player', label: 'Anyone on your team' }, { value: 'lord', label: 'Only the hero' }], t.by ?? 'any_player', (v) => setEvent((e) => { (e.trigger as typeof t).by = v; }))),

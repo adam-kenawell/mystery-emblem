@@ -32,9 +32,22 @@ export function getSeizeObjectiveCoords(state: BattleRuntimeState): Set<string> 
     const trig = ev.trigger;
     if (trig.type !== 'tile_reached') continue;
     if (!ev.actions.some((a) => a.type === 'win_battle')) continue;
-    for (let y = Math.min(trig.y1, trig.y2); y <= Math.max(trig.y1, trig.y2); y++) {
-      for (let x = Math.min(trig.x1, trig.x2); x <= Math.max(trig.x1, trig.x2); x++) {
-        coords.add(coordKey(x, y));
+    if (Array.isArray(trig.tiles) && trig.tiles.length > 0) {
+      for (const t of trig.tiles) {
+        if (Number.isFinite(t.x) && Number.isFinite(t.y)) {
+          coords.add(coordKey(t.x, t.y));
+        }
+      }
+    } else if (
+      Number.isFinite(trig.x1) &&
+      Number.isFinite(trig.x2) &&
+      Number.isFinite(trig.y1) &&
+      Number.isFinite(trig.y2)
+    ) {
+      for (let y = Math.min(trig.y1!, trig.y2!); y <= Math.max(trig.y1!, trig.y2!); y++) {
+        for (let x = Math.min(trig.x1!, trig.x2!); x <= Math.max(trig.x1!, trig.x2!); x++) {
+          coords.add(coordKey(x, y));
+        }
       }
     }
   }

@@ -131,6 +131,9 @@ export class CutsceneScene {
     this.currentBeatIndex = -1;
     this.currentLineIndex = -1;
 
+    this.shell.locationBannerEl.hidden = true;
+    this.shell.ctx.fillStyle = '#000000';
+    this.shell.ctx.fillRect(0, 0, this.shell.canvas.width, this.shell.canvas.height);
     this.rootEl.dataset.cutsceneId = doc.id;
     this.rootEl.hidden = false;
     this.viewportEl.classList.add('is-battle-active');
@@ -143,12 +146,21 @@ export class CutsceneScene {
     if (startBeat > 0) runtime.fastForwardTo(startBeat);
     else runtime.resetToStart();
 
+    const initialBeat = doc.beats[startBeat];
+    if (initialBeat && showIfPasses(initialBeat.showIf, doc.cast, save)) {
+      for (const act of initialBeat.actions ?? []) {
+        if (act.type === 'fade' && (act.duration ?? 0.5) <= 0 && !act.delay && act.start !== 'after') {
+          runtime.executeAction(act, true);
+        }
+      }
+    }
+
     this.refreshSize();
     this.startLoop();
     this.renderFrame();
 
     let music: string | null = doc.music;
-    for (let i = 0; i < startBeat; i++) {
+    for (let i = 0; i <= startBeat && i < doc.beats.length; i++) {
       const beat = doc.beats[i]!;
       if (!showIfPasses(beat.showIf, doc.cast, save)) continue;
       const next = musicChangeToBgm(beat.music, doc.music);
@@ -406,6 +418,8 @@ export class CutsceneScene {
 
   private renderFrame(): void {
     if (!this.openState || !this.runtime) return;
+    this.shell.locationBannerEl.hidden =
+      !this.runtime.banner || Boolean(this.runtime.fade && this.runtime.fade.alpha >= 0.99);
     const { cssFilter } = renderCutsceneStageFrame({
       ctx: this.shell.ctx,
       nativeW: this.shell.canvas.width,

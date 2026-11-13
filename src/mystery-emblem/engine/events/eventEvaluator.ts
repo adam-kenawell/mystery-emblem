@@ -243,11 +243,22 @@ export function getMatchingTileReachedEvents(
   return events.filter((ev) => {
     if (ev.trigger.type !== 'tile_reached') return false;
     if (ev.trigger.by === 'lord' && !unit.isLord) return false;
-    const minX = Math.min(ev.trigger.x1, ev.trigger.x2);
-    const maxX = Math.max(ev.trigger.x1, ev.trigger.x2);
-    const minY = Math.min(ev.trigger.y1, ev.trigger.y2);
-    const maxY = Math.max(ev.trigger.y1, ev.trigger.y2);
-    if (unit.x < minX || unit.x > maxX || unit.y < minY || unit.y > maxY) return false;
+    if (Array.isArray(ev.trigger.tiles) && ev.trigger.tiles.length > 0) {
+      if (!ev.trigger.tiles.some((t) => t.x === unit.x && t.y === unit.y)) return false;
+    } else if (
+      Number.isFinite(ev.trigger.x1) &&
+      Number.isFinite(ev.trigger.x2) &&
+      Number.isFinite(ev.trigger.y1) &&
+      Number.isFinite(ev.trigger.y2)
+    ) {
+      const minX = Math.min(ev.trigger.x1!, ev.trigger.x2!);
+      const maxX = Math.max(ev.trigger.x1!, ev.trigger.x2!);
+      const minY = Math.min(ev.trigger.y1!, ev.trigger.y2!);
+      const maxY = Math.max(ev.trigger.y1!, ev.trigger.y2!);
+      if (unit.x < minX || unit.x > maxX || unit.y < minY || unit.y > maxY) return false;
+    } else {
+      return false;
+    }
     return isEventEligibleToFire(ev, triggeredEventIds, units);
   });
 }

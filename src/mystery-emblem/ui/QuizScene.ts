@@ -12,6 +12,7 @@ import type { SaveStateManager } from '../state/SaveStateManager';
 import { PmdPortraitView } from './PmdSpriteCanvas';
 import { RecruitNicknameOverlay, type PromptRecruitsOptions } from './RecruitNicknameOverlay';
 import { bindBackGestureSurface, bindPointerTap } from './pointerControls';
+import { prefersReducedMotionEnabled } from './typewriterController';
 import { AuraWaveCanvas } from './quiz/AuraWaveCanvas';
 import { renderNgPlusRosterSelectorView } from './quiz/NgPlusRosterSelectorView';
 import { renderQuizLordRevealView, type QuizRevealBeat } from './quiz/QuizRevealSequenceView';
@@ -34,6 +35,7 @@ export class QuizScene {
   public readonly rootEl: HTMLElement;
   private readonly waveEngine: AuraWaveCanvas;
   private readonly stageEl: HTMLElement;
+  private readonly fadeOverlayEl: HTMLElement;
   private readonly typewriter = new QuizTypewriterController();
 
   private readonly saveManager: SaveStateManager;
@@ -44,6 +46,8 @@ export class QuizScene {
 
   private openState = false;
   private fastMode = false;
+  private finalizing = false;
+  private finalizeTimer: number | null = null;
   private step: QuizSceneStep = 'welcome';
   private revealBeat: QuizRevealBeat = 0;
   private questionIndex = 0;
@@ -79,13 +83,15 @@ export class QuizScene {
     this.stageEl = document.createElement('div');
     this.stageEl.className = 'pmd-quiz-stage';
     this.stageEl.dataset.testid = 'quiz-panel-body';
-    this.rootEl.append(this.waveEngine.canvasEl, this.stageEl);
+    this.fadeOverlayEl = document.createElement('div');
+    this.fadeOverlayEl.style.cssText = 'position:absolute;inset:0;z-index:5;background:#000000;opacity:0;pointer-events:none;';
+    this.rootEl.append(this.waveEngine.canvasEl, this.stageEl, this.fadeOverlayEl);
     mountParent.appendChild(this.rootEl);
 
     bindPointerTap(
       this.rootEl,
       () => {
-        if (performance.now() < this.suppressTapUntilMs) return;
+        if (this.finalizing || performance.now() < this.suppressTapUntilMs) return;
         if (this.step === 'questions') this.handleQuestionScreenTap();
         else if (this.step === 'lord_reveal') this.handleRevealAdvanceTap();
       },
@@ -108,6 +114,7 @@ export class QuizScene {
   }
 
   public open(options?: OpenQuizSceneOptions): void {
+    this.resetFinalizeFade();
     this.typewriter.clear();
     this.activeOptions = options ?? {};
     this.openState = true;
@@ -129,6 +136,7 @@ export class QuizScene {
   }
 
   public close(): void {
+    this.resetFinalizeFade();
     if (!this.openState) return;
     this.typewriter.clear();
     this.waveEngine.stopLoop();
@@ -140,7 +148,7 @@ export class QuizScene {
   }
 
   public handleBack(): void {
-    if (!this.isOpen()) return;
+    if (!this.isOpen() || this.finalizing) return;
     this.audioManager.playSfx('cancel');
     this.typewriter.clear();
     const t = computeQuizBackTransition({
@@ -287,11 +295,44 @@ export class QuizScene {
     }
   }
 
+  private resetFinalizeFade(): void {
+    if (this.finalizeTimer !== null) {
+      window.clearTimeout(this.finalizeTimer);
+      this.finalizeTimer = null;
+    }
+    this.finalizing = false;
+    this.fadeOverlayEl.style.transition = 'none';
+    this.fadeOverlayEl.style.opacity = '0';
+    this.fadeOverlayEl.style.pointerEvents = 'none';
+  }
+
   private finalize(lordId: DragonLordSpeciesId, preserveNgPlus = false): void {
-    finalizeQuizCampaignCreation({
-      saveManager: this.saveManager, audioManager: this.audioManager, activeOptions: this.activeOptions,
-      lordSpeciesId: lordId, preserveNgPlus, onCloseQuizScene: () => this.close(),
-    });
+    if (this.finalizing) return;
+    this.finalizing = true;
+    this.audioManager.playSfx('heal');
+    this.audioManager.playBgm(null, { fadeMs: 480 });
+    const commit = () =>
+      finalizeQuizCampaignCreation({
+        saveManager: this.saveManager,
+        audioManager: this.audioManager,
+        activeOptions: this.activeOptions,
+        lordSpeciesId: lordId,
+        preserveNgPlus,
+        skipConfirmSfx: true,
+        onCloseQuizScene: () => this.close(),
+      });
+    if (this.fastMode || prefersReducedMotionEnabled()) {
+      commit();
+      return;
+    }
+    this.fadeOverlayEl.style.pointerEvents = 'auto';
+    this.fadeOverlayEl.style.transition = 'opacity 480ms ease';
+    void this.fadeOverlayEl.offsetWidth;
+    this.fadeOverlayEl.style.opacity = '1';
+    this.finalizeTimer = window.setTimeout(() => {
+      this.finalizeTimer = null;
+      if (this.openState) commit();
+    }, 480);
   }
 
   public destroy(): void {

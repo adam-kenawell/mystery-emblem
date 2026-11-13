@@ -233,10 +233,19 @@ export function finalizeQuizCampaignCreation(params: {
   activeOptions: OpenQuizSceneOptions;
   lordSpeciesId: DragonLordSpeciesId;
   preserveNgPlus?: boolean;
+  skipConfirmSfx?: boolean;
   onCloseQuizScene: () => void;
 }): void {
-  const { saveManager, audioManager, activeOptions, lordSpeciesId, preserveNgPlus = false, onCloseQuizScene } = params;
-  audioManager.playSfx('heal');
+  const {
+    saveManager,
+    audioManager,
+    activeOptions,
+    lordSpeciesId,
+    preserveNgPlus = false,
+    skipConfirmSfx = false,
+    onCloseQuizScene,
+  } = params;
+  if (!skipConfirmSfx) audioManager.playSfx('heal');
   const graph = activeOptions.overworldGraph ?? DEMO_OVERWORLD_GRAPH;
   let created = saveManager.createNewCampaignSave({
     lordSpeciesId,
