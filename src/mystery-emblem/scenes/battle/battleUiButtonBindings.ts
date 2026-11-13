@@ -22,7 +22,7 @@ import {
   cancelCombatForecast,
   confirmForecastAction,
 } from './battleHealForecastAndConfirm';
-import { dismissLevelUpModal } from './battleLevelUpModal';
+import { dismissLevelUpModal, dismissMoveLearnedModal } from './battleLevelUpModal';
 import {
   closeBattleScene,
   restartBattleMatch,
@@ -272,6 +272,16 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
     () => {
       audioManager.playSfx('select');
       dismissLevelUpModal(ctx);
+    },
+    { signal }
+  );
+  bindPointerTap(
+    dom.moveLearnedModalBackdropEl.querySelector<HTMLElement>(
+      '[data-testid="move-learned-continue-btn"]'
+    ),
+    () => {
+      audioManager.playSfx('select');
+      dismissMoveLearnedModal(ctx);
     },
     { signal }
   );

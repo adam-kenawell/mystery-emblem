@@ -2,7 +2,10 @@
  * Viewport Interactivity Gates, Selection Reset & Enemy Danger Area State
  */
 
-import { computeEnemyDangerArea } from '../../engine/terrainAndPathfinding';
+import {
+  computeEnemyDangerArea,
+  computeUnitMovementAndAttackRange,
+} from '../../engine/terrainAndPathfinding';
 import type { DungeonPrepOverlay } from '../../ui/DungeonPrepOverlay';
 import type { TutorialOverlay } from '../../ui/TutorialOverlay';
 import type { BattleDomRefs } from './battleDomShell';
@@ -21,6 +24,7 @@ export function canInteractWithBattleViewport(
     state.cutsceneInProgress ||
     state.systemMenuOpen ||
     !dom.levelUpModalBackdropEl.hidden ||
+    !dom.moveLearnedModalBackdropEl.hidden ||
     !dom.talkChoiceBackdropEl.hidden ||
     Boolean(tutorialOverlay?.isBlockingSceneInput())
   ) {
@@ -71,6 +75,34 @@ export function syncHudControls(state: BattleRuntimeState, dom: BattleDomRefs): 
   dom.fieldSaveBtnEl.title = saveBlock ?? '';
 }
 
+export function clearInspectedAllyRange(state: BattleRuntimeState): boolean {
+  const hadRange = state.inspectedAllyRangeUnitId !== null || state.inspectedAllyRange !== null;
+  state.inspectedAllyRangeUnitId = null;
+  state.inspectedAllyRange = null;
+  return hadRange;
+}
+
+export function toggleInspectedAllyRange(ctx: BattleControllerContext, unitId: string): void {
+  const { state, audioManager } = ctx;
+  if (state.inspectedAllyRangeUnitId === unitId) {
+    clearInspectedAllyRange(state);
+    audioManager.playSfx('cancel');
+    return;
+  }
+  const living = getLivingUnits(state);
+  const unit = living.find(
+    (u) => u.id === unitId && (u.faction === 'npc' || (u.faction === 'player' && u.waited))
+  );
+  if (!unit) {
+    clearInspectedAllyRange(state);
+    return;
+  }
+  state.inspectedAllyRangeUnitId = unit.id;
+  state.inspectedAllyRange = computeUnitMovementAndAttackRange(state.map, unit, living);
+  state.selectionPulseStartMs = performance.now();
+  audioManager.playSfx('select');
+}
+
 export function clearBattleSelection(
   state: BattleRuntimeState,
   dom: BattleDomRefs,
@@ -81,6 +113,7 @@ export function clearBattleSelection(
   state.uncommittedOrigin = null;
   state.originRangeSnapshot = null;
   state.currentRange = null;
+  clearInspectedAllyRange(state);
   state.previewPath = null;
   state.forecastMode = 'attack';
   state.forecastTargetId = null;
@@ -150,6 +183,7 @@ export function syncHoverDangerArea(ctx: BattleControllerContext): boolean {
   if (
     nextHoverEnemyId !== null &&
     !state.selectedUnitId &&
+    !state.inspectedAllyRangeUnitId &&
     !state.globalDangerEnabled &&
     state.trackedEnemyIds.size === 0
   ) {
@@ -162,7 +196,7 @@ export function syncHoverDangerArea(ctx: BattleControllerContext): boolean {
 export function toggleGlobalDangerArea(ctx: BattleControllerContext): void {
   const { state, audioManager } = ctx;
   state.globalDangerEnabled = !state.globalDangerEnabled;
-  if (state.globalDangerEnabled && !state.selectedUnitId) {
+  if (state.globalDangerEnabled && !state.selectedUnitId && !state.inspectedAllyRangeUnitId) {
     state.selectionPulseStartMs = performance.now();
   }
   audioManager.playSfx('select');
@@ -183,7 +217,7 @@ export function toggleIndividualEnemyDanger(
     if (state.suppressedHoverEnemyId === enemyId) {
       state.suppressedHoverEnemyId = null;
     }
-    if (!state.selectedUnitId) {
+    if (!state.selectedUnitId && !state.inspectedAllyRangeUnitId) {
       state.selectionPulseStartMs = performance.now();
     }
   }

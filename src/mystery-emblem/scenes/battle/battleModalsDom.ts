@@ -7,6 +7,8 @@ import { PmdPortraitView } from '../../ui/PmdSpriteCanvas';
 export interface BattleModalsDomRefs {
   levelUpModalBackdropEl: HTMLElement;
   levelUpPortraitView: PmdPortraitView;
+  moveLearnedModalBackdropEl: HTMLElement;
+  moveLearnedPortraitView: PmdPortraitView;
   systemMenuBackdropEl: HTMLElement;
   fieldMenuCardEl: HTMLElement;
   fieldDangerBtnEl: HTMLButtonElement;
@@ -101,9 +103,50 @@ export function createBattleModalsDom(): BattleModalsDomRefs {
     .querySelector('[data-levelup-portrait-slot]')
     ?.appendChild(levelUpPortraitView.canvas);
 
+  const moveLearnedPortraitView = new PmdPortraitView({
+    pixelScale: 1,
+    testId: 'move-learned-portrait',
+  });
+  const moveLearnedModalBackdropEl = document.createElement('div');
+  moveLearnedModalBackdropEl.className = 'pmd-battle-modal-backdrop';
+  moveLearnedModalBackdropEl.dataset.testid = 'battle-move-learned-modal';
+  moveLearnedModalBackdropEl.hidden = true;
+  moveLearnedModalBackdropEl.style.zIndex = '94';
+  moveLearnedModalBackdropEl.innerHTML = `
+    <div class="pmd-window pmd-window--gold pmd-battle-outcome-dialog" role="dialog" aria-modal="true" aria-label="New Move Learned" style="width:min(420px, 94vw);">
+      <span class="pmd-battle-kicker is-victory">NEW MOVE LEARNED!</span>
+      <div class="pmd-forecast-unit-head" style="justify-content:center; margin:0.35rem 0 0.5rem;">
+        <div class="pmd-forecast-portrait-slot" data-move-learned-portrait-slot></div>
+        <div class="pmd-forecast-unit-id" style="text-align:left;">
+          <strong class="pmd-forecast-unit-name" data-testid="move-learned-headline">-</strong>
+          <span class="pmd-forecast-unit-meta" data-testid="move-learned-subline">-</span>
+        </div>
+      </div>
+      <div class="pmd-prep-move-card" data-testid="move-learned-card" style="flex-direction:column; align-items:stretch; gap:0.4rem; margin-bottom:0.5rem; text-align:left;">
+        <div class="pmd-prep-move-title-line" style="justify-content:space-between;">
+          <strong data-testid="move-learned-name" style="color:#58f858;">-</strong>
+          <span class="pmd-prep-cat-tag" data-testid="move-learned-type-cat">-</span>
+        </div>
+        <div class="pmd-prep-stats-grid" data-testid="move-learned-stats-grid" style="grid-template-columns:repeat(5, minmax(0, 1fr));"></div>
+        <p class="pmd-subcard-text" data-testid="move-learned-description" style="margin:0.15rem 0 0; color:#e8f0f8;"></p>
+      </div>
+      <p class="pmd-subcard-text" data-testid="move-learned-equip-note" style="color:#ffd878; margin:0.2rem 0 0.55rem;">
+        Equip this move after the battle ends in the Units menu.
+      </p>
+      <div class="pmd-battle-outcome-actions">
+        <button type="button" class="pmd-btn pmd-btn-primary" data-testid="move-learned-continue-btn" style="min-height:44px;">Continue</button>
+      </div>
+    </div>
+  `;
+  moveLearnedModalBackdropEl
+    .querySelector('[data-move-learned-portrait-slot]')
+    ?.appendChild(moveLearnedPortraitView.canvas);
+
   return {
     levelUpModalBackdropEl,
     levelUpPortraitView,
+    moveLearnedModalBackdropEl,
+    moveLearnedPortraitView,
     systemMenuBackdropEl,
     fieldMenuCardEl: systemMenuBackdropEl.querySelector('[data-testid="dungeon-field-menu"]')!,
     fieldDangerBtnEl: systemMenuBackdropEl.querySelector('[data-testid="battle-field-danger"]')!,

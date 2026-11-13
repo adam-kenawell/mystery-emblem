@@ -124,6 +124,7 @@ export interface BattleSceneSnapshot {
   forecastMoveId: string | null;
   systemMenuOpen: boolean;
   levelUpModalOpen: boolean;
+  moveLearnedModalOpen: boolean;
   talkChoiceModalOpen: boolean;
   levelUpHistory: LevelUpResult[];
   collectedDrops: string[];
@@ -186,8 +187,10 @@ export interface BattleSceneSnapshot {
     defeated: boolean;
   }>;
   reachableCoords: string[];
+  traversedMoveCoords: string[];
   attackBorderCoords: string[];
   supportBorderCoords: string[];
   allAttackableCoords: string[];
   dangerCoords: string[];
+  inspectedAllyRangeUnitId: string | null;
 }

@@ -241,11 +241,16 @@ export function renderPrepAcquiredItemsInspector(params: {
         onMutated(`Used ${item.name} on ${selectedUnit.nickname}!`);
       });
     }
+  } else if (item.category === 'promotion') {
+    const matchingBranches = (selectedSp?.evolutions ?? []).filter((b) => b.requiredItemId === item.id);
+    const minLv = matchingBranches[0]?.minLevel;
+    actionBtn.className = 'pmd-btn pmd-chip-btn';
+    actionBtn.textContent = minLv ? `Lv. ${minLv}+` : 'Incompatible';
+    actionBtn.disabled = true;
   }
 
   const actionsWrap = document.createElement('div');
   actionsWrap.className = 'pmd-prep-move-actions';
-  actionsWrap.appendChild(actionBtn);
 
   if (
     (item.id === 'evolution_stone' || item.id === 'evolution_gem') &&
@@ -255,6 +260,9 @@ export function renderPrepAcquiredItemsInspector(params: {
     const eligibleBranches = selectedSp.evolutions.filter(
       (b) => b.requiredItemId === item.id && selectedUnit.level >= b.minLevel
     );
+    if (eligibleBranches.length === 0) {
+      actionsWrap.appendChild(actionBtn);
+    }
     for (const branch of eligibleBranches) {
       const targetSp = getSpeciesById(branch.targetSpeciesId);
       const usePromoBtn = document.createElement('button');
@@ -281,6 +289,8 @@ export function renderPrepAcquiredItemsInspector(params: {
       });
       actionsWrap.appendChild(usePromoBtn);
     }
+  } else {
+    actionsWrap.appendChild(actionBtn);
   }
 
   inspectorEl.append(mainEl, actionsWrap);

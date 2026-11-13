@@ -50,6 +50,7 @@ import {
 } from '../state/SaveStateManager';
 import { InMemoryCloudSyncAdapter } from '../state/firebaseSync';
 import { PmdPortraitView, PmdSpriteActor } from '../ui/PmdSpriteCanvas';
+import { grantExpAndHandleLevelUps } from '../scenes/battle/battleLevelUpModal';
 import type { AppRuntimeContext } from './appContext';
 import type { SceneRouter } from './sceneRouterController';
 
@@ -114,5 +115,6 @@ export function installMysteryEmblemDebugBridge(
     getTerrainMoveCost,
     getTerrainBonuses,
     computeUnitMovementAndAttackRange,
+    grantExpAndHandleLevelUps,
   };
 }

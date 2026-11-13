@@ -6,7 +6,11 @@ import {
   createInitialPrepDeploymentSlots,
   getMapDeploymentCap,
 } from '../../engine/battleSetup';
-import { toggleIndividualEnemyDanger } from './battleDangerAndViewportState';
+import {
+  clearInspectedAllyRange,
+  toggleIndividualEnemyDanger,
+  toggleInspectedAllyRange,
+} from './battleDangerAndViewportState';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { getActivePrepSaveManager, rebuildPrepBattleUnits } from './battlePrepAndAssets';
 import type { BattleControllerContext } from './battleTypesAndState';
@@ -74,6 +78,7 @@ export function handlePrepViewMapTileTap(
 
   if (state.prepSwapSlotIndex === null) {
     if (clickedSlot && clickedSlot.unitInstanceId) {
+      clearInspectedAllyRange(state);
       state.prepSwapSlotIndex = clickedSlot.slotIndex;
       state.selectionPulseStartMs = performance.now();
       audioManager.playSfx('select');
@@ -86,9 +91,11 @@ export function handlePrepViewMapTileTap(
     }
 
     if (clickedSlot) {
+      clearInspectedAllyRange(state);
       audioManager.playSfx('dialogue_advance');
       state.prepMapStatusNotice = 'Open blue tile - tap a unit first.';
       updateBattleInfoStrip(ctx);
+      ctx.onLayerStateChanged();
       ctx.renderNow();
       return;
     }
@@ -98,6 +105,12 @@ export function handlePrepViewMapTileTap(
     if (tappedEnemy) {
       audioManager.playSfx('select');
       toggleIndividualEnemyDanger(ctx, tappedEnemy.id);
+    } else if (livingOcc && livingOcc.faction === 'npc') {
+      toggleInspectedAllyRange(ctx, livingOcc.id);
+      ctx.onLayerStateChanged();
+    } else if (clearInspectedAllyRange(state)) {
+      audioManager.playSfx('cancel');
+      ctx.onLayerStateChanged();
     } else {
       audioManager.playSfx('dialogue_advance');
     }

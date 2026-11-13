@@ -24,13 +24,13 @@ export interface MovementRangeResult {
   effectiveMov: number;
   /** Legal Blue stopping tiles (`key = "x,y"`), excluding ally-occupied tiles (except unit's own origin) */
   reachableTiles: Map<string, ReachableTileInfo>;
-  /** Full minimum-cost table including pass-through allied tiles */
+  /** Full minimum-cost table including pass-through allied tiles (rendered as the Blue movement zone) */
   traversedCosts: Map<string, number>;
-  /** Red enemy-targetable tiles outside `reachableTiles` */
+  /** Red enemy-targetable tiles outside `traversedCosts` reachable from any legal stopping tile */
   attackBorderTiles: Set<string>;
   /** Complete set of tiles this unit can strike with enemy-targeting moves from any reachable tile */
   allAttackableTiles: Set<string>;
-  /** Green ally-support/heal tiles outside `reachableTiles` and `attackBorderTiles` */
+  /** Green ally-support/heal tiles outside `traversedCosts` reachable from any legal stopping tile (independent of `attackBorderTiles`) */
   supportBorderTiles: Set<string>;
 }
 
@@ -142,7 +142,7 @@ export function computeUnitMovementAndAttackRange(
             if (!isInMapBounds(map, tx, ty)) continue;
             const tKey = coordKey(tx, ty);
             allAttackableTiles.add(tKey);
-            if (!reachableTiles.has(tKey)) {
+            if (!traversedCosts.has(tKey)) {
               attackBorderTiles.add(tKey);
             }
           }
@@ -159,7 +159,7 @@ export function computeUnitMovementAndAttackRange(
             const ty = stopTile.y + dy;
             if (!isInMapBounds(map, tx, ty)) continue;
             const tKey = coordKey(tx, ty);
-            if (!reachableTiles.has(tKey) && !attackBorderTiles.has(tKey)) {
+            if (!traversedCosts.has(tKey)) {
               supportBorderTiles.add(tKey);
             }
           }

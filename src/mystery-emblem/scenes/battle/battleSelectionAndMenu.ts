@@ -4,12 +4,15 @@
 
 import { directionFromDelta } from '../../assets/pmdAssetLoader';
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
-import { getItemById } from '../../data/index';
 import type { BattleUnitState } from '../../engine/combatEngine';
 import type { AStarPathStep } from '../../engine/terrainAndPathfinding';
 import { createMiniItemIcon } from '../../ui/PmdItemIconGrid';
 import { getDanceableTargetsFromCurrentTile } from './battleDanceController';
-import { syncHudControls, syncPrepChromeVisibility } from './battleDangerAndViewportState';
+import {
+  clearInspectedAllyRange,
+  syncHudControls,
+  syncPrepChromeVisibility,
+} from './battleDangerAndViewportState';
 import { getTalkableTargetsFromCurrentTile } from './battleEventRunner';
 import { updateBattleInfoStrip } from './battleHudCards';
 import {
@@ -29,6 +32,7 @@ import {
 
 export function selectPlayerUnit(ctx: BattleControllerContext, unit: BattleUnitState): void {
   const { state, dom, audioManager, tutorialOverlay } = ctx;
+  clearInspectedAllyRange(state);
   state.selectedUnitId = unit.id;
   state.touchInspectedUnitId = state.hoveredTile === null ? unit.id : null;
   state.interactionState = 'unit_selected';
@@ -145,8 +149,6 @@ export function openFloatingCommandMenu(
   dom.cmdDanceBtnEl.hidden = danceTargets.length === 0;
   dom.cmdItemBtnEl.hidden = !canUseItem;
   if (canUseItem && unit.consumableItemId) {
-    const heldItem = getItemById(unit.consumableItemId);
-    const labelText = heldItem?.category === 'promotion' ? 'Evolve!' : 'Item';
     dom.cmdItemBtnEl.innerHTML = '';
     dom.cmdItemBtnEl.appendChild(
       createMiniItemIcon(unit.consumableItemId, {
@@ -156,7 +158,7 @@ export function openFloatingCommandMenu(
       })
     );
     const lblSpan = document.createElement('span');
-    lblSpan.textContent = labelText;
+    lblSpan.textContent = 'Item';
     dom.cmdItemBtnEl.appendChild(lblSpan);
   } else {
     dom.cmdItemBtnEl.textContent = 'Item';

@@ -13,6 +13,7 @@ import {
 } from '../../engine/battleSetup';
 import { DungeonPrepOverlay } from '../../ui/DungeonPrepOverlay';
 import {
+  clearInspectedAllyRange,
   syncPrepChromeVisibility,
   toggleGlobalDangerArea,
 } from './battleDangerAndViewportState';
@@ -44,6 +45,7 @@ export function createBattlePrepOverlay(
     state.prepSwapSlotIndex = null;
     state.prepMapStatusNotice = null;
     state.touchInspectedUnitId = null;
+    clearInspectedAllyRange(state);
     syncPrepChromeVisibility(state, dom, overlayRef);
     updateBattleInfoStrip(ctx);
     ctx.renderNow();

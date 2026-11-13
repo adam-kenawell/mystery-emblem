@@ -32,7 +32,7 @@ import {
   triggerPrepHubTutorials,
 } from './battleTutorialIntegration';
 import type { BattleControllerContext, BattleRuntimeState } from './battleTypesAndState';
-import { getLordUnit } from './battleUnitQueries';
+import { getActiveInspectedAllyRange, getLordUnit } from './battleUnitQueries';
 import { applyBattleSuspendSnapshot, parseBattleSuspendJson } from './battleSuspend';
 
 function hydrateBattleRulesFromMap(state: BattleRuntimeState): void {
@@ -50,15 +50,26 @@ function hydrateBattleRulesFromMap(state: BattleRuntimeState): void {
 export function hasBattleActiveSubLayer(ctx: BattleControllerContext): boolean {
   const { state, dom, prepOverlay } = ctx;
   if (!state.openState) return false;
-  if (!dom.levelUpModalBackdropEl.hidden || !dom.talkChoiceBackdropEl.hidden) return true;
+  if (
+    !dom.levelUpModalBackdropEl.hidden ||
+    !dom.moveLearnedModalBackdropEl.hidden ||
+    !dom.talkChoiceBackdropEl.hidden
+  ) {
+    return true;
+  }
   if (state.systemMenuOpen) return true;
   if (state.phase === 'dungeon_prep') {
-    return state.prepSwapSlotIndex !== null || prepOverlay.hasActiveSubLayer();
+    return (
+      state.prepSwapSlotIndex !== null ||
+      getActiveInspectedAllyRange(state) !== null ||
+      prepOverlay.hasActiveSubLayer()
+    );
   }
   return (
     state.interactionState === 'combat_forecast' ||
     state.interactionState === 'action_menu' ||
-    state.interactionState === 'unit_selected'
+    state.interactionState === 'unit_selected' ||
+    (state.interactionState === 'idle' && getActiveInspectedAllyRange(state) !== null)
   );
 }
 

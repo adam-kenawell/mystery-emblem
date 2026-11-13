@@ -18,6 +18,7 @@ import {
 } from './battleBannersAndTransitions';
 import {
   clearBattleSelection,
+  clearInspectedAllyRange,
   recomputeDangerArea,
   syncHudControls,
   syncPrepChromeVisibility,
@@ -52,6 +53,12 @@ export function hideAllBattleModals(ctx: BattleControllerContext): void {
   if (state.levelUpResolver) {
     const resolve = state.levelUpResolver;
     state.levelUpResolver = null;
+    resolve();
+  }
+  dom.moveLearnedModalBackdropEl.hidden = true;
+  if (state.moveLearnedResolver) {
+    const resolve = state.moveLearnedResolver;
+    state.moveLearnedResolver = null;
     resolve();
   }
   dom.systemMenuBackdropEl.hidden = true;
@@ -107,6 +114,7 @@ export function rebuildPrepBattleUnits(ctx: BattleControllerContext): void {
   const { state, saveManager } = ctx;
   const activeSave = getActivePrepSaveManager(state, saveManager).getSave();
   if (!activeSave) return;
+  clearInspectedAllyRange(state);
   state.units = buildBattleUnitsFromPrepDeployment(
     state.map,
     activeSave.roster,

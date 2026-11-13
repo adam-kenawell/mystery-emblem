@@ -3,7 +3,10 @@
  */
 
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
-import { isInMapBounds } from '../../engine/terrainAndPathfinding';
+import {
+  computeUnitMovementAndAttackRange,
+  isInMapBounds,
+} from '../../engine/terrainAndPathfinding';
 import {
   dismissBeginBattleCard,
   isPhaseTransitionPlaying,
@@ -11,6 +14,7 @@ import {
 } from './battleBannersAndTransitions';
 import {
   clearBattleSelection,
+  clearInspectedAllyRange,
   recomputeDangerArea,
   syncHudControls,
   syncPrepChromeVisibility,
@@ -24,7 +28,7 @@ import {
 import { spawnFloatingText } from './battleFloatingCallouts';
 import { cancelCombatForecast } from './battleHealForecastAndConfirm';
 import { updateBattleInfoStrip } from './battleHudCards';
-import { dismissLevelUpModal } from './battleLevelUpModal';
+import { dismissLevelUpModal, dismissMoveLearnedModal } from './battleLevelUpModal';
 import { triggerVictoryModal } from './battleOutcomeModals';
 import { confirmEnterDungeonFromPrep } from './battlePrepAndAssets';
 import { cancelUncommittedMove } from './battleSelectionAndMenu';
@@ -32,7 +36,9 @@ import { dismissTalkChoiceModal } from './battleTalkChoiceModal';
 import { getExpectedTutorialAction } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
+  getActiveInspectedAllyRange,
   getLivingEnemies,
+  getLivingUnits,
   recomputeSelectedUnitRange,
 } from './battleUnitQueries';
 
@@ -52,6 +58,11 @@ export function handleBattleMenuOrBack(
 
   if (!dom.levelUpModalBackdropEl.hidden) {
     dismissLevelUpModal(ctx);
+    return;
+  }
+
+  if (!dom.moveLearnedModalBackdropEl.hidden) {
+    dismissMoveLearnedModal(ctx);
     return;
   }
 
@@ -117,6 +128,13 @@ export function handleBattleMenuOrBack(
       ctx.renderNow();
       return;
     }
+    if (getActiveInspectedAllyRange(state) !== null && clearInspectedAllyRange(state)) {
+      audioManager.playSfx('cancel');
+      updateBattleInfoStrip(ctx);
+      ctx.onLayerStateChanged();
+      ctx.renderNow();
+      return;
+    }
     if (prepOverlay.handleBack()) {
       syncPrepChromeVisibility(state, dom, prepOverlay);
       ctx.onLayerStateChanged();
@@ -150,6 +168,14 @@ export function handleBattleMenuOrBack(
   if (state.interactionState === 'unit_selected') {
     audioManager.playSfx('cancel');
     clearBattleSelection(state, dom, prepOverlay);
+    updateBattleInfoStrip(ctx);
+    ctx.onLayerStateChanged();
+    ctx.renderNow();
+    return;
+  }
+
+  if (getActiveInspectedAllyRange(state) !== null && clearInspectedAllyRange(state)) {
+    audioManager.playSfx('cancel');
     updateBattleInfoStrip(ctx);
     ctx.onLayerStateChanged();
     ctx.renderNow();
@@ -194,6 +220,15 @@ export function forceUnitPositionForTest(
   recomputeDangerArea(ctx);
   if (state.selectedUnitId === unitId) {
     recomputeSelectedUnitRange(state);
+  }
+  if (state.inspectedAllyRangeUnitId) {
+    const living = getLivingUnits(state);
+    const inspected = living.find((item) => item.id === state.inspectedAllyRangeUnitId);
+    if (inspected && (inspected.faction === 'npc' || (inspected.faction === 'player' && inspected.waited))) {
+      state.inspectedAllyRange = computeUnitMovementAndAttackRange(state.map, inspected, living);
+    } else {
+      clearInspectedAllyRange(state);
+    }
   }
   updateBattleInfoStrip(ctx);
   ctx.renderNow();

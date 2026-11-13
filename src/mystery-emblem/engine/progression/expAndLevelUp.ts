@@ -2,7 +2,6 @@
  * Tactical EXP Formula, Manual Growth Stat Roll & Level-Up Engine
  */
 
-import { autoEquipNewMoveIfSlotEmpty } from '../../data/equippedMoves';
 import { getMoveById, getSpeciesById } from '../../data/index';
 import type {
   PokemonSpeciesDefinition,
@@ -215,13 +214,6 @@ export function awardBattleUnitExp(
 
     for (const moveId of rolled.newlyLearnedMoveIds) {
       unlockedSet.add(moveId);
-      if (unit.activeMoves.length < 4 && !unit.activeMoves.some((m) => m.id === moveId)) {
-        const slot = buildMoveSlotForLearnedMove(moveId);
-        if (slot) {
-          unit.activeMoves.push(slot);
-          autoEquipNewMoveIfSlotEmpty(unit, slot.id);
-        }
-      }
     }
 
     const canPromoteWithStoneNow = species.evolutions.some(

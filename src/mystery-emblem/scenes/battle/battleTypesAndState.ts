@@ -133,6 +133,7 @@ export interface BattleRuntimeState {
   skipPrepPhase: boolean;
   levelUpHistory: LevelUpResult[];
   levelUpResolver: (() => void) | null;
+  moveLearnedResolver: (() => void) | null;
   cutsceneInProgress: boolean;
   currentOnDungeonEnteredBeforePrep: (() => Promise<void>) | undefined;
   currentOnBeforeVictoryModal: (() => Promise<void>) | undefined;
@@ -155,6 +156,8 @@ export interface BattleRuntimeState {
   prepMapStatusNotice: string | null;
   previewPath: AStarPathStep[] | null;
   currentRange: MovementRangeResult | null;
+  inspectedAllyRangeUnitId: string | null;
+  inspectedAllyRange: MovementRangeResult | null;
   uncommittedOrigin: { unitId: string; x: number; y: number; direction: PmdDirection } | null;
   originRangeSnapshot: MovementRangeResult | null;
   forecastMode: 'attack' | 'heal';
@@ -235,6 +238,7 @@ export function createInitialBattleRuntimeState(): BattleRuntimeState {
     skipPrepPhase: false,
     levelUpHistory: [],
     levelUpResolver: null,
+    moveLearnedResolver: null,
     cutsceneInProgress: false,
     currentOnDungeonEnteredBeforePrep: undefined,
     currentOnBeforeVictoryModal: undefined,
@@ -257,6 +261,8 @@ export function createInitialBattleRuntimeState(): BattleRuntimeState {
     prepMapStatusNotice: null,
     previewPath: null,
     currentRange: null,
+    inspectedAllyRangeUnitId: null,
+    inspectedAllyRange: null,
     uncommittedOrigin: null,
     originRangeSnapshot: null,
     forecastMode: 'attack',

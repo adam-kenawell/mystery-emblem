@@ -13,12 +13,15 @@ import { coordKey } from '../../engine/terrainAndPathfinding';
 import { syncFloatingCalloutDom } from './battleFloatingCallouts';
 import {
   drawConnectedRangeZone,
+  drawUnitRangeEnvelope,
+  getDangerAreaPulse,
   getSelectionRangePulse,
   lerpRgba,
+  splitDangerZoneLayers,
 } from './battleRangeZonePainter';
 import { resolveTutorialSpotlightTiles } from './battleTutorialIntegration';
 import { RANGE_PULSE_PERIOD_MS, type BattleControllerContext } from './battleTypesAndState';
-import { getSeizeObjectiveCoords } from './battleUnitQueries';
+import { getActiveInspectedAllyRange, getSeizeObjectiveCoords } from './battleUnitQueries';
 import { renderUnitsAndStrikeVfx } from './battleUnitSpriteRenderer';
 
 export function renderBattleFrame(ctxObj: BattleControllerContext, now: number): void {
@@ -70,31 +73,36 @@ export function renderBattleFrame(ctxObj: BattleControllerContext, now: number):
   const visibleBounds = { startCol, endCol, startRow, endRow };
 
   if (state.currentDanger.combinedDangerTiles.size > 0) {
-    const dangerPulse = getSelectionRangePulse(state, now);
-    drawConnectedRangeZone(
-      ctx,
-      cameraX,
-      cameraY,
-      state.currentDanger.combinedDangerTiles,
-      state.currentDanger.combinedDangerTiles,
-      {
-        fillRgba: lerpRgba([196, 28, 128, 0.2], [255, 112, 196, 0.42], dangerPulse),
-        outerBorderRgba: lerpRgba([236, 72, 172, 0.9], [255, 204, 236, 1.0], dangerPulse),
-        innerGlowRgba: lerpRgba([216, 48, 148, 0.34], [255, 152, 214, 0.66], dangerPulse),
-      },
-      visibleBounds
+    const dangerPulse = getDangerAreaPulse(state, now);
+    const { globalOnlyTiles, individualTiles, combinedBoundaryMask } = splitDangerZoneLayers(
+      state.currentDanger
     );
-    if (state.currentDanger.individualDangerTiles.size > 0) {
+    if (globalOnlyTiles.size > 0) {
       drawConnectedRangeZone(
         ctx,
         cameraX,
         cameraY,
-        state.currentDanger.individualDangerTiles,
-        state.currentDanger.individualDangerTiles,
+        globalOnlyTiles,
+        combinedBoundaryMask,
         {
-          fillRgba: lerpRgba([228, 36, 116, 0.24], [255, 136, 192, 0.46], dangerPulse),
-          outerBorderRgba: lerpRgba([252, 88, 160, 0.94], [255, 220, 238, 1.0], dangerPulse),
-          innerGlowRgba: lerpRgba([240, 56, 136, 0.38], [255, 172, 212, 0.7], dangerPulse),
+          fillRgba: lerpRgba([176, 36, 148, 0.1], [220, 88, 188, 0.16], dangerPulse),
+          outerBorderRgba: lerpRgba([216, 76, 180, 0.48], [244, 156, 218, 0.66], dangerPulse),
+          innerGlowRgba: lerpRgba([196, 56, 164, 0.14], [236, 120, 204, 0.24], dangerPulse),
+        },
+        visibleBounds
+      );
+    }
+    if (individualTiles.size > 0) {
+      drawConnectedRangeZone(
+        ctx,
+        cameraX,
+        cameraY,
+        individualTiles,
+        individualTiles,
+        {
+          fillRgba: lerpRgba([198, 40, 140, 0.14], [240, 100, 188, 0.22], dangerPulse),
+          outerBorderRgba: lerpRgba([236, 84, 174, 0.62], [252, 176, 224, 0.8], dangerPulse),
+          innerGlowRgba: lerpRgba([216, 60, 158, 0.2], [248, 136, 204, 0.32], dangerPulse),
         },
         visibleBounds
       );
@@ -141,60 +149,28 @@ export function renderBattleFrame(ctxObj: BattleControllerContext, now: number):
     }
   }
 
-  if (
-    state.currentRange &&
-    (state.interactionState === 'unit_selected' || state.interactionState === 'walking')
-  ) {
-    const pulse = getSelectionRangePulse(state, now);
-    const reachableSet = new Set<string>(state.currentRange.reachableTiles.keys());
-
-    if (state.currentRange.supportBorderTiles.size > 0) {
-      const supportUnion = new Set<string>(reachableSet);
-      for (const k of state.currentRange.supportBorderTiles) supportUnion.add(k);
-      drawConnectedRangeZone(
-        ctx,
-        cameraX,
-        cameraY,
-        state.currentRange.supportBorderTiles,
-        supportUnion,
-        {
-          fillRgba: lerpRgba([28, 184, 96, 0.15], [132, 255, 188, 0.36], pulse),
-          outerBorderRgba: lerpRgba([72, 228, 140, 0.88], [212, 255, 232, 1.0], pulse),
-          innerGlowRgba: lerpRgba([48, 212, 120, 0.28], [168, 255, 208, 0.6], pulse),
-        },
-        visibleBounds
-      );
-    }
-
-    if (state.currentRange.attackBorderTiles.size > 0) {
-      const attackUnion = new Set<string>(reachableSet);
-      for (const k of state.currentRange.attackBorderTiles) attackUnion.add(k);
-      drawConnectedRangeZone(
-        ctx,
-        cameraX,
-        cameraY,
-        state.currentRange.attackBorderTiles,
-        attackUnion,
-        {
-          fillRgba: lerpRgba([212, 36, 56, 0.16], [255, 132, 144, 0.38], pulse),
-          outerBorderRgba: lerpRgba([244, 80, 96, 0.88], [255, 208, 214, 1.0], pulse),
-          innerGlowRgba: lerpRgba([232, 56, 76, 0.3], [255, 168, 178, 0.62], pulse),
-        },
-        visibleBounds
-      );
-    }
-
-    drawConnectedRangeZone(
+  const canShowInspectedRange =
+    !state.cutsceneInProgress &&
+    state.interactionState === 'idle' &&
+    (state.phase === 'player_phase' ||
+      (state.phase === 'dungeon_prep' &&
+        prepOverlay.isOpen() &&
+        prepOverlay.getSubMode() === 'view_map' &&
+        state.prepSwapSlotIndex === null));
+  const activeRange =
+    state.interactionState === 'unit_selected' || state.interactionState === 'walking'
+      ? state.currentRange
+      : canShowInspectedRange
+        ? getActiveInspectedAllyRange(state)
+        : null;
+  if (activeRange) {
+    drawUnitRangeEnvelope(
       ctx,
       cameraX,
       cameraY,
-      reachableSet,
-      reachableSet,
-      {
-        fillRgba: lerpRgba([24, 128, 236, 0.16], [132, 232, 255, 0.38], pulse),
-        outerBorderRgba: lerpRgba([64, 184, 252, 0.88], [216, 252, 255, 1.0], pulse),
-        innerGlowRgba: lerpRgba([44, 156, 248, 0.3], [164, 242, 255, 0.62], pulse),
-      },
+      activeRange,
+      state.selectionPulseStartMs,
+      now,
       visibleBounds
     );
   }

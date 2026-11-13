@@ -4,8 +4,15 @@
 
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
 import type { BattleUnitState } from '../../engine/combatEngine';
-import { coordKey, parseCoordKey } from '../../engine/terrainAndPathfinding';
+import {
+  coordKey,
+  parseCoordKey,
+  type DangerAreaResult,
+  type MovementRangeResult,
+} from '../../engine/terrainAndPathfinding';
 import { RANGE_PULSE_PERIOD_MS, type BattleRuntimeState } from './battleTypesAndState';
+
+export const ALTERNATING_RANGE_HALF_PERIOD_MS = RANGE_PULSE_PERIOD_MS;
 
 type RgbaTuple = readonly [number, number, number, number];
 
@@ -18,10 +25,49 @@ export function lerpRgba(from: RgbaTuple, to: RgbaTuple, t: number): string {
   return `rgba(${lerpChannel(from[0], to[0], t)}, ${lerpChannel(from[1], to[1], t)}, ${lerpChannel(from[2], to[2], t)}, ${alpha})`;
 }
 
-export function getSelectionRangePulse(state: BattleRuntimeState, now: number): number {
+export function getSelectionRangePulse(
+  state: Pick<BattleRuntimeState, 'selectionPulseStartMs'>,
+  now: number
+): number {
   const elapsed = Math.max(0, now - state.selectionPulseStartMs);
   const phase = ((elapsed % RANGE_PULSE_PERIOD_MS) / RANGE_PULSE_PERIOD_MS) * Math.PI * 2;
   return 0.5 - 0.5 * Math.cos(phase);
+}
+
+export function getDangerAreaPulse(
+  state: Pick<BattleRuntimeState, 'selectionPulseStartMs'>,
+  now: number
+): number {
+  return 1 - getSelectionRangePulse(state, now);
+}
+
+export function resolveAlternatingSupportAttackBeat(
+  pulseStartMs: number,
+  now: number
+): { activeKind: 'attack' | 'support'; pulse: number } {
+  const elapsed = Math.max(0, now - pulseStartMs);
+  const fullPeriod = ALTERNATING_RANGE_HALF_PERIOD_MS * 2;
+  const activeKind = elapsed % fullPeriod < ALTERNATING_RANGE_HALF_PERIOD_MS ? 'attack' : 'support';
+  const pulse = getSelectionRangePulse({ selectionPulseStartMs: pulseStartMs }, now);
+  return { activeKind, pulse };
+}
+
+export function splitDangerZoneLayers(danger: DangerAreaResult): {
+  globalOnlyTiles: Set<string>;
+  individualTiles: ReadonlySet<string>;
+  combinedBoundaryMask: ReadonlySet<string>;
+} {
+  const globalOnlyTiles = new Set<string>();
+  for (const key of danger.globalDangerTiles) {
+    if (!danger.individualDangerTiles.has(key)) {
+      globalOnlyTiles.add(key);
+    }
+  }
+  return {
+    globalOnlyTiles,
+    individualTiles: danger.individualDangerTiles,
+    combinedBoundaryMask: danger.combinedDangerTiles,
+  };
 }
 
 export function drawConnectedRangeZone(
@@ -159,4 +205,86 @@ export function drawUnitGroundShadow(
   ctx.fillRect(cx - halfW + 2, cy + 2, innerSpan, 1);
   ctx.fillRect(cx - halfW, cy - 1, 2, 3);
   ctx.fillRect(cx + halfW - 2, cy - 1, 2, 3);
+}
+
+function buildUnionBoundaryMask(
+  baseSet: ReadonlySet<string>,
+  borderSet: ReadonlySet<string>
+): Set<string> {
+  const union = new Set<string>(baseSet);
+  for (const key of borderSet) union.add(key);
+  return union;
+}
+
+export function drawUnitRangeEnvelope(
+  ctx: CanvasRenderingContext2D,
+  cameraX: number,
+  cameraY: number,
+  range: MovementRangeResult,
+  pulseStartMs: number,
+  now: number,
+  bounds: {
+    startCol: number;
+    endCol: number;
+    startRow: number;
+    endRow: number;
+  }
+): void {
+  const blueMoveSet = new Set<string>(range.traversedCosts.keys());
+  const movePulse = getSelectionRangePulse({ selectionPulseStartMs: pulseStartMs }, now);
+  const hasAttack = range.attackBorderTiles.size > 0;
+  const hasSupport = range.supportBorderTiles.size > 0;
+
+  let activeBorderKind: 'attack' | 'support' | null = null;
+  if (hasAttack && hasSupport) {
+    activeBorderKind = resolveAlternatingSupportAttackBeat(pulseStartMs, now).activeKind;
+  } else if (hasSupport) {
+    activeBorderKind = 'support';
+  } else if (hasAttack) {
+    activeBorderKind = 'attack';
+  }
+
+  if (activeBorderKind === 'support') {
+    drawConnectedRangeZone(
+      ctx,
+      cameraX,
+      cameraY,
+      range.supportBorderTiles,
+      buildUnionBoundaryMask(blueMoveSet, range.supportBorderTiles),
+      {
+        fillRgba: lerpRgba([28, 184, 96, 0.15], [132, 255, 188, 0.36], movePulse),
+        outerBorderRgba: lerpRgba([72, 228, 140, 0.88], [212, 255, 232, 1.0], movePulse),
+        innerGlowRgba: lerpRgba([48, 212, 120, 0.28], [168, 255, 208, 0.6], movePulse),
+      },
+      bounds
+    );
+  } else if (activeBorderKind === 'attack') {
+    drawConnectedRangeZone(
+      ctx,
+      cameraX,
+      cameraY,
+      range.attackBorderTiles,
+      buildUnionBoundaryMask(blueMoveSet, range.attackBorderTiles),
+      {
+        fillRgba: lerpRgba([212, 36, 56, 0.16], [255, 132, 144, 0.38], movePulse),
+        outerBorderRgba: lerpRgba([244, 80, 96, 0.88], [255, 208, 214, 1.0], movePulse),
+        innerGlowRgba: lerpRgba([232, 56, 76, 0.3], [255, 168, 178, 0.62], movePulse),
+      },
+      bounds
+    );
+  }
+
+  drawConnectedRangeZone(
+    ctx,
+    cameraX,
+    cameraY,
+    blueMoveSet,
+    blueMoveSet,
+    {
+      fillRgba: lerpRgba([24, 128, 236, 0.16], [132, 232, 255, 0.38], movePulse),
+      outerBorderRgba: lerpRgba([64, 184, 252, 0.88], [216, 252, 255, 1.0], movePulse),
+      innerGlowRgba: lerpRgba([44, 156, 248, 0.3], [164, 242, 255, 0.62], movePulse),
+    },
+    bounds
+  );
 }

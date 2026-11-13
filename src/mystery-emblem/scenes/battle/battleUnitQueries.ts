@@ -12,11 +12,11 @@ import {
   type BattleMoveSlot,
   type BattleUnitState,
 } from '../../engine/combatEngine';
-import { getEligibleEvolutionBranches } from '../../engine/progressionEngine';
 import {
   computeUnitMovementAndAttackRange,
   coordKey,
   getEffectiveMovementPoints,
+  type MovementRangeResult,
 } from '../../engine/terrainAndPathfinding';
 import type { DungeonPrepOverlay } from '../../ui/DungeonPrepOverlay';
 import { computeDungeonCameraBounds } from '../../ui/gridViewportMath';
@@ -121,6 +121,17 @@ export function recomputeSelectedUnitRange(state: BattleRuntimeState): void {
   state.currentRange = computeUnitMovementAndAttackRange(state.map, unit, getLivingUnits(state));
 }
 
+export function getActiveInspectedAllyRange(state: BattleRuntimeState): MovementRangeResult | null {
+  if (!state.inspectedAllyRangeUnitId) return null;
+  const unit = getLivingUnits(state).find((u) => u.id === state.inspectedAllyRangeUnitId);
+  if (!unit || !(unit.faction === 'npc' || (unit.faction === 'player' && unit.waited))) {
+    state.inspectedAllyRangeUnitId = null;
+    state.inspectedAllyRange = null;
+    return null;
+  }
+  return state.inspectedAllyRange;
+}
+
 export function getAttackableEnemiesFromCurrentTile(
   state: BattleRuntimeState,
   unit: BattleUnitState
@@ -155,9 +166,6 @@ export function canUseUnitEquippedConsumable(unit: BattleUnitState): boolean {
   const item = getItemById(unit.consumableItemId);
   if (!item) return false;
   if (item.category === 'x_item') return true;
-  if (item.category === 'promotion') {
-    return getEligibleEvolutionBranches(unit.speciesId, unit.level, item.id).length > 0;
-  }
   if (item.category === 'consumable') {
     const canHeal =
       Boolean(item.effect.healFlat || item.effect.healFull) && unit.currentHp < unit.maxHp;
@@ -183,6 +191,8 @@ export function buildBattleSceneSnapshot(
   prepOverlay: DungeonPrepOverlay
 ): BattleSceneSnapshot {
   const bounds = computeDungeonCameraBounds(state.map.width, state.map.height, state.cam);
+  const activeInspectedRange = getActiveInspectedAllyRange(state);
+  const effectiveRange = state.currentRange ?? activeInspectedRange;
   return {
     isOpen: state.openState,
     phase: state.phase,
@@ -203,6 +213,7 @@ export function buildBattleSceneSnapshot(
     forecastMoveId: state.forecastMoveId,
     systemMenuOpen: state.systemMenuOpen,
     levelUpModalOpen: !dom.levelUpModalBackdropEl.hidden,
+    moveLearnedModalOpen: !dom.moveLearnedModalBackdropEl.hidden,
     talkChoiceModalOpen: !dom.talkChoiceBackdropEl.hidden,
     levelUpHistory: state.levelUpHistory.map((h) => ({
       ...h,
@@ -271,9 +282,11 @@ export function buildBattleSceneSnapshot(
       defeated: u.defeated,
     })),
     reachableCoords: state.currentRange ? [...state.currentRange.reachableTiles.keys()] : [],
+    traversedMoveCoords: effectiveRange ? [...effectiveRange.traversedCosts.keys()] : [],
     attackBorderCoords: state.currentRange ? [...state.currentRange.attackBorderTiles] : [],
     supportBorderCoords: state.currentRange ? [...state.currentRange.supportBorderTiles] : [],
     allAttackableCoords: state.currentRange ? [...state.currentRange.allAttackableTiles] : [],
     dangerCoords: [...state.currentDanger.combinedDangerTiles],
+    inspectedAllyRangeUnitId: activeInspectedRange ? state.inspectedAllyRangeUnitId : null,
   };
 }

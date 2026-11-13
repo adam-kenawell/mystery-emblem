@@ -219,6 +219,7 @@ export function createBattleDomShell(): BattleDomRefs {
     talkChoiceBackdropEl,
     forecastDom.forecastModalBackdropEl,
     modalsDom.levelUpModalBackdropEl,
+    modalsDom.moveLearnedModalBackdropEl,
     modalsDom.systemMenuBackdropEl,
     modalsDom.victoryModalBackdropEl,
     modalsDom.defeatModalBackdropEl

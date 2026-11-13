@@ -74,7 +74,11 @@ export function getBattleSaveBlockReason(
   if (isPhaseTransitionPlaying(state) || state.beginBattleResolver !== null) {
     return 'Wait for the phase change to finish.';
   }
-  if (state.levelUpResolver !== null || state.talkChoiceResolver !== null) {
+  if (
+    state.levelUpResolver !== null ||
+    state.moveLearnedResolver !== null ||
+    state.talkChoiceResolver !== null
+  ) {
     return 'Close the open window first.';
   }
   return null;

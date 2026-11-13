@@ -12,7 +12,11 @@ import {
 import { isInMapBounds } from '../../engine/terrainAndPathfinding';
 import { isPhaseTransitionPlaying } from './battleBannersAndTransitions';
 import { executeDanceFromCommandMenu } from './battleDanceController';
-import { toggleIndividualEnemyDanger } from './battleDangerAndViewportState';
+import {
+  clearInspectedAllyRange,
+  toggleIndividualEnemyDanger,
+  toggleInspectedAllyRange,
+} from './battleDangerAndViewportState';
 import { executeTalkFromCommandMenu } from './battleEventRunner';
 import { openSystemMenu } from './battleFieldMenuController';
 import {
@@ -33,6 +37,7 @@ import {
 } from './battleTutorialSpotlights';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
+  getActiveInspectedAllyRange,
   getLivingAlliedUnits,
   getLivingEnemies,
   getLivingUnits,
@@ -208,8 +213,9 @@ export function handleBattleTileTap(
 
     if (occupant && occupant.faction === 'player') {
       if (occupant.waited) {
-        audioManager.playSfx('dialogue_advance');
+        toggleInspectedAllyRange(ctx, occupant.id);
         updateBattleInfoStrip(ctx);
+        ctx.onLayerStateChanged();
         ctx.renderNow();
         return;
       }
@@ -218,8 +224,9 @@ export function handleBattleTileTap(
     }
 
     if (occupant && occupant.faction === 'npc') {
-      audioManager.playSfx('dialogue_advance');
+      toggleInspectedAllyRange(ctx, occupant.id);
       updateBattleInfoStrip(ctx);
+      ctx.onLayerStateChanged();
       ctx.renderNow();
       return;
     }
@@ -227,6 +234,15 @@ export function handleBattleTileTap(
     if (occupant && occupant.faction === 'enemy') {
       toggleIndividualEnemyDanger(ctx, occupant.id);
       updateBattleInfoStrip(ctx);
+      ctx.renderNow();
+      return;
+    }
+
+    if (getActiveInspectedAllyRange(state) !== null) {
+      clearInspectedAllyRange(state);
+      audioManager.playSfx('cancel');
+      updateBattleInfoStrip(ctx);
+      ctx.onLayerStateChanged();
       ctx.renderNow();
       return;
     }

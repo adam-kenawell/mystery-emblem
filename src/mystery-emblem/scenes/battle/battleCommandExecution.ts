@@ -2,11 +2,10 @@
  * Floating Command Menu Actions: Attack/Heal Forecast Entry, Mid-Battle Item/Promotion & Wait
  */
 
-import { directionFromDelta, loadSpeciesSpriteBundle } from '../../assets/pmdAssetLoader';
+import { directionFromDelta } from '../../assets/pmdAssetLoader';
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
 import { getItemById } from '../../data/index';
-import { promoteBattleUnitMidBattle } from '../../engine/progressionEngine';
-import { showPhaseBanner, waitBattleMs } from './battleBannersAndTransitions';
+import { waitBattleMs } from './battleBannersAndTransitions';
 import {
   clearBattleSelection,
   recomputeDangerArea,
@@ -28,7 +27,6 @@ import {
   getAttackableEnemiesFromCurrentTile,
   getHealableTargetsFromCurrentTile,
   getSelectedUnit,
-  getUnitVisualKey,
 } from './battleUnitQueries';
 
 export async function useEquippedBattleConsumable(ctx: BattleControllerContext): Promise<void> {
@@ -40,7 +38,6 @@ export async function useEquippedBattleConsumable(ctx: BattleControllerContext):
 
   const runGen = state.battleRunGen;
   let calloutText = item.name;
-  let needsSpriteReloadSpeciesId: string | null = null;
 
   if (item.category === 'x_item') {
     if (!unit.tempBattleBoosts) {
@@ -81,17 +78,6 @@ export async function useEquippedBattleConsumable(ctx: BattleControllerContext):
       unit.statusTurns = 0;
     }
     calloutText = healed > 0 ? `+${healed} HP` : 'CURED!';
-  } else if (
-    item.category === 'promotion' &&
-    (item.id === 'evolution_stone' || item.id === 'evolution_gem')
-  ) {
-    const promo = promoteBattleUnitMidBattle(unit, item.id);
-    const evolvedVisKey = getUnitVisualKey(unit);
-    if (!state.spriteBundles.has(evolvedVisKey)) {
-      needsSpriteReloadSpeciesId = evolvedVisKey;
-    }
-    calloutText = `EVOLVED → ${promo.newSpeciesName}!`;
-    showPhaseBanner(state, dom, `${unit.nickname} evolved into ${promo.newSpeciesName}!`);
   }
 
   unit.consumableItemId = null;
@@ -100,10 +86,8 @@ export async function useEquippedBattleConsumable(ctx: BattleControllerContext):
   unit.renderWorldX = unit.x * PMD_TILE_NATIVE_PX;
   unit.renderWorldY = unit.y * PMD_TILE_NATIVE_PX;
 
-  audioManager.playSfx(item.category === 'promotion' ? 'victory_fanfare' : 'heal');
-  if (item.category !== 'promotion') {
-    spawnFloatingText(state, dom, unit.x, unit.y, calloutText, '#68f8a8', 820);
-  }
+  audioManager.playSfx('heal');
+  spawnFloatingText(state, dom, unit.x, unit.y, calloutText, '#68f8a8', 820);
   clearBattleSelection(state, dom, prepOverlay);
   ctx.tutorialOverlay?.notifyActionCompleted('battle_confirm_item');
   await runTileReachedEvents(ctx, unit, runGen);
@@ -114,14 +98,6 @@ export async function useEquippedBattleConsumable(ctx: BattleControllerContext):
   updateBattleInfoStrip(ctx);
   ctx.onLayerStateChanged();
   ctx.renderNow();
-
-  if (needsSpriteReloadSpeciesId) {
-    const bundle = await loadSpeciesSpriteBundle(needsSpriteReloadSpeciesId);
-    state.spriteBundles.set(needsSpriteReloadSpeciesId, bundle);
-    if (state.openState) {
-      ctx.renderNow();
-    }
-  }
 
   if (!state.openState || runGen !== state.battleRunGen) return;
   if (item.category === 'consumable') {
