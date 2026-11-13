@@ -14,7 +14,7 @@
   "recommendedLevel": 1,
   "deploymentCap": 3,
   "skipPrepPhase": true,
-  "preStoryCutsceneIds": ["cs_01_berry_walk_and_dinner","cs_00_ancient_dragon_war"],
+  "preStoryCutsceneIds": ["cs_00_ancient_dragon_war","cs_01_berry_walk_and_dinner"],
   "chainsDirectlyIntoNodeId": "chapter_01",
   "width": 18,
   "height": 12,
@@ -68,13 +68,7 @@
       "once":true,
       "trigger":{"type":"turn_start","turnNumber":2,"phase":"enemy_phase"},
       "actions":[
-        {
-          "type":"move_unit",
-          "targetUnitId":"prologue_quaquaval",
-          "x":17,
-          "y":5,
-          "face":"right"
-        },
+        {"type":"move_unit","targetUnitId":"prologue_quaquaval","x":17,"y":5,"face":"right"},
         {"type":"despawn_units","unitIds":["prologue_quaquaval"]}
       ]
     },
@@ -93,27 +87,9 @@
             {"id":"prologue_caterpie","x":17,"y":7,"speciesId":"caterpie","level":1,"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true}
           ]
         },
-        {
-          "type":"move_unit",
-          "targetUnitId":"prologue_pawmi",
-          "x":9,
-          "y":5,
-          "face":"left"
-        },
-        {
-          "type":"move_unit",
-          "targetUnitId":"prologue_starly",
-          "x":12,
-          "y":3,
-          "face":"left"
-        },
-        {
-          "type":"move_unit",
-          "targetUnitId":"prologue_caterpie",
-          "x":12,
-          "y":7,
-          "face":"left"
-        },
+        {"type":"move_unit","targetUnitId":"prologue_pawmi","x":9,"y":5,"face":"left"},
+        {"type":"move_unit","targetUnitId":"prologue_starly","x":12,"y":3,"face":"left"},
+        {"type":"move_unit","targetUnitId":"prologue_caterpie","x":12,"y":7,"face":"left"},
         {
           "type":"play_dialogue",
           "scriptId":"prologue_town_trio_intro",
@@ -141,46 +117,14 @@
       "id":"ev_prologue_formation_reset",
       "once":true,
       "trigger":{"type":"unit_healed"},
-      "conditions":[
-        {"kind":"event_triggered","eventId":"ev_prologue_town_trio_wave"}
-      ],
+      "conditions":[{"kind":"event_triggered","eventId":"ev_prologue_town_trio_wave"}],
       "actions":[
         {"type":"move_unit","targetUnitId":"lord","x":3,"y":5,"face":"right"},
-        {
-          "type":"move_unit",
-          "targetUnitId":"partner",
-          "x":2,
-          "y":4,
-          "face":"right"
-        },
-        {
-          "type":"move_unit",
-          "targetUnitId":"healer",
-          "x":2,
-          "y":6,
-          "face":"right"
-        },
-        {
-          "type":"move_unit",
-          "targetUnitId":"prologue_pawmi",
-          "x":14,
-          "y":5,
-          "face":"left"
-        },
-        {
-          "type":"move_unit",
-          "targetUnitId":"prologue_starly",
-          "x":15,
-          "y":4,
-          "face":"left"
-        },
-        {
-          "type":"move_unit",
-          "targetUnitId":"prologue_caterpie",
-          "x":15,
-          "y":6,
-          "face":"left"
-        },
+        {"type":"move_unit","targetUnitId":"partner","x":2,"y":4,"face":"right"},
+        {"type":"move_unit","targetUnitId":"healer","x":2,"y":6,"face":"right"},
+        {"type":"move_unit","targetUnitId":"prologue_pawmi","x":14,"y":5,"face":"left"},
+        {"type":"move_unit","targetUnitId":"prologue_starly","x":15,"y":4,"face":"left"},
+        {"type":"move_unit","targetUnitId":"prologue_caterpie","x":15,"y":6,"face":"left"},
         {
           "type":"play_dialogue",
           "scriptId":"prologue_formation_reset",

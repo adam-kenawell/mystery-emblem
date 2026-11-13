@@ -42,13 +42,17 @@
         "side": "auto",
         "text": "Somewhere in the distant past..."
       },
-      "actions": [{ "type": "fade", "to": "black", "duration": 0 }]
+      "actions": [
+        { "type": "fade", "to": "black", "duration": 0 }
+      ]
     },
     {
       "id": "narration_peace",
       "waitForActions": true,
       "music": { "kind": "main" },
-      "actions": [{ "type": "fade", "to": "clear", "duration": 0.85 }],
+      "actions": [
+        { "type": "fade", "to": "clear", "duration": 0.85 }
+      ],
       "say": {
         "speaker": "narrator",
         "emotion": "Normal",
@@ -76,7 +80,7 @@
         "speaker": "hoopa",
         "emotion": "Joyous",
         "side": "right",
-        "text": "You'll never be able to stop the expansion of the rift, Haxorus!  Yield to me and my other-worldly monsters!"
+        "text": "Hoopa's rings open every age at once! Bow before the Rift, proud dragons, or be swept into nothing!"
       },
       "actions": [
         { "type": "hop", "who": "hoopa", "count": 2 },
@@ -89,8 +93,7 @@
         "speaker": "dragonite",
         "emotion": "Pain",
         "side": "left",
-        "text": "Haxorus! Word from Altaria, our outer defenses have fallen!  Looks like it's just us now!",
-        "hideOtherPortrait": true
+        "text": "Haxorus! Our outer flights have fallen. Every time we strike one beast down, two more pour through the sky!"
       },
       "actions": [{ "type": "shake", "who": "dragonite", "duration": 0.45 }]
     },
@@ -100,7 +103,7 @@
         "speaker": "goodra",
         "emotion": "Sad",
         "side": "left",
-        "text": "We have to figure out a way to close the rift!"
+        "text": "Our kind is on the verge of extinction... If the Rift stays open any longer, the entire world will fall with us."
       }
     },
     {
