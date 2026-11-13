@@ -54,7 +54,7 @@ Centuries later, hairline fractures in the southeastern Space-Time Rift have beg
 
 ## **3.1 Act 1: Expedition to Meet with King Serperior (Playable Deliverable)**
 
-1. **Opening Aura Quiz & Ancient Flashback (`cs_00_ancient_dragon_war`):** The 8-question Dragon Aura Quiz selects `{lord}` (`Axew`, `Gible`, `Dratini`, `Bagon`, or `Goomy`). A flashback depicts peaceful Dragon rule, **Hoopa** opening the Space-Time Rift to unleash evil **Paradox Pokemon**, **Haxorus**, **Dragonite**, and **Goodra** sacrificing their last strength to seal the Rift as Hoopa slips through a portal, and the sealing of the three eggs (`Dreepy`, `Deino`, `{lord}`).
+1. **Opening Aura Quiz & Ancient Flashback (`cs_prelude_dragon_kingdom` -> `cs_00_ancient_dragon_war`):** The prelude shows the thriving Dragon Kingdom and Hoopa stealing its granary stores through his rings before peering at the Paradox army. The 8-question Dragon Aura Quiz selects `{lord}` (`Axew`, `Gible`, `Dratini`, `Bagon`, or `Goomy`). A flashback depicts peaceful Dragon rule, **Hoopa** opening the Space-Time Rift to unleash evil **Paradox Pokemon**, **Haxorus**, **Dragonite**, and **Goodra** sacrificing their last strength to seal the Rift as Hoopa slips through a portal, and the sealing of the three eggs (`Dreepy`, `Deino`, `{lord}`).
 2. **Berry Walk & Family Dinner (`cs_01_berry_walk_and_dinner`):** `{lord}`, `Quaxly`, and `Flabebe` walk home from berry-picking in the Verdant Kingdom to eat dinner with **Quaquaval** and **Florges**. Lively dinner banter establishes everyone's personalities before Quaquaval insists on evening combat practice ("you can never be too prepared").
 3. **Prologue: Hometown Pitch (`prologue`, No Battle Prep):**
    * **Phase 1 (Core Basics vs. Quaquaval):** Move `Quaxly` into `Quaquaval`'s range -> `Quaquaval` strikes `Quaxly` -> `Flabebe` heals `Quaxly` -> `{lord}` attacks from Range 2 with `Dragon Breath` without taking a counterattack (`Quaquaval` explains the 4-move limit, level-up move learning, and equipping 1 Physical `[E]` + 1 Special `[E]` move).
@@ -114,4 +114,4 @@ Centuries later, hairline fractures in the southeastern Space-Time Rift have beg
 * **Space-Time Rift Forces (Chapter 4 Ambush & Act 5 Endgame):**
   * **Ancient Paradox Pokemon:** `Great Tusk` (`0984`), `Scream Tail` (`0985`), `Brute Bonnet` (`0986`), `Flutter Mane` (`0987`), `Slither Wing` (`0988`), `Sandy Shocks` (`0989`), `Roaring Moon` (`1005`).
   * **Future Paradox Pokemon:** `Iron Treads` (`0990`), `Iron Bundle` (`0991`), `Iron Hands` (`0992`), `Iron Jugulis` (`0993`), `Iron Moth` (`0994`), `Iron Thorns` (`0995`), `Iron Valiant` (`1006`).
-  * **Rift Masterminds:** **Hoopa Confined** (`0720`) -> **Hoopa Unbound** (`0720/0001`).
+  * **Rift Masterminds:** **Hoopa Confined** (`0720`) -> **Hoopa Unbound** (`0720/0001`). Hoopa always speaks in first person and plays the gleeful prankster who treats the war as a game.

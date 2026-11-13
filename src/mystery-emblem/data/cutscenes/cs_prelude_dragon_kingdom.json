@@ -1,0 +1,1162 @@
+{
+  "id": "cs_prelude_dragon_kingdom",
+  "title": "The Dragon Kingdom",
+  "music": "treasure_town",
+  "location": "dragon_kingdom_city",
+  "banner": "Ancient Dragon Kingdom - Ages Past",
+  "lighting": "clear",
+  "weather": "none",
+  "camera": {
+    "x": 6,
+    "y": 6.5
+  },
+  "cast": [
+    {
+      "id": "haxorus",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0612",
+        "name": "Haxorus",
+        "speciesName": "Haxorus"
+      }
+    },
+    {
+      "id": "dragonite",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0149",
+        "name": "Dragonite",
+        "speciesName": "Dragonite"
+      }
+    },
+    {
+      "id": "salamence",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0373",
+        "name": "Salamence",
+        "speciesName": "Salamence"
+      }
+    },
+    {
+      "id": "garchomp",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0445",
+        "name": "Garchomp",
+        "speciesName": "Garchomp"
+      }
+    },
+    {
+      "id": "goodra",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0706",
+        "name": "Goodra",
+        "speciesName": "Goodra"
+      }
+    },
+    {
+      "id": "zweilous",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0634",
+        "name": "Zweilous",
+        "speciesName": "Zweilous"
+      }
+    },
+    {
+      "id": "hydreigon",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0635",
+        "name": "Hydreigon",
+        "speciesName": "Hydreigon"
+      }
+    },
+    {
+      "id": "drakloak",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0886",
+        "name": "Drakloak",
+        "speciesName": "Drakloak"
+      }
+    },
+    {
+      "id": "dragapult",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0887",
+        "name": "Dragapult",
+        "speciesName": "Dragapult"
+      }
+    },
+    {
+      "id": "axew",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0610",
+        "name": "Axew",
+        "speciesName": "Axew"
+      }
+    },
+    {
+      "id": "gible",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0443",
+        "name": "Gible",
+        "speciesName": "Gible"
+      }
+    },
+    {
+      "id": "bagon",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0371",
+        "name": "Bagon",
+        "speciesName": "Bagon"
+      }
+    },
+    {
+      "id": "dratini",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0147",
+        "name": "Dratini",
+        "speciesName": "Dratini"
+      }
+    },
+    {
+      "id": "goomy",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0704",
+        "name": "Goomy",
+        "speciesName": "Goomy"
+      }
+    },
+    {
+      "id": "flygon",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0330",
+        "name": "Flygon",
+        "speciesName": "Flygon"
+      }
+    },
+    {
+      "id": "altaria",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0334",
+        "name": "Altaria",
+        "speciesName": "Altaria"
+      }
+    },
+    {
+      "id": "kingdra",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0230",
+        "name": "Kingdra",
+        "speciesName": "Kingdra"
+      }
+    },
+    {
+      "id": "noivern",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0715",
+        "name": "Noivern",
+        "speciesName": "Noivern"
+      }
+    },
+    {
+      "id": "druddigon",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0621",
+        "name": "Druddigon",
+        "speciesName": "Druddigon"
+      }
+    },
+    {
+      "id": "kommo_o",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0784",
+        "name": "Kommo-o",
+        "speciesName": "Kommo-o"
+      }
+    },
+    {
+      "id": "hoopa",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0720",
+        "name": "Hoopa",
+        "speciesName": "Hoopa"
+      }
+    },
+    {
+      "id": "great_tusk",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0984",
+        "name": "Great Tusk",
+        "speciesName": "Great Tusk"
+      }
+    },
+    {
+      "id": "flutter_mane",
+      "who": {
+        "kind": "npc",
+        "pokemon": "0987",
+        "name": "Flutter Mane",
+        "speciesName": "Flutter Mane"
+      }
+    }
+  ],
+  "placements": [
+    {
+      "id": "haxorus",
+      "x": 5,
+      "y": 5,
+      "facing": "Down"
+    },
+    {
+      "id": "dragonite",
+      "x": 8,
+      "y": 3,
+      "facing": "Right"
+    },
+    {
+      "id": "garchomp",
+      "x": 10,
+      "y": 6,
+      "facing": "Left"
+    },
+    {
+      "id": "altaria",
+      "x": 7,
+      "y": 9,
+      "facing": "Right"
+    },
+    {
+      "id": "flygon",
+      "x": 12,
+      "y": 3,
+      "facing": "Down"
+    },
+    {
+      "id": "kingdra",
+      "x": 3,
+      "y": 9,
+      "facing": "Right"
+    },
+    {
+      "id": "salamence",
+      "x": 14,
+      "y": 6,
+      "facing": "Right"
+    },
+    {
+      "id": "hydreigon",
+      "x": 16,
+      "y": 3,
+      "facing": "Down"
+    },
+    {
+      "id": "goodra",
+      "x": 17,
+      "y": 9,
+      "facing": "Left"
+    },
+    {
+      "id": "noivern",
+      "x": 19,
+      "y": 3,
+      "facing": "Left"
+    },
+    {
+      "id": "druddigon",
+      "x": 20,
+      "y": 5,
+      "facing": "Down"
+    },
+    {
+      "id": "kommo_o",
+      "x": 22,
+      "y": 8,
+      "facing": "Left"
+    },
+    {
+      "id": "zweilous",
+      "x": 24,
+      "y": 6,
+      "facing": "Right"
+    },
+    {
+      "id": "drakloak",
+      "x": 26,
+      "y": 4,
+      "facing": "Down"
+    },
+    {
+      "id": "dragapult",
+      "x": 27,
+      "y": 3,
+      "facing": "Left"
+    },
+    {
+      "id": "axew",
+      "x": 28,
+      "y": 7,
+      "facing": "Right"
+    },
+    {
+      "id": "gible",
+      "x": 30,
+      "y": 8,
+      "facing": "Left"
+    },
+    {
+      "id": "bagon",
+      "x": 29,
+      "y": 9,
+      "facing": "Up"
+    },
+    {
+      "id": "dratini",
+      "x": 31,
+      "y": 7,
+      "facing": "Left"
+    },
+    {
+      "id": "goomy",
+      "x": 27,
+      "y": 9,
+      "facing": "Right"
+    },
+    {
+      "id": "hoopa",
+      "x": 1,
+      "y": 1,
+      "facing": "Down",
+      "hidden": true
+    },
+    {
+      "id": "great_tusk",
+      "x": 1,
+      "y": 1,
+      "facing": "Down",
+      "hidden": true
+    },
+    {
+      "id": "flutter_mane",
+      "x": 1,
+      "y": 1,
+      "facing": "Down",
+      "hidden": true
+    }
+  ],
+  "props": [
+    {
+      "id": "city_crate_a",
+      "kind": "image",
+      "image": "berry_crate.png",
+      "x": 33,
+      "y": 4
+    },
+    {
+      "id": "city_crate_b",
+      "kind": "image",
+      "image": "berry_crate.png",
+      "x": 34,
+      "y": 4
+    },
+    {
+      "id": "city_crate_c",
+      "kind": "image",
+      "image": "berry_crate.png",
+      "x": 36,
+      "y": 4
+    },
+    {
+      "id": "city_crate_d",
+      "kind": "image",
+      "image": "berry_crate.png",
+      "x": 37,
+      "y": 4
+    },
+    {
+      "id": "city_crate_e",
+      "kind": "image",
+      "image": "berry_crate.png",
+      "x": 35,
+      "y": 5
+    }
+  ],
+  "beats": [
+    {
+      "id": "black_open",
+      "music": {
+        "kind": "silence"
+      },
+      "advance": {
+        "kind": "seconds",
+        "seconds": 0.6
+      },
+      "actions": [
+        {
+          "type": "fade",
+          "to": "black",
+          "duration": 0
+        }
+      ]
+    },
+    {
+      "id": "narration_kingdom",
+      "music": {
+        "kind": "main"
+      },
+      "say": {
+        "speaker": "narrator",
+        "emotion": "Normal",
+        "side": "auto",
+        "text": "Long ago, the Ancient Dragon Kingdom ruled across every realm, keeping peace and prosperity in every corner of the world."
+      },
+      "actions": [
+        {
+          "type": "fade",
+          "to": "clear",
+          "duration": 2
+        },
+        {
+          "type": "camera",
+          "x": 29,
+          "y": 6.5,
+          "duration": 7.5,
+          "delay": 1.2
+        },
+        {
+          "type": "walk",
+          "who": "dragonite",
+          "path": [
+            [
+              11,
+              3
+            ],
+            [
+              13,
+              2
+            ],
+            [
+              10,
+              2
+            ],
+            [
+              8,
+              3
+            ]
+          ],
+          "speed": "slow",
+          "delay": 0.8
+        },
+        {
+          "type": "walk",
+          "who": "garchomp",
+          "path": [
+            [
+              12,
+              6
+            ],
+            [
+              12,
+              7
+            ],
+            [
+              10,
+              6
+            ]
+          ],
+          "speed": "slow",
+          "delay": 1.5
+        },
+        {
+          "type": "emote",
+          "who": "haxorus",
+          "emote": "music",
+          "delay": 2
+        },
+        {
+          "type": "walk",
+          "who": "altaria",
+          "path": [
+            [
+              9,
+              10
+            ],
+            [
+              11,
+              9
+            ],
+            [
+              8,
+              8
+            ],
+            [
+              7,
+              9
+            ]
+          ],
+          "speed": "slow",
+          "delay": 1
+        },
+        {
+          "type": "walk",
+          "who": "flygon",
+          "path": [
+            [
+              15,
+              2
+            ],
+            [
+              17,
+              3
+            ],
+            [
+              14,
+              3
+            ]
+          ],
+          "speed": "slow",
+          "delay": 2.4
+        },
+        {
+          "type": "walk",
+          "who": "salamence",
+          "path": [
+            [
+              16,
+              6
+            ],
+            [
+              16,
+              7
+            ],
+            [
+              14,
+              6
+            ]
+          ],
+          "speed": "slow",
+          "delay": 2.8
+        },
+        {
+          "type": "face",
+          "who": "goodra",
+          "toward": "kommo_o",
+          "delay": 3.2
+        },
+        {
+          "type": "emote",
+          "who": "goodra",
+          "emote": "joy",
+          "delay": 3.4
+        },
+        {
+          "type": "walk",
+          "who": "noivern",
+          "path": [
+            [
+              21,
+              2
+            ],
+            [
+              23,
+              3
+            ],
+            [
+              20,
+              3
+            ]
+          ],
+          "speed": "slow",
+          "delay": 3.6
+        },
+        {
+          "type": "pose",
+          "who": "druddigon",
+          "anim": "Nod",
+          "delay": 4
+        },
+        {
+          "type": "walk",
+          "who": "kommo_o",
+          "path": [
+            [
+              21,
+              9
+            ],
+            [
+              23,
+              9
+            ],
+            [
+              22,
+              8
+            ]
+          ],
+          "speed": "slow",
+          "delay": 4.2
+        },
+        {
+          "type": "walk",
+          "who": "zweilous",
+          "path": [
+            [
+              25,
+              7
+            ],
+            [
+              23,
+              7
+            ],
+            [
+              24,
+              6
+            ]
+          ],
+          "speed": "slow",
+          "delay": 4.6
+        },
+        {
+          "type": "walk",
+          "who": "dragapult",
+          "path": [
+            [
+              29,
+              2
+            ],
+            [
+              31,
+              3
+            ],
+            [
+              27,
+              3
+            ]
+          ],
+          "speed": "walk",
+          "delay": 5
+        },
+        {
+          "type": "walk",
+          "who": "drakloak",
+          "path": [
+            [
+              28,
+              4
+            ],
+            [
+              26,
+              5
+            ],
+            [
+              26,
+              4
+            ]
+          ],
+          "speed": "slow",
+          "delay": 5.2
+        },
+        {
+          "type": "hop",
+          "who": "axew",
+          "count": 2,
+          "delay": 5.6
+        },
+        {
+          "type": "hop",
+          "who": "goomy",
+          "count": 1,
+          "delay": 6
+        },
+        {
+          "type": "walk",
+          "who": "gible",
+          "path": [
+            [
+              31,
+              9
+            ],
+            [
+              30,
+              8
+            ]
+          ],
+          "speed": "walk",
+          "delay": 6.3
+        },
+        {
+          "type": "hop",
+          "who": "dratini",
+          "count": 2,
+          "delay": 6.7
+        },
+        {
+          "type": "emote",
+          "who": "bagon",
+          "emote": "joy",
+          "delay": 7.1
+        },
+        {
+          "type": "walk",
+          "who": "kingdra",
+          "path": [
+            [
+              4,
+              10
+            ],
+            [
+              3,
+              9
+            ]
+          ],
+          "speed": "slow",
+          "delay": 6
+        }
+      ]
+    },
+    {
+      "id": "narration_harvest",
+      "say": {
+        "speaker": "narrator",
+        "emotion": "Normal",
+        "side": "auto",
+        "text": "Young and old lived side by side, and the kingdom's granaries overflowed with every harvest."
+      },
+      "actions": [
+        {
+          "type": "camera",
+          "x": 31,
+          "y": 6.5,
+          "duration": 1.2
+        },
+        {
+          "type": "walk",
+          "who": "axew",
+          "path": [
+            [
+              29,
+              8
+            ],
+            [
+              30,
+              7
+            ],
+            [
+              28,
+              7
+            ]
+          ],
+          "speed": "walk"
+        },
+        {
+          "type": "hop",
+          "who": "gible",
+          "count": 2,
+          "delay": 0.3
+        },
+        {
+          "type": "walk",
+          "who": "bagon",
+          "path": [
+            [
+              31,
+              9
+            ],
+            [
+              30,
+              10
+            ],
+            [
+              29,
+              9
+            ]
+          ],
+          "speed": "walk",
+          "delay": 0.5
+        },
+        {
+          "type": "emote",
+          "who": "dratini",
+          "emote": "heart",
+          "delay": 0.8
+        },
+        {
+          "type": "hop",
+          "who": "goomy",
+          "count": 2,
+          "delay": 1
+        },
+        {
+          "type": "emote",
+          "who": "axew",
+          "emote": "joy",
+          "delay": 1.6
+        },
+        {
+          "type": "walk",
+          "who": "zweilous",
+          "path": [
+            [
+              26,
+              6
+            ],
+            [
+              26,
+              7
+            ]
+          ],
+          "speed": "slow",
+          "facing": "Right",
+          "delay": 0.6
+        },
+        {
+          "type": "emote",
+          "who": "hydreigon",
+          "emote": "music",
+          "delay": 1.2
+        }
+      ]
+    },
+    {
+      "id": "narration_hoopa_hates",
+      "waitForActions": true,
+      "music": {
+        "kind": "song",
+        "song": "team_skull"
+      },
+      "say": {
+        "speaker": "narrator",
+        "emotion": "Normal",
+        "side": "auto",
+        "text": "But one Pokemon couldn't stand the dragons, or the peace they had built."
+      },
+      "actions": [
+        {
+          "type": "location",
+          "location": "dragon_kingdom_outskirts",
+          "transition": "black",
+          "banner": "Kingdom Outskirts - Night",
+          "camera": {
+            "x": 7.5,
+            "y": 5
+          },
+          "placements": [
+            {
+              "id": "hoopa",
+              "x": 1,
+              "y": 8,
+              "facing": "Right"
+            },
+            {
+              "id": "great_tusk",
+              "x": 11.6,
+              "y": 6,
+              "facing": "Left",
+              "hidden": true
+            },
+            {
+              "id": "flutter_mane",
+              "x": 12.4,
+              "y": 5.7,
+              "facing": "Left",
+              "hidden": true
+            }
+          ],
+          "props": [
+            {
+              "id": "crate_a",
+              "kind": "image",
+              "image": "berry_crate.png",
+              "x": 6,
+              "y": 3
+            },
+            {
+              "id": "crate_b",
+              "kind": "image",
+              "image": "berry_crate.png",
+              "x": 7,
+              "y": 3
+            },
+            {
+              "id": "crate_c",
+              "kind": "image",
+              "image": "berry_crate.png",
+              "x": 8,
+              "y": 3
+            },
+            {
+              "id": "crate_d",
+              "kind": "image",
+              "image": "berry_crate.png",
+              "x": 9,
+              "y": 3
+            },
+            {
+              "id": "thief_ring",
+              "kind": "image",
+              "image": "hoopa_ring.png",
+              "x": 7.5,
+              "y": 4,
+              "hidden": true,
+              "layer": "behind"
+            },
+            {
+              "id": "big_ring",
+              "kind": "image",
+              "image": "hoopa_ring.png",
+              "x": 12,
+              "y": 6.2,
+              "hidden": true,
+              "layer": "front"
+            }
+          ]
+        },
+        {
+          "type": "lighting",
+          "mood": "night",
+          "duration": 0,
+          "delay": 0.4
+        },
+        {
+          "type": "walk",
+          "who": "hoopa",
+          "path": [
+            [
+              3,
+              8
+            ],
+            [
+              4,
+              7
+            ]
+          ],
+          "speed": "slow",
+          "facing": "UpRight",
+          "start": "after"
+        },
+        {
+          "type": "emote",
+          "who": "hoopa",
+          "emote": "ellipsis",
+          "start": "after"
+        }
+      ]
+    },
+    {
+      "id": "narration_rings",
+      "say": {
+        "speaker": "narrator",
+        "emotion": "Normal",
+        "side": "auto",
+        "text": "Hoopa crept to the edge of the kingdom and spirited the dragons' stores away through his rings, one crate at a time."
+      },
+      "actions": [
+        {
+          "type": "walk",
+          "who": "hoopa",
+          "path": [
+            [
+              5,
+              6
+            ],
+            [
+              7,
+              5
+            ]
+          ],
+          "speed": "slow",
+          "facing": "Up"
+        },
+        {
+          "type": "pose",
+          "who": "hoopa",
+          "anim": "Special",
+          "duration": 0.6,
+          "start": "after"
+        },
+        {
+          "type": "prop",
+          "prop": "thief_ring",
+          "visible": true,
+          "start": "after"
+        },
+        {
+          "type": "aura",
+          "who": "hoopa",
+          "color": "#c070ff",
+          "duration": 0.8,
+          "start": "after"
+        },
+        {
+          "type": "flash",
+          "color": "white",
+          "duration": 0.2,
+          "start": "after"
+        },
+        {
+          "type": "prop",
+          "prop": "crate_a",
+          "visible": false,
+          "start": "after"
+        },
+        {
+          "type": "flash",
+          "color": "white",
+          "duration": 0.2,
+          "start": "after",
+          "delay": 0.4
+        },
+        {
+          "type": "prop",
+          "prop": "crate_b",
+          "visible": false,
+          "start": "after"
+        },
+        {
+          "type": "flash",
+          "color": "white",
+          "duration": 0.2,
+          "start": "after",
+          "delay": 0.4
+        },
+        {
+          "type": "prop",
+          "prop": "crate_c",
+          "visible": false,
+          "start": "after"
+        },
+        {
+          "type": "flash",
+          "color": "white",
+          "duration": 0.2,
+          "start": "after",
+          "delay": 0.4
+        },
+        {
+          "type": "prop",
+          "prop": "crate_d",
+          "visible": false,
+          "start": "after"
+        },
+        {
+          "type": "prop",
+          "prop": "thief_ring",
+          "visible": false,
+          "start": "after",
+          "delay": 0.3
+        }
+      ]
+    },
+    {
+      "id": "narration_peer",
+      "say": {
+        "speaker": "narrator",
+        "emotion": "Normal",
+        "side": "auto",
+        "text": "Then Hoopa peered through a ring into ages long past and far ahead... where an army of strange and terrible Pokemon waited."
+      },
+      "actions": [
+        {
+          "type": "hop",
+          "who": "hoopa",
+          "count": 2
+        },
+        {
+          "type": "emote",
+          "who": "hoopa",
+          "emote": "joy"
+        },
+        {
+          "type": "walk",
+          "who": "hoopa",
+          "path": [
+            [
+              9,
+              6
+            ],
+            [
+              10,
+              6
+            ]
+          ],
+          "speed": "slow",
+          "facing": "Right",
+          "start": "after"
+        },
+        {
+          "type": "prop",
+          "prop": "big_ring",
+          "visible": true,
+          "start": "after"
+        },
+        {
+          "type": "aura",
+          "who": "hoopa",
+          "color": "#c070ff",
+          "duration": 1.2
+        },
+        {
+          "type": "screenShake",
+          "duration": 0.4,
+          "intensity": 2
+        },
+        {
+          "type": "show",
+          "who": "great_tusk",
+          "visible": true,
+          "fade": true,
+          "delay": 0.3
+        },
+        {
+          "type": "show",
+          "who": "flutter_mane",
+          "visible": true,
+          "fade": true,
+          "delay": 0.5
+        },
+        {
+          "type": "pose",
+          "who": "hoopa",
+          "anim": "Special",
+          "duration": 0.6,
+          "start": "after"
+        }
+      ]
+    },
+    {
+      "id": "white_out",
+      "advance": {
+        "kind": "actions"
+      },
+      "actions": [
+        {
+          "type": "flash",
+          "color": "white",
+          "duration": 0.3
+        },
+        {
+          "type": "fade",
+          "to": "white",
+          "duration": 0.7
+        }
+      ]
+    }
+  ]
+}

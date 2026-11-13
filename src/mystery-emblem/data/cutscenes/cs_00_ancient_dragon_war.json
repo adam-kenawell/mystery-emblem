@@ -34,42 +34,17 @@
   ],
   "beats": [
     {
-      "id": "distant_past",
-      "music": { "kind": "silence" },
-      "say": {
-        "speaker": "narrator",
-        "emotion": "Normal",
-        "side": "auto",
-        "text": "Somewhere in the distant past..."
-      },
-      "actions": [
-        { "type": "fade", "to": "black", "duration": 0 }
-      ]
-    },
-    {
-      "id": "narration_peace",
-      "waitForActions": true,
-      "music": { "kind": "main" },
-      "actions": [
-        { "type": "fade", "to": "clear", "duration": 0.85 }
-      ],
-      "say": {
-        "speaker": "narrator",
-        "emotion": "Normal",
-        "side": "auto",
-        "text": "In an ancient age long forgotten, the Dragon Kingdom ruled the world in lasting peace."
-      }
-    },
-    {
       "id": "narration_rift",
       "say": {
         "speaker": "narrator",
         "emotion": "Normal",
         "side": "auto",
-        "text": "Until Hoopa, hungering to overthrow the dragons, tore open a Rift in space and time and summoned monstrous Pokemon from beyond."
+        "text": "Then Hoopa, bored of all that peace, tore open a Rift in space and time and let monstrous Pokemon pour through from beyond."
       },
       "actions": [
-        { "type": "flash", "color": "white", "duration": 0.35 },
+        { "type": "fade", "to": "white", "duration": 0 },
+        { "type": "fade", "to": "clear", "duration": 0.9 },
+        { "type": "flash", "color": "white", "duration": 0.35, "delay": 0.9 },
         { "type": "screenShake", "duration": 0.6, "intensity": 4 },
         { "type": "pose", "who": "hoopa", "anim": "Special", "duration": 0.65 }
       ]
@@ -80,7 +55,7 @@
         "speaker": "hoopa",
         "emotion": "Joyous",
         "side": "right",
-        "text": "Hoopa's rings open every age at once! Bow before the Rift, proud dragons, or be swept into nothing!"
+        "text": "Ta-da! My rings open onto every age at once! Come on, proud dragons, let's see how long you last against my new friends!"
       },
       "actions": [
         { "type": "hop", "who": "hoopa", "count": 2 },
@@ -127,7 +102,7 @@
         "speaker": "hoopa",
         "emotion": "Surprised",
         "side": "right",
-        "text": "What?! That blinding Dragon Aura is crushing Hoopa's rings! Back through the portal, quick!"
+        "text": "Hey, no fair! That glow is squishing my rings! Fine, I'm out. We'll play again sometime!"
       },
       "actions": [
         { "type": "flash", "color": "white", "duration": 0.45 },
