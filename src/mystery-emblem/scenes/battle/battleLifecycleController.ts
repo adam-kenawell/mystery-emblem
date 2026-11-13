@@ -12,7 +12,7 @@ import {
   getMapDeploymentCap,
   resolveEnemySpawnsForMap,
 } from '../../engine/battleSetup';
-import { MAP_DEFAULT_SCALE } from '../../ui/mapZoomController';
+import { resolveInitialDungeonScale } from '../../ui/mapZoomController';
 import {
   clearBattleSelection,
   syncPrepChromeVisibility,
@@ -123,7 +123,7 @@ export async function openBattleScene(
   }
 
   state.openState = true;
-  state.cam.displayScale = MAP_DEFAULT_SCALE;
+  state.cam.displayScale = resolveInitialDungeonScale();
   state.pinchTracker.reset();
   dom.rootEl.hidden = false;
   viewportEl.classList.add('is-battle-active');

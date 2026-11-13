@@ -276,7 +276,6 @@ async function processTurnReinforcements(
     if (occupant) {
       state.blockedReinforcementIds.add(wave.id);
       audioManager.playSfx('select');
-      spawnFloatingText(state, dom, wave.stairsX, wave.stairsY, 'STAIRS BLOCKED!', '#88f8b8', 1050);
       await waitBattleMs(state, 200);
       continue;
     }
@@ -297,7 +296,6 @@ async function processTurnReinforcements(
     state.spawnedReinforcementIds.add(wave.id);
     ensureTilePairVisible(state, newEnemy.x, newEnemy.y, newEnemy.x, newEnemy.y);
     audioManager.playSfx('phase_change');
-    spawnFloatingText(state, dom, newEnemy.x, newEnemy.y, 'REINFORCEMENT!', '#ff8090', 1050);
     recomputeDangerArea(ctx);
     ctx.renderNow();
     await waitBattleMs(state, 260);

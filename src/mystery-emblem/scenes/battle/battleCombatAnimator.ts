@@ -14,7 +14,7 @@ import {
   type CombatForecast,
 } from '../../engine/combatEngine';
 import { computeCombatExpGain } from '../../engine/progressionEngine';
-import { ensureTilePairVisible, waitBattleMs } from './battleBannersAndTransitions';
+import { ensureTilePairVisible, showPhaseBanner, waitBattleMs } from './battleBannersAndTransitions';
 import { spawnFloatingText } from './battleFloatingCallouts';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { grantExpAndHandleLevelUps } from './battleLevelUpModal';
@@ -147,7 +147,6 @@ export async function playCombatExchangeAsync(
 
     if (strike.targetDefeated) {
       audioManager.playSfx('unit_ko');
-      spawnFloatingText(state, dom, target.x, target.y, 'DEFEATED!', '#ffb060', 950);
       if (target.faction === 'enemy' && target.droppableItemId) {
         const dropId = target.droppableItemId;
         target.droppableItemId = null;
@@ -155,15 +154,7 @@ export async function playCombatExchangeAsync(
         const dropDef = getItemById(dropId);
         const dropName = dropDef?.name ?? dropId;
         audioManager.playSfx('heal');
-        spawnFloatingText(
-          state,
-          dom,
-          target.x,
-          Math.max(0, target.y - 1),
-          `Got ${dropName}!`,
-          '#ffd860',
-          1200
-        );
+        showPhaseBanner(state, dom, `Obtained ${dropName}!`);
       }
       const koSteps = 6;
       for (let s = 1; s <= koSteps; s++) {

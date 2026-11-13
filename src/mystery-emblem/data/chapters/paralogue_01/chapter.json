@@ -77,7 +77,6 @@
           "toFaction":"player",
           "healToFull":true,
           "readyToAct":true,
-          "calloutText":"WOKE UP!",
           "addToPermanentRoster":true
         }
       ]

@@ -14,7 +14,8 @@ export {
 } from './pinchZoomTracker';
 
 export const MAP_DEFAULT_SCALE = 2.0;
-export const MAP_MIN_SCALE = 1.5;
+export const MAP_MOBILE_DEFAULT_SCALE = 1.35;
+export const MAP_MIN_SCALE = 1.15;
 export const MAP_MAX_SCALE = 2.5;
 
 export interface MapScaleBounds {
@@ -29,11 +30,30 @@ export const DUNGEON_SCALE_BOUNDS: MapScaleBounds = {
   maxScale: MAP_MAX_SCALE,
 };
 
+export const OVERWORLD_MOBILE_DEFAULT_SCALE = 1.9;
+
 export const OVERWORLD_SCALE_BOUNDS: MapScaleBounds = {
   defaultScale: 2.75,
-  minScale: 2.25,
+  minScale: 1.6,
   maxScale: 3.25,
 };
+
+export function isCompactMobileViewport(viewW?: number, viewH?: number): boolean {
+  const w = viewW ?? (typeof window !== 'undefined' ? window.innerWidth : 960);
+  const h = viewH ?? (typeof window !== 'undefined' ? window.innerHeight : 540);
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return false;
+  return Math.min(w, h) <= 540 || w <= 768;
+}
+
+export function resolveInitialDungeonScale(viewW?: number, viewH?: number): number {
+  return isCompactMobileViewport(viewW, viewH) ? MAP_MOBILE_DEFAULT_SCALE : MAP_DEFAULT_SCALE;
+}
+
+export function resolveInitialOverworldScale(viewW?: number, viewH?: number): number {
+  return isCompactMobileViewport(viewW, viewH)
+    ? OVERWORLD_MOBILE_DEFAULT_SCALE
+    : OVERWORLD_SCALE_BOUNDS.defaultScale;
+}
 
 /** 6 native PMD tiles (`6 * 24 = 144` native world px) of comfortable edge/HUD overscroll */
 export const MAP_OVERSCROLL_NATIVE_PX = 6 * 24;

@@ -101,15 +101,9 @@ export async function useEquippedBattleConsumable(ctx: BattleControllerContext):
   unit.renderWorldY = unit.y * PMD_TILE_NATIVE_PX;
 
   audioManager.playSfx(item.category === 'promotion' ? 'victory_fanfare' : 'heal');
-  spawnFloatingText(
-    state,
-    dom,
-    unit.x,
-    unit.y,
-    calloutText,
-    item.category === 'promotion' ? '#ffd860' : '#68f8a8',
-    item.category === 'promotion' ? 1150 : 820
-  );
+  if (item.category !== 'promotion') {
+    spawnFloatingText(state, dom, unit.x, unit.y, calloutText, '#68f8a8', 820);
+  }
   clearBattleSelection(state, dom, prepOverlay);
   ctx.tutorialOverlay?.notifyActionCompleted('battle_confirm_item');
   await runTileReachedEvents(ctx, unit, runGen);

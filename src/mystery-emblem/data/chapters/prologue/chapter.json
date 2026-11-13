@@ -68,6 +68,7 @@
       "once":true,
       "trigger":{"type":"turn_start","turnNumber":2,"phase":"enemy_phase"},
       "actions":[
+        {"type":"move_unit","targetUnitId":"prologue_quaquaval","x":17,"y":5,"face":"right"},
         {"type":"despawn_units","unitIds":["prologue_quaquaval"]}
       ]
     },
@@ -79,14 +80,16 @@
         {
           "type":"spawn_units",
           "faction":"enemy",
-          "calloutText":"ROUND TWO!",
           "bannerText":"Village Sparring Squad!",
           "units":[
-            {"id":"prologue_pawmi","x":9,"y":5,"speciesId":"pawmi","level":1,"moveIds":["nuzzle","thunder_shock"],"equippedMoveId":"nuzzle","equippedMoveIds":["nuzzle"],"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true},
-            {"id":"prologue_starly","x":12,"y":3,"speciesId":"starly","level":1,"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true},
-            {"id":"prologue_caterpie","x":12,"y":7,"speciesId":"caterpie","level":1,"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true}
+            {"id":"prologue_pawmi","x":16,"y":5,"speciesId":"pawmi","level":1,"moveIds":["nuzzle","thunder_shock"],"equippedMoveId":"nuzzle","equippedMoveIds":["nuzzle"],"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true},
+            {"id":"prologue_starly","x":17,"y":3,"speciesId":"starly","level":1,"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true},
+            {"id":"prologue_caterpie","x":17,"y":7,"speciesId":"caterpie","level":1,"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true}
           ]
         },
+        {"type":"move_unit","targetUnitId":"prologue_pawmi","x":9,"y":5,"face":"left"},
+        {"type":"move_unit","targetUnitId":"prologue_starly","x":12,"y":3,"face":"left"},
+        {"type":"move_unit","targetUnitId":"prologue_caterpie","x":12,"y":7,"face":"left"},
         {
           "type":"play_dialogue",
           "scriptId":"prologue_town_trio_intro",
@@ -106,8 +109,7 @@
         {
           "type":"give_unit_item",
           "targetUnitId":"partner",
-          "itemId":"paralyze_heal",
-          "calloutText":"PARALYZE HEAL!"
+          "itemId":"paralyze_heal"
         }
       ]
     },

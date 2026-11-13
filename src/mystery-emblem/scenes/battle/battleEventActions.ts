@@ -124,7 +124,6 @@ export async function executeEventActionsAsync(
         if (action.checkStairsBlocking && occupied.has(coordKey(uSpawn.x, uSpawn.y))) {
           state.blockedReinforcementIds.add(uSpawn.id || eventId);
           audioManager.playSfx('select');
-          spawnFloatingText(state, dom, uSpawn.x, uSpawn.y, 'STAIRS BLOCKED!', '#88f8b8', 1050);
           await waitBattleMs(state, 180);
           continue;
         }
@@ -152,15 +151,6 @@ export async function executeEventActionsAsync(
         state.units.push(built);
         ensureTilePairVisible(state, built.x, built.y, built.x, built.y);
         audioManager.playSfx(action.faction === 'enemy' ? 'phase_change' : 'victory_fanfare');
-        spawnFloatingText(
-          state,
-          dom,
-          built.x,
-          built.y,
-          action.calloutText ?? (action.faction === 'enemy' ? 'REINFORCEMENT!' : 'ALLY ARRIVED!'),
-          action.faction === 'enemy' ? '#ff8090' : '#68f8a8',
-          1050
-        );
         ctx.renderNow();
         await waitBattleMs(state, 220);
       }
@@ -202,7 +192,6 @@ export async function executeEventActionsAsync(
         }
         ensureTilePairVisible(state, target.x, target.y, target.x, target.y);
         audioManager.playSfx('victory_fanfare');
-        spawnFloatingText(state, dom, target.x, target.y, action.calloutText ?? 'JOINED!', '#ffd860', 1100);
         recomputeDangerArea(ctx);
         updateBattleInfoStrip(ctx);
         ctx.renderNow();
@@ -213,7 +202,6 @@ export async function executeEventActionsAsync(
         const idx = state.units.findIndex((item) => item.id === uid && !item.defeated);
         if (idx >= 0) {
           const u = state.units[idx]!;
-          spawnFloatingText(state, dom, u.x, u.y, action.calloutText ?? 'DEPARTED', '#a8d8ff', 950);
           state.trackedEnemyIds.delete(u.id);
           if (state.lastComputedHoverEnemyId === u.id) state.lastComputedHoverEnemyId = null;
           if (state.suppressedHoverEnemyId === u.id) state.suppressedHoverEnemyId = null;
@@ -339,15 +327,6 @@ export async function executeEventActionsAsync(
         }
         ensureTilePairVisible(state, recipient.x, recipient.y, recipient.x, recipient.y);
         audioManager.playSfx('heal');
-        spawnFloatingText(
-          state,
-          dom,
-          recipient.x,
-          Math.max(0, recipient.y - 1),
-          action.calloutText ?? `Got ${itemDef.name}!`,
-          '#ffd860',
-          1050
-        );
         updateBattleInfoStrip(ctx);
         ctx.renderNow();
         await waitBattleMs(state, 220);
@@ -407,8 +386,7 @@ export async function executeEventActionsAsync(
         target.action = 'Hurt';
         target.hitFlashUntilMs = performance.now() + (state.fastMode ? 60 : 230);
         audioManager.playSfx('attack_hit');
-        const effTag = forecast && forecast.attackerSide.typeMultiplier > 1 ? 'SUPER EFFECTIVE! ' : '';
-        spawnFloatingText(state, dom, target.x, target.y, `${effTag}-${dealt}`, '#ff7888', 950);
+        spawnFloatingText(state, dom, target.x, target.y, `-${dealt}`, '#ff7888', 950);
         updateBattleInfoStrip(ctx);
         ctx.renderNow();
         await waitBattleMs(state, 280);

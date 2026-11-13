@@ -3,7 +3,7 @@
  */
 
 import { createPmdButton } from '../../ui/PmdWindow';
-import { MAP_DEFAULT_SCALE } from '../../ui/mapZoomController';
+import { resolveInitialDungeonScale } from '../../ui/mapZoomController';
 
 export interface CutsceneDomShell {
   rootEl: HTMLElement;
@@ -77,7 +77,7 @@ export function buildCutsceneDomShell(opts: {
     const rect = stageWrapEl.getBoundingClientRect();
     const w = Math.max(320, Math.round(rect.width || window.innerWidth || 960));
     const h = Math.max(240, Math.round(rect.height || window.innerHeight || 540));
-    const displayScale = MAP_DEFAULT_SCALE;
+    const displayScale = resolveInitialDungeonScale(w, h);
     const nativeW = Math.max(160, Math.ceil(w / displayScale));
     const nativeH = Math.max(120, Math.ceil(h / displayScale));
     if (canvas.width !== nativeW || canvas.height !== nativeH) {

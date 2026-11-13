@@ -74,14 +74,16 @@
           "type":"spawn_units",
           "faction":"player",
           "addToPermanentRoster":true,
-          "calloutText":"VILLAGE FRIENDS!",
           "bannerText":"Starly, Caterpie & Pawmi Joined!",
           "units":[
-            {"id":"ch4_starly","x":3,"y":2,"speciesId":"starly","level":4},
-            {"id":"ch4_caterpie","x":2,"y":13,"speciesId":"caterpie","level":4},
-            {"id":"ch4_pawmi","x":4,"y":13,"speciesId":"pawmi","level":4}
+            {"id":"ch4_starly","x":0,"y":2,"speciesId":"starly","level":4},
+            {"id":"ch4_caterpie","x":0,"y":13,"speciesId":"caterpie","level":4},
+            {"id":"ch4_pawmi","x":0,"y":14,"speciesId":"pawmi","level":4}
           ]
         },
+        {"type":"move_unit","targetUnitId":"ch4_starly","x":3,"y":2,"face":"right"},
+        {"type":"move_unit","targetUnitId":"ch4_caterpie","x":2,"y":13,"face":"right"},
+        {"type":"move_unit","targetUnitId":"ch4_pawmi","x":4,"y":13,"face":"right"},
         {
           "type":"play_dialogue",
           "scriptId":"ch4_town_trio_join_dialogue",

@@ -13,6 +13,7 @@ import {
   OVERWORLD_SCALE_BOUNDS,
   clampMapScale,
   computeCenteredMapCameraBounds,
+  resolveInitialOverworldScale,
   type MapCameraBounds,
 } from '../../ui/mapZoomController';
 import {
@@ -42,7 +43,7 @@ export class OverworldCameraAndPointersController {
   public viewWidthPx = 960;
   public viewHeightPx = 540;
   public canvasDpr = 1;
-  public displayScale = OVERWORLD_SCALE_BOUNDS.defaultScale;
+  public displayScale = resolveInitialOverworldScale();
   public cameraX = 0;
   public cameraY = 0;
   public hasInitializedCamera = false;
@@ -65,7 +66,7 @@ export class OverworldCameraAndPointersController {
     this.gs.isDraggingCamera = false;
     this.gs.longPressFired = false;
     if (resetScaleToDefault) {
-      this.displayScale = OVERWORLD_SCALE_BOUNDS.defaultScale;
+      this.displayScale = resolveInitialOverworldScale();
     }
   }
 

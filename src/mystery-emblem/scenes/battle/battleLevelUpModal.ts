@@ -154,7 +154,6 @@ export async function grantExpAndHandleLevelUps(
   for (const lv of levelUps) {
     state.levelUpHistory.push(lv);
     audioManager.playSfx('victory_fanfare');
-    spawnFloatingText(state, dom, unit.x, unit.y, `LEVEL UP! Lv.${lv.newLevel}`, '#ffe066', 1100);
     await presentLevelUpModalAsync(ctx, unit, lv, runGen);
     if (!state.openState || runGen !== state.battleRunGen) return;
     updateBattleInfoStrip(ctx);
