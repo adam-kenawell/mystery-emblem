@@ -33,6 +33,10 @@ import {
   openFloatingCommandMenu,
 } from './battleSelectionAndMenu';
 import { confirmForecastStatusHex } from './battleStatusHexController';
+import {
+  triggerReactiveForecastTutorial,
+  triggerReactivePostCombatTutorials,
+} from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
 import { areAllLivingPlayersWaited, getSelectedUnit } from './battleUnitQueries';
 import { playHealActionAsync } from './battleWalkAndHealAnimator';
@@ -68,6 +72,7 @@ export function openCombatForecastModal(
   ctx.onLayerStateChanged();
   tutorialOverlay?.notifyActionCompleted('battle_open_attack_forecast');
   ctx.renderNow();
+  triggerReactiveForecastTutorial(ctx);
 }
 
 export function openHealForecastModal(
@@ -196,6 +201,8 @@ async function confirmForecastAttack(ctx: BattleControllerContext): Promise<void
       return;
     }
     await runEnemyPhase(ctx);
+  } else {
+    await triggerReactivePostCombatTutorials(ctx, runGen);
   }
 }
 

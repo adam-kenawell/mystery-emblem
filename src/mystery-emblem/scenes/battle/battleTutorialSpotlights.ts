@@ -2,10 +2,6 @@
  * Quaquaval Interactive Tutorial Canvas Tile Spotlight Queries for `BattleScene`
  */
 
-import {
-  PROLOGUE_LEVEL_ID,
-  PROLOGUE_PARTNER_TUTORIAL_TILE,
-} from '../../data/chapters/prologue/tutorialStaging';
 import { getItemById, getSpeciesById } from '../../data/index';
 import type {
   TutorialActionTriggerId,
@@ -46,50 +42,11 @@ export function getTutorialPartnerUnit(state: BattleRuntimeState): BattleUnitSta
 }
 
 /**
- * Prologue tutorial moves are forced onto exact tiles when appropriate:
- * - Turn 1 ({partner}): `PROLOGUE_PARTNER_TUTORIAL_TILE` inside Quaquaval's reach.
- * - Turn 2 ({lord}): cheapest free tile exactly 2 spaces from sparring Quaquaval (Range-2 Dragon Breath).
- * - Turn 3 ({partner} holding Paralyze Heal): stay on current tile `{ x: selected.x, y: selected.y }` to open Item menu immediately.
+ * Prologue movement is free-play with zero forced tile locks.
  */
 export function getForcedTutorialMoveTile(
-  state: BattleRuntimeState
+  _state: BattleRuntimeState
 ): { x: number; y: number } | null {
-  if (state.activeLevelId !== PROLOGUE_LEVEL_ID) return null;
-  const selected = getSelectedUnit(state);
-  if (!selected || !state.currentRange) return null;
-  const reachable = state.currentRange.reachableTiles;
-
-  if (state.turnNumber === 1) {
-    const partner = getTutorialPartnerUnit(state);
-    if (partner && selected.id === partner.id) {
-      const tile = PROLOGUE_PARTNER_TUTORIAL_TILE;
-      return reachable.has(coordKey(tile.x, tile.y)) ? { ...tile } : null;
-    }
-    return null;
-  }
-
-  if (state.turnNumber === 2 && selected.isLord) {
-    const mentor = getLivingEnemies(state).find((e) => e.sparring);
-    if (!mentor) return null;
-    const occupied = new Set(
-      getLivingUnits(state)
-        .filter((u) => u.id !== selected.id)
-        .map((u) => coordKey(u.x, u.y))
-    );
-    let best: { x: number; y: number; cost: number } | null = null;
-    for (const [key, info] of reachable) {
-      if (occupied.has(key)) continue;
-      const pt = parseCoordKey(key);
-      if (manhattanDistance(pt.x, pt.y, mentor.x, mentor.y) !== 2) continue;
-      if (!best || info.cost < best.cost) best = { ...pt, cost: info.cost };
-    }
-    return best ? { x: best.x, y: best.y } : null;
-  }
-
-  if (state.turnNumber === 3 && selected.consumableItemId === 'paralyze_heal') {
-    return { x: selected.x, y: selected.y };
-  }
-
   return null;
 }
 

@@ -75,7 +75,7 @@ export function buildNewCampaignSaveData(
       SPECIES_MAP.get(partnerSpeciesId)?.lineId === 'flabebe_line' ? flabebeFlower : undefined,
     level: startLv,
     scaleStatsToLevel: scaleStats,
-    heldItemId: 'oran_berry',
+    consumableItemId: 'paralyze_heal',
   });
   const healer = createPokemonInstance({
     speciesId: healerSpeciesId,
@@ -84,6 +84,7 @@ export function buildNewCampaignSaveData(
       SPECIES_MAP.get(healerSpeciesId)?.lineId === 'flabebe_line' ? flabebeFlower : undefined,
     level: startLv,
     scaleStatsToLevel: scaleStats,
+    heldItemId: 'oran_berry',
   });
 
   const initialChapterId = cfg.currentChapterId?.trim() || 'prologue';

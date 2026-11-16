@@ -3,7 +3,6 @@
  */
 
 import { equipMoveInItsSlot } from '../../data/equippedMoves';
-import { PROLOGUE_LEVEL_ID } from '../../data/chapters/prologue/tutorialStaging';
 import { loadSpeciesSpriteBundle } from '../../assets/pmdAssetLoader';
 import { buildSingleEnemyBattleUnit } from '../../engine/battleSetup';
 import { computeCombatForecast, computeStatusMoveForecast } from '../../engine/combatEngine';
@@ -36,8 +35,8 @@ import {
   runFactionPhaseStartStatusTicks,
 } from './battleStatusHexController';
 import {
-  triggerPrologueTurn2Drills,
-  triggerPrologueTurn3ItemDrill,
+  triggerReactivePostCombatTutorials,
+  triggerTurn2FallbackTerrainTutorial,
 } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
@@ -242,14 +241,13 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
   ctx.renderNow();
 
   audioManager.playSfx('phase_change');
-  void playPhaseTransitionAsync(state, dom, 'player', runGen).then(() => {
+  void playPhaseTransitionAsync(state, dom, 'player', runGen).then(async () => {
     if (!state.openState || runGen !== state.battleRunGen || state.phase !== 'player_phase') {
       return;
     }
-    if (state.activeLevelId === PROLOGUE_LEVEL_ID) {
-      if (state.turnNumber === 2) void triggerPrologueTurn2Drills(ctx, runGen);
-      else if (state.turnNumber === 3) void triggerPrologueTurn3ItemDrill(ctx, runGen);
-      return;
+    const shownPostCombat = await triggerReactivePostCombatTutorials(ctx, runGen);
+    if (!shownPostCombat && state.turnNumber === 2) {
+      await triggerTurn2FallbackTerrainTutorial(ctx, runGen);
     }
   });
 }

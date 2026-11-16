@@ -33,6 +33,7 @@ import {
   cancelUncommittedMove,
   openFloatingCommandMenu,
 } from './battleSelectionAndMenu';
+import { triggerReactiveTerrainTutorialAt } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
   areAllLivingPlayersWaited,
@@ -98,6 +99,15 @@ export async function runTileReachedEvents(
     ctx.state.units
   );
   await runMatchedEvents(ctx, matched, runGen);
+  if (
+    ctx.state.openState &&
+    runGen === ctx.state.battleRunGen &&
+    unit.faction === 'player' &&
+    ctx.state.phase === 'player_phase' &&
+    !checkAndTriggerMatchEnd(ctx)
+  ) {
+    await triggerReactiveTerrainTutorialAt(ctx, unit.x, unit.y, runGen);
+  }
 }
 
 export async function runUnitHealedEvents(

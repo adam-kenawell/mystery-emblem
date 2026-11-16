@@ -112,6 +112,55 @@ export function detectDynamicMapTerrainTutorialIds(map: DungeonMapDefinition): s
   return topics;
 }
 
+function classifyTerrainTutorialTopic(terrain: string | undefined): string | null {
+  if (terrain === 'trees' || terrain === 'mountain') return 'terrain_cover_woods_crags';
+  if (terrain === 'wonder_tile') return 'terrain_wonder_tiles';
+  if (terrain === 'lava' || terrain === 'void' || terrain === 'barrier') {
+    return 'terrain_hazards_lava_void';
+  }
+  return null;
+}
+
+/**
+ * Inspects `(x, y)` and its 4 orthogonal neighbors to detect the first special terrain
+ * tutorial relevant to a unit's newly reached position.
+ */
+export function detectNearbyTerrainTutorialId(
+  map: DungeonMapDefinition,
+  x: number,
+  y: number
+): string | null {
+  const coords: ReadonlyArray<readonly [number, number]> = [
+    [x, y],
+    [x + 1, y],
+    [x - 1, y],
+    [x, y + 1],
+    [x, y - 1],
+  ];
+  let foundCover = false;
+  let foundWonder = false;
+  let foundHazard = false;
+
+  for (let i = 0; i < coords.length; i++) {
+    const [cx, cy] = coords[i]!;
+    if (cx < 0 || cy < 0 || cx >= map.width || cy >= map.height) continue;
+    const rawCell = map.tiles[cy]?.[cx] as { terrain?: string; terrainType?: string } | undefined;
+    const terrain = rawCell?.terrain ?? rawCell?.terrainType;
+    const directTopic = classifyTerrainTutorialTopic(terrain);
+    if (i === 0 && directTopic) {
+      return directTopic;
+    }
+    if (directTopic === 'terrain_cover_woods_crags') foundCover = true;
+    else if (directTopic === 'terrain_wonder_tiles') foundWonder = true;
+    else if (directTopic === 'terrain_hazards_lava_void') foundHazard = true;
+  }
+
+  if (foundCover) return 'terrain_cover_woods_crags';
+  if (foundWonder) return 'terrain_wonder_tiles';
+  if (foundHazard) return 'terrain_hazards_lava_void';
+  return null;
+}
+
 export function evaluatePrepTutorialTopics(opts: {
   levelId: string;
   map: DungeonMapDefinition;
@@ -134,18 +183,10 @@ export function evaluateTurn1TutorialTopics(opts: {
   map: DungeonMapDefinition;
   save: SaveData | null;
 }): string[] {
-  const result = evaluateHookRules({
+  return evaluateHookRules({
     hook: 'battle_turn1',
     levelId: opts.levelId,
     map: opts.map,
     save: opts.save,
   });
-  if (opts.levelId !== 'prologue' && !isQuaquavalAbsentFromLevel(opts.levelId)) {
-    for (const terrainTopicId of detectDynamicMapTerrainTutorialIds(opts.map)) {
-      if (!result.includes(terrainTopicId)) {
-        result.push(terrainTopicId);
-      }
-    }
-  }
-  return result;
 }

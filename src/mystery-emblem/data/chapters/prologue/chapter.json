@@ -10,7 +10,7 @@
   "defaultTilesetId": "042",
   "bgmCue": "do_your_best",
   "objectiveType": "rout",
-  "objectiveLabel": "Complete Quaquaval's Training Bout",
+  "objectiveLabel": "Defeat Starly, Caterpie & Pawmi",
   "recommendedLevel": 1,
   "deploymentCap": 3,
   "skipPrepPhase": true,
@@ -38,107 +38,10 @@
     {"x":4,"y":6,"speciesId":"flabebe"}
   ],
   "enemySpawns": [
-    {"id":"prologue_quaquaval","x":13,"y":5,"speciesId":"mentor_quaquaval","level":12,"moveIds":["aqua_jet","brick_break"],"equippedMoveId":"aqua_jet","equippedMoveIds":["aqua_jet"],"heldItemId":null,"aiMode":"wait_until_in_range","sparring":true,"nickname":"Quaquaval"}
+    {"id":"prologue_pawmi","x":12,"y":5,"speciesId":"pawmi","level":1,"moveIds":["nuzzle"],"equippedMoveId":"nuzzle","equippedMoveIds":["nuzzle"],"heldItemId":null,"aiMode":"aggressive","friendlyBout":true},
+    {"id":"prologue_starly","x":13,"y":3,"speciesId":"starly","level":1,"moveIds":["gust"],"equippedMoveId":"gust","equippedMoveIds":["gust"],"heldItemId":null,"aiMode":"aggressive","friendlyBout":true},
+    {"id":"prologue_caterpie","x":13,"y":7,"speciesId":"caterpie","level":1,"moveIds":["tackle"],"equippedMoveId":"tackle","equippedMoveIds":["tackle"],"heldItemId":null,"aiMode":"aggressive","friendlyBout":true}
   ],
   "reinforcements": [],
-  "events": [
-    {
-      "id":"ev_prologue_rest_team_turn1",
-      "once":true,
-      "trigger":{"type":"turn_start","turnNumber":1,"phase":"player_phase"},
-      "actions":[
-        {"type":"rest_player_units","exceptPartner":true}
-      ]
-    },
-    {
-      "id":"ev_prologue_rest_team_turn2",
-      "once":true,
-      "trigger":{"type":"turn_start","turnNumber":2,"phase":"player_phase"},
-      "actions":[
-        {"type":"rest_player_units","exceptLord":true,"exceptHealer":true},
-        {
-          "type":"play_dialogue",
-          "scriptId":"prologue_ranged_and_heal_lesson",
-          "restorePreviousBgmOnClose":true
-        }
-      ]
-    },
-    {
-      "id":"ev_prologue_quaquaval_steps_back",
-      "once":true,
-      "trigger":{"type":"turn_start","turnNumber":2,"phase":"enemy_phase"},
-      "actions":[
-        {"type":"move_unit","targetUnitId":"prologue_quaquaval","x":17,"y":5,"face":"right"},
-        {"type":"despawn_units","unitIds":["prologue_quaquaval"]}
-      ]
-    },
-    {
-      "id":"ev_prologue_town_trio_wave",
-      "once":true,
-      "trigger":{"type":"turn_start","turnNumber":3,"phase":"player_phase"},
-      "actions":[
-        {
-          "type":"spawn_units",
-          "faction":"enemy",
-          "bannerText":"Village Sparring Squad!",
-          "silent":true,
-          "fadeInFromOffMap":"right",
-          "units":[
-            {"id":"prologue_pawmi","x":16,"y":5,"speciesId":"pawmi","level":1,"moveIds":["nuzzle"],"equippedMoveId":"nuzzle","equippedMoveIds":["nuzzle"],"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true},
-            {"id":"prologue_starly","x":17,"y":3,"speciesId":"starly","level":1,"moveIds":["gust"],"equippedMoveId":"gust","equippedMoveIds":["gust"],"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true},
-            {"id":"prologue_caterpie","x":17,"y":7,"speciesId":"caterpie","level":1,"moveIds":["tackle"],"equippedMoveId":"tackle","equippedMoveIds":["tackle"],"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true}
-          ]
-        },
-        {"type":"move_unit","targetUnitId":"prologue_pawmi","x":9,"y":5,"face":"left"},
-        {"type":"move_unit","targetUnitId":"prologue_starly","x":12,"y":3,"face":"left"},
-        {"type":"move_unit","targetUnitId":"prologue_caterpie","x":12,"y":7,"face":"left"},
-        {
-          "type":"play_dialogue",
-          "scriptId":"prologue_town_trio_intro",
-          "restorePreviousBgmOnClose":true
-        },
-        {
-          "type":"scripted_attack",
-          "attackerUnitId":"prologue_pawmi",
-          "targetUnitId":"partner",
-          "moveId":"nuzzle"
-        },
-        {
-          "type":"play_dialogue",
-          "scriptId":"prologue_paralyze_lesson",
-          "restorePreviousBgmOnClose":true
-        },
-        {
-          "type":"give_unit_item",
-          "targetUnitId":"partner",
-          "itemId":"paralyze_heal"
-        }
-      ]
-    },
-    {
-      "id":"ev_prologue_formation_reset",
-      "once":true,
-      "trigger":{"type":"unit_healed"},
-      "conditions":[{"kind":"event_triggered","eventId":"ev_prologue_town_trio_wave"}],
-      "actions":[
-        {"type":"refresh_units","targetUnitIds":["partner"],"healToFull":true,"clearWait":true,"clearStatus":true},
-        {"type":"move_unit","targetUnitId":"lord","x":3,"y":5,"face":"right"},
-        {"type":"move_unit","targetUnitId":"partner","x":2,"y":4,"face":"right"},
-        {"type":"move_unit","targetUnitId":"healer","x":2,"y":6,"face":"right"},
-        {"type":"move_unit","targetUnitId":"prologue_pawmi","x":14,"y":5,"face":"left"},
-        {"type":"move_unit","targetUnitId":"prologue_starly","x":15,"y":4,"face":"left"},
-        {"type":"move_unit","targetUnitId":"prologue_caterpie","x":15,"y":6,"face":"left"},
-        {
-          "type":"play_dialogue",
-          "scriptId":"prologue_formation_reset",
-          "restorePreviousBgmOnClose":true
-        },
-        {
-          "type":"set_objective",
-          "objectiveType":"rout",
-          "objectiveLabel":"Defeat Starly, Caterpie & Pawmi"
-        }
-      ]
-    }
-  ]
+  "events": []
 }

@@ -102,6 +102,8 @@ export interface TutorialTopicDefinition {
   title: string;
   category: TutorialCompendiumCategory;
   summary: string;
+  chips?: ReadonlyArray<TutorialVisualChip>;
+  bullets?: ReadonlyArray<string>;
   beats: ReadonlyArray<AdvisorTutorialBeat>;
 }
 

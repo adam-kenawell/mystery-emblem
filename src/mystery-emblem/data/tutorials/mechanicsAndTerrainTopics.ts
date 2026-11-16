@@ -1,7 +1,7 @@
 /**
- * Mystery Emblem - Campaign Mechanics & Dynamic Terrain Topics 7-16 (`mechanicsAndTerrainTopics.ts`)
+ * Mystery Emblem - Campaign Mechanics & Dynamic Terrain Topics (`mechanicsAndTerrainTopics.ts`)
  *
- * Voiced by Quaquaval for live coaching and Quaquaval's Field Notes. Zero em dashes.
+ * Non-blocking one-liners with single-screen Field Notes. Zero em dashes.
  */
 
 import type { TutorialTopicDefinition } from './tutorialTypes';
@@ -11,17 +11,22 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     id: 'prep_items_and_convoy',
     title: 'Shared Convoy & Gear vs Consumables',
     category: 'prep_pokemon',
-    summary: 'Handing out gear, Berries, and medicine from the shared Convoy.',
+    summary: 'Handing out held gear, Berries, and medicine from the shared Convoy.',
+    chips: [
+      { kind: 'item', itemId: 'muscle_band', label: 'Held Gear' },
+      { kind: 'item', itemId: 'x_attack', label: 'X-Item (+3 Stat)' },
+    ],
+    bullets: [
+      'Every teammate draws from one shared Convoy pack in Manage Items or the Overworld Items menu.',
+      'Each Pokemon has one item slot: equip either a Held Item (passive gear or auto-Berries) or a Consumable (Potions, status cures, or X-Items).',
+      'Tap a teammate first, then tap an item in the Convoy grid to equip or pass it over.',
+    ],
     beats: [
       {
         id: 'convoy_beat1',
         emotion: 'Happy',
         dialogue:
-          'Our expedition shares one Convoy pack. Pick a teammate in Manage Items, then tap gear or medicine to hand it over.',
-        chips: [
-          { kind: 'item', itemId: 'muscle_band', label: 'Held Gear' },
-          { kind: 'item', itemId: 'x_attack', label: 'X-Item (+3 Stat)' },
-        ],
+          'Our expedition shares one Convoy pack, so you can pass spare gear and medicine to any teammate from Manage Items.',
       },
     ],
   },
@@ -30,27 +35,22 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     title: 'Outlaw Leaders & Water / Flying Footwork',
     category: 'combat_tactics',
     summary: 'Crossing water tiles and reading stationary enemy leaders.',
+    chips: [
+      { kind: 'type', pokemonType: 'Flying' },
+      { kind: 'type', pokemonType: 'Water' },
+      { kind: 'badge', label: '1 Mov Across Water', tone: 'cyan' },
+    ],
+    bullets: [
+      'Most grounded units cannot enter deep water, but Flying and Water types cross water tiles for 1 Movement.',
+      'Stationary enemy leaders hold their position until someone enters their attack range.',
+      'Toggle the Danger Area and clear outer scouts before baiting the boss.',
+    ],
     beats: [
       {
         id: 'ch2_beat1_water_flying',
         emotion: 'Normal',
         dialogue:
-          'Most fighters cannot cross deep water, but flyers glide right over it and swimmers like {partner} splash across with ease.',
-        chips: [
-          { kind: 'type', pokemonType: 'Flying' },
-          { kind: 'type', pokemonType: 'Water' },
-          { kind: 'badge', label: '1 Mov Across Water', tone: 'cyan' },
-        ],
-      },
-      {
-        id: 'ch2_beat2_stationary_boss',
-        emotion: 'Determined',
-        dialogue:
-          'Watch the enemy ringleader carefully! Some bosses hold their ground until you step close, so clear their henchmen first.',
-        chips: [
-          { kind: 'badge', label: 'Check Danger Area', tone: 'gold' },
-          { kind: 'badge', label: 'Clear Escorts First', tone: 'danger' },
-        ],
+          'Swimmers and flyers cross water easily, while stationary bosses hold ground until you step into range.',
       },
     ],
   },
@@ -59,23 +59,21 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     title: 'Cave Stairs & Escape Objectives',
     category: 'combat_tactics',
     summary: 'Blocking Stairs reinforcements and guiding your leader to the exit.',
+    chips: [
+      { kind: 'badge', label: 'Stand On Stairs = Block Spawns', tone: 'gold' },
+      { kind: 'badge', label: '+1 Def/SpD · +10% Avo', tone: 'cyan' },
+    ],
+    bullets: [
+      'Wild reinforcements emerge from dungeon Stairs on scheduled turns unless a unit is standing on them.',
+      'Parking an ally directly on Stairs grants +1 Def/SpD, +10% Avo, and blocks that spawn.',
+      'On Seize / Escape chapters, moving {lord} onto the glowing green exit tiles wins the battle immediately.',
+    ],
     beats: [
       {
         id: 'ch3_beat1_stairs',
         emotion: 'Determined',
         dialogue:
-          'Wild foes climb up from dungeon stairs between turns! Park a sturdy ally directly on the stairs to seal them shut.',
-        chips: [
-          { kind: 'badge', label: 'Stand On Stairs = Block Spawns', tone: 'gold' },
-          { kind: 'badge', label: '+1 Def/SpD · +10% Avo', tone: 'cyan' },
-        ],
-      },
-      {
-        id: 'ch3_beat2_talk_recruit',
-        emotion: 'Normal',
-        dialogue:
-          'Keep your eyes on the objective banner too. On escape marches, getting {lord} safely onto the exit tile wins the battle right away!',
-        chips: [{ kind: 'badge', label: 'Reach Exit Tile = Victory', tone: 'green' }],
+          'Stand on dungeon stairs to block reinforcements, and guide {lord} onto the green exit tiles to win!',
       },
     ],
   },
@@ -84,16 +82,21 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     title: 'Permanent Stat Vitamins & Rare Drops',
     category: 'world_progression',
     summary: 'Winning enemy drops and using Vitamins for permanent stat boosts.',
+    chips: [
+      { kind: 'item', itemId: 'hp_up', label: 'Permanent +Stat' },
+      { kind: 'badge', label: 'Defeat Foe w/ Drop', tone: 'gold' },
+    ],
+    bullets: [
+      'Enemies carrying a green item icon drop their treasure into your Convoy when defeated.',
+      'Vitamins like HP Up permanently raise a stat when used from the Units menu.',
+      'Check enemy popups to spot valuable drops before finishing a map.',
+    ],
     beats: [
       {
         id: 'ch4_beat1_vitamins',
         emotion: 'Happy',
         dialogue:
-          'Foes marked with an item icon drop their treasure when defeated! Vitamins like HP Up permanently strengthen a teammate from the map Menu.',
-        chips: [
-          { kind: 'item', itemId: 'hp_up', label: 'Permanent +Stat' },
-          { kind: 'badge', label: 'Defeat Foe w/ Drop', tone: 'gold' },
-        ],
+          'Foes with an item icon drop treasure when defeated, and Vitamins permanently boost stats in Units.',
       },
     ],
   },
@@ -102,23 +105,21 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     title: 'Kecleon Shops & Teaching TMs',
     category: 'world_progression',
     summary: 'Shopping at Kecleon stalls and teaching permanent TM moves.',
+    chips: [
+      { kind: 'species', speciesId: '0352', label: 'Kecleon Shop' },
+      { kind: 'item', itemId: 'tm13_scald', label: 'Permanent Move Unlock' },
+    ],
+    bullets: [
+      'Kecleon merchants set up stalls on cleared landmarks to sell medicine, held gear, and TMs.',
+      'TMs permanently unlock a compatible move for a teammate when taught from the Units menu.',
+      'Equip newly taught TM moves into your 4-move loadout before marching into battle.',
+    ],
     beats: [
       {
         id: 'shop_beat1_stalls',
         emotion: 'Happy',
         dialogue:
-          'Kecleon merchants set up roadside stalls on cleared landmarks. Visit them to stock up on medicine, gear, and TMs!',
-        chips: [
-          { kind: 'species', speciesId: '0352', label: 'Kecleon Shop' },
-          { kind: 'item', itemId: 'full_heal', label: 'Heals & Gear' },
-        ],
-      },
-      {
-        id: 'shop_beat2_tms',
-        emotion: 'Normal',
-        dialogue:
-          'A TM permanently teaches a compatible teammate a brand-new move. Open Menu on the world map to teach one.',
-        chips: [{ kind: 'item', itemId: 'tm13_scald', label: 'Permanent Move Unlock' }],
+          'Kecleon stalls carry useful gear, cures, and TMs that permanently unlock new moves from the Units menu.',
       },
     ],
   },
@@ -127,20 +128,21 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     title: 'Deployment Caps & Ferocious Rift Bosses',
     category: 'combat_tactics',
     summary: 'Selecting your active strike team and baiting aggressive bosses.',
+    chips: [
+      { kind: 'badge', label: 'Rotate Standby Gear', tone: 'gold' },
+      { kind: 'species', speciesId: 'great_tusk', label: 'Rift Boss Charges!' },
+    ],
+    bullets: [
+      'When your roster exceeds a chapter deployment cap, choose who deploys in Manage Units ({lord} always deploys).',
+      'Pass held items and medicine from benched allies to your active strike team before launching.',
+      'Aggressive Rift bosses charge as soon as anyone enters their range, so bait with high Def or SpD.',
+    ],
     beats: [
       {
         id: 'ch5_beat1_cap',
-        emotion: 'Determined',
-        dialogue:
-          'Our roster is growing! Choose your active lineup in Manage Units ({lord} always leads) and pass spare gear to whoever deploys.',
-        chips: [{ kind: 'badge', label: 'Rotate Standby Gear', tone: 'gold' }],
-      },
-      {
-        id: 'ch5_beat2_mobile_boss',
         emotion: 'Worried',
         dialogue:
-          'Careful! Feral Rift beasts charge the moment anyone enters their range, so lure them forward with a high-defense teammate.',
-        chips: [{ kind: 'species', speciesId: 'great_tusk', label: 'Rift Boss Charges!' }],
+          'Feral Rift bosses charge as soon as anyone enters their range, so lure them in with a sturdy tank.',
       },
     ],
   },
@@ -149,26 +151,21 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     title: 'Status Conditions & Remedies',
     category: 'combat_tactics',
     summary: 'How Burn, Poison, Paralysis, Sleep, and Freeze work, and how to cure them.',
+    chips: [
+      { kind: 'badge', label: 'BRN: -50% Atk + Chip', tone: 'danger' },
+      { kind: 'badge', label: 'PAR: 1 Mov · -25% Spe', tone: 'gold' },
+    ],
+    bullets: [
+      'Paralysis (PAR) cuts Mov to 1 and Speed by 25%; Burn (BRN) halves Physical Attack and deals end-of-turn chip.',
+      'Poison (PSN) deals recurring HP damage; Sleep (SLP) and Freeze (FRZ) prevent actions until cured or thawed.',
+      'Use a Paralyze Heal, Full Heal, Lum Berry, or stand on a glowing Wonder Tile to cleanse status ailments.',
+    ],
     beats: [
       {
         id: 'status_beat1_ailments',
         emotion: 'Worried',
         dialogue:
-          'Burns and poison sap health each turn, and burns halve physical power. Paralysis slows movement to a crawl, while sleep and ice cost turns!',
-        chips: [
-          { kind: 'badge', label: 'BRN: -50% Atk + Chip', tone: 'danger' },
-          { kind: 'badge', label: 'PAR: 1 Mov · -25% Spe', tone: 'gold' },
-        ],
-      },
-      {
-        id: 'status_beat2_cures',
-        emotion: 'Happy',
-        dialogue:
-          'Carry a Paralyze Heal, Full Heal, or Lum Berry, or step onto a glowing Wonder Tile to cleanse any ailment.',
-        chips: [
-          { kind: 'item', itemId: 'paralyze_heal', label: 'Paralyze Heal' },
-          { kind: 'item', itemId: 'full_heal', label: 'Full Heal' },
-        ],
+          'Status ailments like Burn, Poison, and Paralysis can turn a duel quickly, so keep cures or Wonder Tiles in mind.',
       },
     ],
   },
@@ -177,16 +174,21 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     title: 'Defensive Cover: Trees & Mountains',
     category: 'combat_tactics',
     summary: 'Trees and Mountains slow movement on foot but grant strong defensive cover.',
+    chips: [
+      { kind: 'badge', label: 'Trees: +1 Def/SpD · +15% Avo', tone: 'green' },
+      { kind: 'badge', label: 'Mountain: +2 Def/SpD · +20% Avo', tone: 'gold' },
+    ],
+    bullets: [
+      'Trees cost extra movement on foot and grant +1 Def, +1 SpD, and +15% Avoid.',
+      'Mountains cost more movement on foot and grant +2 Def, +2 SpD, and +20% Avoid.',
+      'Flying Pokemon soar smoothly over Trees and Mountains without paying movement penalties or gaining terrain cover.',
+    ],
     beats: [
       {
         id: 'terrain_woods_beat1',
         emotion: 'Determined',
         dialogue:
-          'Trees and rocky crags cost extra steps on foot, yet grant sturdy defense and evasion bonuses. Flyers soar over them without cover.',
-        chips: [
-          { kind: 'badge', label: 'Trees: +1 Def/SpD · +15% Avo', tone: 'green' },
-          { kind: 'badge', label: 'Mountain: +2 Def/SpD · +20% Avo', tone: 'gold' },
-        ],
+          'It looks like standing in those trees or mountains will give you extra protection from the enemy.',
       },
     ],
   },
@@ -195,16 +197,21 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     title: 'PMD Wonder Tiles',
     category: 'combat_tactics',
     summary: 'Glowing dungeon tiles that grant cover, restore HP, and cleanse status.',
+    chips: [
+      { kind: 'badge', label: '+2 Def/SpD · +20% Avo', tone: 'gold' },
+      { kind: 'badge', label: '20% Heal + Cleanse', tone: 'green' },
+    ],
+    bullets: [
+      'Standing on a Wonder Tile grants +2 Def, +2 SpD, and +20% Avoid in combat.',
+      'At the start of your phase, Wonder Tiles restore 20% max HP and cure any status condition.',
+      'Hold Wonder Tiles as anchor points when holding off incoming packs.',
+    ],
     beats: [
       {
         id: 'terrain_wonder_beat1',
         emotion: 'Happy',
         dialogue:
-          'Spot that glowing Wonder Tile? Holding it boosts your defenses, restores health every turn, and cures status ailments!',
-        chips: [
-          { kind: 'badge', label: '+2 Def/SpD · +20% Avo', tone: 'gold' },
-          { kind: 'badge', label: '20% Heal + Cleanse', tone: 'green' },
-        ],
+          'Spot that glowing Wonder Tile? Holding it boosts your defenses, restores health each turn, and cures status ailments.',
       },
     ],
   },
@@ -213,16 +220,21 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     title: 'Lava, Chasms & Levitate Footwork',
     category: 'combat_tactics',
     summary: 'Crossing molten ground and deep chasms safely.',
+    chips: [
+      { kind: 'type', pokemonType: 'Fire' },
+      { kind: 'badge', label: 'Levitate: Void & Barriers', tone: 'gold' },
+    ],
+    bullets: [
+      'Fire types and flyers can cross molten Lava tiles without getting blocked.',
+      'Flying and Levitating Pokemon (like Duskull) glide cleanly across Void chasms and barriers.',
+      'Check traversal class on a unit card before planning a flank across hazards.',
+    ],
     beats: [
       {
         id: 'terrain_hazards_beat1',
         emotion: 'Worried',
         dialogue:
-          'Watch your step near cliffs! Fire types, flyers, and levitating fighters like Honedge can cross hazards where grounded units cannot.',
-        chips: [
-          { kind: 'type', pokemonType: 'Fire' },
-          { kind: 'badge', label: 'Levitate: Void & Barriers', tone: 'gold' },
-        ],
+          'Watch your footing near those hazards: only Fire types, flyers, or levitating allies can cross molten ground or chasms.',
       },
     ],
   },

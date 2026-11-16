@@ -172,3 +172,92 @@
   padding: 4px 12px;
   font-size: 12px;
 }
+
+/* Non-Blocking Field Note Tooltip Pill & Single-Screen Reference Modal */
+.pmd-tutorial-tooltip-pill {
+  position: fixed;
+  top: 0.65rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 97;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  max-width: min(540px, calc(100vw - 170px));
+  padding: 4px 12px;
+  border-width: 6px 8px;
+  border-image-source: var(--pmd-frame-mini-active);
+  border-image-slice: 3 4 fill;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  box-sizing: border-box;
+}
+.pmd-tutorial-tooltip-pill[hidden] { display: none !important; }
+.pmd-tutorial-pill-kicker { font-size: 11px; color: var(--pmd-text-yellow); text-transform: uppercase; flex-shrink: 0; }
+.pmd-tutorial-pill-title { font-size: 13px; color: var(--pmd-text-white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pmd-tutorial-pill-cta { font-size: 11px; color: var(--pmd-text-cyan); flex-shrink: 0; }
+
+.pmd-tutorial-field-note {
+  width: min(560px, 100%);
+  max-height: calc(100dvh - 1.3rem);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+  box-sizing: border-box;
+  overflow: hidden;
+  pointer-events: auto;
+}
+.pmd-tutorial-field-note[hidden] { display: none !important; }
+.pmd-tutorial-note-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; flex-shrink: 0; }
+.pmd-tutorial-chip-type { font-size: 12px; padding: 2px 7px; border-radius: 3px; background: var(--pmd-fill-well-deep); border: 1px solid var(--pmd-divider-subtle); }
+.pmd-tutorial-chip-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  background: var(--pmd-fill-well-deep);
+  border: 1px solid var(--pmd-divider-subtle);
+  color: var(--pmd-text-gold);
+}
+.pmd-tutorial-chip-badge[data-tone='green'] { color: var(--pmd-text-green); }
+.pmd-tutorial-chip-badge[data-tone='cyan'] { color: var(--pmd-text-cyan); }
+.pmd-tutorial-chip-badge[data-tone='danger'] { color: var(--pmd-text-danger); }
+
+.pmd-tutorial-note-bullets {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  font-size: 13px;
+  line-height: 1.42;
+  color: var(--pmd-text-white);
+}
+.pmd-tutorial-note-quote {
+  margin: 0;
+  padding-top: 6px;
+  border-top: 1px solid var(--pmd-divider-subtle);
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--pmd-text-cyan);
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .pmd-tutorial-tooltip-pill { top: 3.35rem; max-width: calc(100vw - 1.2rem); gap: 6px; padding: 4px 10px; }
+  .pmd-tutorial-field-note { padding: 8px 10px; max-height: calc(100dvh - 0.9rem); }
+}
+
+@media (max-height: 500px) {
+  .pmd-tutorial-tooltip-pill { top: 0.4rem; max-width: min(500px, calc(100vw - 180px)); }
+  .pmd-tutorial-field-note { width: min(640px, 100%); max-height: calc(100dvh - 0.6rem); padding: 6px 10px; gap: 5px; }
+  .pmd-tutorial-note-bullets { font-size: 12px; gap: 4px; }
+}

@@ -17,7 +17,7 @@ export interface TutorialActionAvailabilityContext {
   canPerformActionNow?: (action: TutorialActionTriggerId) => boolean;
 }
 
-export type ActiveTutorialModalMode = 'closed' | 'card' | 'compendium';
+export type ActiveTutorialModalMode = 'closed' | 'card' | 'note' | 'compendium';
 
 export class TutorialSessionState {
   public mode: ActiveTutorialModalMode = 'closed';
@@ -118,9 +118,13 @@ export class TutorialSessionState {
 
   public applyModalDomVisibility(shell: TutorialShellElements, nextMode: ActiveTutorialModalMode): void {
     this.mode = nextMode;
-    shell.backdropEl.classList.toggle('is-compendium-mode', nextMode === 'compendium');
+    shell.backdropEl.classList.toggle(
+      'is-compendium-mode',
+      nextMode === 'compendium' || nextMode === 'note'
+    );
     if (nextMode !== 'card') shell.backdropEl.classList.remove('is-interactive-passthrough');
     shell.cardWindowEl.hidden = nextMode !== 'card';
+    shell.noteWindowEl.hidden = nextMode !== 'note';
     shell.compendiumWindowEl.hidden = nextMode !== 'compendium';
     shell.backdropEl.hidden = nextMode === 'closed';
   }

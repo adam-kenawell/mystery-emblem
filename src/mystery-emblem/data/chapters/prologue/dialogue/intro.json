@@ -8,7 +8,8 @@
     { "id": "mentor", "who": { "kind": "mentor" } },
     { "id": "partner", "who": { "kind": "partner" } },
     { "id": "healer", "who": { "kind": "healer" } },
-    { "id": "lord", "who": { "kind": "lord" } }
+    { "id": "lord", "who": { "kind": "lord" } },
+    { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } }
   ],
   "beats": [
     {
@@ -17,25 +18,34 @@
         "speaker": "mentor",
         "emotion": "Determined",
         "side": "right",
-        "text": "Eyes up, all three of you! Tonight we drill the fundamentals of tactical combat right here on the village pitch."
+        "text": "Eyes up, all three of you! Tonight it is a full three-on-three bout against Pawmi, Starly, and Caterpie."
       }
     },
     {
       "id": "line_2",
       "say": {
-        "speaker": "mentor",
-        "emotion": "Normal",
+        "speaker": "pawmi",
+        "emotion": "Happy",
         "side": "right",
-        "text": "First lesson: spacing and enemy reach. {partner}, step forward into my attack range so you can feel how an opponent closes in!"
+        "text": "We have been itching for a rematch all week! Watch out for my static, {partner}!"
       }
     },
     {
       "id": "line_3",
       "say": {
+        "speaker": "mentor",
+        "emotion": "Normal",
+        "side": "right",
+        "text": "Keep that Paralyze Heal in your pocket, {partner}, and stay sharp. I will call out pointers from the sidelines as you fight!"
+      }
+    },
+    {
+      "id": "line_4",
+      "say": {
         "speaker": "partner",
         "emotion": "Determined",
         "side": "left",
-        "text": "You got it, Dad! Watch my footwork, {lord}, {healer}!"
+        "text": "We are ready, Dad! Let us show them our footwork, {lord} and {healer}!"
       }
     }
   ]

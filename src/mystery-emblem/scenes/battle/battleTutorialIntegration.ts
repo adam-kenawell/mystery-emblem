@@ -7,6 +7,8 @@ import {
   PROLOGUE_HEAL_DRILL_TOPIC_ID,
   PROLOGUE_ITEM_CURE_DRILL_TOPIC_ID,
   PROLOGUE_RANGED_DRILL_TOPIC_ID,
+  detectDynamicMapTerrainTutorialIds,
+  detectNearbyTerrainTutorialId,
   evaluatePrepTutorialTopics,
   evaluateTurn1TutorialTopics,
   isQuaquavalAbsentFromLevel,
@@ -22,7 +24,12 @@ import {
   resolveTutorialSpotlightTiles,
 } from './battleTutorialSpotlights';
 import type { BattleControllerContext } from './battleTypesAndState';
-import { canUseUnitEquippedConsumable, getLordUnit, getSelectedUnit } from './battleUnitQueries';
+import {
+  canUseUnitEquippedConsumable,
+  getLivingPlayers,
+  getLordUnit,
+  getSelectedUnit,
+} from './battleUnitQueries';
 
 export {
   getAttackableEnemiesForSelectedState,
@@ -253,30 +260,99 @@ const DUPLICATE_PROLOGUE_LESSON_TOPIC_IDS: ReadonlySet<string> = new Set([
   'ch1_healing_and_items',
 ]);
 
-/** Prologue Turn 2: heal {partner} with {healer}, then strike Quaquaval from Range 2 with {lord}. */
-export async function triggerPrologueTurn2Drills(
-  ctx: BattleControllerContext,
-  runGen: number
-): Promise<void> {
-  const { state } = ctx;
-  for (const topicId of [PROLOGUE_HEAL_DRILL_TOPIC_ID, PROLOGUE_RANGED_DRILL_TOPIC_ID]) {
-    if (!state.openState || runGen !== state.battleRunGen || state.phase !== 'player_phase') {
-      return;
-    }
-    await triggerBattleTutorial(ctx, topicId);
+/** Fires once when the player first opens a combat forecast so Quaquaval explains range & [E] counters. */
+export function triggerReactiveForecastTutorial(ctx: BattleControllerContext): void {
+  const { state, saveManager } = ctx;
+  if (
+    !state.openState ||
+    state.cutsceneInProgress ||
+    isQuaquavalAbsentFromLevel(state.activeLevelId)
+  ) {
+    return;
+  }
+  if (!saveManager.hasSeenTutorial(PROLOGUE_RANGED_DRILL_TOPIC_ID)) {
+    void triggerBattleTutorial(ctx, PROLOGUE_RANGED_DRILL_TOPIC_ID);
   }
 }
 
-/** Prologue Turn 3: cure {partner}'s Paralysis using Paralyze Heal. */
-export async function triggerPrologueTurn3ItemDrill(
+/**
+ * Checks player units after combat or at the start of Player Phase and fires at most one
+ * reactive Quaquaval one-liner (Paralysis/status cure takes priority over general healing).
+ */
+export async function triggerReactivePostCombatTutorials(
   ctx: BattleControllerContext,
   runGen: number
-): Promise<void> {
-  const { state } = ctx;
-  if (!state.openState || runGen !== state.battleRunGen || state.phase !== 'player_phase') {
-    return;
+): Promise<boolean> {
+  const { state, saveManager } = ctx;
+  if (
+    !state.openState ||
+    runGen !== state.battleRunGen ||
+    state.phase !== 'player_phase' ||
+    isQuaquavalAbsentFromLevel(state.activeLevelId)
+  ) {
+    return false;
   }
-  await triggerBattleTutorial(ctx, PROLOGUE_ITEM_CURE_DRILL_TOPIC_ID);
+  const players = getLivingPlayers(state);
+  if (
+    players.some((u) => u.status !== null) &&
+    !saveManager.hasSeenTutorial(PROLOGUE_ITEM_CURE_DRILL_TOPIC_ID)
+  ) {
+    return triggerBattleTutorial(ctx, PROLOGUE_ITEM_CURE_DRILL_TOPIC_ID);
+  }
+  if (
+    players.some((u) => u.currentHp < u.maxHp) &&
+    !saveManager.hasSeenTutorial(PROLOGUE_HEAL_DRILL_TOPIC_ID)
+  ) {
+    return triggerBattleTutorial(ctx, PROLOGUE_HEAL_DRILL_TOPIC_ID);
+  }
+  return false;
+}
+
+/** Triggers a terrain coaching one-liner when a player unit steps onto or adjacent to special terrain. */
+export async function triggerReactiveTerrainTutorialAt(
+  ctx: BattleControllerContext,
+  x: number,
+  y: number,
+  runGen: number
+): Promise<boolean> {
+  const { state, saveManager } = ctx;
+  if (
+    !state.openState ||
+    runGen !== state.battleRunGen ||
+    state.phase !== 'player_phase' ||
+    state.activeLevelId === PROLOGUE_LEVEL_ID ||
+    isQuaquavalAbsentFromLevel(state.activeLevelId)
+  ) {
+    return false;
+  }
+  const topicId = detectNearbyTerrainTutorialId(state.map, x, y);
+  if (!topicId || saveManager.hasSeenTutorial(topicId)) {
+    return false;
+  }
+  return triggerBattleTutorial(ctx, topicId);
+}
+
+/** On Turn 2 of non-Prologue chapters, gently introduces the first unseen special terrain on the map. */
+export async function triggerTurn2FallbackTerrainTutorial(
+  ctx: BattleControllerContext,
+  runGen: number
+): Promise<boolean> {
+  const { state, saveManager } = ctx;
+  if (
+    !state.openState ||
+    runGen !== state.battleRunGen ||
+    state.phase !== 'player_phase' ||
+    state.activeLevelId === PROLOGUE_LEVEL_ID ||
+    isQuaquavalAbsentFromLevel(state.activeLevelId)
+  ) {
+    return false;
+  }
+  for (const topicId of detectDynamicMapTerrainTutorialIds(state.map)) {
+    if (!saveManager.hasSeenTutorial(topicId)) {
+      return triggerBattleTutorial(ctx, topicId);
+    }
+  }
+  return false;
 }
 
 export function triggerPrepHubTutorials(ctx: BattleControllerContext): void {

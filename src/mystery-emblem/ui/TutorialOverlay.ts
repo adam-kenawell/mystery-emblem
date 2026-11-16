@@ -9,6 +9,7 @@ import {
   type TutorialActionTriggerId,
   type TutorialBattleTileFilter,
   type TutorialPresenter,
+  type TutorialTopicDefinition,
 } from '../data/tutorialRegistry';
 import type { SaveStateManager } from '../state/SaveStateManager';
 import { renderCoachCardWithTypewriter } from './tutorial/TutorialCoachCardRenderer';
@@ -17,6 +18,7 @@ import {
   renderTutorialSettingsControlDom,
   type RenderTutorialSettingsControlOptions,
 } from './tutorial/TutorialCompendiumRenderer';
+import { renderFieldNoteModalDom } from './tutorial/TutorialNoteModalRenderer';
 import {
   TutorialSessionState,
   type TutorialActionAvailabilityContext,
@@ -45,6 +47,8 @@ export class TutorialOverlay {
   private fastMode = false;
   private pauseInFastMode = false;
   private activePresenter: TutorialPresenter = 'advisor';
+  private tooltipTopicId: string | null = null;
+  private tooltipTimer: number | null = null;
 
   constructor(options: TutorialOverlayOptions) {
     this.saveManager = options.saveManager;
@@ -56,10 +60,13 @@ export class TutorialOverlay {
       isInteractiveStep: () => this.hasActiveInteractiveStep(),
       onBackdropTap: () => {
         if (this.session.mode === 'card') this.handleCoachAdvanceTap();
-        else if (this.session.mode === 'compendium') this.handleBack();
+        else if (this.session.mode === 'note' || this.session.mode === 'compendium') {
+          this.handleBack();
+        }
       },
       onCardBodyTap: () => this.handleCoachAdvanceTap(),
       onBackGesture: () => this.handleBack(),
+      onTooltipPillTap: () => this.handleTooltipPillTap(),
     });
   }
 
@@ -132,6 +139,7 @@ export class TutorialOverlay {
     const skipFast = (this.fastMode || sceneFastMode) && !this.pauseInFastMode;
     const topic = this.session.evaluateTopicEligibility(this.saveManager, topicId, skipFast);
     if (!topic) return false;
+    this.hideTooltipPill();
     const startIdx = Math.min(
       topic.beats.length - 1,
       this.session.findFirstPendingBeat(topic.beats, 0)
@@ -152,6 +160,50 @@ export class TutorialOverlay {
     });
   }
 
+  private showTooltipPill(topic: TutorialTopicDefinition): void {
+    this.hideTooltipPill();
+    this.tooltipTopicId = topic.id;
+    const pill = this.shell.tooltipPillEl;
+    pill.innerHTML = '';
+    pill.dataset.topicId = topic.id;
+    pill.setAttribute('aria-label', `Field Note: ${topic.title} - Tap to Read`);
+
+    const kickerEl = document.createElement('span');
+    kickerEl.className = 'pmd-tutorial-pill-kicker';
+    kickerEl.textContent = 'Field Note';
+
+    const titleEl = document.createElement('span');
+    titleEl.className = 'pmd-tutorial-pill-title';
+    titleEl.textContent = topic.title;
+
+    const ctaEl = document.createElement('span');
+    ctaEl.className = 'pmd-tutorial-pill-cta';
+    ctaEl.textContent = 'Tap to Read';
+
+    pill.append(kickerEl, titleEl, ctaEl);
+    pill.hidden = false;
+    this.tooltipTimer = window.setTimeout(() => {
+      this.hideTooltipPill();
+    }, 6000);
+  }
+
+  public hideTooltipPill(): void {
+    if (this.tooltipTimer !== null) {
+      window.clearTimeout(this.tooltipTimer);
+      this.tooltipTimer = null;
+    }
+    this.tooltipTopicId = null;
+    this.shell.tooltipPillEl.hidden = true;
+    this.shell.tooltipPillEl.removeAttribute('data-topic-id');
+  }
+
+  private handleTooltipPillTap(): void {
+    const id = this.tooltipTopicId;
+    this.hideTooltipPill();
+    if (!id) return;
+    this.openFieldNoteModal(id, false);
+  }
+
   private resetCardState(markLiveSeen: boolean): ((shown: boolean) => void) | null {
     if (
       markLiveSeen &&
@@ -167,6 +219,7 @@ export class TutorialOverlay {
   }
 
   public openCompendiumModal(): void {
+    this.hideTooltipPill();
     const prevResolve = this.resetCardState(Boolean(this.session.activeCardResolver));
     this.session.applyModalDomVisibility(this.shell, 'compendium');
     this.renderCompendium();
@@ -176,16 +229,41 @@ export class TutorialOverlay {
   }
 
   public openTopicFromCompendium(topicId: string): void {
+    this.openFieldNoteModal(topicId, true);
+  }
+
+  public openFieldNoteModal(topicId: string, returnToCompendium = false): void {
     const topic = getTutorialTopicById(topicId);
-    if (!topic || topic.beats.length === 0) return;
+    if (!topic) return;
+    this.hideTooltipPill();
     if (this.saveManager.getSave()) this.saveManager.markTutorialSeen(topic.id);
+    const prevResolve = this.resetCardState(false);
     this.activePresenter = 'advisor';
-    this.session.startTopic(topic, 0, true, null);
-    this.session.applyModalDomVisibility(this.shell, 'card');
+    this.session.startTopic(topic, 0, returnToCompendium, null);
+    this.session.applyModalDomVisibility(this.shell, 'note');
     this.session.syncInteractivity();
-    this.renderActiveCard();
+    renderFieldNoteModalDom({
+      noteWindowEl: this.shell.noteWindowEl,
+      notePortraitView: this.shell.notePortraitView,
+      topic,
+      save: this.saveManager.getSave(),
+      returnToCompendium,
+      signal: this.abortController.signal,
+      onClose: () => this.dismissNoteModal(),
+    });
     this.audioManager.playSfx('select');
     this.onLayerStateChanged?.();
+    prevResolve?.(true);
+  }
+
+  private dismissNoteModal(): void {
+    const reopen = this.session.returnToCompendiumOnClose;
+    const resolver = this.resetCardState(false);
+    this.session.applyModalDomVisibility(this.shell, reopen ? 'compendium' : 'closed');
+    if (reopen) this.renderCompendium();
+    this.audioManager.playSfx('cancel');
+    this.onLayerStateChanged?.();
+    resolver?.(true);
   }
 
   public handleBack(): boolean {
@@ -194,11 +272,16 @@ export class TutorialOverlay {
       this.dismissActiveCard('cancel');
       return true;
     }
+    if (this.session.mode === 'note') {
+      this.dismissNoteModal();
+      return true;
+    }
     this.closeAll('cancel');
     return true;
   }
 
   public closeAll(sfx: 'cancel' | 'select' | null = null): void {
+    this.hideTooltipPill();
     const resolver = this.resetCardState(true);
     this.session.applyModalDomVisibility(this.shell, 'closed');
     if (sfx) this.audioManager.playSfx(sfx);
@@ -257,13 +340,18 @@ export class TutorialOverlay {
   }
 
   private dismissActiveCard(sfx: 'cancel' | 'select'): void {
-    if (this.session.activeTopic && this.saveManager.getSave()) {
-      this.saveManager.markTutorialSeen(this.session.activeTopic.id);
+    const dismissedTopic = this.session.activeTopic;
+    if (dismissedTopic && this.saveManager.getSave()) {
+      this.saveManager.markTutorialSeen(dismissedTopic.id);
     }
     const reopen = this.session.returnToCompendiumOnClose;
     const resolver = this.resetCardState(false);
     this.session.applyModalDomVisibility(this.shell, reopen ? 'compendium' : 'closed');
-    if (reopen) this.renderCompendium();
+    if (reopen) {
+      this.renderCompendium();
+    } else if (dismissedTopic) {
+      this.showTooltipPill(dismissedTopic);
+    }
     this.audioManager.playSfx(sfx);
     this.onLayerStateChanged?.();
     resolver?.(true);
@@ -320,8 +408,10 @@ export class TutorialOverlay {
 
   public destroy(): void {
     this.closeAll(null);
+    this.hideTooltipPill();
     this.session.clearNudgeTimer();
     this.abortController.abort();
     this.shell.backdropEl.remove();
+    this.shell.tooltipPillEl.remove();
   }
 }
