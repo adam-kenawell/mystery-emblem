@@ -60,10 +60,9 @@
   padding: 3.6rem 1rem 1rem;
 }
 
-/* Overworld: lift story & coaching dialogue above the bottom location dock */
+/* Overworld: lift coaching dialogue above the bottom location dock if docked at bottom */
 .pmd-tutorial-backdrop[data-coach-dock='bottom'][data-overworld-open='true'],
-body:has(#pmd-overworld-scene:not([hidden])) .pmd-tutorial-backdrop[data-coach-dock='bottom'],
-body:has(#pmd-overworld-scene:not([hidden])) .pmd-dialogue-overlay {
+body:has(#pmd-overworld-scene:not([hidden])) .pmd-tutorial-backdrop[data-coach-dock='bottom'] {
   padding-bottom: calc(var(--pmd-overworld-dock-offset, 88px));
 }
 
@@ -129,17 +128,41 @@ body:has(#pmd-overworld-scene:not([hidden])) .pmd-dialogue-overlay {
   align-items: start;
 }
 
-.pmd-advisor-coach-bar.is-nudged {
-  animation: pmd-advisor-nudge-shake 0.38s ease;
+.pmd-tutorial-dialogue-stage[data-coach-dock='top'] .pmd-dialogue-actor-row {
+  align-items: center;
 }
 
-.pmd-tutorial-compendium {
-  width: min(580px, 100%);
+.pmd-advisor-coach-bar.is-nudged {
+  animation: pmd-advisor-nudge-shake 0.38s ease;
 }
 
 .pmd-tutorial-card[hidden],
 .pmd-tutorial-compendium[hidden] {
   display: none !important;
+}
+
+.pmd-advisor-portrait-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: transparent;
+  border: 3px solid var(--pmd-text-yellow);
+  box-shadow: 0 0 0 2px #050a14, 2px 2px 0 rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  box-sizing: content-box;
+  flex-shrink: 0;
+}
+
+.pmd-advisor-portrait-slot .pmd-portrait-canvas,
+.pmd-advisor-portrait-slot canvas {
+  display: block;
+  width: 80px;
+  height: 80px;
+  border: 0;
+  background: transparent;
+  image-rendering: pixelated;
 }
 
 .pmd-advisor-compendium-portrait canvas {
@@ -156,6 +179,12 @@ body:has(#pmd-overworld-scene:not([hidden])) .pmd-dialogue-overlay {
   justify-content: flex-end;
   gap: 6px;
   flex-shrink: 0;
+}
+
+.pmd-advisor-speech-text {
+  height: 5.25em;
+  overflow-y: auto;
+  scrollbar-width: none;
 }
 
 .pmd-tutorial-action-badge {
@@ -175,13 +204,50 @@ body:has(#pmd-overworld-scene:not([hidden])) .pmd-dialogue-overlay {
   box-sizing: border-box;
 }
 
+@media (max-width: 640px) {
+  .pmd-tutorial-backdrop[data-coach-dock='top'] {
+    padding: 3.6rem 0.5rem 0.6rem;
+  }
+
+  .pmd-advisor-portrait-slot .pmd-portrait-canvas,
+  .pmd-advisor-portrait-slot canvas {
+    width: 60px;
+    height: 60px;
+  }
+
+  .pmd-advisor-speech-text {
+    height: 4.97em;
+  }
+}
+
 @media (max-height: 500px) {
   .pmd-tutorial-backdrop {
     padding: 3.35rem 0.65rem 0.45rem;
   }
 
+  .pmd-tutorial-backdrop[data-coach-dock='top'] {
+    padding: 3.35rem 0.65rem 0.45rem;
+  }
+
   .pmd-tutorial-dialogue-stage[data-coach-dock='top'] {
-    grid-template-areas: 'left box right';
+    grid-template-areas:
+      'box box box'
+      'left . right';
+    align-items: start;
+  }
+
+  .pmd-tutorial-dialogue-stage[data-coach-dock='top'] .pmd-dialogue-actor-row {
+    align-items: center;
+  }
+
+  .pmd-advisor-portrait-slot .pmd-portrait-canvas,
+  .pmd-advisor-portrait-slot canvas {
+    width: 60px;
+    height: 60px;
+  }
+
+  .pmd-advisor-speech-text {
+    height: 4.725em;
   }
 }
 

@@ -242,7 +242,7 @@ export class CutsceneScene {
           { id: `${doc.id}_beats_${i}`, lines, restorePreviousBgmOnClose: false },
           {
             inCutsceneStage: true,
-            typewriterMsPerChar: this.fastMode || reducedMotion ? 0 : 10,
+            typewriterMsPerChar: this.fastMode || reducedMotion ? 0 : 14,
             ...(this.usingSaveOverride ? { saveOverride: save } : {}),
             onLineStart: (lineIdx) => {
               if (!this.isCurrent(token)) return;

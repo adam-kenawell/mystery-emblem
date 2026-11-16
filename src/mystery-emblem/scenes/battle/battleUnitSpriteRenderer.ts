@@ -27,6 +27,9 @@ export function renderUnitsAndStrikeVfx(
   );
 
   for (const unit of sortedUnits) {
+    if ((unit.spawnFadeAlpha ?? 1) <= 0.01) {
+      continue;
+    }
     const tileScreenX = unit.renderWorldX - cameraX;
     const tileScreenY = unit.renderWorldY - cameraY;
     const bundle = state.spriteBundles.get(getUnitVisualKey(unit));
@@ -40,6 +43,7 @@ export function renderUnitsAndStrikeVfx(
     );
 
     ctx.save();
+    ctx.globalAlpha *= unit.spawnFadeAlpha ?? 1;
     if (unit.koDissolveProgress > 0) {
       ctx.globalAlpha = Math.max(0.05, 1 - unit.koDissolveProgress);
     }

@@ -18,10 +18,22 @@
   padding: 3.8rem 1rem 1rem;
   user-select: none;
   touch-action: manipulation;
+  box-sizing: border-box;
 }
 
 .pmd-dialogue-overlay[hidden] {
   display: none !important;
+}
+
+.pmd-dialogue-screen-skip-btn {
+  position: fixed;
+  top: max(0.85rem, env(safe-area-inset-top));
+  right: max(0.85rem, env(safe-area-inset-right));
+  z-index: 102;
+  min-height: 38px;
+  min-width: 60px;
+  padding: 4px 10px;
+  font-size: 14px;
 }
 
 .pmd-dialogue-stage {
@@ -36,44 +48,84 @@
   align-items: end;
 }
 
+.pmd-dialogue-actor-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px;
+  border-width: 8px 12px;
+  border-image-source: var(--pmd-frame-translucent);
+  border-image-slice: 5 8 fill;
+  border-image-repeat: stretch;
+  box-sizing: border-box;
+}
+
+.pmd-dialogue-actor-row--left {
+  grid-area: left;
+  justify-self: start;
+}
+
+.pmd-dialogue-actor-row--right {
+  grid-area: right;
+  justify-self: end;
+}
+
+.pmd-dialogue-actor-row[hidden] {
+  display: none !important;
+}
+
 .pmd-dialogue-portrait-slot {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  padding: 0;
+  background: transparent;
+  border: 3px solid var(--pmd-text-yellow);
+  box-shadow: 0 0 0 2px #050a14, 2px 2px 0 rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  box-sizing: content-box;
+  flex-shrink: 0;
 }
 
 .pmd-dialogue-portrait-slot[hidden] {
   display: none !important;
 }
 
-.pmd-dialogue-portrait-slot--left {
-  grid-area: left;
-  justify-self: start;
-}
-
-.pmd-dialogue-portrait-slot--right {
-  grid-area: right;
-  justify-self: end;
-}
-
 .pmd-dialogue-portrait-slot.is-speaking {
-  border-image-source: var(--pmd-frame-mini-active);
+  border-color: #f8f800;
+  opacity: 1;
+  filter: none;
+  border-image-source: none;
 }
 
 .pmd-dialogue-portrait-slot.is-listening {
   opacity: 0.72;
   filter: brightness(0.8);
+  border-color: rgba(248, 248, 0, 0.52);
+  border-image-source: none;
 }
 
-/* Exact 2x integer portrait scale (`40px * 2 = 80px`) on Desktop with crisp 2px white frame */
+/* Exact 2x integer portrait scale (40px * 2 = 80px) on Desktop with crisp border */
 .pmd-dialogue-portrait-slot .pmd-portrait-canvas {
   display: block;
   width: 80px;
   height: 80px;
-  border: 2px solid var(--pmd-text-white);
-  background: #081018;
+  border: 0;
+  background: transparent;
+  image-rendering: pixelated;
+}
+
+.pmd-dialogue-nickname {
+  font-size: 16px;
+  line-height: 1.2;
+  color: var(--pmd-text-yellow);
+  font-weight: bold;
+  letter-spacing: 0.02em;
+  text-align: center;
+  text-shadow: 2px 2px 0 #000000;
+  white-space: nowrap;
 }
 
 .pmd-dialogue-box {
@@ -82,48 +134,9 @@
   padding: 6px 10px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
   cursor: inherit;
-}
-
-.pmd-dialogue-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
-  border-bottom: 2px solid var(--pmd-divider-subtle);
-  padding-bottom: 6px;
-}
-
-.pmd-dialogue-speaker-group {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-width: 0;
-}
-
-.pmd-dialogue-nickname {
-  font-size: 18px;
-  color: var(--pmd-text-yellow);
-  font-weight: bold;
-  letter-spacing: 0.02em;
-  overflow-wrap: anywhere;
-}
-
-.pmd-dialogue-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-}
-
-.pmd-dialogue-skip-btn {
-  min-height: 46px;
-  min-width: 64px;
-  padding: 4px 10px;
-  font-size: 14px;
+  box-sizing: border-box;
 }
 
 .pmd-dialogue-body {
@@ -131,12 +144,13 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 10px;
-  min-height: 54px;
+  width: 100%;
 }
 
 .pmd-dialogue-text {
   flex: 1;
   min-width: 0;
+  text-align: left;
   font-size: 16px;
   line-height: 1.5;
   color: var(--pmd-text-white);
@@ -144,17 +158,26 @@
   word-break: break-word;
 }
 
+.pmd-dialogue-body .pmd-dialogue-text {
+  height: 5.25em;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
 .pmd-dialogue-advance-btn {
-  min-height: 46px;
-  min-width: 56px;
-  padding: 4px 10px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 2px;
+  min-width: 24px;
+  min-height: 24px;
+  color: var(--pmd-text-yellow);
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  font-size: 14px;
-  color: var(--pmd-text-yellow);
   flex-shrink: 0;
+  font-size: 14px;
 }
 
 .pmd-dialogue-caret {
@@ -173,7 +196,6 @@
 
 /* Mobile Portrait (e.g., 390x844) */
 @media (max-width: 640px) {
-
   .pmd-dialogue-overlay {
     padding: 3.6rem 0.5rem 0.6rem;
   }
@@ -185,22 +207,30 @@
 
   .pmd-dialogue-box {
     padding: 4px 6px;
-    gap: 6px;
+  }
+
+  .pmd-dialogue-actor-row {
+    border-width: 6px 8px;
+    padding: 3px 4px;
+    gap: 4px;
   }
 
   .pmd-dialogue-nickname {
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .pmd-dialogue-text {
     font-size: 14px;
     line-height: 1.42;
   }
+
+  .pmd-dialogue-body .pmd-dialogue-text {
+    height: 4.97em;
+  }
 }
 
-/* Short Mobile Landscape (e.g., 844x390) - inline horizontal stage so nothing clips vertically */
+/* Short Mobile Landscape (e.g., 844x390) */
 @media (max-height: 500px) {
-
   .pmd-dialogue-overlay {
     padding: 3.35rem 0.65rem 0.45rem;
   }
@@ -213,11 +243,6 @@
     gap: 6px;
   }
 
-  .pmd-dialogue-portrait-slot {
-    padding: 3px;
-    justify-content: center;
-  }
-
   .pmd-dialogue-portrait-slot .pmd-portrait-canvas {
     width: 60px;
     height: 60px;
@@ -226,30 +251,71 @@
   .pmd-dialogue-box {
     border-width: 8px 12px;
     padding: 4px 6px;
-    gap: 4px;
   }
 
-  .pmd-dialogue-header {
-    padding-bottom: 4px;
+  .pmd-dialogue-actor-row {
+    border-width: 6px 8px;
+    padding: 2px 4px;
+    gap: 3px;
   }
 
-  .pmd-dialogue-body {
-    min-height: 40px;
+  .pmd-dialogue-nickname {
+    font-size: 13px;
   }
 
   .pmd-dialogue-text {
     font-size: 14px;
     line-height: 1.35;
   }
+
+  .pmd-dialogue-body .pmd-dialogue-text {
+    height: 4.725em;
+  }
 }
 
-/* Narration boxes (no portrait or name) and rich text tags from the Cutscene Editor */
-.pmd-dialogue-box.is-narrator .pmd-dialogue-speaker-group {
-  visibility: hidden;
+/* Overworld dialogue top-dock */
+.pmd-dialogue-overlay.is-overworld-top,
+body:has(#pmd-overworld-scene:not([hidden])) .pmd-dialogue-overlay {
+  justify-content: flex-start;
+  padding: 3.6rem 1rem 1rem;
 }
 
+.pmd-dialogue-overlay.is-overworld-top .pmd-dialogue-stage,
+body:has(#pmd-overworld-scene:not([hidden])) .pmd-dialogue-overlay .pmd-dialogue-stage {
+  grid-template-areas:
+    'box box box'
+    'left . right';
+  align-items: start;
+}
+
+.pmd-dialogue-overlay.is-overworld-top .pmd-dialogue-actor-row,
+body:has(#pmd-overworld-scene:not([hidden])) .pmd-dialogue-overlay .pmd-dialogue-actor-row {
+  align-items: center;
+}
+
+@media (max-height: 500px) {
+  .pmd-dialogue-overlay.is-overworld-top,
+  body:has(#pmd-overworld-scene:not([hidden])) .pmd-dialogue-overlay {
+    padding: 3.35rem 0.65rem 0.45rem;
+  }
+
+  .pmd-dialogue-overlay.is-overworld-top .pmd-dialogue-stage,
+  body:has(#pmd-overworld-scene:not([hidden])) .pmd-dialogue-overlay .pmd-dialogue-stage {
+    grid-template-areas:
+      'box box box'
+      'left . right' !important;
+    align-items: start;
+  }
+
+  .pmd-dialogue-overlay.is-overworld-top .pmd-dialogue-actor-row,
+  body:has(#pmd-overworld-scene:not([hidden])) .pmd-dialogue-overlay .pmd-dialogue-actor-row {
+    align-items: center;
+  }
+}
+
+/* Narration boxes (no portrait or name) */
 .pmd-dialogue-box.is-narrator .pmd-dialogue-text {
-  text-align: center;
+  text-align: left;
   font-style: italic;
 }
 

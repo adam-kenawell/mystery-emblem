@@ -79,7 +79,7 @@ export class DialogueOverlay {
   private readonly typewriter = new TypewriterController();
 
   private activeScript: DialogueScript | null = null;
-  private currentLineIndex = 0;
+  public currentLineIndex = 0;
   private savedPreCutsceneBgmId: string | null = null;
   private cutsceneChangedBgm = false;
   private activeSides: Record<DialogueSide, SideSlotState | null> = {
@@ -87,7 +87,7 @@ export class DialogueOverlay {
     right: null,
   };
 
-  private typewriterMsPerChar = 10;
+  private typewriterMsPerChar = 14;
   private saveOverride: SaveData | null | undefined = undefined;
   private finishResolver: ((reason: DialogueFinishReason) => void) | null = null;
   private activeOnLineStart?: (lineIndex: number, line: DialogueLine) => void | Promise<void>;
@@ -143,7 +143,7 @@ export class DialogueOverlay {
     }
 
     this.typewriterMsPerChar =
-      options?.typewriterMsPerChar ?? (prefersReducedMotionEnabled() ? 0 : 10);
+      options?.typewriterMsPerChar ?? (prefersReducedMotionEnabled() ? 0 : 14);
     this.saveOverride = options && 'saveOverride' in options ? options.saveOverride : undefined;
     this.activeOnLineStart = options?.onLineStart;
     this.activeOnAdvanceInterrupt = options?.onAdvanceInterrupt;
@@ -157,6 +157,10 @@ export class DialogueOverlay {
     this.activeSides = { left: null, right: null };
     this.dom.leftSlotEl.hidden = true;
     this.dom.rightSlotEl.hidden = true;
+    this.dom.leftActorRowEl.hidden = true;
+    this.dom.rightActorRowEl.hidden = true;
+    const overworldEl = document.querySelector<HTMLElement>('#pmd-overworld-scene:not([hidden])');
+    this.rootEl.classList.toggle('is-overworld-top', Boolean(overworldEl));
     this.rootEl.hidden = false;
     this.onStateChange?.();
 
@@ -186,8 +190,13 @@ export class DialogueOverlay {
     this.activeOnLineStart = undefined;
     this.activeOnAdvanceInterrupt = undefined;
     this.rootEl.classList.remove('is-cutscene-stage');
+    this.rootEl.classList.remove('is-overworld-top');
     this.cutsceneChangedBgm = false;
     this.activeSides = { left: null, right: null };
+    this.dom.leftSlotEl.hidden = true;
+    this.dom.rightSlotEl.hidden = true;
+    this.dom.leftActorRowEl.hidden = true;
+    this.dom.rightActorRowEl.hidden = true;
     this.rootEl.hidden = true;
     this.onStateChange?.();
 
@@ -215,11 +224,20 @@ export class DialogueOverlay {
     return resolveSpeakerIdentity(speaker, save);
   }
 
-  private handleAdvanceTap(): void {
+  public handleAdvanceTap(): void {
     if (!this.activeScript) return;
     if (this.typewriter.isAnimating()) {
       this.typewriter.completeImmediately();
-      this.syncAdvanceButtonLabel();
+      return;
+    }
+
+    const textEl = this.dom.textEl;
+    const remainingScroll = textEl.scrollHeight - textEl.scrollTop - textEl.clientHeight;
+    if (remainingScroll > 4) {
+      const parsedLineHeight = parseFloat(getComputedStyle(textEl).lineHeight) || 22;
+      const scrollStep = Math.max(1, Math.round(parsedLineHeight * 3));
+      textEl.scrollTop += scrollStep;
+      this.audioManager.playSfx('dialogue_advance');
       return;
     }
 
@@ -239,8 +257,8 @@ export class DialogueOverlay {
   private syncAdvanceButtonLabel(): void {
     if (!this.activeScript) return;
     const isLast = this.currentLineIndex >= this.activeScript.lines.length - 1;
-    const label = isLast ? 'Done' : 'Next';
-    this.dom.advanceBtn.innerHTML = `<span>${label}</span><span class="pmd-dialogue-caret" aria-hidden="true">▼</span>`;
+    this.dom.advanceBtn.setAttribute('aria-label', isLast ? 'Finish dialogue' : 'Advance dialogue');
+    this.dom.advanceBtn.innerHTML = '<span class="pmd-dialogue-caret" aria-hidden="true">▼</span>';
   }
 
   private async renderCurrentLine(opts: { preserveTypewriterProgress: boolean }): Promise<void> {
@@ -269,10 +287,27 @@ export class DialogueOverlay {
     const activeIdentity = isNarrator
       ? { nickname: '', speciesName: '' }
       : this.resolveSpeaker(line.speaker, save);
-    this.dom.nicknameEl.textContent = activeIdentity.nickname;
+
+    if (isNarrator) {
+      this.dom.nicknameEl.textContent = '';
+      this.dom.nicknameEl.remove();
+      this.dom.leftActorRowEl.hidden = true;
+      this.dom.rightActorRowEl.hidden = true;
+    } else {
+      this.dom.nicknameEl.textContent = activeIdentity.nickname;
+      this.dom.nicknameEl.hidden = false;
+      if (line.side === 'left') {
+        this.dom.leftActorRowEl.append(this.dom.leftSlotEl, this.dom.nicknameEl);
+      } else {
+        this.dom.rightActorRowEl.append(this.dom.rightSlotEl, this.dom.nicknameEl);
+      }
+      this.dom.leftActorRowEl.hidden = !this.activeSides.left;
+      this.dom.rightActorRowEl.hidden = !this.activeSides.right;
+    }
 
     const formattedText = interpolateCampaignText(line.text, save, activeIdentity.nickname);
     if (!opts.preserveTypewriterProgress) {
+      this.dom.textEl.scrollTop = 0;
       this.typewriter.start({
         targetEl: this.dom.textEl,
         text: formattedText,

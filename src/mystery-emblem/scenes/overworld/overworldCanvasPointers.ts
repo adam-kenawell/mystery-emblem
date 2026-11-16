@@ -62,7 +62,18 @@ function hitTestNodeAtLocalCss(
   const hitRadiusCss = Math.max(26, 9 * ctrl.displayScale);
   let best: OverworldNodeDefinition | null = null;
   let bestDist = hitRadiusCss;
-  for (const def of hooks.getGraph().nodes) {
+  const save = hooks.saveManager.getSave();
+  const graph = hooks.getGraph();
+  const rec = save ? ensureOverworldGraphState(save, graph) : null;
+  const clearSeq = (hooks as any).getActiveClearSequence?.();
+  for (const def of graph.nodes) {
+    if (rec) {
+      const st = rec.nodes[def.id];
+      if (!st?.unlocked) continue;
+      if (clearSeq && clearSeq.newlyUnlockedNodeIds.includes(def.id)) {
+        continue;
+      }
+    }
     const nodeCssX = (def.x - ctrl.cameraX) * ctrl.displayScale;
     const nodeCssY = (def.y - ctrl.cameraY) * ctrl.displayScale;
     const d = Math.hypot(localCssX - nodeCssX, localCssY - nodeCssY);

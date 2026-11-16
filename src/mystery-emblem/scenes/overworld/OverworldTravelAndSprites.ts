@@ -44,6 +44,16 @@ export function formatOverworldChapterAnnouncement(
   return curNode ? `${chLabel} - ${curNode.name}` : chLabel;
 }
 
+export interface OverworldClearSequence {
+  clearedNodeId: string;
+  newlyUnlockedNodeIds: string[];
+  newlyUnlockedEdgeIds: string[];
+  phase: 'red_to_green' | 'draw_edges' | 'pop_nodes';
+  progress: number;
+  edgeProgress: number;
+  popScale: number;
+}
+
 export class OverworldTravelAndSpritesController {
   public readonly spriteBundles = new Map<string, LoadedSpriteBundle>();
   public lordWorldX = 208;
@@ -57,6 +67,8 @@ export class OverworldTravelAndSpritesController {
     walkedDistancePx: number;
     resolveArrival: () => void;
   } | null = null;
+  public activeClearSequence: OverworldClearSequence | null = null;
+  private cancelCelebration: (() => void) | null = null;
   public lastRouteNodePath: string[] = [];
   public lastRoutePoints: OverworldPoint[] = [];
   public lastTravelDirections: PmdDirection[] = [];
@@ -185,8 +197,106 @@ export class OverworldTravelAndSpritesController {
     });
   }
 
+  public clearCelebrationSequence(): void {
+    if (this.cancelCelebration) {
+      this.cancelCelebration();
+      this.cancelCelebration = null;
+    }
+    this.activeClearSequence = null;
+  }
+
+  public async playChapterClearCelebration(params: {
+    clearedNodeId: string;
+    newlyUnlockedNodeIds: string[];
+    newlyUnlockedEdgeIds: string[];
+  }): Promise<void> {
+    const { clearedNodeId, newlyUnlockedNodeIds, newlyUnlockedEdgeIds } = params;
+    this.clearCelebrationSequence();
+
+    let aborted = false;
+    this.cancelCelebration = () => {
+      aborted = true;
+    };
+
+    const animateDuration = async (
+      durationMs: number,
+      onFrame: (t: number) => void
+    ): Promise<void> => {
+      const startMs = performance.now();
+      while (!aborted && this.deps.isOpen()) {
+        const now = performance.now();
+        const elapsed = now - startMs;
+        const t = durationMs <= 0 ? 1 : Math.min(1, elapsed / durationMs);
+        onFrame(t);
+        this.deps.onRenderFrame();
+        if (t >= 1) break;
+        await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
+      }
+    };
+
+    try {
+      this.activeClearSequence = {
+        clearedNodeId,
+        newlyUnlockedNodeIds,
+        newlyUnlockedEdgeIds,
+        phase: 'red_to_green',
+        progress: 0,
+        edgeProgress: 0,
+        popScale: 0,
+      };
+      this.deps.audioManager.playSfx('heal');
+
+      const p1Duration = this.deps.isFastMode() ? 40 : 450;
+      await animateDuration(p1Duration, (t) => {
+        if (this.activeClearSequence) {
+          this.activeClearSequence.progress = t;
+        }
+      });
+      if (aborted || !this.deps.isOpen()) return;
+
+      if (newlyUnlockedEdgeIds.length > 0) {
+        this.activeClearSequence.phase = 'draw_edges';
+        this.activeClearSequence.progress = 0;
+        this.activeClearSequence.edgeProgress = 0;
+
+        const p2Duration = this.deps.isFastMode() ? 40 : 420;
+        await animateDuration(p2Duration, (t) => {
+          if (this.activeClearSequence) {
+            this.activeClearSequence.progress = t;
+            this.activeClearSequence.edgeProgress = t;
+          }
+        });
+        if (aborted || !this.deps.isOpen()) return;
+      }
+
+      if (newlyUnlockedNodeIds.length > 0) {
+        this.activeClearSequence.phase = 'pop_nodes';
+        this.activeClearSequence.progress = 0;
+        this.activeClearSequence.edgeProgress = 1;
+        this.activeClearSequence.popScale = 0;
+        this.deps.audioManager.playSfx('select');
+
+        const p3Duration = this.deps.isFastMode() ? 30 : 280;
+        await animateDuration(p3Duration, (t) => {
+          if (this.activeClearSequence) {
+            this.activeClearSequence.progress = t;
+            const c1 = 1.70158;
+            const c3 = c1 + 1;
+            const s = 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+            this.activeClearSequence.popScale = Math.max(0, s);
+          }
+        });
+        if (aborted || !this.deps.isOpen()) return;
+      }
+    } finally {
+      this.activeClearSequence = null;
+      this.cancelCelebration = null;
+      this.deps.onRenderFrame();
+    }
+  }
+
   public async handleNodeTapped(node: OverworldNodeDefinition): Promise<void> {
-    if (this.activeTravel) return;
+    if (this.activeTravel || this.activeClearSequence) return;
     const save = this.deps.saveManager.getSave();
     const graph = this.deps.getGraph();
     if (!save) return;
@@ -213,7 +323,7 @@ export class OverworldTravelAndSpritesController {
   }
 
   public async travelToNode(nodeId: string): Promise<boolean> {
-    if (!this.deps.isOpen() || this.activeTravel) return false;
+    if (!this.deps.isOpen() || this.activeTravel || this.activeClearSequence) return false;
     const save = this.deps.saveManager.getSave();
     const graph = this.deps.getGraph();
     if (!save) return false;

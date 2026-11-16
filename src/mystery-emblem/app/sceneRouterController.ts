@@ -34,6 +34,7 @@ export interface SceneRouter {
   openOverworldScene: (opts?: {
     preservePosition?: boolean;
     announceCurrentChapter?: boolean;
+    celebrateClearedNodeId?: string;
   }) => Promise<void>;
   continueCampaignFromTitle: () => Promise<void>;
   openDemoQuizFlow: (opts?: { skipNicknamePrompts?: boolean }) => void;
@@ -44,6 +45,7 @@ export interface SceneRouter {
   launchDemoChapterBattle: (demoChapter: CampaignChapterConfig) => Promise<void>;
   openMapEditor: (levelId?: string) => Promise<void>;
   promptRenameUnit: (instanceId: string, overrideManager?: SaveStateManager) => Promise<void>;
+  setPendingCelebrationNodeId: (nodeId: string | null) => void;
 }
 
 export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
@@ -51,6 +53,7 @@ export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
 
   function showTitleScreen(): void {
     ctx.tutorialOverlay?.closeAll(null);
+    audioManager.stopBgm({ fadeMs: 250 });
     if (dom.devToolsBackdrop) dom.devToolsBackdrop.hidden = true;
     if (dom.titleScreen) dom.titleScreen.hidden = false;
     backStack.syncButtonLabel();
@@ -111,6 +114,7 @@ export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
   async function openOverworldScene(opts?: {
     preservePosition?: boolean;
     announceCurrentChapter?: boolean;
+    celebrateClearedNodeId?: string;
   }): Promise<void> {
     if (!ctx.overworldScene) return;
     ctx.overworldReturnTarget = 'title';
@@ -130,6 +134,7 @@ export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
       graph: DEMO_OVERWORLD_GRAPH,
       preservePosition: opts?.preservePosition ?? true,
       announceCurrentChapter: opts?.announceCurrentChapter ?? false,
+      celebrateClearedNodeId: opts?.celebrateClearedNodeId,
     });
     backStack.syncButtonLabel();
   }
@@ -199,7 +204,13 @@ export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
       await ctx.creditsScene.play();
       manager.markCreditsSeen();
     }
-    await openOverworldScene({ preservePosition: true });
+    const celebrateNodeId =
+      ctx.pendingOverworldCelebrationNodeId === clearedNodeId ? clearedNodeId : undefined;
+    ctx.pendingOverworldCelebrationNodeId = null;
+    await openOverworldScene({
+      preservePosition: true,
+      celebrateClearedNodeId: celebrateNodeId,
+    });
   }
 
   async function continueCampaignFromTitle(): Promise<void> {
@@ -345,7 +356,7 @@ export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
     ctx.devToolsHarness?.onSaveChanged();
   }
 
-  return {
+  const router: SceneRouter = {
     showTitleScreen,
     closeDevToolsOverlay,
     openDevToolsOverlay,
@@ -361,5 +372,15 @@ export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
     launchDemoChapterBattle,
     openMapEditor,
     promptRenameUnit,
+    setPendingCelebrationNodeId: (nodeId) => {
+      ctx.pendingOverworldCelebrationNodeId = nodeId;
+    },
   };
+
+  (ctx as any).sceneRouter = router;
+  if (typeof window !== 'undefined') {
+    (window as unknown as Record<string, unknown>).__MYSTERY_EMBLEM_ROUTER__ = router;
+  }
+
+  return router;
 }

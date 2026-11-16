@@ -216,10 +216,10 @@ export function closeBattleScene(
   dom.rootEl.hidden = true;
   viewportEl.classList.remove('is-battle-active');
 
-  if (state.previousBgmId) {
+  if (destination !== 'title' && state.previousBgmId && state.previousBgmId !== 'top_menu') {
     audioManager.playBgm(state.previousBgmId, { fadeMs: 280 });
   } else {
-    audioManager.playBgm('top_menu', { fadeMs: 280 });
+    audioManager.stopBgm({ fadeMs: 240 });
   }
 
   ctx.onLayerStateChanged();

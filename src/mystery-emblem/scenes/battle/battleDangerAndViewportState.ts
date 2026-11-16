@@ -76,9 +76,15 @@ export function syncHudControls(state: BattleRuntimeState, dom: BattleDomRefs): 
 }
 
 export function clearInspectedAllyRange(state: BattleRuntimeState): boolean {
-  const hadRange = state.inspectedAllyRangeUnitId !== null || state.inspectedAllyRange !== null;
+  const hadRange =
+    state.inspectedAllyRangeUnitId !== null ||
+    state.inspectedAllyRange !== null ||
+    state.hoveredPlayerRangeUnitId !== null ||
+    state.hoveredPlayerRange !== null;
   state.inspectedAllyRangeUnitId = null;
   state.inspectedAllyRange = null;
+  state.hoveredPlayerRangeUnitId = null;
+  state.hoveredPlayerRange = null;
   return hadRange;
 }
 
@@ -114,6 +120,8 @@ export function clearBattleSelection(
   state.originRangeSnapshot = null;
   state.currentRange = null;
   clearInspectedAllyRange(state);
+  state.hoveredPlayerRangeUnitId = null;
+  state.hoveredPlayerRange = null;
   state.previewPath = null;
   state.forecastMode = 'attack';
   state.forecastTargetId = null;
@@ -126,6 +134,58 @@ export function clearBattleSelection(
     state.interactionState = 'idle';
   }
   syncPrepChromeVisibility(state, dom, prepOverlay);
+}
+
+export function syncHoverPlayerRange(ctx: BattleControllerContext): boolean {
+  const { state, dom, prepOverlay, tutorialOverlay } = ctx;
+  const canInteract = canInteractWithBattleViewport(state, dom, prepOverlay, tutorialOverlay);
+  const inValidPhase =
+    state.phase === 'player_phase' ||
+    (state.phase === 'dungeon_prep' &&
+      prepOverlay.isOpen() &&
+      prepOverlay.getSubMode() === 'view_map' &&
+      state.prepSwapSlotIndex === null);
+
+  if (!canInteract || state.interactionState !== 'idle' || !inValidPhase || !state.hoveredTile) {
+    if (state.hoveredPlayerRangeUnitId !== null || state.hoveredPlayerRange !== null) {
+      state.hoveredPlayerRangeUnitId = null;
+      state.hoveredPlayerRange = null;
+      return true;
+    }
+    return false;
+  }
+
+  const { x, y } = state.hoveredTile;
+  const living = getLivingUnits(state);
+  const occupant = living.find(
+    (u) => u.x === x && u.y === y && u.faction === 'player' && !u.waited
+  );
+
+  if (!occupant) {
+    if (state.hoveredPlayerRangeUnitId !== null || state.hoveredPlayerRange !== null) {
+      state.hoveredPlayerRangeUnitId = null;
+      state.hoveredPlayerRange = null;
+      return true;
+    }
+    return false;
+  }
+
+  if (state.hoveredPlayerRangeUnitId === occupant.id) {
+    return false;
+  }
+
+  state.hoveredPlayerRangeUnitId = occupant.id;
+  state.hoveredPlayerRange = computeUnitMovementAndAttackRange(state.map, occupant, living);
+  if (
+    !state.selectedUnitId &&
+    !state.inspectedAllyRangeUnitId &&
+    !state.globalDangerEnabled &&
+    state.trackedEnemyIds.size === 0 &&
+    !state.lastComputedHoverEnemyId
+  ) {
+    state.selectionPulseStartMs = performance.now();
+  }
+  return true;
 }
 
 export function getHoveredEnemyDangerId(ctx: BattleControllerContext): string | null {

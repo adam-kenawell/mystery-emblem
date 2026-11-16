@@ -3,7 +3,8 @@
  */
 
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
-import { DEMO_OVERWORLD_GRAPH, getOverworldNodeById, type OverworldGraphDefinition } from '../data/overworldMapData';
+import { DEMO_OVERWORLD_GRAPH, getOverworldNodeById, type OverworldGraphDefinition, type OverworldNodeDefinition } from '../data/overworldMapData';
+import { ensureOverworldGraphState, resolveCurrentStoryChapterNodeId } from '../engine/overworldEngine';
 import type { SaveStateManager } from '../state/SaveStateManager';
 import { PmdPortraitView } from '../ui/PmdSpriteCanvas';
 import type { TutorialOverlay } from '../ui/TutorialOverlay';
@@ -64,16 +65,21 @@ export class OverworldScene {
         getGraph: () => this.graph,
         isOpen: () => this.openState,
         canInteractWithCanvas: () =>
-          this.openState && !this.modals.kecleonShopOpen && !this.modals.systemMenuOpen && !this.tutorialOverlay?.isBlockingSceneInput(),
+          this.openState &&
+          !this.modals.kecleonShopOpen &&
+          !this.modals.systemMenuOpen &&
+          !this.tutorialOverlay?.isBlockingSceneInput() &&
+          !this.travelCtrl.activeClearSequence,
         isModalOpen: () => this.modals.kecleonShopOpen || this.modals.systemMenuOpen,
-        isTraveling: () => Boolean(this.travelCtrl.activeTravel),
+        isTraveling: () => Boolean(this.travelCtrl.activeTravel || this.travelCtrl.activeClearSequence),
         onRenderFrame: () => this.renderFrame(),
         onMenuOrBack: () => this.handleMenuOrBack(),
-        onNodeTapped: (node) => {
+        onNodeTapped: (node: OverworldNodeDefinition) => {
           if (this.tutorialOverlay?.getExpectedAction()) this.tutorialOverlay.nudgeActiveStep();
           else void this.travelCtrl.handleNodeTapped(node);
         },
-      },
+        getActiveClearSequence: () => this.travelCtrl.activeClearSequence,
+      } as any,
       this.abortController.signal
     );
 
@@ -142,6 +148,7 @@ export class OverworldScene {
     graph?: OverworldGraphDefinition;
     preservePosition?: boolean;
     announceCurrentChapter?: boolean;
+    celebrateClearedNodeId?: string;
   }): Promise<void> {
     if (options?.graph) this.graph = options.graph;
     if (!this.openState) this.previousBgmId = this.audioManager.getCurrentTrackId();
@@ -152,6 +159,7 @@ export class OverworldScene {
     }
     this.saveManager.ensureOverworldInitialized(this.graph);
     this.modals.resetModals();
+    this.travelCtrl.clearCelebrationSequence();
     this.travelCtrl.activeTravel = null;
     const shouldResetCamera = !options?.preservePosition || !this.cam.hasInitializedCamera;
     this.cam.resetGestureState(shouldResetCamera);
@@ -192,12 +200,47 @@ export class OverworldScene {
     this.travelCtrl.startLoop();
     this.opts.onLayerStateChanged();
     this.renderFrame();
+
+    if (options?.celebrateClearedNodeId) {
+      const celebrateClearedNodeId = options.celebrateClearedNodeId;
+      const clearedDef = getOverworldNodeById(celebrateClearedNodeId, this.graph);
+      const save = this.saveManager.getSave();
+      const rec = save ? ensureOverworldGraphState(save, this.graph) : null;
+      if (clearedDef && rec) {
+        const newlyUnlockedNodeIds = (clearedDef.unlocksNodeIdsOnClear ?? []).filter(
+          (nid) => Boolean(rec.nodes[nid]?.unlocked)
+        );
+        const newlyUnlockedEdgeIds = this.graph.edges
+          .filter((e) => {
+            const stA = rec.nodes[e.fromNodeId]?.unlocked;
+            const stB = rec.nodes[e.toNodeId]?.unlocked;
+            return (
+              Boolean(stA && stB) &&
+              (newlyUnlockedNodeIds.includes(e.fromNodeId) || newlyUnlockedNodeIds.includes(e.toNodeId))
+            );
+          })
+          .map((e) => e.id);
+
+        await this.travelCtrl.playChapterClearCelebration({
+          clearedNodeId: celebrateClearedNodeId,
+          newlyUnlockedNodeIds,
+          newlyUnlockedEdgeIds,
+        });
+
+        const nextStoryId = resolveCurrentStoryChapterNodeId(rec.nodes, this.graph);
+        if (nextStoryId && nextStoryId !== celebrateClearedNodeId) {
+          await this.travelToNode(nextStoryId);
+        }
+      }
+    }
+
     this.modals.triggerOverworldArrivalTutorials();
   }
 
   private closeInternal(notifyExit: boolean): void {
     if (!this.openState) return;
     this.openState = false;
+    this.travelCtrl.clearCelebrationSequence();
     this.travelCtrl.stopLoop();
     this.cam.resetGestureState(false);
     this.travelCtrl.activeTravel = null;
@@ -206,7 +249,13 @@ export class OverworldScene {
     this.unsubscribeSave = null;
     this.dom.rootEl.hidden = true;
     this.opts.viewportEl.classList.remove('is-battle-active');
-    if (notifyExit) this.audioManager.playBgm(this.previousBgmId ?? 'top_menu', { fadeMs: 250 });
+    if (notifyExit) {
+      if (this.previousBgmId && this.previousBgmId !== 'top_menu') {
+        this.audioManager.playBgm(this.previousBgmId, { fadeMs: 250 });
+      } else {
+        this.audioManager.stopBgm({ fadeMs: 250 });
+      }
+    }
     this.opts.onLayerStateChanged();
     if (notifyExit) this.opts.onExit();
   }
@@ -271,6 +320,28 @@ export class OverworldScene {
     });
   }
 
+  public getRenderDebugState(): {
+    activeClearSequence: unknown;
+    lastRouteNodePath: string[];
+    lordWorldX: number;
+    lordWorldY: number;
+    unlockedNodeIds: string[];
+    clearedNodeIds: string[];
+  } {
+    const save = this.saveManager.getSave();
+    const rec = save ? ensureOverworldGraphState(save, this.graph) : null;
+    const unlockedNodeIds = rec ? Object.keys(rec.nodes).filter((k) => rec.nodes[k]?.unlocked) : [];
+    const clearedNodeIds = rec ? Object.keys(rec.nodes).filter((k) => rec.nodes[k]?.cleared) : [];
+    return {
+      activeClearSequence: this.travelCtrl.activeClearSequence,
+      lastRouteNodePath: this.travelCtrl.lastRouteNodePath,
+      lordWorldX: this.travelCtrl.lordWorldX,
+      lordWorldY: this.travelCtrl.lordWorldY,
+      unlockedNodeIds,
+      clearedNodeIds,
+    };
+  }
+
   public renderFrame(): void {
     if (!this.openState) return;
     const save = this.saveManager.getSave();
@@ -282,9 +353,11 @@ export class OverworldScene {
       lordDirection: this.travelCtrl.lordDirection, lordAction: this.travelCtrl.lordAction,
       animClockMs: this.travelCtrl.animClockMs, displayScale: this.cam.displayScale,
       canvasDpr: this.cam.canvasDpr, viewWidthPx: this.cam.viewWidthPx, viewHeightPx: this.cam.viewHeightPx,
-      cameraX: this.cam.cameraX, cameraY: this.cam.cameraY, isTraveling: Boolean(this.travelCtrl.activeTravel),
+      cameraX: this.cam.cameraX, cameraY: this.cam.cameraY,
+      isTraveling: Boolean(this.travelCtrl.activeTravel || this.travelCtrl.activeClearSequence),
       hoveredNodeId: this.cam.hoveredNodeId,
       highlightedEdgeIds: this.travelCtrl.activeTravel?.route.edgeIds ?? this.cam.hoverRoutePreview?.edgeIds ?? [],
+      clearSequence: this.travelCtrl.activeClearSequence,
     });
   }
 

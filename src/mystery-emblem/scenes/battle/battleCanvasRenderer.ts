@@ -157,22 +157,45 @@ export function renderBattleFrame(ctxObj: BattleControllerContext, now: number):
         prepOverlay.isOpen() &&
         prepOverlay.getSubMode() === 'view_map' &&
         state.prepSwapSlotIndex === null));
-  const activeRange =
-    state.interactionState === 'unit_selected' || state.interactionState === 'walking'
-      ? state.currentRange
-      : canShowInspectedRange
-        ? getActiveInspectedAllyRange(state)
-        : null;
-  if (activeRange) {
-    drawUnitRangeEnvelope(
-      ctx,
-      cameraX,
-      cameraY,
-      activeRange,
-      state.selectionPulseStartMs,
-      now,
-      visibleBounds
-    );
+
+  if (state.interactionState === 'unit_selected' || state.interactionState === 'walking') {
+    if (state.currentRange) {
+      drawUnitRangeEnvelope(
+        ctx,
+        cameraX,
+        cameraY,
+        state.currentRange,
+        state.selectionPulseStartMs,
+        now,
+        visibleBounds,
+        1
+      );
+    }
+  } else if (canShowInspectedRange) {
+    const inspectedRange = getActiveInspectedAllyRange(state);
+    if (inspectedRange) {
+      drawUnitRangeEnvelope(
+        ctx,
+        cameraX,
+        cameraY,
+        inspectedRange,
+        state.selectionPulseStartMs,
+        now,
+        visibleBounds,
+        1
+      );
+    } else if (state.hoveredPlayerRange) {
+      drawUnitRangeEnvelope(
+        ctx,
+        cameraX,
+        cameraY,
+        state.hoveredPlayerRange,
+        state.selectionPulseStartMs,
+        now,
+        visibleBounds,
+        0.46
+      );
+    }
   }
 
   const seizeTiles = getSeizeObjectiveCoords(state);

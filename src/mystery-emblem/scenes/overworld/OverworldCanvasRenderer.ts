@@ -10,12 +10,14 @@ import type {
 import {
   KECLEON_PMD_ASSET_ID,
   type OverworldGraphDefinition,
+  type OverworldPoint,
 } from '../../data/overworldMapData';
 import {
   ensureOverworldGraphState,
   getEdgePointsOrdered,
 } from '../../engine/overworldEngine';
 import type { SaveData } from '../../types/schemas';
+import type { OverworldClearSequence } from './OverworldTravelAndSprites';
 import {
   drawAnimatedSpriteAtMapPoint,
   syncOverworldNodeLabelsOverlay,
@@ -23,6 +25,41 @@ import {
 } from './overworldSpriteAndLabelDraw';
 
 export type { NodeLabelDomEntry };
+
+function slicePolylineAtFraction(
+  points: ReadonlyArray<OverworldPoint>,
+  fraction: number
+): OverworldPoint[] {
+  if (points.length <= 1 || fraction <= 0) return points.slice(0, 1);
+  if (fraction >= 1) return points.map((p) => ({ x: p.x, y: p.y }));
+
+  let totalLen = 0;
+  for (let i = 1; i < points.length; i++) {
+    totalLen += Math.hypot(points[i]!.x - points[i - 1]!.x, points[i]!.y - points[i - 1]!.y);
+  }
+  const targetDist = totalLen * fraction;
+  const sliced: OverworldPoint[] = [{ x: points[0]!.x, y: points[0]!.y }];
+  let accum = 0;
+
+  for (let i = 1; i < points.length; i++) {
+    const prev = points[i - 1]!;
+    const cur = points[i]!;
+    const segLen = Math.hypot(cur.x - prev.x, cur.y - prev.y);
+    if (accum + segLen <= targetDist) {
+      sliced.push({ x: cur.x, y: cur.y });
+      accum += segLen;
+    } else {
+      const remaining = targetDist - accum;
+      const t = segLen > 0 ? remaining / segLen : 0;
+      sliced.push({
+        x: prev.x + (cur.x - prev.x) * t,
+        y: prev.y + (cur.y - prev.y) * t,
+      });
+      break;
+    }
+  }
+  return sliced;
+}
 
 export interface OverworldRenderFrameContext {
   ctx: CanvasRenderingContext2D;
@@ -47,6 +84,7 @@ export interface OverworldRenderFrameContext {
   isTraveling: boolean;
   hoveredNodeId: string | null;
   highlightedEdgeIds: string[];
+  clearSequence?: OverworldClearSequence | null;
 }
 
 export function renderOverworldFrame(rc: OverworldRenderFrameContext): void {
@@ -97,6 +135,7 @@ export function renderOverworldFrame(rc: OverworldRenderFrameContext): void {
   const reconciled = save
     ? ensureOverworldGraphState(save, graph)
     : { currentNodeId: graph.startNodeId, nodes: {}, mutated: false };
+  const clearSeq = rc.clearSequence;
   const nodeMap = new Map(graph.nodes.map((n) => [n.id, n]));
   const pulse01 = 0.5 + 0.5 * Math.sin(animClockMs / 240);
   const activeRouteEdgeSet = new Set<string>(highlightedEdgeIds);
@@ -108,9 +147,29 @@ export function renderOverworldFrame(rc: OverworldRenderFrameContext): void {
     const stA = reconciled.nodes[a.id];
     const stB = reconciled.nodes[b.id];
     const bothUnlocked = Boolean(stA?.unlocked && stB?.unlocked);
-    if (!stA?.unlocked && !stB?.unlocked) continue;
 
-    const pts = getEdgePointsOrdered(edge, a, b);
+    const isNewlyUnlocked = Boolean(clearSeq?.newlyUnlockedEdgeIds.includes(edge.id));
+    if (isNewlyUnlocked) {
+      if (clearSeq?.phase === 'red_to_green') continue;
+    } else {
+      if (!bothUnlocked) continue;
+    }
+
+    let pts: OverworldPoint[];
+    let edgeFraction = 1;
+    if (isNewlyUnlocked && clearSeq?.phase === 'draw_edges') {
+      edgeFraction = clearSeq.edgeProgress;
+      const isANew = clearSeq.newlyUnlockedNodeIds.includes(a.id);
+      const isBNew = clearSeq.newlyUnlockedNodeIds.includes(b.id);
+      const fromNode = isANew && !isBNew ? b : a;
+      const toNode = isANew && !isBNew ? a : b;
+      const fullPts = getEdgePointsOrdered(edge, fromNode, toNode);
+      pts = slicePolylineAtFraction(fullPts, edgeFraction);
+    } else {
+      pts = getEdgePointsOrdered(edge, a, b);
+    }
+    if (pts.length < 2) continue;
+
     const isHighlightedRoute = activeRouteEdgeSet.has(edge.id);
 
     ctx.save();
@@ -122,15 +181,15 @@ export function renderOverworldFrame(rc: OverworldRenderFrameContext): void {
       ctx.lineTo((pts[i]!.x - cameraX) * scale, (pts[i]!.y - cameraY) * scale);
     }
 
-    if (bothUnlocked) {
-      ctx.strokeStyle = '#2b1708';
-      ctx.lineWidth = Math.max(6, 2.6 * scale);
-      ctx.stroke();
+    ctx.strokeStyle = '#2b1708';
+    ctx.lineWidth = Math.max(6, 2.6 * scale);
+    ctx.stroke();
 
-      ctx.strokeStyle = isHighlightedRoute ? '#70f0ff' : '#ffe074';
-      ctx.lineWidth = Math.max(3, 1.3 * scale);
-      ctx.stroke();
+    ctx.strokeStyle = isHighlightedRoute ? '#70f0ff' : '#ffe074';
+    ctx.lineWidth = Math.max(3, 1.3 * scale);
+    ctx.stroke();
 
+    if (edgeFraction >= 0.99) {
       for (const wp of edge.waypoints) {
         ctx.fillStyle = isHighlightedRoute ? '#ffffff' : '#fff0a8';
         ctx.beginPath();
@@ -143,11 +202,6 @@ export function renderOverworldFrame(rc: OverworldRenderFrameContext): void {
         );
         ctx.fill();
       }
-    } else {
-      ctx.setLineDash([scale * 2, scale * 2]);
-      ctx.strokeStyle = 'rgba(28, 18, 10, 0.55)';
-      ctx.lineWidth = Math.max(2, 1.1 * scale);
-      ctx.stroke();
     }
     ctx.restore();
   }
@@ -161,8 +215,23 @@ export function renderOverworldFrame(rc: OverworldRenderFrameContext): void {
     const cx = Math.round((def.x - cameraX) * scale);
     const cy = Math.round((def.y - cameraY) * scale);
 
+    const isNewDuringClear = Boolean(clearSeq?.newlyUnlockedNodeIds.includes(def.id));
+    if (isNewDuringClear) {
+      if (clearSeq?.phase === 'red_to_green' || clearSeq?.phase === 'draw_edges') {
+        continue;
+      }
+    } else if (!isUnlocked) {
+      continue;
+    }
+
+    let nodeScale = 1;
+    if (isNewDuringClear && clearSeq?.phase === 'pop_nodes') {
+      nodeScale = clearSeq.popScale;
+    }
+    if (nodeScale <= 0) continue;
+
     ctx.save();
-    if (isCurrent || isHovered) {
+    if ((isCurrent || isHovered) && !isNewDuringClear) {
       ctx.beginPath();
       ctx.arc(cx, cy, (7.5 + pulse01 * 2) * scale, 0, Math.PI * 2);
       ctx.strokeStyle = isCurrent
@@ -172,35 +241,63 @@ export function renderOverworldFrame(rc: OverworldRenderFrameContext): void {
       ctx.stroke();
     }
 
-    const crestRadius = (isUnlocked ? 5.2 : 3.8) * scale;
+    const crestRadius = 5.2 * scale * nodeScale;
+
+    if (clearSeq && clearSeq.clearedNodeId === def.id && clearSeq.phase === 'red_to_green') {
+      const t = clearSeq.progress;
+      ctx.beginPath();
+      const glowR = crestRadius + (2 + t * 16) * scale;
+      ctx.arc(cx, cy, glowR, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(104, 248, 168, ${(1 - t) * 0.85})`;
+      ctx.lineWidth = Math.max(2, 1.5 * scale);
+      ctx.stroke();
+    }
+
     ctx.beginPath();
     ctx.arc(cx, cy, crestRadius, 0, Math.PI * 2);
-    if (!isUnlocked) {
-      ctx.fillStyle = 'rgba(28, 36, 52, 0.82)';
-      ctx.strokeStyle = '#8898b0';
+
+    let fillColor: string;
+    let strokeColor: string;
+    let dotColor: string;
+
+    if (clearSeq && clearSeq.clearedNodeId === def.id && clearSeq.phase === 'red_to_green') {
+      const t = clearSeq.progress;
+      const r = Math.round(184 + (30 - 184) * t);
+      const g = Math.round(40 + (140 - 40) * t);
+      const b = Math.round(60 + (82 - 60) * t);
+      fillColor = `rgb(${r}, ${g}, ${b})`;
+      strokeColor = '#f8d048';
+      const dotR = Math.round(255 + (184 - 255) * t);
+      const dotG = Math.round(232 + (255 - 232) * t);
+      const dotB = Math.round(136 + (216 - 136) * t);
+      dotColor = `rgb(${dotR}, ${dotG}, ${dotB})`;
     } else if (st?.activeSkirmish) {
-      ctx.fillStyle = '#a81c2c';
-      ctx.strokeStyle = '#ff98a0';
+      fillColor = '#a81c2c';
+      strokeColor = '#ff98a0';
+      dotColor = isCleared ? '#b8ffd8' : '#ffe888';
     } else if (!isCleared) {
-      ctx.fillStyle = def.kind === 'paralogue' ? '#1c7c54' : '#b8283c';
-      ctx.strokeStyle = '#f8d048';
+      fillColor = '#b8283c';
+      strokeColor = '#f8d048';
+      dotColor = '#ffe888';
     } else {
-      ctx.fillStyle = '#163c74';
-      ctx.strokeStyle = isCurrent ? '#f8d048' : '#58c8f8';
+      fillColor = '#1e8c52';
+      strokeColor = isCurrent ? '#f8d048' : '#68f8a8';
+      dotColor = '#b8ffd8';
     }
+
+    ctx.fillStyle = fillColor;
+    ctx.strokeStyle = strokeColor;
     ctx.lineWidth = Math.max(2, 1 * scale);
     ctx.fill();
     ctx.stroke();
 
-    if (isUnlocked) {
-      ctx.beginPath();
-      ctx.arc(cx, cy, 1.8 * scale, 0, Math.PI * 2);
-      ctx.fillStyle = isCleared ? '#90e8ff' : '#ffe888';
-      ctx.fill();
-    }
+    ctx.beginPath();
+    ctx.arc(cx, cy, 1.8 * scale * nodeScale, 0, Math.PI * 2);
+    ctx.fillStyle = dotColor;
+    ctx.fill();
     ctx.restore();
 
-    if (isUnlocked && st?.activeKecleonShop) {
+    if (isUnlocked && st?.activeKecleonShop && !isNewDuringClear) {
       drawAnimatedSpriteAtMapPoint(
         ctx,
         spriteBundles.get(KECLEON_PMD_ASSET_ID),
@@ -215,7 +312,7 @@ export function renderOverworldFrame(rc: OverworldRenderFrameContext): void {
         'rgba(56, 216, 120, 0.65)'
       );
     }
-    if (isUnlocked && st?.activeSkirmish) {
+    if (isUnlocked && st?.activeSkirmish && !isNewDuringClear) {
       drawAnimatedSpriteAtMapPoint(
         ctx,
         spriteBundles.get(def.skirmishScoutSpeciesId),
@@ -242,6 +339,7 @@ export function renderOverworldFrame(rc: OverworldRenderFrameContext): void {
     cameraY,
     isTraveling,
     hoveredNodeId,
+    clearSequence: rc.clearSequence,
   });
 
   drawAnimatedSpriteAtMapPoint(

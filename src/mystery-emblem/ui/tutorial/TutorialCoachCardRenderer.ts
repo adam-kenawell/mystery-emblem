@@ -13,7 +13,8 @@ import type {
 import { interpolateCampaignText, resolveSpeakerIdentity } from '../../engine/speakerResolver';
 import type { SaveData } from '../../types/schemas';
 import type { PmdPortraitView } from '../PmdSpriteCanvas';
-import { createPmdButton, createPmdWindow } from '../PmdWindow';
+import { createPmdWindow } from '../PmdWindow';
+import { bindPointerTap } from '../pointerControls';
 import { TypewriterController, prefersReducedMotionEnabled } from '../typewriterController';
 
 export interface RenderCoachCardParams {
@@ -60,31 +61,24 @@ function buildNavActionsRow(params: RenderCoachCardParams): HTMLElement {
   actionArea.className = 'pmd-advisor-actions';
 
   if (beatIndex > 0) {
-    actionArea.appendChild(
-      createPmdButton({
-        label: '◀ Back',
-        className: 'pmd-tutorial-nav-btn is-compact',
-        testId: 'tutorial-prev-btn',
-        ariaLabel: 'Previous tip',
-        onTap: () => params.onPrev(),
-        tapOptions: { signal, stopPropagation: true },
-      })
-    );
+    const prevBtn = document.createElement('button');
+    prevBtn.type = 'button';
+    prevBtn.className = 'pmd-dialogue-advance-btn pmd-tutorial-prev-btn';
+    prevBtn.dataset.testid = 'tutorial-prev-btn';
+    prevBtn.setAttribute('aria-label', 'Previous tip');
+    prevBtn.innerHTML = '<span class="pmd-dialogue-caret" aria-hidden="true">◀</span>';
+    bindPointerTap(prevBtn, () => params.onPrev(), { signal, stopPropagation: true });
+    actionArea.appendChild(prevBtn);
   }
 
   const isLastBeat = beatIndex >= totalBeats - 1;
-  const nextBtn = createPmdButton({
-    label: isLastBeat ? 'Done' : 'Next',
-    variant: 'primary',
-    className: 'pmd-dialogue-advance-btn pmd-tutorial-nav-btn is-primary',
-    testId: 'tutorial-next-btn',
-    ariaLabel: isLastBeat ? 'Finish tip' : 'Next tip',
-    onTap: () => params.onNext(),
-    tapOptions: { signal, stopPropagation: true },
-  });
-  nextBtn.innerHTML = `<span>${
-    isLastBeat ? 'Done' : 'Next'
-  }</span><span class="pmd-dialogue-caret" aria-hidden="true">▼</span>`;
+  const nextBtn = document.createElement('button');
+  nextBtn.type = 'button';
+  nextBtn.className = 'pmd-dialogue-advance-btn pmd-tutorial-next-btn';
+  nextBtn.dataset.testid = 'tutorial-next-btn';
+  nextBtn.setAttribute('aria-label', isLastBeat ? 'Finish tip' : 'Next tip');
+  nextBtn.innerHTML = '<span class="pmd-dialogue-caret" aria-hidden="true">▼</span>';
+  bindPointerTap(nextBtn, () => params.onNext(), { signal, stopPropagation: true });
   actionArea.appendChild(nextBtn);
   return actionArea;
 }
@@ -107,34 +101,33 @@ export function renderCoachCardDom(params: RenderCoachCardParams): {
   cardWindowEl.dataset.awaitAction = isInteractive ? beat.awaitAction ?? '' : '';
   cardWindowEl.dataset.advisorEmotion = emotion;
 
-  const portraitSlot = createPmdWindow({
-    variant: 'compact-translucent',
-    className:
-      'pmd-dialogue-portrait-slot pmd-dialogue-portrait-slot--left pmd-advisor-portrait-slot is-speaking',
-    testId: 'tutorial-advisor-portrait-slot',
+  const actorRow = createPmdWindow({
+    variant: 'translucent',
+    className: 'pmd-dialogue-actor-row pmd-dialogue-actor-row--left',
   });
+
+  const portraitSlot = document.createElement('div');
+  portraitSlot.className =
+    'pmd-dialogue-portrait-slot pmd-dialogue-portrait-slot--left pmd-advisor-portrait-slot is-speaking';
+  portraitSlot.dataset.testid = 'tutorial-advisor-portrait-slot';
   portraitSlot.appendChild(coachPortraitView.canvas);
   void coachPortraitView.setPortrait({
     speciesIdOrAssetId: advisor.visualAssetId ?? advisor.pmdAssetId,
     emotion,
   });
 
+  const speakerName = document.createElement('span');
+  speakerName.className = 'pmd-dialogue-nickname pmd-advisor-speaker-name';
+  speakerName.dataset.testid = 'tutorial-speaker-name';
+  speakerName.textContent = advisor.nickname;
+
+  actorRow.append(portraitSlot, speakerName);
+
   const boxEl = createPmdWindow({
     variant: 'translucent',
     className: 'pmd-dialogue-box pmd-tutorial-dialogue-box',
     testId: 'tutorial-dialogue-box',
   });
-
-  const headerEl = document.createElement('div');
-  headerEl.className = 'pmd-dialogue-header';
-  const speakerGroup = document.createElement('div');
-  speakerGroup.className = 'pmd-dialogue-speaker-group';
-  const speakerName = document.createElement('span');
-  speakerName.className = 'pmd-dialogue-nickname pmd-advisor-speaker-name';
-  speakerName.dataset.testid = 'tutorial-speaker-name';
-  speakerName.textContent = advisor.nickname;
-  speakerGroup.appendChild(speakerName);
-  headerEl.appendChild(speakerGroup);
 
   const formattedDialogue = interpolateCampaignText(
     (isMentor && beat.mentorDialogue) || beat.dialogue,
@@ -148,8 +141,8 @@ export function renderCoachCardDom(params: RenderCoachCardParams): {
   bodyEl.appendChild(speechEl);
   bodyEl.appendChild(isInteractive ? buildActionPromptBadge(beat) : buildNavActionsRow(params));
 
-  boxEl.append(headerEl, bodyEl);
-  cardWindowEl.append(portraitSlot, boxEl);
+  boxEl.appendChild(bodyEl);
+  cardWindowEl.append(actorRow, boxEl);
 
   return { speechEl, formattedDialogue };
 }
@@ -164,7 +157,7 @@ export function renderCoachCardWithTypewriter(
   typewriter.start({
     targetEl: speechEl,
     text: formattedDialogue,
-    msPerTick: 12,
+    msPerTick: 16,
     charsPerTick: 2,
     instant: fastMode || prefersReducedMotionEnabled(),
     onTick: onTickSfx,

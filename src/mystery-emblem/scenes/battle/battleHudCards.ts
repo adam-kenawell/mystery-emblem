@@ -198,26 +198,15 @@ export function updateUnitHoverPopup(ctx: BattleControllerContext): void {
 
   const summary = computeUnitPopupStats(state.map, unit);
   const mightEl = dom.unitPopupEl.querySelector('[data-testid="unit-popup-might"]');
-  const defEl = dom.unitPopupEl.querySelector('[data-testid="unit-popup-def"]');
-  const spdefEl = dom.unitPopupEl.querySelector<HTMLElement>('[data-testid="unit-popup-spdef"]');
+  const prtEl = dom.unitPopupEl.querySelector('[data-testid="unit-popup-prt"]');
   const speEl = dom.unitPopupEl.querySelector('[data-testid="unit-popup-spe"]');
   if (mightEl) {
     const parts = [summary.physicalMight, summary.specialMight]
       .filter((m): m is number => m !== null)
       .map(String);
-    mightEl.textContent = parts.length > 0 ? parts.join('/') : '\u2014';
+    mightEl.textContent = parts.length > 0 ? parts.join('/') : '-';
   }
-  if (defEl) defEl.textContent = String(summary.effectiveDef);
-  if (spdefEl) {
-    let spdAliasEl = spdefEl.querySelector<HTMLElement>('[data-testid="unit-popup-spd"]');
-    if (!spdAliasEl) {
-      spdefEl.textContent = '';
-      spdAliasEl = document.createElement('span');
-      spdAliasEl.dataset.testid = 'unit-popup-spd';
-      spdefEl.appendChild(spdAliasEl);
-    }
-    spdAliasEl.textContent = String(summary.effectiveSpd);
-  }
+  if (prtEl) prtEl.textContent = `${summary.effectiveDef}/${summary.effectiveSpd}`;
   if (speEl) speEl.textContent = String(summary.effectiveSpe);
 
   const movesWrap = dom.unitPopupEl.querySelector<HTMLElement>(

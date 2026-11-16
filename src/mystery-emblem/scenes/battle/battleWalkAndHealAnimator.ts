@@ -36,6 +36,7 @@ export function playWalkPathAsync(
         unit.action = 'Idle';
         unit.renderWorldX = unit.x * PMD_TILE_NATIVE_PX;
         unit.renderWorldY = unit.y * PMD_TILE_NATIVE_PX;
+        unit.spawnFadeAlpha = 1;
         resolve();
       },
     };

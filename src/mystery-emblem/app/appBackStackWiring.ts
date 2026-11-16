@@ -46,7 +46,8 @@ export function createAppBackStack(
         return Boolean(
           ((ctx.battleScene?.isOpen() && ctx.battleScene.getSnapshot().phase !== 'dungeon_prep') ||
             ctx.cutsceneScene?.isOpen() ||
-            ctx.creditsScene?.isOpen()) &&
+            ctx.creditsScene?.isOpen() ||
+            Boolean(ctx.dialogueOverlay?.isOpen())) &&
             !isAppDevToolsOpen(ctx) &&
             !ctx.recruitNicknameOverlay?.isOpen()
         );

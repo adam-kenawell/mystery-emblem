@@ -24,7 +24,12 @@ import {
   type BattleUnitState,
 } from '../../engine/combatEngine';
 import { interpolateCampaignText } from '../../engine/speakerResolver';
-import { coordKey, findShortestPathAStar, isInMapBounds } from '../../engine/terrainAndPathfinding';
+import {
+  coordKey,
+  findShortestPathAStar,
+  isInMapBounds,
+  type AStarPathStep,
+} from '../../engine/terrainAndPathfinding';
 import type { DungeonEventAction } from '../../types/schemas';
 import type { DialogueScript } from '../../ui/DialogueOverlay';
 import {
@@ -141,6 +146,22 @@ export async function executeEventActionsAsync(
         built.y = free.y;
         built.renderWorldX = free.x * PMD_TILE_NATIVE_PX;
         built.renderWorldY = free.y * PMD_TILE_NATIVE_PX;
+        if (action.fadeInFromOffMap) {
+          let offMapTile = { x: built.x, y: built.y };
+          if (action.fadeInFromOffMap === 'right') {
+            offMapTile = { x: state.map.width, y: built.y };
+          } else if (action.fadeInFromOffMap === 'left') {
+            offMapTile = { x: -1, y: built.y };
+          } else if (action.fadeInFromOffMap === 'top') {
+            offMapTile = { x: built.x, y: -1 };
+          } else if (action.fadeInFromOffMap === 'bottom') {
+            offMapTile = { x: built.x, y: state.map.height };
+          }
+          built.spawnFadeAlpha = 0;
+          built.offMapWalkFrom = offMapTile;
+          built.renderWorldX = offMapTile.x * PMD_TILE_NATIVE_PX;
+          built.renderWorldY = offMapTile.y * PMD_TILE_NATIVE_PX;
+        }
         if (uSpawn.mustSurvive && !state.defeatIfUnitIdsFall.includes(built.id)) {
           state.defeatIfUnitIdsFall.push(built.id);
         }
@@ -150,9 +171,13 @@ export async function executeEventActionsAsync(
         }
         state.units.push(built);
         ensureTilePairVisible(state, built.x, built.y, built.x, built.y);
-        audioManager.playSfx(action.faction === 'enemy' ? 'phase_change' : 'victory_fanfare');
+        if (!action.silent) {
+          audioManager.playSfx(action.faction === 'enemy' ? 'phase_change' : 'victory_fanfare');
+        }
         ctx.renderNow();
-        await waitBattleMs(state, 220);
+        if (!action.silent) {
+          await waitBattleMs(state, 220);
+        }
       }
       if (action.bannerText) showPhaseBanner(state, dom, action.bannerText);
       if (state.selectedUnitId) recomputeSelectedUnitRange(state);
@@ -279,9 +304,27 @@ export async function executeEventActionsAsync(
           action.y,
           getLivingUnits(state)
         );
-        if (path && path.length > 1) {
+        let walkPath: AStarPathStep[] | null = path;
+        const offMap = mover.offMapWalkFrom;
+        mover.offMapWalkFrom = null;
+        if (offMap) {
+          const entrySteps: AStarPathStep[] = [{ x: offMap.x, y: offMap.y, cumulativeCost: 0 }];
+          let curX = offMap.x;
+          let curY = offMap.y;
+          let cost = 0;
+          while (curX !== mover.x || curY !== mover.y) {
+            if (curX < mover.x) curX++;
+            else if (curX > mover.x) curX--;
+            if (curY < mover.y) curY++;
+            else if (curY > mover.y) curY--;
+            cost++;
+            entrySteps.push({ x: curX, y: curY, cumulativeCost: cost });
+          }
+          walkPath = [...entrySteps, ...(path && path.length > 1 ? path.slice(1) : [])];
+        }
+        if (walkPath && walkPath.length > 1) {
           ensureTilePairVisible(state, mover.x, mover.y, action.x, action.y);
-          await playWalkPathAsync(state, mover, path, true);
+          await playWalkPathAsync(state, mover, walkPath, true);
           if (!state.openState || runGen !== state.battleRunGen) return { aborted: true };
           if (state.selectedUnitId) recomputeSelectedUnitRange(state);
           recomputeDangerArea(ctx);
@@ -294,6 +337,22 @@ export async function executeEventActionsAsync(
           ctx.renderNow();
         }
       }
+    } else if (action.type === 'refresh_units') {
+      for (const ref of action.targetUnitIds) {
+        const u = resolveEventTargetUnit(state, ref);
+        if (u) {
+          if (action.clearWait !== false) u.waited = false;
+          if (action.healToFull) u.currentHp = u.maxHp;
+          if (action.clearStatus) {
+            u.status = null;
+            u.statusTurns = 0;
+          }
+        }
+      }
+      if (state.selectedUnitId) recomputeSelectedUnitRange(state);
+      recomputeDangerArea(ctx);
+      updateBattleInfoStrip(ctx);
+      ctx.renderNow();
     } else if (action.type === 'rest_player_units') {
       const keepHealerId = action.exceptHealer ? getTutorialHealerUnit(state)?.id : undefined;
       const keepPartnerId = action.exceptPartner ? getTutorialPartnerUnit(state)?.id : undefined;
@@ -420,4 +479,9 @@ export async function executeEventActionsAsync(
     }
   }
   return { aborted: false };
+}
+
+if (typeof window !== 'undefined') {
+  (window as unknown as Record<string, unknown>).__MYSTERY_EMBLEM_EXECUTE_EVENT_ACTIONS__ =
+    executeEventActionsAsync;
 }

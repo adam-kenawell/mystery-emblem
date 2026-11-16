@@ -158,6 +158,8 @@ export interface BattleRuntimeState {
   currentRange: MovementRangeResult | null;
   inspectedAllyRangeUnitId: string | null;
   inspectedAllyRange: MovementRangeResult | null;
+  hoveredPlayerRangeUnitId: string | null;
+  hoveredPlayerRange: MovementRangeResult | null;
   uncommittedOrigin: { unitId: string; x: number; y: number; direction: PmdDirection } | null;
   originRangeSnapshot: MovementRangeResult | null;
   forecastMode: 'attack' | 'heal';
@@ -263,6 +265,8 @@ export function createInitialBattleRuntimeState(): BattleRuntimeState {
     currentRange: null,
     inspectedAllyRangeUnitId: null,
     inspectedAllyRange: null,
+    hoveredPlayerRangeUnitId: null,
+    hoveredPlayerRange: null,
     uncommittedOrigin: null,
     originRangeSnapshot: null,
     forecastMode: 'attack',

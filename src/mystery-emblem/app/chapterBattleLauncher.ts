@@ -21,6 +21,7 @@ export async function launchCampaignChapterBattle(
   if (!ctx.battleScene || ctx.demoLaunchInProgress) return;
   ctx.demoLaunchInProgress = true;
   ctx.pendingPostVictoryDemoNodeId = null;
+  ctx.pendingOverworldCelebrationNodeId = null;
   try {
     const newlyRecruitedIds: string[] = [];
     if (demoChapter.recruitment && !manager.hasRecruitedChapter(demoChapter.nodeId)) {
@@ -97,7 +98,12 @@ export async function launchCampaignChapterBattle(
           }
         : undefined,
       onVictory: () => {
-        manager.completeOverworldChapter(demoChapter.nodeId, { graph: DEMO_OVERWORLD_GRAPH });
+        const completion = manager.completeOverworldChapter(demoChapter.nodeId, {
+          graph: DEMO_OVERWORLD_GRAPH,
+        });
+        if (completion.firstClear) {
+          ctx.pendingOverworldCelebrationNodeId = demoChapter.nodeId;
+        }
         if (demoChapter.guaranteesKecleonShopOnClear) {
           manager.spawnOverworldKecleonShop(
             demoChapter.guaranteesKecleonShopOnClear.nodeId,
@@ -134,6 +140,7 @@ export async function launchCampaignChapterBattle(
 
 function prepareStageForOverworldBattle(ctx: AppRuntimeContext): void {
   const { dom } = ctx;
+  ctx.pendingOverworldCelebrationNodeId = null;
   if (ctx.overworldScene?.isOpen()) {
     ctx.overworldReturnTarget = 'suppress';
     ctx.overworldScene.close();

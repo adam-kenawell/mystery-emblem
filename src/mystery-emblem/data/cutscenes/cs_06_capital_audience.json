@@ -57,81 +57,16 @@
       }
     },
     {
-      "id": "serperior_politics_1",
-      "say": {
-        "speaker": "serperior",
-        "emotion": "Normal",
-        "side": "right",
-        "text": "The realms are divided in their response. Neither the Fire Kingdom nor the Ice Kingdom has been touched by Rift attacks yet, so they remain aloof."
-      }
-    },
-    {
-      "id": "serperior_politics_2",
-      "say": {
-        "speaker": "serperior",
-        "emotion": "Normal",
-        "side": "right",
-        "text": "Meanwhile, the proud Forest Tribe believes their own warriors can fight the Rift beasts off without outside aid."
-      }
-    },
-    {
-      "id": "serperior_politics_3",
+      "id": "serperior_chronicles",
       "say": {
         "speaker": "serperior",
         "emotion": "Determined",
         "side": "right",
-        "text": "However, both the Sand Kingdom and the Steel Kingdom stand in agreement with our Verdant Kingdom: we must uncover the truth behind the Rift before it consumes us all."
-      }
-    },
-    {
-      "id": "serperior_mission",
-      "say": {
-        "speaker": "serperior",
-        "emotion": "Determined",
-        "side": "right",
-        "text": "Our shared archives speak of an ancient Pokemon slumbering deep within the Ice Kingdom who remembers the Dawn Era. Quaquaval, {lord}, I entrust your expedition with waking him and learning the truth."
+        "text": "Long before our six realms took shape, the royal chronicles record an era when the Ancient Dragon Kingdom kept peace across the land, until the Rift tore the sky apart. Listen well to how it fell."
       },
       "actions": [
-        { "type": "emote", "who": "lord", "emote": "exclamation", "duration": 0.9 },
-        { "type": "emote", "who": "partner", "emote": "sparkle", "duration": 0.9 }
+        { "type": "fade", "to": "black", "duration": 0.6, "delay": 0.2 }
       ]
-    },
-    {
-      "id": "honedge_pledge",
-      "music": { "kind": "song", "song": "one_for_all" },
-      "say": {
-        "speaker": "honedge",
-        "emotion": "Determined",
-        "side": "left",
-        "text": "By envoy pact, my blade is yours! I am Honedge, warrior of the Steel Kingdom, sworn to guard your northern march!"
-      },
-      "actions": [
-        { "type": "walk", "who": "honedge", "path": [[6, 5]], "speed": 2.6, "facing": "DownRight" },
-        { "type": "pose", "who": "honedge", "anim": "Attack", "duration": 0.45 }
-      ]
-    },
-    {
-      "id": "sandile_pledge",
-      "say": {
-        "speaker": "sandile",
-        "emotion": "Happy",
-        "side": "right",
-        "text": "And I am Sandile from the Sand Kingdom! Stick with me and not a single ambush will sneak past our tracks!"
-      },
-      "actions": [
-        { "type": "walk", "who": "sandile", "path": [[9, 5]], "speed": 2.8, "facing": "DownLeft" },
-        { "type": "hop", "who": "sandile", "count": 2 }
-      ]
-    },
-    {
-      "id": "lord_finale_vow",
-      "say": {
-        "speaker": "lord",
-        "emotion": "Determined",
-        "side": "left",
-        "text": "Honedge, Sandile, welcome to the squad! Next stop: the frozen peaks of the Ice Kingdom to uncover the truth of the past!"
-      },
-      "actions": [{ "type": "aura", "who": "lord", "duration": 1.1 }]
     }
   ]
 }

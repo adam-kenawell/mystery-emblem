@@ -126,6 +126,7 @@ export function advanceBattleAnimations(state: BattleRuntimeState, now: number):
           state.activeWalk = null;
           unit.renderWorldX = unit.x * PMD_TILE_NATIVE_PX;
           unit.renderWorldY = unit.y * PMD_TILE_NATIVE_PX;
+          unit.spawnFadeAlpha = 1;
           done();
           break;
         }
@@ -144,6 +145,12 @@ export function advanceBattleAnimations(state: BattleRuntimeState, now: number):
         const t = Math.min(1, state.activeWalk.segmentElapsedMs / walkMsPerTile);
         unit.renderWorldX = Math.round((fromStep.x + dx * t) * PMD_TILE_NATIVE_PX);
         unit.renderWorldY = Math.round((fromStep.y + dy * t) * PMD_TILE_NATIVE_PX);
+
+        if (unit.spawnFadeAlpha !== undefined && unit.spawnFadeAlpha < 1) {
+          const rampSegments = Math.min(2, Math.max(1, state.activeWalk.steps.length - 1));
+          const walkProgress = (state.activeWalk.segmentIndex + t) / rampSegments;
+          unit.spawnFadeAlpha = Math.min(1, Math.max(0, walkProgress));
+        }
 
         if (state.activeWalk.followCamera) {
           ensureTilePairVisible(state, unit.x, unit.y, toStep.x, toStep.y);

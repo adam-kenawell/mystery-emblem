@@ -221,9 +221,22 @@ export class TutorialOverlay {
     if (this.typewriter.isAnimating()) {
       this.typewriter.completeImmediately();
       this.audioManager.playSfx('select');
-    } else if (!this.hasActiveInteractiveStep()) {
-      this.advanceFromCurrentBeat('select');
+      return;
     }
+    if (this.hasActiveInteractiveStep()) return;
+
+    const speechEl = this.shell.cardWindowEl.querySelector<HTMLElement>(
+      '[data-testid="tutorial-dialogue-text"]'
+    );
+    if (speechEl && speechEl.scrollHeight - speechEl.scrollTop - speechEl.clientHeight > 4) {
+      const parsedLineHeight = parseFloat(getComputedStyle(speechEl).lineHeight) || 22;
+      const scrollStep = Math.max(1, Math.round(parsedLineHeight * 3));
+      speechEl.scrollTop += scrollStep;
+      this.audioManager.playSfx('dialogue_advance');
+      return;
+    }
+
+    this.advanceFromCurrentBeat('select');
   }
 
   private advanceFromCurrentBeat(finishSfx: 'cancel' | 'select'): void {

@@ -9,6 +9,7 @@ import {
   findBestHealPlanForAlly,
 } from '../../engine/combatEngine';
 import { coordKey, findShortestPathAStar } from '../../engine/terrainAndPathfinding';
+import { syncHoverPlayerRange } from './battleDangerAndViewportState';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { getExpectedTutorialAction } from './battleTutorialSpotlights';
 import type { BattleControllerContext } from './battleTypesAndState';
@@ -98,8 +99,10 @@ export function updateHoveredTile(
 
   const prevHoverEnemyId = state.lastComputedHoverEnemyId;
   updateBattleInfoStrip(ctx);
+  const hoverPlayerChanged = syncHoverPlayerRange(ctx);
   if (
     state.lastComputedHoverEnemyId !== prevHoverEnemyId ||
+    hoverPlayerChanged ||
     (state.phase === 'player_phase' && state.interactionState === 'unit_selected')
   ) {
     ctx.renderNow();

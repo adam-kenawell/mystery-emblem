@@ -46,6 +46,27 @@ const description =
           Dev Tools
         </button>
 
+        <!-- Audio Notice Pop-Up (Top-Left, explains music starts upon save load/start) -->
+        <aside
+          id="pmd-audio-notice"
+          class="pmd-window pmd-window--compact pmd-window--translucent pmd-audio-notice"
+          data-testid="title-audio-notice"
+          role="status"
+          aria-live="polite"
+        >
+          <div class="pmd-audio-notice-text">
+            This site plays music once you load or start a save. To turn sounds off later: open Menu -&gt; System on the World Map, or tap an empty tile -&gt; Settings in battle.
+          </div>
+          <button
+            id="pmd-audio-notice-mute-btn"
+            class="pmd-btn pmd-chip-btn pmd-audio-notice-btn"
+            data-testid="title-audio-notice-mute-btn"
+            type="button"
+          >
+            Mute Audio
+          </button>
+        </aside>
+
         <!-- Persistent Top-Right Corner Button: Google Log In / Log Out on Title; Menu / Back in Scenes -->
         <button
           id="pmd-corner-menu-btn"

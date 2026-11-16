@@ -18,7 +18,7 @@
     {"speciesId":"honedge","level":5,"scaleStatsToLevel":true},
     {"speciesId":"sandile","level":5,"scaleStatsToLevel":true}
   ],
-  "postStoryCutsceneId": "cs_06_capital_audience",
+  "postStoryCutsceneIds": ["cs_06_capital_audience", "cs_prelude_dragon_kingdom", "cs_00_ancient_dragon_war", "cs_06b_capital_mission"],
   "width": 26,
   "height": 16,
   "rows": [

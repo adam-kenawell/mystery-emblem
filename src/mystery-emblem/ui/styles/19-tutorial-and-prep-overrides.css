@@ -1,5 +1,5 @@
 @media (max-width: 600px) {
-  .pmd-tutorial-backdrop {
+  .pmd-tutorial-backdrop:not([data-coach-dock='top']) {
     padding: 0.45rem;
   }
 
@@ -14,15 +14,15 @@
   }
 
   .pmd-advisor-portrait-slot {
-    width: 54px;
-    height: 54px;
-    flex: 0 0 54px;
+    width: auto;
+    height: auto;
+    flex: 0 0 auto;
   }
 
   .pmd-advisor-speech-text {
-    font-size: 12.5px;
-    line-height: 1.34;
-    min-height: 2.2em;
+    font-size: 14px;
+    line-height: 1.42;
+    height: 4.97em;
   }
 
   .pmd-tutorial-title {
@@ -31,7 +31,7 @@
 }
 
 @media (max-height: 500px) {
-  .pmd-tutorial-backdrop {
+  .pmd-tutorial-backdrop:not([data-coach-dock='top']) {
     padding: 0.25rem 0.55rem;
   }
 
@@ -49,9 +49,9 @@
   }
 
   .pmd-advisor-portrait-slot {
-    width: 46px;
-    height: 46px;
-    flex: 0 0 46px;
+    width: auto;
+    height: auto;
+    flex: 0 0 auto;
   }
 
   .pmd-advisor-coach-main {
@@ -59,9 +59,9 @@
   }
 
   .pmd-advisor-speech-text {
-    font-size: 12px;
-    line-height: 1.28;
-    min-height: 0;
+    font-size: 14px;
+    line-height: 1.35;
+    height: 4.725em;
   }
 
   .pmd-tutorial-header {

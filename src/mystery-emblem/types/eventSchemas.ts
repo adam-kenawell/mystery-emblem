@@ -111,6 +111,15 @@ export type DungeonEventAction =
       calloutText?: string;
       bannerText?: string;
       addToPermanentRoster?: boolean;
+      silent?: boolean;
+      fadeInFromOffMap?: 'left' | 'right' | 'top' | 'bottom';
+    }
+  | {
+      type: 'refresh_units';
+      targetUnitIds: string[];
+      healToFull?: boolean;
+      clearWait?: boolean;
+      clearStatus?: boolean;
     }
   | {
       type: 'convert_unit';

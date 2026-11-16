@@ -48,6 +48,7 @@ export interface AppRuntimeContext {
   devToolsHarness: DevToolsHarness | null;
   battleReturnTarget: 'devtools' | 'overworld' | 'title';
   pendingPostVictoryDemoNodeId: string | null;
+  pendingOverworldCelebrationNodeId?: string | null;
   overworldReturnTarget: 'title' | 'suppress';
   demoLaunchInProgress: boolean;
 }

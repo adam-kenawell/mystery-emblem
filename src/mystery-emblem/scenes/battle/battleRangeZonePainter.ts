@@ -16,6 +16,10 @@ export const ALTERNATING_RANGE_HALF_PERIOD_MS = RANGE_PULSE_PERIOD_MS;
 
 type RgbaTuple = readonly [number, number, number, number];
 
+function scaleRgbaTuple(tuple: RgbaTuple, alphaScale: number): RgbaTuple {
+  return [tuple[0], tuple[1], tuple[2], tuple[3] * alphaScale];
+}
+
 function lerpChannel(a: number, b: number, t: number): number {
   return Math.round(a + (b - a) * t);
 }
@@ -228,7 +232,8 @@ export function drawUnitRangeEnvelope(
     endCol: number;
     startRow: number;
     endRow: number;
-  }
+  },
+  alphaScale = 1
 ): void {
   const blueMoveSet = new Set<string>(range.traversedCosts.keys());
   const movePulse = getSelectionRangePulse({ selectionPulseStartMs: pulseStartMs }, now);
@@ -252,9 +257,21 @@ export function drawUnitRangeEnvelope(
       range.supportBorderTiles,
       buildUnionBoundaryMask(blueMoveSet, range.supportBorderTiles),
       {
-        fillRgba: lerpRgba([28, 184, 96, 0.15], [132, 255, 188, 0.36], movePulse),
-        outerBorderRgba: lerpRgba([72, 228, 140, 0.88], [212, 255, 232, 1.0], movePulse),
-        innerGlowRgba: lerpRgba([48, 212, 120, 0.28], [168, 255, 208, 0.6], movePulse),
+        fillRgba: lerpRgba(
+          scaleRgbaTuple([28, 184, 96, 0.15], alphaScale),
+          scaleRgbaTuple([132, 255, 188, 0.36], alphaScale),
+          movePulse
+        ),
+        outerBorderRgba: lerpRgba(
+          scaleRgbaTuple([72, 228, 140, 0.88], alphaScale),
+          scaleRgbaTuple([212, 255, 232, 1.0], alphaScale),
+          movePulse
+        ),
+        innerGlowRgba: lerpRgba(
+          scaleRgbaTuple([48, 212, 120, 0.28], alphaScale),
+          scaleRgbaTuple([168, 255, 208, 0.6], alphaScale),
+          movePulse
+        ),
       },
       bounds
     );
@@ -266,9 +283,21 @@ export function drawUnitRangeEnvelope(
       range.attackBorderTiles,
       buildUnionBoundaryMask(blueMoveSet, range.attackBorderTiles),
       {
-        fillRgba: lerpRgba([212, 36, 56, 0.16], [255, 132, 144, 0.38], movePulse),
-        outerBorderRgba: lerpRgba([244, 80, 96, 0.88], [255, 208, 214, 1.0], movePulse),
-        innerGlowRgba: lerpRgba([232, 56, 76, 0.3], [255, 168, 178, 0.62], movePulse),
+        fillRgba: lerpRgba(
+          scaleRgbaTuple([212, 36, 56, 0.16], alphaScale),
+          scaleRgbaTuple([255, 132, 144, 0.38], alphaScale),
+          movePulse
+        ),
+        outerBorderRgba: lerpRgba(
+          scaleRgbaTuple([244, 80, 96, 0.88], alphaScale),
+          scaleRgbaTuple([255, 208, 214, 1.0], alphaScale),
+          movePulse
+        ),
+        innerGlowRgba: lerpRgba(
+          scaleRgbaTuple([232, 56, 76, 0.3], alphaScale),
+          scaleRgbaTuple([255, 168, 178, 0.62], alphaScale),
+          movePulse
+        ),
       },
       bounds
     );
@@ -281,9 +310,21 @@ export function drawUnitRangeEnvelope(
     blueMoveSet,
     blueMoveSet,
     {
-      fillRgba: lerpRgba([24, 128, 236, 0.16], [132, 232, 255, 0.38], movePulse),
-      outerBorderRgba: lerpRgba([64, 184, 252, 0.88], [216, 252, 255, 1.0], movePulse),
-      innerGlowRgba: lerpRgba([44, 156, 248, 0.3], [164, 242, 255, 0.62], movePulse),
+      fillRgba: lerpRgba(
+        scaleRgbaTuple([24, 128, 236, 0.16], alphaScale),
+        scaleRgbaTuple([132, 232, 255, 0.38], alphaScale),
+        movePulse
+      ),
+      outerBorderRgba: lerpRgba(
+        scaleRgbaTuple([64, 184, 252, 0.88], alphaScale),
+        scaleRgbaTuple([216, 252, 255, 1.0], alphaScale),
+        movePulse
+      ),
+      innerGlowRgba: lerpRgba(
+        scaleRgbaTuple([44, 156, 248, 0.3], alphaScale),
+        scaleRgbaTuple([164, 242, 255, 0.62], alphaScale),
+        movePulse
+      ),
     },
     bounds
   );

@@ -22,14 +22,9 @@
   ],
   "beats": [
     {
-      "id": "present_day",
+      "id": "black_open",
       "music": { "kind": "silence" },
-      "say": {
-        "speaker": "narrator",
-        "emotion": "Normal",
-        "side": "auto",
-        "text": "Present day..."
-      },
+      "advance": { "kind": "seconds", "seconds": 0.35 },
       "actions": [
         { "type": "fade", "to": "black", "duration": 0 }
       ]

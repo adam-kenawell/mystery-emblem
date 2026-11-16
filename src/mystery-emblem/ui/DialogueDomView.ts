@@ -9,6 +9,8 @@ import { bindBackGestureSurface, bindPointerTap } from './pointerControls';
 export interface DialogueDomElements {
   rootEl: HTMLElement;
   stageEl: HTMLElement;
+  leftActorRowEl: HTMLElement;
+  rightActorRowEl: HTMLElement;
   leftSlotEl: HTMLElement;
   rightSlotEl: HTMLElement;
   leftPortrait: PmdPortraitView;
@@ -36,59 +38,54 @@ export function buildDialogueDomView(opts: {
   rootEl.setAttribute('aria-modal', 'true');
   rootEl.setAttribute('aria-label', 'Story Dialogue');
 
+  const skipBtn = createPmdButton({
+    label: 'Skip',
+    className: 'pmd-dialogue-skip-btn pmd-dialogue-screen-skip-btn',
+    testId: 'dialogue-skip-btn',
+    ariaLabel: 'Skip dialogue',
+    onTap: () => opts.onSkip(),
+    tapOptions: { signal: opts.signal, stopPropagation: true },
+  });
+  rootEl.appendChild(skipBtn);
+
   const stageEl = document.createElement('div');
   stageEl.className = 'pmd-dialogue-stage';
 
-  const leftSlotEl = createPmdWindow({
-    variant: 'compact-translucent',
-    className: 'pmd-dialogue-portrait-slot pmd-dialogue-portrait-slot--left',
-    testId: 'dialogue-portrait-left',
+  const leftActorRowEl = createPmdWindow({
+    variant: 'translucent',
+    className: 'pmd-dialogue-actor-row pmd-dialogue-actor-row--left',
   });
+
+  const leftSlotEl = document.createElement('div');
+  leftSlotEl.className = 'pmd-dialogue-portrait-slot pmd-dialogue-portrait-slot--left';
+  leftSlotEl.dataset.testid = 'dialogue-portrait-left';
   leftSlotEl.hidden = true;
   const leftPortrait = new PmdPortraitView({ testId: 'dialogue-portrait-left-canvas' });
   leftSlotEl.appendChild(leftPortrait.canvas);
+  leftActorRowEl.appendChild(leftSlotEl);
 
-  const rightSlotEl = createPmdWindow({
-    variant: 'compact-translucent',
-    className: 'pmd-dialogue-portrait-slot pmd-dialogue-portrait-slot--right',
-    testId: 'dialogue-portrait-right',
+  const rightActorRowEl = createPmdWindow({
+    variant: 'translucent',
+    className: 'pmd-dialogue-actor-row pmd-dialogue-actor-row--right',
   });
+
+  const rightSlotEl = document.createElement('div');
+  rightSlotEl.className = 'pmd-dialogue-portrait-slot pmd-dialogue-portrait-slot--right';
+  rightSlotEl.dataset.testid = 'dialogue-portrait-right';
   rightSlotEl.hidden = true;
   const rightPortrait = new PmdPortraitView({ testId: 'dialogue-portrait-right-canvas' });
   rightSlotEl.appendChild(rightPortrait.canvas);
+  rightActorRowEl.appendChild(rightSlotEl);
+
+  const nicknameEl = document.createElement('span');
+  nicknameEl.className = 'pmd-dialogue-nickname';
+  nicknameEl.dataset.testid = 'dialogue-speaker-nickname';
 
   const boxEl = createPmdWindow({
     variant: 'translucent',
     className: 'pmd-dialogue-box',
     testId: 'dialogue-box',
   });
-
-  const headerEl = document.createElement('div');
-  headerEl.className = 'pmd-dialogue-header';
-
-  const speakerGroup = document.createElement('div');
-  speakerGroup.className = 'pmd-dialogue-speaker-group';
-
-  const nicknameEl = document.createElement('span');
-  nicknameEl.className = 'pmd-dialogue-nickname';
-  nicknameEl.dataset.testid = 'dialogue-speaker-nickname';
-
-  speakerGroup.append(nicknameEl);
-
-  const controlsGroup = document.createElement('div');
-  controlsGroup.className = 'pmd-dialogue-controls';
-
-  const skipBtn = createPmdButton({
-    label: 'Skip',
-    className: 'pmd-dialogue-skip-btn',
-    testId: 'dialogue-skip-btn',
-    ariaLabel: 'Skip dialogue',
-    onTap: () => opts.onSkip(),
-    tapOptions: { signal: opts.signal, stopPropagation: true },
-  });
-
-  controlsGroup.appendChild(skipBtn);
-  headerEl.append(speakerGroup, controlsGroup);
 
   const bodyEl = document.createElement('div');
   bodyEl.className = 'pmd-dialogue-body';
@@ -97,25 +94,24 @@ export function buildDialogueDomView(opts: {
   textEl.className = 'pmd-dialogue-text';
   textEl.dataset.testid = 'dialogue-text';
 
-  const advanceBtn = createPmdButton({
-    label: 'Next ▼',
-    variant: 'primary',
-    className: 'pmd-dialogue-advance-btn',
-    testId: 'dialogue-advance-btn',
-    ariaLabel: 'Advance dialogue',
-    onTap: () => opts.onAdvance(),
-    tapOptions: { signal: opts.signal, stopPropagation: true },
+  const advanceBtn = document.createElement('button');
+  advanceBtn.type = 'button';
+  advanceBtn.className = 'pmd-dialogue-advance-btn';
+  advanceBtn.dataset.testid = 'dialogue-advance-btn';
+  advanceBtn.setAttribute('aria-label', 'Advance dialogue');
+  advanceBtn.innerHTML = '<span class="pmd-dialogue-caret" aria-hidden="true">▼</span>';
+  bindPointerTap(advanceBtn, () => opts.onAdvance(), {
+    signal: opts.signal,
+    stopPropagation: true,
   });
-  advanceBtn.innerHTML =
-    '<span>Next</span><span class="pmd-dialogue-caret" aria-hidden="true">▼</span>';
 
   bodyEl.append(textEl, advanceBtn);
-  boxEl.append(headerEl, bodyEl);
-  stageEl.append(leftSlotEl, rightSlotEl, boxEl);
+  boxEl.appendChild(bodyEl);
+  stageEl.append(leftActorRowEl, rightActorRowEl, boxEl);
   rootEl.appendChild(stageEl);
   opts.mountParent.appendChild(rootEl);
 
-  for (const surface of [boxEl, leftSlotEl, rightSlotEl]) {
+  for (const surface of [boxEl, leftActorRowEl, rightActorRowEl, leftSlotEl, rightSlotEl]) {
     bindPointerTap(surface, () => opts.onAdvance(), {
       signal: opts.signal,
       stopPropagation: true,
@@ -124,7 +120,9 @@ export function buildDialogueDomView(opts: {
   bindPointerTap(
     rootEl,
     (ev) => {
-      if (ev.target === rootEl || ev.target === stageEl) opts.onAdvance();
+      const target = ev.target as HTMLElement | null;
+      if (target?.closest('[data-testid="dialogue-skip-btn"]')) return;
+      opts.onAdvance();
     },
     { signal: opts.signal }
   );
@@ -133,6 +131,8 @@ export function buildDialogueDomView(opts: {
   return {
     rootEl,
     stageEl,
+    leftActorRowEl,
+    rightActorRowEl,
     leftSlotEl,
     rightSlotEl,
     leftPortrait,

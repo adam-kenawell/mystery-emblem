@@ -229,3 +229,49 @@
     font-size: 13px;
   }
 }
+
+/* Audio notice pop-up anchored in top-left */
+.pmd-audio-notice {
+  position: fixed;
+  top: max(0.85rem, env(safe-area-inset-top));
+  left: max(0.85rem, env(safe-area-inset-left));
+  z-index: 94;
+  width: min(300px, calc(100vw - 1.7rem));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 8px;
+  transition: opacity 0.38s ease, transform 0.38s ease;
+}
+
+#pmd-dev-tools-btn:not([hidden]) ~ #pmd-audio-notice {
+  top: calc(max(0.85rem, env(safe-area-inset-top)) + 54px);
+}
+
+.pmd-audio-notice.is-fading-out {
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+}
+
+.pmd-audio-notice-text {
+  font-size: 12px;
+  line-height: 1.35;
+  color: #f8f8f8;
+}
+
+.pmd-audio-notice-btn {
+  align-self: flex-start;
+}
+
+@media (max-width: 640px) {
+  .pmd-audio-notice {
+    top: calc(max(0.85rem, env(safe-area-inset-top)) + 104px);
+    width: min(240px, calc(100vw - 1.7rem));
+  }
+
+  #pmd-dev-tools-btn:not([hidden]) ~ #pmd-audio-notice {
+    top: calc(max(0.85rem, env(safe-area-inset-top)) + 104px);
+  }
+}
+

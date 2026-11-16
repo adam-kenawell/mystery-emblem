@@ -121,6 +121,7 @@ export function bindTitleAndCornerControls(params: {
     () => {
       audioManager.playSfx('select');
       setStatus('');
+      dismissAudioNotice(true);
       if (!manager.hasAnySave()) {
         openDemoQuizFlow();
         return;
@@ -140,13 +141,83 @@ export function bindTitleAndCornerControls(params: {
     { signal }
   );
 
+  const audioNoticeEl = document.getElementById('pmd-audio-notice') as HTMLElement | null;
+  const audioNoticeMuteBtn = document.getElementById(
+    'pmd-audio-notice-mute-btn'
+  ) as HTMLButtonElement | null;
+
+  let audioNoticeDismissed = false;
+  let audioNoticeTimer: ReturnType<typeof setTimeout> | null = null;
+  let audioNoticeFadeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const dismissAudioNotice = (instant = false): void => {
+    if (audioNoticeTimer) {
+      clearTimeout(audioNoticeTimer);
+      audioNoticeTimer = null;
+    }
+    if (audioNoticeFadeTimer) {
+      clearTimeout(audioNoticeFadeTimer);
+      audioNoticeFadeTimer = null;
+    }
+    audioNoticeDismissed = true;
+    if (!audioNoticeEl) return;
+    if (instant) {
+      audioNoticeEl.classList.remove('is-fading-out');
+      audioNoticeEl.hidden = true;
+    } else {
+      audioNoticeEl.classList.add('is-fading-out');
+      audioNoticeFadeTimer = setTimeout(() => {
+        audioNoticeEl.hidden = true;
+        audioNoticeFadeTimer = null;
+      }, 400);
+    }
+  };
+
+  const syncMuteButtonState = (muted: boolean): void => {
+    if (!audioNoticeMuteBtn) return;
+    audioNoticeMuteBtn.textContent = muted ? 'Audio: Muted' : 'Mute Audio';
+    audioNoticeMuteBtn.classList.toggle('is-active', !muted);
+  };
+
+  syncMuteButtonState(audioManager.getSettings().muted);
+  const unsubAudio = audioManager.subscribe((snapshot) => {
+    syncMuteButtonState(snapshot.settings.muted);
+  });
+
+  if (audioNoticeEl && !audioNoticeDismissed) {
+    audioNoticeTimer = setTimeout(() => {
+      dismissAudioNotice(false);
+    }, 8000);
+  }
+
+  if (audioNoticeMuteBtn) {
+    bindPointerTap(
+      audioNoticeMuteBtn,
+      () => {
+        const isMutedNow = audioManager.toggleMute();
+        if (!isMutedNow) {
+          audioManager.playSfx('select');
+        }
+        syncMuteButtonState(isMutedNow);
+      },
+      { signal, stopPropagation: true }
+    );
+  }
+
+  signal?.addEventListener(
+    'abort',
+    () => {
+      unsubAudio();
+      if (audioNoticeTimer) clearTimeout(audioNoticeTimer);
+      if (audioNoticeFadeTimer) clearTimeout(audioNoticeFadeTimer);
+    },
+    { once: true }
+  );
+
   const renderAll = (): void => {
     const save = manager.getSave();
     const hasAnySave = manager.hasAnySave();
     const adminActive = isAppAdminSignedIn(ctx);
-    if (!audioManager.getCurrentTrackId()) {
-      audioManager.playBgm('top_menu', { fadeMs: 350 });
-    }
     const anySceneOpen =
       Boolean(ctx.cutsceneScene?.isOpen()) ||
       Boolean(ctx.creditsScene?.isOpen()) ||
@@ -156,6 +227,11 @@ export function bindTitleAndCornerControls(params: {
       Boolean(ctx.battleScene?.isOpen()) ||
       Boolean(ctx.mapEditorScene?.isOpen()) ||
       Boolean(ctx.overworldScene?.isOpen());
+    if (anySceneOpen) {
+      dismissAudioNotice(true);
+    } else if (audioNoticeDismissed && audioNoticeEl) {
+      audioNoticeEl.hidden = true;
+    }
     if (!anySceneOpen && dom.titleScreen) dom.titleScreen.hidden = false;
     if (dom.devToolsBtn) dom.devToolsBtn.hidden = !adminActive;
     if (!adminActive) {

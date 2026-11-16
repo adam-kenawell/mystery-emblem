@@ -93,6 +93,8 @@ export interface BattleUnitState extends PathfindingUnitContext, EquippedMoveSlo
   renderWorldY: number;
   hitFlashUntilMs: number;
   koDissolveProgress: number;
+  spawnFadeAlpha?: number;
+  offMapWalkFrom?: { x: number; y: number } | null;
 }
 
 export interface CombatSideForecast {
@@ -271,8 +273,23 @@ export function computeUnitPopupStats(
   const terrain = getMapTerrainAt(map, unit.x, unit.y) ?? 'floor';
   const terrainBonuses = getTerrainBonuses(terrain, unit);
 
-  const effectiveDef = eff.def + terrainBonuses.defBonus;
-  const effectiveSpd = eff.spd + terrainBonuses.spdBonus;
+  let shieldDefBonus = 0;
+  let shieldSpdBonus = 0;
+  if (unit.activeShields) {
+    for (const s of unit.activeShields) {
+      if (s.turnsLeft > 0) {
+        if (!s.category || s.category === 'Physical') {
+          shieldDefBonus += s.reduction;
+        }
+        if (!s.category || s.category === 'Special') {
+          shieldSpdBonus += s.reduction;
+        }
+      }
+    }
+  }
+
+  const effectiveDef = eff.def + terrainBonuses.defBonus + shieldDefBonus;
+  const effectiveSpd = eff.spd + terrainBonuses.spdBonus + shieldSpdBonus;
 
   let physicalMight: number | null = null;
   let specialMight: number | null = null;

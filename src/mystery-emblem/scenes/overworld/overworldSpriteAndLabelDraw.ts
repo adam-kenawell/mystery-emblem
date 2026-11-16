@@ -11,6 +11,7 @@ import {
 import type { OverworldGraphDefinition } from '../../data/overworldMapData';
 import { resolveCurrentStoryChapterNodeId } from '../../engine/overworld/overworldGraphState';
 import type { OverworldNodeState } from '../../types/schemas';
+import type { OverworldClearSequence } from './OverworldTravelAndSprites';
 
 const OVERWORLD_SPRITE_SCALE_FACTOR = 0.5;
 
@@ -109,6 +110,7 @@ export function syncOverworldNodeLabelsOverlay(params: {
   cameraY: number;
   isTraveling: boolean;
   hoveredNodeId: string | null;
+  clearSequence?: OverworldClearSequence | null;
 }): void {
   const {
     nodeLabelsLayerEl,
@@ -120,6 +122,7 @@ export function syncOverworldNodeLabelsOverlay(params: {
     cameraY,
     isTraveling,
     hoveredNodeId,
+    clearSequence,
   } = params;
   const activeIds = new Set<string>();
   const storyChapterNodeId = resolveCurrentStoryChapterNodeId(reconciled.nodes, graph);
@@ -146,6 +149,11 @@ export function syncOverworldNodeLabelsOverlay(params: {
     }
 
     const st = reconciled.nodes[def.id];
+    const isNewDuringClear = Boolean(clearSequence?.newlyUnlockedNodeIds.includes(def.id));
+    if (isNewDuringClear && clearSequence?.phase !== 'pop_nodes') {
+      entry.anchorEl.hidden = true;
+      continue;
+    }
     // Declutter: only the Lord's settled node and the current story chapter show a title card
     // (no hover reveal); paralogues, cleared chapters and shop/skirmish nodes stay hidden.
     const isCurrent = reconciled.currentNodeId === def.id && !isTraveling;

@@ -109,6 +109,9 @@ export class TutorialSpotlightController {
     }
 
     const overworldEl = document.querySelector<HTMLElement>('#pmd-overworld-scene:not([hidden])');
+    if (overworldEl) {
+      preferredDock = 'top';
+    }
     this.backdropEl.dataset.overworldOpen = overworldEl ? 'true' : 'false';
     this.backdropEl.dataset.coachDock = preferredDock;
     this.cardWindowEl.dataset.coachDock = preferredDock;
