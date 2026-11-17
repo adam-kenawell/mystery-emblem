@@ -9,14 +9,26 @@ import {
 } from '../data/campaignConfig';
 import { buildEquippedSlotsFromSeed } from '../data/equippedMoves';
 import { ITEM_MAP, SPECIES_MAP } from '../data/index';
+import {
+  SUPPORT_RANK_THRESHOLDS,
+  clampSupportPointsForUnlockedRank,
+  getMaxSupportRank,
+  getSupportPairDefinition,
+  getSupportRankIndex,
+  makeCanonicalSupportPairKey,
+} from '../data/supports/supportMatrix';
 import { computeManualScaledStatsForJoinLevel } from '../engine/progressionEngine';
 import {
   QUIZ_SEED_SLOT_KEYS,
+  SUPPORT_RANKS,
   type OwnedPokemonInstance,
   type SaveData,
   type StatBlockSeven,
   type SupportLevel,
+  type SupportPairProgress,
+  type SupportRank,
   type UnitCosmeticForm,
+  type UnlockedSupportRank,
 } from '../types/schemas';
 import type { CloudUser } from './firebaseSync';
 
@@ -36,6 +48,8 @@ export function normalizeSaveSlot(slot: unknown): number {
   const n = Math.floor(Number(slot));
   return n >= 1 && n <= SAVE_SLOT_COUNT ? n : 1;
 }
+
+export { SUPPORT_RANK_THRESHOLDS };
 
 export const SUPPORT_LEVEL_THRESHOLDS: readonly [number, number, number, number, number] = [
   5, 12, 22, 35, 50,
@@ -87,12 +101,7 @@ export function generateSaveId(prefix: string): string {
 }
 
 export function makeSupportPairKey(instanceIdA: string, instanceIdB: string): string {
-  if (instanceIdA === instanceIdB) {
-    throw new Error('Cannot compute Support pair key between a unit and itself.');
-  }
-  return instanceIdA < instanceIdB
-    ? `${instanceIdA}::${instanceIdB}`
-    : `${instanceIdB}::${instanceIdA}`;
+  return makeCanonicalSupportPairKey(instanceIdA, instanceIdB);
 }
 
 export function computeSupportLevel(points: number): SupportLevel {
@@ -142,9 +151,72 @@ export function normalizeLegacySingleItemSlots(candidate: unknown): unknown {
   const needsDualEquipMigration = obj.roster.some(
     (unit) => Boolean(unit && unit.equippedPhysicalMoveId === undefined)
   );
-  if (!needsItemNormalize && !needsSeedHydration && !needsDualEquipMigration) return candidate;
+  const rawSupports = obj.supports as unknown;
+  const needsSupportsMigration =
+    !rawSupports ||
+    typeof rawSupports !== 'object' ||
+    Array.isArray(rawSupports) ||
+    Object.entries(rawSupports as Record<string, unknown>).some(([k, v]) => {
+      if (!v || typeof v !== 'object') return true;
+      const entry = v as { unlockedRank?: unknown };
+      if (entry.unlockedRank === undefined) return true;
+      if ('level' in entry) return true;
+      if (!k.includes('::') || k.startsWith('unit_') || k.includes('::unit_')) return true;
+      return false;
+    });
+  if (!needsItemNormalize && !needsSeedHydration && !needsDualEquipMigration && !needsSupportsMigration) {
+    return candidate;
+  }
 
   const cloned = JSON.parse(JSON.stringify(obj)) as SaveData;
+  if (needsSupportsMigration) {
+    const unitIdToActor = new Map<string, string>();
+    for (const u of cloned.roster) {
+      if (!u?.instanceId) continue;
+      const actor =
+        u.isLord || u.instanceId === cloned.campaign?.lordInstanceId
+          ? 'lord'
+          : SPECIES_MAP.get(u.speciesId)?.lineId;
+      if (actor) unitIdToActor.set(u.instanceId, actor);
+    }
+    const normalized: Record<string, SupportPairProgress> = {};
+    if (rawSupports && typeof rawSupports === 'object' && !Array.isArray(rawSupports)) {
+      for (const [rawKey, rawVal] of Object.entries(rawSupports as Record<string, unknown>)) {
+        if (!rawVal || typeof rawVal !== 'object') continue;
+        const parts = rawKey.split('::');
+        if (parts.length !== 2) continue;
+        const actorA = unitIdToActor.get(parts[0]!) ?? parts[0]!;
+        const actorB = unitIdToActor.get(parts[1]!) ?? parts[1]!;
+        if (!actorA || !actorB || actorA === actorB) continue;
+        if (actorA.startsWith('unit_') || actorB.startsWith('unit_')) continue;
+        const pairDef = getSupportPairDefinition(actorA, actorB);
+        if (!pairDef) continue;
+        const entry = rawVal as { points?: unknown; unlockedRank?: unknown };
+        const rawRank = entry.unlockedRank;
+        let unlockedRank: UnlockedSupportRank = null;
+        if (
+          typeof rawRank === 'string' &&
+          (SUPPORT_RANKS as readonly string[]).includes(rawRank) &&
+          getSupportRankIndex(rawRank as SupportRank) <= getSupportRankIndex(pairDef.maxRank)
+        ) {
+          unlockedRank = rawRank as SupportRank;
+        }
+        const prev = normalized[pairDef.pairKey];
+        const mergedRank = getMaxSupportRank(prev?.unlockedRank ?? null, unlockedRank);
+        const rawPts = Number(entry.points ?? 0);
+        const mergedPts = clampSupportPointsForUnlockedRank(
+          Math.max(prev?.points ?? 0, Number.isFinite(rawPts) ? rawPts : 0),
+          mergedRank,
+          pairDef.maxRank
+        );
+        normalized[pairDef.pairKey] = {
+          points: mergedPts,
+          unlockedRank: mergedRank,
+        };
+      }
+    }
+    cloned.supports = normalized;
+  }
   if (needsDualEquipMigration) {
     // Pre-dual-[E] saves stored one `equippedMoveId`; slot it by category and auto-fill the other.
     for (const unit of cloned.roster) {

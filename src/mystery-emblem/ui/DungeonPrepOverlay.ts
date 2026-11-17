@@ -3,9 +3,13 @@
  */
 
 import type { AudioManager } from '../audio/AudioManager';
+import { areSupportsEnabledForBattlePrep } from '../data/supports/supportMatrix';
+import { hasAnyAvailableSupportConversation } from '../engine/supportEngine';
 import type { SaveStateManager } from '../state/SaveStateManager';
 import type { DungeonMapDefinition, PrepDeploymentSlot } from '../types/schemas';
+import type { DialogueOverlay } from './DialogueOverlay';
 import { PmdPortraitView } from './PmdSpriteCanvas';
+import { SupportsMenuController } from './SupportsMenuView';
 import type { TutorialOverlay } from './TutorialOverlay';
 import type { ItemFilterTab } from './inspector/ItemActionInspector';
 import { renderPrepManageItems } from './prep/PrepItemsRenderer';
@@ -18,14 +22,16 @@ import {
   type PrepDomElements,
 } from './prep/prepTemplates';
 
-export type PrepSubMode = 'hub' | 'manage_units' | 'manage_items' | 'view_map';
+export type PrepSubMode = 'hub' | 'manage_units' | 'manage_items' | 'supports' | 'view_map';
 export type { ItemFilterTab };
 
 export interface DungeonPrepOverlayOptions {
   parentEl: HTMLElement;
   audioManager: AudioManager;
+  getDialogueOverlay?: () => DialogueOverlay | undefined;
   getTutorialOverlay?: () => TutorialOverlay | undefined;
   getSaveManager: () => SaveStateManager;
+  getLevelId?: () => string;
   getMap: () => DungeonMapDefinition;
   getEnemyCount: () => number;
   getObjectiveLabel?: () => string;
@@ -35,6 +41,7 @@ export interface DungeonPrepOverlayOptions {
   getSelectedSwapSlotIndex: () => number | null;
   onToggleDeployUnit: (instanceId: string) => { ok: boolean; message: string };
   onRosterOrLoadoutMutated: () => void;
+  onSupportsMutated?: () => void;
   onEnterViewMap: () => void;
   onExitViewMap: () => void;
   onToggleGlobalDanger: () => void;
@@ -48,6 +55,7 @@ export class DungeonPrepOverlay {
   private readonly opts: DungeonPrepOverlayOptions;
   private readonly dom: PrepDomElements;
   private readonly unitPortraitView: PmdPortraitView;
+  private readonly supportsController: SupportsMenuController;
   private readonly abortController = new AbortController();
 
   private visible = false;
@@ -64,6 +72,17 @@ export class DungeonPrepOverlay {
     this.opts = options;
     this.unitPortraitView = new PmdPortraitView({ pixelScale: 1.5, testId: 'prep-unit-portrait' });
     this.dom = createPrepDomElements(this.opts.parentEl, this.unitPortraitView);
+    this.supportsController = new SupportsMenuController({
+      saveManager: () => this.opts.getSaveManager(),
+      audioManager: this.opts.audioManager,
+      dialogueOverlay: this.opts.getDialogueOverlay?.(),
+      signal: this.abortController.signal,
+      onSupportsMutated: () => {
+        this.opts.onSupportsMutated?.();
+        this.refreshAll();
+      },
+      onLayerStateChanged: () => this.opts.onSubLayerChanged(),
+    });
     bindPrepStaticButtons({
       dom: this.dom,
       audioManager: this.opts.audioManager,
@@ -106,14 +125,17 @@ export class DungeonPrepOverlay {
   public hide(): void {
     this.visible = false;
     this.pendingMoveToSwapIn = null;
+    this.supportsController.reset();
     this.dom.rootEl.hidden = true;
     this.dom.hubBackdropEl.hidden = true;
     this.dom.unitsBackdropEl.hidden = true;
     this.dom.itemsBackdropEl.hidden = true;
+    this.dom.supportsBackdropEl.hidden = true;
     this.dom.mapHudEl.hidden = true;
   }
 
   public destroy(): void {
+    this.supportsController.destroy();
     this.abortController.abort();
     this.dom.rootEl.remove();
   }
@@ -140,6 +162,14 @@ export class DungeonPrepOverlay {
       return true;
     }
     if (this.subMode === 'manage_items') {
+      this.opts.audioManager.playSfx('cancel');
+      this.setSubMode('hub');
+      return true;
+    }
+    if (this.subMode === 'supports') {
+      if (this.supportsController.handleBack()) {
+        return true;
+      }
       this.opts.audioManager.playSfx('cancel');
       this.setSubMode('hub');
       return true;
@@ -172,10 +202,12 @@ export class DungeonPrepOverlay {
     this.renderHub();
     if (this.subMode === 'manage_units') this.renderManageUnits();
     else if (this.subMode === 'manage_items') this.renderManageItems();
+    else if (this.subMode === 'supports') this.supportsController.renderInto(this.dom.supportsBodyEl);
     else if (this.subMode === 'view_map') this.syncMapHudState();
   }
 
   private setSubMode(next: PrepSubMode): void {
+    if (next !== 'supports') this.supportsController.reset();
     this.subMode = next;
     this.pendingMoveToSwapIn = null;
     this.syncVisibility();
@@ -188,6 +220,7 @@ export class DungeonPrepOverlay {
     this.dom.hubBackdropEl.hidden = this.subMode !== 'hub';
     this.dom.unitsBackdropEl.hidden = this.subMode !== 'manage_units';
     this.dom.itemsBackdropEl.hidden = this.subMode !== 'manage_items';
+    this.dom.supportsBackdropEl.hidden = this.subMode !== 'supports';
     this.dom.mapHudEl.hidden = this.subMode !== 'view_map';
   }
 
@@ -211,8 +244,13 @@ export class DungeonPrepOverlay {
   }
 
   private renderHub(): void {
+    const save = this.opts.getSaveManager().getSave();
+    const levelId = this.opts.getLevelId?.() ?? '';
     renderPrepHubSummary({
       hubBackdropEl: this.dom.hubBackdropEl,
+      supportsBtnEl: this.dom.supportsBtnEl,
+      supportsEnabled: areSupportsEnabledForBattlePrep(save, levelId),
+      hasReadySupport: hasAnyAvailableSupportConversation(save),
       map: this.opts.getMap(),
       deployedCount: this.getDeployedCount(),
       cap: this.opts.getDeploymentCap(),

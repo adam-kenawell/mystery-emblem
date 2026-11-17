@@ -5,15 +5,26 @@
 import { MAX_UNIT_LEVEL, MIN_UNIT_LEVEL } from '../data/campaignConfig';
 import { reconcileEquippedMoves, type EquippedMoveSlots } from '../data/equippedMoves';
 import { ITEM_MAP, MOVE_MAP, SPECIES_MAP } from '../data/index';
+import {
+  SUPPORT_PAIR_DEFINITIONS,
+  SUPPORT_RANK_THRESHOLDS,
+  SUPPORT_UNLOCK_REQUIRED_CHAPTER_ID,
+  clampSupportPointsForUnlockedRank,
+  getMaxSupportRank,
+  getNextSupportRank,
+  getSupportPairDefinition,
+  getSupportRankIndex,
+} from '../data/supports/supportMatrix';
+import { buildRosterActorLookup, resolveSupportActorIdForRosterUnit } from '../engine/supportEngine';
 import type {
   ConvoyEntry,
   SaveData,
   StatBlockSeven,
   SupportPairProgress,
+  SupportRank,
   UnitCosmeticForm,
 } from '../types/schemas';
 import {
-  computeSupportLevel,
   makeSupportPairKey,
   returnItemToConvoyList,
   sanitizeNickname,
@@ -38,20 +49,90 @@ export interface CommitBattleResultsPayload {
   droppedItemIds?: ReadonlyArray<string>;
   clearRewardItems?: ReadonlyArray<ConvoyEntry>;
   bonusGold?: number;
+  battleSupports?: Readonly<Record<string, SupportPairProgress>>;
+}
+
+function resolveActorIdInput(save: SaveData, idOrActor: string): string {
+  const unit = save.roster.find((u) => u.instanceId === idOrActor);
+  if (!unit) return idOrActor;
+  return resolveSupportActorIdForRosterUnit(unit, save) ?? idOrActor;
 }
 
 export function mutateAddSupportPoints(
   save: SaveData,
-  instanceIdA: string,
-  instanceIdB: string,
+  instanceIdOrActorA: string,
+  instanceIdOrActorB: string,
   delta = 1
 ): SupportPairProgress {
-  const pairKey = makeSupportPairKey(instanceIdA, instanceIdB);
-  const prev = save.supports[pairKey]?.points ?? 0;
-  const points = Math.max(0, prev + delta);
-  const progress: SupportPairProgress = { points, level: computeSupportLevel(points) };
+  const actorA = resolveActorIdInput(save, instanceIdOrActorA);
+  const actorB = resolveActorIdInput(save, instanceIdOrActorB);
+  const pairDef = getSupportPairDefinition(actorA, actorB);
+  const pairKey = pairDef?.pairKey ?? makeSupportPairKey(actorA, actorB);
+  const prev = save.supports[pairKey] ?? { points: 0, unlockedRank: null };
+  const rawPoints = Math.max(0, prev.points + delta);
+  const points = pairDef
+    ? clampSupportPointsForUnlockedRank(rawPoints, prev.unlockedRank, pairDef.maxRank)
+    : rawPoints;
+  const progress: SupportPairProgress = { points, unlockedRank: prev.unlockedRank ?? null };
   save.supports[pairKey] = progress;
   return { ...progress };
+}
+
+export function mutateUnlockSupportRank(
+  save: SaveData,
+  actorIdA: string,
+  actorIdB: string,
+  rank: SupportRank
+): SupportPairProgress {
+  const actorA = resolveActorIdInput(save, actorIdA);
+  const actorB = resolveActorIdInput(save, actorIdB);
+  const pairDef = getSupportPairDefinition(actorA, actorB);
+  if (!pairDef) {
+    throw new Error(`No Support pairing defined between "${actorA}" and "${actorB}".`);
+  }
+  if (getSupportRankIndex(rank) > getSupportRankIndex(pairDef.maxRank)) {
+    throw new Error(`Support rank "${rank}" exceeds max rank "${pairDef.maxRank}" for "${pairDef.pairKey}".`);
+  }
+  const prev = save.supports[pairDef.pairKey] ?? { points: 0, unlockedRank: null };
+  const unlockedRank = getMaxSupportRank(prev.unlockedRank ?? null, rank) ?? rank;
+  const points = clampSupportPointsForUnlockedRank(
+    Math.max(prev.points, SUPPORT_RANK_THRESHOLDS[rank]),
+    unlockedRank,
+    pairDef.maxRank
+  );
+  const progress: SupportPairProgress = { points, unlockedRank };
+  save.supports[pairDef.pairKey] = progress;
+  return { ...progress };
+}
+
+export function mutateReadyNextSupportRanksForCheat(
+  save: SaveData,
+  filterActorId?: string
+): number {
+  if (!save.campaign.completedChapterIds.includes(SUPPORT_UNLOCK_REQUIRED_CHAPTER_ID)) {
+    save.campaign.completedChapterIds.push(SUPPORT_UNLOCK_REQUIRED_CHAPTER_ID);
+  }
+  const rosterActors = buildRosterActorLookup(save);
+  let readied = 0;
+  for (const def of SUPPORT_PAIR_DEFINITIONS) {
+    if (!rosterActors.has(def.actorA) || !rosterActors.has(def.actorB)) continue;
+    if (filterActorId && def.actorA !== filterActorId && def.actorB !== filterActorId) continue;
+    const prev = save.supports[def.pairKey] ?? { points: 0, unlockedRank: null };
+    const nextRank = getNextSupportRank(prev.unlockedRank ?? null, def.maxRank);
+    if (!nextRank) continue;
+    const targetPts = SUPPORT_RANK_THRESHOLDS[nextRank];
+    const nextPts = clampSupportPointsForUnlockedRank(
+      Math.max(prev.points, targetPts),
+      prev.unlockedRank ?? null,
+      def.maxRank
+    );
+    save.supports[def.pairKey] = {
+      points: nextPts,
+      unlockedRank: prev.unlockedRank ?? null,
+    };
+    readied += 1;
+  }
+  return readied;
 }
 
 export function mutateCommitBattleResults(
@@ -123,5 +204,26 @@ export function mutateCommitBattleResults(
 
   if (payload.bonusGold && payload.bonusGold > 0) {
     save.gold = Math.max(0, Math.floor(save.gold + payload.bonusGold));
+  }
+
+  if (payload.battleSupports) {
+    for (const [pairKey, battleEntry] of Object.entries(payload.battleSupports)) {
+      if (!battleEntry) continue;
+      const parts = pairKey.split('::');
+      if (parts.length !== 2) continue;
+      const pairDef = getSupportPairDefinition(parts[0], parts[1]);
+      if (!pairDef) continue;
+      const existing = save.supports[pairDef.pairKey] ?? { points: 0, unlockedRank: null };
+      const unlockedRank = getMaxSupportRank(
+        existing.unlockedRank ?? null,
+        battleEntry.unlockedRank ?? null
+      );
+      const points = clampSupportPointsForUnlockedRank(
+        Math.max(existing.points, battleEntry.points ?? 0),
+        unlockedRank,
+        pairDef.maxRank
+      );
+      save.supports[pairDef.pairKey] = { points, unlockedRank };
+    }
   }
 }

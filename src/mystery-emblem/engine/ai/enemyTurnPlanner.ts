@@ -10,6 +10,7 @@ import {
   getEnemyStatusMovesAtDistance,
   getOffensiveMovesAtDistance,
   manhattanDistance,
+  type BattleSupportContext,
   type BattleUnitState,
   type CombatForecast,
   type StatusMoveForecast,
@@ -52,7 +53,8 @@ function chooseAiUnitAction(
   actor: BattleUnitState,
   allLivingUnits: ReadonlyArray<BattleUnitState>,
   priorityTargetIds?: ReadonlySet<string>,
-  activatedSquadIds?: ReadonlySet<string>
+  activatedSquadIds?: ReadonlySet<string>,
+  supportCtx?: BattleSupportContext
 ): EnemyTurnDecision {
   const stayPath: AStarPathStep[] = [{ x: actor.x, y: actor.y, cumulativeCost: 0 }];
 
@@ -104,10 +106,14 @@ function chooseAiUnitAction(
       const dist = manhattanDistance(stopTile.x, stopTile.y, target.x, target.y);
       const validMoves = getOffensiveMovesAtDistance(actor, dist);
       for (const moveSlot of validMoves) {
-        const forecast = computeCombatForecast(map, actor, target, moveSlot.id, {
-          x: stopTile.x,
-          y: stopTile.y,
-        });
+        const forecast = computeCombatForecast(
+          map,
+          actor,
+          target,
+          moveSlot.id,
+          { x: stopTile.x, y: stopTile.y },
+          supportCtx
+        );
         if (!forecast) continue;
 
         const expectedDamageDealt =
@@ -158,10 +164,14 @@ function chooseAiUnitAction(
 
       const statusSlots = getEnemyStatusMovesAtDistance(actor, dist);
       for (const stSlot of statusSlots) {
-        const stForecast = computeStatusMoveForecast(map, actor, target, stSlot.id, {
-          x: stopTile.x,
-          y: stopTile.y,
-        });
+        const stForecast = computeStatusMoveForecast(
+          map,
+          actor,
+          target,
+          stSlot.id,
+          { x: stopTile.x, y: stopTile.y },
+          supportCtx
+        );
         if (!stForecast || stForecast.blockedReason || stForecast.hitRate <= 0) continue;
 
         let score = 46 * (stForecast.hitRate / 100);
@@ -297,15 +307,24 @@ export function chooseEnemyAction(
   enemy: BattleUnitState,
   allLivingUnits: ReadonlyArray<BattleUnitState>,
   protectedUnitIds?: ReadonlySet<string>,
-  activatedSquadIds?: ReadonlySet<string>
+  activatedSquadIds?: ReadonlySet<string>,
+  supportCtx?: BattleSupportContext
 ): EnemyTurnDecision {
-  return chooseAiUnitAction(map, enemy, allLivingUnits, protectedUnitIds, activatedSquadIds);
+  return chooseAiUnitAction(
+    map,
+    enemy,
+    allLivingUnits,
+    protectedUnitIds,
+    activatedSquadIds,
+    supportCtx
+  );
 }
 
 export function chooseNpcAllyAction(
   map: DungeonMapDefinition,
   npcUnit: BattleUnitState,
-  allLivingUnits: ReadonlyArray<BattleUnitState>
+  allLivingUnits: ReadonlyArray<BattleUnitState>,
+  supportCtx?: BattleSupportContext
 ): EnemyTurnDecision {
-  return chooseAiUnitAction(map, npcUnit, allLivingUnits);
+  return chooseAiUnitAction(map, npcUnit, allLivingUnits, undefined, undefined, supportCtx);
 }

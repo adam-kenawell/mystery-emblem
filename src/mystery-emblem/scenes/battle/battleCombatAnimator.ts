@@ -18,6 +18,7 @@ import { ensureTilePairVisible, showPhaseBanner, waitBattleMs } from './battleBa
 import { spawnFloatingText } from './battleFloatingCallouts';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { grantExpAndHandleLevelUps } from './battleLevelUpModal';
+import { awardBattleCombatSupportPoints } from './battleSupportHelpers';
 import { getBattleRng, type BattleControllerContext } from './battleTypesAndState';
 
 export async function playCombatExchangeAsync(
@@ -217,6 +218,7 @@ export async function playCombatExchangeAsync(
     playerUnit.currentHp > 0 &&
     outcome.strikes.some((s) => s.actorId === playerUnit.id)
   ) {
+    awardBattleCombatSupportPoints(ctx, playerUnit, enemyUnit);
     const playerStrikes = outcome.strikes.filter((s) => s.actorId === playerUnit.id);
     const landedHit = playerStrikes.some((s) => s.didHit);
     const dealtDamage = playerStrikes.some((s) => s.didHit && s.damageDealt > 0);
@@ -229,5 +231,13 @@ export async function playCombatExchangeAsync(
       defeatedEnemy,
     });
     await grantExpAndHandleLevelUps(ctx, playerUnit, expGain, runGen);
+  } else if (
+    playerUnit &&
+    enemyUnit &&
+    !playerUnit.defeated &&
+    playerUnit.currentHp > 0 &&
+    outcome.strikes.length > 0
+  ) {
+    awardBattleCombatSupportPoints(ctx, playerUnit, enemyUnit);
   }
 }

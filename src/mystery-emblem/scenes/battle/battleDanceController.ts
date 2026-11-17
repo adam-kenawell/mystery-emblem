@@ -26,6 +26,7 @@ import { spawnFloatingText } from './battleFloatingCallouts';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { grantExpAndHandleLevelUps } from './battleLevelUpModal';
 import { runEnemyPhase } from './battlePhaseAndAiRunner';
+import { awardBattleAllyPairSupportPoint } from './battleSupportHelpers';
 import type { BattleControllerContext, BattleRuntimeState } from './battleTypesAndState';
 import {
   areAllLivingPlayersWaited,
@@ -98,6 +99,7 @@ export async function playDanceActionAsync(
   dancer.action = 'Idle';
 
   if (dancer.faction === 'player' && !dancer.defeated && dancer.currentHp > 0) {
+    awardBattleAllyPairSupportPoint(ctx, dancer, targetAlly);
     const enemies = state.units.filter((u) => u.faction === 'enemy');
     const chapterLv =
       enemies.length > 0

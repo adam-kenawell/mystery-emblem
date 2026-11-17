@@ -1,0 +1,1076 @@
+[
+  {
+    "pairKey": "flabebe_line::quaxly_line",
+    "actorA": "flabebe_line",
+    "actorB": "quaxly_line",
+    "rank": "C",
+    "title": "Not a Feather Out of Place",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "healer", "who": { "kind": "healer" } },
+      { "id": "partner", "who": { "kind": "partner" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Hold still for one second, {name:partner}. You have a scrape right along your left shoulder."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "Forget the shoulder, {name:healer}! Tell me honestly, did that dusty gust flatten my crest?"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "You took a direct knock in the mud and the very first thing on your mind is your hairdo?"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "It is not vanity! Clean feathers cut the wind cleaner, and sharp footwork starts at the crown."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Sure it does. Here, hold this crushed Pecha-petal paste against the bruise before it swells."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Whoa, that cooled down fast. Did you gather those petals back at camp this morning?"
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Joyous",
+          "side": "left",
+          "text": "Of course! Someone has to keep a spare salve handy when our proudest dancer forgets to duck."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "flabebe_line::quaxly_line",
+    "actorA": "flabebe_line",
+    "actorB": "quaxly_line",
+    "rank": "B",
+    "title": "Late-Night Petal Poultice",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "healer", "who": { "kind": "healer" } },
+      { "id": "partner", "who": { "kind": "partner" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "{name:healer}? Everyone else turned in an hour ago. Why are you still grinding herbs by lantern light?"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "We burned through half our poultices today. If I steep these clover stems overnight, they set twice as strong."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "Your eyes are drooping, though. Set the mortar down and drink this warm berry tea before it goes cold."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Mm, sweet and tart. Did you raid the kitchen pot just for me?"
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "I knew you would still be awake fussing over bandages. You always pack extra for the whole neighborhood."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Teary-Eyed",
+          "side": "left",
+          "text": "If a remedy fails out here, it hurts someone I grew up beside. Making extra batches is the one way I stay ahead of the worry."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Then give me the spare mortar. Two pairs of hands finish in half the time, and neither of us misses tomorrow's march."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "flabebe_line::quaxly_line",
+    "actorA": "flabebe_line",
+    "actorB": "quaxly_line",
+    "rank": "A",
+    "title": "Behind the Front Line",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "healer", "who": { "kind": "healer" } },
+      { "id": "partner", "who": { "kind": "partner" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Angry",
+          "side": "left",
+          "text": "Do not give me that grin, {name:partner}! You dove straight into a stray rock blast just to block my flank!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Pain",
+          "side": "right",
+          "text": "Ouch, easy with the wrap! Look, you were mid-heal, and I was already pivoting that way anyway."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "Liar. You have been throwing yourself ahead of me since we were knee-high in the orchard."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Sad",
+          "side": "right",
+          "text": "Can you blame me? Whenever things turn ugly, my head goes blank if I think something might reach you first."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Teary-Eyed",
+          "side": "left",
+          "text": "And what do you think happens to my focus when you hit the dirt in front of me? I am not fragile anymore, {name:partner}."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "I know you are not. Seeing you stand calm in the middle of chaos is half the reason I can keep my footing."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Good. Then watch your own front, and trust me to guard both our backs from here on out."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "flabebe_line::quaxly_line",
+    "actorA": "flabebe_line",
+    "actorB": "quaxly_line",
+    "rank": "S",
+    "title": "Orchard Fence Vow",
+    "music": "a_wish_for_peace",
+    "cast": [
+      { "id": "healer", "who": { "kind": "healer" } },
+      { "id": "partner", "who": { "kind": "partner" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Funny how quiet camp feels once the embers sink low. It almost sounds like the crickets back along our garden fence."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Remember how you used to hop up on that crooked post and dare me to race you to the brook before sunrise?"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "And I always slipped on the mossy stone so you had to patch my scraped knees with clover leaves before anyone noticed!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "We thought crossing the creek was the farthest adventure in the world. Now look how many miles sit between us and home."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Inspired",
+          "side": "right",
+          "text": "No matter how wild the road gets ahead, {name:healer}, I never feel lost as long as I hear you right behind my shoulder."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Teary-Eyed",
+          "side": "left",
+          "text": "Then make me one promise, {name:partner}. Not a reckless hero speech, just a real promise."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "When this expedition ends, we walk back through that orchard gate together, both of us whole, just like we left."
+        }
+      },
+      {
+        "id": "line_8",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "You have my word on it. Side by side all the way out, and side by side all the way home."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "mentor_quaquaval_line::quaxly_line",
+    "actorA": "mentor_quaquaval_line",
+    "actorB": "quaxly_line",
+    "rank": "C",
+    "title": "Balanced Footwork",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "mentor", "who": { "kind": "mentor" } },
+      { "id": "partner", "who": { "kind": "partner" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Pivot left, step through, strike! Wait, why did my heel catch on the turn again?!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "You are throwing your weight ahead of your hips, {name:partner}. Slow the spin down by half and plant your heel first."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Dad?! How long were you standing by the supply wagon?"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Long enough to watch you repeat the same Royal Guard drill six times in a row. You have plenty of fire, kiddo."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "When you move in battle, every step lands cleanly without wasting a motion. I still feel clumsy beside you."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Every veteran looks effortless after twenty years of bruised toes. Fix that stance, take a breath, and show me one steady step."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "mentor_quaquaval_line::quaxly_line",
+    "actorA": "mentor_quaquaval_line",
+    "actorB": "quaxly_line",
+    "rank": "B",
+    "title": "Behind the Royal Cloak",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "mentor", "who": { "kind": "mentor" } },
+      { "id": "partner", "who": { "kind": "partner" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Dad, can I ask something about your Royal Guard days? How did you know you were ready to stand beside the King?"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Hah! Truth be told, I was terrified my first week in the courtyard. Half the knights towered over me."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "No way! You never look rattled when enemies charge straight at our line."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "Oh, I still get rattled, {name:partner}. Mostly whenever I see you sprint forward to draw the first hit."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Sad",
+          "side": "right",
+          "text": "Wait, really? I only push hard so you do not have to carry the whole front by yourself anymore."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "I know, son, and I am grateful. Just remember a parent never truly stops fretting, even while cheering loudest from behind."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "mentor_quaquaval_line::quaxly_line",
+    "actorA": "mentor_quaquaval_line",
+    "actorB": "quaxly_line",
+    "rank": "A",
+    "title": "A Stride of Your Own",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "mentor", "who": { "kind": "mentor" } },
+      { "id": "partner", "who": { "kind": "partner" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "I watched you hold the eastern flank today, {name:partner}. Clean guard, tight turn, and zero wasted energy."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Really? I thought my second turn came out a little narrower than the old Royal Guard form you taught me."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "It did, and that is why it worked. My old form belonged to palace flagstones, not muddy trails and sudden ambushes."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Inspired",
+          "side": "right",
+          "text": "So I do not have to copy every step verbatim?"
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Joyous",
+          "side": "left",
+          "text": "Never. I taught you the rhythm so you could build a stride of your own, and watching you outgrow my shadow makes me prouder than any medal."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Then keep pace with me out there tomorrow, Dad. Let us see what both our strides can do together."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "flabebe_line::mentor_quaquaval_line",
+    "actorA": "flabebe_line",
+    "actorB": "mentor_quaquaval_line",
+    "rank": "C",
+    "title": "Misses from the Kitchen",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "healer", "who": { "kind": "healer" } },
+      { "id": "mentor", "who": { "kind": "mentor" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Here is your bowl, {name:mentor}! I tossed extra wild thyme in so the camp stew smells a little closer to home."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Ah, bless you, {name:healer}. One whiff of thyme takes me straight back to our valley table with your mother."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Do you miss those loud village dinners? Mom always baked two extra loaves because you and the kids swept the basket clean."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Every single evening. Nobody kneads herb bread like Florges, and nobody trades tall tales across the table like our family."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "I bet she is watering the front border right now, waiting for word from us."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "She knows we will return every last one of you safely to her table. Until then, let us keep her recipe alive on the road."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "flabebe_line::mentor_quaquaval_line",
+    "actorA": "flabebe_line",
+    "actorB": "mentor_quaquaval_line",
+    "rank": "B",
+    "title": "The Lantern Watch",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "healer", "who": { "kind": "healer" } },
+      { "id": "mentor", "who": { "kind": "mentor" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "{name:healer}? You should be fast asleep in the tent. Is something wrong?"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Nothing is wrong. I noticed you took the midnight watch for the third night running, so I brought warm chamomile."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "That is mighty thoughtful of you. An old guard sleeps light anyway, so I might as well let the younger squad rest."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Teary-Eyed",
+          "side": "left",
+          "text": "I never really said thank you properly, {name:mentor}. Back in the village, and out here too, you always step between us and trouble."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Raising you kids alongside Florges gave this soldier a real home again. Guarding you is never a chore."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Still, let us share the quiet for ten minutes before I head back. Even a Royal Guard deserves someone looking out for him."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "pawmi_line::quaxly_line",
+    "actorA": "pawmi_line",
+    "actorB": "quaxly_line",
+    "rank": "C",
+    "title": "Unfinished Pitch Business",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } },
+      { "id": "partner", "who": { "kind": "partner" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Joyous",
+          "side": "left",
+          "text": "Hey, {name:partner}! Still feeling pins and needles in your wing from that Nuzzle back on the hometown pitch?"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Angry",
+          "side": "right",
+          "text": "Hey! The grass was slick with evening dew, and I was mid-turn! You caught me flat-footed!"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Haha, an excuse for every weather report! Admit it, you never saw my cheek pouches light up until I tagged your shoulder."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Fine, you scored the opener! Put your pads up after mess call, {name:pawmi}. No way I am letting that count as the final tally."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "Now you are talking! Just try not to let those sparks ruffle your precious crest."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Save the jokes for after you try landing a second hit on me!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "pawmi_line::quaxly_line",
+    "actorA": "pawmi_line",
+    "actorB": "quaxly_line",
+    "rank": "B",
+    "title": "Dodging Static",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } },
+      { "id": "partner", "who": { "kind": "partner" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Whoa! You slipped right under my left jab before the spark even crackled!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Counted your shoulder dip! Your fur puffs up half a heartbeat before you lunge with Nuzzle."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Wait, really? Nobody back in town ever read that windup before."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "I have spent weeks practicing side-steps so electric foes cannot pin me down again. You make a brutal sparring partner."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Then I have to hide my tell, do I? Good! Fighting someone who reads my tricks forces me to get faster too."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Catch your breath for ten seconds and go again! Next round, I am closing the distance before you blink."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "pawmi_line::quaxly_line",
+    "actorA": "pawmi_line",
+    "actorB": "quaxly_line",
+    "rank": "A",
+    "title": "Sparks on the Flank",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } },
+      { "id": "partner", "who": { "kind": "partner" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "That cross-step today was slick, {name:pawmi}. You shut down that flank rush before I even finished pivoting."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Took a cue from your footwork! Watching you weave through heavy hitters made me stop lunging straight ahead."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Wait, you were studying my drills? I thought you only joined the road to settle our pitch score."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "Half of it was pride, sure. The other half was hearing how wild the Rift got and refusing to sit home while you marched into it."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Inspired",
+          "side": "right",
+          "text": "Having your sparks covering my blind side beats any solo rematch, {name:pawmi}. Nobody keeps me sharper than you."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Joyous",
+          "side": "left",
+          "text": "Deal! We keep the hometown banner flying out front, and save the tiebreaker match for the victory feast!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "caterpie_line::flabebe_line",
+    "actorA": "caterpie_line",
+    "actorB": "flabebe_line",
+    "rank": "C",
+    "title": "Dew on the Clover",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "caterpie", "who": { "kind": "recruit", "speciesId": "caterpie" } },
+      { "id": "healer", "who": { "kind": "healer" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Look at how clean this morning dew sits on the clover, {name:healer}. Every drop catches the sunrise like tiny glass beads."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Most of the squad stomps right past without looking down. You always find the prettiest corners of every trail, {name:caterpie}."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Does dew taste different out here in the hills compared to our village meadow?"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Inspired",
+          "side": "right",
+          "text": "Taste a drop from the mint leaf beside you! Mountain mist leaves a crisp tang that valley grass never gets."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Joyous",
+          "side": "left",
+          "text": "Whoa, it really does! Fresh and cool, like cold spring water."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Next rest stop, let us scout the sunny ridges together before camp wakes up."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "caterpie_line::flabebe_line",
+    "actorA": "caterpie_line",
+    "actorB": "flabebe_line",
+    "rank": "B",
+    "title": "The Pale Wildflower",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "caterpie", "who": { "kind": "recruit", "speciesId": "caterpie" } },
+      { "id": "healer", "who": { "kind": "healer" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Excuse me, {name:healer}? I found this tiny pale blossom tucked under a mossy stone. Could its leaves help your salves?"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Oh! That is silver-bell bloom! It rarely grows near dusty roads because travelers trample the shoots."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "I was careful! I pinched only two outer petals and left the stem and roots untouched."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "You treated it like a seasoned herbalist! Watch what happens when we dab the sap onto this scratched leaf."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "The edges knitted right back together! I always wondered how you kept our satchels smelling so fresh."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Keep those sharp eyes on the hedgerows, {name:caterpie}. Nobody else in camp spots quiet gifts like you do."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "caterpie_line::flabebe_line",
+    "actorA": "caterpie_line",
+    "actorB": "flabebe_line",
+    "rank": "A",
+    "title": "Roots Through Stone",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "caterpie", "who": { "kind": "recruit", "speciesId": "caterpie" } },
+      { "id": "healer", "who": { "kind": "healer" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Sad",
+          "side": "left",
+          "text": "{name:healer}, do you ever feel small out here? Everyone else hits like thunder, and I mostly tangle foes up or hide in tall grass."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Small? Wait a minute, think about that silver-bell flower you found clinging to bare rock last week."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "The tiny pale one? What about it?"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Storms tear down giant oaks, yet wildflowers bend with the wind and push steady roots right through cracked stone."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Teary-Eyed",
+          "side": "left",
+          "text": "So slowing an enemy down or spotting a safe path really does count for something?"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "More than you know. Every time you pause to notice the world around us, you keep the rest of us from losing our gentle hearts on the march."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "Thank you, {name:healer}. I will keep watching the quiet ground ahead so you always have petals ready for the fight."
+        }
+      }
+    ]
+  }
+]

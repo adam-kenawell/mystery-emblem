@@ -27,6 +27,7 @@ import {
 } from './battlePrepAndAssets';
 import { togglePrepDeployUnit } from './battlePrepSlotActions';
 import type { BattleSceneOptions } from './battlePublicTypes';
+import { syncBattleSupportsFromSave } from './battleSupportHelpers';
 import { openBattleSaveProgressOverlay } from './battleSuspend';
 import { triggerBattleTutorial } from './battleTutorialIntegration';
 import type { BattleControllerContext, BattleRuntimeState } from './battleTypesAndState';
@@ -54,8 +55,10 @@ export function createBattlePrepOverlay(
   overlayRef = new DungeonPrepOverlay({
     parentEl: dom.rootEl,
     audioManager,
+    getDialogueOverlay: () => options.dialogueOverlay,
     getTutorialOverlay: () => options.tutorialOverlay,
     getSaveManager: () => getActivePrepSaveManager(state, options.saveManager),
+    getLevelId: () => state.activeLevelId,
     getMap: () => state.map,
     getEnemyCount: () => getLivingEnemies(state).length,
     getObjectiveLabel: () => state.objectiveLabel,
@@ -65,6 +68,12 @@ export function createBattlePrepOverlay(
     getSelectedSwapSlotIndex: () => state.prepSwapSlotIndex,
     onToggleDeployUnit: (id) => togglePrepDeployUnit(getCtx(), id),
     onRosterOrLoadoutMutated: () => rebuildPrepBattleUnits(getCtx()),
+    onSupportsMutated: () => {
+      const ctx = getCtx();
+      syncBattleSupportsFromSave(ctx);
+      updateBattleInfoStrip(ctx);
+      ctx.renderNow();
+    },
     onEnterViewMap: clearPrepViewMapSelection,
     onExitViewMap: clearPrepViewMapSelection,
     onToggleGlobalDanger: () => toggleGlobalDangerArea(getCtx()),

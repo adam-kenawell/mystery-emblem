@@ -1,0 +1,1460 @@
+[
+  {
+    "pairKey": "lord::quaxly_line",
+    "actorA": "lord",
+    "actorB": "quaxly_line",
+    "rank": "C",
+    "title": "Morning Crest Check",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "partner", "who": { "kind": "partner" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "Hold on, hold on! Do not blow the march horn yet, {name:lord}! My left crest feather is sticking straight up!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Nobody at camp has touched the horn, {name:partner}. You have been staring into that water bucket for ten minutes."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Wind resistance matters when you lead the charge! One crooked tuft throws off my whole pivot."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Here, take the clean washcloth before you dump half our drinking water onto your head again."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Hey, I only spilled half a ladle yesterday! ...Wait. Is your pack strap twisted upside down again?"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Stand still a second. There! Straightened the buckle. Can't have our squad leader marching lopsided while I beat you to the ridge."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Joyous",
+          "side": "left",
+          "text": "Race you to the trailhead, then. Last one past the signpost carries the heavy camp kettle tonight!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "lord::quaxly_line",
+    "actorA": "lord",
+    "actorB": "quaxly_line",
+    "rank": "B",
+    "title": "Two Bowls, One Table",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "partner", "who": { "kind": "partner" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Dinner call! Grab a seat by the fire, {name:lord}, before the stew cools off."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Wait a second. Why does my bowl have two extra berry dumplings while yours barely has broth?"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Huh? Must have been a clumsy ladle scoop! Besides, I was testing the spice earlier, so I am already half full."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "You said the exact same thing back home whenever Dad stretched winter rations. You used to slide half your supper onto my plate when I was looking away."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Well, somebody had to keep you fueled up! You always burned twice as much energy trying to climb orchard trees after dusk."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Fair enough, so here is my turn. Take one dumpling back right now, or I am eating half yours on tomorrow's lunch break."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Ha! Deal! Just don't complain when I still outrun you up the next hill on a lighter stomach!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "lord::quaxly_line",
+    "actorA": "lord",
+    "actorB": "quaxly_line",
+    "rank": "A",
+    "title": "Beneath the Brashness",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "partner", "who": { "kind": "partner" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "You are still awake, {name:partner}? Everyone else turned in an hour ago."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "Couldn't sleep. Keep replaying that ambush earlier today, {name:lord}."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "We made it out without a single unit going down. What is eating at you?"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Sad",
+          "side": "right",
+          "text": "That third raider clipped your side when you jumped in front of me. You barely flinched, then kept barking orders like nothing happened."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Teary-Eyed",
+          "side": "right",
+          "text": "Ever since Dad told us why he left the Royal Guard, I keep thinking about how fast a family can break if one person tries to absorb every hit alone."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Sad",
+          "side": "left",
+          "text": "I didn't mean to scare you. I thought keeping a steady face would keep the squad calm."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Next time a blow actually stings, I will call it out right away. Promise. You shouldn't have to watch my back in the dark like this."
+        }
+      },
+      {
+        "id": "line_8",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Good. Because if you hide a bruise again, I am dragging you straight to the medical tent myself."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "lord::quaxly_line",
+    "actorA": "lord",
+    "actorB": "quaxly_line",
+    "rank": "S",
+    "title": "Two Halves of Home",
+    "music": "a_wish_for_peace",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "partner", "who": { "kind": "partner" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Funny how quiet the camp looks right before sunrise. Almost reminds me of our old fence line back in the valley."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Except back then our biggest threat was getting caught stealing warm rolls off the cooling rack."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Hey, we pulled off some legendary heists on that cooling rack! Nobody else could have covered my exit like you did."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Inspired",
+          "side": "right",
+          "text": "We did not share the same egg, {name:lord}, and half the time we still argue over who takes point. Yet every road we walk feels like home as long as you are beside me."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "Same here, {name:partner}. Whatever mysteries wait past the next kingdom, I want you at my side when we face them."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Then let us make it official right here. Sworn partners through every battle, every blizzard, and every absurd detour."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Shoulder to shoulder until the whole world is safe again. And maybe one day, a quiet supper back home."
+        }
+      },
+      {
+        "id": "line_8",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Deal! First one back to the homestead sets the table, and this time I am letting you take the bigger roll!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "flabebe_line::lord",
+    "actorA": "flabebe_line",
+    "actorB": "lord",
+    "rank": "C",
+    "title": "Chamomile and Scuffs",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "healer", "who": { "kind": "healer" } },
+      { "id": "lord", "who": { "kind": "lord" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Not one step past this log, {name:lord}. Drink this while it is still warm."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Whoa, {name:healer}! How did you even spot me behind the supply wagon?"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Because you always favor your left side when you are hiding a scrape. Let me see that bruise before you wave me off."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "It is barely a sting. Save the pecha salve for the scouts who actually took heavy hits today."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Chamomile and dried mint grow on every hillside, so you are not depriving anyone by sitting down for three minutes."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Pain",
+          "side": "left",
+          "text": "Oof, bitter! You definitely put extra root in this batch on purpose."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Consider it a gentle reminder to report to the healer tent before sneaking off next time!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "flabebe_line::lord",
+    "actorA": "flabebe_line",
+    "actorB": "lord",
+    "rank": "B",
+    "title": "The Old Valley Wreath",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "healer", "who": { "kind": "healer" } },
+      { "id": "lord", "who": { "kind": "lord" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Those little white blossoms in your satchel look familiar, {name:healer}. Did we pass a patch like that on the road?"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Good eye, {name:lord}! I pressed these back in the orchard behind our homes the morning before we marched out."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "No wonder your bandages always smell like clean meadow air instead of camp smoke."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Steeped petals calm shaken nerves faster than any lecture. When battles get loud, scent brings people back to themselves."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "Truthfully, seeing you steady out there on the field does that for me too. Knowing you are watching everyone's vitals keeps my head clear."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Oh! Careful, or you will make me drop my thread. Here, tuck this tiny woven sprig into your supply pouch."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Show me which dried leaves stop bleeding too, so I can carry a spare bundle when we split up on big maps."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "flabebe_line::lord",
+    "actorA": "flabebe_line",
+    "actorB": "lord",
+    "rank": "A",
+    "title": "Steady Hands",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "healer", "who": { "kind": "healer" } },
+      { "id": "lord", "who": { "kind": "lord" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "Hold on, {name:healer}. Set that kettle down before you scald yourself. Your hands are shaking."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Ah... sorry, {name:lord}. Just tired from brewing extra tonic after that rough fight."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Sit on the crate and let me pour. You patched up the entire vanguard today without taking one break."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Sad",
+          "side": "right",
+          "text": "Whenever you sprint ahead to draw enemy fire, my heart jumps into my throat. Out in the valley, the worst injury was a scraped knee."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Teary-Eyed",
+          "side": "right",
+          "text": "Now I watch you step into real ambushes, and I keep thinking what would happen if I reached you one second too late."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Sad",
+          "side": "left",
+          "text": "I never stopped to think how heavy that watch is on you. I just wanted everyone behind me to stay safe."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "I will stop charging ahead without checking our spacing first. And when you are running on empty, you let me cover your rest."
+        }
+      },
+      {
+        "id": "line_8",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Thank you, {name:lord}. Even healers need someone looking out for them now and then."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "flabebe_line::lord",
+    "actorA": "flabebe_line",
+    "actorB": "lord",
+    "rank": "S",
+    "title": "Rooted Through Every Season",
+    "music": "a_wish_for_peace",
+    "cast": [
+      { "id": "healer", "who": { "kind": "healer" } },
+      { "id": "lord", "who": { "kind": "lord" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Look at the wildflowers blooming by the tent pegs, {name:lord}. Even trampled soil finds a way back to green."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Reminders of home always seem to sprout wherever you set up camp, {name:healer}."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Here. I braided an evergreen sprig into this flower charm so it will not wilt through snow or mountain wind."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "We have walked every mile from the orchard trail to the front lines together. I do not think I could lead this expedition without your voice keeping us grounded."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Inspired",
+          "side": "right",
+          "text": "And I found my courage because you never once turned away from someone in trouble. You shield our path, and I keep every heart whole."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Then let us bind that promise to this charm. Wherever the road takes us, through every storm and quiet season after, we stay anchored side by side."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Lifelong companions, {name:lord}. And when peace finally settles, you owe me a whole afternoon of tea in the orchard!"
+        }
+      },
+      {
+        "id": "line_8",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Joyous",
+          "side": "left",
+          "text": "Even the bitter chamomile batch? Deal. I will drink every drop."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "lord::mentor_quaquaval_line",
+    "actorA": "lord",
+    "actorB": "mentor_quaquaval_line",
+    "rank": "C",
+    "title": "Dawn Footwork",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "mentor", "who": { "kind": "mentor" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Rise and shine, {name:lord}! Dawn mist is lifting, which means twenty paces of guard rhythm before breakfast!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Dizzy",
+          "side": "left",
+          "text": "Ugh... Dad, the sun isn't even over the treeline yet. Why am I the only one out here in the cold?"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Haha! Because the squad looks to you when an ambush hits at first light! Now steady your stance and pivot cleanly on three."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Right... one, two, turn. Wait, why are you making me balance my supply pack while turning?"
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "An unbalanced pack drags your blind side wide open. Good! Look at how crisp that pivot was compared to last week."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Wait, was that an actual compliment, or are you about to double the drill count?"
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Both! Ten more paces, champ, then I am flipping sweet-berry pancakes for everyone!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "lord::mentor_quaquaval_line",
+    "actorA": "lord",
+    "actorB": "mentor_quaquaval_line",
+    "rank": "B",
+    "title": "The Wooden Cloak Clasp",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "mentor", "who": { "kind": "mentor" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "What is that wooden medallion you are polishing by the coals, Dad? I have never seen you wear it."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Oh, this old thing? Just my Royal Guard cloak clasp. Thought I would scrub off the road dust before it turns green."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "You kept it tucked inside your saddlebag all those years in the valley, right under the spare aprons."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Sad",
+          "side": "right",
+          "text": "Ha... sharp eyes, {name:lord}. Back when I hung up my royal cloak, I swore I would trade palace halls for burnt stewpots and quiet mornings."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "Sometimes I still wonder if hiding in that orchard made me soft, or if bringing you kids onto real roads broke the only promise I kept right."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Those years taught us how to look after neighbors, share rations, and hold our nerve under pressure. Nothing about that life was wasted, Dad."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "You sure know how to talk sense into an old guard. Keep that fire burning strong, kid."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "lord::mentor_quaquaval_line",
+    "actorA": "lord",
+    "actorB": "mentor_quaquaval_line",
+    "rank": "A",
+    "title": "No Longer Just the Kids",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "mentor", "who": { "kind": "mentor" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Look at these scouting notes on the ridge ambush. Stay behind my line tomorrow, {name:lord}, while I draw the heavy hitters first."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "If you sprint into the ravine alone, archers on the bluff will box you in. Let me anchor the western brush while our ranged units clear the ledge."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Stunned",
+          "side": "right",
+          "text": "Wait... you already mapped the crossfire angles from the ridge? When did you learn to read terrain like a captain?"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "You have been drilling formation spacing into us since we were knee-high, Dad."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Sad",
+          "side": "right",
+          "text": "Truth is, I kept stepping in front of you because I was terrified of failing to shield you the way I promised myself I always would."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "You do not have to shoulder the whole front line by yourself anymore. Let us guard your flank for a change."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Teary-Eyed",
+          "side": "right",
+          "text": "Heh... look at me getting misty-eyed over a map board. All right, Commander {name:lord}."
+        }
+      },
+      {
+        "id": "line_8",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Inspired",
+          "side": "right",
+          "text": "Tomorrow we take that ravine together, side by side. Lead the march."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "combee_line::lord",
+    "actorA": "combee_line",
+    "actorB": "lord",
+    "rank": "C",
+    "title": "Three Voices, One Formation",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "combee", "who": { "kind": "recruit", "speciesId": "combee" } },
+      { "id": "lord", "who": { "kind": "lord" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Oh! Careful, careful! Excuse us, {name:lord}, we brought dry kindling for the camp stove... sorry we dropped two sticks!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "No harm done, {name:combee}. Looks like one of you is nodding off mid-hover though."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "Yes, our bottom one drifted right out after hauling three pails of water. Top left watches east, top right watches west, and bottom usually keeps count... Zzz..."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Whoa! Sorry! Bottom is awake now! Wait, did we already hand over the firewood?"
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Set the bundle by the hearth and take a real breather. Nobody can fly guard shift on zero sleep."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "We promise we are much sharper in battle! The Queen expects swift wingwork, and we want to earn our keep beside you!"
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "You already proved your nerve at the spring. Grab some dinner and rest all six wings tonight."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "combee_line::lord",
+    "actorA": "combee_line",
+    "actorB": "lord",
+    "rank": "B",
+    "title": "Sweet Nectar Rations",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "combee", "who": { "kind": "recruit", "speciesId": "combee" } },
+      { "id": "lord", "who": { "kind": "lord" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Pardon us, {name:lord}! We saved a little sealed jar of clover honey from our hive pouch just for you!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Clover honey? Isn't that emergency trail food from your own hive stores, {name:combee}?"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Squad leaders burn the most stamina keeping everyone moving! Besides, the bottom one already licked the spoon clean... wait, no I didn't!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Wait a second. Did you three skip lunch while out foraging nectar for the rest of the camp?"
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "Well, everyone else here grew up together or trained like knights. We just wanted to make sure nobody minded having humble scouts around."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "You helped us clear outlaws off our own watering hole. Sit down right now and pass two spare spoons over here."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Yay! Three spoons for three bees, wait, four with yours! Sweetest break we have had all week!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "combee_line::lord",
+    "actorA": "combee_line",
+    "actorB": "lord",
+    "rank": "A",
+    "title": "A Place in the Vanguard",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "combee", "who": { "kind": "recruit", "speciesId": "combee" } },
+      { "id": "lord", "who": { "kind": "lord" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "Whew! Did we swoop across the eastern ridge fast enough, {name:lord}? Our bottom half nearly clipped a pine branch on the turn!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "You cut off that entire flanking squad before they could touch our rear line. Without you three in the air, we would have been boxed in."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Really? Even the bottom bee stayed wide awake through the whole dive!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "I did! I spotted the second raider hiding behind the boulder and yelled first!"
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Ha! Looks like all three of you are running in perfect sync now, {name:combee}."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "When we flew down to that watering hole, we only hoped for a few pails to bring the Queen."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Inspired",
+          "side": "right",
+          "text": "Instead we found a crew worth flying through storms for. Wherever you point us, {name:lord}, all three of us are right behind you!"
+        }
+      },
+      {
+        "id": "line_8",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Glad to have you in our core vanguard. Keep those eyes sharp on the horizon!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "chespin_line::lord",
+    "actorA": "chespin_line",
+    "actorB": "lord",
+    "rank": "C",
+    "title": "Oath of the Heavy Buckler",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
+      { "id": "lord", "who": { "kind": "lord" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Hup! Step, brace, hold! One hundred paces down, one hundred more to go!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Are those river boulders strapped inside your pack, {name:chespin}? We already finished marching for the day!"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Commander {name:lord}! My thanks for the concern, yet a squire of modest foot speed must forge endurance twice as hard."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "You held that foothill choke point against four raiders without yielding an inch. Nobody here doubts your stamina."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Holding steady ground is the barest duty of a shield-bearer. Until my armor outlasts every strike, my drills remain unfinished."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "At least take this waterskin and drop the rocks before supper gets cold. Even knights need fuel for tomorrow's wall."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "My thanks, Commander. After you take your own meal first, I shall join you at the fire!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "chespin_line::lord",
+    "actorA": "chespin_line",
+    "actorB": "lord",
+    "rank": "B",
+    "title": "Dents on the Guard",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
+      { "id": "lord", "who": { "kind": "lord" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "Hold on, {name:chespin}. Why are you hammering dents out of your buckler by yourself instead of visiting the medical tent?"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "A knight does not trouble our healer over mere scuffs on gear, {name:lord}. Once I tighten this strap, I am fit for duty."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "That is not gear wear. Your guard arm has a deep bruise right under the buckle."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Sad",
+          "side": "right",
+          "text": "...Forgive me. During the uphill pursuit today, the faster scouts outpaced me. I sprinted recklessly to catch up and took a flank blow unbraced."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "If my legs cannot reach an ally in peril before steel falls, what worth is my shield?"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "That is my fault as leader for letting the line stretch too thin. From now on, we anchor our advance around your pace."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "You would slow the vanguard on my account? My thanks, {name:lord}... I swear I shall never let that wall break."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "chespin_line::lord",
+    "actorA": "chespin_line",
+    "actorB": "lord",
+    "rank": "A",
+    "title": "The Unyielding Wall",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
+      { "id": "lord", "who": { "kind": "lord" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Wind is biting cold up on this ridge, {name:chespin}. Your watch shift ended twenty minutes ago."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "A sentinel stays vigilant until dawn, {name:lord}. Besides, the quiet lets me think clearly."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "About what? You seem even quieter tonight than usual."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Sad",
+          "side": "right",
+          "text": "Back on the Foothill Trail, when those bandits surrounded me... I truly believed nobody would answer my call. I had made peace with falling on that path alone."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Yet you and your family charged straight into the fray without hesitation. I have been trying to repay that debt ever since."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "You already repaid us ten times over every time you stepped into harm's way for this squad. Stop thinking you owe us your life, {name:chespin}."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "True chivalry isn't dying alone on some hillside. It is living to stand shoulder to shoulder with allies who have your back."
+        }
+      },
+      {
+        "id": "line_8",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Teary-Eyed",
+          "side": "right",
+          "text": "...I see. Then I shall guard my own life just as fiercely as yours. My thanks... my friend."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "chespin_line::lord",
+    "actorA": "chespin_line",
+    "actorB": "lord",
+    "rank": "S",
+    "title": "Spear and Bastion",
+    "music": "a_wish_for_peace",
+    "cast": [
+      { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
+      { "id": "lord", "who": { "kind": "lord" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Commander {name:lord}! If I may have a solemn moment before the march sounds..."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Whoa, stand up, {name:chespin}! Why are you kneeling out here in the dew?"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Inspired",
+          "side": "right",
+          "text": "Once, I believed knightly honor meant swearing fealty to a distant throne and enduring every hardship alone."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Marching beside you showed me something far truer. Honor lives in the companions who trust you with their lives and never leave you behind."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "Then rise and stand eye to eye with me, {name:chespin}. I don't want a retainer kneeling behind me; I want an equal partner beside me."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "So be it! You be the spearhead that breaks the darkness, and I shall be the unyielding bastion at your flank."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Sworn partners through every battle ahead, and steadfast friends long after the banners come down."
+        }
+      },
+      {
+        "id": "line_8",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "On my shield and my name, partner! Lead on, and I shall keep pace with you all the way!"
+        }
+      }
+    ]
+  }
+]

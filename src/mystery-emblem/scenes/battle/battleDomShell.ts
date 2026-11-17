@@ -164,6 +164,7 @@ export function createBattleDomShell(): BattleDomRefs {
       <span class="pmd-unit-popup-stat"><em>PRT</em><strong data-testid="unit-popup-prt">0/0</strong></span>
       <span class="pmd-unit-popup-stat"><em>SPE</em><strong data-testid="unit-popup-spe">0</strong></span>
     </div>
+    <div class="pmd-unit-popup-supports" data-testid="unit-popup-supports" hidden></div>
     <div class="pmd-unit-popup-moves" data-testid="unit-popup-moves"></div>
   `;
   const popupSlot = unitPopupEl.querySelector('[data-popup-portrait-slot]');

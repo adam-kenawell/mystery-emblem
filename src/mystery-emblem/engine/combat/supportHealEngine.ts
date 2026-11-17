@@ -3,6 +3,7 @@
  */
 
 import type { DungeonMapDefinition, MoveDefinition, TerrainType } from '../../types/schemas';
+import { computeAdjacentSupportSummary } from '../supportEngine';
 import {
   coordKey,
   findShortestPathAStar,
@@ -16,6 +17,7 @@ import {
   isShieldMove,
   manhattanDistance,
   type BattleMoveSlot,
+  type BattleSupportContext,
   type BattleUnitState,
 } from './combatTypesAndStats';
 
@@ -76,7 +78,8 @@ export function computeHealForecast(
   healer: BattleUnitState,
   target: BattleUnitState,
   moveId: string,
-  healerPosOverride?: { x: number; y: number }
+  healerPosOverride?: { x: number; y: number },
+  supportCtx?: BattleSupportContext
 ): HealForecast | null {
   const hx = healerPosOverride?.x ?? healer.x;
   const hy = healerPosOverride?.y ?? healer.y;
@@ -86,6 +89,12 @@ export function computeHealForecast(
   const slot = validSlots.find((s) => s.id === moveId) ?? validSlots[0];
   if (!slot) return null;
 
+  const healerSupportBonus = supportCtx
+    ? computeAdjacentSupportSummary(healer, supportCtx.units, supportCtx.supports, { x: hx, y: hy })
+        .totalBonus
+    : undefined;
+  const effectiveHealSpa = healer.stats.spa + (healerSupportBonus?.spa ?? 0);
+
   const payload = slot.move.supportPayload;
   const isShield = isShieldMove(slot.move);
   let healPower = 10;
@@ -94,7 +103,7 @@ export function computeHealForecast(
   } else if (payload?.healPercentMaxHp) {
     healPower = Math.max(1, Math.round((target.maxHp * payload.healPercentMaxHp) / 100));
   } else if (payload?.healAmount) {
-    healPower = Math.max(1, payload.healAmount + Math.floor(healer.stats.spa / 2));
+    healPower = Math.max(1, payload.healAmount + Math.floor(effectiveHealSpa / 2));
   } else if (payload?.cureStatus) {
     healPower = 0;
   }

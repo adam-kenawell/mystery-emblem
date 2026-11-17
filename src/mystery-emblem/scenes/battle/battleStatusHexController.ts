@@ -33,6 +33,10 @@ import { renderForecastMoveList, setForecastStatLabels } from './battleForecastM
 import { updateBattleInfoStrip } from './battleHudCards';
 import { grantExpAndHandleLevelUps } from './battleLevelUpModal';
 import { checkAndTriggerMatchEnd } from './battleOutcomeModals';
+import {
+  awardBattleCombatSupportPoints,
+  getBattleSupportContext,
+} from './battleSupportHelpers';
 import { getBattleRng, type BattleControllerContext } from './battleTypesAndState';
 import {
   areAllLivingPlayersWaited,
@@ -50,7 +54,14 @@ export function renderStatusHexForecastModalDom(
   onRefresh: () => void
 ): void {
   const { state, dom, audioManager, abortSignal } = ctx;
-  const forecast = computeStatusMoveForecast(state.map, caster, defender, chosenSlot.id);
+  const forecast = computeStatusMoveForecast(
+    state.map,
+    caster,
+    defender,
+    chosenSlot.id,
+    undefined,
+    getBattleSupportContext(state)
+  );
   if (!forecast) return;
   state.currentForecast = null;
 
@@ -235,8 +246,13 @@ export async function playStatusHexActionAsync(
 
   state.activeStrikeVfx = null;
   caster.action = 'Idle';
-  if (caster.faction === 'player' && !caster.defeated && caster.currentHp > 0 && didHit) {
-    await grantExpAndHandleLevelUps(ctx, caster, computeSupportHealExpGain(caster.level, target.level), runGen);
+  if (caster.faction === 'player' && !caster.defeated && caster.currentHp > 0) {
+    awardBattleCombatSupportPoints(ctx, caster, target);
+    if (didHit) {
+      await grantExpAndHandleLevelUps(ctx, caster, computeSupportHealExpGain(caster.level, target.level), runGen);
+    }
+  } else if (target.faction === 'player' && !target.defeated && target.currentHp > 0) {
+    awardBattleCombatSupportPoints(ctx, target, caster);
   }
   return didHit;
 }
@@ -250,7 +266,14 @@ export async function confirmForecastStatusHex(
   const target = state.units.find((u) => u.id === state.forecastTargetId && !u.defeated && u.currentHp > 0);
   if (!caster || !target || !state.forecastMoveId) return;
 
-  const forecast = computeStatusMoveForecast(state.map, caster, target, state.forecastMoveId);
+  const forecast = computeStatusMoveForecast(
+    state.map,
+    caster,
+    target,
+    state.forecastMoveId,
+    undefined,
+    getBattleSupportContext(state)
+  );
   if (!forecast || forecast.blockedReason) return;
 
   const runGen = state.battleRunGen;

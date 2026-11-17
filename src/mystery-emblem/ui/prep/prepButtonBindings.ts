@@ -59,6 +59,20 @@ export function bindPrepStaticButtons(params: {
   );
 
   bindPointerTap(
+    dom.supportsBtnEl,
+    () => {
+      const tutorial = getTutorialOverlay?.();
+      if (tutorial?.getExpectedAction()) {
+        tutorial.nudgeActiveStep();
+        return;
+      }
+      audioManager.playSfx('select');
+      params.onSetSubMode('supports');
+    },
+    { signal }
+  );
+
+  bindPointerTap(
     dom.hubBackdropEl.querySelector<HTMLElement>('[data-testid="prep-btn-view-map"]'),
     () => {
       const tutorial = getTutorialOverlay?.();
@@ -135,6 +149,15 @@ export function bindPrepStaticButtons(params: {
 
   bindPointerTap(
     dom.itemsBackdropEl.querySelector<HTMLElement>('[data-testid="prep-items-close-btn"]'),
+    () => {
+      audioManager.playSfx('cancel');
+      params.onSetSubMode('hub');
+    },
+    { signal }
+  );
+
+  bindPointerTap(
+    dom.supportsBackdropEl.querySelector<HTMLElement>('[data-testid="prep-supports-close-btn"]'),
     () => {
       audioManager.playSfx('cancel');
       params.onSetSubMode('hub');

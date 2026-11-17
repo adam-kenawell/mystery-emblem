@@ -139,6 +139,29 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
     ],
   },
   {
+    id: 'overworld_supports_unlocked',
+    title: 'Unit Supports & Bond Bonuses',
+    category: 'world_progression',
+    summary: 'Build C to S bonds by fighting beside allies or healing teammates, then unlock conversations.',
+    chips: [
+      { kind: 'badge', label: 'Ranks C · B · A · S', tone: 'gold' },
+      { kind: 'badge', label: '! = Conversation Ready', tone: 'green' },
+    ],
+    bullets: [
+      'Attacking or countering beside an ally and healing teammates builds their Support points, marked by floating hearts in battle.',
+      'Open Menu -> Supports on the World Map (or Battle Prep from Chapter 3 onward) whenever an ! badge appears to watch conversations.',
+      'Unlocked C, B, A, and S bonds grant each Pokemon signature adjacent combat stat bonuses visible on the Battle Unit Info card.',
+    ],
+    beats: [
+      {
+        id: 'ow_supports_quip',
+        emotion: 'Happy',
+        dialogue:
+          'Fighting side by side and healing teammates builds their bond, so open Menu and check Supports whenever an exclamation mark appears to hear their conversations and unlock adjacent stat boosts!',
+      },
+    ],
+  },
+  {
     id: 'rift_tremors_wild_pokemon',
     title: 'Rift Tremors on the Roads',
     category: 'world_progression',

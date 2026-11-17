@@ -27,6 +27,7 @@ import type {
   PrepDeploymentSlot,
   ReinforcementWaveDefinition,
   SaveData,
+  SupportPairProgress,
 } from '../../types/schemas';
 import type { DialogueOverlay, DialogueScript } from '../../ui/DialogueOverlay';
 import type { DungeonPrepOverlay } from '../../ui/DungeonPrepOverlay';
@@ -145,6 +146,7 @@ export interface BattleRuntimeState {
   deploymentSlots: PrepDeploymentSlot[];
   prepSwapSlotIndex: number | null;
   units: BattleUnitState[];
+  battleSupportPoints: Record<string, SupportPairProgress>;
   turnNumber: number;
   phase: BattlePhase;
   interactionState: BattleInteractionState;
@@ -252,6 +254,7 @@ export function createInitialBattleRuntimeState(): BattleRuntimeState {
     deploymentSlots: [],
     prepSwapSlotIndex: null,
     units: [],
+    battleSupportPoints: {},
     turnNumber: 1,
     phase: 'dungeon_prep',
     interactionState: 'idle',

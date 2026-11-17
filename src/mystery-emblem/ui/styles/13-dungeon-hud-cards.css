@@ -303,6 +303,27 @@
   text-shadow: 1px 1px 0 #000000;
 }
 
+.pmd-unit-popup-stat.is-support-buffed {
+  border-color: rgba(88, 248, 88, 0.58);
+}
+
+.pmd-unit-popup-stat strong.is-support-buffed {
+  color: var(--pmd-text-green);
+}
+
+.pmd-unit-popup-supports {
+  background: rgba(16, 44, 30, 0.72);
+  border: 1px solid rgba(88, 248, 88, 0.56);
+  padding: 2px 5px;
+  font-size: 10px;
+  line-height: 1.2;
+  color: var(--pmd-text-green);
+  text-shadow: 1px 1px 0 #000000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .pmd-unit-popup-moves {
   display: flex;
   flex-direction: column;

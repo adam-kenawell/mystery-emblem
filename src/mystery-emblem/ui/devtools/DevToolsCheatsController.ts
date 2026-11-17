@@ -193,6 +193,23 @@ export class DevToolsCheatsController {
       { signal }
     );
 
+    bindPointerTap(
+      modalEl.querySelector('[data-testid="devtools-ready-supports"]'),
+      () => {
+        this.ensureActiveSaveForCheat();
+        const count = saveManager.cheatReadyNextSupportRanks();
+        audioManager.playSfx('heal');
+        this.setCheatStatus(
+          count > 0
+            ? `${count} support conversation(s) ready (!).`
+            : 'All recruited support conversations already ready or maxed.'
+        );
+        this.refresh();
+        this.deps.onLiveStateMutated();
+      },
+      { signal }
+    );
+
     modalEl.querySelectorAll<HTMLButtonElement>('[data-shop-type]').forEach((btn) => {
       bindPointerTap(
         btn,

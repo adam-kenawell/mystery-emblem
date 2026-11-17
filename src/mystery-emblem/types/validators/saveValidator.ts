@@ -12,6 +12,7 @@ import {
   FLABEBE_FLOWER_COLORS,
   ORICORIO_STYLES,
   QUIZ_SEED_SLOT_KEYS,
+  SUPPORT_RANKS,
   type ItemDefinition,
   type MoveDefinition,
   type PokemonSpeciesDefinition,
@@ -157,6 +158,28 @@ export function validateSaveData(
     }
   } else {
     errors.push('SaveData.convoy must be an array.');
+  }
+
+  if (!save.supports || typeof save.supports !== 'object' || Array.isArray(save.supports)) {
+    errors.push('SaveData.supports must be an object.');
+  } else {
+    for (const [pairKey, progress] of Object.entries(save.supports)) {
+      if (!progress || typeof progress !== 'object') {
+        errors.push(`Invalid support progress entry for "${pairKey}".`);
+        continue;
+      }
+      if (!Number.isInteger(progress.points) || progress.points < 0) {
+        errors.push(`Support "${pairKey}" points must be a non-negative integer.`);
+      }
+      if (progress.unlockedRank === undefined) {
+        progress.unlockedRank = null;
+      } else if (
+        progress.unlockedRank !== null &&
+        !(SUPPORT_RANKS as readonly string[]).includes(progress.unlockedRank)
+      ) {
+        errors.push(`Support "${pairKey}" has invalid unlockedRank "${String(progress.unlockedRank)}".`);
+      }
+    }
   }
 
   return {

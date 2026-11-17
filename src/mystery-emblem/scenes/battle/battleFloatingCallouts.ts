@@ -19,6 +19,43 @@ export function clearFloatingTexts(state: BattleRuntimeState, dom: BattleDomRefs
   dom.floatingCalloutLayerEl.innerHTML = '';
 }
 
+const SUPPORT_HEART_SVG =
+  '<svg class="pmd-support-heart-svg" viewBox="0 0 9 8" aria-hidden="true" shape-rendering="crispEdges">' +
+  '<path fill="#050a14" d="M1,0H4V1H5V0H8V1H9V4H8V5H7V6H6V7H5V8H4V7H3V6H2V5H1V4H0V1H1Z"/>' +
+  '<path fill="#ff68a8" d="M1,1H3V2H4V3H5V2H6V1H8V3H7V4H6V5H5V6H4V5H3V4H2V3H1Z"/>' +
+  '<rect fill="#ffd8ec" x="2" y="2" width="1" height="1"/>' +
+  '</svg>';
+
+export function spawnSupportHeartCallout(
+  state: BattleRuntimeState,
+  dom: BattleDomRefs,
+  tileX: number,
+  tileY: number,
+  durationMs = 920
+): void {
+  const now = performance.now();
+  const id = state.nextFloatingTextId++;
+  const ft: FloatingBattleText = {
+    id,
+    worldX: tileX * PMD_TILE_NATIVE_PX + PMD_TILE_NATIVE_PX / 2,
+    worldY: Math.max(2, tileY * PMD_TILE_NATIVE_PX - 2),
+    text: '',
+    color: '#ff68a8',
+    emphasis: true,
+    createdAtMs: now,
+    durationMs: state.fastMode ? Math.max(120, Math.round(durationMs * 0.25)) : durationMs,
+  };
+  state.floatingTexts.push(ft);
+
+  const el = document.createElement('span');
+  el.className = 'pmd-battle-floating-callout is-emphasis is-support-heart';
+  el.dataset.testid = 'battle-support-heart';
+  el.innerHTML = SUPPORT_HEART_SVG;
+  dom.floatingCalloutLayerEl.appendChild(el);
+  state.floatingTextEls.set(id, el);
+  syncFloatingCalloutDom(state, dom, now);
+}
+
 export function spawnFloatingText(
   state: BattleRuntimeState,
   dom: BattleDomRefs,

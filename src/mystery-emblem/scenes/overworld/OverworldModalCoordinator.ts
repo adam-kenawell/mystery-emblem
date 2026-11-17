@@ -4,16 +4,23 @@
 
 import type { AudioManager } from '../../audio/AudioManager';
 import { KECLEON_PMD_ASSET_ID, type OverworldGraphDefinition } from '../../data/overworldMapData';
+import { areSupportsUnlockedInCampaign } from '../../data/supports/supportMatrix';
 import { ensureOverworldGraphState } from '../../engine/overworldEngine';
 import type { SaveStateManager } from '../../state/SaveStateManager';
+import type { DialogueOverlay } from '../../ui/DialogueOverlay';
 import type { PmdPortraitView } from '../../ui/PmdSpriteCanvas';
+import { SupportsMenuController } from '../../ui/SupportsMenuView';
 import type { TutorialOverlay } from '../../ui/TutorialOverlay';
 import { bindPointerTap } from '../../ui/pointerControls';
 import { renderOverworldConvoyTab } from './OverworldItemsTabRenderer';
 import { renderOverworldKecleonShop } from './OverworldKecleonShopRenderer';
 import { openOverworldSaveProgressOverlay, renderOverworldSystemTab, type PendingSystemConfirm } from './OverworldSystemTabRenderer';
 import { renderOverworldUnitsTab } from './OverworldUnitsTabRenderer';
-import type { OverworldDomElements, OverworldMenuTab } from './overworldDomTemplates';
+import {
+  syncOverworldSupportsTabButton,
+  type OverworldDomElements,
+  type OverworldMenuTab,
+} from './overworldDomTemplates';
 import { getOverworldArrivalTutorialTopicIds } from './overworldSnapshot';
 
 export class OverworldModalCoordinator {
@@ -21,6 +28,7 @@ export class OverworldModalCoordinator {
   public systemMenuOpen = false;
   public activeMenuTab: OverworldMenuTab = 'units';
 
+  private readonly supportsController: SupportsMenuController;
   private unitDetailPortraitView: PmdPortraitView | null = null;
   private selectedUnitInstanceId: string | null = null;
   private selectedShopItemId: string | null = null;
@@ -37,6 +45,7 @@ export class OverworldModalCoordinator {
       kecleonPortraitView: PmdPortraitView;
       saveManager: SaveStateManager;
       audioManager: AudioManager;
+      dialogueOverlay?: DialogueOverlay;
       tutorialOverlay?: TutorialOverlay;
       getGraph: () => OverworldGraphDefinition;
       isOpen: () => boolean;
@@ -52,6 +61,17 @@ export class OverworldModalCoordinator {
     },
     signal: AbortSignal
   ) {
+    this.supportsController = new SupportsMenuController({
+      saveManager: deps.saveManager,
+      audioManager: deps.audioManager,
+      dialogueOverlay: deps.dialogueOverlay,
+      signal,
+      onSupportsMutated: () => {
+        if (this.systemMenuOpen) this.renderSystemMenuBody();
+        this.deps.onLayerStateChanged();
+      },
+      onLayerStateChanged: () => this.deps.onLayerStateChanged(),
+    });
     this.bindModalButtons(signal);
   }
 
@@ -59,8 +79,20 @@ export class OverworldModalCoordinator {
     this.kecleonShopOpen = false;
     this.systemMenuOpen = false;
     this.pendingSystemConfirm = null;
+    this.supportsController.reset();
     this.deps.dom.kecleonBackdropEl.hidden = true;
     this.deps.dom.systemMenuBackdropEl.hidden = true;
+  }
+
+  public hasSupportsSubLayer(): boolean {
+    return this.supportsController.hasActiveSubLayer();
+  }
+
+  public handleSubBack(): boolean {
+    if (this.supportsController.handleBack()) {
+      return true;
+    }
+    return false;
   }
 
   public openKecleonShop(): void {
@@ -109,7 +141,8 @@ export class OverworldModalCoordinator {
   }
 
   public openSystemMenu(tab: OverworldMenuTab = 'units'): void {
-    this.activeMenuTab = tab;
+    const save = this.deps.saveManager.getSave();
+    this.activeMenuTab = tab === 'supports' && !areSupportsUnlockedInCampaign(save) ? 'units' : tab;
     this.pendingSystemConfirm = null;
     this.menuFeedbackMessage = '';
     this.systemMenuOpen = true;
@@ -122,6 +155,7 @@ export class OverworldModalCoordinator {
 
   public closeSystemMenu(): void {
     if (!this.systemMenuOpen) return;
+    this.supportsController.reset();
     this.systemMenuOpen = false;
     this.pendingSystemConfirm = null;
     this.deps.dom.systemMenuBackdropEl.hidden = true;
@@ -130,12 +164,16 @@ export class OverworldModalCoordinator {
   }
 
   public renderSystemMenuBody(): void {
+    const save = this.deps.saveManager.getSave();
+    syncOverworldSupportsTabButton(this.deps.dom, save);
+    if (this.activeMenuTab === 'supports' && !areSupportsUnlockedInCampaign(save)) {
+      this.activeMenuTab = 'units';
+    }
     this.deps.dom.systemMenuBackdropEl.querySelectorAll<HTMLElement>('[data-ow-tab]').forEach((btn) => {
       btn.classList.toggle('is-active', btn.dataset.owTab === this.activeMenuTab);
     });
     this.setMenuFeedback(this.menuFeedbackMessage);
     this.deps.dom.menuPanelBodyEl.innerHTML = '';
-    const save = this.deps.saveManager.getSave();
     if (!save) return;
 
     if (this.activeMenuTab === 'units') {
@@ -175,6 +213,8 @@ export class OverworldModalCoordinator {
       this.selectedUnitInstanceId = res.selectedUnitInstanceId;
       this.selectedConvoyItemId = res.selectedConvoyItemId;
       void this.triggerTutorial('prep_items_and_convoy');
+    } else if (this.activeMenuTab === 'supports') {
+      this.supportsController.renderInto(this.deps.dom.menuPanelBodyEl);
     } else {
       renderOverworldSystemTab({
         menuPanelBodyEl: this.deps.dom.menuPanelBodyEl,
@@ -225,6 +265,7 @@ export class OverworldModalCoordinator {
       bindPointerTap(tabBtn, () => {
         const tab = tabBtn.dataset.owTab as OverworldMenuTab | undefined;
         if (!tab) return;
+        this.supportsController.reset();
         this.deps.audioManager.playSfx('select');
         this.activeMenuTab = tab;
         this.pendingSystemConfirm = null;

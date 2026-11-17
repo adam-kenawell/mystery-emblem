@@ -13,6 +13,7 @@ import {
 } from './battleDangerAndViewportState';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { getActivePrepSaveManager, rebuildPrepBattleUnits } from './battlePrepAndAssets';
+import { syncBattleSupportsFromSave } from './battleSupportHelpers';
 import type { BattleControllerContext } from './battleTypesAndState';
 import { getLivingEnemies, getLivingUnits } from './battleUnitQueries';
 
@@ -170,7 +171,13 @@ export function handlePrepViewMapTileTap(
 
 export function refreshFromExternalSaveCheat(ctx: BattleControllerContext): void {
   const { state, prepOverlay, saveManager } = ctx;
-  if (!state.openState || state.phase !== 'dungeon_prep') return;
+  if (!state.openState) return;
+  syncBattleSupportsFromSave(ctx);
+  if (state.phase !== 'dungeon_prep') {
+    updateBattleInfoStrip(ctx);
+    ctx.renderNow();
+    return;
+  }
   const activeSave = getActivePrepSaveManager(state, saveManager).getSave();
   if (!activeSave) return;
   const rosterIds = new Set(activeSave.roster.map((u) => u.instanceId));

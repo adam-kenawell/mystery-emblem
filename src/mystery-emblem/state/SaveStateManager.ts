@@ -9,10 +9,11 @@ import { DEMO_OVERWORLD_GRAPH, type OverworldGraphDefinition } from '../data/ove
 import type { PostBattleSpawnResult } from '../engine/overworldEngine';
 import type {
   ItemDefinition, KecleonShopType, OwnedPokemonInstance, SaveData,
-  SupportPairProgress, TutorialDetailLevel, TutorialFamiliarityPreferences,
+  SupportPairProgress, SupportRank, TutorialDetailLevel, TutorialFamiliarityPreferences,
 } from '../types/schemas';
 import {
   mutateAddSupportPoints, mutateCommitBattleResults,
+  mutateReadyNextSupportRanksForCheat, mutateUnlockSupportRank,
   type BattleUnitSaveSyncEntry, type CommitBattleResultsPayload,
 } from './battleCommitMutators';
 import {
@@ -40,7 +41,7 @@ import {
 import {
   ACTIVE_SLOT_STORAGE_KEY, computeSupportLevel, createPokemonInstance, getDefaultStorage, getSaveSlotStorageKey,
   getUnitEquippedItemId, LEGACY_SAVE_STORAGE_KEY, makeSupportPairKey, META_STORAGE_KEY, normalizeSaveSlot,
-  sanitizeNickname, SAVE_SLOT_COUNT, SAVE_SLOT_INDICES, SAVE_STORAGE_KEY, SUPPORT_LEVEL_THRESHOLDS,
+  sanitizeNickname, SAVE_SLOT_COUNT, SAVE_SLOT_INDICES, SAVE_STORAGE_KEY, SUPPORT_LEVEL_THRESHOLDS, SUPPORT_RANK_THRESHOLDS,
   type CloudSyncResolution, type CreatePokemonOptions, type StorageLike, type SyncStatusSnapshot,
 } from './saveHelpersAndFactory';
 import {
@@ -50,7 +51,7 @@ import {
 
 export {
   DEFAULT_QUIZ_SEEDS, formatCampaignChapterLabel, SAVE_STORAGE_KEY, META_STORAGE_KEY,
-  SUPPORT_LEVEL_THRESHOLDS, makeSupportPairKey, computeSupportLevel, sanitizeNickname,
+  SUPPORT_LEVEL_THRESHOLDS, SUPPORT_RANK_THRESHOLDS, makeSupportPairKey, computeSupportLevel, sanitizeNickname,
   getUnitEquippedItemId, createPokemonInstance, SAVE_SLOT_COUNT, ACTIVE_SLOT_STORAGE_KEY, getSaveSlotStorageKey,
 };
 export type {
@@ -201,6 +202,8 @@ export class SaveStateManager {
   public evolveUnitToSpecies(id: string, targetSpeciesId: string): OwnedPokemonInstance { const s = this.requireActiveSave(); const { unit, mutated } = mutateEvolveUnitToSpecies(s, id, targetSpeciesId); if (mutated) this.commitSave(s); return cloneUnit(unit); }
   public equipItemToUnit(id: string, itemId: string | null, sourceUnitId?: string): OwnedPokemonInstance { const s = this.requireActiveSave(); const { unit, mutated } = mutateEquipItemToUnit(s, id, itemId, sourceUnitId); if (mutated) this.commitSave(s); return cloneUnit(unit); }
   public addSupportPoints(idA: string, idB: string, delta = 1): SupportPairProgress { const s = this.requireActiveSave(); const p = mutateAddSupportPoints(s, idA, idB, delta); this.commitSave(s); return p; }
+  public unlockSupportRank(actorIdA: string, actorIdB: string, rank: SupportRank): SupportPairProgress { const s = this.requireActiveSave(); const p = mutateUnlockSupportRank(s, actorIdA, actorIdB, rank); this.commitSave(s); return p; }
+  public cheatReadyNextSupportRanks(filterActorId?: string): number { const s = this.requireActiveSave(); const count = mutateReadyNextSupportRanksForCheat(s, filterActorId); this.commitSave(s); return count; }
   public addGold(amount: number): SaveData { return this.mutateAndCommit((s) => { s.gold = Math.max(0, Math.floor(s.gold + amount)); }); }
   public commitBattleResults(payload: CommitBattleResultsPayload): SaveData { return this.mutateAndCommit((s) => { mutateCommitBattleResults(s, payload); delete s.battleSuspendJson; }); }
 

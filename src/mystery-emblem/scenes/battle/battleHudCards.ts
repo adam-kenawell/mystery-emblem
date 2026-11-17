@@ -5,6 +5,7 @@
 import { isMoveEquipped } from '../../data/equippedMoves';
 import { getItemById } from '../../data/index';
 import { resolveUnitAllegiance } from '../../data/allegiance';
+import { formatSupportStatBonusShort } from '../../data/supports/supportMatrix';
 import { STATUS_BADGE_COLORS, computeUnitPopupStats, type BattleUnitState } from '../../engine/combatEngine';
 import {
   TERRAIN_METADATA,
@@ -19,6 +20,7 @@ import {
   canInteractWithBattleViewport,
   syncHoverDangerArea,
 } from './battleDangerAndViewportState';
+import { getBattleSupportContext } from './battleSupportHelpers';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
   escapeHudHtml,
@@ -196,18 +198,42 @@ export function updateUnitHoverPopup(ctx: BattleControllerContext): void {
     hpFillEl.style.width = `${Math.max(0, Math.min(100, Math.round((unit.currentHp / unit.maxHp) * 100)))}%`;
   }
 
-  const summary = computeUnitPopupStats(state.map, unit);
-  const mightEl = dom.unitPopupEl.querySelector('[data-testid="unit-popup-might"]');
-  const prtEl = dom.unitPopupEl.querySelector('[data-testid="unit-popup-prt"]');
-  const speEl = dom.unitPopupEl.querySelector('[data-testid="unit-popup-spe"]');
+  const summary = computeUnitPopupStats(state.map, unit, getBattleSupportContext(state));
+  const mightEl = dom.unitPopupEl.querySelector<HTMLElement>('[data-testid="unit-popup-might"]');
+  const prtEl = dom.unitPopupEl.querySelector<HTMLElement>('[data-testid="unit-popup-prt"]');
+  const speEl = dom.unitPopupEl.querySelector<HTMLElement>('[data-testid="unit-popup-spe"]');
   if (mightEl) {
     const parts = [summary.physicalMight, summary.specialMight]
       .filter((m): m is number => m !== null)
       .map(String);
     mightEl.textContent = parts.length > 0 ? parts.join('/') : '-';
+    mightEl.classList.toggle('is-support-buffed', summary.mightBoostedBySupport);
+    mightEl.parentElement?.classList.toggle('is-support-buffed', summary.mightBoostedBySupport);
   }
-  if (prtEl) prtEl.textContent = `${summary.effectiveDef}/${summary.effectiveSpd}`;
-  if (speEl) speEl.textContent = String(summary.effectiveSpe);
+  if (prtEl) {
+    prtEl.textContent = `${summary.effectiveDef}/${summary.effectiveSpd}`;
+    prtEl.classList.toggle('is-support-buffed', summary.prtBoostedBySupport);
+    prtEl.parentElement?.classList.toggle('is-support-buffed', summary.prtBoostedBySupport);
+  }
+  if (speEl) {
+    speEl.textContent = String(summary.effectiveSpe);
+    speEl.classList.toggle('is-support-buffed', summary.speBoostedBySupport);
+    speEl.parentElement?.classList.toggle('is-support-buffed', summary.speBoostedBySupport);
+  }
+
+  const supportsEl = dom.unitPopupEl.querySelector<HTMLElement>(
+    '[data-testid="unit-popup-supports"]'
+  );
+  if (supportsEl) {
+    const bonusText = formatSupportStatBonusShort(summary.supportSummary.totalBonus);
+    if (summary.supportSummary.activePartners.length > 0 && bonusText) {
+      supportsEl.textContent = `Support: ${bonusText}`;
+      supportsEl.hidden = false;
+    } else {
+      supportsEl.textContent = '';
+      supportsEl.hidden = true;
+    }
+  }
 
   const movesWrap = dom.unitPopupEl.querySelector<HTMLElement>(
     '[data-testid="unit-popup-moves"]'

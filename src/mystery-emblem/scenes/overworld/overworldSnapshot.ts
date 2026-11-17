@@ -15,6 +15,7 @@ import type {
   OwnedPokemonInstance,
   SaveData,
 } from '../../types/schemas';
+import type { DialogueOverlay } from '../../ui/DialogueOverlay';
 import type { TutorialOverlay } from '../../ui/TutorialOverlay';
 import type { OverworldCameraAndPointersController } from './OverworldCameraAndPointers';
 import type { OverworldTravelAndSpritesController } from './OverworldTravelAndSprites';
@@ -24,6 +25,7 @@ export interface OverworldSceneOptions {
   viewportEl: HTMLElement;
   saveManager: SaveStateManager;
   audioManager?: AudioManager;
+  dialogueOverlay?: DialogueOverlay;
   tutorialOverlay?: TutorialOverlay;
   graph?: OverworldGraphDefinition;
   onExit: () => void;
@@ -80,6 +82,7 @@ export function getOverworldArrivalTutorialTopicIds(save: SaveData): string[] {
   const topics = ['overworld_and_skirmishes'];
   if (save.campaign.completedChapterIds.includes('chapter_02')) {
     topics.push('overworld_expedition_menu');
+    topics.push('overworld_supports_unlocked');
   }
   if (save.campaign.kecleonShopsUnlocked) topics.push('kecleon_shops_and_tms');
   if (Object.values(save.overworld?.nodes ?? {}).some((n) => Boolean(n?.activeSkirmish))) {

@@ -30,6 +30,7 @@ Read this index first in every session before scanning directories. Read only th
 - `overworld/{overworldGraphData,kecleonShopCatalog,skirmishEncounterData}.ts` (`overworldMapData.ts` barrel) - 6-node Act 1 Verdant Kingdom graph, 4 Kecleon Shop catalogs, Feral Skirmish tiers.
 - `storyCutscenes.ts`, `creditsData.ts`, `accessControl.ts`, `allegiance.ts` - Multi-cutscene lookup (`getPre/PostChapterCutsceneIds`, `listStoryCutscenesInPlayOrder`), Act 1 credits cast + `DEMO_FEEDBACK_FORM_URL` demo CTA (`resolveCreditsEndCardCopy().feedbackFormUrl`, opened by `openDemoFeedbackForm` in `scenes/credits/creditsDomBuilder.ts` on real `click`), admin gate, unit-card realm allegiance (`Verdant`, `Sand`, `Steel`, `Forest`, `Rift`, `Feral`).
 - `tutorials/{tutorialTypes,prologueDrillTopics,earlyChapterTopics,mechanicsAndTerrainTopics,tutorialTriggers}.ts` (`tutorialRegistry.ts` barrel) - **Quaquaval's Field Notes** coaching topics & `TUTORIAL_TRIGGER_RULES`.
+- `supports/{supportTypes,supportMatrix,supportConversationRegistry}.ts` + `supports/conversations/{hero_core,hero_expedition,hometown_bonds,vanguard_bonds,town_trio_bonds}.json` - Awakening-style Unit Supports matrix (27 active pairs across the 11-unit demo cast), 84 `C/B/A/S` support scripts, and species-line combat bonus profiles.
 
 ### Schemas, Validators & Persistence (`types/`, `state/`)
 - `types/{registrySchemas,battleSchemas,eventSchemas,saveSchemas}.ts` (`types/schemas.ts` barrel) - Core TS types (`SaveData` schema `v2`, `DungeonEventAction` incl. `give_unit_item`, `scripted_attack`, `win_battle`, `exceptPartner`).
@@ -40,15 +41,16 @@ Read this index first in every session before scanning directories. Read only th
 - `assets/{pmdAssetTypes,subformResolver,portraitAndItemLoader,spriteBundleLoader}.ts` (`pmdAssetLoader.ts` barrel) - 8-dir sprite/portrait/item loaders, Lord -> Flabebe (`0669`) & Florges (`0671`) flower subform resolver, `computePmdTileSpritePlacement`.
 - `assets/{tilesetCatalog,tilesetOverlays,tilesetLoader}.ts` & `audio/{AudioManager,audioFadeAndSettings,webAudioSfxSynth,audioTracks}.ts` - 144 `24x24` PMD tilesets & EoS WebAudio BGM/SFX engine.
 - `engine/speakerResolver.ts` - Central `{lord|partner|healer|healer_parent|mentor|advisor|unit|species|npc}` speaker/portrait/subform resolver (`resolveSpeaker`, `resolveDialogueSpeaker`).
-- `engine/{overworldEngine,terrainAndPathfinding,combatEngine,progressionEngine,enemyAi,battleEvents,quizScoring,battleSetup,battleSpawnHelpers,fallbackPrepManager}.ts` - Overworld Dijkstra, terrain/A*/Danger Area, 18-type combat/status/forecast/counter/heal/dance math, rubber-banded EXP (`mentor_quaquaval` veteran penalty), AI, and declarative event evaluators.
+- `engine/{overworldEngine,terrainAndPathfinding,combatEngine,progressionEngine,supportEngine,enemyAi,battleEvents,quizScoring,battleSetup,battleSpawnHelpers,fallbackPrepManager}.ts` - Overworld Dijkstra, terrain/A*/Danger Area, 18-type combat/status/forecast/counter/heal/dance math, Awakening-style support points/auras/script compilation, rubber-banded EXP (`mentor_quaquaval` veteran penalty), AI, and declarative event evaluators.
 
 ### Scoped CSS, Shared UI Widgets & Scenes (`ui/`, `scenes/`)
-- `ui/pmdWindow.css` + `ui/styles/{00-reset..26-battle-events}.css` - 28 scoped CSS modules.
+- `ui/pmdWindow.css` + `ui/styles/{00-reset..28-supports-menu}.css` - Scoped CSS modules (`28-supports-menu.css` styles the Supports roster, Partner Popup, and camp playback backdrop).
 - `ui/{PmdWindow,PmdSpriteCanvas,PmdUnitPortraitGrid,PmdItemIconGrid,typeColors,typewriterController,pointerControls,mapZoomController,pinchZoomTracker,gridViewportMath}.ts` + `ui/inspector/*`.
-- `ui/{RecruitNicknameOverlay,QuizScene,DungeonPrepOverlay,DevToolsHarness,DialogueOverlay,TutorialOverlay}.ts` + `cutscene-editor/*`.
+- `ui/{RecruitNicknameOverlay,QuizScene,DungeonPrepOverlay,SupportsMenuView,DevToolsHarness,DialogueOverlay,TutorialOverlay}.ts` + `cutscene-editor/*`.
 - `scenes/{OverworldScene,CutsceneScene,CreditsScene,BattleScene,ChapterMapEditorScene}.ts` + `scenes/{overworld,cutscene,credits,battle,editor}/*`.
 
 ## 3. Task Routing Quick-Lookup
 - **Stats / Moves / Items / Skills:** `data/species/*.json`, `data/moves/*.json`, `data/items/*.json`, `data/personal_skills.json` + `types/validators/registryValidators.ts`
 - **Add / Edit a Chapter, Dialogue, Event or Cutscene:** `data/chapters/{id}/{chapter.json,dialogue/*.json}`, `data/cutscenes/*.json`, `data/cutscenes/locations/*.json` + `types/eventSchemas.ts` + `data/cutscenes/cutsceneDocTypes.ts`
 - **Combat / Pathfinding / AI / Events / EXP:** `engine/{combat,pathfinding,ai,events,progression}/*` + `scenes/battle/{battleCombatAnimator,battleEventActions,battleEventRunner,battlePhaseAndAiRunner}.ts`
+- **Unit Supports / Pairings / Combat Auras:** `data/supports/*` + `engine/supportEngine.ts` + `scenes/battle/battleSupportHelpers.ts` + `ui/SupportsMenuView.ts`

@@ -87,6 +87,7 @@ export function buildDevToolsModalHtml(): string {
           <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-reset-d1">Reset to Ch. 1</button>
           <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-clear-current-node">Clear Node</button>
           <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-spawn-skirmish">Spawn Skirmish</button>
+          <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="devtools-ready-supports">Ready Next Supports (!)</button>
         </div>
         <div class="pmd-inline-btns">
           <button type="button" class="pmd-btn pmd-chip-btn" data-shop-type="healing_shop" data-testid="devtools-shop-healing_shop">Shop: Heal/Stone</button>

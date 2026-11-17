@@ -34,6 +34,7 @@ import {
   playStatusHexActionAsync,
   runFactionPhaseStartStatusTicks,
 } from './battleStatusHexController';
+import { getBattleSupportContext } from './battleSupportHelpers';
 import {
   triggerReactivePostCombatTutorials,
   triggerTurn2FallbackTerrainTutorial,
@@ -118,12 +119,14 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
     ensureTilePairVisible(state, enemy.x, enemy.y, enemy.x, enemy.y);
     updateBattleInfoStrip(ctx);
 
+    const supportCtx = getBattleSupportContext(state);
     const decision = chooseEnemyAction(
       state.map,
       enemy,
       getLivingUnits(state),
       protectedSet,
-      state.activatedSquadIds
+      state.activatedSquadIds,
+      supportCtx
     );
 
     if (decision.path.length > 1) {
@@ -143,7 +146,9 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
           state.map,
           enemy,
           target,
-          decision.statusHex.moveId
+          decision.statusHex.moveId,
+          undefined,
+          getBattleSupportContext(state)
         );
         if (stForecast && !stForecast.blockedReason) {
           await waitBattleMs(state, 150);
@@ -163,7 +168,9 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
           state.map,
           enemy,
           target,
-          decision.attack.moveId
+          decision.attack.moveId,
+          undefined,
+          getBattleSupportContext(state)
         );
         if (liveForecast) {
           await waitBattleMs(state, 160);

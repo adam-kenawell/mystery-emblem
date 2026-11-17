@@ -6,8 +6,10 @@ import {
   getEquippedMoveIdForCategory,
   type EquipCategory,
 } from '../../data/equippedMoves';
-import { getItemById, getMoveById } from '../../data/index';
+import { getItemById } from '../../data/index';
+import type { SupportStatBonus } from '../../data/supports/supportTypes';
 import type { DungeonMapDefinition, TerrainBonuses } from '../../types/schemas';
+import { computeAdjacentSupportSummary } from '../supportEngine';
 import { getMapTerrainAt, getTerrainBonuses } from '../terrainAndPathfinding';
 import {
   getOffensiveMovesAtDistance,
@@ -15,6 +17,7 @@ import {
   isOffensiveMove,
   manhattanDistance,
   type BattleMoveSlot,
+  type BattleSupportContext,
   type BattleUnitState,
   type CombatForecast,
   type CombatSideForecast,
@@ -29,12 +32,14 @@ export function buildSideForecast(
   actor: BattleUnitState,
   target: BattleUnitState,
   moveSlot: BattleMoveSlot,
-  targetTerrainBonuses: TerrainBonuses
+  targetTerrainBonuses: TerrainBonuses,
+  actorSupportBonus?: SupportStatBonus,
+  targetSupportBonus?: SupportStatBonus
 ): CombatSideForecast {
   const move = moveSlot.move;
   const isPhysical = move.category === 'Physical';
-  const actorEff = getUnitEffectiveCombatStats(actor);
-  const targetEff = getUnitEffectiveCombatStats(target);
+  const actorEff = getUnitEffectiveCombatStats(actor, actorSupportBonus);
+  const targetEff = getUnitEffectiveCombatStats(target, targetSupportBonus);
 
   let effectiveOffensiveStat = isPhysical ? actorEff.atk : actorEff.spa;
   if (isPhysical && actor.status === 'BRN' && actor.personalSkillId !== 'guts') {
@@ -136,7 +141,8 @@ export function computeCombatForecast(
   attacker: BattleUnitState,
   defender: BattleUnitState,
   attackerMoveId: string,
-  attackerPosOverride?: { x: number; y: number }
+  attackerPosOverride?: { x: number; y: number },
+  supportCtx?: BattleSupportContext
 ): CombatForecast | null {
   const ax = attackerPosOverride?.x ?? attacker.x;
   const ay = attackerPosOverride?.y ?? attacker.y;
@@ -156,12 +162,21 @@ export function computeCombatForecast(
   const defenderTerrain = getMapTerrainAt(map, defender.x, defender.y) ?? 'floor';
   const attackerTerrainBonuses = getTerrainBonuses(attackerTerrain, attacker);
   const defenderTerrainBonuses = getTerrainBonuses(defenderTerrain, defender);
+  const attackerSupportBonus = supportCtx
+    ? computeAdjacentSupportSummary(attacker, supportCtx.units, supportCtx.supports, { x: ax, y: ay })
+        .totalBonus
+    : undefined;
+  const defenderSupportBonus = supportCtx
+    ? computeAdjacentSupportSummary(defender, supportCtx.units, supportCtx.supports).totalBonus
+    : undefined;
 
   const attackerSide = buildSideForecast(
     attacker,
     defender,
     attackerSlot,
-    defenderTerrainBonuses
+    defenderTerrainBonuses,
+    attackerSupportBonus,
+    defenderSupportBonus
   );
 
   let defenderCanCounter = false;
@@ -185,7 +200,14 @@ export function computeCombatForecast(
       defenderCounterReason = `Out of Range ([E] R${defSlot.range[0]})`;
     } else {
       defenderCanCounter = true;
-      defenderSide = buildSideForecast(defender, attacker, defSlot, attackerTerrainBonuses);
+      defenderSide = buildSideForecast(
+        defender,
+        attacker,
+        defSlot,
+        attackerTerrainBonuses,
+        defenderSupportBonus,
+        attackerSupportBonus
+      );
     }
   }
 

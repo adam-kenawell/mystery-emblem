@@ -1,0 +1,1166 @@
+[
+  {
+    "pairKey": "lord::machop_line",
+    "actorA": "lord",
+    "actorB": "machop_line",
+    "rank": "C",
+    "title": "Grip Check",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "machop", "who": { "kind": "recruit", "speciesId": "machop" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Hold it right there, {name:lord}! Before we break camp, let me test the knots on your supply pack."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Everything is buckled down, {name:machop}. Did a strap come loose?"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Nope, nice and tight. Now squeeze my forearm as hard as you can! Come on, full grip!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Wait, why? Alright... there. Happy?"
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Hup! Solid clamp, decent wrist lock! Boss Machamp always says half of winning a mountain fight happens in the fingers before a single punch lands."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Tonight after dinner, I am running cliff-ledge finger hangs with pebbles in my belt. You are welcome to join my drill!"
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Leave out the extra pebbles for night one, {name:machop}, and you have a deal."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "lord::machop_line",
+    "actorA": "lord",
+    "actorB": "machop_line",
+    "rank": "B",
+    "title": "Shadow of Four Arms",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "machop", "who": { "kind": "recruit", "speciesId": "machop" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "Still out here, {name:machop}? Everyone else turned in an hour ago, and your knuckles look scraped raw."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Pain",
+          "side": "right",
+          "text": "Gah! Just twenty more fingertip presses against this boulder, {name:lord}. My left hand slipped on the wet slate earlier."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Sad",
+          "side": "right",
+          "text": "Boss Machamp cleared an entire ridge rockslide by himself this week. Meanwhile, I led your squad straight into cave ambushes and needed bailing out on my own shortcut."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Wait a second. Nobody asked you to move a whole mountain solo, {name:machop}. Your tunnel got us past the blockade before dusk."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "Sure, after we had to fight our way through! When Boss Machamp told me to step in for him, I swore I would not look like a kid playing guide."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "You took point in dark stone against wild packs and never missed a footing once. Wrap those hands before you tear a tendon, or tomorrow's march is going to hurt."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Inspired",
+          "side": "right",
+          "text": "Heh... alright, captain. One wrap of cloth, then straight to bed. Thanks, {name:lord}."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "lord::machop_line",
+    "actorA": "lord",
+    "actorB": "machop_line",
+    "rank": "A",
+    "title": "Ridge Worth Climbing",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "machop", "who": { "kind": "recruit", "speciesId": "machop" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Last handhold right there, {name:lord}! Pull up onto the shelf and catch the sunrise!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "Whoa... You can see the whole mountain pass behind us and the plains stretching straight out ahead."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Funny, isn't it? Your footwork barely even kicked a pebble loose on that chimney climb. All those drills paid off."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Only because you spotted every solid crack in the granite first, {name:machop}."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "I sent a courier slate back to Boss Machamp yesterday. Didn't claim I out-lifted him or cleared a pass alone, either."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "I wrote that I found a leader worth climbing beside! Whenever this Rift mess is finished, {name:lord}, you have a permanent rope partner on the high peaks."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Count on it, {name:machop}. Just promise we climb down before breakfast cools off."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "lord::slakoth_line",
+    "actorA": "lord",
+    "actorB": "slakoth_line",
+    "rank": "C",
+    "title": "Oran Berry Alarm",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "slakoth", "who": { "kind": "recruit", "speciesId": "slakoth" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Hey, {name:slakoth}, your watch turn starts in five minutes. Can you let go of the berry crate long enough to sit up?"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "*Yaaawn*... Morning already? Give me two more blinks, {name:lord}. The shade on this crate is top grade."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "If you fall asleep on sentry duty, a whole pack could waltz right past the lantern."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Mm... Not a pack. Just one wild Zigzagoon sniffing the fern patch twenty paces northwest. Wind shifted left."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Hold on... Wait, there really is a tail poking out of the ferns northwest! Your eyes weren't even open!"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Ears don't need eyelids, {name:lord}. Toss me a spare Oran Berry from that crate and I'll listen for anything bigger."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "lord::slakoth_line",
+    "actorA": "lord",
+    "actorB": "slakoth_line",
+    "rank": "B",
+    "title": "Reading the Meadow Wind",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "slakoth", "who": { "kind": "recruit", "speciesId": "slakoth" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Mind if I sit by this oak for noon rest, {name:slakoth}? Everyone else is sparring by the creek."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "*Yaaawn*... Plenty of moss to share, {name:lord}. Here, take the sunny half of this Oran Berry."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Thanks. Hey, before we found you in Lush Prairie, how did you dodge poachers on your own while napping in broad daylight?"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Easy. Crickets go quiet before boots hit the hill. Clover bends the wrong way when an ambush stalks downwind. Even dirt hums before heavy hooves charge."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Moving fast all day burns out your nerves. Save everything for the one swing that counts, and the noise stops bothering you."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "No wonder your hits land like falling timber once you finally wake up, {name:slakoth}."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Lean against my shoulder and shut your eyes for ten minutes, {name:lord}. I will nudge you if the crickets stop singing."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "lord::starly_line",
+    "actorA": "lord",
+    "actorB": "starly_line",
+    "rank": "C",
+    "title": "Skyline Wager",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "starly", "who": { "kind": "recruit", "speciesId": "starly" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Heads up below, {name:lord}! Clear road for two miles, zero bandits, and three shortcut bends marked on the ridge!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Fast report as ever, {name:starly}. Did you even touch a branch the whole flight?"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Please! I fly twice as fast now as I did back on the hometown pitch. Speaking of which, your left flank only held in our sparring bout because I hit a nasty crosswind!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "A crosswind? On a calm evening in town? That is a bold rewrite of history, {name:starly}."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Angry",
+          "side": "right",
+          "text": "Hey, gusts happen! Tell you what, next time the vanguard spots a fork in the trail, bet I tag the high signpost before your boots clear the grass!"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "You are on, {name:starly}. Just remember to actually report what is past the signpost when you win."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Done deal! Watch my tail feathers eat the dust, {name:lord}!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "lord::starly_line",
+    "actorA": "lord",
+    "actorB": "starly_line",
+    "rank": "B",
+    "title": "Feathers in the Gale",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "starly", "who": { "kind": "recruit", "speciesId": "starly" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "{name:starly}, come down by the tent awning. You have been shaking rain out of your wings on that wet pine bough for twenty minutes."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "I am fine, {name:lord}! Just keeping high lookout in case this storm blows something ugly off the ridge."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Here, dry towel near the brazier. When you three trailed us over the mountain pass to reach the capital, did you fly through gales like this alone?"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Pain",
+          "side": "right",
+          "text": "Tch... Up above the passes, the sleet nearly pinned my wings shut twice. Lost your tracks in the fog for half a day."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Angry",
+          "side": "right",
+          "text": "You left town on a royal summons without saying a word! Somebody had to catch up fast before your squad walked straight under an ambush!"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Sad",
+          "side": "left",
+          "text": "I should have told you at the gate, {name:starly}. I didn't want to drag home friends into real blades."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Too late for that now, rival. Scold me in the morning; tonight I am hogging the warm corner by your fire."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "lord::starly_line",
+    "actorA": "lord",
+    "actorB": "starly_line",
+    "rank": "A",
+    "title": "Two Sets of Eyes",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "starly", "who": { "kind": "recruit", "speciesId": "starly" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Quiet evening, {name:starly}. Usually you are buzzing circles around camp until lights out."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "Look up at that clear sky, {name:lord}. Hard to believe it cracked open like glass outside the Emerald Capital just days ago."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Sad",
+          "side": "right",
+          "text": "When Great Tusk roared out of that Rift, the updraft shook every feather off balance. Up in open air, there is nothing to brace against if the sky itself breaks."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Then you drop straight down to our line whenever it does, {name:starly}. You watch the horizon from above, and I will hold every shadow on the ground beneath you."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Heh... Not bad for somebody who still cannot fly a single yard."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Truth is, you are the only rival whose pace I would ever slow my wings down to match, {name:lord}. Knowing you are anchored below makes every dive worth taking."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Same here, {name:starly}. Nobody leads the squad into battle sharper than you."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "lord::starly_line",
+    "actorA": "lord",
+    "actorB": "starly_line",
+    "rank": "S",
+    "title": "Wing and Banner",
+    "music": "a_wish_for_peace",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "starly", "who": { "kind": "recruit", "speciesId": "starly" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Hey, {name:lord}. Before the horns blow for the next march, catch!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Wait, is this one of your primary feathers? You braided green grass cord right around the quill."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Yeah, well, do not make a speech about it! Back home, flyers trade a shed pinion when they swear to share the same sky for life."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "Give me a moment... There, knotted straight onto my expedition badge where everybody can see it."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Listen to me, {name:lord}. I do not care if this road drags us through frozen peaks, desert wastes, or straight into the Rift itself."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Every battle from here until the world is quiet again, my shadow flies right above your shoulder. No rival, no storm, and no distance breaks this flock."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Sworn partners from the hometown pitch to the end of the map, {name:starly}. Wherever you fly, I am right beneath you."
+        }
+      },
+      {
+        "id": "line_8",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Good! Now try keeping up when I sound the advance, partner!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "caterpie_line::lord",
+    "actorA": "caterpie_line",
+    "actorB": "lord",
+    "rank": "C",
+    "title": "Counting Leaves",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "caterpie", "who": { "kind": "recruit", "speciesId": "caterpie" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "What are you sketching in the dirt over there, {name:caterpie}?"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Oh, {name:lord}! Look at these giant fern fronds along the capital road. Each leaflet is wider than our whole clover patch back home!"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Inspired",
+          "side": "right",
+          "text": "Every mile we walk out here, the bark smells different and the canopy climbs twice as high. I keep wondering what the view looks like from those top branches."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Hold steady a second, {name:caterpie}. Hop onto my arm and let us reach that high cedar bough over the ridge."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Whoa! Look at the valley mist curling between the spires! Everything down on the road looks tiny from up here!"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Wait till we reach the other kingdoms, {name:caterpie}. I bet there are treetops twice as tall waiting for you."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Then I am going to count every single leaf along the way, {name:lord}!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "caterpie_line::lord",
+    "actorA": "caterpie_line",
+    "actorB": "lord",
+    "rank": "B",
+    "title": "Silk on the Trail",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "caterpie", "who": { "kind": "recruit", "speciesId": "caterpie" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Hey, {name:caterpie}, did you tie these silver silk threads between the wagon wheels and the supply sacks?"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "Ah, you noticed! Sorry if they look messy, {name:lord}. The slope behind camp gets slick with dew at night, and the heavy crates kept shifting toward the ditch."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Sad",
+          "side": "right",
+          "text": "I cannot haul boulders like Quaquaval or punch through stone walls like the big fighters, so I figured anchoring the packs was the least I could handle."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Messy? You saved half our spare remedies from tumbling down a ravine in the dark, {name:caterpie}."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Besides, nobody catches loose latches or hidden snares down near the grass faster than you. Our hometown crew would be lost without your eyes."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Inspired",
+          "side": "right",
+          "text": "Really? Then tonight I will weave extra guide lines up the steep switchback before sunrise so nobody slips!"
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Lead the way up the ridge, {name:caterpie}. Just save some energy for spotting the next high branch!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "lord::pawmi_line",
+    "actorA": "lord",
+    "actorB": "pawmi_line",
+    "rank": "C",
+    "title": "Static Rematch",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Up and at 'em, {name:lord}! Three, two, one, rematch time right here by the cookfire!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Hold on, {name:pawmi}! I barely finished pouring hot tea, and your cheeks are already sparking like firecrackers!"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "That is because I have been waiting since the hometown pitch bout! You three broke my Nuzzle lock with Paralyze Heal and swept the field. That score is staying zero to one until I tag you back!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Haha, careful! One more bounce like that and you are going to toast the kettle."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Stunned",
+          "side": "right",
+          "text": "Whoa, zap! Good catch, sorry, kettle! Okay, five minutes after packs are rolled. Three quick rounds of footwork, full speed!"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Three rounds, no Nuzzle shocks near the tents. Deal, {name:pawmi}!"
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Deal! Better stretch those legs fast, {name:lord}, because I am not slowing down!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "lord::pawmi_line",
+    "actorA": "lord",
+    "actorB": "pawmi_line",
+    "rank": "B",
+    "title": "When Sparks Scatter",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "Hey, {name:pawmi}. You have been scrubbing soot off your gloves all alone by the stream since the skirmish ended."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Sad",
+          "side": "right",
+          "text": "Oh, hey, {name:lord}. Look at my cheeks. Every time I try charging up tonight, the sparks just fizzle sideways."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "Back on the town pitch, yelling and snapping jolts felt like a huge game. Today, charging down real horns and iron hides, I wondered if a little shock from me could even stop anybody from getting hurt."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Wait a minute. Who sprinted right into the middle of a stampede outside the capital gates without hesitating half a heartbeat?"
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "One spark from you locks up an attacker mid-charge and buys the whole line room to breathe, {name:pawmi}. I never doubt who has my flank when I hear that crackle."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Pop! Heh... hear that? Guess the static came right back on its own."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Thanks, {name:lord}. Next time a heavy charger rushes the line, I am meeting them head-on before they touch you!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "lord::pawmi_line",
+    "actorA": "lord",
+    "actorB": "pawmi_line",
+    "rank": "A",
+    "title": "Same Rhythm",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Step left, pivot, fake right! Come on, {name:lord}, match the count!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Right behind your shoulder, {name:pawmi}! Watch the inside lane, cut back!"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Whoa, hold up! You shifted left half a second before my heel even planted!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "After how many bouts together since town, {name:pawmi}? I can tell which way you are cutting just from the flicker on your whiskers."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Hahaha! Remember when we used to clash head-first across the grass just trying to outscore each other?"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Fighting on the same side of the line feels ten times faster. Nobody else in the whole squad can keep up with our tempo, {name:lord}!"
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Then let us run the drill one more time before dark, partner. Same count!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "lord::pawmi_line",
+    "actorA": "lord",
+    "actorB": "pawmi_line",
+    "rank": "S",
+    "title": "Unbroken Current",
+    "music": "a_wish_for_peace",
+    "cast": [
+      { "id": "lord", "who": { "kind": "lord" } },
+      { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Taking the late watch under the stars, {name:pawmi}? No midnight sprints tonight?"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Not tonight, {name:lord}. Sit here for a minute. Look, my cheeks are just humming warm and steady, no wild crackles at all."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Back home, I chased you across the pitch every day just to prove I was faster. Then we crossed the mountains, stared down that torn sky, and everything clicked."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Teary-Eyed",
+          "side": "right",
+          "text": "I wasn't chasing a rematch anymore, {name:lord}. I just couldn't stand the thought of you walking into the dark ahead of us without me at your side."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "That goes both ways, {name:pawmi}. Every time the odds look impossible, hearing your cheer makes the whole field feel winnable."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "No matter how far the Rift pulls us from home, we see this through together and run the victory lap back to our old pitch side by side."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Sworn partners for life, {name:lord}! From the hometown grass to the end of the war, my spark stays locked right next to yours!"
+        }
+      },
+      {
+        "id": "line_8",
+        "say": {
+          "speaker": "lord",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Unbroken current, {name:pawmi}. Always."
+        }
+      }
+    ]
+  }
+]

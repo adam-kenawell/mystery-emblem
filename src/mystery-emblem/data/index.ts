@@ -14,6 +14,8 @@ import playableParaloguesRaw from './species/playable_paralogues.json';
 import playableQuizEarlyRaw from './species/playable_quiz_early.json';
 import playableQuizLateRaw from './species/playable_quiz_late.json';
 import playableStoryRaw from './species/playable_story.json';
+import { SUPPORT_CONVERSATION_LIST } from './supports/supportConversationRegistry';
+import { SUPPORT_PAIR_DEFINITIONS } from './supports/supportMatrix';
 import {
   type ItemDefinition,
   type LearnsetEntry,
@@ -115,7 +117,11 @@ export function getRegistryValidationSummary(): RegistryValidationSummary {
       POKEMON_SPECIES_LIST,
       MOVES_LIST,
       ITEMS_LIST,
-      PERSONAL_SKILLS_LIST
+      PERSONAL_SKILLS_LIST,
+      {
+        pairs: SUPPORT_PAIR_DEFINITIONS,
+        conversations: SUPPORT_CONVERSATION_LIST,
+      }
     );
   }
   return cachedValidation;

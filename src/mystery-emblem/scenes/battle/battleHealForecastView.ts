@@ -11,6 +11,7 @@ import {
   renderForecastMoveList,
   setForecastStatLabels,
 } from './battleForecastMoveList';
+import { getBattleSupportContext } from './battleSupportHelpers';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
   getHealableTargetsFromCurrentTile,
@@ -35,7 +36,14 @@ export function refreshHealForecastModalDom(ctx: BattleControllerContext): void 
   }
   const activeSlot = validMoves.find((m) => m.id === state.forecastMoveId) ?? validMoves[0]!;
 
-  const healForecast = computeHealForecast(state.map, healer, target, state.forecastMoveId);
+  const healForecast = computeHealForecast(
+    state.map,
+    healer,
+    target,
+    state.forecastMoveId,
+    undefined,
+    getBattleSupportContext(state)
+  );
   if (!healForecast) return;
   state.currentHealForecast = healForecast;
 

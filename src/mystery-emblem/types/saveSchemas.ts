@@ -75,11 +75,16 @@ export interface ConvoyEntry {
   quantity: number;
 }
 
+export const SUPPORT_RANKS = ['C', 'B', 'A', 'S'] as const;
+export type SupportRank = (typeof SUPPORT_RANKS)[number];
+export type UnlockedSupportRank = SupportRank | null;
 export type SupportLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
 export interface SupportPairProgress {
   points: number;
-  level: SupportLevel;
+  unlockedRank: UnlockedSupportRank;
+  /** Legacy numeric field retained only for pre-rank save normalization */
+  level?: SupportLevel;
 }
 
 export interface SkirmishSpawnState {
@@ -155,7 +160,7 @@ export interface SaveData {
   campaign: CampaignState;
   roster: OwnedPokemonInstance[];
   convoy: ConvoyEntry[];
-  /** Keyed by canonical sorted pair `${minInstanceId}::${maxInstanceId}` */
+  /** Keyed by canonical sorted actor pair `${minActorId}::${maxActorId}` (`'lord'` or `lineId`) */
   supports: Record<string, SupportPairProgress>;
   overworld: {
     currentNodeId: string;

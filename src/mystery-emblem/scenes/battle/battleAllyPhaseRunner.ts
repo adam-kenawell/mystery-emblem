@@ -18,6 +18,7 @@ import { recomputeDangerArea, syncHudControls } from './battleDangerAndViewportS
 import { runUnitDefeatedEvents } from './battleEventRunner';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { checkAndTriggerMatchEnd } from './battleOutcomeModals';
+import { getBattleSupportContext } from './battleSupportHelpers';
 import type { BattleControllerContext } from './battleTypesAndState';
 import { getLivingNpcs, getLivingUnits } from './battleUnitQueries';
 import { playWalkPathAsync } from './battleWalkAndHealAnimator';
@@ -50,7 +51,12 @@ export async function runAllyNpcPhase(
     ensureTilePairVisible(state, npc.x, npc.y, npc.x, npc.y);
     updateBattleInfoStrip(ctx);
 
-    const decision = chooseNpcAllyAction(state.map, npc, getLivingUnits(state));
+    const decision = chooseNpcAllyAction(
+      state.map,
+      npc,
+      getLivingUnits(state),
+      getBattleSupportContext(state)
+    );
 
     if (decision.path.length > 1) {
       await playWalkPathAsync(state, npc, decision.path, true);
@@ -69,7 +75,9 @@ export async function runAllyNpcPhase(
           state.map,
           npc,
           target,
-          decision.attack.moveId
+          decision.attack.moveId,
+          undefined,
+          getBattleSupportContext(state)
         );
         if (liveForecast) {
           await waitBattleMs(state, 150);

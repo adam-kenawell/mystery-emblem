@@ -13,11 +13,13 @@ import type {
   StatusCondition,
   TerrainType,
 } from '../../types/schemas';
+import { computeAdjacentSupportSummary } from '../supportEngine';
 import { getMapTerrainAt, getTerrainBonuses } from '../terrainAndPathfinding';
 import {
   getUnitEffectiveCombatStats,
   manhattanDistance,
   type BattleMoveSlot,
+  type BattleSupportContext,
   type BattleUnitState,
 } from './combatTypesAndStats';
 
@@ -125,7 +127,8 @@ export function computeStatusMoveForecast(
   caster: BattleUnitState,
   target: BattleUnitState,
   moveId: string,
-  casterPosOverride?: { x: number; y: number }
+  casterPosOverride?: { x: number; y: number },
+  supportCtx?: BattleSupportContext
 ): StatusMoveForecast | null {
   const cx = casterPosOverride?.x ?? caster.x;
   const cy = casterPosOverride?.y ?? caster.y;
@@ -136,8 +139,16 @@ export function computeStatusMoveForecast(
   const inflictStatus = slot?.move.supportPayload?.inflictStatus;
   if (!slot || !inflictStatus) return null;
 
-  const casterEff = getUnitEffectiveCombatStats(caster);
-  const targetEff = getUnitEffectiveCombatStats(target);
+  const casterSupportBonus = supportCtx
+    ? computeAdjacentSupportSummary(caster, supportCtx.units, supportCtx.supports, { x: cx, y: cy })
+        .totalBonus
+    : undefined;
+  const targetSupportBonus = supportCtx
+    ? computeAdjacentSupportSummary(target, supportCtx.units, supportCtx.supports).totalBonus
+    : undefined;
+
+  const casterEff = getUnitEffectiveCombatStats(caster, casterSupportBonus);
+  const targetEff = getUnitEffectiveCombatStats(target, targetSupportBonus);
   const casterTerrain = getMapTerrainAt(map, cx, cy) ?? 'floor';
   const targetTerrain = getMapTerrainAt(map, target.x, target.y) ?? 'floor';
   const targetBonuses = getTerrainBonuses(targetTerrain, target);

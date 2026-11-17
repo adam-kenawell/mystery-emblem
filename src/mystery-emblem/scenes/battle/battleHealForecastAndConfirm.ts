@@ -33,6 +33,7 @@ import {
   openFloatingCommandMenu,
 } from './battleSelectionAndMenu';
 import { confirmForecastStatusHex } from './battleStatusHexController';
+import { getBattleSupportContext } from './battleSupportHelpers';
 import {
   triggerReactiveForecastTutorial,
   triggerReactivePostCombatTutorials,
@@ -148,7 +149,14 @@ async function confirmForecastAttack(ctx: BattleControllerContext): Promise<void
   );
   if (!attacker || !defender || !state.forecastMoveId) return;
 
-  const forecast = computeCombatForecast(state.map, attacker, defender, state.forecastMoveId);
+  const forecast = computeCombatForecast(
+    state.map,
+    attacker,
+    defender,
+    state.forecastMoveId,
+    undefined,
+    getBattleSupportContext(state)
+  );
   if (!forecast) return;
 
   const runGen = state.battleRunGen;
@@ -217,7 +225,14 @@ async function confirmForecastHeal(ctx: BattleControllerContext): Promise<void> 
   );
   if (!healer || !target || !state.forecastMoveId) return;
 
-  const healForecast = computeHealForecast(state.map, healer, target, state.forecastMoveId);
+  const healForecast = computeHealForecast(
+    state.map,
+    healer,
+    target,
+    state.forecastMoveId,
+    undefined,
+    getBattleSupportContext(state)
+  );
   if (!healForecast) return;
 
   const runGen = state.battleRunGen;

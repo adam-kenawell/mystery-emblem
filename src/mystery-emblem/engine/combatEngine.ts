@@ -18,6 +18,7 @@ export {
   getUnitEffectiveCombatStats,
   computeUnitPopupStats,
   type BattleMoveSlot,
+  type BattleSupportContext,
   type TempBattleBoosts,
   type BattleUnitState,
   type CombatSideForecast,

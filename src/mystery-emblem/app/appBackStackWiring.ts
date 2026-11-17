@@ -3,6 +3,7 @@
  */
 
 import { hasAdminDevToolsAccess } from '../data/accessControl';
+import { hasAnyAvailableSupportConversation } from '../engine/supportEngine';
 import { BackStackController } from '../ui/pointerControls';
 import { closeSaveSlotOverlay, isSaveSlotOverlayOpen } from '../ui/SaveSlotOverlay';
 import type { AppRuntimeContext } from './appContext';
@@ -68,10 +69,18 @@ export function createAppBackStack(
           return;
         }
         if (ctx.mapEditorScene?.isOpen() || ctx.overworldScene?.isOpen()) {
+          const hasReadySupport =
+            ctx.overworldScene?.isOpen() &&
+            hasAnyAvailableSupportConversation(ctx.manager.getSave());
           btn.hidden = false;
-          btn.textContent = 'Menu';
+          btn.innerHTML = hasReadySupport
+            ? 'Menu <span class="pmd-supports-exclaim-mini" data-testid="corner-menu-ready-badge">!</span>'
+            : 'Menu';
           btn.dataset.cornerMode = 'menu';
-          btn.setAttribute('aria-label', 'Open System Menu');
+          btn.setAttribute(
+            'aria-label',
+            hasReadySupport ? 'Open System Menu (Support Ready)' : 'Open System Menu'
+          );
           btn.removeAttribute('title');
           return;
         }

@@ -10,11 +10,20 @@
 import { isMoveEquipped } from '../../data/equippedMoves';
 import { getItemById, getPersonalSkillById, getSpeciesById } from '../../data/index';
 import {
+  formatLineSupportGiftTag,
+  formatSupportStatBonusShort,
+  getSupportPartnersForActor,
+} from '../../data/supports/supportMatrix';
+import {
   STATUS_BADGE_COLORS,
   getUnitEffectiveCombatStats,
   isOffensiveMove,
 } from '../../engine/combatEngine';
 import { MAX_UNIT_LEVEL } from '../../engine/progressionEngine';
+import {
+  computeAdjacentSupportSummary,
+  resolveSupportActorIdForBattleUnit,
+} from '../../engine/supportEngine';
 import { getEffectiveMovementPoints } from '../../engine/terrainAndPathfinding';
 import type { OwnedPokemonInstance, StatBlockSeven } from '../../types/schemas';
 import { createMiniItemIcon } from '../../ui/PmdItemIconGrid';
@@ -102,7 +111,10 @@ export function renderBattleUnitsRosterPanel(
     const skill = getPersonalSkillById(unit.personalSkillId || sp?.personalSkillId || '');
     const hasHiddenPotential =
       unit.personalSkillId === 'hidden_potential' || sp?.personalSkillId === 'hidden_potential';
-    const eff = getUnitEffectiveCombatStats(unit);
+    const supportSummary = isFainted
+      ? computeAdjacentSupportSummary(unit, [], state.battleSupportPoints)
+      : computeAdjacentSupportSummary(unit, state.units, state.battleSupportPoints);
+    const eff = getUnitEffectiveCombatStats(unit, supportSummary.totalBonus);
     const effMov = isFainted ? unit.mov : getEffectiveMovementPoints(unit);
     const speciesTag =
       unit.nickname.trim().toLowerCase() !== unit.speciesName.trim().toLowerCase()
@@ -154,6 +166,7 @@ export function renderBattleUnitsRosterPanel(
         </div>
         <div class="pmd-dungeon-units-kv" data-testid="dungeon-units-detail-item"></div>
       </div>
+      <div class="pmd-dungeon-units-subbox" data-testid="dungeon-units-detail-supports"></div>
       <div class="pmd-dungeon-units-moves" data-testid="dungeon-units-detail-moves"></div>
     `;
 
@@ -235,6 +248,34 @@ export function renderBattleUnitsRosterPanel(
         row.appendChild(txt);
         itemSlotEl.appendChild(row);
       }
+    }
+
+    const supportsBoxEl = detailEl.querySelector<HTMLElement>(
+      '[data-testid="dungeon-units-detail-supports"]'
+    )!;
+    const actorId = resolveSupportActorIdForBattleUnit(unit);
+    const hasSupportPartners = actorId ? getSupportPartnersForActor(actorId).length > 0 : false;
+    const giftTag = formatLineSupportGiftTag(sp?.lineId);
+    if (!hasSupportPartners && supportSummary.activePartners.length === 0) {
+      supportsBoxEl.hidden = true;
+    } else {
+      const totalLabel = formatSupportStatBonusShort(supportSummary.totalBonus);
+      const partnerRowsHtml =
+        supportSummary.activePartners.length > 0
+          ? supportSummary.activePartners
+              .map((p) => {
+                const pBonus = formatSupportStatBonusShort(p.bonus);
+                return `<span class="pmd-dungeon-units-support-partner">${escapeUiHtml(p.nickname)} (${p.rank}): ${escapeUiHtml(pBonus)}</span>`;
+              })
+              .join('')
+          : `<span class="pmd-dungeon-units-support-empty">No supported allies adjacent.</span>`;
+      supportsBoxEl.innerHTML = `
+        <div class="pmd-dungeon-units-kv">
+          <strong>Adjacent Supports${totalLabel ? ` (${escapeUiHtml(totalLabel)})` : ''}</strong>
+          ${partnerRowsHtml}
+          <span class="pmd-dungeon-units-support-gift">Support Gift: ${escapeUiHtml(giftTag || 'Balanced')}</span>
+        </div>
+      `;
     }
 
     const movesEl = detailEl.querySelector<HTMLElement>('[data-testid="dungeon-units-detail-moves"]')!;

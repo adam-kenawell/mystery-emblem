@@ -168,6 +168,7 @@ export function triggerVictoryModal(ctx: BattleControllerContext): void {
         droppedItemIds: state.collectedDrops,
         clearRewardItems: [...state.clearRewardItems, ...state.eventBonusItems],
         bonusGold: state.eventBonusGold,
+        battleSupports: state.battleSupportPoints,
       });
 
       for (const rec of state.pendingPostBattleRecruits) {

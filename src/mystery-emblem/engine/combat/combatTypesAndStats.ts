@@ -4,6 +4,10 @@
 
 import type { PmdDirection, PmdSpriteAction } from '../../assets/pmdAssetLoader';
 import { getItemById, getMoveById, getSpeciesById } from '../../data/index';
+import type {
+  AdjacentSupportSummary,
+  SupportStatBonus,
+} from '../../data/supports/supportTypes';
 import {
   getEquippedMoveIds,
   isMoveEquipped,
@@ -15,11 +19,16 @@ import type {
   PokemonType,
   StatBlockSeven,
   StatusCondition,
+  SupportPairProgress,
   TerrainBonuses,
   TerrainType,
   TraversalClass,
   UnitCosmeticForm,
 } from '../../types/schemas';
+import {
+  computeAdjacentSupportSummary,
+  createZeroSupportBonus,
+} from '../supportEngine';
 import {
   getMapTerrainAt,
   getTerrainBonuses,
@@ -27,6 +36,11 @@ import {
   type PathfindingUnitContext,
 } from '../terrainAndPathfinding';
 import type { TypeEffectivenessLabel, TypeEffectivenessMultiplier } from './typeEffectiveness';
+
+export interface BattleSupportContext {
+  units: ReadonlyArray<BattleUnitState>;
+  supports?: Readonly<Record<string, SupportPairProgress>>;
+}
 
 export interface BattleMoveSlot extends ActiveMoveRangeEntry {
   maxPp: number;
@@ -202,7 +216,8 @@ export function getUnitEffectiveCombatStats(
   unit: Pick<BattleUnitState, 'speciesId' | 'stats' | 'heldItemId' | 'tempBattleBoosts'> & {
     status?: StatusCondition | null;
     personalSkillId?: string;
-  }
+  },
+  supportBonus?: SupportStatBonus
 ): {
   atk: number;
   def: number;
@@ -213,11 +228,11 @@ export function getUnitEffectiveCombatStats(
   critBonus: number;
 } {
   const boosts = unit.tempBattleBoosts;
-  let atk = unit.stats.atk + (boosts?.atk ?? 0);
-  let def = unit.stats.def + (boosts?.def ?? 0);
-  let spa = unit.stats.spa + (boosts?.spa ?? 0);
-  let spd = unit.stats.spd + (boosts?.spd ?? 0);
-  let spe = unit.stats.spe + (boosts?.spe ?? 0);
+  let atk = unit.stats.atk + (boosts?.atk ?? 0) + (supportBonus?.atk ?? 0);
+  let def = unit.stats.def + (boosts?.def ?? 0) + (supportBonus?.def ?? 0);
+  let spa = unit.stats.spa + (boosts?.spa ?? 0) + (supportBonus?.spa ?? 0);
+  let spd = unit.stats.spd + (boosts?.spd ?? 0) + (supportBonus?.spd ?? 0);
+  let spe = unit.stats.spe + (boosts?.spe ?? 0) + (supportBonus?.spe ?? 0);
   let hitBonus = 0;
   let critBonus = boosts?.crit ?? 0;
 
@@ -258,18 +273,26 @@ export interface UnitPopupCombatSummary {
   specialMight: number | null;
   effectiveDef: number;
   effectiveSpd: number;
-  /** Effective Speed (base + boosts + held item; PAR penalty). Terrain grants no Speed bonus. */
+  /** Effective Speed (base + boosts + held item + adjacent support; PAR penalty). Terrain grants no Speed bonus. */
   effectiveSpe: number;
   terrainDefBonus: number;
   terrainSpdBonus: number;
   terrainAvoidBonus: number;
+  supportSummary: AdjacentSupportSummary;
+  mightBoostedBySupport: boolean;
+  prtBoostedBySupport: boolean;
+  speBoostedBySupport: boolean;
 }
 
 export function computeUnitPopupStats(
   map: DungeonMapDefinition,
-  unit: BattleUnitState
+  unit: BattleUnitState,
+  supportCtx?: BattleSupportContext
 ): UnitPopupCombatSummary {
-  const eff = getUnitEffectiveCombatStats(unit);
+  const supportSummary: AdjacentSupportSummary = supportCtx
+    ? computeAdjacentSupportSummary(unit, supportCtx.units, supportCtx.supports)
+    : { totalBonus: createZeroSupportBonus(), activePartners: [] };
+  const eff = getUnitEffectiveCombatStats(unit, supportSummary.totalBonus);
   const terrain = getMapTerrainAt(map, unit.x, unit.y) ?? 'floor';
   const terrainBonuses = getTerrainBonuses(terrain, unit);
 
@@ -335,5 +358,12 @@ export function computeUnitPopupStats(
     terrainDefBonus: terrainBonuses.defBonus,
     terrainSpdBonus: terrainBonuses.spdBonus,
     terrainAvoidBonus: terrainBonuses.avoidBonus,
+    supportSummary,
+    mightBoostedBySupport:
+      (physicalMight !== null && supportSummary.totalBonus.atk > 0) ||
+      (specialMight !== null && supportSummary.totalBonus.spa > 0),
+    prtBoostedBySupport:
+      supportSummary.totalBonus.def > 0 || supportSummary.totalBonus.spd > 0,
+    speBoostedBySupport: supportSummary.totalBonus.spe > 0,
   };
 }

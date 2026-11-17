@@ -9,11 +9,13 @@ import {
   getOverworldNodeById,
   type OverworldGraphDefinition,
 } from '../../data/overworldMapData';
+import { areSupportsUnlockedInCampaign } from '../../data/supports/supportMatrix';
 import { ensureOverworldGraphState } from '../../engine/overworldEngine';
+import { hasAnyAvailableSupportConversation } from '../../engine/supportEngine';
 import type { SaveData } from '../../types/schemas';
 import type { PmdPortraitView } from '../../ui/PmdSpriteCanvas';
 
-export type OverworldMenuTab = 'units' | 'convoy' | 'system';
+export type OverworldMenuTab = 'units' | 'convoy' | 'supports' | 'system';
 
 const mapImageCache = new Map<string, Promise<CanvasImageSource>>();
 
@@ -65,6 +67,7 @@ export interface OverworldDomElements {
   kecleonShelfEl: HTMLElement;
   kecleonStatusEl: HTMLElement;
   systemMenuBackdropEl: HTMLElement;
+  supportsTabBtnEl: HTMLButtonElement;
   menuPanelBodyEl: HTMLElement;
   menuFeedbackEl: HTMLElement;
 }
@@ -164,6 +167,7 @@ export function createOverworldDomElements(
       <nav class="pmd-inline-btns" aria-label="Overworld Menu Sections">
         <button type="button" class="pmd-btn pmd-chip-btn is-active" data-ow-tab="units" data-testid="overworld-menu-tab-units">Units</button>
         <button type="button" class="pmd-btn pmd-chip-btn" data-ow-tab="convoy" data-testid="overworld-menu-tab-convoy">Items</button>
+        <button type="button" class="pmd-btn pmd-chip-btn" data-ow-tab="supports" data-testid="overworld-menu-tab-supports" hidden>Supports</button>
         <button type="button" class="pmd-btn pmd-chip-btn" data-ow-tab="system" data-testid="overworld-menu-tab-system">System</button>
       </nav>
       <p class="pmd-subcard-text" data-testid="overworld-menu-feedback" style="color:#90ffbe;" hidden></p>
@@ -202,9 +206,23 @@ export function createOverworldDomElements(
     kecleonShelfEl: kecleonBackdropEl.querySelector('[data-testid="kecleon-shop-shelf"]')!,
     kecleonStatusEl: kecleonBackdropEl.querySelector('[data-testid="kecleon-shop-status"]')!,
     systemMenuBackdropEl,
+    supportsTabBtnEl: systemMenuBackdropEl.querySelector('[data-testid="overworld-menu-tab-supports"]')!,
     menuPanelBodyEl: systemMenuBackdropEl.querySelector('[data-testid="overworld-menu-body"]')!,
     menuFeedbackEl: systemMenuBackdropEl.querySelector('[data-testid="overworld-menu-feedback"]')!,
   };
+}
+
+export function syncOverworldSupportsTabButton(
+  dom: OverworldDomElements,
+  save: SaveData | null | undefined
+): void {
+  const unlocked = areSupportsUnlockedInCampaign(save);
+  dom.supportsTabBtnEl.hidden = !unlocked;
+  if (!unlocked) return;
+  const hasReady = hasAnyAvailableSupportConversation(save);
+  dom.supportsTabBtnEl.innerHTML = hasReady
+    ? 'Supports<span class="pmd-supports-tab-badge" data-testid="overworld-supports-tab-ready-badge">!</span>'
+    : 'Supports';
 }
 
 const OVERWORLD_NODE_CODE_PREFIXES: ReadonlyArray<[RegExp, string]> = [

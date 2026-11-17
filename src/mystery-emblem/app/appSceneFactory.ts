@@ -88,6 +88,7 @@ export function mountGameplayScenesAndDevTools(ctx: AppRuntimeContext, router: S
       viewportEl: dom.viewportEl,
       saveManager: manager,
       audioManager,
+      dialogueOverlay: ctx.dialogueOverlay ?? undefined,
       tutorialOverlay: tutorialOverlay ?? undefined,
       onExit: () => { if (ctx.overworldReturnTarget !== 'suppress') router.showTitleScreen(); },
       onLayerStateChanged: () => backStack.syncButtonLabel(),

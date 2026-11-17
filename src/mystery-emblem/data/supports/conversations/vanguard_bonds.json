@@ -1,0 +1,1443 @@
+[
+  {
+    "pairKey": "combee_line::flabebe_line",
+    "actorA": "combee_line",
+    "actorB": "flabebe_line",
+    "rank": "C",
+    "title": "Pollen on the Breeze",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "combee", "who": { "kind": "recruit", "speciesId": "combee" } },
+      { "id": "healer", "who": { "kind": "healer" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Good morning, {name:healer}! We traced the warm updraft from the ridge and found golden clover blooming behind camp! ...Yeah, golden clover!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Golden clover this high up? No wonder my blossom kept tilting east while we marched!"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "We shook a little dust off the outer petals for you. Left wing carried the dry pollen, right wing grabbed the dewdrop... and the bottom of us dropped the dewdrop."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Hehe, thank you anyway, all three of you. Here, let me brush the loose grains into your honeycomb pocket before the wind steals them."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Joyous",
+          "side": "left",
+          "text": "Whoa, your touch cooled our wings right down! How did you keep those petals so crisp without a drop of spring water? ...Yeah, how?!"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Just shade them with a leaf when the sun bites too hard. Next break, you show us where that clover grows, and I will teach you how to spot the freshest buds."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "combee_line::flabebe_line",
+    "actorA": "combee_line",
+    "actorB": "flabebe_line",
+    "rank": "B",
+    "title": "Dew and Honeycraft",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "combee", "who": { "kind": "recruit", "speciesId": "combee" } },
+      { "id": "healer", "who": { "kind": "healer" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Hold still a second, {name:combee}. You caught soot on your wingtips scouting through that dry pass."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "Sorry, {name:healer}! We hovered too close to a wild ember trap, and the bottom of us tried to sneeze it out... which only blew ash everywhere."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Good thing you brought back sweet nectar from the valley yesterday. Dab a tiny drop along a scorched wing and it seals the cracks like tree sap."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Wait, our own honey works as salve?! We always just ate it between marches! ...Wait, we can use it for wings too?!"
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Mix it with crushed mint leaf and it calms bruises twice as fast. My mom taught me that trick back home whenever my brother scraped his knees."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Then we have a deal! We scout every wildflower patch ahead of the squad, and you turn our harvest into medicine! ...Into medicine!"
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Deal! With scouts like you in the canopy, nobody in this company will ever run short of salve."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "combee_line::flabebe_line",
+    "actorA": "combee_line",
+    "actorB": "flabebe_line",
+    "rank": "A",
+    "title": "Three Heads, One Bloom",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "combee", "who": { "kind": "recruit", "speciesId": "combee" } },
+      { "id": "healer", "who": { "kind": "healer" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "{name:combee}, why did you dive in front of that stone volley earlier? Your lower wing is trembling."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Pain",
+          "side": "left",
+          "text": "Ow, easy on the left edge... A pebble clipped your stem while you were healing the front line, so we banked across before the second rock hit."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Sad",
+          "side": "right",
+          "text": "You took the blow for a single petal? If one of you gets hurt badly, all three of you feel it."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "That's why we move fast. Back at the hive, if a frost wind hits one flowerbed, the whole swarm crowds around to warm it. ...Yeah, we don't leave blooms behind."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Teary-Eyed",
+          "side": "right",
+          "text": "Even when the road gets meaner than our village woods... you still hover right beside me."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Besides, who else lets us nap on a soft blossom between turns? We're sticking near you all the way to the finish, {name:healer}."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Inspired",
+          "side": "right",
+          "text": "Then stay close enough to hear my bell-chime, okay? Whenever you pull back hurt, my healing light goes to you first."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "combee_line::flabebe_line",
+    "actorA": "combee_line",
+    "actorB": "flabebe_line",
+    "rank": "S",
+    "title": "Wing and Petal Oath",
+    "music": "a_wish_for_peace",
+    "cast": [
+      { "id": "combee", "who": { "kind": "recruit", "speciesId": "combee" } },
+      { "id": "healer", "who": { "kind": "healer" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Look at that sky, {name:healer}. Even out here near scarred ground, a tiny blue bud poked straight through the gravel! ...Right through the gravel!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "And look at all the pollen clinging to your fur. Everywhere we have marched since the watering hole, you have been planting seeds without even noticing."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Wait, really? We thought we were just snacking on the fly! ...Wait, we planted a trail?"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "When this Rift trouble is finally sealed and the roads open back up, every camp we left behind is going to bloom."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "Hey, {name:healer}. Once the war ends, will you fly out past the village with us? Half the ridges out there still need fresh meadows."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Inspired",
+          "side": "right",
+          "text": "Count on it. Wing and petal, from the first spring morning to every hillside after. Neither of us flies a meadow alone again."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Joyous",
+          "side": "left",
+          "text": "All three of us heard that promise, and not even the bottom one lagged! Wing and petal partners for life!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "chespin_line::mentor_quaquaval_line",
+    "actorA": "chespin_line",
+    "actorB": "mentor_quaquaval_line",
+    "rank": "C",
+    "title": "Angle of the Shield",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
+      { "id": "mentor", "who": { "kind": "mentor" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Hmph! Brace the shoulders, lock both knees, never give a single pace! Right, Master {name:mentor}?"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Stand like a gatepost, young {name:chespin}, and a charging rhino will tip you over like a barrel. Watch your left heel."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Whoa! One tap with your feather fan spun my whole shell sideways! How did you break my stance so easily?"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Because you met force head-on. Turn your shoulder ten degrees, sink your weight into the back foot, and let their blow slide off your armor."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Ten degrees... sink the back heel... Wait. That feels lighter! Almost like dancing in iron!"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Footwork keeps armor alive, squire. Practice that pivot twenty times before supper, and tomorrow no raider on the ridge moves you."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "chespin_line::mentor_quaquaval_line",
+    "actorA": "chespin_line",
+    "actorB": "mentor_quaquaval_line",
+    "rank": "B",
+    "title": "Yielding an Inch",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
+      { "id": "mentor", "who": { "kind": "mentor" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "Master {name:mentor}, I held the narrow pass today, yet when a second attacker flanked right, I nearly lost my balance stepping back."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "You hesitated because you thought a knight should never retreat a single step. Am I right?"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Sad",
+          "side": "left",
+          "text": "Yes, sir. On the foothill trail, I swore to stand like a wall. Giving ground felt like breaking my oath."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "In the Royal Guard, we had a saying: yield an inch with your feet so your comrades keep a mile behind you. Stubbornness gets your flank broken."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Wait... so sliding half a pace back to line up both foes in front of my shell is actually good guard work?"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "The very finest kind. A wall never thinks, {name:chespin}. A knight moves so the line never tears."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "Yield an inch to hold a mile. I will drill that step until my boots wear thin!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "chespin_line::mentor_quaquaval_line",
+    "actorA": "chespin_line",
+    "actorB": "mentor_quaquaval_line",
+    "rank": "A",
+    "title": "Mantle of the Guard",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
+      { "id": "mentor", "who": { "kind": "mentor" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Enough drills for tonight, {name:chespin}. Sit by the embers and catch your breath."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "Did I miss my pivot on that last sweep, Master {name:mentor}? I felt my back heel lift."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Your heel stayed planted, and you parried three strikes I threw at full speed. That was no squire's stance."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Full speed?! You mean you weren't holding back anymore?"
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Not once. Back when I served King Serperior, knights twice your size buckled under half that pressure. You belong in the Royal Guard."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Teary-Eyed",
+          "side": "left",
+          "text": "Coming from you, sir... that means more than any royal medal."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "mentor",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "My knees won't carry the front line forever, {name:chespin}. Watch over my kids when the storms break ahead, and keep standing tall."
+        }
+      },
+      {
+        "id": "line_8",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Upon my shell and my honor, Master {name:mentor}, nothing touches them while I am standing."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "chespin_line::machop_line",
+    "actorA": "chespin_line",
+    "actorB": "machop_line",
+    "rank": "C",
+    "title": "Unstoppable vs. Immovable",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
+      { "id": "machop", "who": { "kind": "recruit", "speciesId": "machop" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "All right, {name:chespin}! I split three pine logs before breakfast, so brace that shiny shell! Let's see if my punch can nudge you!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "I am ready whenever you are, {name:machop}. Strike right at the center crest."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Shouting",
+          "side": "right",
+          "text": "Hup-HAAAH! ...YOWCH! Ow, ow, ow! Did you swallow a boulder?! My knuckles feel like they hit a castle wall!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Are your fingers all right?! Wait... my boots didn't even slide an inch in the mud!"
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Pain",
+          "side": "right",
+          "text": "Shake it off, shake it off... Hmph! Okay, round one goes to the iron nut. Tomorrow I am bringing a heavier chop!"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "First let our camp healer wrap your hand. Then you may test my armor every evening you like."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "chespin_line::machop_line",
+    "actorA": "chespin_line",
+    "actorB": "machop_line",
+    "rank": "B",
+    "title": "Shield and Spear",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
+      { "id": "machop", "who": { "kind": "recruit", "speciesId": "machop" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Not aiming straight at the crest this time! Watch the footwork, {name:chespin}, feint left, strike low!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Ha! Pivot ten degrees, sink the heel... and shoulder check!"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Stunned",
+          "side": "right",
+          "text": "Whoa! You caught my sweep mid-spin and bounced me right off your shoulder! When did you get that quick on the turn?"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Every time you lunge, you open my guard... and every time I pin you down, look at your stance. Anyone else behind me would be wide open."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Hold on... Wait a second! If you soak the enemy's counter first and lock them right in front of you, I can vault straight past your shoulder!"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "Shield pins the gate, fist breaks the line. We should test that formation on the next march!"
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Now you're talking! No more punching each other's knuckles bruised, let's save the heavy swings for the raiders!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "chespin_line::machop_line",
+    "actorA": "chespin_line",
+    "actorB": "machop_line",
+    "rank": "A",
+    "title": "Dents and Knuckles",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
+      { "id": "machop", "who": { "kind": "recruit", "speciesId": "machop" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "Hey, hold still while I buff out that gouge on your backplate. That brute swung way harder than we expected."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "It is only a scratch, {name:machop}. You dropped him before his follow-up could land."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Sad",
+          "side": "right",
+          "text": "Almost wasn't fast enough, though. When I punch too deep into a pack, I never think about my own guard. You always cover my blind side."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "And when wild packs surround me, I tend to freeze and bunker down until my legs go numb. Hearing you shout 'break through!' snaps me right back awake."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Guess neither of us is complete on our own, huh? Funny how a mountain guide and a roadside squire fit like two halves of a warhammer."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Stay on my right shoulder tomorrow, {name:machop}. No wall holds us back when we push together."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "chespin_line::machop_line",
+    "actorA": "chespin_line",
+    "actorB": "machop_line",
+    "rank": "S",
+    "title": "Frontline Oath",
+    "music": "a_wish_for_peace",
+    "cast": [
+      { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
+      { "id": "machop", "who": { "kind": "recruit", "speciesId": "machop" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Whew! Look at this old sparring mark on your shell, {name:chespin}. Still shows right where my fist bounced off the first night we met."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "I never polished it out. Kept it as a reminder that our vanguard never yields once we set our boots together."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Inspired",
+          "side": "right",
+          "text": "Ha! Listen to us. Boss Machamp always told me a true fighter looks for a partner he can trust with his unguarded back."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "Then let us make it formal, comrade. Through whatever kingdoms and rifts lie ahead of this expedition, I will always hold the gate beside you."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "And I will always shatter whatever tries to break your shield! And after peace returns, you are coming up to the mountain ridge to help me train the new guides!"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Joyous",
+          "side": "left",
+          "text": "Deal, brother-in-arms! Shield and spear, from this vanguard line to the very last mountain!"
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Frontline buddies forever! Bring on whatever army shows up next!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "chespin_line::quaxly_line",
+    "actorA": "chespin_line",
+    "actorB": "quaxly_line",
+    "rank": "C",
+    "title": "Clatter vs. Glide",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
+      { "id": "partner", "who": { "kind": "partner" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Clack-clunk, clack-clunk! {name:chespin}, pal, any outpost within half a mile can hear you marching before we even crest the hill!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Let them hear me coming, {name:partner}. Better loud armor than twirling into an ambush with nothing guarding your ribs."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Hey, my footwork isn't flashy! Watch: two quick hops, spin the crest smooth, and zero mud on the feathers!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "You just stepped on a loose pebble mid-spin and nearly sat in that puddle."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Angry",
+          "side": "right",
+          "text": "That was a tactical crouch! Look, when you move faster than arrows, you don't need twenty pounds of chestnut plate!"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Then show me how well speed holds when an enemy blocks the narrow bridge ahead. I will be right behind you to catch the bounce."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "chespin_line::quaxly_line",
+    "actorA": "chespin_line",
+    "actorB": "quaxly_line",
+    "rank": "B",
+    "title": "Springboard Shell",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
+      { "id": "partner", "who": { "kind": "partner" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Watch this flank dash, {name:chespin}! Left turn, slide right... wait, why did you step into that gap?!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Oof! Look out, {name:partner}! An archer had a bead on that gap, so I cut across!"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Dizzy",
+          "side": "right",
+          "text": "Ugh... my beak bounced clean off your backplate like a rubber ball. Good thing my crest stayed intact."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "Forgive me! I bruised your wing with my heavy shell again."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Are you kidding? That rebound launched me straight past the archer's guard! Maybe Dad's heavy-guard drills weren't all hot air."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "And I will admit your speed drew every eye away from the line. Fast feet need an anchor, and an anchor needs fast feet."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "partner",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Hah! Just give me a two-second whistle before you become a surprise wall next time, partner!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "chespin_line::flabebe_line",
+    "actorA": "chespin_line",
+    "actorB": "flabebe_line",
+    "rank": "C",
+    "title": "Careful Boots",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
+      { "id": "healer", "who": { "kind": "healer" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "Halt! Nobody take another step! ...I am stuck."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "{name:chespin}? Why are you standing on one foot like a statue in the middle of the path?"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "There is a clump of tiny white blossoms three inches ahead of my boot, {name:healer}. My armor weighs a ton! One wrong step and I will flatten them!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Oh, haha! Those are tough meadow daisies, silly! Even if a cart wheel rolled over them, they would spring right back up by dusk."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Truly? Wait, even your own blossom... whenever you drift close to me in camp, I hold my breath so my shoulder spikes never snag a petal."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "That is awfully sweet of a big knight! Just set your foot down gently around that rock, and we can both keep marching."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "chespin_line::flabebe_line",
+    "actorA": "chespin_line",
+    "actorB": "flabebe_line",
+    "rank": "B",
+    "title": "Windbreak for a Bud",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
+      { "id": "healer", "who": { "kind": "healer" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "Oh no, the ridge gust is picking up! If this cold draft hits that rare frost-lily bud, the petals will wilt before I can gather its dew."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Say no more, {name:healer}. Tell me where to plant my boots without touching the roots."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Right on that flat slate stone to the west! Just kneel low so your shell cuts the wind."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Like so? Not a single breeze can slip past the rim now. Take all the time your healing bottle needs."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "healer",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Got every drop! Look how open the bloom stayed behind your shoulder. Armor is wonderful for more than blocking swords, isn't it?"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "chespin",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "A knight shields the frail as well as the fierce. Whenever you gather herbs on windy cliffs, call me first."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "combee_line::slakoth_line",
+    "actorA": "combee_line",
+    "actorB": "slakoth_line",
+    "rank": "C",
+    "title": "Midnight at Noon",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "combee", "who": { "kind": "recruit", "speciesId": "combee" } },
+      { "id": "slakoth", "who": { "kind": "recruit", "speciesId": "slakoth" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Excuse us! Hello? {name:slakoth}! The sun is straight overhead and the camp horn blew five minutes ago! ...Five minutes ago!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Mmph... five more minutes... sun feels nice on the moss right here..."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Dizzy",
+          "side": "left",
+          "text": "How can anyone sleep with six wings buzzing two inches above your ear?! Back at our hive, midday means thirty nectar runs before tea!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Sounds exhausting... You three keep flapping like that, you'll miss the best cloud shapes... Look, that one's a berry..."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "Hold on, top-left says keep moving, top-right says he has a point, and... *yawn*... the bottom of us just nodded off watching that cloud!"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "See...? One third of you already understands... Wake me when we reach the next shade tree..."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "combee_line::slakoth_line",
+    "actorA": "combee_line",
+    "actorB": "slakoth_line",
+    "rank": "B",
+    "title": "Art of the Nap",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "combee", "who": { "kind": "recruit", "speciesId": "combee" } },
+      { "id": "slakoth", "who": { "kind": "recruit", "speciesId": "slakoth" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Okay, {name:slakoth}, we timed you for three whole days! Every afternoon at the exact same shadow length, you curl up for forty winks!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Mhmm... Keep your heartbeat slow... save every ounce of juice until you actually need to swing..."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Wait, so your naps aren't an accident? You schedule them like our Queen schedules hive shifts?! ...Like hive shifts!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Well... calling it a schedule makes me sleepy just thinking about it... Want to try sitting still for once?"
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "We brought warm honey-sap in an acorn cup! Let's try ten quiet minutes together. No buzzing, no scouting... okay, maybe soft humming."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Sweet honey and soft humming... You three might be the best nap crew on this whole march..."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "machop_line::slakoth_line",
+    "actorA": "machop_line",
+    "actorB": "slakoth_line",
+    "rank": "C",
+    "title": "One-Arm Boulder Press",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "machop", "who": { "kind": "recruit", "speciesId": "machop" } },
+      { "id": "slakoth", "who": { "kind": "recruit", "speciesId": "slakoth" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Shouting",
+          "side": "left",
+          "text": "Rise and shine, {name:slakoth}! Dawn patrol means fifty mountain squats, twenty sprints, and boulder presses until your arms burn!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "*Yaaawn*... Too noisy, Coach {name:machop}... That big rock is blocking my sunbeam anyway..."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Hey, that granite boulder weighs twice as much as you! Let's lift it together on three! One, two..."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Hup... There. Dropped it in the ditch. Nice and sunny now... Zzz..."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Stunned",
+          "side": "left",
+          "text": "WHAT?! You tossed a four-hundred-pound boulder one-handed without even breaking a yawn?! Wait, wake up! Teach me your grip!!"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Mmph... tell you after lunch... Zzz..."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "machop_line::slakoth_line",
+    "actorA": "machop_line",
+    "actorB": "slakoth_line",
+    "rank": "B",
+    "title": "The Stillness Workout",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "machop", "who": { "kind": "recruit", "speciesId": "machop" } },
+      { "id": "slakoth", "who": { "kind": "recruit", "speciesId": "slakoth" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Uh... {name:machop}? Why are you lying face-up on a flat rock staring at the sky? Are you hurt?"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Shh! Do not break my focus! I figured out your secret! You store power by doing zero movement! I am training total stillness right now!"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Your left foot is tapping sixty times a minute... and your fists are still clenched tight..."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Dizzy",
+          "side": "left",
+          "text": "Gah! I can't help it! Lying still for three minutes hurts worse than climbing Mount Horn! How do you turn your muscles all the way off?!"
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Don't try so hard to relax... Just eat a berry and let gravity hold your shoulders..."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "Forget it! I am going back to timber presses! But next time our camp hits a landslide, I am waking you first!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "machop_line::slakoth_line",
+    "actorA": "machop_line",
+    "actorB": "slakoth_line",
+    "rank": "A",
+    "title": "Right on Cue",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "machop", "who": { "kind": "recruit", "speciesId": "machop" } },
+      { "id": "slakoth", "who": { "kind": "recruit", "speciesId": "slakoth" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Hey, {name:slakoth}. Keep sleeping if you want for five more minutes. I scoped out the ravine ahead, and there is a fallen granite slab blocking the wagons."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Mmph... no morning drill speech today? No whistle?"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Took me a while to realize I don't need to train you into my rhythm. You carry mountain strength in your own quiet way."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Heh... Appreciate the quiet, Coach. Point me at that granite slab so I can clear it before my afternoon nap."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "Deal! You heave the slab clear so I can sprint ahead and scout the ridge. Nobody makes a better tag-team in the passes than us."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "slakoth",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "You run the fast miles, I'll move the heavy stones... Anytime you call, {name:machop}, I'll wake up for you."
+        }
+      }
+    ]
+  }
+]

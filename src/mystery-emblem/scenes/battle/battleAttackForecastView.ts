@@ -21,6 +21,7 @@ import {
   renderForecastMoveList,
   setForecastStatLabels,
 } from './battleForecastMoveList';
+import { getBattleSupportContext } from './battleSupportHelpers';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
   getAttackableEnemiesFromCurrentTile,
@@ -89,7 +90,14 @@ export function refreshCombatForecastModalDom(ctx: BattleControllerContext): voi
     return;
   }
   const allTargets = getAttackableEnemiesFromCurrentTile(state, attacker);
-  const forecast = computeCombatForecast(state.map, attacker, defender, state.forecastMoveId);
+  const forecast = computeCombatForecast(
+    state.map,
+    attacker,
+    defender,
+    state.forecastMoveId,
+    undefined,
+    getBattleSupportContext(state)
+  );
   if (!forecast) return;
   state.currentForecast = forecast;
 

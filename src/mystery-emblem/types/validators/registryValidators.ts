@@ -5,6 +5,7 @@
  * zero pure stat-change moves), and Rule 5 (strict faction separation & promotion rules).
  */
 
+import { PMD_EXTENDED_PORTRAIT_EMOTIONS } from '../../assets/pmdAssetTypes';
 import {
   BRANCHED_PROMOTION_MIN_LEVEL,
   CONVERTIBLE_FACTION_LINE_IDS,
@@ -14,6 +15,14 @@ import {
   MIN_UNIT_LEVEL,
   STONE_PROMOTION_MIN_LEVEL,
 } from '../../data/campaignConfig';
+import {
+  getSupportRanksUpTo,
+  makeCanonicalSupportPairKey,
+} from '../../data/supports/supportMatrix';
+import type {
+  SupportConversationDoc,
+  SupportPairDefinition,
+} from '../../data/supports/supportTypes';
 import {
   ITEM_CATEGORIES,
   MOVE_CATEGORIES,
@@ -57,7 +66,69 @@ const VALID_MOVE_CATEGORY_SET = new Set<string>(MOVE_CATEGORIES);
 const VALID_SUPPORT_SUBKIND_SET = new Set<string>(SUPPORT_SUBKINDS);
 const VALID_ITEM_CATEGORY_SET = new Set<string>(ITEM_CATEGORIES);
 const ASSET_ID_REGEX = /^\d{4}(?:\/\d{4})?$/;
+const VALID_EXTENDED_EMOTION_SET = new Set<string>(PMD_EXTENDED_PORTRAIT_EMOTIONS);
 const STAT_SIX_KEYS: readonly (keyof StatBlockSix)[] = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
+
+export function validateSupportRegistries(
+  pairs: readonly SupportPairDefinition[],
+  conversations: readonly SupportConversationDoc[]
+): string[] {
+  const errors: string[] = [];
+  const docMap = new Map<string, SupportConversationDoc>();
+
+  for (const doc of conversations) {
+    const expectedKey = makeCanonicalSupportPairKey(doc.actorA, doc.actorB);
+    if (doc.pairKey !== expectedKey) {
+      errors.push(`Support doc "${doc.pairKey}" (${doc.rank}) has non-canonical pairKey (expected "${expectedKey}").`);
+    }
+    const mapKey = `${expectedKey}::${doc.rank}`;
+    if (docMap.has(mapKey)) {
+      errors.push(`Duplicate support conversation "${mapKey}".`);
+    }
+    docMap.set(mapKey, doc);
+
+    if (doc.title && (doc.title.includes('\u2014') || doc.title.includes('--'))) {
+      errors.push(`Support doc "${mapKey}" title contains forbidden em-dash punctuation.`);
+    }
+    const castIds = new Set(doc.cast.map((c) => c.id));
+    if (!Array.isArray(doc.beats) || doc.beats.length === 0) {
+      errors.push(`Support doc "${mapKey}" has no beats.`);
+      continue;
+    }
+    for (const beat of doc.beats) {
+      const say = beat.say;
+      if (!say) continue;
+      if (say.speaker !== 'narrator' && !castIds.has(say.speaker)) {
+        errors.push(`Support doc "${mapKey}" beat "${beat.id}" references unknown cast speaker "${say.speaker}".`);
+      }
+      if (!VALID_EXTENDED_EMOTION_SET.has(say.emotion)) {
+        errors.push(`Support doc "${mapKey}" beat "${beat.id}" has invalid emotion "${say.emotion}".`);
+      }
+      if (say.text.includes('\u2014') || say.text.includes('--')) {
+        errors.push(`Support doc "${mapKey}" beat "${beat.id}" contains forbidden em-dash punctuation.`);
+      }
+      const tokens = say.text.match(/\{[^}]+\}/g);
+      if (tokens) {
+        for (const tok of tokens) {
+          const castMatch = /^\{name:([a-z0-9_]+)\}$/i.exec(tok);
+          if (!castMatch || !castIds.has(castMatch[1]!)) {
+            errors.push(`Support doc "${mapKey}" beat "${beat.id}" has unresolved token "${tok}".`);
+          }
+        }
+      }
+    }
+  }
+
+  for (const pair of pairs) {
+    for (const rank of getSupportRanksUpTo(pair.maxRank)) {
+      if (!docMap.has(`${pair.pairKey}::${rank}`)) {
+        errors.push(`Missing support conversation "${pair.pairKey}::${rank}".`);
+      }
+    }
+  }
+
+  return errors;
+}
 
 function validateGrowthBlock(block: StatBlockSix, label: string, errors: string[]): void {
   for (const k of STAT_SIX_KEYS) {
@@ -163,7 +234,11 @@ export function validateAllRegistries(
   speciesList: readonly PokemonSpeciesDefinition[],
   moves: readonly MoveDefinition[],
   items: readonly ItemDefinition[],
-  skills: readonly PersonalSkillDefinition[]
+  skills: readonly PersonalSkillDefinition[],
+  supportConfig?: {
+    pairs: readonly SupportPairDefinition[];
+    conversations: readonly SupportConversationDoc[];
+  }
 ): RegistryValidationSummary {
   const skRes = validatePersonalSkills(skills);
   const mvRes = validateMoves(moves);
@@ -252,6 +327,9 @@ export function validateAllRegistries(
   }
   if (byId.get('slakoth')?.personalSkillId !== 'hidden_potential') {
     errors.push('Slakoth must carry personalSkillId "hidden_potential".');
+  }
+  if (supportConfig) {
+    errors.push(...validateSupportRegistries(supportConfig.pairs, supportConfig.conversations));
   }
 
   return {

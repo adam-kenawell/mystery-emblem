@@ -10,6 +10,9 @@ export interface PrepDomElements {
   hubBackdropEl: HTMLElement;
   unitsBackdropEl: HTMLElement;
   itemsBackdropEl: HTMLElement;
+  supportsBackdropEl: HTMLElement;
+  supportsBtnEl: HTMLButtonElement;
+  supportsBodyEl: HTMLElement;
   mapHudEl: HTMLElement;
   mapReturnBtnEl: HTMLButtonElement;
   mapHintPillEl: HTMLElement;
@@ -18,6 +21,9 @@ export interface PrepDomElements {
 
 export function renderPrepHubSummary(params: {
   hubBackdropEl: HTMLElement;
+  supportsBtnEl?: HTMLButtonElement;
+  supportsEnabled?: boolean;
+  hasReadySupport?: boolean;
   map: DungeonMapDefinition;
   deployedCount: number;
   cap: number;
@@ -30,6 +36,16 @@ export function renderPrepHubSummary(params: {
   if (objEl) {
     const victoryLabel = params.objectiveLabel ?? `Rout All Enemies (${params.enemyCount})`;
     objEl.textContent = `${victoryLabel} · ${params.deployedCount}/${params.cap} Deployed`;
+  }
+  if (params.supportsBtnEl) {
+    const enabled = Boolean(params.supportsEnabled);
+    params.supportsBtnEl.hidden = !enabled;
+    const titleEl = params.supportsBtnEl.querySelector<HTMLElement>('.pmd-prep-opt-title');
+    if (titleEl && enabled) {
+      titleEl.innerHTML = params.hasReadySupport
+        ? 'Supports<span class="pmd-supports-tab-badge" data-testid="prep-supports-ready-badge">!</span>'
+        : 'Supports';
+    }
   }
 }
 
@@ -76,6 +92,9 @@ export function createPrepDomElements(
         </button>
         <button type="button" class="pmd-btn pmd-menu-row pmd-prep-option-btn" data-testid="prep-btn-manage-items">
           <span class="pmd-prep-opt-title">Manage Items</span>
+        </button>
+        <button type="button" class="pmd-btn pmd-menu-row pmd-prep-option-btn" data-testid="prep-btn-supports" hidden>
+          <span class="pmd-prep-opt-title">Supports</span>
         </button>
         <button type="button" class="pmd-btn pmd-menu-row pmd-prep-option-btn" data-testid="prep-btn-view-map">
           <span class="pmd-prep-opt-title">View Map</span>
@@ -184,6 +203,23 @@ export function createPrepDomElements(
     </div>
   `;
 
+  const supportsBackdropEl = document.createElement('div');
+  supportsBackdropEl.className = 'pmd-battle-modal-backdrop pmd-prep-backdrop';
+  supportsBackdropEl.dataset.testid = 'prep-supports-modal';
+  supportsBackdropEl.hidden = true;
+  supportsBackdropEl.innerHTML = `
+    <div class="pmd-window pmd-prep-modal-dialog pmd-prep-items-dialog" role="dialog" aria-modal="true" aria-label="Unit Supports">
+      <div class="pmd-prep-modal-topbar">
+        <div>
+          <h3 class="pmd-panel-title">SUPPORTS</h3>
+          <p class="pmd-panel-sub">Conversations &amp; Adjacent Bonuses</p>
+        </div>
+        <button type="button" class="pmd-btn pmd-chip-btn" data-testid="prep-supports-close-btn">Done</button>
+      </div>
+      <div data-testid="prep-supports-body"></div>
+    </div>
+  `;
+
   const mapHudEl = document.createElement('div');
   mapHudEl.className = 'pmd-battle-hud-top pmd-prep-map-hud';
   mapHudEl.dataset.testid = 'prep-map-hud';
@@ -207,11 +243,13 @@ export function createPrepDomElements(
   mapDangerBtnEl.textContent = 'Danger: OFF';
 
   mapHudEl.append(mapReturnBtnEl, mapHintPillEl, mapDangerBtnEl);
-  rootEl.append(hubBackdropEl, unitsBackdropEl, itemsBackdropEl, mapHudEl);
+  rootEl.append(hubBackdropEl, unitsBackdropEl, itemsBackdropEl, supportsBackdropEl, mapHudEl);
   parentEl.appendChild(rootEl);
 
   return {
-    rootEl, hubBackdropEl, unitsBackdropEl, itemsBackdropEl, mapHudEl,
-    mapReturnBtnEl, mapHintPillEl, mapDangerBtnEl,
+    rootEl, hubBackdropEl, unitsBackdropEl, itemsBackdropEl, supportsBackdropEl,
+    supportsBtnEl: hubBackdropEl.querySelector('[data-testid="prep-btn-supports"]')!,
+    supportsBodyEl: supportsBackdropEl.querySelector('[data-testid="prep-supports-body"]')!,
+    mapHudEl, mapReturnBtnEl, mapHintPillEl, mapDangerBtnEl,
   };
 }

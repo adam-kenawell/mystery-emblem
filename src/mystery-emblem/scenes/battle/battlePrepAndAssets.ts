@@ -25,6 +25,7 @@ import {
 } from './battleDangerAndViewportState';
 import { clearFloatingTexts } from './battleFloatingCallouts';
 import { updateBattleInfoStrip } from './battleHudCards';
+import { cloneSaveSupportsForBattle } from './battleSupportHelpers';
 import { dismissTalkChoiceModal } from './battleTalkChoiceModal';
 import { triggerPrepHubTutorials } from './battleTutorialIntegration';
 import type { BattleControllerContext, BattleRuntimeState } from './battleTypesAndState';
@@ -181,6 +182,7 @@ export async function setupFreshBattleState(
     getActivePrepSaveManager(state, saveManager).getSave()
   );
   const activeSave = getActivePrepSaveManager(state, saveManager).getSave()!;
+  state.battleSupportPoints = cloneSaveSupportsForBattle(activeSave);
   state.deploymentSlots = createInitialPrepDeploymentSlots(
     state.map,
     activeSave.roster,

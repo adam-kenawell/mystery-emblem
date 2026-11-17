@@ -119,6 +119,18 @@
     2px 3px 0 #000000;
 }
 
+.pmd-battle-floating-callout.is-support-heart {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pmd-support-heart-svg {
+  width: 1.1em;
+  height: 1em;
+  display: block;
+}
+
 /* Shared typography & form controls inside dynamic battle overlays */
 .pmd-battle-scene .pmd-panel-title {
   font-size: 18px;

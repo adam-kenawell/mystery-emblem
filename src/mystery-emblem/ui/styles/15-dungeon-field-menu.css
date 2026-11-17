@@ -117,6 +117,9 @@
 .pmd-dungeon-units-growth-strip.is-boosted strong { color: var(--pmd-text-green); }
 .pmd-dungeon-units-kv { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
 .pmd-dungeon-units-kv strong { color: var(--pmd-text-yellow); }
+.pmd-dungeon-units-support-partner { color: var(--pmd-text-green); font-size: 11px; }
+.pmd-dungeon-units-support-empty { color: rgba(248, 248, 248, 0.72); font-size: 11px; }
+.pmd-dungeon-units-support-gift { color: var(--pmd-text-cyan); font-size: 11px; }
 
 .pmd-dungeon-units-moves {
   display: grid;

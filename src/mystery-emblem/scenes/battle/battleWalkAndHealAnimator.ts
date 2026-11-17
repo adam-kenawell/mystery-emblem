@@ -11,6 +11,7 @@ import { ensureTilePairVisible, waitBattleMs } from './battleBannersAndTransitio
 import { spawnFloatingText } from './battleFloatingCallouts';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { grantExpAndHandleLevelUps } from './battleLevelUpModal';
+import { awardBattleAllyPairSupportPoint } from './battleSupportHelpers';
 import type { BattleControllerContext, BattleRuntimeState } from './battleTypesAndState';
 
 export function playWalkPathAsync(
@@ -135,6 +136,7 @@ export async function playHealActionAsync(
   healer.action = 'Idle';
 
   if (healer.faction === 'player' && !healer.defeated && healer.currentHp > 0) {
+    awardBattleAllyPairSupportPoint(ctx, healer, target);
     const enemies = state.units.filter((u) => u.faction === 'enemy');
     const chapterLv =
       enemies.length > 0

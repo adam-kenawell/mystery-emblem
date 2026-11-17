@@ -1,0 +1,1180 @@
+[
+  {
+    "pairKey": "caterpie_line::starly_line",
+    "actorA": "caterpie_line",
+    "actorB": "starly_line",
+    "rank": "C",
+    "title": "High Branch, Low Trail",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "caterpie", "who": { "kind": "recruit", "speciesId": "caterpie" } },
+      { "id": "starly", "who": { "kind": "recruit", "speciesId": "starly" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Good news, {name:caterpie}! I circled two ridges ahead and spotted a dry pine hollow for camp tonight."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Nice scouting, {name:starly}. Did you check the brush underneath, or just admire the view from the treetops?"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Hey, I looked down! Mostly! Why, did you find something crawling along the trail?"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Fresh thorn vines across the path, plus your spare pouch strap torn clean in half. Hand it here before you drop rations all over the kingdom."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Whoa, good eye! Just like when we used to climb the big oak back home and you caught every acorn I fumbled."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Hold still while I wind a silk knot around the buckle. Somebody has to keep your gear anchored to the ground."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "caterpie_line::starly_line",
+    "actorA": "caterpie_line",
+    "actorB": "starly_line",
+    "rank": "B",
+    "title": "Wait on the Ridge",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "caterpie", "who": { "kind": "recruit", "speciesId": "caterpie" } },
+      { "id": "starly", "who": { "kind": "recruit", "speciesId": "starly" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "Phew... those shale ledges slowed me down badly today, {name:starly}. You could have cleared the ambush twice while waiting on me."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "And leave my flank wide open? Not happening. You saw that crosswind near the crest."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Wait, you hovered back there because of the gust, not because you were bored?"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Angry",
+          "side": "right",
+          "text": "One tailwind nearly flipped me sideways into a boulder! If your silk line hadn't tagged that pine branch for me to grab, I'd be wearing dirt."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Heh. Even fast wings need a tether when the valley kicks up a gale."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Touché. Next steep climb, give a whistle and I'll drop low to cover the ridge while you haul up."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Deal. You watch the sky, and I'll keep the rocks from tripping you up."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "caterpie_line::starly_line",
+    "actorA": "caterpie_line",
+    "actorB": "starly_line",
+    "rank": "A",
+    "title": "Until Your Wings Come",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "caterpie", "who": { "kind": "recruit", "speciesId": "caterpie" } },
+      { "id": "starly", "who": { "kind": "recruit", "speciesId": "starly" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "You've been staring at the clouds since we set the campfire, {name:caterpie}. Still thinking about that last canyon march?"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Sad",
+          "side": "left",
+          "text": "A little. Every road past the capital gets steeper and harsher. Sometimes I wonder how long you'll have to keep slowing down for a crawler."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Shouting",
+          "side": "right",
+          "text": "Hey! Don't talk about yourself like that! Who held off two wild thugs in the brush while I regrouped?!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "I know, I just... wish I could rise up beside you when trouble hits from the ridge."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Listen to me. I watched you inch up every wet branch back home before either of us knew how to fight. You never quit halfway."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "So I'm staying right above your shoulder on every dirt road until the day you spread wings of your own."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Teary-Eyed",
+          "side": "left",
+          "text": "Thank you, {name:starly}. When that day comes, I'm challenging you to a race all the way back to town."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "caterpie_line::starly_line",
+    "actorA": "caterpie_line",
+    "actorB": "starly_line",
+    "rank": "S",
+    "title": "Sworn to the Sky",
+    "music": "a_wish_for_peace",
+    "cast": [
+      { "id": "caterpie", "who": { "kind": "recruit", "speciesId": "caterpie" } },
+      { "id": "starly", "who": { "kind": "recruit", "speciesId": "starly" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Hold out your left talon for a second, {name:starly}. I spun this silver cord tight enough to shrug off sleet and briars."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Whoa, it catches the dawn light like frost! What's the occasion?"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "A promise. Wherever these Rifts drag the expedition, if fog splits the squad, I'll know which shadow in the clouds is yours."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Inspired",
+          "side": "right",
+          "text": "Then here's my side of the oath. This crest feather stays tucked in your satchel until you don't need a lookout anymore."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Even after I earn wings, I'll still need someone loud enough to keep me from overthinking every turn."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Count on it! Ground to sky, hometown to the far ends of the map, nobody breaks our line."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "Side by side, {name:starly}. All the way home."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "caterpie_line::pawmi_line",
+    "actorA": "caterpie_line",
+    "actorB": "pawmi_line",
+    "rank": "C",
+    "title": "Frizzy Spools",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "caterpie", "who": { "kind": "recruit", "speciesId": "caterpie" } },
+      { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Almost done winding this medical silk onto the stick. Just one last loop and..."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Need a paw, {name:caterpie}?! I ran two laps around the camp clearing and I'm wide awake!"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Stunned",
+          "side": "left",
+          "text": "Bzzzt! Ack! {name:pawmi}, wait, don't grab the loose end with your cheeks sparking like that!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Eek! Why is the whole spool puffing up like a cotton ball?!"
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Dizzy",
+          "side": "left",
+          "text": "Static charge. My neat bandage roll now looks like a startled sheep."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "Aw, man, I'm really sorry! Every time I hurry to help, my fur ruins the tidy stuff. Let me help untangle it!"
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Easy, easy. Sit on the flat stone for a minute and let the sparks ground out first, then we'll fix it together."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "caterpie_line::pawmi_line",
+    "actorA": "caterpie_line",
+    "actorB": "pawmi_line",
+    "rank": "B",
+    "title": "Tip-Toe Charge",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "caterpie", "who": { "kind": "recruit", "speciesId": "caterpie" } },
+      { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Okay, carrying the woven supply net, walking slow, holding my breath, zero sparks..."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "{name:pawmi}, you're puffing your cheeks out so hard you're trembling. Watch that root on your left!"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Pain",
+          "side": "right",
+          "text": "Whoa! Crackle! Ow, tripped! Catch the net!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Got you! One silk snag around your waist, and the net is safe."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Sad",
+          "side": "right",
+          "text": "I tried holding everything in, and it popped twice as loud when I stumbled. How do you stay so calm?"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Don't bottle your charge up tight. Bleed the extra buzz off into a dry stick before you pick up thread, then move at your normal step."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Tap a stick first, then walk normal! Oh, that feels way better than clenching my ears shut!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "caterpie_line::pawmi_line",
+    "actorA": "caterpie_line",
+    "actorB": "pawmi_line",
+    "rank": "A",
+    "title": "Warm Spark",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "caterpie", "who": { "kind": "recruit", "speciesId": "caterpie" } },
+      { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "Damp mountain mist soaked right through the pack straps again. My silk won't cure properly while the moss is this wet."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Hold on, {name:caterpie}. Set the spool on that flat rock and step back just a paw's length."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Huh? Wait, the air around the rock just turned toasty warm, and I didn't hear a single snap!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Heehee! I let the big spark drain into the gravel first, then kept just a tiny hum between my palms to dry the stone."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "Not one frayed fiber. You've got real finesse under all that energy when you slow down, {name:pawmi}."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Best part? My cheeks don't even ache afterward! Guess pacing works on the trail too, not just in drills."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "caterpie_line::pawmi_line",
+    "actorA": "caterpie_line",
+    "actorB": "pawmi_line",
+    "rank": "S",
+    "title": "Thread and Current",
+    "music": "a_wish_for_peace",
+    "cast": [
+      { "id": "caterpie", "who": { "kind": "recruit", "speciesId": "caterpie" } },
+      { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Okay, tripwire test number four! Lay the silk line across the clearing, {name:caterpie}."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Anchored to both pines. Ready for your pulse, {name:pawmi}."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "One gentle tap! Hear that? A clean low hum from end to end, and zero scorched leaves!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Joyous",
+          "side": "left",
+          "text": "Any prowler brushing that thread will light up the whole perimeter before they reach camp!"
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Inspired",
+          "side": "right",
+          "text": "You know, if I'd charged out here alone, I'd have tripped my own ambush in five seconds flat. Having you steady my pace changed everything."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "caterpie",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "And I'd still be sitting at the starting post overplanning if you hadn't dragged me into motion. We balance each other cleanly."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Then here's to our squad's best duo, {name:caterpie}! Wherever the road bends next, we hold the line together!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "pawmi_line::starly_line",
+    "actorA": "pawmi_line",
+    "actorB": "starly_line",
+    "rank": "C",
+    "title": "Who Tracked Whom",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } },
+      { "id": "starly", "who": { "kind": "recruit", "speciesId": "starly" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Joyous",
+          "side": "left",
+          "text": "Still can't get over the look on everyone's faces when we crashed the capital gates! Best entrance ever, right, {name:starly}?"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "You're welcome for the directions! Without me spotting their campfire smoke over the foothills, you'd still be sniffing gravel."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Angry",
+          "side": "left",
+          "text": "Excuse me?! Your smoke plume turned out to be a charcoal kiln! My nose found the actual berry-crate trail through the cave!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Hey, that kiln smelled very heroic from three hundred feet up! Besides, who dove into that Great Tusk dust cloud first?"
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Me, by half a stride! And don't think I didn't notice your tail feathers smoking when that tusk swiped past!"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Ha! Barely a scratch! Next big scrap, first one to tag the boss wins dinner."
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "pawmi_line::starly_line",
+    "actorA": "pawmi_line",
+    "actorB": "starly_line",
+    "rank": "B",
+    "title": "Scraped Paws, Sore Wings",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } },
+      { "id": "starly", "who": { "kind": "recruit", "speciesId": "starly" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Pain",
+          "side": "right",
+          "text": "Ow... okay, nobody's looking, right? My right wing feels like I carried a boulder across the valley."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Aha! I knew you pulled a muscle flapping non-stop up those cliffs to keep ahead of me!"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "Shh! Keep your voice down, {name:pawmi}! Wait... why are you wrapping a leaf around your hind paw?"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Dizzy",
+          "side": "left",
+          "text": "Okay, fine, I slid fifty feet down a gravel bank trying to beat you to the capital road. Blister the size of a Cheri Berry."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Ha! Two stubborn idiots limping into a royal battle like we owned the place."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Joyous",
+          "side": "left",
+          "text": "And we still pulled it off! Deal is nobody breathes a word to Master Quaquaval or the rest of the squad, got it?"
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Sealed tight. Now hurry up and heal that paw so I can dust you on tomorrow's march!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "pawmi_line::starly_line",
+    "actorA": "pawmi_line",
+    "actorB": "starly_line",
+    "rank": "A",
+    "title": "No Leaving Us Behind",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } },
+      { "id": "starly", "who": { "kind": "recruit", "speciesId": "starly" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "Look at how far back our hometown hills are now, {name:starly}. Just blue haze past the river."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Weird, isn't it? Back on the village pitch, folks laughed when we said we'd join a real expedition one day."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "They called us loud, reckless, and way too quick to pick fights with bigger Pokemon."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Turns out loud and reckless was the exact ticket needed to cross a mountain range without a map."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "Plus, when you dive high and I rush low, nobody gets a clean swing at either of us."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Here's the rule from now on, {name:pawmi}. No matter how wild the next realm gets, neither of us gets left behind."
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Joyous",
+          "side": "left",
+          "text": "Not a chance! High road and low road, crashing every gate together!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "combee_line::starly_line",
+    "actorA": "combee_line",
+    "actorB": "starly_line",
+    "rank": "C",
+    "title": "Six Wings vs Two",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "combee", "who": { "kind": "recruit", "speciesId": "combee" } },
+      { "id": "starly", "who": { "kind": "recruit", "speciesId": "starly" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Whoosh! Ha! Beat that barrel roll, {name:combee}! Let's see all three of you spin through the pine boughs!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Dizzy",
+          "side": "left",
+          "text": "Urgh, stop buzzing past our ears like an arrow! Left says roll, right says bank, and bottom gets carsick just watching!"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Surprised",
+          "side": "right",
+          "text": "Wait, you three don't steer as one? How do you even dive at an enemy?"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Normal",
+          "side": "left",
+          "text": "We don't dive like falling rocks. We hover dead level, match six wingbeats to the hum, and hold our lane steady."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Hah, fair enough! Looks peaceful until you start snapping Bug Bite at someone's lunch!"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Precision beats reckless loops, {name:starly}. Try hovering inside one handspan for three minutes without wobbling!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "combee_line::starly_line",
+    "actorA": "combee_line",
+    "actorB": "starly_line",
+    "rank": "B",
+    "title": "Breaking the Crosswind",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "combee", "who": { "kind": "recruit", "speciesId": "combee" } },
+      { "id": "starly", "who": { "kind": "recruit", "speciesId": "starly" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Worried",
+          "side": "left",
+          "text": "Bzz... this canyon draft hits flat like a wall! Our lower half keeps drifting sideways before we can clear the pass!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Don't fight a headwind broadside, {name:combee}! Tuck tight behind my tail feathers and ride my wake!"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Surprised",
+          "side": "left",
+          "text": "Whoa! All the roar vanished the instant we slotted behind your wingtips! It feels like calm meadow air!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "Solo flyers cut the seam clean! Now match your left and right beats so the bottom stays level through the turn."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Got it! One, two, three, bank together! Look, we didn't drop an inch!"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Now THAT is flying! Half the effort and twice the ground covered!"
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "We take back half our complaints about show-off flyers, {name:starly}. Just half!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "combee_line::starly_line",
+    "actorA": "combee_line",
+    "actorB": "starly_line",
+    "rank": "A",
+    "title": "Eyes on Every Angle",
+    "music": "thoughts_for_friends",
+    "cast": [
+      { "id": "combee", "who": { "kind": "recruit", "speciesId": "combee" } },
+      { "id": "starly", "who": { "kind": "recruit", "speciesId": "starly" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Normal",
+          "side": "right",
+          "text": "Hey, {name:combee}, thanks for screaming about that gravel sling from the left hedge earlier. Never saw it coming mid-dive."
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Bottom spotted the shadow, right heard the brush snap, and top shouted! Three pairs of eyes beat one reckless streak any day."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Inspired",
+          "side": "right",
+          "text": "Honestly, I always flew like the sky only belonged to one bird at a time. Watching your hive-sync made me rethink how a wing formation works."
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "And we used to hug the grass whenever winds turned nasty. Having a spearpoint flyer carve the gale open lets us fight where the squad needs us."
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "starly",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "So here's our sky drill: I punch straight through the front to scatter their archers..."
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "combee",
+          "emotion": "Joyous",
+          "side": "left",
+          "text": "And we hold the middle draft and watch your tail from every angle! Best four-part air wing in the kingdom!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "machop_line::pawmi_line",
+    "actorA": "machop_line",
+    "actorB": "pawmi_line",
+    "rank": "C",
+    "title": "Sparking Spar",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "machop", "who": { "kind": "recruit", "speciesId": "machop" } },
+      { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Hup! Two! Three! Four! Nothing clears the morning chill like two hundred palm strikes before breakfast!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Joyous",
+          "side": "right",
+          "text": "Ooh, ooh, let me drill with you, {name:machop}! I've been practicing quick paw jabs back in town!"
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Happy",
+          "side": "left",
+          "text": "Now we're talking! Block my right chop with both paws, then snap back fast! Ready? Hup!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Yah! Left parry, right counter! Take that!"
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Stunned",
+          "side": "left",
+          "text": "ZAP! Gah! My knuckles just lit up like a lightning rod!"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Worried",
+          "side": "right",
+          "text": "Eep! Sorry, {name:machop}! When I throw a punch too fast, my cheeks dump static straight through my fingertips!"
+        }
+      },
+      {
+        "id": "line_7",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Joyous",
+          "side": "left",
+          "text": "Hah! Shook my whole arm awake! Come on, again! Boss Machamp says fighting surprises toughens your guard!"
+        }
+      }
+    ]
+  },
+  {
+    "pairKey": "machop_line::pawmi_line",
+    "actorA": "machop_line",
+    "actorB": "pawmi_line",
+    "rank": "B",
+    "title": "Jab and Jolt",
+    "music": "heartwarming",
+    "cast": [
+      { "id": "machop", "who": { "kind": "recruit", "speciesId": "machop" } },
+      { "id": "pawmi", "who": { "kind": "recruit", "speciesId": "pawmi" } }
+    ],
+    "beats": [
+      {
+        "id": "line_1",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Determined",
+          "side": "left",
+          "text": "Remember the drill, {name:pawmi}! Keep your palms dry for the parries, then save the spark strictly for the finishing strike!"
+        }
+      },
+      {
+        "id": "line_2",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Determined",
+          "side": "right",
+          "text": "Locked in! Left block! Right slip! Pivot..."
+        }
+      },
+      {
+        "id": "line_3",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Shouting",
+          "side": "right",
+          "text": "And Nuzzle-jab on the wooden post! CRACK!"
+        }
+      },
+      {
+        "id": "line_4",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Inspired",
+          "side": "left",
+          "text": "Whoa! That post jumped an inch out of the dirt! Cleanest snap I've seen all week!"
+        }
+      },
+      {
+        "id": "line_5",
+        "say": {
+          "speaker": "pawmi",
+          "emotion": "Happy",
+          "side": "right",
+          "text": "My paws didn't even fizzle out early! Matching your step gave the jolt way more kick!"
+        }
+      },
+      {
+        "id": "line_6",
+        "say": {
+          "speaker": "machop",
+          "emotion": "Joyous",
+          "side": "left",
+          "text": "Heavy fist up front, lightning counter right underneath! Wait till those Rift brutes run into our one-two combo!"
+        }
+      }
+    ]
+  }
+]

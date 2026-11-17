@@ -16,6 +16,7 @@ import { OverworldModalCoordinator } from './overworld/OverworldModalCoordinator
 import { OverworldTravelAndSpritesController, formatOverworldChapterAnnouncement } from './overworld/OverworldTravelAndSprites';
 import {
   createOverworldDomElements, loadOverworldMapImage, syncOverworldHudAndDock,
+  syncOverworldSupportsTabButton,
   type OverworldDomElements, type OverworldMenuTab,
 } from './overworld/overworldDomTemplates';
 import {
@@ -89,6 +90,7 @@ export class OverworldScene {
         kecleonPortraitView,
         saveManager: this.saveManager,
         audioManager: this.audioManager,
+        dialogueOverlay: options.dialogueOverlay,
         tutorialOverlay: this.tutorialOverlay,
         getGraph: () => this.graph,
         isOpen: () => this.openState,
@@ -137,7 +139,9 @@ export class OverworldScene {
   }
 
   public isOpen(): boolean { return this.openState; }
-  public hasActiveSubLayer(): boolean { return this.openState && (this.modals.kecleonShopOpen || this.modals.systemMenuOpen); }
+  public hasActiveSubLayer(): boolean {
+    return this.openState && (this.modals.kecleonShopOpen || this.modals.systemMenuOpen || this.modals.hasSupportsSubLayer());
+  }
   public setFastMode(enabled: boolean): void { this.fastMode = Boolean(enabled); }
   public close(): void { this.closeInternal(true); }
   public openKecleonShop(): void { this.modals.openKecleonShop(); }
@@ -272,6 +276,7 @@ export class OverworldScene {
 
   public handleMenuOrBack(): void {
     if (!this.openState) return;
+    if (this.modals.handleSubBack()) return;
     if (this.modals.kecleonShopOpen) this.modals.closeKecleonShop();
     else if (this.modals.systemMenuOpen) this.modals.closeSystemMenu();
     else this.modals.openSystemMenu('units');
@@ -373,6 +378,10 @@ export class OverworldScene {
 
   private syncHudAndDock(): void {
     const save = this.saveManager.getSave();
-    if (save) syncOverworldHudAndDock(this.dom, save, this.graph);
+    if (save) {
+      syncOverworldHudAndDock(this.dom, save, this.graph);
+      syncOverworldSupportsTabButton(this.dom, save);
+      this.opts.onLayerStateChanged();
+    }
   }
 }

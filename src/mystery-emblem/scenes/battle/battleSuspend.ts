@@ -11,6 +11,7 @@ import type {
   DungeonMapDefinition,
   KecleonShopType,
   PrepDeploymentSlot,
+  SupportPairProgress,
 } from '../../types/schemas';
 import { isPhaseTransitionPlaying, playPhaseTransitionAsync } from './battleBannersAndTransitions';
 import {
@@ -44,6 +45,7 @@ export interface BattleSuspendSnapshot {
   surviveTurns: number | null;
   defeatIfUnitIdsFall: string[];
   units: BattleUnitState[];
+  battleSupportPoints?: Record<string, SupportPairProgress>;
   deploymentSlots: PrepDeploymentSlot[];
   triggeredEventIds: string[];
   spawnedReinforcementIds: string[];
@@ -101,6 +103,7 @@ export function buildBattleSuspendJson(state: BattleRuntimeState): string | null
     surviveTurns: state.surviveTurns ?? null,
     defeatIfUnitIdsFall: [...state.defeatIfUnitIdsFall],
     units: state.units,
+    battleSupportPoints: state.battleSupportPoints,
     deploymentSlots: state.deploymentSlots,
     triggeredEventIds: [...state.triggeredEventIds],
     spawnedReinforcementIds: [...state.spawnedReinforcementIds],
@@ -182,6 +185,9 @@ export async function applyBattleSuspendSnapshot(
     hitFlashUntilMs: 0,
     action: u.defeated ? u.action : 'Idle',
   }));
+  state.battleSupportPoints = snap.battleSupportPoints
+    ? (JSON.parse(JSON.stringify(snap.battleSupportPoints)) as Record<string, SupportPairProgress>)
+    : {};
   state.deploymentSlots = snap.deploymentSlots;
   state.triggeredEventIds = new Set(snap.triggeredEventIds);
   state.spawnedReinforcementIds = new Set(snap.spawnedReinforcementIds);
