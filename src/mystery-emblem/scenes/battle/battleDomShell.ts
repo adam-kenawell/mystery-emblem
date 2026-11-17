@@ -154,8 +154,11 @@ export function createBattleDomShell(): BattleDomRefs {
           <strong data-testid="unit-popup-hp">20/20</strong>
           <span class="pmd-unit-popup-status" data-popup-status hidden></span>
         </div>
-        <div class="pmd-forecast-hp-bar-track pmd-unit-popup-hp-bar">
+        <div class="pmd-forecast-hp-bar-track pmd-unit-popup-hp-bar" data-testid="unit-popup-hp-bar">
           <div class="pmd-forecast-hp-bar-fill" data-popup-hp-fill></div>
+        </div>
+        <div class="pmd-unit-popup-exp-bar-track" data-testid="unit-popup-exp-bar" data-popup-exp-track>
+          <div class="pmd-unit-popup-exp-bar-fill" data-testid="unit-popup-exp-fill" data-popup-exp-fill></div>
         </div>
       </div>
     </div>

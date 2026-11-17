@@ -9,7 +9,14 @@ import { STATUS_BADGE_COLORS } from '../../engine/combatEngine';
 import type { BattleDomRefs } from './battleDomShell';
 import { drawUnitGroundShadow } from './battleRangeZonePainter';
 import type { BattleRuntimeState } from './battleTypesAndState';
-import { getRenderableUnits, getUnitVisualKey, isUnitGrayedOut } from './battleUnitQueries';
+import {
+  computeUnitExpProgressRatio,
+  getRenderableUnits,
+  getUnitVisualKey,
+  isUnitGrayedOut,
+  resolveAwakeningHpBarColors,
+  resolveExpBarColor,
+} from './battleUnitQueries';
 
 export function renderUnitsAndStrikeVfx(
   ctx: CanvasRenderingContext2D,
@@ -119,8 +126,9 @@ export function renderUnitsAndStrikeVfx(
     }
 
     if (unit.koDissolveProgress === 0) {
+      const expRatio = computeUnitExpProgressRatio(unit);
       const barX = Math.round(tileScreenX + 3);
-      const barY = Math.round(tileScreenY + PMD_TILE_NATIVE_PX - 3);
+      const barY = Math.round(tileScreenY + PMD_TILE_NATIVE_PX - (expRatio !== null ? 5 : 3));
       const hpRatio = Math.max(0, Math.min(1, unit.currentHp / Math.max(1, unit.maxHp)));
       const fillW = Math.round(16 * hpRatio);
 
@@ -133,17 +141,24 @@ export function renderUnitsAndStrikeVfx(
         ctx.fillRect(barX + 1, barY - 3, 4, 2);
       }
       if (fillW > 0) {
-        ctx.fillStyle =
-          unit.faction === 'enemy'
-            ? '#ff5c6c'
-            : unit.faction === 'npc'
-              ? '#48e898'
-              : hpRatio > 0.5
-                ? '#58e890'
-                : hpRatio > 0.25
-                  ? '#f8d048'
-                  : '#ff5464';
+        const hpColors = resolveAwakeningHpBarColors(unit.maxHp);
+        const hpGrad = ctx.createLinearGradient(barX + 1, barY + 1, barX + 17, barY + 1);
+        hpGrad.addColorStop(0, hpColors.leftHex);
+        hpGrad.addColorStop(0.5, hpColors.midHex);
+        hpGrad.addColorStop(1, hpColors.rightHex);
+        ctx.fillStyle = hpGrad;
         ctx.fillRect(barX + 1, barY + 1, fillW, 1);
+      }
+      if (expRatio !== null) {
+        const expBarX = barX;
+        const expBarY = barY + 3;
+        const expFillW = Math.round(12 * expRatio);
+        ctx.fillStyle = 'rgba(4, 8, 18, 0.92)';
+        ctx.fillRect(expBarX, expBarY, 14, 2);
+        if (expFillW > 0) {
+          ctx.fillStyle = resolveExpBarColor(expRatio).hex;
+          ctx.fillRect(expBarX + 1, expBarY, expFillW, 1);
+        }
       }
 
       if (talkTargetIds?.has(unit.id)) {

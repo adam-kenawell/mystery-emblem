@@ -16,6 +16,7 @@ import {
   type BattleMoveSlot,
   type BattleUnitState,
 } from '../../engine/combatEngine';
+import { EXP_PER_LEVEL, MAX_UNIT_LEVEL } from '../../engine/progressionEngine';
 import {
   computeUnitMovementAndAttackRange,
   coordKey,
@@ -65,6 +66,112 @@ export function isUnitGrayedOut(
 ): boolean {
   if (!unit.waited) return false;
   return !(phase === 'enemy_phase' && unit.faction !== 'enemy');
+}
+
+export interface AwakeningHpBarColors {
+  leftRgb: [number, number, number];
+  midRgb: [number, number, number];
+  rightRgb: [number, number, number];
+  leftHex: string;
+  midHex: string;
+  rightHex: string;
+  cssGradient: string;
+}
+
+function lerpChannel(a: number, b: number, t: number): number {
+  return Math.round(a + (b - a) * t);
+}
+
+function lerpRgbTuple(
+  a: [number, number, number],
+  b: [number, number, number],
+  t: number
+): [number, number, number] {
+  return [lerpChannel(a[0], b[0], t), lerpChannel(a[1], b[1], t), lerpChannel(a[2], b[2], t)];
+}
+
+function rgbToHex([r, g, b]: [number, number, number]): string {
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
+/**
+ * Fire Emblem Awakening-style total-HP gradient:
+ * - Low max HP (~15): green on the left -> warm yellow -> red/orange on the right.
+ * - As max HP increases (up to ~55+), the gradient shifts progressively into cyan and blue.
+ */
+export function resolveAwakeningHpBarColors(maxHp: number): AwakeningHpBarColors {
+  const safeMax = Math.max(1, Number.isFinite(maxHp) ? maxHp : 15);
+  const t = Math.max(0, Math.min(1, (safeMax - 15) / 40));
+
+  const lowLeft: [number, number, number] = [72, 232, 104];
+  const midLeft: [number, number, number] = [56, 216, 200];
+  const highLeft: [number, number, number] = [40, 136, 248];
+
+  const lowMid: [number, number, number] = [248, 196, 56];
+  const midMid: [number, number, number] = [80, 232, 148];
+  const highMid: [number, number, number] = [56, 200, 255];
+
+  const lowRight: [number, number, number] = [248, 84, 48];
+  const midRight: [number, number, number] = [184, 232, 96];
+  const highRight: [number, number, number] = [88, 240, 232];
+
+  const leftRgb =
+    t <= 0.5 ? lerpRgbTuple(lowLeft, midLeft, t * 2) : lerpRgbTuple(midLeft, highLeft, (t - 0.5) * 2);
+  const midRgb =
+    t <= 0.5 ? lerpRgbTuple(lowMid, midMid, t * 2) : lerpRgbTuple(midMid, highMid, (t - 0.5) * 2);
+  const rightRgb =
+    t <= 0.5
+      ? lerpRgbTuple(lowRight, midRight, t * 2)
+      : lerpRgbTuple(midRight, highRight, (t - 0.5) * 2);
+
+  const leftHex = rgbToHex(leftRgb);
+  const midHex = rgbToHex(midRgb);
+  const rightHex = rgbToHex(rightRgb);
+
+  return {
+    leftRgb,
+    midRgb,
+    rightRgb,
+    leftHex,
+    midHex,
+    rightHex,
+    cssGradient: `linear-gradient(90deg, ${leftHex} 0%, ${midHex} 50%, ${rightHex} 100%)`,
+  };
+}
+
+/**
+ * Returns `0..1` EXP progress toward the next level for player units, or `null` for non-player units.
+ */
+export function computeUnitExpProgressRatio(
+  unit: Pick<BattleUnitState, 'faction' | 'level' | 'exp'>
+): number | null {
+  if (unit.faction !== 'player') return null;
+  if (unit.level >= MAX_UNIT_LEVEL) return 1;
+  const rawExp = typeof unit.exp === 'number' && Number.isFinite(unit.exp) ? unit.exp : 0;
+  return Math.max(0, Math.min(1, rawExp / EXP_PER_LEVEL));
+}
+
+export interface ExpBarColorInfo {
+  rgb: [number, number, number];
+  hex: string;
+  cssBackground: string;
+}
+
+/**
+ * EXP bar color: darker deep blue at low EXP (`0`), shifting to bright light blue right before leveling up (`1`).
+ */
+export function resolveExpBarColor(expRatio: number): ExpBarColorInfo {
+  const t = Math.max(0, Math.min(1, Number.isFinite(expRatio) ? expRatio : 0));
+  const darkBlue: [number, number, number] = [24, 84, 184];
+  const lightBlue: [number, number, number] = [144, 232, 255];
+  const rgb = lerpRgbTuple(darkBlue, lightBlue, t);
+  const hex = rgbToHex(rgb);
+  const startHex = rgbToHex(lerpRgbTuple(darkBlue, lightBlue, t * 0.55));
+  return {
+    rgb,
+    hex,
+    cssBackground: `linear-gradient(90deg, ${startHex} 0%, ${hex} 100%)`,
+  };
 }
 
 /** `"x,y"` keys of every `seize` objective tile (`tile_reached` events that `win_battle`) */

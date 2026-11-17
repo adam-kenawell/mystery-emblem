@@ -28,6 +28,7 @@ import {
   getLivingUnits,
   getSelectedUnit,
   getUnitVisualKey,
+  resolveAwakeningHpBarColors,
 } from './battleUnitQueries';
 
 export function refreshCombatForecastModalDom(ctx: BattleControllerContext): void {
@@ -215,6 +216,7 @@ export function refreshCombatForecastModalDom(ctx: BattleControllerContext): voi
   if (atkProjBar) {
     atkProjBar.className = 'pmd-forecast-hp-bar-fill';
     atkProjBar.style.width = `${Math.round((forecast.projectedAttackerHp / attacker.maxHp) * 100)}%`;
+    atkProjBar.style.background = resolveAwakeningHpBarColors(attacker.maxHp).cssGradient;
   }
 
   const defNameEl = q('[data-testid="forecast-defender-name"]');
@@ -287,5 +289,6 @@ export function refreshCombatForecastModalDom(ctx: BattleControllerContext): voi
   if (defProjBar) {
     defProjBar.className = 'pmd-forecast-hp-bar-fill is-enemy';
     defProjBar.style.width = `${Math.round((forecast.projectedDefenderHp / defender.maxHp) * 100)}%`;
+    defProjBar.style.background = resolveAwakeningHpBarColors(defender.maxHp).cssGradient;
   }
 }

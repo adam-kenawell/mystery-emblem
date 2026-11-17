@@ -271,6 +271,24 @@
 
 .pmd-unit-popup-hp-bar { height: 8px; }
 
+.pmd-unit-popup-exp-bar-track {
+  position: relative;
+  align-self: flex-start;
+  width: 84%;
+  height: 5px;
+  background: #101824;
+  border: 1px solid rgba(248, 248, 248, 0.85);
+  overflow: hidden;
+}
+
+.pmd-unit-popup-exp-bar-track[hidden] { display: none !important; }
+
+.pmd-unit-popup-exp-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: #1854b8;
+}
+
 .pmd-unit-popup-stats-row {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

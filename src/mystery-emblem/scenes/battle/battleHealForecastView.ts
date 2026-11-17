@@ -17,6 +17,7 @@ import {
   getHealableTargetsFromCurrentTile,
   getSelectedUnit,
   getUnitVisualKey,
+  resolveAwakeningHpBarColors,
 } from './battleUnitQueries';
 
 export function refreshHealForecastModalDom(ctx: BattleControllerContext): void {
@@ -162,6 +163,7 @@ export function refreshHealForecastModalDom(ctx: BattleControllerContext): void 
   if (atkProjBar) {
     atkProjBar.className = 'pmd-forecast-hp-bar-fill';
     atkProjBar.style.width = `${Math.round((healerProjectedHp / healer.maxHp) * 100)}%`;
+    atkProjBar.style.background = resolveAwakeningHpBarColors(healer.maxHp).cssGradient;
   }
 
   const defNameEl = q('[data-testid="forecast-defender-name"]');
@@ -192,5 +194,6 @@ export function refreshHealForecastModalDom(ctx: BattleControllerContext): void 
   if (defProjBar) {
     defProjBar.className = 'pmd-forecast-hp-bar-fill is-heal';
     defProjBar.style.width = `${Math.round((healForecast.projectedTargetHp / target.maxHp) * 100)}%`;
+    defProjBar.style.background = resolveAwakeningHpBarColors(target.maxHp).cssGradient;
   }
 }

@@ -23,11 +23,14 @@ import {
 import { getBattleSupportContext } from './battleSupportHelpers';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
+  computeUnitExpProgressRatio,
   escapeHudHtml,
   getLivingUnits,
   getSeizeObjectiveCoords,
   getSelectedUnit,
   getUnitVisualKey,
+  resolveAwakeningHpBarColors,
+  resolveExpBarColor,
 } from './battleUnitQueries';
 
 export function updateBattleInfoStrip(ctx: BattleControllerContext): void {
@@ -196,6 +199,20 @@ export function updateUnitHoverPopup(ctx: BattleControllerContext): void {
       isEnemy ? ' is-enemy' : isNpc ? ' is-npc' : ''
     }`;
     hpFillEl.style.width = `${Math.max(0, Math.min(100, Math.round((unit.currentHp / unit.maxHp) * 100)))}%`;
+    hpFillEl.style.background = resolveAwakeningHpBarColors(unit.maxHp).cssGradient;
+  }
+
+  const expTrackEl = dom.unitPopupEl.querySelector<HTMLElement>('[data-popup-exp-track]');
+  const expFillEl = dom.unitPopupEl.querySelector<HTMLElement>('[data-popup-exp-fill]');
+  const expRatio = computeUnitExpProgressRatio(unit);
+  if (expTrackEl && expFillEl) {
+    if (expRatio === null) {
+      expTrackEl.hidden = true;
+    } else {
+      expTrackEl.hidden = false;
+      expFillEl.style.width = `${Math.round(expRatio * 100)}%`;
+      expFillEl.style.background = resolveExpBarColor(expRatio).cssBackground;
+    }
   }
 
   const summary = computeUnitPopupStats(state.map, unit, getBattleSupportContext(state));
