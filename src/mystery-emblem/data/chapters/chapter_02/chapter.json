@@ -10,8 +10,8 @@
   "defaultTilesetId": "042",
   "bgmCue": "apple_woods",
   "objectiveType": "rout",
-  "objectiveLabel": "Rescue Smoliv & Rout Raiders",
-  "defeatIfUnitIdsFall": ["ch2_smoliv"],
+  "objectiveLabel": "Rescue Chespin & Rout Raiders",
+  "defeatIfUnitIdsFall": ["ch2_chespin"],
   "recommendedLevel": 3,
   "deploymentCap": 4,
   "preStoryCutsceneId": "cs_04_royal_guard_past",
@@ -43,7 +43,7 @@
   "recruitment": {"fixedSpeciesIds":["mentor_quaquaval"],"joinLevel":12,"scaleStatsToLevel":false,"fallbackSpeciesIds":[]},
   "guaranteesKecleonShopOnClear": {"nodeId":"chapter_02","shopType":"healing_shop"},
   "npcSpawns": [
-    {"id":"ch2_smoliv","x":9,"y":7,"speciesId":"smoliv","level":3,"stationary":true,"mustSurvive":true,"nickname":"Smoliv","heldItemId":null}
+    {"id":"ch2_chespin","x":9,"y":7,"speciesId":"chespin","level":3,"stationary":true,"mustSurvive":true,"nickname":"Chespin","heldItemId":null}
   ],
   "enemySpawns": [
     {"id":"ch2_enemy_0","x":14,"y":4,"speciesId":"zigzagoon_galar","level":3,"heldItemId":null,"squadId":"ch2_north_trail","aiMode":"wait_until_in_range","nickname":"Galarian Zigzagoon"},
@@ -59,13 +59,13 @@
   "reinforcements": [],
   "events": [
     {
-      "id":"ev_ch2_recruit_smoliv",
+      "id":"ev_ch2_recruit_chespin",
       "once":true,
-      "trigger":{"type":"battle_victory","requireSurvivedUnitIds":["ch2_smoliv"]},
+      "trigger":{"type":"battle_victory","requireSurvivedUnitIds":["ch2_chespin"]},
       "actions":[
         {
           "type":"recruit_post_battle",
-          "speciesId":"smoliv",
+          "speciesId":"chespin",
           "level":3,
           "scaleStatsToLevel":true
         }

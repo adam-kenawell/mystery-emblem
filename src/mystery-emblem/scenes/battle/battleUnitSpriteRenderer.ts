@@ -9,7 +9,7 @@ import { STATUS_BADGE_COLORS } from '../../engine/combatEngine';
 import type { BattleDomRefs } from './battleDomShell';
 import { drawUnitGroundShadow } from './battleRangeZonePainter';
 import type { BattleRuntimeState } from './battleTypesAndState';
-import { getRenderableUnits, getUnitVisualKey } from './battleUnitQueries';
+import { getRenderableUnits, getUnitVisualKey, isUnitGrayedOut } from './battleUnitQueries';
 
 export function renderUnitsAndStrikeVfx(
   ctx: CanvasRenderingContext2D,
@@ -63,7 +63,7 @@ export function renderUnitsAndStrikeVfx(
       const { drawX, drawY } = placement;
       const isHitFlashing = now < unit.hitFlashUntilMs;
 
-      if (isHitFlashing || unit.waited) {
+      if (isHitFlashing || isUnitGrayedOut(state.phase, unit)) {
         if (
           dom.tintScratchCanvas.width < anim.frameWidth ||
           dom.tintScratchCanvas.height < anim.frameHeight

@@ -11,14 +11,14 @@
     { "id": "partner", "who": { "kind": "partner" } },
     { "id": "healer", "who": { "kind": "healer" } },
     { "id": "mentor", "who": { "kind": "mentor" } },
-    { "id": "smoliv", "who": { "kind": "recruit", "speciesId": "smoliv" } },
+    { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
     { "id": "machop", "who": { "kind": "recruit", "speciesId": "machop" } }
   ],
   "placements": [
     { "id": "lord", "x": 6, "y": 5, "facing": "Right" },
     { "id": "partner", "x": 8, "y": 5, "facing": "Left" },
     { "id": "healer", "x": 6, "y": 6, "facing": "UpRight" },
-    { "id": "smoliv", "x": 8, "y": 6, "facing": "UpLeft" },
+    { "id": "chespin", "x": 8, "y": 6, "facing": "UpLeft" },
     { "id": "mentor", "x": 7, "y": 4, "facing": "Down" },
     { "id": "machop", "x": 12, "y": 5, "facing": "Left", "hidden": true }
   ],
@@ -27,12 +27,12 @@
     {
       "id": "campfire_1",
       "say": {
-        "speaker": "smoliv",
-        "emotion": "Happy",
+        "speaker": "chespin",
+        "emotion": "Normal",
         "side": "right",
-        "text": "Warming my leaves by a real campfire with all of you feels like a dream... Thank you again for letting me tag along!"
+        "text": "I will take first watch. And second. Sleep well, everyone."
       },
-      "actions": [{ "type": "emote", "who": "smoliv", "emote": "heart", "duration": 1 }]
+      "actions": [{ "type": "emote", "who": "chespin", "emote": "ellipsis", "duration": 1 }]
     },
     {
       "id": "campfire_2",
@@ -40,7 +40,7 @@
         "speaker": "partner",
         "emotion": "Happy",
         "side": "right",
-        "text": "The more the merrier, Smoliv! Especially once we see whatever grand mission King Serperior has waiting for Dad."
+        "text": "Ha! You don't have to guard us all night, Chespin. Save some strength for whatever grand mission King Serperior has waiting for Dad."
       }
     },
     {
@@ -74,7 +74,7 @@
         { "type": "place", "who": "lord", "x": 6, "y": 4, "facing": "Right" },
         { "type": "place", "who": "partner", "x": 6, "y": 6, "facing": "Right" },
         { "type": "place", "who": "healer", "x": 5, "y": 5, "facing": "Right" },
-        { "type": "place", "who": "smoliv", "x": 5, "y": 6, "facing": "Right" },
+        { "type": "place", "who": "chespin", "x": 5, "y": 6, "facing": "Right" },
         { "type": "fade", "to": "clear", "duration": 0.45 },
         { "type": "walk", "who": "machop", "path": [[9, 5]], "speed": 3.5, "facing": "Left" },
         { "type": "hop", "who": "machop", "count": 2 }

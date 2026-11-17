@@ -2,7 +2,11 @@
  * Unit Queries, Consumable Eligibility & Diagnostic Snapshot Builder for `BattleScene`
  */
 
-import { resolveUnitVisualAssetId } from '../../assets/pmdAssetLoader';
+import {
+  directionFromDelta,
+  resolveUnitVisualAssetId,
+  type PmdDirection,
+} from '../../assets/pmdAssetLoader';
 import { hasChapterMapOverride } from '../../data/chapterMapRegistry';
 import { getItemById } from '../../data/index';
 import {
@@ -23,6 +27,45 @@ import { computeDungeonCameraBounds } from '../../ui/gridViewportMath';
 import type { BattleDomRefs } from './battleDomShell';
 import type { BattleSceneSnapshot } from './battlePublicTypes';
 import type { BattleRuntimeState } from './battleTypesAndState';
+
+type FacingUnit = Pick<BattleUnitState, 'id' | 'faction' | 'x' | 'y' | 'currentHp' | 'defeated' | 'isBoss'>;
+
+/**
+ * Cardinal direction from `unit` toward the living boss (nearest living enemy once no boss remains).
+ * Ties between axes favor horizontal. Returns null when there is no enemy to face.
+ */
+export function resolveBossFacingDirection(
+  units: ReadonlyArray<FacingUnit>,
+  unit: Pick<FacingUnit, 'x' | 'y'>
+): PmdDirection | null {
+  const enemies = units.filter((u) => u.faction === 'enemy' && !u.defeated && u.currentHp > 0);
+  const dist = (u: FacingUnit) => Math.abs(u.x - unit.x) + Math.abs(u.y - unit.y);
+  const target =
+    enemies.find((u) => u.isBoss) ??
+    enemies.reduce<FacingUnit | null>((best, u) => (!best || dist(u) < dist(best) ? u : best), null);
+  if (!target) return null;
+  const dx = target.x - unit.x;
+  const dy = target.y - unit.y;
+  if (dx === 0 && dy === 0) return null;
+  return Math.abs(dx) >= Math.abs(dy)
+    ? directionFromDelta(Math.sign(dx), 0)
+    : directionFromDelta(0, Math.sign(dy));
+}
+
+/** Turns a unit that just finished its action toward the boss. */
+export function faceUnitTowardBoss(state: BattleRuntimeState, unit: BattleUnitState): void {
+  const dir = resolveBossFacingDirection(state.units, unit);
+  if (dir !== null) unit.direction = dir;
+}
+
+/** Waited units render grayed, except the player side during Enemy Phase. */
+export function isUnitGrayedOut(
+  phase: BattleRuntimeState['phase'],
+  unit: Pick<BattleUnitState, 'faction' | 'waited'>
+): boolean {
+  if (!unit.waited) return false;
+  return !(phase === 'enemy_phase' && unit.faction !== 'enemy');
+}
 
 /** `"x,y"` keys of every `seize` objective tile (`tile_reached` events that `win_battle`) */
 export function getSeizeObjectiveCoords(state: BattleRuntimeState): Set<string> {

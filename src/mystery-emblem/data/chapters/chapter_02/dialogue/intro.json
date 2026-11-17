@@ -2,21 +2,21 @@
   "id": "intro",
   "chapter": "chapter_02",
   "role": "intro",
-  "title": "Battle Prep & Smoliv's Plea",
+  "title": "Battle Prep & the Lone Knight",
   "music": "growing_anxiety",
   "cast": [
     { "id": "mentor", "who": { "kind": "mentor" } },
-    { "id": "smoliv", "who": { "kind": "recruit", "speciesId": "smoliv" } },
+    { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
     { "id": "lord", "who": { "kind": "lord" } }
   ],
   "beats": [
     {
       "id": "line_1",
       "say": {
-        "speaker": "smoliv",
-        "emotion": "Crying",
+        "speaker": "chespin",
+        "emotion": "Determined",
         "side": "right",
-        "text": "Stay back! Please, I only have berry oil in my basket!"
+        "text": "Strike all you like, raiders. You will tire long before my shell does."
       }
     },
     {
@@ -25,7 +25,7 @@
         "speaker": "mentor",
         "emotion": "Determined",
         "side": "left",
-        "text": "Hold steady, little Smoliv! Before we charge in, {lord}, take a moment in Battle Prep."
+        "text": "Hold steady, young Chespin! Before we charge in, {lord}, take a moment in Battle Prep."
       }
     },
     {

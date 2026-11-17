@@ -2,10 +2,10 @@
   "id": "outro",
   "chapter": "chapter_02",
   "role": "outro",
-  "title": "Smoliv Joins the Crew",
+  "title": "Chespin Takes an Oath",
   "music": "heartwarming",
   "cast": [
-    { "id": "smoliv", "who": { "kind": "recruit", "speciesId": "smoliv" } },
+    { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
     { "id": "lord", "who": { "kind": "lord" } },
     { "id": "healer", "who": { "kind": "healer" } }
   ],
@@ -13,10 +13,10 @@
     {
       "id": "line_1",
       "say": {
-        "speaker": "smoliv",
-        "emotion": "Teary-Eyed",
+        "speaker": "chespin",
+        "emotion": "Normal",
         "side": "right",
-        "text": "Y-you chased every single one of those raiders off! I thought I was done for..."
+        "text": "The trail is clear. My thanks. I could keep them from passing, but I could never make them leave."
       }
     },
     {
@@ -25,16 +25,16 @@
         "speaker": "healer",
         "emotion": "Happy",
         "side": "left",
-        "text": "You are safe now! Were you traveling these mountain trails all alone?"
+        "text": "Not a single scratch on that shell! Were you guarding this trail all by yourself?"
       }
     },
     {
       "id": "line_3",
       "say": {
-        "speaker": "smoliv",
-        "emotion": "Inspired",
+        "speaker": "chespin",
+        "emotion": "Determined",
         "side": "right",
-        "text": "I was trying to reach the capital markets, but the roads have turned so dangerous... Please, {lord}, may I join your team? I feel the safest when I am with all of you!"
+        "text": "I am training to become a knight of the Verdant Kingdom. {lord}, allow me to march with your company. I will be your shield."
       }
     },
     {
@@ -43,7 +43,16 @@
         "speaker": "lord",
         "emotion": "Happy",
         "side": "left",
-        "text": "Of course you can, Smoliv! Stick with us and we will cross the mountain together."
+        "text": "We'd be glad to have you, Chespin! Just try to keep up on the mountain."
+      }
+    },
+    {
+      "id": "line_5",
+      "say": {
+        "speaker": "chespin",
+        "emotion": "Worried",
+        "side": "right",
+        "text": "...I will do my best."
       }
     }
   ]

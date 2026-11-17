@@ -71,7 +71,7 @@ export type CastIdentity =
   | { kind: 'advisor' }
   /** A quiz-chosen recruit */
   | { kind: 'quiz_slot'; slot: QuizSeedSlotKey; index?: number; fallbackSpeciesId?: string }
-  /** A fixed story recruit (Smoliv, Machop, Slakoth...): their roster unit once recruited, else the species */
+  /** A fixed story recruit (Chespin, Machop, Slakoth...): their roster unit once recruited, else the species */
   | { kind: 'recruit'; speciesId: string }
   /** The Nth extra party member beyond the core four; hidden when the party is smaller */
   | { kind: 'party_extra'; slotIndex: number }

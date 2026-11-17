@@ -138,6 +138,27 @@ export async function playCombatExchangeAsync(
       spawnFloatingText(state, dom, target.x, target.y, `-${strike.damageDealt}`, '#ff7888');
     }
 
+    if (strike.consumedBerryItemId) {
+      target.heldItemId = null;
+      const healed = strike.actorHpAfter - actor.currentHp;
+      actor.currentHp = strike.actorHpAfter;
+      if (strike.actorStatusCured) {
+        actor.status = null;
+        actor.statusTurns = 0;
+      }
+      const berryName = (getItemById(strike.consumedBerryItemId)?.name ?? 'Berry').toUpperCase();
+      audioManager.playSfx('heal');
+      spawnFloatingText(
+        state,
+        dom,
+        actor.x,
+        Math.max(0, actor.y - 1),
+        healed > 0 ? `ATE ${berryName}! +${healed}` : `ATE ${berryName}!`,
+        '#68f8a8',
+        900
+      );
+    }
+
     updateBattleInfoStrip(ctx);
     await waitBattleMs(state, 310);
     if (!state.openState || runGen !== state.battleRunGen) return;

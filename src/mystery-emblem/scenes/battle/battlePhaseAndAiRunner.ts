@@ -46,6 +46,7 @@ import {
   getLivingUnits,
   getLordUnit,
   getUnitVisualKey,
+  faceUnitTowardBoss,
 } from './battleUnitQueries';
 import { playWalkPathAsync } from './battleWalkAndHealAnimator';
 
@@ -90,6 +91,9 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
 
   state.phase = 'enemy_phase';
   state.interactionState = 'enemy_acting';
+  for (const u of getLivingUnits(state)) {
+    if (u.faction !== 'enemy') faceUnitTowardBoss(state, u);
+  }
   syncHudControls(state, dom);
   updateBattleInfoStrip(ctx);
   ctx.onLayerStateChanged();

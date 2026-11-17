@@ -2,6 +2,7 @@
  * Pure 1-to-4 Strike Combat Exchange Resolver
  */
 
+import { getItemById } from '../../data/index';
 import type { MoveDefinition, StatusCondition } from '../../types/schemas';
 import type {
   BattleUnitState,
@@ -28,6 +29,11 @@ export interface CombatStrikeOutcome {
   targetHpBefore: number;
   targetHpAfter: number;
   targetDefeated: boolean;
+  /** Berry the actor ate off the target (Bug Bite), or null. */
+  consumedBerryItemId: string | null;
+  /** Actor HP after eating a stolen berry (equals current HP when nothing was eaten). */
+  actorHpAfter: number;
+  actorStatusCured: boolean;
 }
 
 export interface CombatExchangeOutcome {
@@ -57,6 +63,8 @@ export function resolveCombatExchange(
   let defenderPp = forecast.defenderSide ? forecast.defenderSide.ppBefore : null;
   let attackerStatus: StatusCondition | null = attacker.status;
   let defenderStatus: StatusCondition | null = defender.status;
+  let attackerHeldItemId: string | null = attacker.heldItemId;
+  let defenderHeldItemId: string | null = defender.heldItemId;
 
   const strikes: CombatStrikeOutcome[] = [];
 
@@ -104,6 +112,9 @@ export function resolveCombatExchange(
           targetHpBefore: curTargetHp,
           targetHpAfter: curTargetHp,
           targetDefeated: false,
+          consumedBerryItemId: null,
+          actorHpAfter: isCounter ? defenderHp : attackerHp,
+          actorStatusCured: false,
         });
         return;
       }
@@ -141,6 +152,32 @@ export function resolveCombatExchange(
       defenderHp = hpAfter;
     }
 
+    // Bug Bite: the actor eats the target's held berry and gains its effect.
+    let consumedBerryItemId: string | null = null;
+    let actorStatusCured = false;
+    let actorHpAfter = isCounter ? defenderHp : attackerHp;
+    if (didHit && side.typeMultiplier > 0 && side.move.consumesTargetBerry) {
+      const targetHeldId = isCounter ? attackerHeldItemId : defenderHeldItemId;
+      const berry = targetHeldId ? getItemById(targetHeldId) : undefined;
+      if (berry?.category === 'held_berry') {
+        consumedBerryItemId = berry.id;
+        if (isCounter) attackerHeldItemId = null;
+        else defenderHeldItemId = null;
+        const healAmount =
+          (berry.effect.berryHealFlat ?? 0) +
+          Math.floor((actor.maxHp * (berry.effect.berryHealPercent ?? 0)) / 100);
+        actorHpAfter = Math.min(actor.maxHp, actorHpAfter + healAmount);
+        if (isCounter) defenderHp = actorHpAfter;
+        else attackerHp = actorHpAfter;
+        const actorStatus = isCounter ? defenderStatus : attackerStatus;
+        if (berry.effect.berryCureAllStatus && actorStatus) {
+          actorStatusCured = true;
+          if (isCounter) defenderStatus = null;
+          else attackerStatus = null;
+        }
+      }
+    }
+
     let inflictedStatus: StatusCondition | null = null;
     if (didHit && side.typeMultiplier > 0 && hpAfter > 0) {
       const curTargetStatus = isCounter ? attackerStatus : defenderStatus;
@@ -168,6 +205,9 @@ export function resolveCombatExchange(
       targetHpBefore: hpBefore,
       targetHpAfter: hpAfter,
       targetDefeated: hpAfter <= 0,
+      consumedBerryItemId,
+      actorHpAfter,
+      actorStatusCured,
     });
   };
 

@@ -38,7 +38,7 @@
     {"x":3,"y":5,"speciesId":"quaxly"},
     {"x":3,"y":7,"speciesId":"flabebe"},
     {"x":2,"y":6,"speciesId":"mentor_quaquaval"},
-    {"x":2,"y":7,"speciesId":"smoliv"}
+    {"x":2,"y":7,"speciesId":"chespin"}
   ],
   "recruitment": {"fixedSpeciesIds":["machop"],"joinLevel":4,"scaleStatsToLevel":true,"fallbackSpeciesIds":[]},
   "clearRewardItems": [

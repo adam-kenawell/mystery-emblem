@@ -33,7 +33,7 @@ export function createFallbackBattlePrepManager(minSquadSize = 5): SaveStateMana
 
   const extraPool = [
     MENTOR_JAGEN_SPECIES_ID,
-    'smoliv',
+    'chespin',
     'machop',
     'slakoth',
     'starly',

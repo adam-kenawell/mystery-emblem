@@ -52,7 +52,7 @@ See `Mystery Emblem - Lore, Kingdoms & Character Bible.md` for full character bi
 * **Act 1 (`Expedition to Meet with King Serperior` - 100% Playable Deliverable):**
   * `Prologue` (**Hometown Pitch**): Core Trio (`{lord}`, `Quaxly`, `Flabebe`) sparring vs. `Quaquaval` & Town Trio (`Starly`, `Caterpie`, `Pawmi`).
   * `Chapter 1` (**Watering Hole**): Core Trio fends off outlaw thugs; `Pidgeotto` delivers Serperior's summons; Overworld unveils.
-  * `Chapter 2` (**Foothill Trail**): `Quaquaval` reveals his secret past in Serperior's Royal Guard; introduces Battle Prep; rescue and recruit **Smoliv**.
+  * `Chapter 2` (**Foothill Trail**): `Quaquaval` reveals his secret past in Serperior's Royal Guard; introduces Battle Prep; rescue and recruit knight **Chespin**.
   * `Chapter 3` (**Mountain Caves**): Night campfire & dawn meeting with **Machop** (guiding in place of busy `Machamp`); `"Get {lord} to the Exit"` cave pursuit. Unlocks `Paralogue 1` and `Chapter 4`.
   * `Paralogue 1` (**Lush Prairie**): Optional side quest recruiting `Lv. 1` Aptitude (`Hidden Potential` `+20%` growths) **Slakoth**.
   * `Chapter 4` (**Capital Outskirts**): Ambushed outside the capital by feral **Ancient Paradox Pokemon** (`Great Tusk`, `Flutter Mane`, `Slither Wing`, `Scream Tail`, `Brute Bonnet`); mid-battle, **Starly**, **Caterpie**, and **Pawmi** crash in (having trailed you from home) and join your squad.

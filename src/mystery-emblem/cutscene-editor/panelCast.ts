@@ -35,7 +35,7 @@ function defaultIdentity(kind: IdentityKind): CastIdentity {
     case 'quiz_slot':
       return { kind, slot: 'slot1Flying', fallbackSpeciesId: 'starly' };
     case 'recruit':
-      return { kind, speciesId: 'smoliv' };
+      return { kind, speciesId: 'chespin' };
     case 'party_extra':
       return { kind, slotIndex: 0 };
     case 'npc':

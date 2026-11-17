@@ -121,7 +121,7 @@ function cloneEvents(
 }
 
 export function hydrateChapterDefaultMap(raw: CompactChapterJson): DungeonMapDefinition {
-  const defaultAllies = ['axew', 'quaxly', 'flabebe', 'mentor_quaquaval', 'smoliv', 'machop', 'starly'];
+  const defaultAllies = ['axew', 'quaxly', 'flabebe', 'mentor_quaquaval', 'chespin', 'machop', 'starly'];
   return {
     id: raw.id,
     name: raw.label,

@@ -7,6 +7,7 @@
     { "id": "partner", "who": { "kind": "partner" } },
     { "id": "healer", "who": { "kind": "healer" } },
     { "id": "lord", "who": { "kind": "lord" } },
+    { "id": "combee", "who": { "kind": "recruit", "speciesId": "combee" } },
     {
       "id": "boss",
       "who": { "kind": "npc", "pokemon": "0453", "name": "Boss Croagunk", "speciesName": "Croagunk" }
@@ -19,7 +20,7 @@
         "speaker": "boss",
         "emotion": "Angry",
         "side": "right",
-        "text": "Heh, three village kids all by themselves, no grown-ups in sight! Fan out and corner them by the spring!"
+        "text": "Heh, three village kids and a lost little bug, no grown-ups in sight! Fan out and corner them by the spring!"
       }
     },
     {
@@ -38,6 +39,15 @@
         "emotion": "Determined",
         "side": "left",
         "text": "And we have tall forest cover right beside us for extra Dodge! Let's drive these thugs away together!"
+      }
+    },
+    {
+      "id": "line_4",
+      "say": {
+        "speaker": "combee",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "That Zigzagoon up north is clutching an Oran Berry. One Bug Bite and it's our breakfast!"
       }
     }
   ]

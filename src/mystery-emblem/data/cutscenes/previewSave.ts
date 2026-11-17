@@ -12,7 +12,7 @@ import type { SaveData } from '../../types/schemas';
 
 const PREVIEW_RECRUIT_SPECIES_IDS = [
   'mentor_quaquaval',
-  'smoliv',
+  'chespin',
   'machop',
   'slakoth',
   'starly',

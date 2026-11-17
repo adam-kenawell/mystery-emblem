@@ -126,6 +126,8 @@ export interface MoveDefinition {
   secondaryEffect?: MoveSecondaryEffect;
   /** Defender counter with priority strikes before a non-priority attacker. */
   priority?: boolean;
+  /** On hit, the user eats the target's held berry and gains its effect (Bug Bite). */
+  consumesTargetBerry?: boolean;
 }
 
 export const ITEM_CATEGORIES = [

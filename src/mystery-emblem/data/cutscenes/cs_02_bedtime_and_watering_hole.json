@@ -10,6 +10,7 @@
     { "id": "lord", "who": { "kind": "lord" } },
     { "id": "partner", "who": { "kind": "partner" } },
     { "id": "healer", "who": { "kind": "healer" } },
+    { "id": "combee", "who": { "kind": "npc", "pokemon": "0415", "name": "Combee", "speciesName": "Combee" } },
     {
       "id": "thug_leader",
       "who": { "kind": "npc", "pokemon": "0453", "name": "Croagunk", "speciesName": "Croagunk" }
@@ -82,6 +83,7 @@
             { "id": "lord", "x": 1, "y": 6, "facing": "Right" },
             { "id": "partner", "x": 1, "y": 5, "facing": "Right" },
             { "id": "healer", "x": 1, "y": 7, "facing": "Right" },
+            { "id": "combee", "x": 8, "y": 4, "facing": "Right" },
             { "id": "thug_leader", "x": 22, "y": 6, "facing": "Left", "hidden": true },
             { "id": "thug_zig_north", "x": 13, "y": 3, "facing": "Left", "hidden": true },
             { "id": "thug_imp_north", "x": 14, "y": 4, "facing": "Left", "hidden": true },
@@ -105,6 +107,56 @@
       }
     },
     {
+      "id": "combee_greeting",
+      "say": {
+        "speaker": "combee",
+        "emotion": "Surprised",
+        "side": "right",
+        "text": "Oh! Morning! Sorry, sorry, we'll be out of your way in a buzz. The hive's been dry for three days, so the Queen sent us down for water."
+      },
+      "actions": [
+        { "type": "emote", "who": "combee", "emote": "exclamation", "duration": 0.8 },
+        { "type": "walk", "who": "combee", "path": [[7, 4]], "speed": 2.4, "facing": "Left" }
+      ]
+    },
+    {
+      "id": "combee_healer_reply",
+      "say": {
+        "speaker": "healer",
+        "emotion": "Happy",
+        "side": "left",
+        "text": "Take all you need! Nobody owns the spring."
+      }
+    },
+    {
+      "id": "combee_partner_question",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Surprised",
+        "side": "left",
+        "text": "Hold on. 'We'? Are all three of you talking at the same time?"
+      }
+    },
+    {
+      "id": "combee_intro",
+      "say": {
+        "speaker": "combee",
+        "emotion": "Happy",
+        "side": "right",
+        "text": "Always! The bottom one lags a little. We're Combee. All of us. It gets confusing at the hive."
+      },
+      "actions": [{ "type": "emote", "who": "combee", "emote": "sweat", "duration": 0.9 }]
+    },
+    {
+      "id": "combee_lord_reply",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Happy",
+        "side": "left",
+        "text": "Nice to meet you, Combee. I'm {lord}. If the hive runs dry again, come find us in the village."
+      }
+    },
+    {
       "id": "thugs_jump_out",
       "waitForActions": true,
       "music": { "kind": "song", "song": "drenched_bluff" },
@@ -117,6 +169,7 @@
       "actions": [
         { "type": "emote", "who": "lord", "emote": "exclamation", "duration": 0.9 },
         { "type": "emote", "who": "partner", "emote": "exclamation", "duration": 0.9 },
+        { "type": "emote", "who": "combee", "emote": "exclamation", "duration": 0.9 },
         { "type": "camera", "x": 17, "y": 6.5, "duration": 1.2 },
         { "type": "show", "who": "thug_leader", "visible": true, "fade": true, "delay": 0.6 },
         { "type": "walk", "who": "thug_leader", "path": [[20, 6]], "speed": 2.2, "facing": "Left", "delay": 0.6 }
@@ -154,6 +207,20 @@
       "actions": [
         { "type": "camera", "x": 6, "y": 6.5, "duration": 0.8 },
         { "type": "pose", "who": "lord", "anim": "Attack", "duration": 0.45, "start": "after" }
+      ]
+    },
+    {
+      "id": "combee_joins",
+      "waitForActions": true,
+      "say": {
+        "speaker": "combee",
+        "emotion": "Determined",
+        "side": "right",
+        "text": "Hey! This spring belongs to everyone! Six wings and three bad tempers, coming right up. Count us in, {lord}!"
+      },
+      "actions": [
+        { "type": "walk", "who": "combee", "path": [[6, 4], [5, 4], [4, 4]], "speed": 3.2, "facing": "Right" },
+        { "type": "emote", "who": "combee", "emote": "angry", "duration": 0.9, "delay": 1.0 }
       ]
     }
   ]

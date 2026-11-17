@@ -53,7 +53,7 @@ export function toggleEditorPlayerSpawnAt(
     };
   }
 
-  const defaultPool = ['axew', 'quaxly', 'flabebe', 'smoliv', 'machop', 'starly'];
+  const defaultPool = ['axew', 'quaxly', 'flabebe', 'chespin', 'machop', 'starly'];
   const spId = defaultPool[state.map.playerSpawns.length % defaultPool.length] ?? 'axew';
   const sp = getSpeciesById(spId);
 

@@ -12,8 +12,8 @@
     { "id": "partner", "who": { "kind": "partner" } },
     { "id": "healer", "who": { "kind": "healer" } },
     {
-      "id": "smoliv",
-      "who": { "kind": "recruit", "speciesId": "smoliv" },
+      "id": "chespin",
+      "who": { "kind": "recruit", "speciesId": "chespin" },
       "offStage": true
     }
   ],
@@ -88,14 +88,14 @@
       "id": "cry_for_help",
       "music": { "kind": "song", "song": "oh_no" },
       "say": {
-        "speaker": "smoliv",
-        "emotion": "Crying",
+        "speaker": "chespin",
+        "emotion": "Determined",
         "side": "right",
-        "text": "H-help!! Somebody, please! Raiders have me cornered up the trail!"
+        "text": "Is anyone out there?! I can hold this trail all day, but I cannot drive these raiders off alone!"
       }
     },
     {
-      "id": "lord_hears_smoliv",
+      "id": "lord_hears_chespin",
       "say": {
         "speaker": "lord",
         "emotion": "Surprised",

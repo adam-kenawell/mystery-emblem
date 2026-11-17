@@ -12,8 +12,9 @@
   "objectiveType": "rout",
   "objectiveLabel": "Rout the Watering Hole Thugs",
   "recommendedLevel": 2,
-  "deploymentCap": 3,
+  "deploymentCap": 4,
   "skipPrepPhase": true,
+  "recruitment": {"fixedSpeciesIds":["combee"],"joinLevel":2,"scaleStatsToLevel":true,"fallbackSpeciesIds":[]},
   "preStoryCutsceneId": "cs_02_bedtime_and_watering_hole",
   "postStoryCutsceneId": "cs_03_pidgeotto_summons",
   "width": 24,
@@ -37,10 +38,11 @@
   "playerSlots": [
     {"x":3,"y":6,"speciesId":"axew"},
     {"x":3,"y":5,"speciesId":"quaxly"},
-    {"x":3,"y":7,"speciesId":"flabebe"}
+    {"x":3,"y":7,"speciesId":"flabebe"},
+    {"x":4,"y":4,"speciesId":"combee"}
   ],
   "enemySpawns": [
-    {"id":"ch1_thug_0","x":11,"y":3,"speciesId":"zigzagoon_galar","level":2,"heldItemId":null,"squadId":"ch1_north_ford","aiMode":"wait_until_in_range","nickname":"Galarian Zigzagoon"},
+    {"id":"ch1_thug_0","x":11,"y":3,"speciesId":"zigzagoon_galar","level":2,"heldItemId":"oran_berry","squadId":"ch1_north_ford","aiMode":"wait_until_in_range","nickname":"Galarian Zigzagoon"},
     {"id":"ch1_thug_1","x":12,"y":4,"speciesId":"impidimp","level":2,"heldItemId":null,"squadId":"ch1_north_ford","aiMode":"wait_until_in_range","nickname":"Impidimp"},
     {"id":"ch1_thug_2","x":11,"y":9,"speciesId":"venipede","level":2,"heldItemId":null,"squadId":"ch1_south_ford","aiMode":"wait_until_in_range","nickname":"Venipede"},
     {"id":"ch1_thug_3","x":12,"y":10,"speciesId":"zigzagoon_galar","level":2,"heldItemId":null,"squadId":"ch1_south_ford","droppableItemId":"potion","aiMode":"wait_until_in_range","nickname":"Galarian Zigzagoon"},
