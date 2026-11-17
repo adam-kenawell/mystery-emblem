@@ -290,33 +290,28 @@ export class DialogueOverlay {
 
     if (isNarrator) {
       this.dom.nicknameEl.textContent = '';
-      this.dom.nicknameEl.remove();
+      this.dom.nicknameEl.hidden = true;
       this.dom.leftActorRowEl.hidden = true;
       this.dom.rightActorRowEl.hidden = true;
     } else {
-      this.dom.nicknameEl.textContent = activeIdentity.nickname;
+      this.dom.nicknameEl.textContent = `${activeIdentity.nickname}: `;
       this.dom.nicknameEl.hidden = false;
-      if (line.side === 'left') {
-        this.dom.leftActorRowEl.append(this.dom.leftSlotEl, this.dom.nicknameEl);
-      } else {
-        this.dom.rightActorRowEl.append(this.dom.rightSlotEl, this.dom.nicknameEl);
-      }
-      this.dom.leftActorRowEl.hidden = !this.activeSides.left;
-      this.dom.rightActorRowEl.hidden = !this.activeSides.right;
+      this.dom.leftActorRowEl.hidden = line.side !== 'left';
+      this.dom.rightActorRowEl.hidden = line.side !== 'right';
     }
 
     const formattedText = interpolateCampaignText(line.text, save, activeIdentity.nickname);
     if (!opts.preserveTypewriterProgress) {
       this.dom.textEl.scrollTop = 0;
       this.typewriter.start({
-        targetEl: this.dom.textEl,
+        targetEl: this.dom.textBodyEl,
         text: formattedText,
         msPerTick: this.typewriterMsPerChar,
         charsPerTick: 2,
         onTick: () => this.audioManager.playSfx('typewriter_blip'),
       });
     } else {
-      this.typewriter.updateTextPreservingProgress(this.dom.textEl, formattedText);
+      this.typewriter.updateTextPreservingProgress(this.dom.textBodyEl, formattedText);
     }
 
     this.syncAdvanceButtonLabel();
@@ -326,14 +321,13 @@ export class DialogueOverlay {
       const slotEl = side === 'left' ? this.dom.leftSlotEl : this.dom.rightSlotEl;
       const view = side === 'left' ? this.dom.leftPortrait : this.dom.rightPortrait;
       const state = this.activeSides[side];
-      if (!state || isNarrator) {
+      if (!state || isNarrator || line.side !== side) {
         slotEl.hidden = true;
         continue;
       }
       const id = this.resolveSpeaker(state.speaker, save);
       slotEl.hidden = false;
-      slotEl.classList.toggle('is-speaking', line.side === side);
-      slotEl.classList.toggle('is-listening', line.side !== side);
+      slotEl.classList.add('is-speaking');
       portraitTasks.push(
         view.setPortrait({
           speciesIdOrAssetId: id.visualAssetId ?? id.speciesId ?? id.pmdAssetId,

@@ -148,8 +148,6 @@ body:has(#pmd-overworld-scene:not([hidden])) .pmd-tutorial-backdrop[data-coach-d
   justify-content: center;
   padding: 0;
   background: transparent;
-  border: 3px solid var(--pmd-text-yellow);
-  box-shadow: 0 0 0 2px #050a14, 2px 2px 0 rgba(0, 0, 0, 0.55);
   overflow: hidden;
   box-sizing: content-box;
   flex-shrink: 0;

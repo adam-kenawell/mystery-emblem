@@ -119,9 +119,9 @@ export function renderCoachCardDom(params: RenderCoachCardParams): {
   const speakerName = document.createElement('span');
   speakerName.className = 'pmd-dialogue-nickname pmd-advisor-speaker-name';
   speakerName.dataset.testid = 'tutorial-speaker-name';
-  speakerName.textContent = advisor.nickname;
+  speakerName.textContent = `${advisor.nickname}: `;
 
-  actorRow.append(portraitSlot, speakerName);
+  actorRow.append(portraitSlot);
 
   const boxEl = createPmdWindow({
     variant: 'translucent',
@@ -135,10 +135,13 @@ export function renderCoachCardDom(params: RenderCoachCardParams): {
   );
   const bodyEl = document.createElement('div');
   bodyEl.className = 'pmd-dialogue-body';
-  const speechEl = document.createElement('p');
-  speechEl.className = 'pmd-dialogue-text pmd-advisor-speech-text';
+  const textEl = document.createElement('p');
+  textEl.className = 'pmd-dialogue-text pmd-advisor-speech-text';
+  const speechEl = document.createElement('span');
+  speechEl.className = 'pmd-dialogue-text-body';
   speechEl.dataset.testid = 'tutorial-dialogue-text';
-  bodyEl.appendChild(speechEl);
+  textEl.append(speakerName, speechEl);
+  bodyEl.appendChild(textEl);
   bodyEl.appendChild(isInteractive ? buildActionPromptBadge(beat) : buildNavActionsRow(params));
 
   boxEl.appendChild(bodyEl);

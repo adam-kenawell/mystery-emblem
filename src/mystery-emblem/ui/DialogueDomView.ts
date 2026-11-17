@@ -19,6 +19,7 @@ export interface DialogueDomElements {
   nicknameEl: HTMLElement;
   skipBtn: HTMLButtonElement;
   textEl: HTMLElement;
+  textBodyEl: HTMLElement;
   advanceBtn: HTMLButtonElement;
 }
 
@@ -92,7 +93,11 @@ export function buildDialogueDomView(opts: {
 
   const textEl = document.createElement('p');
   textEl.className = 'pmd-dialogue-text';
-  textEl.dataset.testid = 'dialogue-text';
+
+  const textBodyEl = document.createElement('span');
+  textBodyEl.className = 'pmd-dialogue-text-body';
+  textBodyEl.dataset.testid = 'dialogue-text';
+  textEl.append(nicknameEl, textBodyEl);
 
   const advanceBtn = document.createElement('button');
   advanceBtn.type = 'button';
@@ -141,6 +146,7 @@ export function buildDialogueDomView(opts: {
     nicknameEl,
     skipBtn,
     textEl,
+    textBodyEl,
     advanceBtn,
   };
 }

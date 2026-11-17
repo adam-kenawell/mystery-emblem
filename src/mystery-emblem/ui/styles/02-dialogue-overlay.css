@@ -52,8 +52,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
-  padding: 4px 6px;
+  gap: 0;
+  padding: 0;
   border-width: 8px 12px;
   border-image-source: var(--pmd-frame-translucent);
   border-image-slice: 5 8 fill;
@@ -82,8 +82,6 @@
   justify-content: center;
   padding: 0;
   background: transparent;
-  border: 3px solid var(--pmd-text-yellow);
-  box-shadow: 0 0 0 2px #050a14, 2px 2px 0 rgba(0, 0, 0, 0.55);
   overflow: hidden;
   box-sizing: content-box;
   flex-shrink: 0;
@@ -93,21 +91,7 @@
   display: none !important;
 }
 
-.pmd-dialogue-portrait-slot.is-speaking {
-  border-color: #f8f800;
-  opacity: 1;
-  filter: none;
-  border-image-source: none;
-}
-
-.pmd-dialogue-portrait-slot.is-listening {
-  opacity: 0.72;
-  filter: brightness(0.8);
-  border-color: rgba(248, 248, 0, 0.52);
-  border-image-source: none;
-}
-
-/* Exact 2x integer portrait scale (40px * 2 = 80px) on Desktop with crisp border */
+/* Exact 2x integer portrait scale (40px * 2 = 80px) on Desktop */
 .pmd-dialogue-portrait-slot .pmd-portrait-canvas {
   display: block;
   width: 80px;
@@ -118,14 +102,11 @@
 }
 
 .pmd-dialogue-nickname {
-  font-size: 16px;
-  line-height: 1.2;
   color: var(--pmd-text-yellow);
-  font-weight: bold;
-  letter-spacing: 0.02em;
-  text-align: center;
-  text-shadow: 2px 2px 0 #000000;
-  white-space: nowrap;
+}
+
+.pmd-dialogue-nickname[hidden] {
+  display: none;
 }
 
 .pmd-dialogue-box {
@@ -211,12 +192,6 @@
 
   .pmd-dialogue-actor-row {
     border-width: 6px 8px;
-    padding: 3px 4px;
-    gap: 4px;
-  }
-
-  .pmd-dialogue-nickname {
-    font-size: 14px;
   }
 
   .pmd-dialogue-text {
@@ -255,12 +230,6 @@
 
   .pmd-dialogue-actor-row {
     border-width: 6px 8px;
-    padding: 2px 4px;
-    gap: 3px;
-  }
-
-  .pmd-dialogue-nickname {
-    font-size: 13px;
   }
 
   .pmd-dialogue-text {
