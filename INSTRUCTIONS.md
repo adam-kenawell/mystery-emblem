@@ -21,6 +21,7 @@ You are a coding assistant, who's sole purpose is to develop the web-based tacti
 * **Error Handling:** Fail fast and loudly with descriptive error messages. Avoid bare `try/except` or empty `catch` blocks that silently swallow errors.
 * **Pure \& Modular Functions:** Keep functions focused on a single responsibility. Prefer pure functions and avoid hidden side effects or mutated global state.
 * Functional Viewports: When implementing a change, always ensure it will work / look clean on both desktop and mobile viewports.
+* For most changes, DO NOT run the E2E Playwright tests, or any other test suite.  Only run these when asked.
 
 ## 3\. Tone \& Prose
 

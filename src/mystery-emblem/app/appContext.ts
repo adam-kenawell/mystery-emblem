@@ -24,6 +24,7 @@ export interface AppDomRefs {
   devToolsModal: HTMLElement | null;
   devToolsBtn: HTMLElement | null;
   cornerMenuBtn: HTMLButtonElement | null;
+  titleAuthBtn: HTMLButtonElement | null;
   statusMsgEl: HTMLElement | null;
   btnContinue: HTMLButtonElement | null;
   btnContinueLabel: HTMLElement | null;

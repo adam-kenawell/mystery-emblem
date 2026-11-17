@@ -49,6 +49,8 @@ export class AudioManager {
   private awaitingUserUnlock = false;
   private pausedByVisibility = false;
   private unlocked = false;
+  /** Stays silent (no SFX) until the first real BGM cue, i.e. the quiz welcome screen or a loaded save. */
+  private gameAudioStarted = false;
 
   private readonly sfxSynth = new WebAudioSfxSynthesizer();
   private readonly listeners = new Set<AudioListener>();
@@ -154,6 +156,7 @@ export class AudioManager {
     }
     const track = resolveBgmTrack(trackIdOrAlias);
     if (!track) return null;
+    this.gameAudioStarted = true;
 
     const fadeMs = Math.max(0, opts?.fadeMs ?? 320);
     const shouldLoop = opts?.loop ?? track.loop;
@@ -210,10 +213,12 @@ export class AudioManager {
   }
 
   public playSfx(sfxId: PmdUiSfxId): void {
+    if (!this.gameAudioStarted) return;
     this.sfxSynth.playSfx(sfxId, this.settings.sfxVolume, this.settings.muted);
   }
 
   public playSfxUrl(url: string, volumeScale = 1): void {
+    if (!this.gameAudioStarted) return;
     if (this.settings.muted || this.settings.sfxVolume <= 0.01) return;
     if (typeof window === 'undefined' || typeof Audio === 'undefined') return;
     try {

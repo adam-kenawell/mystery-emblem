@@ -26,6 +26,12 @@ export interface OpenSaveSlotOverlayOptions {
 
 let activeOverlay: { el: HTMLElement; close: () => void } | null = null;
 
+const TRASH_ICON_SVG =
+  '<svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" shape-rendering="crispEdges" fill="currentColor">' +
+  '<rect x="6" y="1" width="4" height="1"/><rect x="2" y="2" width="12" height="2"/>' +
+  '<path d="M3 5h10l-1 10H4z M5 6v8h1V6z M7.5 6v8h1V6z M10 6v8h1V6z" fill-rule="evenodd"/>' +
+  '</svg>';
+
 export function isSaveSlotOverlayOpen(): boolean {
   return activeOverlay !== null;
 }
@@ -34,15 +40,10 @@ export function closeSaveSlotOverlay(): void {
   activeOverlay?.close();
 }
 
-function formatSavedAt(ts: number | null): string {
-  if (!ts) return '';
-  try {
-    return new Date(ts).toLocaleString(undefined, {
-      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-    });
-  } catch {
-    return '';
-  }
+function formatSavedAt(ts: number): string {
+  return new Date(ts).toLocaleString(undefined, {
+    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+  });
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -124,27 +125,12 @@ export function openSaveSlotOverlay(opts: OpenSaveSlotOverlayOptions): void {
       '',
       `save-slot-${summary.slot}-select`
     );
-    const heading = el('span', 'pmd-save-slot-heading', `File ${summary.slot}`);
-    if (summary.isActive && mode === 'save' && !summary.isEmpty) {
-      heading.appendChild(el('span', 'pmd-save-slot-tag', 'CURRENT'));
-    }
-    if (summary.hasBattleSuspend) {
-      heading.appendChild(el('span', 'pmd-save-slot-tag is-battle', 'MID-BATTLE'));
-    }
-    main.appendChild(heading);
-    if (summary.isEmpty) {
-      main.appendChild(el('span', 'pmd-save-slot-meta', mode === 'load' ? 'Empty - Start a New Game' : 'Empty'));
-    } else {
-      main.appendChild(
-        el('span', 'pmd-save-slot-meta', `${summary.lordName ?? '???'} · ${summary.chapterLabel ?? ''}`)
-      );
-      main.appendChild(
-        el(
-          'span',
-          'pmd-save-slot-meta',
-          `${summary.rosterCount} Pokémon · ${summary.gold} G · ${formatSavedAt(summary.lastUpdated)}`
-        )
-      );
+    const label = summary.isEmpty
+      ? mode === 'load' ? 'Empty - Start a New Game' : 'Empty'
+      : `${summary.chapterLabel ?? 'Prologue'} - ${summary.lordName ?? '???'}`;
+    main.appendChild(el('span', `pmd-save-slot-heading${summary.isEmpty ? '' : ' has-data'}`, label));
+    if (!summary.isEmpty && summary.lastUpdated) {
+      main.appendChild(el('span', 'pmd-save-slot-time', formatSavedAt(summary.lastUpdated)));
     }
     bindPointerTap(
       main,
@@ -170,7 +156,10 @@ export function openSaveSlotOverlay(opts: OpenSaveSlotOverlayOptions): void {
     card.appendChild(main);
 
     if (mode === 'load' && !summary.isEmpty) {
-      const del = button('pmd-btn-danger pmd-save-slot-side', 'Delete', `save-slot-${summary.slot}-delete`);
+      const del = button('pmd-btn-danger pmd-save-slot-side pmd-save-slot-delete', '', `save-slot-${summary.slot}-delete`);
+      del.setAttribute('aria-label', 'Delete');
+      del.title = 'Delete';
+      del.innerHTML = TRASH_ICON_SVG;
       bindPointerTap(
         del,
         () => {

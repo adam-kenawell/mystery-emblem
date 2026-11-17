@@ -7,7 +7,7 @@
 export const SITE_URL = 'https://mysteryemblem.com';
 export const SITE_NAME = 'Mystery Emblem';
 export const AUTHOR_NAME = 'Adam Kenawell';
-export const AUTHOR_BLOG_URL = 'https://adam.kenawell.family/blog/';
+export const AUTHOR_BLOG_URL = 'https://adam.kenawell.family/blog/mystery-emblem';
 export const OG_IMAGE_PATH = '/og-image.jpg';
 
 export interface InfoPageLink {

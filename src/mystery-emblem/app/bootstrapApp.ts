@@ -65,6 +65,7 @@ export async function initMysteryEmblemApp(): Promise<void> {
     devToolsModal: document.getElementById('pmd-devtools-modal'),
     devToolsBtn: document.getElementById('pmd-dev-tools-btn'),
     cornerMenuBtn: document.getElementById('pmd-corner-menu-btn') as HTMLButtonElement | null,
+    titleAuthBtn: document.getElementById('pmd-title-auth-btn') as HTMLButtonElement | null,
     statusMsgEl: document.getElementById('pmd-status-msg'),
     btnContinue: document.getElementById('btn-continue') as HTMLButtonElement | null,
     btnContinueLabel: document.getElementById('btn-continue-label'),

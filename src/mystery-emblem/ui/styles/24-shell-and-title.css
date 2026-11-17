@@ -190,41 +190,61 @@
   width: 100%;
 }
 
-/* Info-page links: a framed bar beside the top-right Log In button (title screen only, since it
-   lives inside #pmd-title-screen and hides with it). */
+/* Info-page links + Log In / Log Out: one framed top-right bar on the title screen (hides with
+   #pmd-title-screen; the corner button takes over Log In during the quiz). */
 .pmd-title-links {
   position: fixed;
   top: max(0.85rem, env(safe-area-inset-top));
-  right: calc(max(0.85rem, env(safe-area-inset-right)) + 108px + 10px);
+  right: max(0.85rem, env(safe-area-inset-right));
   z-index: 95;
   min-height: 46px;
+  max-width: calc(100vw - 1.7rem);
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   padding: 4px 14px;
   font-size: 14px;
   white-space: nowrap;
 }
 
-.pmd-title-links a {
+.pmd-title-links a,
+.pmd-title-auth-btn {
   color: #a8e0f8;
   text-decoration: none;
   padding: 2px 0;
 }
 
+.pmd-title-links-sep {
+  color: var(--pmd-divider-subtle);
+}
+
+.pmd-title-auth-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 0;
+  font: inherit;
+  color: #f8f800;
+  cursor: inherit;
+}
+
 .pmd-title-links a:hover,
-.pmd-title-links a:focus-visible {
+.pmd-title-links a:focus-visible,
+.pmd-title-auth-btn:hover,
+.pmd-title-auth-btn:focus-visible {
   color: #f8f800;
   text-decoration: underline;
 }
 
-/* Narrow screens: drop the bar onto its own row under the Log In button. */
+/* Narrow screens: let the bar wrap onto two centered rows. */
 @media (max-width: 640px) {
   .pmd-title-links {
-    top: calc(max(0.85rem, env(safe-area-inset-top)) + 46px + 8px);
-    right: max(0.85rem, env(safe-area-inset-right));
     min-height: 38px;
-    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 2px;
+    column-gap: 8px;
     padding: 2px 12px;
     font-size: 13px;
   }
@@ -238,14 +258,12 @@
   z-index: 94;
   width: min(300px, calc(100vw - 1.7rem));
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   padding: 6px 8px;
   transition: opacity 0.38s ease, transform 0.38s ease;
-}
-
-#pmd-dev-tools-btn:not([hidden]) ~ #pmd-audio-notice {
-  top: calc(max(0.85rem, env(safe-area-inset-top)) + 54px);
 }
 
 .pmd-audio-notice.is-fading-out {
@@ -260,18 +278,14 @@
   color: #f8f8f8;
 }
 
-.pmd-audio-notice-btn {
-  align-self: flex-start;
+.pmd-audio-notice-icon {
+  flex: 0 0 auto;
+  color: var(--pmd-text-cyan);
 }
 
 @media (max-width: 640px) {
   .pmd-audio-notice {
-    top: calc(max(0.85rem, env(safe-area-inset-top)) + 104px);
     width: min(240px, calc(100vw - 1.7rem));
-  }
-
-  #pmd-dev-tools-btn:not([hidden]) ~ #pmd-audio-notice {
-    top: calc(max(0.85rem, env(safe-area-inset-top)) + 104px);
   }
 }
 

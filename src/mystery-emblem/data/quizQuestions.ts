@@ -2,7 +2,7 @@
  * 8-Question Dragon Aura Personality Quiz (`quizQuestions.ts`)
  *
  * Scores the 5 Stage-1 Dragon Lords (`axew`, `bagon`, `gible`, `dratini`, `goomy`)
- * across all 576 answer combinations (`134 / 102 / 133 / 100 / 107`).
+ * across all 6561 answer combinations (3 options per question).
  * Chapter recruits are fixed story/paralogue characters rather than quiz-seeded slots.
  */
 
@@ -93,6 +93,12 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
         primaryLord: 'bagon',
         secondaryLord: 'dratini',
       },
+      {
+        id: 'C',
+        text: 'Whack it with a spoon until it gives!',
+        primaryLord: 'gible',
+        secondaryLord: 'bagon',
+      },
     ],
   },
   {
@@ -111,6 +117,12 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
         text: 'Duck under an awning and enjoy the rain.',
         primaryLord: 'bagon',
         secondaryLord: 'goomy',
+      },
+      {
+        id: 'C',
+        text: 'Share your coat and walk a friend home.',
+        primaryLord: 'goomy',
+        secondaryLord: 'axew',
       },
     ],
   },
@@ -131,6 +143,12 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
         primaryLord: 'gible',
         secondaryLord: 'dratini',
       },
+      {
+        id: 'C',
+        text: 'Tell everyone "We\'ve got this!" and step up first.',
+        primaryLord: 'axew',
+        secondaryLord: 'gible',
+      },
     ],
   },
   {
@@ -149,6 +167,12 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
         text: 'Follow the path full of strange wildflowers!',
         primaryLord: 'goomy',
         secondaryLord: 'gible',
+      },
+      {
+        id: 'C',
+        text: 'Charge down the path that looks toughest!',
+        primaryLord: 'bagon',
+        secondaryLord: 'axew',
       },
     ],
   },
@@ -169,6 +193,12 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
         primaryLord: 'axew',
         secondaryLord: 'gible',
       },
+      {
+        id: 'C',
+        text: 'Sitting back, watching the flames and noticing everyone.',
+        primaryLord: 'dratini',
+        secondaryLord: 'goomy',
+      },
     ],
   },
   {
@@ -186,6 +216,12 @@ export const PERSONALITY_QUIZ_QUESTIONS: ReadonlyArray<QuizQuestionDefinition> =
         id: 'B',
         text: "Hop up anyway! Don't waste the morning!",
         primaryLord: 'axew',
+        secondaryLord: 'bagon',
+      },
+      {
+        id: 'C',
+        text: 'Get up slowly and plan out the day first.',
+        primaryLord: 'dratini',
         secondaryLord: 'bagon',
       },
     ],

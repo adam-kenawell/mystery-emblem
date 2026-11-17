@@ -48,7 +48,7 @@ export function renderQuizWelcomePopup(
       <p style="margin:0;"><strong>Sign in with Google</strong> to save your progress and keep playing on any device.</p>
       <p style="margin:0;">
         Follow the game's progress on my blog:
-        <a href="https://adam.kenawell.family/blog/" target="_blank" rel="noopener noreferrer" data-testid="quiz-welcome-blog-link" style="color:#88d8ff;">adam.kenawell.family/blog</a>
+        <a href="https://adam.kenawell.family/blog/mystery-emblem" target="_blank" rel="noopener noreferrer" data-testid="quiz-welcome-blog-link" style="color:#88d8ff;">adam.kenawell.family/blog/mystery-emblem</a>
       </p>
       <p style="margin:0;">At the end of the demo there's a short Google Form for feedback. All feedback helps, and I want this game to be the best it can be!</p>
       <p style="margin:0;">
@@ -75,6 +75,33 @@ export function renderQuizWelcomePopup(
   }
 
   stageEl.appendChild(popup);
+}
+
+const AUDIO_NOTICE_SEEN_KEY = 'mystery_emblem_audio_notice_seen_v1';
+const SPEAKER_ICON_SVG =
+  '<svg class="pmd-audio-notice-icon" viewBox="0 0 16 16" width="20" height="20" aria-hidden="true" shape-rendering="crispEdges" fill="currentColor">' +
+  '<path d="M1 5h3l4-3v12l-4-3H1z"/><rect x="10" y="6" width="1" height="4"/>' +
+  '<rect x="12" y="4" width="1" height="8"/><rect x="14" y="2" width="1" height="12"/>' +
+  '</svg>';
+
+/** Shows the top-left music notice only on the player's first ever visit; fades out after ~8s. */
+export function showFirstVisitAudioNotice(hostEl: HTMLElement): HTMLElement | null {
+  if (localStorage.getItem(AUDIO_NOTICE_SEEN_KEY)) return null;
+  localStorage.setItem(AUDIO_NOTICE_SEEN_KEY, '1');
+
+  const notice = document.createElement('aside');
+  notice.className = 'pmd-window pmd-window--compact pmd-window--translucent pmd-audio-notice';
+  notice.dataset.testid = 'quiz-audio-notice';
+  notice.setAttribute('role', 'status');
+  notice.setAttribute('aria-live', 'polite');
+  notice.innerHTML = `<div class="pmd-audio-notice-text">This game has music and sound effects.</div>${SPEAKER_ICON_SVG}`;
+  hostEl.appendChild(notice);
+
+  setTimeout(() => {
+    notice.classList.add('is-fading-out');
+    setTimeout(() => notice.remove(), 400);
+  }, 8000);
+  return notice;
 }
 
 export function renderQuizQuestionWindow(

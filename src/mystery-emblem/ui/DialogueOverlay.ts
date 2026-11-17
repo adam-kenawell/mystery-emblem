@@ -87,7 +87,7 @@ export class DialogueOverlay {
     right: null,
   };
 
-  private typewriterMsPerChar = 14;
+  private typewriterMsPerChar = 22;
   private saveOverride: SaveData | null | undefined = undefined;
   private finishResolver: ((reason: DialogueFinishReason) => void) | null = null;
   private activeOnLineStart?: (lineIndex: number, line: DialogueLine) => void | Promise<void>;
@@ -143,7 +143,7 @@ export class DialogueOverlay {
     }
 
     this.typewriterMsPerChar =
-      options?.typewriterMsPerChar ?? (prefersReducedMotionEnabled() ? 0 : 14);
+      options?.typewriterMsPerChar ?? (prefersReducedMotionEnabled() ? 0 : 22);
     this.saveOverride = options && 'saveOverride' in options ? options.saveOverride : undefined;
     this.activeOnLineStart = options?.onLineStart;
     this.activeOnAdvanceInterrupt = options?.onAdvanceInterrupt;

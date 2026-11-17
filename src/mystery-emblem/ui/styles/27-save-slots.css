@@ -40,10 +40,10 @@
   flex: 1 1 auto;
   min-height: 58px;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 2px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   text-align: left;
   padding: 4px 10px;
 }
@@ -55,29 +55,32 @@
 .pmd-save-slot-heading {
   font-weight: bold;
   color: var(--pmd-text-cyan);
+  overflow-wrap: anywhere;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.pmd-save-slot-meta {
-  font-size: 12px;
-  opacity: 0.9;
+.pmd-save-slot-heading.has-data {
+  color: var(--pmd-text-yellow);
 }
 
-.pmd-save-slot-tag {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 0 5px;
+.pmd-save-slot-time {
+  flex: 0 0 auto;
   font-size: 11px;
-  border: 1px solid var(--pmd-text-green);
-  color: var(--pmd-text-green);
-}
-
-.pmd-save-slot-tag.is-battle {
-  border-color: var(--pmd-text-danger);
-  color: var(--pmd-text-danger);
+  color: #a0a8b0;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .pmd-save-slot-side {
   min-width: 76px;
+}
+
+.pmd-save-slot-delete {
+  min-width: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .pmd-save-slot-confirm {

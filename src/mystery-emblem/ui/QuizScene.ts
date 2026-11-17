@@ -17,7 +17,7 @@ import { AuraWaveCanvas } from './quiz/AuraWaveCanvas';
 import { renderNgPlusRosterSelectorView } from './quiz/NgPlusRosterSelectorView';
 import { renderQuizLordRevealView, type QuizRevealBeat } from './quiz/QuizRevealSequenceView';
 import {
-  appendQuizQuestionOptionsWindow, renderQuizQuestionWindow, renderQuizWelcomePopup,
+  appendQuizQuestionOptionsWindow, renderQuizQuestionWindow, renderQuizWelcomePopup, showFirstVisitAudioNotice,
   type QuizQuestionDescriptor,
 } from './quiz/QuizWelcomeAndQuestionsView';
 import {
@@ -37,6 +37,7 @@ export class QuizScene {
   private readonly stageEl: HTMLElement;
   private readonly fadeOverlayEl: HTMLElement;
   private readonly typewriter = new QuizTypewriterController();
+  private audioNoticeEl: HTMLElement | null = null;
 
   private readonly saveManager: SaveStateManager;
   private readonly audioManager: AudioManager;
@@ -130,6 +131,7 @@ export class QuizScene {
     this.rootEl.hidden = false;
     this.audioManager.playBgm('personality_quiz', { fadeMs: 260 });
     this.render();
+    if (this.step === 'welcome') this.audioNoticeEl = showFirstVisitAudioNotice(this.rootEl);
     this.waveEngine.renderFrame(0);
     this.waveEngine.startLoop();
     this.onStateChange?.();
@@ -142,6 +144,8 @@ export class QuizScene {
     this.waveEngine.stopLoop();
     this.openState = false;
     this.rootEl.hidden = true;
+    this.audioNoticeEl?.remove();
+    this.audioNoticeEl = null;
     this.waveEngine.setTargetPalette(MYSTICAL_QUIZ_WAVE_PALETTE, true, true);
     delete this.rootEl.dataset.auraFlowerColor;
     this.onStateChange?.();

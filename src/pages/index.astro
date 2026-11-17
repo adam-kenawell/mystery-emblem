@@ -2,7 +2,7 @@
 import '@fontsource/fusion-pixel-12px-proportional-kr';
 import '../mystery-emblem/ui/pmdWindow.css';
 import SeoHead from '../components/SeoHead.astro';
-import { INFO_PAGES, VIDEO_GAME_JSON_LD } from '../siteMeta';
+import { AUTHOR_BLOG_URL, INFO_PAGES, VIDEO_GAME_JSON_LD } from '../siteMeta';
 
 const title = 'Mystery Emblem – Free Tactics RPG Fan Game in Your Browser';
 const description =
@@ -46,28 +46,7 @@ const description =
           Dev Tools
         </button>
 
-        <!-- Audio Notice Pop-Up (Top-Left, explains music starts upon save load/start) -->
-        <aside
-          id="pmd-audio-notice"
-          class="pmd-window pmd-window--compact pmd-window--translucent pmd-audio-notice"
-          data-testid="title-audio-notice"
-          role="status"
-          aria-live="polite"
-        >
-          <div class="pmd-audio-notice-text">
-            This site plays music once you load or start a save. To turn sounds off later: open Menu -&gt; System on the World Map, or tap an empty tile -&gt; Settings in battle.
-          </div>
-          <button
-            id="pmd-audio-notice-mute-btn"
-            class="pmd-btn pmd-chip-btn pmd-audio-notice-btn"
-            data-testid="title-audio-notice-mute-btn"
-            type="button"
-          >
-            Mute Audio
-          </button>
-        </aside>
-
-        <!-- Persistent Top-Right Corner Button: Google Log In / Log Out on Title; Menu / Back in Scenes -->
+        <!-- Persistent Top-Right Corner Button: Google Log In / Log Out in the Quiz; Menu / Back in Scenes (title screen uses the nav's #pmd-title-auth-btn) -->
         <button
           id="pmd-corner-menu-btn"
           class="pmd-window pmd-window--compact pmd-corner-btn pmd-corner-right"
@@ -127,7 +106,23 @@ const description =
             aria-label="About the game"
             data-testid="title-info-links"
           >
-            {INFO_PAGES.map((page) => <a href={page.path}>{page.label}</a>)}
+            {INFO_PAGES.map((page) => (
+              <Fragment>
+                <a href={page.path}>{page.label}</a>
+                <span class="pmd-title-links-sep" aria-hidden="true">|</span>
+              </Fragment>
+            ))}
+            <a href={AUTHOR_BLOG_URL} target="_blank" rel="noopener noreferrer">Changelog</a>
+            <span class="pmd-title-links-sep" aria-hidden="true">|</span>
+            <button
+              id="pmd-title-auth-btn"
+              class="pmd-title-auth-btn"
+              data-testid="title-auth-btn"
+              type="button"
+              aria-label="Log in with Google"
+            >
+              <span>Log In</span>
+            </button>
           </nav>
         </section>
 
