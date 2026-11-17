@@ -195,14 +195,17 @@ async function confirmForecastAttack(ctx: BattleControllerContext): Promise<void
   ctx.onLayerStateChanged();
   ctx.renderNow();
 
+  await triggerReactivePostCombatTutorials(ctx, runGen);
+  if (!state.openState || runGen !== state.battleRunGen || state.phase !== 'player_phase') {
+    return;
+  }
+
   if (areAllLivingPlayersWaited(state)) {
     await waitBattleMs(state, 240);
     if (!state.openState || runGen !== state.battleRunGen || state.phase !== 'player_phase') {
       return;
     }
     await runEnemyPhase(ctx);
-  } else {
-    await triggerReactivePostCombatTutorials(ctx, runGen);
   }
 }
 

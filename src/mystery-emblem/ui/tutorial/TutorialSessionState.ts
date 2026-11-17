@@ -81,14 +81,15 @@ export class TutorialSessionState {
   public evaluateTopicEligibility(
     saveManager: SaveStateManager,
     topicId: string,
-    skipForFastMode: boolean
+    skipForFastMode: boolean,
+    forceIfAlreadySeen = false
   ): TutorialTopicDefinition | null {
     const save = saveManager.getSave();
     const topic = getTutorialTopicById(topicId);
     if (!save || !topic || topic.beats.length === 0) return null;
     saveManager.unlockTutorial(topic.id);
     if (!saveManager.areTutorialsEnabled()) return null;
-    if (saveManager.hasSeenTutorial(topic.id)) return null;
+    if (!forceIfAlreadySeen && saveManager.hasSeenTutorial(topic.id)) return null;
     if (skipForFastMode) {
       saveManager.markTutorialSeen(topic.id);
       return null;

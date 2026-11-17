@@ -282,7 +282,8 @@ export const resolveDialogueSpeaker = resolveSpeakerIdentity;
 export function interpolateCampaignText(
   rawText: string,
   save: SaveData | null,
-  activeSpeakerNickname?: string
+  activeSpeakerNickname?: string,
+  extraTokens?: Readonly<Record<string, string>>
 ): string {
   const lordName = resolveSpeakerIdentity({ kind: 'lord' }, save).nickname;
   const partnerName = resolveSpeakerIdentity({ kind: 'partner' }, save).nickname;
@@ -290,6 +291,7 @@ export function interpolateCampaignText(
   const healerParentName = resolveSpeakerIdentity({ kind: 'healer_parent' }, save).nickname;
   const mentorName = resolveSpeakerIdentity({ kind: 'mentor' }, save).nickname;
   const advisorName = resolveSpeakerIdentity({ kind: 'advisor' }, save).nickname;
+  const afflictedName = extraTokens?.afflicted?.trim() || partnerName;
 
   let out = rawText
     .replace(/\{lord\}/g, lordName)
@@ -297,7 +299,15 @@ export function interpolateCampaignText(
     .replace(/\{healer\}/g, healerName)
     .replace(/\{healer_parent\}/g, healerParentName)
     .replace(/\{mentor\}/g, mentorName)
-    .replace(/\{advisor\}/g, advisorName);
+    .replace(/\{advisor\}/g, advisorName)
+    .replace(/\{afflicted\}/g, afflictedName);
+
+  if (extraTokens) {
+    for (const [key, value] of Object.entries(extraTokens)) {
+      if (key === 'afflicted') continue;
+      out = out.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+    }
+  }
 
   if (activeSpeakerNickname !== undefined) {
     out = out.replace(/\{speaker\}/g, activeSpeakerNickname);

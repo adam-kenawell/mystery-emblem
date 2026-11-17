@@ -47,6 +47,7 @@ export class TutorialOverlay {
   private fastMode = false;
   private pauseInFastMode = false;
   private activePresenter: TutorialPresenter = 'advisor';
+  private activeTokens: Readonly<Record<string, string>> | undefined;
   private tooltipTopicId: string | null = null;
   private tooltipTimer: number | null = null;
 
@@ -122,10 +123,21 @@ export class TutorialOverlay {
 
   public presentTopicIfNeeded(
     topicId: string,
-    opts?: { sceneFastMode?: boolean; presenter?: TutorialPresenter }
+    opts?: {
+      sceneFastMode?: boolean;
+      presenter?: TutorialPresenter;
+      forceIfAlreadySeen?: boolean;
+      tokens?: Readonly<Record<string, string>>;
+    }
   ): Promise<boolean> {
     const next = this.presentationQueue.then(() =>
-      this.runTopicPresentation(topicId, Boolean(opts?.sceneFastMode), opts?.presenter ?? 'advisor')
+      this.runTopicPresentation(
+        topicId,
+        Boolean(opts?.sceneFastMode),
+        opts?.presenter ?? 'advisor',
+        Boolean(opts?.forceIfAlreadySeen),
+        opts?.tokens
+      )
     );
     this.presentationQueue = next.catch(() => false);
     return next;
@@ -134,10 +146,17 @@ export class TutorialOverlay {
   private async runTopicPresentation(
     topicId: string,
     sceneFastMode: boolean,
-    presenter: TutorialPresenter
+    presenter: TutorialPresenter,
+    forceIfAlreadySeen = false,
+    tokens?: Readonly<Record<string, string>>
   ): Promise<boolean> {
     const skipFast = (this.fastMode || sceneFastMode) && !this.pauseInFastMode;
-    const topic = this.session.evaluateTopicEligibility(this.saveManager, topicId, skipFast);
+    const topic = this.session.evaluateTopicEligibility(
+      this.saveManager,
+      topicId,
+      skipFast,
+      forceIfAlreadySeen
+    );
     if (!topic) return false;
     this.hideTooltipPill();
     const startIdx = Math.min(
@@ -146,6 +165,7 @@ export class TutorialOverlay {
     );
     return new Promise<boolean>((resolve) => {
       this.activePresenter = presenter;
+      this.activeTokens = tokens;
       this.session.startTopic(topic, startIdx, false, resolve);
       this.session.applyModalDomVisibility(this.shell, 'card');
       this.session.syncInteractivity();
@@ -248,6 +268,7 @@ export class TutorialOverlay {
       topic,
       save: this.saveManager.getSave(),
       returnToCompendium,
+      tokens: this.activeTokens,
       signal: this.abortController.signal,
       onClose: () => this.dismissNoteModal(),
     });
@@ -374,6 +395,7 @@ export class TutorialOverlay {
         returnToCompendiumOnClose: this.session.returnToCompendiumOnClose,
         save: this.saveManager.getSave(),
         presenter: this.activePresenter,
+        tokens: this.activeTokens,
         signal: this.abortController.signal,
         onPrev: () => this.stepBeatBackward(),
         onNext: () => this.handleCoachAdvanceTap(),

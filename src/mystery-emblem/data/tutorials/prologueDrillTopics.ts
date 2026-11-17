@@ -81,7 +81,7 @@ export const PROLOGUE_DRILL_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefiniti
         id: 'item_cure_drill_quip',
         emotion: 'Worried',
         dialogue:
-          'Static left {partner} Paralyzed! Select {partner} and choose Item anytime to use that Paralyze Heal.',
+          'Static left {afflicted} Paralyzed! Catch this Paralyze Heal, then select {afflicted} and choose Item to heal your paralysis.',
       },
     ],
   },

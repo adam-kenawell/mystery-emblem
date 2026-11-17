@@ -28,6 +28,7 @@ export interface RenderCoachCardParams {
   returnToCompendiumOnClose: boolean;
   save: SaveData | null;
   presenter?: TutorialPresenter;
+  tokens?: Readonly<Record<string, string>>;
   signal: AbortSignal;
   onPrev: () => void;
   onNext: () => void;
@@ -131,7 +132,9 @@ export function renderCoachCardDom(params: RenderCoachCardParams): {
 
   const formattedDialogue = interpolateCampaignText(
     (isMentor && beat.mentorDialogue) || beat.dialogue,
-    save
+    save,
+    undefined,
+    params.tokens
   );
   const bodyEl = document.createElement('div');
   bodyEl.className = 'pmd-dialogue-body';

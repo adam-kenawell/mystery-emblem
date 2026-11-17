@@ -21,6 +21,7 @@ export interface RenderFieldNoteModalParams {
   topic: TutorialTopicDefinition;
   save: SaveData | null;
   returnToCompendium: boolean;
+  tokens?: Readonly<Record<string, string>>;
   signal: AbortSignal;
   onClose: () => void;
 }
@@ -129,7 +130,7 @@ export function renderFieldNoteModalDom(params: RenderFieldNoteModalParams): voi
     topic.bullets && topic.bullets.length > 0 ? topic.bullets : [topic.summary];
   for (const rawLine of bulletLines) {
     const li = document.createElement('li');
-    li.textContent = interpolateCampaignText(rawLine, save);
+    li.textContent = interpolateCampaignText(rawLine, save, undefined, params.tokens);
     bulletsList.appendChild(li);
   }
   noteWindowEl.appendChild(bulletsList);
@@ -139,7 +140,9 @@ export function renderFieldNoteModalDom(params: RenderFieldNoteModalParams): voi
   quoteEl.dataset.testid = 'tutorial-note-quote';
   quoteEl.textContent = interpolateCampaignText(
     topic.beats[0]?.dialogue ?? topic.summary,
-    save
+    save,
+    undefined,
+    params.tokens
   );
   noteWindowEl.appendChild(quoteEl);
 }

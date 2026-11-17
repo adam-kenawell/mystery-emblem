@@ -15,6 +15,9 @@ import {
 } from '../../data/tutorialRegistry';
 import { getMapDeploymentCap } from '../../engine/battleSetup';
 import { getEligibleEvolutionBranches } from '../../engine/progressionEngine';
+import { ensureTilePairVisible } from './battleBannersAndTransitions';
+import { spawnFloatingText } from './battleFloatingCallouts';
+import { updateBattleInfoStrip } from './battleHudCards';
 import {
   getAttackableEnemiesForSelectedState,
   getExpectedTutorialAction,
@@ -235,7 +238,8 @@ export function registerBattleTutorialAvailabilityProvider(ctx: BattleController
 
 export function triggerBattleTutorial(
   ctx: BattleControllerContext,
-  topicId: string
+  topicId: string,
+  opts?: { forceIfAlreadySeen?: boolean; tokens?: Readonly<Record<string, string>> }
 ): Promise<boolean> {
   const { state, tutorialOverlay } = ctx;
   if (!tutorialOverlay || !state.openState || state.cutsceneInProgress) {
@@ -251,6 +255,8 @@ export function triggerBattleTutorial(
   return tutorialOverlay.presentTopicIfNeeded(topicId, {
     sceneFastMode: state.fastMode,
     presenter: isPrologue ? 'mentor' : 'advisor',
+    forceIfAlreadySeen: opts?.forceIfAlreadySeen,
+    tokens: opts?.tokens,
   });
 }
 
@@ -283,7 +289,7 @@ export async function triggerReactivePostCombatTutorials(
   ctx: BattleControllerContext,
   runGen: number
 ): Promise<boolean> {
-  const { state, saveManager } = ctx;
+  const { state, dom, saveManager, audioManager } = ctx;
   if (
     !state.openState ||
     runGen !== state.battleRunGen ||
@@ -293,11 +299,56 @@ export async function triggerReactivePostCombatTutorials(
     return false;
   }
   const players = getLivingPlayers(state);
+  const isPrologue = state.activeLevelId === PROLOGUE_LEVEL_ID;
+  const paralyzedPrologueUnit = isPrologue
+    ? players.find((u) => u.status === 'PAR' && u.consumableItemId !== 'paralyze_heal')
+    : undefined;
+  const afflictedUnit =
+    paralyzedPrologueUnit ??
+    players.find((u) => u.status === 'PAR') ??
+    players.find((u) => u.status !== null);
+
   if (
-    players.some((u) => u.status !== null) &&
-    !saveManager.hasSeenTutorial(PROLOGUE_ITEM_CURE_DRILL_TOPIC_ID)
+    afflictedUnit &&
+    (Boolean(paralyzedPrologueUnit) || !saveManager.hasSeenTutorial(PROLOGUE_ITEM_CURE_DRILL_TOPIC_ID))
   ) {
-    return triggerBattleTutorial(ctx, PROLOGUE_ITEM_CURE_DRILL_TOPIC_ID);
+    if (paralyzedPrologueUnit) {
+      if (paralyzedPrologueUnit.heldItemId) {
+        state.eventBonusItems.push({ itemId: paralyzedPrologueUnit.heldItemId, quantity: 1 });
+        paralyzedPrologueUnit.heldItemId = null;
+      }
+      if (
+        paralyzedPrologueUnit.consumableItemId &&
+        paralyzedPrologueUnit.consumableItemId !== 'paralyze_heal'
+      ) {
+        state.eventBonusItems.push({ itemId: paralyzedPrologueUnit.consumableItemId, quantity: 1 });
+      }
+      paralyzedPrologueUnit.consumableItemId = 'paralyze_heal';
+      ensureTilePairVisible(
+        state,
+        paralyzedPrologueUnit.x,
+        paralyzedPrologueUnit.y,
+        paralyzedPrologueUnit.x,
+        paralyzedPrologueUnit.y
+      );
+      state.inspectedTile = { x: paralyzedPrologueUnit.x, y: paralyzedPrologueUnit.y };
+      audioManager.playSfx('heal');
+      spawnFloatingText(
+        state,
+        dom,
+        paralyzedPrologueUnit.x,
+        Math.max(0, paralyzedPrologueUnit.y - 1),
+        'PARALYZE HEAL!',
+        '#68f8a8',
+        950
+      );
+      updateBattleInfoStrip(ctx);
+      ctx.renderNow();
+    }
+    return triggerBattleTutorial(ctx, PROLOGUE_ITEM_CURE_DRILL_TOPIC_ID, {
+      forceIfAlreadySeen: Boolean(paralyzedPrologueUnit),
+      tokens: { afflicted: afflictedUnit.nickname },
+    });
   }
   if (
     players.some((u) => u.currentHp < u.maxHp) &&
