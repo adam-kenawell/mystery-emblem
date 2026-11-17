@@ -193,7 +193,7 @@ export function renderBattleFrame(ctxObj: BattleControllerContext, now: number):
         state.selectionPulseStartMs,
         now,
         visibleBounds,
-        0.46
+        0.62
       );
     }
   }
