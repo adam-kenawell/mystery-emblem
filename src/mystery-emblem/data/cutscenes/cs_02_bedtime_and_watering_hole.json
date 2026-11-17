@@ -13,7 +13,14 @@
     {
       "id": "thug_leader",
       "who": { "kind": "npc", "pokemon": "0453", "name": "Croagunk", "speciesName": "Croagunk" }
-    }
+    },
+    { "id": "thug_zig_north", "who": { "kind": "npc", "pokemon": "0263/0001", "name": "Galarian Zigzagoon", "speciesName": "Galarian Zigzagoon" } },
+    { "id": "thug_imp_north", "who": { "kind": "npc", "pokemon": "0859", "name": "Impidimp", "speciesName": "Impidimp" } },
+    { "id": "thug_veni_south", "who": { "kind": "npc", "pokemon": "0543", "name": "Venipede", "speciesName": "Venipede" } },
+    { "id": "thug_zig_south", "who": { "kind": "npc", "pokemon": "0263/0001", "name": "Galarian Zigzagoon", "speciesName": "Galarian Zigzagoon" } },
+    { "id": "thug_rook_scout", "who": { "kind": "npc", "pokemon": "0821", "name": "Rookidee", "speciesName": "Rookidee" } },
+    { "id": "thug_rook_den", "who": { "kind": "npc", "pokemon": "0821", "name": "Rookidee", "speciesName": "Rookidee" } },
+    { "id": "thug_imp_den", "who": { "kind": "npc", "pokemon": "0859", "name": "Impidimp", "speciesName": "Impidimp" } }
   ],
   "placements": [
     { "id": "lord", "x": 7, "y": 5, "facing": "Right" },
@@ -67,21 +74,28 @@
       "actions": [
         {
           "type": "location",
-          "location": "bluff_camp",
+          "location": "watering_hole",
           "transition": "black",
           "banner": "Village Watering Hole - Next Morning",
-          "camera": { "x": 8, "y": 5.5 },
+          "camera": { "x": 6, "y": 6.5 },
           "placements": [
-            { "id": "lord", "x": 5, "y": 5, "facing": "Right" },
-            { "id": "partner", "x": 6, "y": 4, "facing": "Right" },
-            { "id": "healer", "x": 5, "y": 6, "facing": "Right" },
-            { "id": "thug_leader", "x": 12, "y": 5, "facing": "Left", "hidden": true }
+            { "id": "lord", "x": 1, "y": 6, "facing": "Right" },
+            { "id": "partner", "x": 1, "y": 5, "facing": "Right" },
+            { "id": "healer", "x": 1, "y": 7, "facing": "Right" },
+            { "id": "thug_leader", "x": 22, "y": 6, "facing": "Left", "hidden": true },
+            { "id": "thug_zig_north", "x": 13, "y": 3, "facing": "Left", "hidden": true },
+            { "id": "thug_imp_north", "x": 14, "y": 4, "facing": "Left", "hidden": true },
+            { "id": "thug_veni_south", "x": 13, "y": 9, "facing": "Left", "hidden": true },
+            { "id": "thug_zig_south", "x": 14, "y": 10, "facing": "Left", "hidden": true },
+            { "id": "thug_rook_scout", "x": 14, "y": 1, "facing": "Down", "hidden": true },
+            { "id": "thug_rook_den", "x": 21, "y": 4, "facing": "Left", "hidden": true },
+            { "id": "thug_imp_den", "x": 21, "y": 9, "facing": "Left", "hidden": true }
           ]
         },
         { "type": "lighting", "mood": "morning_coast", "duration": 0.3 },
-        { "type": "walk", "who": "lord", "path": [[7, 5]], "speed": 2.6, "facing": "Right" },
-        { "type": "walk", "who": "partner", "path": [[8, 4]], "speed": 2.8, "facing": "Right" },
-        { "type": "walk", "who": "healer", "path": [[7, 6]], "speed": 2.6, "facing": "Right" }
+        { "type": "walk", "who": "lord", "path": [[3, 6]], "speed": 2.6, "facing": "Right" },
+        { "type": "walk", "who": "partner", "path": [[3, 5]], "speed": 2.6, "facing": "Right" },
+        { "type": "walk", "who": "healer", "path": [[3, 7]], "speed": 2.6, "facing": "Right" }
       ],
       "say": {
         "speaker": "healer",
@@ -92,7 +106,8 @@
     },
     {
       "id": "thugs_jump_out",
-      "music": { "kind": "song", "song": "outlaw" },
+      "waitForActions": true,
+      "music": { "kind": "song", "song": "drenched_bluff" },
       "say": {
         "speaker": "thug_leader",
         "emotion": "Angry",
@@ -100,10 +115,32 @@
         "text": "Hold it right there, village runts! Drop the pails and empty your pouches if you want to walk home dry!"
       },
       "actions": [
-        { "type": "show", "who": "thug_leader", "visible": true, "fade": true },
-        { "type": "walk", "who": "thug_leader", "path": [[10, 5]], "speed": 3.8, "facing": "Left" },
         { "type": "emote", "who": "lord", "emote": "exclamation", "duration": 0.9 },
-        { "type": "emote", "who": "partner", "emote": "exclamation", "duration": 0.9 }
+        { "type": "emote", "who": "partner", "emote": "exclamation", "duration": 0.9 },
+        { "type": "camera", "x": 17, "y": 6.5, "duration": 1.2 },
+        { "type": "show", "who": "thug_leader", "visible": true, "fade": true, "delay": 0.6 },
+        { "type": "walk", "who": "thug_leader", "path": [[20, 6]], "speed": 2.2, "facing": "Left", "delay": 0.6 }
+      ]
+    },
+    {
+      "id": "thugs_surround",
+      "actions": [
+        { "type": "camera", "x": 12, "y": 6.5, "duration": 1.0 },
+        { "type": "show", "who": "thug_rook_den", "visible": true, "fade": true, "delay": 0.2 },
+        { "type": "walk", "who": "thug_rook_den", "path": [[20, 4], [19, 4]], "speed": 3.2, "facing": "Left", "delay": 0.2 },
+        { "type": "show", "who": "thug_imp_den", "visible": true, "fade": true, "delay": 0.3 },
+        { "type": "walk", "who": "thug_imp_den", "path": [[20, 9], [19, 9]], "speed": 3.2, "facing": "Left", "delay": 0.3 },
+        { "type": "show", "who": "thug_rook_scout", "visible": true, "fade": true, "delay": 0.5 },
+        { "type": "walk", "who": "thug_rook_scout", "path": [[14, 2], [14, 3], [14, 4], [14, 5]], "speed": 4.2, "facing": "Left", "delay": 0.5 },
+        { "type": "show", "who": "thug_zig_north", "visible": true, "fade": true, "delay": 0.8 },
+        { "type": "walk", "who": "thug_zig_north", "path": [[12, 3], [11, 3]], "speed": 3.6, "facing": "Left", "delay": 0.8 },
+        { "type": "show", "who": "thug_imp_north", "visible": true, "fade": true, "delay": 0.9 },
+        { "type": "walk", "who": "thug_imp_north", "path": [[13, 4], [12, 4]], "speed": 3.6, "facing": "Left", "delay": 0.9 },
+        { "type": "show", "who": "thug_veni_south", "visible": true, "fade": true, "delay": 1.0 },
+        { "type": "walk", "who": "thug_veni_south", "path": [[12, 9], [11, 9]], "speed": 3.0, "facing": "Left", "delay": 1.0 },
+        { "type": "show", "who": "thug_zig_south", "visible": true, "fade": true, "delay": 1.1 },
+        { "type": "walk", "who": "thug_zig_south", "path": [[13, 10], [12, 10]], "speed": 3.6, "facing": "Left", "delay": 1.1 },
+        { "type": "emote", "who": "healer", "emote": "sweat", "duration": 1, "delay": 1.4 }
       ]
     },
     {
@@ -114,7 +151,10 @@
         "side": "left",
         "text": "Outlaw thugs at our own watering hole?! Stay behind us, {healer}. Looks like Dad's training pays off right now!"
       },
-      "actions": [{ "type": "pose", "who": "lord", "anim": "Attack", "duration": 0.45 }]
+      "actions": [
+        { "type": "camera", "x": 6, "y": 6.5, "duration": 0.8 },
+        { "type": "pose", "who": "lord", "anim": "Attack", "duration": 0.45, "start": "after" }
+      ]
     }
   ]
 }

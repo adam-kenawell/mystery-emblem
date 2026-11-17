@@ -33,14 +33,14 @@
     "X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5"
   ],
   "playerSlots": [
-    {"x":5,"y":4,"speciesId":"axew"},
-    {"x":5,"y":5,"speciesId":"quaxly"},
-    {"x":4,"y":6,"speciesId":"flabebe"}
+    {"x":3,"y":5,"speciesId":"axew"},
+    {"x":2,"y":4,"speciesId":"quaxly"},
+    {"x":2,"y":6,"speciesId":"flabebe"}
   ],
   "enemySpawns": [
-    {"id":"prologue_pawmi","x":12,"y":5,"speciesId":"pawmi","level":1,"moveIds":["nuzzle"],"equippedMoveId":"nuzzle","equippedMoveIds":["nuzzle"],"heldItemId":null,"aiMode":"aggressive","friendlyBout":true},
-    {"id":"prologue_starly","x":13,"y":3,"speciesId":"starly","level":1,"moveIds":["gust"],"equippedMoveId":"gust","equippedMoveIds":["gust"],"heldItemId":null,"aiMode":"aggressive","friendlyBout":true},
-    {"id":"prologue_caterpie","x":13,"y":7,"speciesId":"caterpie","level":1,"moveIds":["tackle"],"equippedMoveId":"tackle","equippedMoveIds":["tackle"],"heldItemId":null,"aiMode":"aggressive","friendlyBout":true}
+    {"id":"prologue_pawmi","x":16,"y":5,"speciesId":"pawmi","level":1,"moveIds":["nuzzle"],"equippedMoveId":"nuzzle","equippedMoveIds":["nuzzle"],"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true},
+    {"id":"prologue_starly","squadId":"prologue_flock","x":11,"y":3,"speciesId":"starly","level":1,"moveIds":["gust"],"equippedMoveId":"gust","equippedMoveIds":["gust"],"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true},
+    {"id":"prologue_caterpie","squadId":"prologue_flock","x":12,"y":7,"speciesId":"caterpie","level":1,"moveIds":["tackle"],"equippedMoveId":"tackle","equippedMoveIds":["tackle"],"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true}
   ],
   "reinforcements": [],
   "events": []

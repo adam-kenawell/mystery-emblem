@@ -3,7 +3,6 @@
   "chapter": "chapter_01",
   "role": "intro",
   "title": "Watering Hole Ambush",
-  "music": "outlaw",
   "cast": [
     { "id": "partner", "who": { "kind": "partner" } },
     { "id": "healer", "who": { "kind": "healer" } },
