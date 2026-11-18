@@ -155,6 +155,129 @@
   background: #50f850;
 }
 
+/* Level-Up sequential stat reveal & New Move Learned modal styling */
+.pmd-levelup-stat-box {
+  position: relative;
+  min-height: 44px;
+  justify-content: center;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    transform 0.18s ease;
+}
+
+.pmd-levelup-stat-box .pmd-prep-stat-val {
+  color: var(--pmd-text-white);
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 2px;
+}
+
+.pmd-levelup-stat-box.is-upgraded {
+  border-color: var(--pmd-text-yellow);
+  background: #143652;
+  box-shadow: inset 0 0 0 1px rgba(248, 208, 72, 0.35);
+}
+
+.pmd-levelup-stat-box.is-upgraded .pmd-prep-stat-val {
+  color: var(--pmd-text-yellow);
+}
+
+.pmd-levelup-stat-box.is-popping {
+  animation: pmd-levelup-stat-pop 0.34s cubic-bezier(0.22, 1.35, 0.36, 1);
+}
+
+.pmd-levelup-stat-gain {
+  font-style: normal;
+  font-size: 11px;
+  color: var(--pmd-text-green);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+@keyframes pmd-levelup-stat-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.16) translateY(-3px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+.pmd-move-learned-separator {
+  width: 100%;
+  height: 2px;
+  background: var(--pmd-divider-subtle);
+  margin: 2px 0;
+}
+
+.pmd-move-learned-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  background: var(--pmd-fill-well);
+  border: 2px solid var(--pmd-divider-subtle);
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.pmd-move-learned-title-row {
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.pmd-move-learned-name-line {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.pmd-move-learned-field-lbl {
+  font-size: 12px;
+  font-weight: bold;
+  color: var(--pmd-text-cyan);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.pmd-prep-stats-grid.pmd-move-learned-stats-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.pmd-move-learned-stat-chip {
+  padding: 5px 4px;
+  gap: 2px;
+}
+
+.pmd-move-learned-stat-chip .pmd-prep-stat-val {
+  color: var(--pmd-text-white);
+  font-size: 13px;
+}
+
+.pmd-move-learned-stat-chip.is-highlight {
+  border-color: var(--pmd-text-yellow);
+}
+
+.pmd-move-learned-stat-chip.is-highlight .pmd-prep-stat-val {
+  color: var(--pmd-text-yellow);
+}
+
+.pmd-move-learned-desc-box {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: var(--pmd-fill-well-deep);
+  border: 2px solid var(--pmd-divider-subtle);
+  padding: 6px 8px;
+}
+
 /* Mobile Portrait (`390x844`) Forecast & Outcome Layout */
 @media (max-width: 600px) {
 

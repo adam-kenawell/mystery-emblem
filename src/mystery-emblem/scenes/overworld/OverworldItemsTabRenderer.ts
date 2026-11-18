@@ -8,7 +8,7 @@ import { getItemById, getMoveById, getSpeciesById } from '../../data/index';
 import { getUnitEquippedItemId, type SaveStateManager } from '../../state/SaveStateManager';
 import type { ItemDefinition, SaveData } from '../../types/schemas';
 import { createItemIconCell } from '../../ui/PmdItemIconGrid';
-import { createMiniSpeciesPortrait, createUnitPortraitCell } from '../../ui/PmdUnitPortraitGrid';
+import { createUnitPortraitCell } from '../../ui/PmdUnitPortraitGrid';
 import {
   createEvolutionBranchButton,
   createItemInspectorBanner,
@@ -54,8 +54,17 @@ export function renderOverworldConvoyTab(params: OverworldItemsTabParams): {
   const targetUnit =
     save.roster.find((u) => u.instanceId === resolvedUnitId) ?? save.roster[0];
 
+  const layoutGrid = document.createElement('div');
+  layoutGrid.className = 'pmd-overworld-roster-grid pmd-units-sidebar-layout';
+
+  const sidebarCol = document.createElement('div');
+  sidebarCol.className = 'pmd-units-sidebar';
+  const sidebarLbl = document.createElement('span');
+  sidebarLbl.className = 'pmd-units-sidebar-label';
+  sidebarLbl.textContent = 'Units';
+
   const unitBar = document.createElement('div');
-  unitBar.className = 'pmd-unit-portrait-grid pmd-overworld-items-unit-grid';
+  unitBar.className = 'pmd-overworld-unit-list pmd-unit-portrait-grid pmd-overworld-items-unit-grid is-vertical-sidebar';
   unitBar.dataset.testid = 'overworld-items-unit-grid';
   for (const u of save.roster) {
     const uItemId = getUnitEquippedItemId(u);
@@ -76,11 +85,14 @@ export function renderOverworldConvoyTab(params: OverworldItemsTabParams): {
       })
     );
   }
+  sidebarCol.append(sidebarLbl, unitBar);
+
+  const detailCol = document.createElement('div');
+  detailCol.className = 'pmd-overworld-unit-detail';
 
   const slotBanner = document.createElement('div');
   slotBanner.className = 'pmd-prep-slot-banner';
   slotBanner.dataset.testid = 'overworld-items-slot-card';
-  slotBanner.style.marginBottom = '0.45rem';
   if (targetUnit) {
     renderUnitEquippedSlotBanner({
       containerEl: slotBanner,
@@ -152,6 +164,7 @@ export function renderOverworldConvoyTab(params: OverworldItemsTabParams): {
       marginTopPx: 6,
       testId: 'overworld-convoy-inspector',
       headHtml: `
+        <span class="pmd-move-learned-field-lbl">Item:</span>
         <strong class="pmd-item-inspector-name">${escapeUiHtml(selItem.name)} ×${selBag.quantity}</strong>
         ${selTmMove ? `<span class="pmd-prep-cat-tag">${renderColoredTypeHtml(selTmMove.type)}</span>` : ''}
       `,
@@ -165,24 +178,56 @@ export function renderOverworldConvoyTab(params: OverworldItemsTabParams): {
     if (equippable && targetUnit) {
       const giveBtn = document.createElement('button');
       giveBtn.type = 'button';
-      giveBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn pmd-portrait-action-btn';
+      giveBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
       giveBtn.dataset.equipConvoy = selItem.id;
       giveBtn.dataset.testid = `overworld-convoy-equip-btn-${selItem.id}`;
-      giveBtn.appendChild(
-        createMiniSpeciesPortrait(
-          resolveUnitVisualAssetId(targetUnit.speciesId, targetUnit.cosmeticForm),
-          { title: targetUnit.nickname, sizePx: 20 }
-        )
-      );
-      const lbl = document.createElement('span');
-      lbl.textContent = targetItemId ? 'Replace' : 'Equip';
-      giveBtn.appendChild(lbl);
+      giveBtn.textContent = targetItemId ? 'Replace' : 'Equip';
       bindPointerTap(giveBtn, () => {
         audioManager.playSfx('select');
         saveManager.equipItemToUnit(targetUnit.instanceId, selItem.id);
         onFeedbackAndRefresh(`Equipped ${selItem.name} on ${targetUnit.nickname}.`);
       });
       actionsWrap.appendChild(giveBtn);
+    } else if (selItem.category === 'vitamin' && targetUnit) {
+      const useBtn = document.createElement('button');
+      useBtn.type = 'button';
+      useBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
+      useBtn.dataset.testid = `overworld-convoy-use-vitamin-${selItem.id}`;
+      useBtn.textContent = 'Use';
+      bindPointerTap(useBtn, () => {
+        try {
+          saveManager.useVitaminOnUnit(targetUnit.instanceId, selItem.id);
+          audioManager.playSfx('heal');
+          onFeedbackAndRefresh(`Used ${selItem.name} on ${targetUnit.nickname}!`);
+        } catch (err) {
+          audioManager.playSfx('cancel');
+          onFeedbackAndRefresh(err instanceof Error ? err.message : 'Could not use Vitamin.');
+        }
+      });
+      actionsWrap.appendChild(useBtn);
+    } else if (selItem.category === 'tm' && selItem.effect.teachesMoveId && targetUnit) {
+      const targetSp = getSpeciesById(targetUnit.speciesId);
+      const alreadyKnows = targetUnit.unlockedMoveIds.includes(selItem.effect.teachesMoveId);
+      const compatible = Boolean(targetSp?.compatibleTmIds.includes(selItem.id));
+      const teachBtn = document.createElement('button');
+      teachBtn.type = 'button';
+      teachBtn.className = `pmd-btn pmd-chip-btn${!alreadyKnows && compatible ? ' pmd-btn-primary' : ''}`;
+      teachBtn.dataset.testid = `overworld-convoy-teach-tm-${selItem.id}`;
+      teachBtn.textContent = alreadyKnows ? 'Known' : compatible ? 'Teach' : 'Incompatible';
+      teachBtn.disabled = alreadyKnows || !compatible;
+      if (!teachBtn.disabled) {
+        bindPointerTap(teachBtn, () => {
+          try {
+            saveManager.teachTmMove(targetUnit.instanceId, selItem.id);
+            audioManager.playSfx('heal');
+            onFeedbackAndRefresh(`Taught ${selItem.name} to ${targetUnit.nickname}!`);
+          } catch (err) {
+            audioManager.playSfx('cancel');
+            onFeedbackAndRefresh(err instanceof Error ? err.message : 'Could not teach TM.');
+          }
+        });
+      }
+      actionsWrap.appendChild(teachBtn);
     }
 
     if (
@@ -218,7 +263,9 @@ export function renderOverworldConvoyTab(params: OverworldItemsTabParams): {
     box.append(bagGrid, bagBanner);
   }
 
-  menuPanelBodyEl.append(unitBar, slotBanner, box);
+  detailCol.append(slotBanner, box);
+  layoutGrid.append(sidebarCol, detailCol);
+  menuPanelBodyEl.appendChild(layoutGrid);
   return {
     selectedUnitInstanceId: resolvedUnitId,
     selectedConvoyItemId: nextConvoyItemId,

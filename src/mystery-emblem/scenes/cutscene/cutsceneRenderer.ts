@@ -20,6 +20,7 @@ import {
   normalizeTilesetId,
   type LoadedTilesetSheet,
 } from '../../assets/tilesetLoader';
+import { drawMapEdgeVignette } from '../../ui/gridViewportMath';
 import {
   drawLightingAndMotes,
   drawScreenFadeAndFlash,
@@ -261,6 +262,16 @@ export function renderCutsceneStageFrame(params: RenderCutsceneFrameParams): { c
   }
   drawLightingAndMotes(ctx, runtime.lighting, nativeW, nativeH, camX, camY, runtime.props, runtime.animClockMs, params.ambientMotes);
   ctx.restore();
+
+  if (!runtime.location.fillsScreen) {
+    drawMapEdgeVignette(
+      ctx,
+      camX,
+      camY,
+      runtime.location.width * PMD_TILE_NATIVE_PX,
+      runtime.location.height * PMD_TILE_NATIVE_PX
+    );
+  }
 
   drawWeather(ctx, runtime.weather, nativeW, nativeH, runtime.animClockMs);
   drawScreenFadeAndFlash(ctx, runtime.fade, runtime.flash, nativeW, nativeH);

@@ -144,7 +144,13 @@ export function renderPrepManageUnits(ctx: PrepUnitsRenderContext): string | nul
   const skill = getPersonalSkillById(sp.personalSkillId);
   const abilityEl = unitsBackdropEl.querySelector<HTMLElement>('[data-testid="prep-unit-ability"]');
   if (abilityEl) {
-    abilityEl.innerHTML = `<span class="pmd-prep-ability-title"><strong>${escapeUiHtml(skill?.name ?? sp.personalSkillId)}</strong> - ${escapeUiHtml(skill?.description ?? '-')}</span>`;
+    abilityEl.innerHTML = `
+      <div class="pmd-inline-item-row">
+        <span class="pmd-move-learned-field-lbl">Ability:</span>
+        <strong style="color:var(--pmd-text-green);font-size:14px;">${escapeUiHtml(skill?.name ?? sp.personalSkillId)}</strong>
+      </div>
+      <span class="pmd-prep-move-stats">${escapeUiHtml(skill?.description ?? '-')}</span>
+    `;
   }
 
   const eqItemId = getUnitEquippedItemId(selected);
@@ -154,13 +160,24 @@ export function renderPrepManageUnits(ctx: PrepUnitsRenderContext): string | nul
   if (itemSumEl) {
     itemSumEl.innerHTML = '';
     if (eqItem) {
+      const col = document.createElement('div');
+      col.className = 'pmd-overworld-action-meta';
       const wrap = document.createElement('span');
       wrap.className = 'pmd-inline-item-row';
       const lbl = document.createElement('span');
+      lbl.className = 'pmd-move-learned-field-lbl';
       lbl.textContent = 'Item:';
-      wrap.append(lbl, createMiniItemIcon(eqItem.id, { sizePx: 20 }));
-      itemSumEl.appendChild(wrap);
-    } else itemSumEl.innerHTML = 'Item: <strong>Empty</strong>';
+      const nameStrong = document.createElement('strong');
+      nameStrong.textContent = eqItem.name;
+      wrap.append(lbl, createMiniItemIcon(eqItem.id, { sizePx: 20 }), nameStrong);
+      const descSpan = document.createElement('span');
+      descSpan.className = 'pmd-prep-move-stats';
+      descSpan.textContent = eqItem.description;
+      col.append(wrap, descSpan);
+      itemSumEl.appendChild(col);
+    } else {
+      itemSumEl.innerHTML = '<span class="pmd-move-learned-field-lbl">Item:</span> <strong>Empty</strong>';
+    }
   }
   if (itemBtnEl) itemBtnEl.textContent = eqItem ? 'Change' : 'Equip';
 

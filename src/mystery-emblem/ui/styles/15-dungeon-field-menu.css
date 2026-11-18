@@ -59,9 +59,16 @@
   touch-action: pan-y;
 }
 
-.pmd-dungeon-submodal.is-units-panel { width: min(540px, 100%); }
+.pmd-dungeon-submodal.is-units-panel {
+  width: min(680px, 100%);
+  max-width: 680px;
+  height: min(520px, calc(100dvh - 4.4rem));
+  max-height: min(520px, calc(100dvh - 4.4rem));
+  overflow: hidden;
+}
 
 .pmd-dungeon-info-objective {
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -70,6 +77,7 @@
 }
 
 .pmd-dungeon-units-head {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -81,7 +89,19 @@
 .pmd-portrait-pip.is-fainted,
 .pmd-unit-popup-status.is-fainted { border-color: var(--pmd-text-danger); color: var(--pmd-text-danger); }
 .pmd-dungeon-units-state { font-size: 11px; color: var(--pmd-text-cyan); text-shadow: 1px 1px 0 #000000; }
-.pmd-dungeon-units-detail { display: flex; flex-direction: column; gap: 6px; }
+.pmd-dungeon-units-detail {
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  touch-action: pan-y;
+  background: var(--pmd-fill-well);
+  border: 2px solid var(--pmd-divider-subtle);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
 .pmd-dungeon-units-hp-box,
 .pmd-dungeon-units-subbox {

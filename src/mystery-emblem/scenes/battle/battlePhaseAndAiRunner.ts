@@ -127,7 +127,9 @@ async function runAllyNpcPhase(
       state.map,
       npc,
       getLivingUnits(state),
-      getBattleSupportContext(state)
+      getBattleSupportContext(state),
+      undefined,
+      state.turnNumber
     );
 
     if (decision.path.length > 1) {

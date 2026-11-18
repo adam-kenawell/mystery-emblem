@@ -72,10 +72,16 @@ export function renderOverworldUnitsTab(params: OverworldUnitsTabParams): {
     params.unitDetailPortraitView ?? new PmdPortraitView({ testId: 'overworld-unit-portrait' });
 
   const grid = document.createElement('div');
-  grid.className = 'pmd-overworld-roster-grid';
+  grid.className = 'pmd-overworld-roster-grid pmd-units-sidebar-layout';
+
+  const sidebarCol = document.createElement('div');
+  sidebarCol.className = 'pmd-units-sidebar';
+  const sidebarLbl = document.createElement('span');
+  sidebarLbl.className = 'pmd-units-sidebar-label';
+  sidebarLbl.textContent = 'Units';
 
   const listCol = document.createElement('div');
-  listCol.className = 'pmd-overworld-unit-list pmd-unit-portrait-grid';
+  listCol.className = 'pmd-overworld-unit-list pmd-unit-portrait-grid is-vertical-sidebar';
   listCol.dataset.testid = 'overworld-roster-grid';
 
   for (const u of save.roster) {
@@ -137,7 +143,10 @@ export function renderOverworldUnitsTab(params: OverworldUnitsTabParams): {
     gearBox.innerHTML = `
       <div class="pmd-overworld-action-row">
         <div class="pmd-overworld-action-meta">
-          <strong>${escapeUiHtml(skill?.name ?? 'Ability')}</strong>
+          <div class="pmd-inline-item-row">
+            <span class="pmd-move-learned-field-lbl">Ability:</span>
+            <strong>${escapeUiHtml(skill?.name ?? 'Ability')}</strong>
+          </div>
           <span>${escapeUiHtml(skill?.description ?? '')}</span>
         </div>
       </div>
@@ -150,15 +159,17 @@ export function renderOverworldUnitsTab(params: OverworldUnitsTabParams): {
     if (equippedItem) {
       const iconRow = document.createElement('div');
       iconRow.className = 'pmd-inline-item-row';
-      iconRow.appendChild(createMiniItemIcon(equippedItem.id, { sizePx: 22 }));
+      const itemLbl = document.createElement('span');
+      itemLbl.className = 'pmd-move-learned-field-lbl';
+      itemLbl.textContent = 'Item:';
+      const itemNameStrong = document.createElement('strong');
+      itemNameStrong.textContent = equippedItem.name;
+      iconRow.append(itemLbl, createMiniItemIcon(equippedItem.id, { sizePx: 22 }), itemNameStrong);
       const descSpan = document.createElement('span');
       descSpan.textContent = equippedItem.description;
-      iconRow.appendChild(descSpan);
-      itemMeta.appendChild(iconRow);
+      itemMeta.append(iconRow, descSpan);
     } else {
-      const emptyStrong = document.createElement('strong');
-      emptyStrong.textContent = 'Item: Empty';
-      itemMeta.appendChild(emptyStrong);
+      itemMeta.innerHTML = `<div class="pmd-inline-item-row"><span class="pmd-move-learned-field-lbl">Item:</span><strong>Empty</strong></div>`;
     }
     itemActionRow.appendChild(itemMeta);
 
@@ -265,7 +276,8 @@ export function renderOverworldUnitsTab(params: OverworldUnitsTabParams): {
     );
   }
 
-  grid.append(listCol, detailCol);
+  sidebarCol.append(sidebarLbl, listCol);
+  grid.append(sidebarCol, detailCol);
   menuPanelBodyEl.appendChild(grid);
   return {
     unitDetailPortraitView: portraitView,

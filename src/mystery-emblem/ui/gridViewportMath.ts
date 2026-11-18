@@ -217,3 +217,51 @@ export function applyDungeonZoomWithWorldAnchor(
     anchorWorldY - localCssY / cam.displayScale
   );
 }
+
+/** Soft inward vignette along the map perimeter so the map blends smoothly into `#080e1c`. */
+export function drawMapEdgeVignette(
+  ctx: CanvasRenderingContext2D,
+  cameraX: number,
+  cameraY: number,
+  mapPxW: number,
+  mapPxH: number
+): void {
+  const left = -cameraX;
+  const top = -cameraY;
+  const right = mapPxW - cameraX;
+  const bottom = mapPxH - cameraY;
+  const fadePx = Math.min(28, Math.floor(Math.min(mapPxW, mapPxH) * 0.14));
+  if (fadePx <= 0) return;
+
+  ctx.save();
+
+  const topGrad = ctx.createLinearGradient(0, top, 0, top + fadePx);
+  topGrad.addColorStop(0, '#080e1c');
+  topGrad.addColorStop(0.45, 'rgba(8, 14, 28, 0.52)');
+  topGrad.addColorStop(1, 'rgba(8, 14, 28, 0)');
+  ctx.fillStyle = topGrad;
+  ctx.fillRect(left, top, mapPxW, fadePx);
+
+  const botGrad = ctx.createLinearGradient(0, bottom, 0, bottom - fadePx);
+  botGrad.addColorStop(0, '#080e1c');
+  botGrad.addColorStop(0.45, 'rgba(8, 14, 28, 0.52)');
+  botGrad.addColorStop(1, 'rgba(8, 14, 28, 0)');
+  ctx.fillStyle = botGrad;
+  ctx.fillRect(left, bottom - fadePx, mapPxW, fadePx);
+
+  const leftGrad = ctx.createLinearGradient(left, 0, left + fadePx, 0);
+  leftGrad.addColorStop(0, '#080e1c');
+  leftGrad.addColorStop(0.45, 'rgba(8, 14, 28, 0.52)');
+  leftGrad.addColorStop(1, 'rgba(8, 14, 28, 0)');
+  ctx.fillStyle = leftGrad;
+  ctx.fillRect(left, top, fadePx, mapPxH);
+
+  const rightGrad = ctx.createLinearGradient(right, 0, right - fadePx, 0);
+  rightGrad.addColorStop(0, '#080e1c');
+  rightGrad.addColorStop(0.45, 'rgba(8, 14, 28, 0.52)');
+  rightGrad.addColorStop(1, 'rgba(8, 14, 28, 0)');
+  ctx.fillStyle = rightGrad;
+  ctx.fillRect(right - fadePx, top, fadePx, mapPxH);
+
+  ctx.restore();
+}

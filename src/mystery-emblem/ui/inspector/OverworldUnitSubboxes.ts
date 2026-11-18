@@ -98,7 +98,7 @@ export function buildOverworldMoveLoadoutSubbox(params: {
   const { unit, saveManager, audioManager, onFeedbackAndRefresh } = params;
   const movesBox = document.createElement('div');
   movesBox.className = 'pmd-overworld-subbox';
-  movesBox.innerHTML = `<p class="pmd-overworld-subbox-title">Moves (${unit.activeMoveIds.length}/4 Active · [E] Phys + Spec Counters)</p>`;
+  movesBox.innerHTML = `<p class="pmd-overworld-subbox-title">Moves</p>`;
 
   for (const mId of unit.unlockedMoveIds) {
     const mv = getMoveById(mId);

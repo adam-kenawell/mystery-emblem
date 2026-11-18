@@ -73,25 +73,22 @@
   color: var(--pmd-text-yellow);
 }
 
-/* Manage Units & Manage Items Full Modals */
-.pmd-prep-modal-dialog {
-  width: 100%;
-  max-width: 940px;
-  max-height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
+/* Manage Units & Manage Items Full Modals (Constant Fixed Dimensions + Internal Scroll) */
+.pmd-prep-modal-dialog,
+.pmd-prep-items-dialog {
+  width: min(880px, 100%);
+  max-width: 880px;
+  height: min(540px, calc(100dvh - 2rem));
+  max-height: min(540px, calc(100dvh - 2rem));
+  overflow: hidden;
   padding: 8px 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  touch-action: pan-y;
-}
-
-.pmd-prep-items-dialog {
-  max-width: 820px;
 }
 
 .pmd-prep-modal-topbar {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -101,10 +98,14 @@
 }
 
 .pmd-prep-units-body {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
   display: grid;
-  grid-template-columns: minmax(250px, 315px) minmax(0, 1fr);
+  grid-template-columns: 78px minmax(0, 1fr);
   gap: 10px;
-  align-items: start;
+  align-items: stretch;
 }
 
 .pmd-prep-roster-pane,
@@ -113,6 +114,23 @@
   flex-direction: column;
   gap: 8px;
   min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.pmd-prep-inspector-pane,
+[data-testid='prep-supports-body'] {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  touch-action: pan-y;
+}
+
+.pmd-prep-inspector-pane {
+  background: var(--pmd-fill-well);
+  border: 2px solid var(--pmd-divider-subtle);
+  padding: 8px 10px;
 }
 
 .pmd-prep-deploy-btn {

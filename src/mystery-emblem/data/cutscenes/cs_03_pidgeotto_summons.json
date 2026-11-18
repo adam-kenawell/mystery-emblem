@@ -15,7 +15,7 @@
     { "id": "healer_parent", "who": { "kind": "healer_parent" } },
     {
       "id": "messenger",
-      "who": { "kind": "npc", "pokemon": "0017", "name": "Royal Courier", "speciesName": "Pidgeotto" }
+      "who": { "kind": "npc", "pokemon": "0017", "name": "Pidgeotto", "speciesName": "Pidgeotto" }
     }
   ],
   "placements": [
@@ -87,7 +87,8 @@
         "text": "There is no time to explain tonight. Pack your satchels and rations immediately. We leave at first light."
       },
       "actions": [
-        { "type": "show", "who": "messenger", "visible": false, "fade": true }
+        { "type": "walk", "who": "messenger", "path": [[7, 10]], "speed": 4.2, "facing": "Down" },
+        { "type": "show", "who": "messenger", "visible": false, "fade": true, "delay": 0.42 }
       ]
     },
     {

@@ -15,7 +15,6 @@ import {
   createEvolutionBranchButton,
   createItemInspectorBanner,
   escapeUiHtml,
-  formatItemCategoryLabel,
 } from './UnitDetailCard';
 
 export type ItemFilterTab = 'all' | 'held' | 'healing' | 'x_item' | 'special';
@@ -148,10 +147,9 @@ export function renderPrepAcquiredItemsInspector(params: {
     iconSizePx: 28,
     testId: 'prep-item-inspector',
     headHtml: `
-      <strong class="pmd-item-inspector-name">${escapeUiHtml(item.name)}</strong>
-      <span class="pmd-prep-cat-tag">${escapeUiHtml(formatItemCategoryLabel(item.category))}</span>
+      <span class="pmd-move-learned-field-lbl">Item:</span>
+      <strong class="pmd-item-inspector-name">${escapeUiHtml(item.name)} ×${bagQty}</strong>
       ${tmMove ? `<span class="pmd-prep-cat-tag">${renderColoredTypeHtml(tmMove.type)}</span>` : ''}
-      <span class="pmd-prep-stock-tag">×${bagQty}</span>
     `,
     descHtml: escapeUiHtml(item.description),
     holders: holders.map((h) => ({

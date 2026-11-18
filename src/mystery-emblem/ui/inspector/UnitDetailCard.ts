@@ -8,6 +8,7 @@
  * Strictly obeys Rule 2 (Unified Pointer Events ONLY) and Rule 3 (PMD visual skin).
  */
 
+import { resolveUnitVisualAssetId } from '../../assets/pmdAssetLoader';
 import type { AudioManager } from '../../audio/AudioManager';
 import { getItemById, getSpeciesById } from '../../data/index';
 import { getUnitEquippedItemId, type SaveStateManager } from '../../state/SaveStateManager';
@@ -344,25 +345,40 @@ export interface UnitItemSlotBannerParams {
 }
 
 export function renderUnitEquippedSlotBanner(params: UnitItemSlotBannerParams): void {
-  const { containerEl, unit, saveManager, audioManager, iconTestId, unequipBtnTestId, showCategoryBadge = false, onUnequipped } = params;
+  const { containerEl, unit, saveManager, audioManager, iconTestId, unequipBtnTestId, onUnequipped } = params;
   containerEl.innerHTML = '';
   const currentItemId = getUnitEquippedItemId(unit);
   const currentItem = currentItemId ? getItemById(currentItemId) : undefined;
   const infoDiv = document.createElement('div');
   infoDiv.className = 'pmd-prep-slot-info';
 
+  const unitHeaderRow = document.createElement('div');
+  unitHeaderRow.className = 'pmd-inline-item-row';
+  unitHeaderRow.appendChild(
+    createMiniSpeciesPortrait(resolveUnitVisualAssetId(unit.speciesId, unit.cosmeticForm), {
+      title: unit.nickname,
+      sizePx: 24,
+    })
+  );
+  const unitTitleSpan = document.createElement('span');
+  unitTitleSpan.innerHTML = `<strong style="color:var(--pmd-text-yellow);font-size:15px;">${escapeHtml(unit.nickname)}</strong> <span class="pmd-prep-unit-meta-line">Lv. ${unit.level}</span>`;
+  unitHeaderRow.appendChild(unitTitleSpan);
+  infoDiv.appendChild(unitHeaderRow);
+
   if (currentItem) {
     const titleLine = document.createElement('div');
     titleLine.className = 'pmd-inline-item-row';
-    const nickStrong = document.createElement('strong');
-    nickStrong.textContent = `${unit.nickname}:`;
-    titleLine.append(nickStrong, createMiniItemIcon(currentItem.id, { sizePx: 22, testId: iconTestId }));
-    if (showCategoryBadge) {
-      const catTag = document.createElement('span');
-      catTag.className = 'pmd-prep-cat-tag';
-      catTag.textContent = formatItemCategoryLabel(currentItem.category);
-      titleLine.appendChild(catTag);
-    }
+    const itemLbl = document.createElement('span');
+    itemLbl.className = 'pmd-move-learned-field-lbl';
+    itemLbl.textContent = 'Equipped Item:';
+    const itemNameStrong = document.createElement('strong');
+    itemNameStrong.style.color = 'var(--pmd-text-green)';
+    itemNameStrong.textContent = currentItem.name;
+    titleLine.append(
+      itemLbl,
+      createMiniItemIcon(currentItem.id, { sizePx: 22, testId: iconTestId }),
+      itemNameStrong
+    );
     const descSpan = document.createElement('span');
     descSpan.className = 'pmd-prep-move-stats';
     descSpan.textContent = currentItem.description;
@@ -380,7 +396,10 @@ export function renderUnitEquippedSlotBanner(params: UnitItemSlotBannerParams): 
     });
     containerEl.append(infoDiv, unequipBtn);
   } else {
-    infoDiv.innerHTML = `<div class="pmd-prep-move-title-line"><strong>${escapeHtml(unit.nickname)}: Empty</strong></div>`;
+    const emptyLine = document.createElement('div');
+    emptyLine.className = 'pmd-inline-item-row';
+    emptyLine.innerHTML = `<span class="pmd-move-learned-field-lbl">Equipped Item:</span><strong>Empty</strong>`;
+    infoDiv.appendChild(emptyLine);
     containerEl.appendChild(infoDiv);
   }
 }

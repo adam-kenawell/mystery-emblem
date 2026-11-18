@@ -87,6 +87,7 @@ function chooseAiUnitAction(
     };
   }
 
+  const isStationary = Boolean(actor.stationary || actor.aiMode === 'stationary');
   const range = precomputedRange ?? computeUnitMovementAndAttackRange(map, actor, allLivingUnits);
 
   interface ScoredCandidate {
@@ -104,6 +105,9 @@ function chooseAiUnitAction(
   const candidates: ScoredCandidate[] = [];
 
   for (const stopTile of range.reachableTiles.values()) {
+    if (isStationary && (stopTile.x !== actor.x || stopTile.y !== actor.y)) {
+      continue;
+    }
     for (const target of hostileTargets) {
       const dist = manhattanDistance(stopTile.x, stopTile.y, target.x, target.y);
       const validMoves = getOffensiveMovesAtDistance(actor, dist);
@@ -329,7 +333,95 @@ export function chooseNpcAllyAction(
   npcUnit: BattleUnitState,
   allLivingUnits: ReadonlyArray<BattleUnitState>,
   supportCtx?: BattleSupportContext,
-  precomputedRange?: MovementRangeResult
+  precomputedRange?: MovementRangeResult,
+  turnNumber = 1
 ): EnemyTurnDecision {
-  return chooseAiUnitAction(map, npcUnit, allLivingUnits, undefined, undefined, supportCtx, precomputedRange);
+  const stayPath: AStarPathStep[] = [{ x: npcUnit.x, y: npcUnit.y, cumulativeCost: 0 }];
+
+  if (npcUnit.id === 'ch2_chespin') {
+    if (
+      turnNumber === 1 &&
+      !npcUnit.defeated &&
+      npcUnit.currentHp > 0 &&
+      npcUnit.status !== 'SLP'
+    ) {
+      const hostileTargets = allLivingUnits.filter(
+        (u) => !areBattleFactionsAllied(u.faction, npcUnit.faction) && !u.defeated && u.currentHp > 0
+      );
+      if (hostileTargets.length > 0) {
+        const range =
+          precomputedRange ?? computeUnitMovementAndAttackRange(map, npcUnit, allLivingUnits);
+        let bestTile = { x: npcUnit.x, y: npcUnit.y };
+        let bestMinDist = -Infinity;
+        let bestTotalDist = -Infinity;
+        let bestYPenalty = Infinity;
+
+        for (const tile of range.reachableTiles.values()) {
+          let minDist = Infinity;
+          let totalDist = 0;
+          for (const enemy of hostileTargets) {
+            const d = manhattanDistance(tile.x, tile.y, enemy.x, enemy.y);
+            if (d < minDist) minDist = d;
+            totalDist += d;
+          }
+          const yPenalty = Math.abs(tile.y - npcUnit.y);
+          if (
+            minDist > bestMinDist ||
+            (minDist === bestMinDist && totalDist > bestTotalDist) ||
+            (minDist === bestMinDist && totalDist === bestTotalDist && yPenalty < bestYPenalty) ||
+            (minDist === bestMinDist &&
+              totalDist === bestTotalDist &&
+              yPenalty === bestYPenalty &&
+              tile.x < bestTile.x)
+          ) {
+            bestMinDist = minDist;
+            bestTotalDist = totalDist;
+            bestYPenalty = yPenalty;
+            bestTile = { x: tile.x, y: tile.y };
+          }
+        }
+
+        if (bestTile.x !== npcUnit.x || bestTile.y !== npcUnit.y) {
+          const path = findShortestPathAStar(
+            map,
+            npcUnit,
+            bestTile.x,
+            bestTile.y,
+            allLivingUnits
+          );
+          if (path && path.length > 1) {
+            return {
+              kind: 'pursue',
+              enemyId: npcUnit.id,
+              stopX: bestTile.x,
+              stopY: bestTile.y,
+              path,
+              attack: null,
+              statusHex: null,
+            };
+          }
+        }
+      }
+    }
+
+    return {
+      kind: 'wait',
+      enemyId: npcUnit.id,
+      stopX: npcUnit.x,
+      stopY: npcUnit.y,
+      path: stayPath,
+      attack: null,
+      statusHex: null,
+    };
+  }
+
+  return chooseAiUnitAction(
+    map,
+    npcUnit,
+    allLivingUnits,
+    undefined,
+    undefined,
+    supportCtx,
+    precomputedRange
+  );
 }

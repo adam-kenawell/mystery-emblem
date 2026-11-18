@@ -122,10 +122,10 @@ export function createPrepDomElements(
         </div>
         <button type="button" class="pmd-btn pmd-chip-btn" data-testid="prep-units-close-btn">Done</button>
       </div>
-      <div class="pmd-prep-units-body">
-        <div class="pmd-prep-roster-pane">
-          <span class="pmd-preset-label">Roster</span>
-          <div class="pmd-unit-portrait-grid pmd-prep-portrait-grid" data-testid="prep-roster-list"></div>
+      <div class="pmd-prep-units-body pmd-units-sidebar-layout">
+        <div class="pmd-prep-roster-pane pmd-units-sidebar">
+          <span class="pmd-units-sidebar-label">Units</span>
+          <div class="pmd-unit-portrait-grid pmd-prep-portrait-grid is-vertical-sidebar" data-testid="prep-roster-list"></div>
         </div>
         <div class="pmd-prep-inspector-pane" data-testid="prep-unit-detail">
           <div class="pmd-prep-unit-hero">
@@ -155,7 +155,7 @@ export function createPrepDomElements(
           </div>
           <div class="pmd-prep-moves-section">
             <div class="pmd-devtools-row-between">
-              <span class="pmd-preset-label" data-prep-active-moves-heading>Moves (0 / 4)</span>
+              <span class="pmd-preset-label" data-prep-active-moves-heading>Moves</span>
             </div>
             <div class="pmd-prep-move-list" data-testid="prep-active-moves"></div>
             <div data-prep-unlocked-wrap>
@@ -183,23 +183,27 @@ export function createPrepDomElements(
       <div class="pmd-prep-modal-topbar">
         <div>
           <h3 class="pmd-panel-title">ITEMS</h3>
-          <p class="pmd-panel-sub">1 Item per Unit</p>
         </div>
         <button type="button" class="pmd-btn pmd-chip-btn" data-testid="prep-items-close-btn">Done</button>
       </div>
-      <div class="pmd-prep-items-unit-bar">
-        <div class="pmd-unit-portrait-grid pmd-prep-items-portrait-grid" data-testid="prep-items-unit-list"></div>
+      <div class="pmd-prep-units-body pmd-units-sidebar-layout">
+        <div class="pmd-prep-roster-pane pmd-units-sidebar">
+          <span class="pmd-units-sidebar-label">Units</span>
+          <div class="pmd-unit-portrait-grid pmd-prep-items-portrait-grid is-vertical-sidebar" data-testid="prep-items-unit-list"></div>
+        </div>
+        <div class="pmd-prep-inspector-pane">
+          <div class="pmd-prep-slot-banner" data-testid="prep-unit-item-slot-card"></div>
+          <div class="pmd-prep-filter-bar" role="tablist" aria-label="Item Category Filter">
+            <button type="button" class="pmd-btn pmd-chip-btn is-active" data-item-filter="all" data-testid="prep-item-filter-all">All</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-item-filter="held" data-testid="prep-item-filter-held">Held</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-item-filter="healing" data-testid="prep-item-filter-healing">Healing</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-item-filter="x_item" data-testid="prep-item-filter-x">X-Items</button>
+            <button type="button" class="pmd-btn pmd-chip-btn" data-item-filter="special" data-testid="prep-item-filter-special">TMs / Vitamins</button>
+          </div>
+          <div class="pmd-prep-items-list" data-testid="prep-acquired-items-list"></div>
+          <p class="pmd-prep-status-line" data-testid="prep-items-status" hidden></p>
+        </div>
       </div>
-      <div class="pmd-prep-slot-banner" data-testid="prep-unit-item-slot-card"></div>
-      <div class="pmd-prep-filter-bar" role="tablist" aria-label="Item Category Filter">
-        <button type="button" class="pmd-btn pmd-chip-btn is-active" data-item-filter="all" data-testid="prep-item-filter-all">All</button>
-        <button type="button" class="pmd-btn pmd-chip-btn" data-item-filter="held" data-testid="prep-item-filter-held">Held</button>
-        <button type="button" class="pmd-btn pmd-chip-btn" data-item-filter="healing" data-testid="prep-item-filter-healing">Healing</button>
-        <button type="button" class="pmd-btn pmd-chip-btn" data-item-filter="x_item" data-testid="prep-item-filter-x">X-Items</button>
-        <button type="button" class="pmd-btn pmd-chip-btn" data-item-filter="special" data-testid="prep-item-filter-special">TMs / Vitamins</button>
-      </div>
-      <div class="pmd-prep-items-list" data-testid="prep-acquired-items-list"></div>
-      <p class="pmd-prep-status-line" data-testid="prep-items-status" hidden></p>
     </div>
   `;
 

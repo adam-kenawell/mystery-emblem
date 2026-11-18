@@ -3,22 +3,27 @@
    ========================================================================== */
 
 .pmd-supports-view {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
 .pmd-supports-hint {
+  flex-shrink: 0;
   margin: 0;
 }
 
 .pmd-supports-unit-list {
+  flex: 1 1 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: var(--pmd-fill-well);
   border: 2px solid var(--pmd-divider-subtle);
   padding: 2px 6px;
-  max-height: min(56dvh, 420px);
   overflow-y: auto;
   touch-action: pan-y;
 }

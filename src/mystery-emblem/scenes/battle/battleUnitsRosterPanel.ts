@@ -85,8 +85,14 @@ export function renderBattleUnitsRosterPanel(
       { signal: abortSignal }
     );
 
+    const sidebarCol = document.createElement('div');
+    sidebarCol.className = 'pmd-units-sidebar';
+    const sidebarLbl = document.createElement('span');
+    sidebarLbl.className = 'pmd-units-sidebar-label';
+    sidebarLbl.textContent = 'Units';
+
     const gridEl = document.createElement('div');
-    gridEl.className = 'pmd-unit-portrait-grid pmd-dungeon-units-grid';
+    gridEl.className = 'pmd-unit-portrait-grid pmd-dungeon-units-grid is-vertical-sidebar';
     gridEl.dataset.testid = 'dungeon-units-grid';
     for (const u of playerUnits) {
       const isFainted = u.defeated || u.currentHp <= 0;
@@ -112,6 +118,8 @@ export function renderBattleUnitsRosterPanel(
         })
       );
     }
+    sidebarCol.append(sidebarLbl, gridEl);
+
     cardEl.appendChild(headEl);
     if (opts?.headerHtml) {
       const objWrap = document.createElement('div');
@@ -119,7 +127,11 @@ export function renderBattleUnitsRosterPanel(
       objWrap.innerHTML = opts.headerHtml;
       cardEl.appendChild(objWrap);
     }
-    cardEl.appendChild(gridEl);
+
+    const bodyLayoutEl = document.createElement('div');
+    bodyLayoutEl.className = 'pmd-units-sidebar-layout';
+    bodyLayoutEl.appendChild(sidebarCol);
+    cardEl.appendChild(bodyLayoutEl);
 
     const unit = playerUnits.find((u) => u.id === activeUnitId) ?? playerUnits[0];
     if (!unit) return;
@@ -179,13 +191,19 @@ export function renderBattleUnitsRosterPanel(
       <div class="pmd-dungeon-units-subbox" data-testid="dungeon-units-detail-growths"></div>
       <div class="pmd-dungeon-units-subbox">
         <div class="pmd-dungeon-units-kv" data-testid="dungeon-units-detail-skill">
-          <strong>${escapeUiHtml(skill?.name ?? 'Ability')}</strong>
+          <div class="pmd-inline-item-row">
+            <span class="pmd-move-learned-field-lbl">Ability:</span>
+            <strong>${escapeUiHtml(skill?.name ?? 'Ability')}</strong>
+          </div>
           <span>${escapeUiHtml(skill?.description ?? '-')}</span>
         </div>
         <div class="pmd-dungeon-units-kv" data-testid="dungeon-units-detail-item"></div>
       </div>
       <div class="pmd-dungeon-units-subbox" data-testid="dungeon-units-detail-supports"></div>
-      <div class="pmd-dungeon-units-moves" data-testid="dungeon-units-detail-moves"></div>
+      <div class="pmd-dungeon-units-subbox">
+        <span class="pmd-dungeon-units-kicker">Moves</span>
+        <div class="pmd-dungeon-units-moves" data-testid="dungeon-units-detail-moves"></div>
+      </div>
     `;
 
     detailEl.querySelector('[data-units-detail-portrait]')?.appendChild(detailPortrait.canvas);
@@ -253,18 +271,22 @@ export function renderBattleUnitsRosterPanel(
     const itemSlotEl = detailEl.querySelector<HTMLElement>('[data-testid="dungeon-units-detail-item"]')!;
     const itemIds = [unit.heldItemId, unit.consumableItemId].filter((id): id is string => Boolean(id));
     if (itemIds.length === 0) {
-      itemSlotEl.innerHTML = `<strong>Item: Empty</strong>`;
+      itemSlotEl.innerHTML = `<div class="pmd-inline-item-row"><span class="pmd-move-learned-field-lbl">Item:</span><strong>Empty</strong></div>`;
     } else {
       for (const id of itemIds) {
         const def = getItemById(id);
         if (!def) continue;
         const row = document.createElement('div');
         row.className = 'pmd-inline-item-row';
-        row.appendChild(createMiniItemIcon(def.id, { sizePx: 18, cropped: true }));
-        const txt = document.createElement('span');
-        txt.innerHTML = `<strong>${escapeUiHtml(def.name)}</strong> - ${escapeUiHtml(def.description)}`;
-        row.appendChild(txt);
-        itemSlotEl.appendChild(row);
+        const itemLbl = document.createElement('span');
+        itemLbl.className = 'pmd-move-learned-field-lbl';
+        itemLbl.textContent = 'Item:';
+        const itemStrong = document.createElement('strong');
+        itemStrong.textContent = def.name;
+        row.append(itemLbl, createMiniItemIcon(def.id, { sizePx: 18, cropped: true }), itemStrong);
+        const desc = document.createElement('span');
+        desc.textContent = def.description;
+        itemSlotEl.append(row, desc);
       }
     }
 
@@ -313,7 +335,7 @@ export function renderBattleUnitsRosterPanel(
       })
       .join('');
 
-    cardEl.appendChild(detailEl);
+    bodyLayoutEl.appendChild(detailEl);
   };
 
   renderPanel();

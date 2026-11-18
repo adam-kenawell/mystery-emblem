@@ -119,12 +119,24 @@
   pointer-events: none;
 }
 
-/* Kecleon Shop & Overworld System Menu Modals (Solid `#204868` PMD Frame) */
+/* Kecleon Shop & Overworld System Menu Modals (Solid `#204868` PMD Frame, Constant Fixed Size) */
 .pmd-overworld-modal-dialog {
   width: min(880px, 100%);
-  max-height: 100%;
-  overflow-y: auto;
+  max-width: 880px;
+  height: min(540px, calc(100dvh - 2rem));
+  max-height: min(540px, calc(100dvh - 2rem));
+  overflow: hidden;
   padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pmd-kecleon-shelf {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -177,12 +189,6 @@
   font-size: 14px;
   color: var(--pmd-text-white);
   line-height: 1.35;
-}
-
-.pmd-kecleon-shelf {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 
 .pmd-kecleon-item-price {

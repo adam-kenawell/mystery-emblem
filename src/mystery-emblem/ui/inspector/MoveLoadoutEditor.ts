@@ -46,7 +46,7 @@ export function renderPrepMoveLoadout(params: PrepMoveLoadoutRenderParams): void
   if (activeHeadingEl) {
     activeHeadingEl.textContent = pendingMoveToSwapIn
       ? `Replace a move with ${getMoveById(pendingMoveToSwapIn)?.name ?? pendingMoveToSwapIn}:`
-      : `Moves (${unit.activeMoveIds.length} / 4) · [E] Phys + Spec Counters`;
+      : 'Moves';
   }
 
   if (activeListEl) {

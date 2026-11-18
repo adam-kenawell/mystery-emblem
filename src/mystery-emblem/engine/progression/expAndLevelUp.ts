@@ -2,6 +2,7 @@
  * Tactical EXP Formula, Manual Growth Stat Roll & Level-Up Engine
  */
 
+import { autoEquipNewMoveIfSlotEmpty } from '../../data/equippedMoves';
 import { getMoveById, getSpeciesById } from '../../data/index';
 import type {
   PokemonSpeciesDefinition,
@@ -104,6 +105,7 @@ export interface LevelUpResult {
   statsBefore: StatBlockSeven;
   statsAfter: StatBlockSeven;
   newlyLearnedMoveIds: string[];
+  autoEquippedMoveIds?: string[];
   canPromoteWithStoneNow: boolean;
 }
 
@@ -212,8 +214,17 @@ export function awardBattleUnitExp(
     unit.maxHp = rolled.statsAfter.hp;
     unit.currentHp = Math.min(unit.maxHp, unit.currentHp + rolled.statGains.hp);
 
+    const autoEquippedMoveIds: string[] = [];
     for (const moveId of rolled.newlyLearnedMoveIds) {
       unlockedSet.add(moveId);
+      if (unit.activeMoves.length < 4 && !unit.activeMoves.some((m) => m.id === moveId)) {
+        const slot = buildMoveSlotForLearnedMove(moveId);
+        if (slot) {
+          unit.activeMoves.push(slot);
+          autoEquipNewMoveIfSlotEmpty(unit, moveId);
+          autoEquippedMoveIds.push(moveId);
+        }
+      }
     }
 
     const canPromoteWithStoneNow = species.evolutions.some(
@@ -231,6 +242,7 @@ export function awardBattleUnitExp(
       statsBefore,
       statsAfter: { ...rolled.statsAfter },
       newlyLearnedMoveIds: rolled.newlyLearnedMoveIds,
+      autoEquippedMoveIds,
       canPromoteWithStoneNow,
     });
 

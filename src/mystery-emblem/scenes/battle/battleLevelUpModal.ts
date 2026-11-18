@@ -31,7 +31,8 @@ export interface MoveLearnedModalDetails {
 
 export function buildMoveLearnedModalDetails(
   unitNickname: string,
-  move: MoveDefinition
+  move: MoveDefinition,
+  opts?: { autoEquipped?: boolean }
 ): MoveLearnedModalDetails {
   const isSupport = move.category === 'Support/Heal';
   const [rMin, rMax] = move.range;
@@ -68,12 +69,24 @@ export function buildMoveLearnedModalDetails(
     rangeText,
     ppText: `${move.pp}`,
     description: move.description,
-    equipNote: 'Equip this move after the battle ends in the Units menu.',
+    equipNote: opts?.autoEquipped
+      ? 'Automatically equipped and ready to use in this battle!'
+      : 'Move slots full (4/4). Equip this move after the battle ends in the Units menu.',
   };
+}
+
+const activeLevelUpTimers = new WeakMap<HTMLElement, number[]>();
+
+function clearLevelUpStatTimers(backdrop: HTMLElement): void {
+  const timers = activeLevelUpTimers.get(backdrop);
+  if (!timers) return;
+  for (const id of timers) window.clearTimeout(id);
+  activeLevelUpTimers.delete(backdrop);
 }
 
 export function dismissLevelUpModal(ctx: BattleControllerContext): void {
   const { state, dom } = ctx;
+  clearLevelUpStatTimers(dom.levelUpModalBackdropEl);
   if (dom.levelUpModalBackdropEl.hidden && !state.levelUpResolver) return;
   dom.levelUpModalBackdropEl.hidden = true;
   const resolver = state.levelUpResolver;
@@ -100,10 +113,12 @@ export function presentLevelUpModalAsync(
   roll: LevelUpResult,
   runGen: number
 ): Promise<void> {
-  const { state, dom } = ctx;
+  const { state, dom, audioManager } = ctx;
   if (!state.openState || runGen !== state.battleRunGen) {
     return Promise.resolve();
   }
+
+  clearLevelUpStatTimers(dom.levelUpModalBackdropEl);
 
   const titleEl = dom.levelUpModalBackdropEl.querySelector('[data-testid="levelup-unit-title"]');
   const levelLineEl = dom.levelUpModalBackdropEl.querySelector(
@@ -129,6 +144,13 @@ export function presentLevelUpModalAsync(
     mirrorHorizontal: false,
   });
 
+  const pendingUpgrades: Array<{
+    cell: HTMLElement;
+    valEl: HTMLElement;
+    afterVal: number;
+    gain: number;
+  }> = [];
+
   if (statsGridEl) {
     statsGridEl.innerHTML = '';
     const statDefs: ReadonlyArray<{
@@ -144,21 +166,22 @@ export function presentLevelUpModalAsync(
     ];
     for (const sd of statDefs) {
       const gain = roll.statGains[sd.key];
+      const beforeVal = roll.statsBefore[sd.key];
+      const afterVal = roll.statsAfter[sd.key];
       const cell = document.createElement('div');
-      cell.className = 'pmd-prep-stat-cell';
+      cell.className = 'pmd-prep-stat-box pmd-levelup-stat-box';
       cell.dataset.testid = `levelup-stat-${sd.key}`;
-      if (gain > 0) {
-        cell.style.borderColor = '#f8d048';
-      }
-      const valText =
-        gain > 0 ? `${roll.statsAfter[sd.key]} (+${gain})` : `${roll.statsAfter[sd.key]}`;
-      cell.innerHTML = `<span>${sd.label}</span><strong style="${gain > 0 ? 'color:#ffe066;' : ''}">${valText}</strong>`;
+      cell.innerHTML = `<span class="pmd-prep-stat-lbl">${sd.label}</span><strong class="pmd-prep-stat-val" data-levelup-val>${beforeVal}</strong>`;
+      const valEl = cell.querySelector<HTMLElement>('[data-levelup-val]')!;
       statsGridEl.appendChild(cell);
+      if (gain > 0) {
+        pendingUpgrades.push({ cell, valEl, afterVal, gain });
+      }
     }
     const movCell = document.createElement('div');
-    movCell.className = 'pmd-prep-stat-cell';
+    movCell.className = 'pmd-prep-stat-box pmd-levelup-stat-box';
     movCell.dataset.testid = 'levelup-stat-mov';
-    movCell.innerHTML = `<span>MOV</span><strong>${roll.statsAfter.mov}</strong>`;
+    movCell.innerHTML = `<span class="pmd-prep-stat-lbl">MOV</span><strong class="pmd-prep-stat-val">${roll.statsAfter.mov}</strong>`;
     statsGridEl.appendChild(movCell);
   }
 
@@ -171,6 +194,24 @@ export function presentLevelUpModalAsync(
   ctx.onLayerStateChanged();
   ctx.renderNow();
 
+  if (pendingUpgrades.length > 0) {
+    const timers: number[] = [];
+    const baseDelayMs = 240;
+    const stepDelayMs = 210;
+    pendingUpgrades.forEach((item, idx) => {
+      const tId = window.setTimeout(() => {
+        if (dom.levelUpModalBackdropEl.hidden || !state.openState || runGen !== state.battleRunGen) {
+          return;
+        }
+        item.cell.classList.add('is-upgraded', 'is-popping');
+        item.valEl.innerHTML = `${item.afterVal} <em class="pmd-levelup-stat-gain">+${item.gain}</em>`;
+        audioManager.playSfx('select');
+      }, baseDelayMs + idx * stepDelayMs);
+      timers.push(tId);
+    });
+    activeLevelUpTimers.set(dom.levelUpModalBackdropEl, timers);
+  }
+
   return new Promise<void>((resolve) => {
     state.levelUpResolver = resolve;
   });
@@ -180,14 +221,16 @@ export function presentMoveLearnedModalAsync(
   ctx: BattleControllerContext,
   unit: BattleUnitState,
   move: MoveDefinition,
-  runGen: number
+  runGen: number,
+  opts?: { autoEquipped?: boolean }
 ): Promise<void> {
   const { state, dom } = ctx;
   if (!state.openState || runGen !== state.battleRunGen) {
     return Promise.resolve();
   }
 
-  const details = buildMoveLearnedModalDetails(unit.nickname, move);
+  const autoEquipped = Boolean(opts?.autoEquipped);
+  const details = buildMoveLearnedModalDetails(unit.nickname, move, { autoEquipped });
   const backdrop = dom.moveLearnedModalBackdropEl;
   const headlineEl = backdrop.querySelector('[data-testid="move-learned-headline"]');
   const sublineEl = backdrop.querySelector('[data-testid="move-learned-subline"]');
@@ -195,7 +238,7 @@ export function presentMoveLearnedModalAsync(
   const typeCatEl = backdrop.querySelector('[data-testid="move-learned-type-cat"]');
   const statsGridEl = backdrop.querySelector<HTMLElement>('[data-testid="move-learned-stats-grid"]');
   const descEl = backdrop.querySelector('[data-testid="move-learned-description"]');
-  const equipNoteEl = backdrop.querySelector('[data-testid="move-learned-equip-note"]');
+  const equipNoteEl = backdrop.querySelector<HTMLElement>('[data-testid="move-learned-equip-note"]');
 
   if (headlineEl) headlineEl.textContent = details.headline;
   if (sublineEl) sublineEl.textContent = `Lv. ${unit.level} ${unit.speciesName}`;
@@ -215,24 +258,24 @@ export function presentMoveLearnedModalAsync(
     const statCells: ReadonlyArray<{ testId: string; label: string; value: string; highlight?: boolean }> = [
       { testId: 'move-learned-stat-dmg', label: details.damageLabel, value: details.damageText, highlight: true },
       { testId: 'move-learned-stat-hit', label: 'HIT', value: details.hitText },
-      { testId: 'move-learned-stat-crit', label: 'CRIT', value: details.critText },
+      { testId: 'move-learned-stat-crit', label: 'CRT', value: details.critText },
       { testId: 'move-learned-stat-rng', label: 'RNG', value: details.rangeText },
       { testId: 'move-learned-stat-pp', label: 'PP', value: details.ppText },
     ];
     for (const sc of statCells) {
       const cell = document.createElement('div');
-      cell.className = 'pmd-prep-stat-cell';
+      cell.className = `pmd-prep-stat-box pmd-move-learned-stat-chip${sc.highlight ? ' is-highlight' : ''}`;
       cell.dataset.testid = sc.testId;
-      if (sc.highlight) {
-        cell.style.borderColor = '#f8d048';
-      }
-      cell.innerHTML = `<span>${escapeHudHtml(sc.label)}</span><strong style="${sc.highlight ? 'color:#ffe066;' : ''}">${escapeHudHtml(sc.value)}</strong>`;
+      cell.innerHTML = `<span class="pmd-prep-stat-lbl">${escapeHudHtml(sc.label)}</span><strong class="pmd-prep-stat-val">${escapeHudHtml(sc.value)}</strong>`;
       statsGridEl.appendChild(cell);
     }
   }
 
   if (descEl) descEl.textContent = details.description;
-  if (equipNoteEl) equipNoteEl.textContent = details.equipNote;
+  if (equipNoteEl) {
+    equipNoteEl.textContent = details.equipNote;
+    equipNoteEl.style.color = autoEquipped ? '#98f8b8' : '#ffd878';
+  }
 
   backdrop.hidden = false;
   ctx.onLayerStateChanged();
@@ -275,11 +318,14 @@ export async function grantExpAndHandleLevelUps(
     audioManager.playSfx('victory_fanfare');
     await presentLevelUpModalAsync(ctx, unit, lv, runGen);
     if (!state.openState || runGen !== state.battleRunGen) return;
+    const autoEqSet = new Set(lv.autoEquippedMoveIds ?? []);
     for (const moveId of lv.newlyLearnedMoveIds) {
       const move = getMoveById(moveId);
       if (!move) continue;
       audioManager.playSfx('victory_fanfare');
-      await presentMoveLearnedModalAsync(ctx, unit, move, runGen);
+      await presentMoveLearnedModalAsync(ctx, unit, move, runGen, {
+        autoEquipped: autoEqSet.has(moveId),
+      });
       if (!state.openState || runGen !== state.battleRunGen) return;
     }
     updateBattleInfoStrip(ctx);

@@ -10,6 +10,7 @@ import {
 } from '../../assets/tilesetLoader';
 import { coordKey } from '../../engine/terrainAndPathfinding';
 import type { DungeonMapDefinition } from '../../types/schemas';
+import { drawMapEdgeVignette } from '../../ui/gridViewportMath';
 import { syncFloatingCalloutDom } from './battleFloatingCallouts';
 import { computeForecastStageBounds } from './battleForecastLog';
 import {
@@ -348,6 +349,7 @@ export function renderBattleFrame(ctxObj: BattleControllerContext, now: number):
   }
 
   renderUnitsAndStrikeVfx(ctx, state, dom, now);
+  drawMapEdgeVignette(ctx, cameraX, cameraY, mapPxW, mapPxH);
   if (state.interactionState === 'combat_forecast') {
     drawForecastSpotlightDim(ctxObj, cameraX, cameraY, bufferWidth, bufferHeight);
   }
