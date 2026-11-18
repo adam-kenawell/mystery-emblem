@@ -356,7 +356,7 @@ export function renderBattleFrame(ctxObj: BattleControllerContext, now: number):
   syncFloatingCalloutDom(state, dom, now);
 }
 
-/** Dims the whole map except the forecast "stage" (participants' tiles plus a 1-tile border). */
+/** Dims the whole map except the forecast "stage" (participants' tiles plus a soft-faded 1-tile border). */
 function drawForecastSpotlightDim(
   ctxObj: BattleControllerContext,
   cameraX: number,
@@ -371,18 +371,69 @@ function drawForecastSpotlightDim(
   if (participants.length === 0) return;
   const stage = computeForecastStageBounds(participants);
   const T = PMD_TILE_NATIVE_PX;
+  const outerL = stage.minX * T - cameraX;
+  const outerT = stage.minY * T - cameraY;
+  const outerW = (stage.maxX - stage.minX + 1) * T;
+  const outerH = (stage.maxY - stage.minY + 1) * T;
+  const outerR = outerL + outerW;
+  const outerB = outerT + outerH;
+
+  const fadePx = Math.min(20, Math.floor(Math.min(outerW, outerH) * 0.28));
+  const innerL = outerL + fadePx;
+  const innerT = outerT + fadePx;
+  const innerR = outerR - fadePx;
+  const innerB = outerB - fadePx;
+  const innerW = Math.max(0, innerR - innerL);
+  const innerH = Math.max(0, innerB - innerT);
+
+  const DIM_FULL = 'rgba(4, 10, 20, 0.65)';
+  const DIM_MID = 'rgba(4, 10, 20, 0.34)';
+  const DIM_ZERO = 'rgba(4, 10, 20, 0)';
+
   const { ctx } = dom;
   ctx.save();
   ctx.beginPath();
   ctx.rect(0, 0, width, height);
-  ctx.rect(
-    stage.minX * T - cameraX,
-    stage.minY * T - cameraY,
-    (stage.maxX - stage.minX + 1) * T,
-    (stage.maxY - stage.minY + 1) * T
-  );
-  ctx.fillStyle = 'rgba(4, 10, 20, 0.65)';
+  ctx.rect(outerL, outerT, outerW, outerH);
+  ctx.fillStyle = DIM_FULL;
   ctx.fill('evenodd');
+
+  if (fadePx > 0) {
+    const addFadeStops = (grad: CanvasGradient): CanvasGradient => {
+      grad.addColorStop(0, DIM_ZERO);
+      grad.addColorStop(0.55, DIM_MID);
+      grad.addColorStop(1, DIM_FULL);
+      return grad;
+    };
+
+    if (innerW > 0) {
+      ctx.fillStyle = addFadeStops(ctx.createLinearGradient(0, innerT, 0, outerT));
+      ctx.fillRect(innerL, outerT, innerW, fadePx);
+
+      ctx.fillStyle = addFadeStops(ctx.createLinearGradient(0, innerB, 0, outerB));
+      ctx.fillRect(innerL, innerB, innerW, fadePx);
+    }
+
+    if (innerH > 0) {
+      ctx.fillStyle = addFadeStops(ctx.createLinearGradient(innerL, 0, outerL, 0));
+      ctx.fillRect(outerL, innerT, fadePx, innerH);
+
+      ctx.fillStyle = addFadeStops(ctx.createLinearGradient(innerR, 0, outerR, 0));
+      ctx.fillRect(innerR, innerT, fadePx, innerH);
+    }
+
+    const corners: ReadonlyArray<[number, number, number, number]> = [
+      [innerL, innerT, outerL, outerT],
+      [innerR, innerT, innerR, outerT],
+      [innerL, innerB, outerL, innerB],
+      [innerR, innerB, innerR, innerB],
+    ];
+    for (const [cx, cy, rx, ry] of corners) {
+      ctx.fillStyle = addFadeStops(ctx.createRadialGradient(cx, cy, 0, cx, cy, fadePx));
+      ctx.fillRect(rx, ry, fadePx, fadePx);
+    }
+  }
+
   ctx.restore();
 }
 
