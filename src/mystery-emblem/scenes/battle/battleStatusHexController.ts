@@ -29,6 +29,7 @@ import {
   renderForecastLog,
   setForecastConfirm,
   setForecastHpBars,
+  positionForecastFrame,
   setForecastSidePortrait,
   setForecastSideStats,
   setForecastSideVisible,
@@ -76,8 +77,9 @@ export function renderStatusHexForecastModalDom(
   setForecastSideVisible(backdrop, 'defender', true);
   setForecastSidePortrait(backdrop, 'attacker', caster);
   setForecastSidePortrait(backdrop, 'defender', defender);
-  setForecastHpBars(backdrop, 'attacker', caster, caster.currentHp, 'player');
-  setForecastHpBars(backdrop, 'defender', defender, defender.currentHp, 'enemy');
+  setForecastHpBars(backdrop, 'attacker', caster, caster.currentHp);
+  setForecastHpBars(backdrop, 'defender', defender, defender.currentHp);
+  positionForecastFrame(backdrop, dom.canvas, state.cam, [caster, defender]);
 }
 
 export async function playStatusHexActionAsync(

@@ -66,8 +66,9 @@ export function openCombatForecastModal(
   state.forecastTargetId = defender.id;
   state.forecastMoveId = moveId;
 
-  refreshCombatForecastModalDom(ctx);
+  // Unhide first: the refresh measures the frame to place it beside the units.
   dom.forecastModalBackdropEl.hidden = false;
+  refreshCombatForecastModalDom(ctx);
   syncPrepChromeVisibility(state, dom, prepOverlay);
   syncHudControls(state, dom);
   updateBattleInfoStrip(ctx);
@@ -100,8 +101,8 @@ export function openHealForecastModal(
   state.forecastTargetId = targetAlly.id;
   state.forecastMoveId = moveId;
 
-  refreshHealForecastModalDom(ctx);
   dom.forecastModalBackdropEl.hidden = false;
+  refreshHealForecastModalDom(ctx);
   syncPrepChromeVisibility(state, dom, prepOverlay);
   syncHudControls(state, dom);
   updateBattleInfoStrip(ctx);

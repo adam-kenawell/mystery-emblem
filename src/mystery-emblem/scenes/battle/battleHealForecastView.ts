@@ -8,6 +8,7 @@ import {
   renderForecastLog,
   setForecastConfirm,
   setForecastHpBars,
+  positionForecastFrame,
   setForecastSidePortrait,
   setForecastSideStats,
   setForecastSideVisible,
@@ -55,12 +56,13 @@ export function refreshHealForecastModalDom(ctx: BattleControllerContext): void 
   setForecastSideStats(backdrop, 'defender', null);
 
   if (isSelf) {
-    setForecastHpBars(backdrop, 'attacker', healer, healForecast.projectedTargetHp, 'heal');
+    setForecastHpBars(backdrop, 'attacker', healer, healForecast.projectedTargetHp);
   } else {
-    setForecastHpBars(backdrop, 'attacker', healer, healer.currentHp, 'player');
-    setForecastHpBars(backdrop, 'defender', target, healForecast.projectedTargetHp, 'heal');
+    setForecastHpBars(backdrop, 'attacker', healer, healer.currentHp);
+    setForecastHpBars(backdrop, 'defender', target, healForecast.projectedTargetHp);
   }
   setForecastSideVisible(backdrop, 'defender', !isSelf);
   setForecastSidePortrait(backdrop, 'attacker', healer);
   setForecastSidePortrait(backdrop, 'defender', target);
+  positionForecastFrame(backdrop, dom.canvas, state.cam, isSelf ? [healer] : [healer, target]);
 }

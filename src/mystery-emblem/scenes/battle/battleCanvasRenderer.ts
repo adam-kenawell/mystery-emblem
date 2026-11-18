@@ -11,6 +11,7 @@ import {
 import type { TutorialBattleTileFilter } from '../../data/tutorialRegistry';
 import { coordKey } from '../../engine/terrainAndPathfinding';
 import { syncFloatingCalloutDom } from './battleFloatingCallouts';
+import { computeForecastStageBounds } from './battleForecastLog';
 import {
   drawConnectedRangeZone,
   drawUnitRangeEnvelope,
@@ -291,7 +292,7 @@ export function renderBattleFrame(ctxObj: BattleControllerContext, now: number):
   syncFloatingCalloutDom(state, dom, now);
 }
 
-/** Dims the whole map except the tiles of the two forecast participants (one tile on self-heal). */
+/** Dims the whole map except the forecast "stage" (participants' tiles plus a 1-tile border). */
 function drawForecastSpotlightDim(
   ctxObj: BattleControllerContext,
   cameraX: number,
@@ -302,14 +303,20 @@ function drawForecastSpotlightDim(
   const { state, dom } = ctxObj;
   const actor = getSelectedUnit(state);
   const target = state.units.find((u) => u.id === state.forecastTargetId);
-  const participants = new Map([actor, target].filter((u) => u).map((u) => [u!.id, u!]));
+  const participants = [actor, target].filter((u) => u !== undefined && u !== null);
+  if (participants.length === 0) return;
+  const stage = computeForecastStageBounds(participants);
+  const T = PMD_TILE_NATIVE_PX;
   const { ctx } = dom;
   ctx.save();
   ctx.beginPath();
   ctx.rect(0, 0, width, height);
-  for (const u of participants.values()) {
-    ctx.rect(u.x * PMD_TILE_NATIVE_PX - cameraX, u.y * PMD_TILE_NATIVE_PX - cameraY, PMD_TILE_NATIVE_PX, PMD_TILE_NATIVE_PX);
-  }
+  ctx.rect(
+    stage.minX * T - cameraX,
+    stage.minY * T - cameraY,
+    (stage.maxX - stage.minX + 1) * T,
+    (stage.maxY - stage.minY + 1) * T
+  );
   ctx.fillStyle = 'rgba(4, 10, 20, 0.65)';
   ctx.fill('evenodd');
   ctx.restore();

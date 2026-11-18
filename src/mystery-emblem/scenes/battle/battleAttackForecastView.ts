@@ -17,6 +17,7 @@ import {
   renderForecastLog,
   setForecastConfirm,
   setForecastHpBars,
+  positionForecastFrame,
   setForecastSidePortrait,
   setForecastSideStats,
   setForecastSideVisible,
@@ -119,6 +120,7 @@ export function refreshCombatForecastModalDom(ctx: BattleControllerContext): voi
   setForecastSideVisible(backdrop, 'defender', true);
   setForecastSidePortrait(backdrop, 'attacker', attacker);
   setForecastSidePortrait(backdrop, 'defender', defender);
-  setForecastHpBars(backdrop, 'attacker', attacker, forecast.projectedAttackerHp, 'player');
-  setForecastHpBars(backdrop, 'defender', defender, forecast.projectedDefenderHp, 'enemy');
+  setForecastHpBars(backdrop, 'attacker', attacker, forecast.projectedAttackerHp);
+  setForecastHpBars(backdrop, 'defender', defender, forecast.projectedDefenderHp);
+  positionForecastFrame(backdrop, dom.canvas, state.cam, [attacker, defender]);
 }

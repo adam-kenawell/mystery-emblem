@@ -44,7 +44,7 @@ export function createBattleForecastDom(): BattleForecastDomRefs {
               </div>
               <div class="pmd-forecast-hp-bar-track">
                 <div class="pmd-forecast-hp-bar-ghost" data-defender-hp-cur-bar></div>
-                <div class="pmd-forecast-hp-bar-fill is-enemy" data-defender-hp-proj-bar></div>
+                <div class="pmd-forecast-hp-bar-fill" data-defender-hp-proj-bar></div>
               </div>
             </div>
           </div>

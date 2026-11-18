@@ -3,6 +3,7 @@
  */
 
 import { tileCenterToClientPoint } from '../../ui/gridViewportMath';
+import { getElementZoom } from '../../ui/uiScale';
 import { syncHudControls } from './battleDangerAndViewportState';
 import { renderFieldSubmodalContents } from './battleFieldSubmodalViews';
 import { updateBattleInfoStrip } from './battleHudCards';
@@ -64,8 +65,10 @@ export function positionFieldMenuCard(ctx: BattleControllerContext): void {
   const stageRect = dom.canvasStageEl.getBoundingClientRect();
   const stageW = stageRect.width || dom.canvasStageEl.clientWidth || 640;
   const stageH = stageRect.height || dom.canvasStageEl.clientHeight || 480;
-  const menuW = dom.fieldMenuCardEl.offsetWidth || 228;
-  const menuH = dom.fieldMenuCardEl.offsetHeight || 338;
+  // Card + corner buttons are scaled by --pmd-ui-scale; do the math in screen px.
+  const zoom = getElementZoom(dom.fieldMenuCardEl);
+  const menuW = (dom.fieldMenuCardEl.offsetWidth || 228) * zoom;
+  const menuH = (dom.fieldMenuCardEl.offsetHeight || 338) * zoom;
   const EDGE_PAD = 8;
   const CURSOR_GAP_X = 12;
   const CURSOR_OFFSET_Y = 14;
@@ -87,24 +90,22 @@ export function positionFieldMenuCard(ctx: BattleControllerContext): void {
     left = Math.max(EDGE_PAD, Math.min(Math.max(EDGE_PAD, stageW - menuW - EDGE_PAD), left));
 
     const overlapsTopRightCornerBtn =
-      state.phase === 'dungeon_prep' && left + menuW > stageW - 136;
-    const overlapsTopLeftCornerBtn = left < 148;
+      state.phase === 'dungeon_prep' && left + menuW > stageW - 136 * zoom;
+    const overlapsTopLeftCornerBtn = left < 148 * zoom;
     const minTop =
       overlapsTopRightCornerBtn || overlapsTopLeftCornerBtn
-        ? stageH <= 500
-          ? 56
-          : 64
+        ? (stageH <= 500 ? 56 : 64) * zoom
         : EDGE_PAD;
     const maxTop = Math.max(EDGE_PAD, stageH - menuH - EDGE_PAD);
     top = Math.max(Math.min(minTop, maxTop), Math.min(maxTop, localY - CURSOR_OFFSET_Y));
   } else {
     left = Math.max(EDGE_PAD, stageW - menuW - 12);
     const maxTop = Math.max(EDGE_PAD, stageH - menuH - EDGE_PAD);
-    top = Math.min(stageH <= 500 ? 56 : 64, maxTop);
+    top = Math.min((stageH <= 500 ? 56 : 64) * zoom, maxTop);
   }
 
-  dom.fieldMenuCardEl.style.left = `${Math.round(left)}px`;
-  dom.fieldMenuCardEl.style.top = `${Math.round(top)}px`;
+  dom.fieldMenuCardEl.style.left = `${Math.round(left / zoom)}px`;
+  dom.fieldMenuCardEl.style.top = `${Math.round(top / zoom)}px`;
 }
 
 export function setSystemMenuSubView(

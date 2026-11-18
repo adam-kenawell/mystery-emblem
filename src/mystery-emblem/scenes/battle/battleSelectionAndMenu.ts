@@ -7,6 +7,7 @@ import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
 import type { BattleUnitState } from '../../engine/combatEngine';
 import type { AStarPathStep } from '../../engine/terrainAndPathfinding';
 import { createMiniItemIcon } from '../../ui/PmdItemIconGrid';
+import { getElementZoom } from '../../ui/uiScale';
 import { getDanceableTargetsFromCurrentTile } from './battleDanceController';
 import {
   clearInspectedAllyRange,
@@ -108,8 +109,10 @@ export function positionFloatingActionMenu(ctx: BattleControllerContext): void {
     (dom.cmdHealBtnEl.hidden ? 0 : 1) +
     (dom.cmdDanceBtnEl.hidden ? 0 : 1) +
     (dom.cmdItemBtnEl.hidden ? 0 : 1);
-  const menuW = 144;
-  const menuH = visibleBtnCount * 50 + 14;
+  // Menu is scaled by --pmd-ui-scale; do the math in screen px.
+  const zoom = getElementZoom(dom.actionMenuEl);
+  const menuW = 144 * zoom;
+  const menuH = (visibleBtnCount * 50 + 14) * zoom;
 
   let left = unitScreenX + tileDisplayPx + 8;
   if (left + menuW > stageW - 8) {
@@ -118,12 +121,12 @@ export function positionFloatingActionMenu(ctx: BattleControllerContext): void {
   left = Math.max(8, Math.min(stageW - menuW - 8, left));
 
   let top = unitScreenY - 8;
-  const minTop = stageW <= 720 && stageH > 500 ? 110 : 58;
-  const maxTop = Math.max(minTop, stageH - menuH - 44);
+  const minTop = (stageW <= 720 && stageH > 500 ? 110 : 58) * zoom;
+  const maxTop = Math.max(minTop, stageH - menuH - 44 * zoom);
   top = Math.max(minTop, Math.min(maxTop, top));
 
-  dom.actionMenuEl.style.left = `${Math.round(left)}px`;
-  dom.actionMenuEl.style.top = `${Math.round(top)}px`;
+  dom.actionMenuEl.style.left = `${Math.round(left / zoom)}px`;
+  dom.actionMenuEl.style.top = `${Math.round(top / zoom)}px`;
 }
 
 export function openFloatingCommandMenu(

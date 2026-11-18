@@ -1,9 +1,15 @@
-/* Dock the forecast near the top so the map and units stay visible below it.
-   No backdrop dim: the map canvas dims itself except the two participants' tiles. */
+/* No backdrop dim: the map canvas dims itself except the two participants' tiles.
+   The frame is placed beside the battling units by positionForecastFrame (JS). */
 .pmd-battle-modal-backdrop.pmd-forecast-backdrop {
-  align-items: flex-start;
   background: transparent;
-  padding-top: 0.6rem; /* top edge level with the Back button */
+}
+
+.pmd-forecast-backdrop .pmd-battle-forecast-dialog.pmd-fe-forecast-frame {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: min(460px, calc(100% - 16px));
+  max-height: none;
 }
 
 /* 4. Turn-by-Turn Attack / Heal / Hex Forecast (`.pmd-fe-forecast-frame`, `battleForecastDom.ts`) */
@@ -145,6 +151,19 @@
   color: var(--pmd-text-danger);
 }
 
+/* Forecast HP bars: solid green remaining HP, dark red for HP about to be lost, near-black empty */
+.pmd-fe-forecast-frame .pmd-forecast-hp-bar-track {
+  background: #0a0f16;
+}
+
+.pmd-fe-forecast-frame .pmd-forecast-hp-bar-ghost {
+  background: #8a2232;
+}
+
+.pmd-fe-forecast-frame .pmd-forecast-hp-bar-fill {
+  background: #50f850;
+}
+
 /* Header: Determined portrait + HIT / CRT + HP bar per side (right side mirrored) */
 .pmd-fe-sides {
   display: grid;
@@ -278,6 +297,12 @@
   box-shadow: 0 4px 0 rgba(0, 0, 0, 0.55);
 }
 
+/* Box sits low on screen: open the dropdown above it instead */
+.pmd-fe-forecast-frame.is-picker-up .pmd-fe-move-picker {
+  top: auto;
+  bottom: calc(100% + 16px);
+}
+
 .pmd-fe-move-picker[hidden] {
   display: none;
 }
@@ -325,11 +350,6 @@
 
 /* Mobile Portrait (`390x844`): compact box, >= 44x44px touch targets */
 @media (max-width: 600px) {
-  /* Full-width box would collide with Back, so drop it just below */
-  .pmd-battle-modal-backdrop.pmd-forecast-backdrop {
-    padding-top: 3.6rem;
-  }
-
   .pmd-dungeon-hud-bottom-left {
     left: 0.45rem;
     bottom: 0.45rem;
