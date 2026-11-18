@@ -4,11 +4,9 @@
 
 import { directionFromDelta } from '../../assets/pmdAssetLoader';
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
-import { getItemById } from '../../data/index';
 import {
   STATUS_ACTION_CALLOUTS,
   STATUS_BADGE_COLORS,
-  STATUS_SHORT_EFFECT_TEXT,
   applyInflictedStatusToUnit,
   applyPhaseStartStatusTick,
   computeStatusMoveForecast,
@@ -17,9 +15,6 @@ import {
   type StatusMoveForecast,
 } from '../../engine/combatEngine';
 import { computeSupportHealExpGain } from '../../engine/progressionEngine';
-import { createMiniItemIcon } from '../../ui/PmdItemIconGrid';
-import { createMiniSpeciesPortrait } from '../../ui/PmdUnitPortraitGrid';
-import { bindPointerTap } from '../../ui/pointerControls';
 import { ensureTilePairVisible, waitBattleMs } from './battleBannersAndTransitions';
 import {
   clearBattleSelection,
@@ -29,7 +24,16 @@ import {
 } from './battleDangerAndViewportState';
 import { runTileReachedEvents } from './battleEventRunner';
 import { spawnFloatingText } from './battleFloatingCallouts';
-import { renderForecastMoveList, setForecastStatLabels } from './battleForecastMoveList';
+import {
+  buildHexForecastLines,
+  renderForecastLog,
+  setForecastConfirm,
+  setForecastHpBars,
+  setForecastSidePortrait,
+  setForecastSideStats,
+  setForecastSideVisible,
+} from './battleForecastLog';
+import { renderForecastMoveList } from './battleForecastMoveList';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { grantExpAndHandleLevelUps } from './battleLevelUpModal';
 import { checkAndTriggerMatchEnd } from './battleOutcomeModals';
@@ -40,9 +44,7 @@ import {
 import { getBattleRng, type BattleControllerContext } from './battleTypesAndState';
 import {
   areAllLivingPlayersWaited,
-  getAttackableEnemiesFromCurrentTile,
   getSelectedUnit,
-  getUnitVisualKey,
 } from './battleUnitQueries';
 
 export function renderStatusHexForecastModalDom(
@@ -53,7 +55,7 @@ export function renderStatusHexForecastModalDom(
   validMoves: ReadonlyArray<BattleMoveSlot>,
   onRefresh: () => void
 ): void {
-  const { state, dom, audioManager, abortSignal } = ctx;
+  const { state, dom } = ctx;
   const forecast = computeStatusMoveForecast(
     state.map,
     caster,
@@ -66,112 +68,16 @@ export function renderStatusHexForecastModalDom(
   state.currentForecast = null;
 
   const backdrop = dom.forecastModalBackdropEl;
-  const q = (sel: string) => backdrop.querySelector<HTMLElement>(sel);
-  const setTxt = (sel: string, txt: string) => {
-    const el = q(sel);
-    if (el) el.textContent = txt;
-  };
-
-  setTxt('[data-forecast-title]', 'STATUS FORECAST');
-  const defCardEl = q('[data-testid="forecast-defender-card"]');
-  if (defCardEl) defCardEl.className = 'pmd-fe-enemy-box is-defender';
-  const confirmBtnEl = backdrop.querySelector<HTMLButtonElement>('[data-testid="forecast-attack-btn"]');
-  if (confirmBtnEl) {
-    confirmBtnEl.textContent = 'Hex!';
-    confirmBtnEl.disabled = Boolean(forecast.blockedReason);
-  }
-
+  setForecastConfirm(backdrop, 'Hex!', Boolean(forecast.blockedReason));
   renderForecastMoveList(ctx, caster, validMoves, chosenSlot.id, onRefresh);
-  setForecastStatLabels(backdrop, { atk2: 'STS', atk3: 'HIT', atk4: 'RNG', def2: 'DMG', def3: 'HIT', def4: 'CRT' });
-
-  void dom.attackerPortraitView.setPortrait({ speciesIdOrAssetId: getUnitVisualKey(caster), emotion: 'Determined', mirrorHorizontal: false });
-  void dom.defenderPortraitView.setPortrait({
-    speciesIdOrAssetId: getUnitVisualKey(defender),
-    emotion: forecast.blockedReason ? 'Normal' : 'Worried',
-    mirrorHorizontal: true,
-  });
-
-  const effBadgeEl = q('[data-testid="forecast-effectiveness-badge"]');
-  if (effBadgeEl) {
-    effBadgeEl.className = `pmd-forecast-eff-badge ${forecast.blockedReason ? 'is-resisted' : 'is-super'}`;
-    effBadgeEl.textContent = forecast.blockedReason ?? STATUS_SHORT_EFFECT_TEXT[forecast.inflictStatus];
-    effBadgeEl.hidden = false;
-  }
-
-  const allTargets = getAttackableEnemiesFromCurrentTile(state, caster);
-  const targetsWrap = q('[data-forecast-targets-wrap]');
-  const targetsRow = q('[data-forecast-targets]');
-  if (targetsWrap && targetsRow) {
-    targetsRow.innerHTML = '';
-    targetsWrap.hidden = allTargets.length <= 1;
-    if (allTargets.length > 1) {
-      for (const entry of allTargets) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `pmd-btn pmd-chip-btn pmd-portrait-action-btn${entry.enemy.id === defender.id ? ' is-active' : ''}`;
-        btn.dataset.testid = `forecast-target-${entry.enemy.id}`;
-        const hpSpan = document.createElement('span');
-        hpSpan.textContent = `HP ${entry.enemy.currentHp}`;
-        btn.append(createMiniSpeciesPortrait(getUnitVisualKey(entry.enemy), { sizePx: 20 }), hpSpan);
-        bindPointerTap(
-          btn,
-          () => {
-            audioManager.playSfx('select');
-            state.forecastTargetId = entry.enemy.id;
-            caster.direction = directionFromDelta(entry.enemy.x - caster.x, entry.enemy.y - caster.y);
-            onRefresh();
-            ctx.renderNow();
-          },
-          { signal: abortSignal }
-        );
-        targetsRow.appendChild(btn);
-      }
-    }
-  }
-
-  const [rMin, rMax] = chosenSlot.range;
-  setTxt('[data-testid="forecast-attacker-name"]', `${caster.nickname}`);
-  setTxt('[data-testid="forecast-attacker-weapon"]', forecast.move.name);
-  setTxt('[data-testid="forecast-attacker-hp"]', `${caster.currentHp} → ${caster.currentHp}`);
-  setTxt('[data-testid="forecast-attacker-dmg"]', forecast.inflictStatus);
-  setTxt('[data-testid="forecast-attacker-hit"]', `${forecast.hitRate}%`);
-  setTxt('[data-testid="forecast-attacker-crit"]', rMin === rMax ? `R${rMin}` : `R${rMin}-${rMax}`);
-
-  const setHpBars = (curSel: string, projSel: string, pct: string, isEnemy: boolean) => {
-    const cur = q(curSel);
-    const proj = q(projSel);
-    if (cur) cur.style.width = pct;
-    if (proj) {
-      proj.className = `pmd-forecast-hp-bar-fill${isEnemy ? ' is-enemy' : ''}`;
-      proj.style.width = pct;
-    }
-  };
-  setHpBars('[data-attacker-hp-cur-bar]', '[data-attacker-hp-proj-bar]', `${Math.round((caster.currentHp / caster.maxHp) * 100)}%`, false);
-
-  setTxt('[data-testid="forecast-defender-name"]', `${defender.nickname}${defender.isBoss ? ' [BOSS]' : ''}`);
-  setTxt('[data-testid="forecast-defender-weapon"]', 'No Counter');
-  setTxt('[data-testid="forecast-defender-hp"]', `${defender.currentHp} → ${defender.currentHp}`);
-  setTxt('[data-testid="forecast-defender-dmg"]', '-');
-  setTxt('[data-testid="forecast-defender-hit"]', '-');
-  setTxt('[data-testid="forecast-defender-crit"]', '-');
-
-  const defMetaEl = q('[data-defender-meta]');
-  if (defMetaEl) {
-    defMetaEl.innerHTML = '';
-    if (defender.droppableItemId && getItemById(defender.droppableItemId)) {
-      const dropChip = document.createElement('span');
-      dropChip.className = 'pmd-hud-drop-chip';
-      dropChip.dataset.testid = 'forecast-defender-drop-chip';
-      const dropLbl = document.createElement('span');
-      dropLbl.textContent = 'DROP';
-      dropChip.append(dropLbl, createMiniItemIcon(defender.droppableItemId, { sizePx: 16, cropped: true }));
-      defMetaEl.appendChild(dropChip);
-      defMetaEl.hidden = false;
-    } else {
-      defMetaEl.hidden = true;
-    }
-  }
-  setHpBars('[data-defender-hp-cur-bar]', '[data-defender-hp-proj-bar]', `${Math.round((defender.currentHp / defender.maxHp) * 100)}%`, true);
+  renderForecastLog(backdrop, buildHexForecastLines(defender, forecast));
+  setForecastSideStats(backdrop, 'attacker', null);
+  setForecastSideStats(backdrop, 'defender', { note: 'No Counter' });
+  setForecastSideVisible(backdrop, 'defender', true);
+  setForecastSidePortrait(backdrop, 'attacker', caster);
+  setForecastSidePortrait(backdrop, 'defender', defender);
+  setForecastHpBars(backdrop, 'attacker', caster, caster.currentHp, 'player');
+  setForecastHpBars(backdrop, 'defender', defender, defender.currentHp, 'enemy');
 }
 
 export async function playStatusHexActionAsync(

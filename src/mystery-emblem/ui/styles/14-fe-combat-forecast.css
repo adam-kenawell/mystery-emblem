@@ -1,93 +1,285 @@
-/* 4. Fire Emblem Interlocking L-Shape Attack / Heal Preview (`.pmd-fe-forecast-frame`) */
-.pmd-battle-forecast-dialog.pmd-fe-forecast-frame {
-  max-width: 540px;
-  padding: 6px 8px;
-  gap: 6px;
-}
-
-.pmd-fe-targets-bar {
-  padding-bottom: 4px;
-  border-bottom: 2px solid var(--pmd-divider-subtle);
-}
-
-.pmd-fe-l-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0;
-  align-items: stretch;
-}
-
-/* Left Vertical Stem of the Blue 'L' (merges seamlessly with `.pmd-fe-player-foot`) */
-.pmd-fe-player-stem {
+/* Dock the forecast near the top so the map and units stay visible below it.
+   No backdrop dim: the map canvas dims itself except the two participants' tiles. */
+.pmd-battle-modal-backdrop.pmd-forecast-backdrop {
+  align-items: flex-start;
   background: transparent;
-  padding: 4px 8px 8px 2px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 6px;
-  min-width: 0;
+  padding-top: 0.6rem; /* top edge level with the Back button */
 }
 
-/* Top-Right Inset Red Enemy Rectangle (or Emerald Ally Box in Heal Mode) */
-.pmd-fe-enemy-box {
-  padding: 6px 8px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 5px;
-  min-width: 0;
+/* 4. Turn-by-Turn Attack / Heal / Hex Forecast (`.pmd-fe-forecast-frame`, `battleForecastDom.ts`) */
+.pmd-battle-forecast-dialog.pmd-fe-forecast-frame {
+  position: relative;
+  overflow: visible;
+  max-width: 460px;
+  padding: 8px 10px;
+  gap: 8px;
 }
 
-.pmd-fe-enemy-box.is-defender {
-  background: #3b1526;
-  border: 3px solid #f06880;
-  box-shadow: inset 0 0 0 2px #881030;
-}
-
-.pmd-fe-enemy-box.is-ally-heal {
-  background: #143c2c;
-  border: 3px solid var(--pmd-text-green);
-  box-shadow: inset 0 0 0 2px #0c281c;
-}
-
-.pmd-fe-enemy-hp-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 4px;
-}
-
-.pmd-fe-hp-num {
-  font-size: 12px;
+.pmd-forecast-back-btn {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  z-index: 2;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 4px 12px;
+  font: inherit;
+  font-size: 13px;
   font-weight: bold;
+  color: var(--pmd-text-white);
+  text-shadow: 1px 1px 0 #000000;
+  cursor: pointer;
+}
+
+.pmd-forecast-back-btn:hover {
+  color: var(--pmd-text-yellow);
+}
+
+.pmd-fe-title {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--pmd-text-yellow);
+  text-shadow: 1px 1px 0 #000000;
+  text-align: center;
+  letter-spacing: 0.06em;
+}
+
+.pmd-fe-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Strike log: one wrapping row of steps joined by sequence arrows */
+.pmd-fe-log {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  min-height: 36px;
+}
+
+/* Step: card (large Pain portrait + attached damage plate), then a mini HP-left bar */
+.pmd-fe-log-step {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+/* Shield / hex steps: portrait + text side by side */
+.pmd-fe-log-step.is-text {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.pmd-fe-log-step canvas {
+  flex-shrink: 0;
+  background: var(--pmd-fill-well);
+  border: 2px solid var(--pmd-text-white);
+}
+
+.pmd-fe-log-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--pmd-fill-well);
+  border: 2px solid var(--pmd-text-white);
+}
+
+.pmd-fe-log-step .pmd-fe-log-card canvas {
+  border: none;
+}
+
+.pmd-fe-log-num.pmd-fe-log-dmg {
+  padding: 3px 0 2px;
+  font-size: 16px;
+  line-height: 1;
+  text-align: center;
+  border-top: 2px solid var(--pmd-text-white);
+}
+
+.pmd-forecast-hp-bar-track.pmd-fe-log-bar {
+  width: 100%;
+  height: 8px;
+  border-width: 1px;
+}
+
+.pmd-fe-log-sep {
+  font-size: 14px;
+  color: var(--pmd-text-yellow);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.pmd-fe-log-num {
+  font-size: 15px;
   color: var(--pmd-text-white);
   text-shadow: 1px 1px 0 #000000;
   white-space: nowrap;
 }
 
-.pmd-fe-stats-strip {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 4px;
+.pmd-fe-log-num.is-super,
+.pmd-fe-log-num.is-heal {
+  color: var(--pmd-text-green);
 }
 
-.pmd-fe-stem-move-line {
+.pmd-fe-log-num.is-resisted {
+  color: var(--pmd-text-orange);
+}
+
+.pmd-fe-log-num.is-immune,
+.pmd-fe-log-num.is-blocked {
+  color: #9098a0;
+}
+
+.pmd-fe-log-num.is-blocked {
+  font-size: 14px;
+}
+
+.pmd-fe-log-num.is-stab {
+  font-weight: bold;
+}
+
+.pmd-fe-log-num.is-ko {
+  color: var(--pmd-text-danger);
+}
+
+/* Header: Determined portrait + HIT / CRT + HP bar per side (right side mirrored) */
+.pmd-fe-sides {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.pmd-fe-side {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
+  gap: 8px;
   min-width: 0;
 }
 
-/* Full-Width Bottom Horizontal Foot of the Blue 'L' */
-.pmd-fe-player-foot {
-  grid-column: 1 / -1;
-  background: transparent;
-  padding: 6px 2px 2px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+.pmd-fe-side.is-right {
+  flex-direction: row-reverse;
+}
+
+.pmd-fe-side-portrait {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.pmd-fe-side-portrait > canvas {
+  background: var(--pmd-fill-well);
+  border: 2px solid var(--pmd-text-white);
+}
+
+.pmd-fe-side-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Divider + "Battle Sequence" heading above the strike log */
+.pmd-fe-divider {
+  height: 2px;
+  background: var(--pmd-divider-subtle);
+}
+
+.pmd-fe-section-label {
+  font-size: 11px;
+  color: var(--pmd-text-yellow);
+  text-shadow: 1px 1px 0 #000000;
+  letter-spacing: 0.06em;
+}
+
+.pmd-fe-side[hidden] {
+  display: none;
+}
+
+.pmd-fe-side-stats {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--pmd-text-cyan);
+  text-shadow: 1px 1px 0 #000000;
+  white-space: nowrap;
+}
+
+.pmd-fe-side.is-right .pmd-fe-side-stats {
+  justify-content: flex-end;
+}
+
+.pmd-fe-side-note {
+  color: #9098a0;
+}
+
+.pmd-fe-side-stats strong {
+  color: var(--pmd-text-yellow);
+}
+
+/* Footer: `Using: <move>` picker toggle + confirm */
+.pmd-fe-footer {
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
+}
+
+.pmd-btn.pmd-fe-using-btn {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  justify-content: flex-start;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pmd-btn.pmd-fe-using-btn::after {
+  content: ' \25BE';
+  color: var(--pmd-text-yellow);
+}
+
+.pmd-btn.pmd-fe-using-btn.is-open::after {
+  content: ' \25B4';
+}
+
+.pmd-btn.pmd-fe-using-btn:disabled::after {
+  content: '';
+}
+
+.pmd-fe-using-label {
+  color: var(--pmd-text-cyan);
+}
+
+.pmd-fe-using-move {
+  color: var(--pmd-text-green);
+}
+
+.pmd-btn.pmd-fe-confirm-btn {
+  flex: 0 0 auto;
+  min-width: 112px;
+  min-height: 44px;
+}
+
+/* Move picker dropdown hangs below the box so the forecast stays readable */
+.pmd-fe-move-picker {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: calc(100% + 16px); /* clears the frame's border-image */
+  z-index: 3;
+  max-height: 60vh;
+  overflow-y: auto;
+  background: #0c1826;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.55);
+}
+
+.pmd-fe-move-picker[hidden] {
+  display: none;
 }
 
 .pmd-fe-move-list {
@@ -131,17 +323,13 @@
   flex-shrink: 0;
 }
 
-.pmd-fe-player-foot .pmd-forecast-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: center;
-  gap: 6px;
-  min-width: 112px;
-}
-
-/* Mobile Portrait (`390x844`): keep literal 2-column 'L' geometry & >= 44x44px touch targets */
+/* Mobile Portrait (`390x844`): compact box, >= 44x44px touch targets */
 @media (max-width: 600px) {
+  /* Full-width box would collide with Back, so drop it just below */
+  .pmd-battle-modal-backdrop.pmd-forecast-backdrop {
+    padding-top: 3.6rem;
+  }
+
   .pmd-dungeon-hud-bottom-left {
     left: 0.45rem;
     bottom: 0.45rem;
@@ -161,37 +349,34 @@
   }
 
   .pmd-battle-forecast-dialog.pmd-fe-forecast-frame {
-    padding: 4px 6px;
-    gap: 4px;
-  }
-
-  .pmd-fe-player-stem {
-    padding: 3px 5px 6px 2px;
-    gap: 4px;
-  }
-
-  .pmd-fe-enemy-box {
-    padding: 4px 5px;
-    gap: 4px;
-  }
-
-  .pmd-fe-player-foot {
-    grid-template-columns: minmax(0, 1fr);
-    padding: 6px 0 0;
+    padding: 6px 8px;
     gap: 6px;
   }
 
-  .pmd-fe-player-foot .pmd-forecast-actions {
-    flex-direction: row;
-    width: 100%;
+  .pmd-fe-log-num {
+    font-size: 13px;
   }
 
-  .pmd-fe-player-foot .pmd-forecast-actions .pmd-btn {
-    flex: 1;
+  .pmd-fe-sides {
+    gap: 10px;
+  }
+
+  .pmd-fe-side-stats {
+    gap: 6px;
+    font-size: 11px;
+  }
+
+  .pmd-btn.pmd-fe-confirm-btn {
+    min-width: 96px;
+  }
+
+  .pmd-fe-move-picker {
+    left: 8px;
+    right: 8px;
   }
 }
 
-/* Short Mobile Landscape (`844x390`): ultra-compact zero-clip 'L' & >= 44x44px buttons */
+/* Short Mobile Landscape (`844x390`): ultra-compact zero-clip box & >= 44x44px buttons */
 @media (max-height: 500px) {
   .pmd-unit-portrait-cell,
   .pmd-item-icon-cell {
@@ -231,36 +416,37 @@
   }
 
   .pmd-battle-forecast-dialog.pmd-fe-forecast-frame {
-    max-width: 680px;
+    max-width: 560px;
     border-width: 8px 12px;
-    padding: 4px 6px;
+    padding: 4px 8px;
     gap: 4px;
   }
 
-  .pmd-fe-player-stem {
-    padding: 2px 6px 4px 2px;
-    gap: 3px;
+  .pmd-fe-body {
+    gap: 4px;
   }
 
-  .pmd-fe-enemy-box {
-    padding: 3px 6px;
-    gap: 3px;
+  .pmd-fe-log {
+    gap: 2px;
   }
 
-  .pmd-fe-player-foot {
-    grid-template-columns: minmax(0, 1fr) auto;
-    padding: 4px 2px 0;
-    gap: 6px;
+  .pmd-fe-log-step canvas {
+    width: 40px !important;
+    height: 40px !important;
+  }
+
+  .pmd-fe-side-portrait > canvas {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .pmd-fe-move-picker {
+    max-height: 45vh;
   }
 
   .pmd-fe-move-list:has(> :nth-child(3)) {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 8px;
-  }
-
-  .pmd-fe-player-foot .pmd-forecast-actions {
-    flex-direction: row;
-    flex-wrap: nowrap;
   }
 }

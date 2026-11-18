@@ -21,7 +21,11 @@ import {
 } from './battleRangeZonePainter';
 import { resolveTutorialSpotlightTiles } from './battleTutorialIntegration';
 import { RANGE_PULSE_PERIOD_MS, type BattleControllerContext } from './battleTypesAndState';
-import { getActiveInspectedAllyRange, getSeizeObjectiveCoords } from './battleUnitQueries';
+import {
+  getActiveInspectedAllyRange,
+  getSeizeObjectiveCoords,
+  getSelectedUnit,
+} from './battleUnitQueries';
 import { renderUnitsAndStrikeVfx } from './battleUnitSpriteRenderer';
 
 export function renderBattleFrame(ctxObj: BattleControllerContext, now: number): void {
@@ -281,5 +285,32 @@ export function renderBattleFrame(ctxObj: BattleControllerContext, now: number):
   }
 
   renderUnitsAndStrikeVfx(ctx, state, dom, now);
+  if (state.interactionState === 'combat_forecast') {
+    drawForecastSpotlightDim(ctxObj, cameraX, cameraY, bufferWidth, bufferHeight);
+  }
   syncFloatingCalloutDom(state, dom, now);
+}
+
+/** Dims the whole map except the tiles of the two forecast participants (one tile on self-heal). */
+function drawForecastSpotlightDim(
+  ctxObj: BattleControllerContext,
+  cameraX: number,
+  cameraY: number,
+  width: number,
+  height: number
+): void {
+  const { state, dom } = ctxObj;
+  const actor = getSelectedUnit(state);
+  const target = state.units.find((u) => u.id === state.forecastTargetId);
+  const participants = new Map([actor, target].filter((u) => u).map((u) => [u!.id, u!]));
+  const { ctx } = dom;
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, width, height);
+  for (const u of participants.values()) {
+    ctx.rect(u.x * PMD_TILE_NATIVE_PX - cameraX, u.y * PMD_TILE_NATIVE_PX - cameraY, PMD_TILE_NATIVE_PX, PMD_TILE_NATIVE_PX);
+  }
+  ctx.fillStyle = 'rgba(4, 10, 20, 0.65)';
+  ctx.fill('evenodd');
+  ctx.restore();
 }

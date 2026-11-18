@@ -51,27 +51,19 @@ export function getValidForecastMoves(state: BattleRuntimeState): BattleMoveSlot
   return getEnemyTargetingMovesAtDistance(attacker, distNow);
 }
 
-export function setForecastStatLabels(
-  backdropEl: HTMLElement,
-  labels: {
-    atk2: string;
-    atk3: string;
-    atk4: string;
-    def2: string;
-    def3: string;
-    def4: string;
-  }
-): void {
-  const set = (sel: string, txt: string) => {
-    const el = backdropEl.querySelector(sel);
-    if (el) el.textContent = txt;
-  };
-  set('[data-atk-stat2-label]', labels.atk2);
-  set('[data-atk-stat3-label]', labels.atk3);
-  set('[data-atk-stat4-label]', labels.atk4);
-  set('[data-def-stat2-label]', labels.def2);
-  set('[data-def-stat3-label]', labels.def3);
-  set('[data-def-stat4-label]', labels.def4);
+export function isForecastMovePickerOpen(backdropEl: HTMLElement): boolean {
+  const picker = backdropEl.querySelector<HTMLElement>('[data-forecast-move-picker]');
+  return Boolean(picker && !picker.hidden);
+}
+
+/** Opens/closes the move picker popup layered over the forecast box. */
+export function setForecastMovePickerOpen(backdropEl: HTMLElement, open: boolean): void {
+  const picker = backdropEl.querySelector<HTMLElement>('[data-forecast-move-picker]');
+  const usingBtn = backdropEl.querySelector<HTMLElement>(
+    '[data-testid="forecast-move-switch-btn"]'
+  );
+  if (picker) picker.hidden = !open;
+  usingBtn?.classList.toggle('is-open', open);
 }
 
 export function renderForecastMoveList(
@@ -87,6 +79,15 @@ export function renderForecastMoveList(
   );
   if (!movesListEl) return;
   movesListEl.innerHTML = '';
+
+  const usingBtn = dom.forecastModalBackdropEl.querySelector<HTMLButtonElement>(
+    '[data-testid="forecast-move-switch-btn"]'
+  );
+  const selectedSlot = actor.activeMoves.find((s) => s.id === selectedMoveId);
+  if (usingBtn) {
+    usingBtn.innerHTML = `<span class="pmd-fe-using-label">Using:</span> <span class="pmd-fe-using-move">${escapeHudHtml(selectedSlot?.move.name ?? '-')}</span>`;
+    usingBtn.disabled = actor.activeMoves.length <= 1;
+  }
 
   const validIds = new Set(validMoves.map((m) => m.id));
   for (const slot of actor.activeMoves) {
@@ -121,9 +122,10 @@ export function renderForecastMoveList(
       bindPointerTap(
         btn,
         () => {
+          setForecastMovePickerOpen(dom.forecastModalBackdropEl, false);
+          audioManager.playSfx('select');
           if (state.forecastMoveId === slot.id) return;
           state.forecastMoveId = slot.id;
-          audioManager.playSfx('select');
           onSelectMove();
           ctx.renderNow();
         },

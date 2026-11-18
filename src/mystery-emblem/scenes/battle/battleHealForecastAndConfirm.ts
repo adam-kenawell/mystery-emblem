@@ -24,6 +24,7 @@ import {
   runUnitDefeatedEvents,
   runUnitHealedEvents,
 } from './battleEventRunner';
+import { setForecastMovePickerOpen } from './battleForecastMoveList';
 import { refreshHealForecastModalDom } from './battleHealForecastView';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { checkAndTriggerMatchEnd } from './battleOutcomeModals';
@@ -112,6 +113,7 @@ export function openHealForecastModal(
 export function cancelCombatForecast(ctx: BattleControllerContext): void {
   const { state, dom, prepOverlay, audioManager } = ctx;
   dom.forecastModalBackdropEl.hidden = true;
+  setForecastMovePickerOpen(dom.forecastModalBackdropEl, false);
   state.forecastTargetId = null;
   state.forecastMoveId = null;
   state.currentForecast = null;

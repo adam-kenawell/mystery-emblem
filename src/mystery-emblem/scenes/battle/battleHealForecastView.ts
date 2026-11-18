@@ -1,34 +1,30 @@
 /**
- * Fire Emblem Interlocking 'L'-Shape Support / Heal Forecast DOM Updater
+ * Turn-by-Turn Support / Heal / Shield Forecast DOM Updater
  */
 
-import { directionFromDelta } from '../../assets/pmdAssetLoader';
 import { computeHealForecast } from '../../engine/combatEngine';
-import { createMiniSpeciesPortrait } from '../../ui/PmdUnitPortraitGrid';
-import { bindPointerTap } from '../../ui/pointerControls';
 import {
-  getValidForecastMoves,
-  renderForecastMoveList,
-  setForecastStatLabels,
-} from './battleForecastMoveList';
+  buildHealForecastLines,
+  renderForecastLog,
+  setForecastConfirm,
+  setForecastHpBars,
+  setForecastSidePortrait,
+  setForecastSideStats,
+  setForecastSideVisible,
+} from './battleForecastLog';
+import { getValidForecastMoves, renderForecastMoveList } from './battleForecastMoveList';
 import { getBattleSupportContext } from './battleSupportHelpers';
 import type { BattleControllerContext } from './battleTypesAndState';
-import {
-  getHealableTargetsFromCurrentTile,
-  getSelectedUnit,
-  getUnitVisualKey,
-  resolveAwakeningHpBarColors,
-} from './battleUnitQueries';
+import { getSelectedUnit } from './battleUnitQueries';
 
 export function refreshHealForecastModalDom(ctx: BattleControllerContext): void {
-  const { state, dom, audioManager, abortSignal } = ctx;
+  const { state, dom } = ctx;
   const healer = getSelectedUnit(state);
   const target = state.units.find(
     (u) => u.id === state.forecastTargetId && !u.defeated && u.currentHp > 0
   );
   if (!healer || !target) return;
 
-  const allHealTargets = getHealableTargetsFromCurrentTile(state, healer);
   const validMoves = getValidForecastMoves(state);
   if (validMoves.length === 0) return;
 
@@ -48,152 +44,23 @@ export function refreshHealForecastModalDom(ctx: BattleControllerContext): void 
   if (!healForecast) return;
   state.currentHealForecast = healForecast;
 
-  const shield = healForecast.shield;
-  const gainText = shield
-    ? `-${shield.reduction}${shield.category ? ` ${shield.category === 'Physical' ? 'PHYS' : 'SPEC'}` : ''} DMG / ${shield.turns} turn${shield.turns === 1 ? '' : 's'}`
-    : `+${healForecast.actualHeal} HP`;
-
   const backdrop = dom.forecastModalBackdropEl;
-  const titleEl = backdrop.querySelector('[data-forecast-title]');
-  if (titleEl) titleEl.textContent = shield ? 'SHIELD FORECAST' : 'HEAL FORECAST';
-  const defCardEl = backdrop.querySelector<HTMLElement>('[data-testid="forecast-defender-card"]');
-  if (defCardEl) defCardEl.className = 'pmd-fe-enemy-box is-ally-heal';
-  const confirmBtnEl = backdrop.querySelector<HTMLElement>('[data-testid="forecast-attack-btn"]');
-  if (confirmBtnEl) { confirmBtnEl.textContent = shield ? 'Shield!' : 'Heal!'; (confirmBtnEl as HTMLButtonElement).disabled = false; }
-
+  const isSelf = target.id === healer.id;
+  setForecastConfirm(backdrop, healForecast.shield ? 'Shield!' : 'Heal!', false);
   renderForecastMoveList(ctx, healer, validMoves, activeSlot.id, () =>
     refreshHealForecastModalDom(ctx)
   );
-  setForecastStatLabels(backdrop, {
-    atk2: 'HEAL',
-    atk3: 'HIT',
-    atk4: 'PP',
-    def2: 'GAIN',
-    def3: 'MAX',
-    def4: 'STAT',
-  });
+  renderForecastLog(backdrop, buildHealForecastLines(target, healForecast));
+  setForecastSideStats(backdrop, 'attacker', null);
+  setForecastSideStats(backdrop, 'defender', null);
 
-  void dom.attackerPortraitView.setPortrait({
-    speciesIdOrAssetId: getUnitVisualKey(healer),
-    emotion: 'Happy',
-    mirrorHorizontal: false,
-  });
-  void dom.defenderPortraitView.setPortrait({
-    speciesIdOrAssetId: getUnitVisualKey(target),
-    emotion: 'Happy',
-    mirrorHorizontal: true,
-  });
-
-  const effBadgeEl = backdrop.querySelector<HTMLElement>(
-    '[data-testid="forecast-effectiveness-badge"]'
-  );
-  if (effBadgeEl) {
-    effBadgeEl.textContent = gainText;
-    effBadgeEl.className = 'pmd-forecast-eff-badge is-super';
-    effBadgeEl.hidden = false;
+  if (isSelf) {
+    setForecastHpBars(backdrop, 'attacker', healer, healForecast.projectedTargetHp, 'heal');
+  } else {
+    setForecastHpBars(backdrop, 'attacker', healer, healer.currentHp, 'player');
+    setForecastHpBars(backdrop, 'defender', target, healForecast.projectedTargetHp, 'heal');
   }
-
-  const targetsWrap = backdrop.querySelector<HTMLElement>('[data-forecast-targets-wrap]');
-  const targetsRow = backdrop.querySelector<HTMLElement>('[data-forecast-targets]');
-  if (targetsWrap && targetsRow) {
-    targetsRow.innerHTML = '';
-    if (allHealTargets.length > 1) {
-      targetsWrap.hidden = false;
-      for (const entry of allHealTargets) {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `pmd-btn pmd-chip-btn pmd-portrait-action-btn${entry.ally.id === target.id ? ' is-active' : ''}`;
-        btn.dataset.testid = `forecast-target-${entry.ally.id}`;
-        btn.appendChild(
-          createMiniSpeciesPortrait(getUnitVisualKey(entry.ally), { sizePx: 20 })
-        );
-        const hpSpan = document.createElement('span');
-        hpSpan.textContent = `${entry.ally.currentHp}/${entry.ally.maxHp}`;
-        btn.appendChild(hpSpan);
-        bindPointerTap(
-          btn,
-          () => {
-            audioManager.playSfx('select');
-            state.forecastTargetId = entry.ally.id;
-            if (entry.ally.id !== healer.id) {
-              healer.direction = directionFromDelta(
-                entry.ally.x - healer.x,
-                entry.ally.y - healer.y
-              );
-            }
-            refreshHealForecastModalDom(ctx);
-            ctx.renderNow();
-          },
-          { signal: abortSignal }
-        );
-        targetsRow.appendChild(btn);
-      }
-    } else {
-      targetsWrap.hidden = true;
-    }
-  }
-
-  const q = (sel: string) => backdrop.querySelector<HTMLElement>(sel);
-  const atkNameEl = q('[data-testid="forecast-attacker-name"]');
-  const atkWpnEl = q('[data-testid="forecast-attacker-weapon"]');
-  const atkHpEl = q('[data-testid="forecast-attacker-hp"]');
-  const atkDmgEl = q('[data-testid="forecast-attacker-dmg"]');
-  const atkHitEl = q('[data-testid="forecast-attacker-hit"]');
-  const atkCritEl = q('[data-testid="forecast-attacker-crit"]');
-  const atkCurBar = q('[data-attacker-hp-cur-bar]');
-  const atkProjBar = q('[data-attacker-hp-proj-bar]');
-
-  const healerProjectedHp =
-    target.id === healer.id ? healForecast.projectedTargetHp : healer.currentHp;
-  if (atkNameEl) atkNameEl.textContent = `${healer.nickname}`;
-  if (atkWpnEl) atkWpnEl.textContent = healForecast.move.name;
-  if (atkHpEl) {
-    atkHpEl.textContent =
-      target.id === healer.id
-        ? `${healer.currentHp} → ${healerProjectedHp}`
-        : `${healer.currentHp}/${healer.maxHp}`;
-  }
-  const gainShort = shield ? `-${shield.reduction}` : `+${healForecast.actualHeal}`;
-  if (atkDmgEl) atkDmgEl.textContent = gainShort;
-  if (atkHitEl) atkHitEl.textContent = '100%';
-  if (atkCritEl) atkCritEl.textContent = `${healForecast.ppAfter}/${activeSlot.maxPp}`;
-  if (atkCurBar) {
-    atkCurBar.style.width = `${Math.round((healer.currentHp / healer.maxHp) * 100)}%`;
-  }
-  if (atkProjBar) {
-    atkProjBar.className = 'pmd-forecast-hp-bar-fill';
-    atkProjBar.style.width = `${Math.round((healerProjectedHp / healer.maxHp) * 100)}%`;
-    atkProjBar.style.background = resolveAwakeningHpBarColors(healer.maxHp).cssGradient;
-  }
-
-  const defNameEl = q('[data-testid="forecast-defender-name"]');
-  const defMetaEl = q('[data-defender-meta]');
-  const defWpnEl = q('[data-testid="forecast-defender-weapon"]');
-  const defHpEl = q('[data-testid="forecast-defender-hp"]');
-  const defDmgEl = q('[data-testid="forecast-defender-dmg"]');
-  const defHitEl = q('[data-testid="forecast-defender-hit"]');
-  const defCritEl = q('[data-testid="forecast-defender-crit"]');
-  const defCurBar = q('[data-defender-hp-cur-bar]');
-  const defProjBar = q('[data-defender-hp-proj-bar]');
-
-  if (defNameEl) defNameEl.textContent = `${target.nickname}`;
-  if (defMetaEl) {
-    defMetaEl.textContent = '';
-    defMetaEl.hidden = true;
-  }
-  if (defWpnEl) defWpnEl.textContent = gainText;
-  if (defHpEl) defHpEl.textContent = `${target.currentHp} → ${healForecast.projectedTargetHp}`;
-  if (defDmgEl) defDmgEl.textContent = gainShort;
-  if (defHitEl) defHitEl.textContent = `${target.maxHp}`;
-  if (defCritEl) {
-    defCritEl.textContent = healForecast.curesStatus ? 'Cured!' : (target.status ?? 'OK');
-  }
-  if (defCurBar) {
-    defCurBar.style.width = `${Math.round((target.currentHp / target.maxHp) * 100)}%`;
-  }
-  if (defProjBar) {
-    defProjBar.className = 'pmd-forecast-hp-bar-fill is-heal';
-    defProjBar.style.width = `${Math.round((healForecast.projectedTargetHp / target.maxHp) * 100)}%`;
-    defProjBar.style.background = resolveAwakeningHpBarColors(target.maxHp).cssGradient;
-  }
+  setForecastSideVisible(backdrop, 'defender', !isSelf);
+  setForecastSidePortrait(backdrop, 'attacker', healer);
+  setForecastSidePortrait(backdrop, 'defender', target);
 }

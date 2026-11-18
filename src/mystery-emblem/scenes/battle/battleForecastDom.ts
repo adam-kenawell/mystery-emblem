@@ -1,124 +1,69 @@
 /**
- * Fire Emblem Interlocking 'L'-Shape Attack & Heal Forecast Modal DOM Builder
+ * Turn-by-Turn Attack / Heal / Hex Forecast Modal DOM Builder
+ *
+ * Layout: per side Determined portrait + HIT/CRT + HP bar -> divider -> "Battle Sequence" log ->
+ * footer (`Using: [move]` picker toggle + confirm). Back sits top-right; tapping outside closes.
  */
-
-import { PmdPortraitView } from '../../ui/PmdSpriteCanvas';
 
 export interface BattleForecastDomRefs {
   forecastModalBackdropEl: HTMLElement;
-  attackerPortraitView: PmdPortraitView;
-  defenderPortraitView: PmdPortraitView;
 }
 
 export function createBattleForecastDom(): BattleForecastDomRefs {
-  const attackerPortraitView = new PmdPortraitView({
-    pixelScale: 1,
-    testId: 'forecast-attacker-portrait',
-  });
-  const defenderPortraitView = new PmdPortraitView({
-    pixelScale: 1,
-    testId: 'forecast-defender-portrait',
-  });
-
   const forecastModalBackdropEl = document.createElement('div');
-  forecastModalBackdropEl.className = 'pmd-battle-modal-backdrop';
+  forecastModalBackdropEl.className = 'pmd-battle-modal-backdrop pmd-forecast-backdrop';
   forecastModalBackdropEl.dataset.testid = 'battle-forecast-modal';
   forecastModalBackdropEl.hidden = true;
   forecastModalBackdropEl.innerHTML = `
+    <button type="button" class="pmd-window pmd-window--compact pmd-forecast-back-btn" data-testid="forecast-back-btn" aria-label="Back">Back</button>
     <div class="pmd-window pmd-battle-forecast-dialog pmd-fe-forecast-frame" role="dialog" aria-modal="true" aria-label="Combat Forecast">
-      <span class="pmd-sr-only" data-forecast-title>COMBAT FORECAST</span>
-      <div class="pmd-fe-targets-bar" data-forecast-targets-wrap hidden>
-        <div class="pmd-inline-btns" data-forecast-targets></div>
-      </div>
-
-      <div class="pmd-fe-l-grid">
-        <div class="pmd-fe-player-stem" data-testid="forecast-attacker-card">
-          <div class="pmd-forecast-unit-head">
-            <div class="pmd-forecast-portrait-slot" data-attacker-portrait-slot></div>
-            <div class="pmd-forecast-unit-id">
-              <strong class="pmd-forecast-unit-name" data-testid="forecast-attacker-name">-</strong>
-              <div class="pmd-fe-stem-move-line">
-                <span class="pmd-forecast-move-line" data-testid="forecast-attacker-weapon">-</span>
-                <span class="pmd-forecast-eff-badge" data-testid="forecast-effectiveness-badge" hidden>1x</span>
+      <div class="pmd-fe-title">Battle Forecast</div>
+      <div class="pmd-fe-body" data-forecast-body>
+        <div class="pmd-fe-sides">
+          <div class="pmd-fe-side is-left" data-testid="forecast-attacker-card">
+            <span class="pmd-fe-side-portrait" data-attacker-portrait></span>
+            <div class="pmd-fe-side-info">
+              <div class="pmd-fe-side-stats" data-attacker-stats>
+                <span data-attacker-hit-wrap>HIT <strong data-testid="forecast-attacker-hit">-</strong></span>
+                <span data-attacker-crit-wrap>CRT <strong data-testid="forecast-attacker-crit">-</strong></span>
+                <span class="pmd-fe-side-note" data-testid="forecast-attacker-note" data-attacker-note hidden></span>
+              </div>
+              <div class="pmd-forecast-hp-bar-track">
+                <div class="pmd-forecast-hp-bar-ghost" data-attacker-hp-cur-bar></div>
+                <div class="pmd-forecast-hp-bar-fill" data-attacker-hp-proj-bar></div>
               </div>
             </div>
           </div>
-          <div class="pmd-fe-enemy-hp-row">
-            <span class="pmd-fe-hp-num" data-testid="forecast-attacker-hp">-</span>
-          </div>
-          <div class="pmd-forecast-hp-bar-track">
-            <div class="pmd-forecast-hp-bar-ghost" data-attacker-hp-cur-bar></div>
-            <div class="pmd-forecast-hp-bar-fill" data-attacker-hp-proj-bar></div>
-          </div>
-          <div class="pmd-fe-stats-strip">
-            <div class="pmd-forecast-stat">
-              <span data-atk-stat2-label>DMG</span>
-              <strong data-testid="forecast-attacker-dmg">-</strong>
-            </div>
-            <div class="pmd-forecast-stat">
-              <span data-atk-stat3-label>HIT</span>
-              <strong data-testid="forecast-attacker-hit">-</strong>
-            </div>
-            <div class="pmd-forecast-stat">
-              <span data-atk-stat4-label>CRT</span>
-              <strong data-testid="forecast-attacker-crit">-</strong>
+          <div class="pmd-fe-side is-right" data-testid="forecast-defender-card">
+            <span class="pmd-fe-side-portrait" data-defender-portrait></span>
+            <div class="pmd-fe-side-info">
+              <div class="pmd-fe-side-stats" data-defender-stats>
+                <span data-defender-hit-wrap>HIT <strong data-testid="forecast-defender-hit">-</strong></span>
+                <span data-defender-crit-wrap>CRT <strong data-testid="forecast-defender-crit">-</strong></span>
+                <span class="pmd-fe-side-note" data-testid="forecast-defender-note" data-defender-note hidden></span>
+              </div>
+              <div class="pmd-forecast-hp-bar-track">
+                <div class="pmd-forecast-hp-bar-ghost" data-defender-hp-cur-bar></div>
+                <div class="pmd-forecast-hp-bar-fill is-enemy" data-defender-hp-proj-bar></div>
+              </div>
             </div>
           </div>
         </div>
+        <div class="pmd-fe-divider" role="separator"></div>
+        <div class="pmd-fe-section-label">Battle Sequence</div>
+        <div class="pmd-fe-log" data-testid="forecast-log" data-forecast-log></div>
+      </div>
 
-        <div class="pmd-fe-enemy-box is-defender" data-testid="forecast-defender-card">
-          <div class="pmd-forecast-unit-head">
-            <div class="pmd-forecast-portrait-slot" data-defender-portrait-slot></div>
-            <div class="pmd-forecast-unit-id">
-              <strong class="pmd-forecast-unit-name" data-testid="forecast-defender-name">-</strong>
-              <span class="pmd-forecast-move-line" data-testid="forecast-defender-weapon">-</span>
-              <span class="pmd-forecast-unit-meta" data-defender-meta hidden></span>
-            </div>
-          </div>
-          <div class="pmd-fe-enemy-hp-row">
-            <span class="pmd-fe-hp-num" data-testid="forecast-defender-hp">-</span>
-          </div>
-          <div class="pmd-forecast-hp-bar-track">
-            <div class="pmd-forecast-hp-bar-ghost" data-defender-hp-cur-bar></div>
-            <div class="pmd-forecast-hp-bar-fill is-enemy" data-defender-hp-proj-bar></div>
-          </div>
-          <div class="pmd-fe-stats-strip">
-            <div class="pmd-forecast-stat">
-              <span data-def-stat2-label>DMG</span>
-              <strong data-testid="forecast-defender-dmg">-</strong>
-            </div>
-            <div class="pmd-forecast-stat">
-              <span data-def-stat3-label>HIT</span>
-              <strong data-testid="forecast-defender-hit">-</strong>
-            </div>
-            <div class="pmd-forecast-stat">
-              <span data-def-stat4-label>CRT</span>
-              <strong data-testid="forecast-defender-crit">-</strong>
-            </div>
-          </div>
-        </div>
+      <div class="pmd-fe-move-picker" data-forecast-move-picker hidden>
+        <div class="pmd-fe-move-list pmd-menu-list" data-testid="forecast-move-list" data-forecast-moves></div>
+      </div>
 
-        <div class="pmd-fe-player-foot">
-          <div class="pmd-fe-move-list pmd-menu-list" data-testid="forecast-move-list" data-forecast-moves></div>
-          <div class="pmd-forecast-actions">
-            <button type="button" class="pmd-btn pmd-btn-primary" data-testid="forecast-attack-btn">Attack!</button>
-            <button type="button" class="pmd-btn" data-testid="forecast-cancel-btn">Cancel</button>
-          </div>
-        </div>
+      <div class="pmd-fe-footer">
+        <button type="button" class="pmd-btn pmd-fe-using-btn" data-testid="forecast-move-switch-btn">Using: -</button>
+        <button type="button" class="pmd-btn pmd-btn-primary pmd-fe-confirm-btn" data-testid="forecast-attack-btn">Attack!</button>
       </div>
     </div>
   `;
 
-  forecastModalBackdropEl
-    .querySelector('[data-attacker-portrait-slot]')
-    ?.appendChild(attackerPortraitView.canvas);
-  forecastModalBackdropEl
-    .querySelector('[data-defender-portrait-slot]')
-    ?.appendChild(defenderPortraitView.canvas);
-
-  return {
-    forecastModalBackdropEl,
-    attackerPortraitView,
-    defenderPortraitView,
-  };
+  return { forecastModalBackdropEl };
 }

@@ -18,6 +18,7 @@ import {
   closeSystemMenu,
   setSystemMenuSubView,
 } from './battleFieldMenuController';
+import { isForecastMovePickerOpen, setForecastMovePickerOpen } from './battleForecastMoveList';
 import {
   cancelCombatForecast,
   confirmForecastAction,
@@ -130,20 +131,47 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
     { signal }
   );
 
+  const forecastEl = dom.forecastModalBackdropEl;
   bindPointerTap(
-    dom.forecastModalBackdropEl.querySelector<HTMLElement>('[data-testid="forecast-attack-btn"]'),
+    forecastEl.querySelector<HTMLElement>('[data-testid="forecast-attack-btn"]'),
     () => void confirmForecastAction(ctx),
     { signal }
   );
+  // Back button and taps outside the box peel one layer: picker first, then the forecast.
+  const exitForecastLayer = () => {
+    if (isForecastMovePickerOpen(forecastEl)) {
+      audioManager.playSfx('cancel');
+      setForecastMovePickerOpen(forecastEl, false);
+      return;
+    }
+    const expected = getExpectedTutorialAction(tutorialOverlay);
+    if (expected === 'battle_confirm_attack' || expected === 'battle_confirm_heal') {
+      tutorialOverlay?.nudgeActiveStep();
+      return;
+    }
+    cancelCombatForecast(ctx);
+  };
   bindPointerTap(
-    dom.forecastModalBackdropEl.querySelector<HTMLElement>('[data-testid="forecast-cancel-btn"]'),
+    forecastEl.querySelector<HTMLElement>('[data-testid="forecast-back-btn"]'),
+    exitForecastLayer,
+    { signal }
+  );
+  forecastEl.addEventListener(
+    'pointerdown',
+    (e: PointerEvent) => {
+      if (e.target !== forecastEl) return;
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      exitForecastLayer();
+    },
+    { signal }
+  );
+  bindPointerTap(
+    forecastEl.querySelector<HTMLElement>('[data-testid="forecast-move-switch-btn"]'),
     () => {
-      const expected = getExpectedTutorialAction(tutorialOverlay);
-      if (expected === 'battle_confirm_attack' || expected === 'battle_confirm_heal') {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
-      cancelCombatForecast(ctx);
+      audioManager.playSfx('select');
+      setForecastMovePickerOpen(forecastEl, !isForecastMovePickerOpen(forecastEl));
     },
     { signal }
   );

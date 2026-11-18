@@ -35,8 +35,6 @@ export interface BattleDomRefs extends BattleModalsDomRefs {
   fieldUnitsBtnEl: HTMLButtonElement;
   fieldSaveBtnEl: HTMLButtonElement;
   forecastModalBackdropEl: HTMLElement;
-  attackerPortraitView: PmdPortraitView;
-  defenderPortraitView: PmdPortraitView;
 }
 
 export function createBattleDomShell(): BattleDomRefs {
