@@ -97,14 +97,7 @@ export function updateHoveredTile(
     }
   }
 
-  const prevHoverEnemyId = state.lastComputedHoverEnemyId;
   updateBattleInfoStrip(ctx);
-  const hoverPlayerChanged = syncHoverPlayerRange(ctx);
-  if (
-    state.lastComputedHoverEnemyId !== prevHoverEnemyId ||
-    hoverPlayerChanged ||
-    (state.phase === 'player_phase' && state.interactionState === 'unit_selected')
-  ) {
-    ctx.renderNow();
-  }
+  syncHoverPlayerRange(ctx);
+  ctx.renderNow();
 }

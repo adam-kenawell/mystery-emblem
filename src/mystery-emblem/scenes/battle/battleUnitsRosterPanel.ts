@@ -42,7 +42,8 @@ import { createRosterUnitPortraitBtn } from './battleUnitsRosterCell';
 export function renderBattleUnitsRosterPanel(
   ctx: BattleControllerContext,
   cardEl: HTMLElement,
-  onClose: () => void
+  onClose: () => void,
+  opts?: { headerHtml?: string }
 ): void {
   const { state, audioManager, abortSignal } = ctx;
   const playerUnits = state.units.filter((u) => u.faction === 'player');
@@ -65,12 +66,13 @@ export function renderBattleUnitsRosterPanel(
     cardEl.innerHTML = '';
     const livingCount = playerUnits.filter((u) => !u.defeated && u.currentHp > 0).length;
 
+    const isBattleInfo = Boolean(opts?.headerHtml);
     const headEl = document.createElement('div');
     headEl.className = 'pmd-dungeon-units-head';
     headEl.innerHTML = `
       <div>
-        <h3 class="pmd-panel-title">UNITS</h3>
-        <p class="pmd-panel-sub">${livingCount} / ${playerUnits.length} Active</p>
+        <h3 class="pmd-panel-title">${isBattleInfo ? 'BATTLE INFO' : 'UNITS'}</h3>
+        ${isBattleInfo ? '' : `<p class="pmd-panel-sub">${livingCount} / ${playerUnits.length} Active</p>`}
       </div>
       <button type="button" class="pmd-btn pmd-btn-primary" data-testid="battle-units-close-btn">Close</button>
     `;
@@ -101,7 +103,14 @@ export function renderBattleUnitsRosterPanel(
         )
       );
     }
-    cardEl.append(headEl, gridEl);
+    cardEl.appendChild(headEl);
+    if (opts?.headerHtml) {
+      const objWrap = document.createElement('div');
+      objWrap.className = 'pmd-dungeon-info-objective';
+      objWrap.innerHTML = opts.headerHtml;
+      cardEl.appendChild(objWrap);
+    }
+    cardEl.appendChild(gridEl);
 
     const unit = playerUnits.find((u) => u.id === activeUnitId) ?? playerUnits[0];
     if (!unit) return;

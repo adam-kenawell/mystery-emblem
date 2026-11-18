@@ -1,10 +1,11 @@
 /* ==========================================================================
-   Global In-Game UI Scale (`--pmd-ui-scale`)
-   Desktop ~1.25x, tablets ~1.15x, phone portrait and short landscape (<=500px tall) 1x.
-   CSS `zoom` keeps percentage / inset layouts filling the viewport while
-   enlarging px-based fonts, frames and hitboxes. JS-anchored menus divide their
-   px `left`/`top` by `getElementZoom` (`ui/uiScale.ts`). Map canvases and
-   tile-anchored layers (floating callouts, node labels) are never zoomed.
+   Global UI Scale (`--pmd-ui-scale`)
+   1.15x on tablets and desktop (>=601x501), 1x on phone portrait & short
+   landscape (<=500px tall). CSS `zoom` keeps percentage / inset layouts filling
+   the viewport while enlarging px-based fonts, frames and hitboxes. JS-anchored
+   menus divide their px `left`/`top` by `getElementZoom` (`ui/uiScale.ts`).
+   Map / backdrop canvases and tile-anchored layers (floating callouts, node
+   labels) are never zoomed.
    ========================================================================== */
 
 :root {
@@ -17,13 +18,14 @@
   }
 }
 
-@media (min-width: 1200px) and (min-height: 700px) {
-  :root {
-    --pmd-ui-scale: 1.25;
-  }
-}
-
 :is(
+  /* Title, quiz & credits */
+  .pmd-title-card,
+  .pmd-title-links,
+  .pmd-audio-notice,
+  .pmd-quiz-stage,
+  .pmd-credits-top-bar,
+  .pmd-credits-scroll-viewport,
   /* Shared chrome & modals (battle, overworld, prep, supports, shop) */
   .pmd-corner-btn,
   .pmd-battle-modal-backdrop,
@@ -58,6 +60,12 @@
 
 /* Never compound the scale when one scaled layer is nested inside another */
 :is(
+  .pmd-title-card,
+  .pmd-title-links,
+  .pmd-audio-notice,
+  .pmd-quiz-stage,
+  .pmd-credits-top-bar,
+  .pmd-credits-scroll-viewport,
   .pmd-corner-btn,
   .pmd-battle-modal-backdrop,
   .pmd-modal-backdrop,
@@ -82,6 +90,12 @@
   .pmd-overworld-dock,
   .pmd-overworld-toast
 ) :is(
+  .pmd-title-card,
+  .pmd-title-links,
+  .pmd-audio-notice,
+  .pmd-quiz-stage,
+  .pmd-credits-top-bar,
+  .pmd-credits-scroll-viewport,
   .pmd-corner-btn,
   .pmd-battle-modal-backdrop,
   .pmd-modal-backdrop,

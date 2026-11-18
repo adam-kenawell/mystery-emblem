@@ -11,12 +11,10 @@ export interface BattleModalsDomRefs {
   moveLearnedPortraitView: PmdPortraitView;
   systemMenuBackdropEl: HTMLElement;
   fieldMenuCardEl: HTMLElement;
-  fieldDangerBtnEl: HTMLButtonElement;
   fieldEndPhaseBtnEl: HTMLButtonElement;
-  fieldObjectiveBtnEl: HTMLButtonElement;
+  fieldInfoBtnEl: HTMLButtonElement;
   fieldSettingsBtnEl: HTMLButtonElement;
-  fieldOverworldBtnEl: HTMLButtonElement;
-  fieldTitleBtnEl: HTMLButtonElement;
+  fieldSaveExitBtnEl: HTMLButtonElement;
   fieldSubmodalCardEl: HTMLElement;
   victoryModalBackdropEl: HTMLElement;
   defeatModalBackdropEl: HTMLElement;
@@ -29,12 +27,10 @@ export function createBattleModalsDom(): BattleModalsDomRefs {
   systemMenuBackdropEl.hidden = true;
   systemMenuBackdropEl.innerHTML = `
     <div class="pmd-window pmd-dungeon-field-menu pmd-menu-list" data-testid="dungeon-field-menu" role="menu" aria-label="Dungeon Menu">
-      <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-field-danger">Danger Area: OFF</button>
       <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row" data-testid="battle-field-end-phase">End Phase</button>
-      <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-field-objective">Objective</button>
+      <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-field-info">Battle Info</button>
       <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-field-settings">Settings</button>
-      <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-field-overworld">Return to Overworld</button>
-      <button type="button" class="pmd-btn pmd-btn-danger pmd-menu-row" data-testid="battle-field-title">Return to Title Screen</button>
+      <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-field-save-exit">Save &amp; Exit</button>
     </div>
     <div class="pmd-window pmd-dungeon-submodal" data-field-submodal role="dialog" aria-modal="true" hidden></div>
   `;
@@ -149,20 +145,16 @@ export function createBattleModalsDom(): BattleModalsDomRefs {
     moveLearnedPortraitView,
     systemMenuBackdropEl,
     fieldMenuCardEl: systemMenuBackdropEl.querySelector('[data-testid="dungeon-field-menu"]')!,
-    fieldDangerBtnEl: systemMenuBackdropEl.querySelector('[data-testid="battle-field-danger"]')!,
     fieldEndPhaseBtnEl: systemMenuBackdropEl.querySelector(
       '[data-testid="battle-field-end-phase"]'
     )!,
-    fieldObjectiveBtnEl: systemMenuBackdropEl.querySelector(
-      '[data-testid="battle-field-objective"]'
-    )!,
+    fieldInfoBtnEl: systemMenuBackdropEl.querySelector('[data-testid="battle-field-info"]')!,
     fieldSettingsBtnEl: systemMenuBackdropEl.querySelector(
       '[data-testid="battle-field-settings"]'
     )!,
-    fieldOverworldBtnEl: systemMenuBackdropEl.querySelector(
-      '[data-testid="battle-field-overworld"]'
+    fieldSaveExitBtnEl: systemMenuBackdropEl.querySelector(
+      '[data-testid="battle-field-save-exit"]'
     )!,
-    fieldTitleBtnEl: systemMenuBackdropEl.querySelector('[data-testid="battle-field-title"]')!,
     fieldSubmodalCardEl: systemMenuBackdropEl.querySelector('[data-field-submodal]')!,
     victoryModalBackdropEl,
     defeatModalBackdropEl,

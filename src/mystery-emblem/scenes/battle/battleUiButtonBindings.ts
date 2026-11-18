@@ -12,7 +12,6 @@ import {
   useEquippedBattleConsumable,
 } from './battleCommandExecution';
 import { executeDanceFromCommandMenu } from './battleDanceController';
-import { toggleGlobalDangerArea } from './battleDangerAndViewportState';
 import { executeTalkFromCommandMenu } from './battleEventRunner';
 import {
   closeSystemMenu,
@@ -30,7 +29,6 @@ import {
 } from './battleLifecycleController';
 import { requestManualEndPhase } from './battlePhaseAndAiRunner';
 import { cancelUncommittedMove } from './battleSelectionAndMenu';
-import { openBattleSaveProgressOverlay } from './battleSuspend';
 import { getExpectedTutorialAction } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
 
@@ -207,21 +205,6 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
   );
 
   bindPointerTap(
-    dom.fieldDangerBtnEl,
-    () => {
-      const expected = getExpectedTutorialAction(tutorialOverlay);
-      if (expected && expected !== 'battle_toggle_danger_area') {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
-      toggleGlobalDangerArea(ctx);
-      closeSystemMenu(ctx);
-      tutorialOverlay?.notifyActionCompleted('battle_toggle_danger_area');
-      ctx.renderNow();
-    },
-    { signal }
-  );
-  bindPointerTap(
     dom.fieldEndPhaseBtnEl,
     () => {
       if (getExpectedTutorialAction(tutorialOverlay)) {
@@ -233,7 +216,7 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
     },
     { signal }
   );
-  const bindFieldSubViewBtn = (btn: HTMLElement, view: 'objective' | 'units' | 'settings' | 'confirm_overworld' | 'confirm_title') => {
+  const bindFieldSubViewBtn = (btn: HTMLElement, view: 'info' | 'settings' | 'save_exit') => {
     bindPointerTap(
       btn,
       () => {
@@ -247,25 +230,9 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
       { signal }
     );
   };
-  bindFieldSubViewBtn(dom.fieldObjectiveBtnEl, 'objective');
-  bindFieldSubViewBtn(dom.fieldUnitsBtnEl, 'units');
+  bindFieldSubViewBtn(dom.fieldInfoBtnEl, 'info');
   bindFieldSubViewBtn(dom.fieldSettingsBtnEl, 'settings');
-  bindFieldSubViewBtn(dom.fieldOverworldBtnEl, 'confirm_overworld');
-  bindFieldSubViewBtn(dom.fieldTitleBtnEl, 'confirm_title');
-
-  bindPointerTap(
-    dom.fieldSaveBtnEl,
-    () => {
-      if (getExpectedTutorialAction(tutorialOverlay)) {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
-      audioManager.playSfx('select');
-      closeSystemMenu(ctx);
-      openBattleSaveProgressOverlay(ctx);
-    },
-    { signal }
-  );
+  bindFieldSubViewBtn(dom.fieldSaveExitBtnEl, 'save_exit');
 
   bindPointerTap(
     dom.victoryModalBackdropEl.querySelector<HTMLElement>('[data-testid="victory-replay-btn"]'),

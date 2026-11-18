@@ -250,17 +250,33 @@ export function renderBattleFrame(ctxObj: BattleControllerContext, now: number):
     ctx.restore();
   }
 
-  const cursorX = state.inspectedTile.x * PMD_TILE_NATIVE_PX - cameraX;
-  const cursorY = state.inspectedTile.y * PMD_TILE_NATIVE_PX - cameraY;
-  ctx.fillStyle = '#f8d048';
-  ctx.fillRect(cursorX, cursorY, 5, 2);
-  ctx.fillRect(cursorX, cursorY, 2, 5);
-  ctx.fillRect(cursorX + PMD_TILE_NATIVE_PX - 5, cursorY, 5, 2);
-  ctx.fillRect(cursorX + PMD_TILE_NATIVE_PX - 2, cursorY, 2, 5);
-  ctx.fillRect(cursorX, cursorY + PMD_TILE_NATIVE_PX - 2, 5, 2);
-  ctx.fillRect(cursorX, cursorY + PMD_TILE_NATIVE_PX - 5, 2, 5);
-  ctx.fillRect(cursorX + PMD_TILE_NATIVE_PX - 5, cursorY + PMD_TILE_NATIVE_PX - 2, 5, 2);
-  ctx.fillRect(cursorX + PMD_TILE_NATIVE_PX - 2, cursorY + PMD_TILE_NATIVE_PX - 5, 2, 5);
+  // At most one tile bracket on screen: hover if present, else the last-tapped tile on touch.
+  // Bounces harder when that tile is an active selection (selected unit, inspected range,
+  // or prep swap slot).
+  const cursor = state.hoveredTile ?? (state.touchInspectedUnitId ? state.inspectedTile : null);
+  if (cursor) {
+    const selUnit = getSelectedUnit(state);
+    const rngUnit = state.inspectedAllyRangeUnitId
+      ? state.units.find((u) => u.id === state.inspectedAllyRangeUnitId)
+      : null;
+    const swapSlot =
+      state.prepSwapSlotIndex !== null
+        ? state.deploymentSlots.find((s) => s.slotIndex === state.prepSwapSlotIndex)
+        : null;
+    const isSelected = Boolean(
+      (selUnit && selUnit.x === cursor.x && selUnit.y === cursor.y) ||
+        (rngUnit && rngUnit.x === cursor.x && rngUnit.y === cursor.y) ||
+        (swapSlot && swapSlot.x === cursor.x && swapSlot.y === cursor.y) ||
+        state.touchInspectedUnitId
+    );
+    drawTileCursorBrackets(
+      ctx,
+      cursor.x * PMD_TILE_NATIVE_PX - cameraX,
+      cursor.y * PMD_TILE_NATIVE_PX - cameraY,
+      now,
+      isSelected ? 'selected' : 'hover'
+    );
+  }
 
   const activeFilter: TutorialBattleTileFilter | null =
     tutorialOverlay?.getActiveTileFilter() ?? null;
@@ -319,5 +335,38 @@ function drawForecastSpotlightDim(
   );
   ctx.fillStyle = 'rgba(4, 10, 20, 0.65)';
   ctx.fill('evenodd');
+  ctx.restore();
+}
+
+/**
+ * Yellow corner brackets for the hovered tile (small, slow bounce) and the selected tile
+ * (larger, faster bounce). Kept to integer native px so the pixel art stays crisp.
+ */
+function drawTileCursorBrackets(
+  ctx: CanvasRenderingContext2D,
+  tileX: number,
+  tileY: number,
+  now: number,
+  mode: 'hover' | 'selected'
+): void {
+  const period = mode === 'selected' ? 480 : 900;
+  const maxInset = mode === 'selected' ? 3 : 1;
+  const wave = 0.5 - 0.5 * Math.cos(((now % period) / period) * Math.PI * 2);
+  const inset = Math.round(wave * maxInset);
+  const L = tileX + inset;
+  const T = tileY + inset;
+  const R = tileX + PMD_TILE_NATIVE_PX - inset;
+  const B = tileY + PMD_TILE_NATIVE_PX - inset;
+  ctx.save();
+  ctx.globalAlpha = mode === 'selected' ? 1 : 0.78;
+  ctx.fillStyle = '#f8d048';
+  ctx.fillRect(L, T, 5, 2);
+  ctx.fillRect(L, T, 2, 5);
+  ctx.fillRect(R - 5, T, 5, 2);
+  ctx.fillRect(R - 2, T, 2, 5);
+  ctx.fillRect(L, B - 2, 5, 2);
+  ctx.fillRect(L, B - 5, 2, 5);
+  ctx.fillRect(R - 5, B - 2, 5, 2);
+  ctx.fillRect(R - 2, B - 5, 2, 5);
   ctx.restore();
 }

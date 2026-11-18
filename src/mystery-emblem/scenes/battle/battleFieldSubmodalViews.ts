@@ -4,6 +4,7 @@
 
 import { bindPointerTap } from '../../ui/pointerControls';
 import { closeBattleScene } from './battleLifecycleController';
+import { getBattleSaveBlockReason, openBattleSaveProgressOverlay } from './battleSuspend';
 import type {
   BattleExitDestination,
   BattleFieldMenuSubView,
@@ -30,14 +31,7 @@ export function renderFieldSubmodalContents(
   cardEl.classList.remove('is-units-panel');
   cardEl.innerHTML = '';
 
-  if (subView === 'units') {
-    renderBattleUnitsRosterPanel(ctx, cardEl, hooks.closeSystemMenu);
-    return;
-  }
-
-  if (subView === 'objective') {
-    cardEl.dataset.testid = 'dungeon-objective-modal';
-    cardEl.setAttribute('aria-label', 'Battle Objective');
+  if (subView === 'info') {
     const lord = getLordUnit(state);
     const livingAllies = getLivingPlayers(state);
     const readyAllies = livingAllies.filter((u) => !u.waited).length;
@@ -54,8 +48,7 @@ export function renderFieldSubmodalContents(
       ? `Turn ${state.turnNumber} / ${state.surviveTurns}`
       : `Turn ${state.turnNumber}`;
 
-    cardEl.innerHTML = `
-      <h3 class="pmd-panel-title">OBJECTIVE</h3>
+    const headerHtml = `
       <p class="pmd-panel-sub" data-testid="dungeon-objective-turn">${escapeHudHtml(state.map.name)} · ${escapeHudHtml(turnDisplay)}</p>
       <div class="pmd-dungeon-obj-grid">
         <div class="pmd-dungeon-obj-cell is-wide">
@@ -75,18 +68,8 @@ export function renderFieldSubmodalContents(
           <strong>${livingEnemies.length}</strong>
         </div>
       </div>
-      <div class="pmd-battle-outcome-actions">
-        <button type="button" class="pmd-btn pmd-btn-primary" data-testid="battle-objective-close-btn">Close</button>
-      </div>
     `;
-
-    bindPointerTap(
-      cardEl.querySelector<HTMLElement>('[data-testid="battle-objective-close-btn"]'),
-      () => {
-        audioManager.playSfx('cancel');
-        hooks.closeSystemMenu();
-      }
-    );
+    renderBattleUnitsRosterPanel(ctx, cardEl, hooks.closeSystemMenu, { headerHtml });
     return;
   }
 
@@ -188,6 +171,47 @@ export function renderFieldSubmodalContents(
     return;
   }
 
+  if (subView === 'save_exit') {
+    cardEl.dataset.testid = 'dungeon-save-exit-modal';
+    cardEl.setAttribute('aria-label', 'Save and Exit');
+    const saveBlock = getBattleSaveBlockReason(state);
+    cardEl.innerHTML = `
+      <h3 class="pmd-panel-title">SAVE &amp; EXIT</h3>
+      <div class="pmd-menu-list">
+        ${state.suspendSource ? `<button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-field-save"${saveBlock ? ` disabled title="${escapeHudHtml(saveBlock)}"` : ''}>Save Progress</button>` : ''}
+        <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-field-overworld">Return to Overworld</button>
+        <button type="button" class="pmd-btn pmd-btn-danger pmd-menu-row" data-testid="battle-field-title">Return to Title Screen</button>
+      </div>
+      <div class="pmd-battle-outcome-actions">
+        <button type="button" class="pmd-btn" data-testid="battle-save-exit-back-btn">Back</button>
+      </div>
+    `;
+    bindPointerTap(cardEl.querySelector<HTMLElement>('[data-testid="battle-field-save"]'), () => {
+      audioManager.playSfx('select');
+      hooks.closeSystemMenu();
+      openBattleSaveProgressOverlay(ctx);
+    });
+    bindPointerTap(
+      cardEl.querySelector<HTMLElement>('[data-testid="battle-field-overworld"]'),
+      () => {
+        audioManager.playSfx('select');
+        hooks.setSubView('confirm_overworld');
+      }
+    );
+    bindPointerTap(cardEl.querySelector<HTMLElement>('[data-testid="battle-field-title"]'), () => {
+      audioManager.playSfx('select');
+      hooks.setSubView('confirm_title');
+    });
+    bindPointerTap(
+      cardEl.querySelector<HTMLElement>('[data-testid="battle-save-exit-back-btn"]'),
+      () => {
+        audioManager.playSfx('cancel');
+        hooks.setSubView('save_exit');
+      }
+    );
+    return;
+  }
+
   const isOverworld = subView === 'confirm_overworld';
   const destination: BattleExitDestination = isOverworld ? 'overworld' : 'title';
   const titleText = isOverworld ? 'RETURN TO OVERWORLD?' : 'RETURN TO TITLE SCREEN?';
@@ -216,7 +240,7 @@ export function renderFieldSubmodalContents(
     cardEl.querySelector<HTMLElement>('[data-testid="battle-cancel-exit-btn"]'),
     () => {
       audioManager.playSfx('cancel');
-      hooks.setSubView('root');
+      hooks.setSubView('save_exit');
     }
   );
 }

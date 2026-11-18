@@ -32,8 +32,6 @@ export interface BattleDomRefs extends BattleModalsDomRefs {
   cmdWaitBtnEl: HTMLButtonElement;
   cmdCancelBtnEl: HTMLButtonElement;
   talkChoiceBackdropEl: HTMLElement;
-  fieldUnitsBtnEl: HTMLButtonElement;
-  fieldSaveBtnEl: HTMLButtonElement;
   forecastModalBackdropEl: HTMLElement;
 }
 
@@ -194,20 +192,6 @@ export function createBattleDomShell(): BattleDomRefs {
   const forecastDom = createBattleForecastDom();
   const modalsDom = createBattleModalsDom();
 
-  // 7th Field Menu option (`Units`) docked between `Objective` and `Settings`
-  const fieldUnitsBtnEl = document.createElement('button');
-  fieldUnitsBtnEl.type = 'button';
-  fieldUnitsBtnEl.className = 'pmd-btn pmd-menu-row';
-  fieldUnitsBtnEl.dataset.testid = 'battle-field-units';
-  fieldUnitsBtnEl.textContent = 'Units';
-  modalsDom.fieldMenuCardEl.insertBefore(fieldUnitsBtnEl, modalsDom.fieldSettingsBtnEl);
-
-  const fieldSaveBtnEl = document.createElement('button');
-  fieldSaveBtnEl.type = 'button';
-  fieldSaveBtnEl.className = 'pmd-btn pmd-menu-row';
-  fieldSaveBtnEl.dataset.testid = 'battle-field-save';
-  fieldSaveBtnEl.textContent = 'Save Progress';
-  modalsDom.fieldMenuCardEl.insertBefore(fieldSaveBtnEl, modalsDom.fieldSettingsBtnEl);
 
   rootEl.append(
     canvasStageEl,
@@ -252,8 +236,6 @@ export function createBattleDomShell(): BattleDomRefs {
     cmdWaitBtnEl: actionMenuEl.querySelector('[data-testid="dungeon-cmd-wait"]')!,
     cmdCancelBtnEl: actionMenuEl.querySelector('[data-testid="dungeon-cmd-cancel"]')!,
     talkChoiceBackdropEl,
-    fieldUnitsBtnEl,
-    fieldSaveBtnEl,
     ...forecastDom,
     ...modalsDom,
   };

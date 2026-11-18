@@ -61,6 +61,14 @@
 
 .pmd-dungeon-submodal.is-units-panel { width: min(540px, 100%); }
 
+.pmd-dungeon-info-objective {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(168, 192, 224, 0.35);
+}
+
 .pmd-dungeon-units-head {
   display: flex;
   align-items: center;
