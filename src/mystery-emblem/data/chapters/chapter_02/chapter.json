@@ -11,7 +11,7 @@
   "bgmCue": "apple_woods",
   "objectiveType": "rout",
   "objectiveLabel": "Rescue Chespin & Rout Raiders",
-  "defeatIfUnitIdsFall": ["ch2_chespin"],
+  "defeatIfUnitIdsFall": ["player_0", "player_1", "player_2", "ch2_chespin"],
   "recommendedLevel": 3,
   "deploymentCap": 4,
   "preStoryCutsceneId": "cs_04_royal_guard_past",

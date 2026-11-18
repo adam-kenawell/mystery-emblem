@@ -259,7 +259,6 @@ export function getUnitEffectiveCombatStats(
   }
 
   if (unit.status && unit.personalSkillId === 'guts') atk += 3;
-  if (unit.status === 'PAR') spe = Math.max(1, Math.floor(spe * 0.75));
 
   return { atk, def, spa, spd, spe, hitBonus, critBonus };
 }
@@ -271,7 +270,7 @@ export interface UnitPopupCombatSummary {
   specialMight: number | null;
   effectiveDef: number;
   effectiveSpd: number;
-  /** Effective Speed (base + boosts + held item + adjacent support; PAR penalty). Terrain grants no Speed bonus. */
+  /** Effective Speed (base + boosts + held item + adjacent support). Terrain grants no Speed bonus. */
   effectiveSpe: number;
   terrainDefBonus: number;
   terrainSpdBonus: number;

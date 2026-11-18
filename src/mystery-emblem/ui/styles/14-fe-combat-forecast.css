@@ -151,6 +151,41 @@
   color: var(--pmd-text-danger);
 }
 
+.pmd-fe-log-ko {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  color: var(--pmd-text-danger);
+  background: var(--pmd-fill-well-deep);
+  border: 2px solid var(--pmd-text-danger);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.pmd-fe-side-hp-line {
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1.1;
+  color: var(--pmd-text-white);
+  text-shadow: 1px 1px 0 #000000;
+  white-space: nowrap;
+}
+
+.pmd-fe-side.is-right .pmd-fe-side-hp-line {
+  text-align: right;
+}
+
+.pmd-fe-side-hp-line.is-ko {
+  color: var(--pmd-text-danger);
+}
+
+.pmd-fe-side-hp-line.is-heal {
+  color: var(--pmd-text-green);
+}
+
 /* Forecast HP bars: solid green remaining HP, dark red for HP about to be lost, near-black empty */
 .pmd-fe-forecast-frame .pmd-forecast-hp-bar-track {
   background: #0a0f16;

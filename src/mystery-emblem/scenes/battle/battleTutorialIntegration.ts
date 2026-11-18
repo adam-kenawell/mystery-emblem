@@ -76,9 +76,9 @@ export async function triggerReactivePostCombatTutorials(
 
   if (isPrologue) {
     const paralyzedUnit = players.find((u) => u.status === 'PAR');
-    if (paralyzedUnit) {
-      const grantedCure = paralyzedUnit.consumableItemId !== 'paralyze_heal';
-      if (grantedCure) {
+    if (paralyzedUnit && !state.prologueParalyzeCureGranted) {
+      state.prologueParalyzeCureGranted = true;
+      if (paralyzedUnit.consumableItemId !== 'paralyze_heal') {
         if (paralyzedUnit.heldItemId) {
           state.eventBonusItems.push({ itemId: paralyzedUnit.heldItemId, quantity: 1 });
           paralyzedUnit.heldItemId = null;
@@ -108,12 +108,10 @@ export async function triggerReactivePostCombatTutorials(
         updateBattleInfoStrip(ctx);
         ctx.renderNow();
       }
-      if (grantedCure || !saveManager.hasSeenTutorial(PROLOGUE_ITEM_CURE_DRILL_TOPIC_ID)) {
-        return triggerBattleTutorial(ctx, PROLOGUE_ITEM_CURE_DRILL_TOPIC_ID, {
-          forceIfAlreadySeen: grantedCure,
-          tokens: { afflicted: paralyzedUnit.nickname },
-        });
-      }
+      return triggerBattleTutorial(ctx, PROLOGUE_ITEM_CURE_DRILL_TOPIC_ID, {
+        forceIfAlreadySeen: true,
+        tokens: { afflicted: paralyzedUnit.nickname },
+      });
     }
   } else if (
     players.some((u) => u.status !== null) &&

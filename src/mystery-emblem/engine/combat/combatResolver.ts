@@ -90,9 +90,10 @@ export function resolveCombatExchange(
     const curActorStatus = isCounter ? defenderStatus : attackerStatus;
     if (curActorStatus === 'SLP') return;
 
-    if (curActorStatus === 'PAR') {
+    const actorStartedParalyzed = actor.status === 'PAR';
+    if (curActorStatus === 'PAR' && actorStartedParalyzed) {
       const paraRoll = rng();
-      if (paraRoll < 1 / 3) {
+      if (paraRoll < 0.3) {
         const curTargetHp = isCounter ? attackerHp : defenderHp;
         const curActorPp = isCounter ? (defenderPp ?? 0) : attackerPp;
         strikes.push({

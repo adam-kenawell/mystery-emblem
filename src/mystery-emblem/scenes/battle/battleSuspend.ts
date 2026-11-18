@@ -56,6 +56,7 @@ export interface BattleSuspendSnapshot {
   eventBonusGold: number;
   pendingShopUnlocks: Array<{ nodeId: string; shopType?: KecleonShopType }>;
   pendingPostBattleRecruits: PendingPostBattleRecruit[];
+  prologueParalyzeCureGranted?: boolean;
   levelUpHistory: LevelUpResult[];
   globalDangerEnabled: boolean;
   trackedEnemyIds: string[];
@@ -114,6 +115,7 @@ export function buildBattleSuspendJson(state: BattleRuntimeState): string | null
     eventBonusGold: state.eventBonusGold,
     pendingShopUnlocks: state.pendingShopUnlocks,
     pendingPostBattleRecruits: state.pendingPostBattleRecruits,
+    prologueParalyzeCureGranted: state.prologueParalyzeCureGranted,
     levelUpHistory: state.levelUpHistory,
     globalDangerEnabled: state.globalDangerEnabled,
     trackedEnemyIds: [...state.trackedEnemyIds],
@@ -180,11 +182,20 @@ export async function applyBattleSuspendSnapshot(
   state.defeatIfUnitIdsFall = [...snap.defeatIfUnitIdsFall];
   state.units = snap.units.map((u) => ({
     ...u,
+    ...(u.faction === 'player' && (u.isLord || u.speciesId === 'quaxly' || u.speciesId === 'quaxwell' || u.speciesId === 'quaquaval' || u.speciesId === 'flabebe' || u.speciesId === 'floette' || u.speciesId === 'florges')
+      ? { mustSurvive: true }
+      : {}),
     frameIndex: 0,
     nextFrameAt: 0,
     hitFlashUntilMs: 0,
     action: u.defeated ? u.action : 'Idle',
   }));
+  state.defeatIfUnitIdsFall = [
+    ...new Set([
+      ...state.defeatIfUnitIdsFall,
+      ...state.units.filter((u) => u.mustSurvive).map((u) => u.id),
+    ]),
+  ];
   state.battleSupportPoints = snap.battleSupportPoints
     ? (JSON.parse(JSON.stringify(snap.battleSupportPoints)) as Record<string, SupportPairProgress>)
     : {};
@@ -198,6 +209,7 @@ export async function applyBattleSuspendSnapshot(
   state.eventBonusGold = snap.eventBonusGold;
   state.pendingShopUnlocks = [...snap.pendingShopUnlocks];
   state.pendingPostBattleRecruits = [...snap.pendingPostBattleRecruits];
+  state.prologueParalyzeCureGranted = Boolean(snap.prologueParalyzeCureGranted);
   state.levelUpHistory = [...snap.levelUpHistory];
   state.globalDangerEnabled = snap.globalDangerEnabled;
   state.trackedEnemyIds = new Set(snap.trackedEnemyIds);

@@ -160,6 +160,12 @@ export function renderForecastLog(backdrop: HTMLElement, lines: ReadonlyArray<Fo
     card.append(portrait, el('span', `pmd-fe-log-dmg ${toneCls}`, dmgText));
     step.append(card, track);
     logEl.appendChild(step);
+    if (line.ko) {
+      logEl.appendChild(el('span', 'pmd-fe-log-sep', '\u25B8'));
+      const koEl = el('span', 'pmd-fe-log-ko', 'KO');
+      koEl.dataset.testid = `forecast-log-ko-${i}`;
+      logEl.appendChild(koEl);
+    }
   });
 }
 
@@ -171,10 +177,17 @@ export function setForecastHpBars(
 ): void {
   const cur = backdrop.querySelector<HTMLElement>(`[data-${which}-hp-cur-bar]`);
   const proj = backdrop.querySelector<HTMLElement>(`[data-${which}-hp-proj-bar]`);
+  const hpLine = backdrop.querySelector<HTMLElement>(`[data-${which}-hp-line]`);
+  const clampedProj = Math.max(0, projectedHp);
   const pct = (hp: number) => `${Math.round((Math.max(0, hp) / unit.maxHp) * 100)}%`;
   if (cur) cur.style.width = pct(unit.currentHp);
   if (proj) {
-    proj.style.width = pct(projectedHp);
+    proj.style.width = pct(clampedProj);
+  }
+  if (hpLine) {
+    hpLine.textContent = `${unit.currentHp} -> ${clampedProj}`;
+    hpLine.classList.toggle('is-ko', clampedProj <= 0);
+    hpLine.classList.toggle('is-heal', clampedProj > unit.currentHp);
   }
 }
 

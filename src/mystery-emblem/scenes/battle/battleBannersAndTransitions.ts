@@ -95,6 +95,25 @@ export function presentBeginBattleCardAsync(
   }
 
   dom.beginBattleObjectiveEl.textContent = state.objectiveLabel;
+  const defeatEl = dom.beginBattleBackdropEl.querySelector<HTMLElement>(
+    '[data-testid="dungeon-begin-battle-defeat"]'
+  );
+  if (defeatEl) {
+    const lord = state.units.find((u) => u.faction === 'player' && u.isLord);
+    const lordLabel = lord ? lord.nickname : 'Dragon Lord';
+    const protectedNames = [
+      ...new Set(
+        state.units
+          .filter((u) => u.mustSurvive || state.defeatIfUnitIdsFall.includes(u.id))
+          .map((u) => u.nickname)
+          .filter((n) => Boolean(n && n !== lordLabel))
+      ),
+    ];
+    defeatEl.textContent =
+      protectedNames.length > 0
+        ? `${[lordLabel, ...protectedNames].join(', ')} falls in battle`
+        : `${lordLabel} falls in battle`;
+  }
   dom.beginBattleBackdropEl.hidden = false;
   audioManager.playSfx('select');
 

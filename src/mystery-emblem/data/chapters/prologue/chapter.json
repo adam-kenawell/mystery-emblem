@@ -11,6 +11,7 @@
   "bgmCue": "do_your_best",
   "objectiveType": "rout",
   "objectiveLabel": "Defeat Starly, Caterpie & Pawmi",
+  "defeatIfUnitIdsFall": ["player_0", "player_1", "player_2"],
   "recommendedLevel": 1,
   "deploymentCap": 3,
   "skipPrepPhase": true,
@@ -22,13 +23,13 @@
     "X:1 X:1 X:1 X:1 F:15 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 X:1 F:10 X:1 X:1 X:1",
     "X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2 X:2",
     "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
-    "F:28 F:28 F:28 F:124 F:28 F:28 F:28 F:28 F:28 F:27 F:28 F:28 F:28 F:28 F:124 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:124 F:28 F:28 F:28 F:28 F:28 X:27 F:28 F:28 F:28 F:28 F:124 F:28 F:28 F:28",
     "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
     "F:28 F:14 F:28 F:28 F:28 F:28 F:126 F:126 F:126 F:126 F:126 F:126 F:28 F:28 F:28 F:28 F:28 F:28",
     "F:28 F:28 F:28 F:28 F:28 F:28 F:126 F:126 F:126 F:126 F:126 F:126 F:28 F:28 F:28 F:28 F:28 F:28",
     "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:14 F:28 F:28",
     "F:28 F:28 F:28 F:124 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:124 F:28 F:28 F:28",
-    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:14 F:28 F:28 F:28 F:27 F:28 F:28 F:28 F:28 F:28 F:28",
+    "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:14 F:28 F:28 F:28 X:27 F:28 F:28 F:28 F:28 F:28 F:28",
     "F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28 F:28",
     "X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5 X:5"
   ],
@@ -38,9 +39,9 @@
     {"x":2,"y":6,"speciesId":"flabebe"}
   ],
   "enemySpawns": [
-    {"id":"prologue_pawmi","x":16,"y":5,"speciesId":"pawmi","level":1,"moveIds":["nuzzle"],"equippedMoveId":"nuzzle","equippedMoveIds":["nuzzle"],"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true},
-    {"id":"prologue_starly","squadId":"prologue_flock","x":11,"y":3,"speciesId":"starly","level":1,"moveIds":["gust"],"equippedMoveId":"gust","equippedMoveIds":["gust"],"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true},
-    {"id":"prologue_caterpie","squadId":"prologue_flock","x":12,"y":7,"speciesId":"caterpie","level":1,"moveIds":["tackle"],"equippedMoveId":"tackle","equippedMoveIds":["tackle"],"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true}
+    {"id":"prologue_pawmi","x":16,"y":5,"speciesId":"pawmi","level":1,"moveIds":["nuzzle"],"equippedMoveId":"nuzzle","equippedMoveIds":["nuzzle"],"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true,"nickname":"Pawmi"},
+    {"id":"prologue_starly","squadId":"prologue_flock","x":11,"y":3,"speciesId":"starly","level":1,"moveIds":["gust"],"equippedMoveId":"gust","equippedMoveIds":["gust"],"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true,"nickname":"Starly"},
+    {"id":"prologue_caterpie","squadId":"prologue_flock","x":12,"y":7,"speciesId":"caterpie","level":1,"moveIds":["tackle"],"equippedMoveId":"tackle","equippedMoveIds":["tackle"],"heldItemId":null,"aiMode":"wait_until_in_range","friendlyBout":true,"nickname":"Caterpie"}
   ],
   "reinforcements": [],
   "events": []

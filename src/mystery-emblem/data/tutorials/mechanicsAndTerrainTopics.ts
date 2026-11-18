@@ -129,10 +129,10 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     summary: 'How Burn, Poison, Paralysis, Sleep, and Freeze work, and how to cure them.',
     chips: [
       { kind: 'badge', label: 'BRN: -50% Atk + Chip', tone: 'danger' },
-      { kind: 'badge', label: 'PAR: 1 Mov · -25% Spe', tone: 'gold' },
+      { kind: 'badge', label: 'PAR: 30% Fizzle', tone: 'gold' },
     ],
     bullets: [
-      'Paralysis (PAR) cuts Mov to 1 and Speed by 25%; Burn (BRN) halves Physical Attack and deals end-of-turn chip.',
+      'Paralysis (PAR) gives a 30% chance to be fully paralyzed and unable to respond; Burn (BRN) halves Physical Attack and deals end-of-turn chip.',
       'Poison (PSN) deals recurring HP damage; Sleep (SLP) and Freeze (FRZ) prevent actions until cured or thawed.',
       'Use a Paralyze Heal, Full Heal, Lum Berry, or stand on a glowing Wonder Tile to cleanse status ailments.',
     ],

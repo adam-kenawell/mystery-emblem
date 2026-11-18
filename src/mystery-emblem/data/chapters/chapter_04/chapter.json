@@ -11,6 +11,7 @@
   "bgmCue": "boss_battle",
   "objectiveType": "defeat_boss",
   "objectiveLabel": "Defeat Rift Behemoth: Great Tusk",
+  "defeatIfUnitIdsFall": ["player_0", "player_1", "player_2"],
   "recommendedLevel": 5,
   "deploymentCap": 6,
   "isDemoFinale": true,

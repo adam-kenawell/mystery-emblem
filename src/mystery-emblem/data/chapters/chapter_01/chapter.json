@@ -11,6 +11,7 @@
   "bgmCue": "drenched_bluff",
   "objectiveType": "rout",
   "objectiveLabel": "Rout the Watering Hole Thugs",
+  "defeatIfUnitIdsFall": ["player_0", "player_1", "player_2"],
   "recommendedLevel": 2,
   "deploymentCap": 4,
   "skipPrepPhase": true,

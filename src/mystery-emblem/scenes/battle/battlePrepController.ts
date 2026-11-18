@@ -188,6 +188,7 @@ export async function setupFreshBattleState(
   state.eventBonusGold = 0;
   state.pendingShopUnlocks = [];
   state.pendingPostBattleRecruits = [];
+  state.prologueParalyzeCureGranted = false;
   state.defeatReasonText = null;
   state.levelUpHistory = [];
   state.prepSwapSlotIndex = null;

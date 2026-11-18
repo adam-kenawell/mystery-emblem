@@ -11,6 +11,7 @@
   "bgmCue": "mt_bristle",
   "objectiveType": "seize",
   "objectiveLabel": "Guide Your Leader to the Cave Exit",
+  "defeatIfUnitIdsFall": ["player_0", "player_1", "player_2"],
   "recommendedLevel": 4,
   "deploymentCap": 6,
   "preStoryCutsceneId": "cs_05_campfire_and_machop",

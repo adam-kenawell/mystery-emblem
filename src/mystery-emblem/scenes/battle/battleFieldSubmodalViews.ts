@@ -37,10 +37,15 @@ export function renderFieldSubmodalContents(
     const livingAllies = getLivingPlayers(state);
     const readyAllies = livingAllies.filter((u) => !u.waited).length;
     const livingEnemies = getLivingEnemies(state);
-    const protectedNames = state.defeatIfUnitIdsFall
-      .map((id) => state.units.find((u) => u.id === id)?.nickname)
-      .filter((n): n is string => Boolean(n && n !== lord?.nickname));
     const lordLabel = lord ? lord.nickname : 'Dragon Lord';
+    const protectedNames = [
+      ...new Set(
+        state.units
+          .filter((u) => u.mustSurvive || state.defeatIfUnitIdsFall.includes(u.id))
+          .map((u) => u.nickname)
+          .filter((n): n is string => Boolean(n && n !== lordLabel))
+      ),
+    ];
     const defeatText =
       protectedNames.length > 0
         ? `${[lordLabel, ...protectedNames].join(' or ')} falls in battle`

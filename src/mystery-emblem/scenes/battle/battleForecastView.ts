@@ -63,6 +63,7 @@ export function createBattleForecastDom(): BattleForecastDomRefs {
                 <div class="pmd-forecast-hp-bar-ghost" data-attacker-hp-cur-bar></div>
                 <div class="pmd-forecast-hp-bar-fill" data-attacker-hp-proj-bar></div>
               </div>
+              <div class="pmd-fe-side-hp-line" data-testid="forecast-attacker-hp" data-attacker-hp-line>- -> -</div>
             </div>
           </div>
           <div class="pmd-fe-side is-right" data-testid="forecast-defender-card">
@@ -77,6 +78,7 @@ export function createBattleForecastDom(): BattleForecastDomRefs {
                 <div class="pmd-forecast-hp-bar-ghost" data-defender-hp-cur-bar></div>
                 <div class="pmd-forecast-hp-bar-fill" data-defender-hp-proj-bar></div>
               </div>
+              <div class="pmd-fe-side-hp-line" data-testid="forecast-defender-hp" data-defender-hp-line>- -> -</div>
             </div>
           </div>
         </div>

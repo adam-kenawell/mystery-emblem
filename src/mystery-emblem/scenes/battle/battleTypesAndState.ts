@@ -126,6 +126,7 @@ export interface BattleRuntimeState {
   eventBonusGold: number;
   pendingShopUnlocks: Array<{ nodeId: string; shopType?: KecleonShopType }>;
   pendingPostBattleRecruits: PendingPostBattleRecruit[];
+  prologueParalyzeCureGranted: boolean;
   commitToSaveOnVictory: boolean;
   clearRewardItems: ReadonlyArray<ConvoyEntry>;
   skipPrepPhase: boolean;
@@ -233,6 +234,7 @@ export function createInitialBattleRuntimeState(): BattleRuntimeState {
     eventBonusGold: 0,
     pendingShopUnlocks: [],
     pendingPostBattleRecruits: [],
+    prologueParalyzeCureGranted: false,
     commitToSaveOnVictory: false,
     clearRewardItems: [],
     skipPrepPhase: false,

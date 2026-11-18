@@ -238,6 +238,8 @@ export function createBattleDomShell(): BattleDomRefs {
       <div class="pmd-begin-battle-obj-box">
         <span class="pmd-begin-battle-obj-kicker">Victory Condition</span>
         <strong class="pmd-begin-battle-obj-text" data-testid="dungeon-begin-battle-objective">Rout All Enemies</strong>
+        <span class="pmd-begin-battle-obj-kicker" style="margin-top:0.25rem; color:var(--pmd-text-danger);">Defeat Condition</span>
+        <span class="pmd-begin-battle-obj-text" style="font-size:12px; color:#ffc8d0;" data-testid="dungeon-begin-battle-defeat"></span>
       </div>
     </div>
   `;

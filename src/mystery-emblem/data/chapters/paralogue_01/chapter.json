@@ -11,7 +11,7 @@
   "bgmCue": "fun_exploration",
   "objectiveType": "rout",
   "objectiveLabel": "Protect Slakoth & Rout Poachers",
-  "defeatIfUnitIdsFall": ["p1_slakoth"],
+  "defeatIfUnitIdsFall": ["player_0", "player_1", "player_2", "p1_slakoth"],
   "recommendedLevel": 4,
   "deploymentCap": 6,
   "width": 24,

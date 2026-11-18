@@ -69,10 +69,10 @@ export const PROLOGUE_DRILL_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefiniti
     summary: 'How Paralysis and other status conditions work, and how to cure them with Item.',
     chips: [
       { kind: 'item', itemId: 'paralyze_heal', label: 'Paralyze Heal' },
-      { kind: 'badge', label: 'PAR: 1 Mov · -25% Spe', tone: 'gold' },
+      { kind: 'badge', label: 'PAR: 30% Fizzle', tone: 'gold' },
     ],
     bullets: [
-      'Paralysis (PAR) reduces Movement to 1, cuts Speed by 25%, and can cause strikes to fizzle.',
+      'Paralysis (PAR) gives a 30% chance to be fully paralyzed and unable to respond in combat.',
       'Burn (BRN) halves Physical Attack and deals chip damage; Poison (PSN) saps HP; Sleep (SLP) and Freeze (FRZ) skip actions.',
       'Select an afflicted unit, move or tap its own tile to open the command menu, and tap Item to use a status cure.',
     ],

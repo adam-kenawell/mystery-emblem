@@ -7,7 +7,12 @@
  */
 
 import { PMD_TILE_NATIVE_PX } from '../assets/tilesetLoader';
-import { MENTOR_JAGEN_SPECIES_ID, STARTING_CAMPAIGN_LEVEL } from '../data/campaignConfig';
+import {
+  FIXED_HEALER_SPECIES_ID,
+  FIXED_PARTNER_SPECIES_ID,
+  MENTOR_JAGEN_SPECIES_ID,
+  STARTING_CAMPAIGN_LEVEL,
+} from '../data/campaignConfig';
 import { getSpeciesById } from '../data/index';
 import { InMemoryCloudSyncAdapter } from '../state/firebaseSync';
 import { SaveStateManager, type StorageLike } from '../state/SaveStateManager';
@@ -67,6 +72,20 @@ export function createFallbackBattlePrepManager(minSquadSize = 5): SaveStateMana
 
   mgr.addConvoyItem('super_potion', 1);
   return mgr;
+}
+
+const CORE_HERO_PROTECTED_LINE_IDS = new Set<string>([
+  `${FIXED_PARTNER_SPECIES_ID}_line`,
+  `${FIXED_HEALER_SPECIES_ID}_line`,
+]);
+
+export function isCoreProtectedPlayerSpecies(
+  speciesId: string,
+  isLord?: boolean
+): boolean {
+  if (isLord) return true;
+  const lineId = getSpeciesById(speciesId)?.lineId;
+  return Boolean(lineId && CORE_HERO_PROTECTED_LINE_IDS.has(lineId));
 }
 
 export const EXTRA_PLAYER_DEPLOYMENT_COORDS: ReadonlyArray<{ x: number; y: number }> = [
@@ -216,6 +235,7 @@ export function buildBattleUnitsFromPrepDeployment(
       rosterInstanceId: owned.instanceId,
       faction: 'player',
       isLord: owned.isLord,
+      mustSurvive: isCoreProtectedPlayerSpecies(sp.id, owned.isLord),
       speciesId: sp.id,
       speciesName: sp.name,
       nickname: owned.nickname || sp.name,
