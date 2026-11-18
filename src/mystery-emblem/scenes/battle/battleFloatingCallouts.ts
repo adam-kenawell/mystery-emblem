@@ -6,7 +6,6 @@ import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
 import { ensureTilePairVisible } from './battleBannersAndTransitions';
 import type { BattleDomRefs } from './battleDomShell';
 import {
-  WALK_MS_PER_TILE_FAST,
   WALK_MS_PER_TILE_NORMAL,
   type BattleRuntimeState,
   type FloatingBattleText,
@@ -43,7 +42,7 @@ export function spawnSupportHeartCallout(
     color: '#ff68a8',
     emphasis: true,
     createdAtMs: now,
-    durationMs: state.fastMode ? Math.max(120, Math.round(durationMs * 0.25)) : durationMs,
+    durationMs,
   };
   state.floatingTexts.push(ft);
 
@@ -76,7 +75,7 @@ export function spawnFloatingText(
     color,
     emphasis,
     createdAtMs: now,
-    durationMs: state.fastMode ? Math.max(120, Math.round(durationMs * 0.25)) : durationMs,
+    durationMs,
   };
   state.floatingTexts.push(ft);
 
@@ -137,7 +136,7 @@ export function syncFloatingCalloutDom(
 }
 
 export function advanceBattleAnimations(state: BattleRuntimeState, now: number): void {
-  const walkMsPerTile = state.fastMode ? WALK_MS_PER_TILE_FAST : WALK_MS_PER_TILE_NORMAL;
+  const walkMsPerTile = WALK_MS_PER_TILE_NORMAL;
 
   if (state.activeWalk) {
     const unit = state.units.find((u) => u.id === state.activeWalk!.unitId);
@@ -163,7 +162,6 @@ export function advanceBattleAnimations(state: BattleRuntimeState, now: number):
           state.activeWalk = null;
           unit.renderWorldX = unit.x * PMD_TILE_NATIVE_PX;
           unit.renderWorldY = unit.y * PMD_TILE_NATIVE_PX;
-          unit.spawnFadeAlpha = 1;
           done();
           break;
         }
@@ -182,12 +180,6 @@ export function advanceBattleAnimations(state: BattleRuntimeState, now: number):
         const t = Math.min(1, state.activeWalk.segmentElapsedMs / walkMsPerTile);
         unit.renderWorldX = Math.round((fromStep.x + dx * t) * PMD_TILE_NATIVE_PX);
         unit.renderWorldY = Math.round((fromStep.y + dy * t) * PMD_TILE_NATIVE_PX);
-
-        if (unit.spawnFadeAlpha !== undefined && unit.spawnFadeAlpha < 1) {
-          const rampSegments = Math.min(2, Math.max(1, state.activeWalk.steps.length - 1));
-          const walkProgress = (state.activeWalk.segmentIndex + t) / rampSegments;
-          unit.spawnFadeAlpha = Math.min(1, Math.max(0, walkProgress));
-        }
 
         if (state.activeWalk.followCamera) {
           ensureTilePairVisible(state, unit.x, unit.y, toStep.x, toStep.y);

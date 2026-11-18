@@ -16,17 +16,6 @@ import { LIGHTING_MOOD_LABELS, WEATHER_LABELS } from '../scenes/cutscene/cutscen
 import { stripRichDialogueTags } from '../ui/typewriterController';
 import { nameForSpriteCollabId } from './pokemonNames';
 
-export const QUIZ_SLOT_LABELS: Readonly<Record<string, string>> = {
-  slot1Flying: 'Quiz bird (Ch. 1)',
-  slot2Psychic: 'Quiz psychic (Ch. 2)',
-  slot3Electric: 'Quiz electric (Ch. 4)',
-  slot4Rock: 'Quiz rock slot',
-  slot5Fire: 'Quiz fire slot',
-  slot6Grass: 'Quiz grass slot',
-  slot7Fairy: 'Quiz fairy slot',
-  slot8Ice: 'Quiz ice slot',
-};
-
 export function describeIdentity(who: CastIdentity): string {
   switch (who.kind) {
     case 'lord':
@@ -41,8 +30,6 @@ export function describeIdentity(who: CastIdentity): string {
       return 'Quaquaval (Mentor)';
     case 'advisor':
       return 'Quaquaval (Field Notes)';
-    case 'quiz_slot':
-      return QUIZ_SLOT_LABELS[who.slot] ?? `Quiz recruit (${who.slot})`;
     case 'recruit':
       return `${getSpeciesById(who.speciesId)?.name ?? who.speciesId} (story recruit)`;
     case 'party_extra':

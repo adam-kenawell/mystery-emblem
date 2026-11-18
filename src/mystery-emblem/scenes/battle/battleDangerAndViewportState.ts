@@ -209,8 +209,11 @@ export function getHoveredEnemyDangerId(ctx: BattleControllerContext): string | 
   return hoveredEnemy.id;
 }
 
-export function recomputeDangerArea(ctx: BattleControllerContext): void {
-  const { state, dom, prepOverlay } = ctx;
+export function recomputeDangerArea(ctx: BattleControllerContext, invalidateCache = true): void {
+  const { state, prepOverlay } = ctx;
+  if (invalidateCache) {
+    state.dangerRangeCache.clear();
+  }
   const hoveredEnemyId = getHoveredEnemyDangerId(ctx);
   let effectiveTracked: Set<string> = state.trackedEnemyIds;
   if (hoveredEnemyId && !state.trackedEnemyIds.has(hoveredEnemyId)) {
@@ -221,6 +224,7 @@ export function recomputeDangerArea(ctx: BattleControllerContext): void {
   state.currentDanger = computeEnemyDangerArea(state.map, getLivingUnits(state), {
     globalEnabled: state.globalDangerEnabled,
     trackedEnemyIds: effectiveTracked,
+    precomputedEnemyRanges: state.dangerRangeCache,
   });
   prepOverlay.syncMapHudState();
 }
@@ -240,7 +244,7 @@ export function syncHoverDangerArea(ctx: BattleControllerContext): boolean {
   ) {
     state.selectionPulseStartMs = performance.now();
   }
-  recomputeDangerArea(ctx);
+  recomputeDangerArea(ctx, false);
   return true;
 }
 
@@ -251,7 +255,7 @@ export function toggleGlobalDangerArea(ctx: BattleControllerContext): void {
     state.selectionPulseStartMs = performance.now();
   }
   audioManager.playSfx('select');
-  recomputeDangerArea(ctx);
+  recomputeDangerArea(ctx, false);
   ctx.renderNow();
 }
 
@@ -272,5 +276,5 @@ export function toggleIndividualEnemyDanger(
       state.selectionPulseStartMs = performance.now();
     }
   }
-  recomputeDangerArea(ctx);
+  recomputeDangerArea(ctx, false);
 }

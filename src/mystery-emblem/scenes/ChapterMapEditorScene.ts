@@ -2,10 +2,12 @@
  * Dev Tools Interactive Level & Chapter Map Editor (`ChapterMapEditorScene`)
  */
 
+import { normalizeTilesetId } from '../assets/tilesetLoader';
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
 import { cloneDungeonMap, exportChapterMapJson, getDefaultChapterMap } from '../data/chapterMapRegistry';
 import type { SaveStateManager } from '../state/SaveStateManager';
 import type { DungeonMapDefinition, TerrainType } from '../types/schemas';
+import { checkProjectSaveAvailable } from '../ui/devtools/projectFileClient';
 import {
   applyDungeonZoomWithWorldAnchor,
   centerDungeonCameraOnTile,
@@ -14,8 +16,9 @@ import {
   syncDungeonCanvasBuffer,
   tileCenterToClientPoint,
 } from '../ui/gridViewportMath';
-import { clampMapScale } from '../ui/mapZoomController';
-import { refreshEditorChunkPalette } from './editor/editorAssetsAndPalette';
+import { MAP_DEFAULT_SCALE, clampMapScale } from '../ui/mapZoomController';
+import { bindPointerTap } from '../ui/pointerControls';
+import { highlightEditorChunkCell, refreshEditorChunkPalette } from './editor/editorAssetsAndPalette';
 import {
   applyEditorStrokeAtTile,
   handleEditorTileTap,
@@ -26,12 +29,6 @@ import {
 import { renderDungeonMapPreviewCanvas, renderEditorFrame } from './editor/editorCanvasRenderer';
 import { createEditorDomShell, type EditorDomRefs } from './editor/editorDomShell';
 import { bindEditorHudAndDrawerInteractions, type EditorControlCallbacks } from './editor/editorHudAndDrawerBindings';
-import {
-  applyEditorBrushUpdate,
-  handleEditorMenuOrBackAction,
-  performEditorCloseState,
-  prepareEditorOpenState,
-} from './editor/editorLifecycleHelpers';
 import { bindEditorModalInteractions } from './editor/editorModalBindings';
 import {
   openEditorLocationSession,
@@ -57,8 +54,6 @@ import {
   type LocationEditSession,
   type MapEditorToolMode,
 } from './editor/editorTypesAndState';
-import { checkProjectSaveAvailable } from '../ui/devtools/projectFileClient';
-import { bindPointerTap } from '../ui/pointerControls';
 
 export {
   renderDungeonMapPreviewCanvas,
@@ -81,7 +76,6 @@ export class ChapterMapEditorScene {
   private readonly state: EditorRuntimeState;
   private readonly abortController = new AbortController();
   private resizeObserver: ResizeObserver | null = null;
-  private rafId: number | null = null;
 
   constructor(options: ChapterMapEditorSceneOptions) {
     this.viewportEl = options.viewportEl;
@@ -172,10 +166,9 @@ export class ChapterMapEditorScene {
   }
 
   public async open(levelId = 'prologue', options?: { startDrawerOpen?: boolean }): Promise<void> {
-    prepareEditorOpenState({ dom: this.dom, state: this.state, viewportEl: this.viewportEl, audioManager: this.audioManager, startDrawerOpen: options?.startDrawerOpen });
+    this.prepareOpenState(options?.startDrawerOpen);
     this.syncViewportDimensions();
     await this.selectLevel(levelId, { recenterCamera: true });
-    this.startLoop();
     this.onLayerStateChanged();
     this.renderFrame();
   }
@@ -185,19 +178,11 @@ export class ChapterMapEditorScene {
       this.finishLocationSession(false);
       return;
     }
-    performEditorCloseState({
-      dom: this.dom,
-      state: this.state,
-      viewportEl: this.viewportEl,
-      audioManager: this.audioManager,
-      stopLoop: () => this.stopLoop(),
-      onLayerStateChanged: () => this.onLayerStateChanged(),
-      onExitCallback: () => this.onExitCallback(),
-    });
+    this.closeSurface(true);
   }
 
   public destroy(): void {
-    this.stopLoop();
+    this.state.openState = false;
     if (this.state.toastTimer !== null) {
       window.clearTimeout(this.state.toastTimer);
       this.state.toastTimer = null;
@@ -210,7 +195,31 @@ export class ChapterMapEditorScene {
   }
 
   public handleMenuOrBack(): void {
-    handleEditorMenuOrBackAction({ dom: this.dom, state: this.state, audioManager: this.audioManager, setDrawerOpen: (o) => this.setDrawerOpen(o), onLayerStateChanged: () => this.onLayerStateChanged() });
+    const { dom, state, audioManager } = this;
+    if (!state.openState) return;
+    if (state.jsonModalOpen) {
+      audioManager.playSfx('cancel');
+      state.jsonModalOpen = false;
+      dom.jsonModalBackdropEl.hidden = true;
+      this.onLayerStateChanged();
+      return;
+    }
+    if (state.systemMenuOpen) {
+      audioManager.playSfx('cancel');
+      state.systemMenuOpen = false;
+      dom.systemMenuBackdropEl.hidden = true;
+      this.onLayerStateChanged();
+      return;
+    }
+    if (state.drawerOpen) {
+      audioManager.playSfx('cancel');
+      this.setDrawerOpen(false);
+      return;
+    }
+    audioManager.playSfx('select');
+    state.systemMenuOpen = true;
+    dom.systemMenuBackdropEl.hidden = false;
+    this.onLayerStateChanged();
   }
 
   public async selectLevel(levelId: string, opts?: { recenterCamera?: boolean }): Promise<void> {
@@ -246,7 +255,18 @@ export class ChapterMapEditorScene {
   }
 
   public setBrush(brush: { terrainType?: TerrainType; tilesetId?: string; chunkIndex?: number }): void {
-    applyEditorBrushUpdate({ dom: this.dom, state: this.state, signal: this.abortController.signal, brush, syncUiAndInfo: () => this.syncUiAndInfo() });
+    const { dom, state } = this;
+    if (brush.terrainType) state.brushTerrainType = brush.terrainType;
+    if (brush.tilesetId) {
+      state.brushTilesetId = normalizeTilesetId(brush.tilesetId);
+      dom.tilesetSelectEl.value = state.brushTilesetId;
+      void refreshEditorChunkPalette(dom, state, this.abortController.signal, () => this.syncUiAndInfo());
+    }
+    if (typeof brush.chunkIndex === 'number') {
+      state.brushChunkIndex = Math.max(0, Math.min(399, Math.floor(brush.chunkIndex)));
+      highlightEditorChunkCell(dom, state.brushChunkIndex);
+    }
+    this.syncUiAndInfo();
   }
 
   public paintTileAt(tx: number, ty: number, pushUndo = true): boolean {
@@ -273,7 +293,7 @@ export class ChapterMapEditorScene {
 
   /** Opens a cutscene location's tile layer for painting; Done/Cancel return via the session. */
   public async openLocationLayer(map: DungeonMapDefinition, session: LocationEditSession): Promise<void> {
-    prepareEditorOpenState({ dom: this.dom, state: this.state, viewportEl: this.viewportEl, audioManager: this.audioManager, startDrawerOpen: true });
+    this.prepareOpenState(true);
     this.syncViewportDimensions();
     await openEditorLocationSession({
       dom: this.dom,
@@ -284,9 +304,42 @@ export class ChapterMapEditorScene {
       syncUiAndInfo: () => this.syncUiAndInfo(),
       renderFrame: () => this.renderFrame(),
     });
-    this.startLoop();
     this.onLayerStateChanged();
     this.renderFrame();
+  }
+
+  private prepareOpenState(startDrawerOpen?: boolean): void {
+    const { dom, state, audioManager } = this;
+    if (!state.openState) {
+      state.previousBgmId = audioManager.getCurrentTrackId();
+    }
+    state.openState = true;
+    state.cam.displayScale = MAP_DEFAULT_SCALE;
+    state.pinchTracker.reset();
+    state.drawerOpen = startDrawerOpen ?? true;
+    state.systemMenuOpen = false;
+    state.jsonModalOpen = false;
+    dom.systemMenuBackdropEl.hidden = true;
+    dom.jsonModalBackdropEl.hidden = true;
+    dom.drawerEl.hidden = !state.drawerOpen;
+    dom.rootEl.hidden = false;
+    this.viewportEl.classList.add('is-battle-active');
+  }
+
+  private closeSurface(runExitCallback: boolean): void {
+    const { dom, state, audioManager } = this;
+    if (!state.openState) return;
+    state.openState = false;
+    state.pinchTracker.reset();
+    state.systemMenuOpen = false;
+    state.jsonModalOpen = false;
+    dom.systemMenuBackdropEl.hidden = true;
+    dom.jsonModalBackdropEl.hidden = true;
+    dom.rootEl.hidden = true;
+    this.viewportEl.classList.remove('is-battle-active');
+    audioManager.playBgm(state.previousBgmId ?? 'top_menu', { fadeMs: 260 });
+    this.onLayerStateChanged();
+    if (runExitCallback) this.onExitCallback();
   }
 
   private finishLocationSession(done: boolean): void {
@@ -294,15 +347,7 @@ export class ChapterMapEditorScene {
     if (!session) return;
     const map = cloneDungeonMap(this.state.map);
     this.state.locationSession = null;
-    performEditorCloseState({
-      dom: this.dom,
-      state: this.state,
-      viewportEl: this.viewportEl,
-      audioManager: this.audioManager,
-      stopLoop: () => this.stopLoop(),
-      onLayerStateChanged: () => this.onLayerStateChanged(),
-      onExitCallback: () => {},
-    });
+    this.closeSurface(false);
     this.state.editorTargetKind = 'chapter';
     this.state.referenceMarkers = [];
     if (done) session.onDone(map);
@@ -344,7 +389,6 @@ export class ChapterMapEditorScene {
     if (this.state.editorTargetKind === 'location') return;
     const targetId = this.state.activeLevelId;
     this.state.openState = false;
-    this.stopLoop();
     this.dom.rootEl.hidden = true;
     this.viewportEl.classList.remove('is-battle-active');
     this.onPlayLevelCallback(targetId);
@@ -362,26 +406,6 @@ export class ChapterMapEditorScene {
 
   private getMutationHooks(): EditorMutationHooks {
     return { state: this.state, audioManager: this.audioManager, syncUiAndInfo: () => this.syncUiAndInfo(), renderFrame: () => this.renderFrame(), showToast: (m) => showEditorToast(this.dom, this.state, m), setBrush: (b) => this.setBrush(b) };
-  }
-
-  private startLoop(): void {
-    if (this.rafId !== null) return;
-    const step = () => {
-      if (!this.state.openState) {
-        this.rafId = null;
-        return;
-      }
-      this.renderFrame();
-      this.rafId = window.requestAnimationFrame(step);
-    };
-    this.rafId = window.requestAnimationFrame(step);
-  }
-
-  private stopLoop(): void {
-    if (this.rafId !== null) {
-      window.cancelAnimationFrame(this.rafId);
-      this.rafId = null;
-    }
   }
 
   private renderFrame(): void {

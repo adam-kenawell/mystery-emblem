@@ -3,7 +3,6 @@
  */
 
 import { directionFromDelta } from '../../assets/pmdAssetLoader';
-import type { TutorialActionTriggerId } from '../../data/tutorialRegistry';
 import { findBestTalkPlanForTarget } from '../../engine/battleEvents';
 import {
   findBestAttackPlanForTarget,
@@ -30,81 +29,24 @@ import {
   selectPlayerUnit,
   startInteractiveWalk,
 } from './battleSelectionAndMenu';
-import {
-  getForcedTutorialMoveTile,
-  resolveTutorialSpotlightTiles,
-} from './battleTutorialSpotlights';
 import type { BattleControllerContext } from './battleTypesAndState';
-import { getLivingEnemies, getSelectedUnit } from './battleUnitQueries';
+import { getSelectedUnit } from './battleUnitQueries';
 
 export function handleSelectedUnitTileTap(
   ctx: BattleControllerContext,
   tx: number,
   ty: number,
   occupant: BattleUnitState | undefined,
-  livingUnits: BattleUnitState[],
-  expectedTutorialAction: TutorialActionTriggerId | null
+  livingUnits: BattleUnitState[]
 ): void {
-  const { state, dom, prepOverlay, audioManager, tutorialOverlay } = ctx;
+  const { state, dom, prepOverlay, audioManager } = ctx;
   const selected = getSelectedUnit(state);
   if (!selected || !state.currentRange) {
     clearBattleSelection(state, dom, prepOverlay);
     return;
   }
 
-  if (expectedTutorialAction === 'battle_move_to_blue_tile') {
-    const targetKey = coordKey(tx, ty);
-    const hasNonOriginMove = resolveTutorialSpotlightTiles(
-      state,
-      prepOverlay,
-      'reachable_move'
-    ).some((pt) => pt.x !== selected.x || pt.y !== selected.y);
-    const isOriginTap = tx === selected.x && ty === selected.y;
-    const forced = getForcedTutorialMoveTile(state);
-    if (
-      (occupant && occupant.id !== selected.id) ||
-      !state.currentRange.reachableTiles.has(targetKey) ||
-      (hasNonOriginMove && isOriginTap) ||
-      (forced && (tx !== forced.x || ty !== forced.y))
-    ) {
-      tutorialOverlay?.nudgeActiveStep();
-      return;
-    }
-  } else if (expectedTutorialAction === 'battle_open_heal_forecast') {
-    if (!occupant || occupant.faction !== 'player' || occupant.currentHp >= occupant.maxHp) {
-      tutorialOverlay?.nudgeActiveStep();
-      return;
-    }
-  } else if (expectedTutorialAction === 'battle_open_attack_forecast') {
-    if (occupant && occupant.faction === 'enemy') {
-      const plan = findBestAttackPlanForTarget(
-        state.map,
-        selected,
-        occupant,
-        state.currentRange.reachableTiles,
-        livingUnits
-      );
-      if (!plan) {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
-    } else {
-      const targetKey = coordKey(tx, ty);
-      const canWalkToInRangeTile =
-        !occupant &&
-        state.currentRange.reachableTiles.has(targetKey) &&
-        getLivingEnemies(state).some(
-          (e) =>
-            getEnemyTargetingMovesAtDistance(selected, manhattanDistance(tx, ty, e.x, e.y)).length > 0
-        );
-      if (!canWalkToInRangeTile) {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
-    }
-  }
-
-  if (occupant && occupant.id !== selected.id && state.events.length > 0 && !expectedTutorialAction) {
+  if (occupant && occupant.id !== selected.id && state.events.length > 0) {
     const talkPlan = findBestTalkPlanForTarget(
       state.map,
       selected,

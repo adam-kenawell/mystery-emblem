@@ -19,7 +19,7 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
     ],
     bullets: [
       'Tap a ready teammate to view its Blue movement range, Red attack border, and Green support range.',
-      'Right-click an empty square (or long-press on mobile, or open the Field Menu) to toggle the purple Enemy Danger Area.',
+      'Right-click an empty square (or long-press on mobile) to toggle the purple Enemy Danger Area.',
       'Once all allies act (or you select End Phase from the Field Menu), Enemy Phase begins. If {lord} hits 0 HP, the battle is lost.',
     ],
     beats: [
@@ -28,53 +28,6 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
         emotion: 'Determined',
         dialogue:
           'Move allies across blue tiles, and right-click (or long-press) anytime to toggle the Danger Area!',
-      },
-    ],
-  },
-  {
-    id: 'ch1_first_combat_forecast',
-    title: 'Combat Forecast, Ranges & [E] Counters',
-    category: 'combat_tactics',
-    summary: 'Physical vs Special range, dual [E] counter slots, and follow-up strikes.',
-    chips: [
-      { kind: 'badge', label: 'Physical = R1', tone: 'gold' },
-      { kind: 'badge', label: 'Special = R2', tone: 'cyan' },
-      { kind: 'badge', label: '1 Phys + 1 Spec [E]', tone: 'green' },
-    ],
-    bullets: [
-      'Physical moves hit adjacent foes (Range 1), while Special moves strike two spaces away (Range 2).',
-      'Each fighter equips one Physical [E] and one Special [E] move for Enemy Phase counterattacks.',
-      'Hitting an elemental weakness boosts damage, and outspeeding a foe by +5 Speed grants a x2 follow-up strike.',
-    ],
-    beats: [
-      {
-        id: 'combat_quip',
-        emotion: 'Determined',
-        dialogue:
-          'Tap an enemy in range to inspect the battle forecast before committing to your strike.',
-      },
-    ],
-  },
-  {
-    id: 'ch1_healing_and_items',
-    title: 'Healing Allies & Medicine Items',
-    category: 'prep_pokemon',
-    summary: 'Using medicine from Item, auto Berries, and healing allies from afar.',
-    chips: [
-      { kind: 'item', itemId: 'oran_berry', label: 'Oran Berry (Auto)' },
-      { kind: 'item', itemId: 'paralyze_heal', label: 'Status Cure (Item)' },
-    ],
-    bullets: [
-      'Held Berries activate automatically in a pinch without spending your turn.',
-      'Potions, status cures, and X-Items occupy your item slot as a consumable and are triggered from Item.',
-      '{healer} mends allies from up to two spaces away and earns EXP on every heal.',
-    ],
-    beats: [
-      {
-        id: 'heal_items_quip',
-        emotion: 'Normal',
-        dialogue:
-          'Berries trigger on their own when HP drops low, while Potions and status cures can be used anytime from the Item menu.',
       },
     ],
   },

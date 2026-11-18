@@ -16,15 +16,13 @@ import {
   getNextSupportRank,
   getSupportPairDefinition,
   getSupportPartnersForActor,
+  type ActiveSupportPartnerEntry,
+  type AdjacentSupportSummary,
+  type ResolvedSupportStatBonus,
+  type SupportActorId,
+  type SupportConversationDoc,
+  type SupportMaxRank,
 } from '../data/supports/supportMatrix';
-import type {
-  ActiveSupportPartnerEntry,
-  AdjacentSupportSummary,
-  ResolvedSupportStatBonus,
-  SupportActorId,
-  SupportConversationDoc,
-  SupportMaxRank,
-} from '../data/supports/supportTypes';
 import type {
   OwnedPokemonInstance,
   SaveData,

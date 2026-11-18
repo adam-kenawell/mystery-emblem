@@ -49,8 +49,7 @@ export function createAppBackStack(
             ctx.cutsceneScene?.isOpen() ||
             ctx.creditsScene?.isOpen() ||
             Boolean(ctx.dialogueOverlay?.isOpen())) &&
-            !isAppDevToolsOpen(ctx) &&
-            !ctx.recruitNicknameOverlay?.isOpen()
+            !isAppDevToolsOpen(ctx)
         );
       },
       syncIdleButton: (btn) => {
@@ -176,11 +175,6 @@ export function registerAppBackStackLayers(
     id: 'dialogue-overlay',
     isActive: () => Boolean(ctx.dialogueOverlay?.isOpen()),
     onBack: () => ctx.dialogueOverlay?.close('cancelled'),
-  });
-  backStack.registerLayer({
-    id: 'recruit-nickname-modal',
-    isActive: () => Boolean(ctx.recruitNicknameOverlay?.isOpen()),
-    onBack: () => ctx.recruitNicknameOverlay?.handleBack(),
   });
   backStack.registerLayer({
     id: 'tutorial-overlay',

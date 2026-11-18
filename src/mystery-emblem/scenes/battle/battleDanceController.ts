@@ -15,21 +15,17 @@ import {
 } from '../../engine/combatEngine';
 import { computeSupportHealExpGain } from '../../engine/progressionEngine';
 import { ensureTilePairVisible, waitBattleMs } from './battleBannersAndTransitions';
+import { finalizePlayerUnitAction } from './battleCommandExecution';
 import {
-  clearBattleSelection,
-  recomputeDangerArea,
   syncHudControls,
   syncPrepChromeVisibility,
 } from './battleDangerAndViewportState';
-import { runTileReachedEvents } from './battleEventRunner';
 import { spawnFloatingText } from './battleFloatingCallouts';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { grantExpAndHandleLevelUps } from './battleLevelUpModal';
-import { runEnemyPhase } from './battlePhaseAndAiRunner';
 import { awardBattleAllyPairSupportPoint } from './battleSupportHelpers';
 import type { BattleControllerContext, BattleRuntimeState } from './battleTypesAndState';
 import {
-  areAllLivingPlayersWaited,
   getLivingPlayers,
   getSelectedUnit,
 } from './battleUnitQueries';
@@ -80,7 +76,7 @@ export async function playDanceActionAsync(
     toWorldY: toCenterY,
     color: '#ffd860',
     startedAtMs: performance.now(),
-    durationMs: state.fastMode ? 80 : 300,
+    durationMs: 300,
   };
 
   audioManager.playSfx('heal');
@@ -140,24 +136,5 @@ export async function executeDanceFromCommandMenu(
   await playDanceActionAsync(ctx, dancer, chosen.ally, moveSlot, runGen);
   if (!state.openState || runGen !== state.battleRunGen) return;
 
-  dancer.waited = true;
-  dancer.action = 'Idle';
-  dancer.renderWorldX = dancer.x * PMD_TILE_NATIVE_PX;
-  dancer.renderWorldY = dancer.y * PMD_TILE_NATIVE_PX;
-
-  clearBattleSelection(state, dom, prepOverlay);
-  await runTileReachedEvents(ctx, dancer, runGen);
-  if (!state.openState || runGen !== state.battleRunGen || state.phase !== 'player_phase') return;
-
-  recomputeDangerArea(ctx);
-  syncHudControls(state, dom);
-  updateBattleInfoStrip(ctx);
-  ctx.onLayerStateChanged();
-  ctx.renderNow();
-
-  if (areAllLivingPlayersWaited(state)) {
-    await waitBattleMs(state, 220);
-    if (!state.openState || runGen !== state.battleRunGen || state.phase !== 'player_phase') return;
-    await runEnemyPhase(ctx);
-  }
+  await finalizePlayerUnitAction(ctx, dancer, runGen, { autoEndDelayMs: 220 });
 }

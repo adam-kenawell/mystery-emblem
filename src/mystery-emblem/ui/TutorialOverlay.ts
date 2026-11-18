@@ -6,8 +6,6 @@ import { getAudioManager, type AudioManager } from '../audio/AudioManager';
 import {
   getTutorialTopicById,
   type AdvisorTutorialBeat,
-  type TutorialActionTriggerId,
-  type TutorialBattleTileFilter,
   type TutorialPresenter,
   type TutorialTopicDefinition,
 } from '../data/tutorialRegistry';
@@ -19,14 +17,11 @@ import {
   type RenderTutorialSettingsControlOptions,
 } from './tutorial/TutorialCompendiumRenderer';
 import { renderFieldNoteModalDom } from './tutorial/TutorialNoteModalRenderer';
-import {
-  TutorialSessionState,
-  type TutorialActionAvailabilityContext,
-} from './tutorial/TutorialSessionState';
+import { TutorialSessionState } from './tutorial/TutorialSessionState';
 import { buildTutorialShellView, type TutorialShellElements } from './tutorial/TutorialShellView';
 import { TypewriterController } from './typewriterController';
 
-export type { RenderTutorialSettingsControlOptions, TutorialActionAvailabilityContext };
+export type { RenderTutorialSettingsControlOptions };
 
 export interface TutorialOverlayOptions {
   parent: HTMLElement;
@@ -44,8 +39,6 @@ export class TutorialOverlay {
   private readonly session = new TutorialSessionState();
   private readonly typewriter = new TypewriterController();
   private presentationQueue: Promise<unknown> = Promise.resolve();
-  private fastMode = false;
-  private pauseInFastMode = false;
   private activePresenter: TutorialPresenter = 'advisor';
   private activeTokens: Readonly<Record<string, string>> | undefined;
   private tooltipTopicId: string | null = null;
@@ -58,7 +51,6 @@ export class TutorialOverlay {
     this.shell = buildTutorialShellView({
       parent: options.parent,
       signal: this.abortController.signal,
-      isInteractiveStep: () => this.hasActiveInteractiveStep(),
       onBackdropTap: () => {
         if (this.session.mode === 'card') this.handleCoachAdvanceTap();
         else if (this.session.mode === 'note' || this.session.mode === 'compendium') {
@@ -71,60 +63,21 @@ export class TutorialOverlay {
     });
   }
 
-  public setActionAvailabilityProvider(provider: TutorialActionAvailabilityContext | null): void {
-    this.session.availabilityProvider = provider;
-    if (this.isOpen() && this.session.mode === 'card') this.session.syncInteractivity();
-  }
-
   public isOpen(): boolean {
     return this.session.mode !== 'closed' && !this.shell.backdropEl.hidden;
   }
 
   public isBlockingSceneInput(): boolean {
-    return this.isOpen() && !this.hasActiveInteractiveStep();
-  }
-
-  public setFastMode(enabled: boolean): void {
-    this.fastMode = enabled;
-  }
-
-  public setPauseInFastMode(enabled: boolean): void {
-    this.pauseInFastMode = enabled;
+    return this.isOpen();
   }
 
   public getCurrentBeat(): AdvisorTutorialBeat | null {
     return this.session.getCurrentBeat();
   }
 
-  public getExpectedAction(): TutorialActionTriggerId | null {
-    return this.session.getExpectedAction(this.isOpen());
-  }
-
-  public hasActiveInteractiveStep(): boolean {
-    return this.getExpectedAction() !== null;
-  }
-
-  public getActiveTileFilter(): TutorialBattleTileFilter | null {
-    return this.session.getActiveTileFilter(this.isOpen());
-  }
-
-  public notifyActionCompleted(action: TutorialActionTriggerId): boolean {
-    if (this.getExpectedAction() !== action) return false;
-    this.advanceFromCurrentBeat('select');
-    return true;
-  }
-
-  public nudgeActiveStep(): void {
-    if (!this.isOpen() || this.session.mode !== 'card') return;
-    if (this.typewriter.isAnimating()) this.typewriter.completeImmediately();
-    this.audioManager.playSfx('cancel');
-    this.session.triggerNudgeAnimation(this.shell.cardWindowEl);
-  }
-
   public presentTopicIfNeeded(
     topicId: string,
     opts?: {
-      sceneFastMode?: boolean;
       presenter?: TutorialPresenter;
       forceIfAlreadySeen?: boolean;
       tokens?: Readonly<Record<string, string>>;
@@ -133,7 +86,6 @@ export class TutorialOverlay {
     const next = this.presentationQueue.then(() =>
       this.runTopicPresentation(
         topicId,
-        Boolean(opts?.sceneFastMode),
         opts?.presenter ?? 'advisor',
         Boolean(opts?.forceIfAlreadySeen),
         opts?.tokens
@@ -145,36 +97,24 @@ export class TutorialOverlay {
 
   private async runTopicPresentation(
     topicId: string,
-    sceneFastMode: boolean,
     presenter: TutorialPresenter,
     forceIfAlreadySeen = false,
     tokens?: Readonly<Record<string, string>>
   ): Promise<boolean> {
-    const skipFast = (this.fastMode || sceneFastMode) && !this.pauseInFastMode;
     const topic = this.session.evaluateTopicEligibility(
       this.saveManager,
       topicId,
-      skipFast,
       forceIfAlreadySeen
     );
     if (!topic) return false;
+
     this.hideTooltipPill();
-    const startIdx = Math.min(
-      topic.beats.length - 1,
-      this.session.findFirstPendingBeat(topic.beats, 0)
-    );
     return new Promise<boolean>((resolve) => {
       this.activePresenter = presenter;
       this.activeTokens = tokens;
-      this.session.startTopic(topic, startIdx, false, resolve);
+      this.session.startTopic(topic, false, resolve);
       this.session.applyModalDomVisibility(this.shell, 'card');
-      this.session.syncInteractivity();
       this.renderActiveCard();
-      this.shell.spotlight.startLoop(() => ({
-        isCardOpen: this.isOpen() && this.session.mode === 'card',
-        beat: this.getCurrentBeat(),
-        isInteractive: this.hasActiveInteractiveStep(),
-      }));
       this.audioManager.playSfx('select');
       this.onLayerStateChanged?.();
     });
@@ -229,11 +169,10 @@ export class TutorialOverlay {
       markLiveSeen &&
       this.session.activeTopic &&
       !this.session.returnToCompendiumOnClose &&
-      this.saveManager.getSave()
+      this.saveManager.getReadOnlySave()
     ) {
       this.saveManager.markTutorialSeen(this.session.activeTopic.id);
     }
-    this.shell.spotlight.hide();
     this.typewriter.stop();
     return this.session.clearCardFields();
   }
@@ -256,17 +195,16 @@ export class TutorialOverlay {
     const topic = getTutorialTopicById(topicId);
     if (!topic) return;
     this.hideTooltipPill();
-    if (this.saveManager.getSave()) this.saveManager.markTutorialSeen(topic.id);
+    if (this.saveManager.getReadOnlySave()) this.saveManager.markTutorialSeen(topic.id);
     const prevResolve = this.resetCardState(false);
     this.activePresenter = 'advisor';
-    this.session.startTopic(topic, 0, returnToCompendium, null);
+    this.session.startTopic(topic, returnToCompendium, null);
     this.session.applyModalDomVisibility(this.shell, 'note');
-    this.session.syncInteractivity();
     renderFieldNoteModalDom({
       noteWindowEl: this.shell.noteWindowEl,
       notePortraitView: this.shell.notePortraitView,
       topic,
-      save: this.saveManager.getSave(),
+      save: this.saveManager.getReadOnlySave(),
       returnToCompendium,
       tokens: this.activeTokens,
       signal: this.abortController.signal,
@@ -310,16 +248,6 @@ export class TutorialOverlay {
     resolver?.(true);
   }
 
-  private stepBeatBackward(): void {
-    if (this.session.mode !== 'card' || this.session.activeBeatIndex <= 0) return;
-    if (this.hasActiveInteractiveStep()) return;
-    this.typewriter.stop();
-    this.session.goToBeat(this.session.activeBeatIndex - 1);
-    this.audioManager.playSfx('dialogue_advance');
-    this.renderActiveCard();
-    this.onLayerStateChanged?.();
-  }
-
   private handleCoachAdvanceTap(): void {
     if (this.session.mode !== 'card') return;
     if (this.typewriter.isAnimating()) {
@@ -327,7 +255,6 @@ export class TutorialOverlay {
       this.audioManager.playSfx('select');
       return;
     }
-    if (this.hasActiveInteractiveStep()) return;
 
     const speechEl = this.shell.cardWindowEl.querySelector<HTMLElement>(
       '[data-testid="tutorial-dialogue-text"]'
@@ -340,29 +267,21 @@ export class TutorialOverlay {
       return;
     }
 
-    this.advanceFromCurrentBeat('select');
-  }
-
-  private advanceFromCurrentBeat(finishSfx: 'cancel' | 'select'): void {
-    this.typewriter.stop();
-    const rawNext = this.session.activeBeatIndex + 1;
-    const nextIdx =
-      this.session.returnToCompendiumOnClose || rawNext <= this.session.furthestBeatIndex
-        ? rawNext
-        : this.session.findFirstPendingBeat(this.session.activeBeats, rawNext);
+    const nextIdx = this.session.activeBeatIndex + 1;
     if (nextIdx < this.session.activeBeats.length) {
-      this.session.goToBeat(nextIdx);
+      this.typewriter.stop();
+      this.session.activeBeatIndex = nextIdx;
       this.audioManager.playSfx('select');
       this.renderActiveCard();
       this.onLayerStateChanged?.();
       return;
     }
-    this.dismissActiveCard(finishSfx);
+    this.dismissActiveCard('select');
   }
 
   private dismissActiveCard(sfx: 'cancel' | 'select'): void {
     const dismissedTopic = this.session.activeTopic;
-    if (dismissedTopic && this.saveManager.getSave()) {
+    if (dismissedTopic && this.saveManager.getReadOnlySave()) {
       this.saveManager.markTutorialSeen(dismissedTopic.id);
     }
     const reopen = this.session.returnToCompendiumOnClose;
@@ -378,11 +297,19 @@ export class TutorialOverlay {
     resolver?.(true);
   }
 
+  private syncCoachDock(): void {
+    const overworldEl = document.querySelector<HTMLElement>('#pmd-overworld-scene:not([hidden])');
+    const preferredDock = overworldEl ? 'top' : 'bottom';
+    this.shell.backdropEl.classList.remove('is-compendium-mode');
+    this.shell.backdropEl.dataset.overworldOpen = overworldEl ? 'true' : 'false';
+    this.shell.backdropEl.dataset.coachDock = preferredDock;
+    this.shell.cardWindowEl.dataset.coachDock = preferredDock;
+  }
+
   private renderActiveCard(): void {
     const topic = this.session.activeTopic;
     const beat = this.session.activeBeats[this.session.activeBeatIndex];
     if (!topic || !beat) return;
-    const interactive = this.hasActiveInteractiveStep();
     renderCoachCardWithTypewriter(
       {
         cardWindowEl: this.shell.cardWindowEl,
@@ -391,20 +318,16 @@ export class TutorialOverlay {
         beat,
         beatIndex: this.session.activeBeatIndex,
         totalBeats: this.session.activeBeats.length,
-        isInteractive: interactive,
-        returnToCompendiumOnClose: this.session.returnToCompendiumOnClose,
-        save: this.saveManager.getSave(),
+        save: this.saveManager.getReadOnlySave(),
         presenter: this.activePresenter,
         tokens: this.activeTokens,
         signal: this.abortController.signal,
-        onPrev: () => this.stepBeatBackward(),
         onNext: () => this.handleCoachAdvanceTap(),
       },
       this.typewriter,
-      this.fastMode,
       () => this.audioManager.playSfx('typewriter_blip')
     );
-    this.shell.spotlight.sync(beat, interactive);
+    this.syncCoachDock();
   }
 
   private renderCompendium(): void {
@@ -431,7 +354,6 @@ export class TutorialOverlay {
   public destroy(): void {
     this.closeAll(null);
     this.hideTooltipPill();
-    this.session.clearNudgeTimer();
     this.abortController.abort();
     this.shell.backdropEl.remove();
     this.shell.tooltipPillEl.remove();

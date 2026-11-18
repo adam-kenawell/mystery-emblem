@@ -92,7 +92,6 @@ export interface BattleOpenOptions {
   commitToSaveOnVictory?: boolean;
   clearRewardItems?: ReadonlyArray<ConvoyEntry>;
   preferredDeployInstanceIds?: ReadonlyArray<string>;
-  pauseOnLevelUpInFastMode?: boolean;
   skipPrepPhase?: boolean;
   onDungeonEnteredBeforePrep?: () => Promise<void>;
   onVictory?: () => void;
@@ -133,7 +132,6 @@ export interface BattleSceneSnapshot {
   triggeredEventIds: string[];
   globalDangerEnabled: boolean;
   trackedEnemyIds: string[];
-  fastMode: boolean;
   camera: {
     x: number;
     y: number;

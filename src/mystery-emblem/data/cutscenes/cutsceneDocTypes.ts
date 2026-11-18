@@ -10,7 +10,6 @@
  */
 
 import type { PmdNamedDirection, PmdPortraitEmotion } from '../../assets/pmdAssetTypes';
-import type { QuizSeedSlotKey } from '../../types/schemas';
 
 export type Facing = PmdNamedDirection;
 
@@ -69,8 +68,6 @@ export type CastIdentity =
   | { kind: 'healer_parent' }
   | { kind: 'mentor' }
   | { kind: 'advisor' }
-  /** A quiz-chosen recruit */
-  | { kind: 'quiz_slot'; slot: QuizSeedSlotKey; index?: number; fallbackSpeciesId?: string }
   /** A fixed story recruit (Chespin, Machop, Slakoth...): their roster unit once recruited, else the species */
   | { kind: 'recruit'; speciesId: string }
   /** The Nth extra party member beyond the core four; hidden when the party is smaller */

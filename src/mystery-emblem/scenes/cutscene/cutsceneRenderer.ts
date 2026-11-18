@@ -7,7 +7,9 @@
 
 import {
   computePmdTileSpritePlacement,
+  drawSpriteAnimFrame,
   normalizePmdDirection,
+  resolveAnimFrameIndex,
   type LoadedActionAnimation,
   type LoadedSpriteBundle,
 } from '../../assets/pmdAssetLoader';
@@ -69,6 +71,55 @@ export function computeCutsceneCamera(
 
 const positiveMod = (v: number, m: number) => ((v % m) + m) % m;
 
+const staticTileLayerCache = new WeakMap<
+  ResolvedLocationLayer,
+  { canvas: HTMLCanvasElement; width: number; height: number; sheetCount: number }
+>();
+
+function getOrBuildStaticTileLayerCanvas(
+  layer: ResolvedLocationLayer,
+  sheets: ReadonlyMap<string, LoadedTilesetSheet>
+): HTMLCanvasElement | null {
+  const grid = layer.grid;
+  if (!grid || grid.length === 0) return null;
+  const height = grid.length;
+  const width = grid[0]?.length ?? 0;
+  if (width === 0) return null;
+
+  const cached = staticTileLayerCache.get(layer);
+  if (
+    cached &&
+    cached.width === width &&
+    cached.height === height &&
+    cached.sheetCount === sheets.size
+  ) {
+    return cached.canvas;
+  }
+
+  const offscreen = document.createElement('canvas');
+  offscreen.width = width * PMD_TILE_NATIVE_PX;
+  offscreen.height = height * PMD_TILE_NATIVE_PX;
+  const oCtx = offscreen.getContext('2d');
+  if (!oCtx) return null;
+  oCtx.imageSmoothingEnabled = false;
+
+  for (let ty = 0; ty < height; ty++) {
+    const row = grid[ty]!;
+    const drawY = ty * PMD_TILE_NATIVE_PX;
+    for (let tx = 0; tx < row.length; tx++) {
+      const cell = row[tx];
+      if (!cell) continue;
+      const drawX = tx * PMD_TILE_NATIVE_PX;
+      const sheet = sheets.get(normalizeTilesetId(cell.tilesetId));
+      if (sheet) drawTilesetChunk(oCtx, sheet, cell.chunkIndex, drawX, drawY, PMD_TILE_NATIVE_PX);
+      drawSpecialTerrainOverlay(oCtx, cell.terrainType, cell.tilesetId, drawX, drawY, PMD_TILE_NATIVE_PX);
+    }
+  }
+
+  staticTileLayerCache.set(layer, { canvas: offscreen, width, height, sheetCount: sheets.size });
+  return offscreen;
+}
+
 function drawLocationLayer(
   ctx: CanvasRenderingContext2D,
   layer: ResolvedLocationLayer,
@@ -84,18 +135,18 @@ function drawLocationLayer(
   if (layer.opacity !== undefined && layer.opacity < 1) ctx.globalAlpha = Math.max(0, layer.opacity);
   const t = animClockMs / 1000;
   if (layer.kind === 'tiles' && layer.grid) {
-    for (let ty = 0; ty < layer.grid.length; ty++) {
-      const row = layer.grid[ty]!;
-      const drawY = ty * PMD_TILE_NATIVE_PX - camY;
-      if (drawY + PMD_TILE_NATIVE_PX < 0 || drawY > nativeH) continue;
-      for (let tx = 0; tx < row.length; tx++) {
-        const cell = row[tx];
-        if (!cell) continue;
-        const drawX = tx * PMD_TILE_NATIVE_PX - camX;
-        if (drawX + PMD_TILE_NATIVE_PX < 0 || drawX > nativeW) continue;
-        const sheet = sheets.get(normalizeTilesetId(cell.tilesetId));
-        if (sheet) drawTilesetChunk(ctx, sheet, cell.chunkIndex, drawX, drawY, PMD_TILE_NATIVE_PX);
-        drawSpecialTerrainOverlay(ctx, cell.terrainType, cell.tilesetId, drawX, drawY, PMD_TILE_NATIVE_PX);
+    const cachedCanvas = getOrBuildStaticTileLayerCanvas(layer, sheets);
+    if (cachedCanvas) {
+      const srcX = Math.max(0, Math.floor(camX));
+      const srcY = Math.max(0, Math.floor(camY));
+      const dstX = srcX - camX;
+      const dstY = srcY - camY;
+      const maxSw = cachedCanvas.width - srcX;
+      const maxSh = cachedCanvas.height - srcY;
+      const sw = Math.min(maxSw, Math.ceil(nativeW - dstX));
+      const sh = Math.min(maxSh, Math.ceil(nativeH - dstY));
+      if (sw > 0 && sh > 0) {
+        ctx.drawImage(cachedCanvas, srcX, srcY, sw, sh, dstX, dstY, sw, sh);
       }
     }
   } else if (layer.kind === 'picture' && layer.img) {
@@ -263,34 +314,14 @@ export function drawCutsceneActor(
   ctx.fill();
 
   if (anim) {
-    const safeFrameCount = Math.max(1, anim.frameCount);
-    let totalMs = 0;
-    for (let i = 0; i < safeFrameCount; i++) totalMs += Math.max(16, anim.durationsMs[i] ?? 120);
-    totalMs = Math.max(80, totalMs);
-    const holdLastFrame = actor.poseAnim !== null && actor.poseRemainingMs !== Infinity;
-    let rem = holdLastFrame ? Math.min(actor.animElapsedMs, totalMs - 1) : actor.animElapsedMs % totalMs;
-    let frameIdx = 0;
-    for (let i = 0; i < safeFrameCount; i++) {
-      const dur = Math.max(16, anim.durationsMs[i] ?? 120);
-      if (rem < dur) {
-        frameIdx = i;
-        break;
-      }
-      rem -= dur;
-    }
+    const totalMs = anim.durationsMs.reduce((sum, d) => sum + d, 0);
+    const elapsed =
+      actor.poseAnim !== null && actor.poseRemainingMs !== Infinity
+        ? Math.min(actor.animElapsedMs, Math.max(80, totalMs) - 1)
+        : actor.animElapsedMs;
+    const frameIdx = resolveAnimFrameIndex(anim, elapsed);
     const safeDir = normalizePmdDirection(actor.direction, 0);
-    const rowIdx = anim.rowCount > 1 ? safeDir % anim.rowCount : 0;
-    ctx.drawImage(
-      anim.source,
-      frameIdx * anim.frameWidth,
-      rowIdx * anim.frameHeight,
-      anim.frameWidth,
-      anim.frameHeight,
-      placement.drawX,
-      placement.drawY + hopOffsetY,
-      anim.frameWidth,
-      anim.frameHeight
-    );
+    drawSpriteAnimFrame(ctx, anim, frameIdx, safeDir, placement.drawX, placement.drawY + hopOffsetY);
   } else {
     ctx.fillStyle = '#58c8f8';
     ctx.fillRect(tileScreenX + 6, tileScreenY + 6 + hopOffsetY, 12, 12);

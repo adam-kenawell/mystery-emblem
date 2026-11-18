@@ -25,7 +25,7 @@
         "speaker": "mentor",
         "emotion": "Normal",
         "side": "right",
-        "text": "Do not let that drowsy posture fool you. Youngsters like Slakoth start frail, yet harbor tremendous Hidden Potential once trained."
+        "text": "Do not let that drowsy posture fool you. Youngsters like Slakoth start slow, yet they grow far stronger than anyone expects once they start fighting."
       }
     },
     {
@@ -34,7 +34,7 @@
         "speaker": "lord",
         "emotion": "Determined",
         "side": "left",
-        "text": "Let's hurry across the grass, Talk to Slakoth to wake him up, and clear out these poachers!"
+        "text": "Let's hurry across the grass, rouse Slakoth before the poachers reach him, and clear them out of this meadow!"
       }
     }
   ]

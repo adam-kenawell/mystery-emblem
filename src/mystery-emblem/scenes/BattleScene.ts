@@ -15,14 +15,11 @@ import {
   clampDungeonCameraPosition,
   clientPointToDungeonWorld,
   syncDungeonCanvasBuffer,
-  tileCenterToClientPoint,
 } from '../ui/gridViewportMath';
 import { clampMapScale } from '../ui/mapZoomController';
 import {
   cheatFullHealSquad,
   cheatInstantWin,
-  forceUnitHpForTest,
-  forceUnitPositionForTest,
   handleBattleMenuOrBack,
 } from './battle/battleBackAndCheats';
 import { clearOpeningAndPhaseAnimations } from './battle/battleBannersAndTransitions';
@@ -36,12 +33,12 @@ import {
   restartBattleMatch,
 } from './battle/battleLifecycleController';
 import { requestManualEndPhase } from './battle/battlePhaseAndAiRunner';
-import { getActivePrepSaveManager } from './battle/battlePrepAndAssets';
 import {
   createBattlePrepOverlay,
+  getActivePrepSaveManager,
+  refreshFromExternalSaveCheat,
   subscribeBattlePrepMapChanges,
-} from './battle/battlePrepOverlayWiring';
-import { refreshFromExternalSaveCheat } from './battle/battlePrepSlotActions';
+} from './battle/battlePrepController';
 import {
   BATTLE_TILE_DISPLAY_PX,
   BATTLE_TILE_SCALE,
@@ -54,7 +51,6 @@ import {
   type BattleSceneSnapshot,
 } from './battle/battlePublicTypes';
 import { applyBattleAnchoredZoom, bindBattleCanvasStagePointers } from './battle/battleStagePointers';
-import { resolveTutorialSpotlightTiles } from './battle/battleTutorialSpotlights';
 import {
   createInitialBattleRuntimeState,
   type BattleControllerContext,
@@ -170,26 +166,6 @@ export class BattleScene {
     return requestManualEndPhase(this.ctx);
   }
 
-  public setFastMode(enabled: boolean): void {
-    this.state.fastMode = Boolean(enabled);
-  }
-
-  public setPauseOnLevelUpInFastMode(enabled: boolean): void {
-    this.state.pauseOnLevelUpInFastMode = Boolean(enabled);
-  }
-
-  public setRng(rngFn: (() => number) | null): void {
-    this.state.customRng = rngFn;
-  }
-
-  public forceUnitHpForTest(unitId: string, nextHp: number): void {
-    forceUnitHpForTest(this.ctx, unitId, nextHp);
-  }
-
-  public forceUnitPositionForTest(unitId: string, x: number, y: number): void {
-    forceUnitPositionForTest(this.ctx, unitId, x, y);
-  }
-
   public cheatFullHealSquad(): void {
     cheatFullHealSquad(this.ctx);
   }
@@ -214,16 +190,6 @@ export class BattleScene {
     const anchor = clientPointToDungeonWorld(this.dom.canvas, this.state.cam, cx, cy);
     applyBattleAnchoredZoom(this.ctx, clampMapScale(nextScale), cx, cy, anchor.worldX, anchor.worldY);
     this.renderNow();
-  }
-
-  public getTileClientCenter(tx: number, ty: number): { clientX: number; clientY: number } {
-    return tileCenterToClientPoint(this.dom.canvas, this.state.cam, tx, ty);
-  }
-
-  public getTutorialSpotlightTileCoords(): Array<{ x: number; y: number }> {
-    const filter = this.ctx.tutorialOverlay?.getActiveTileFilter() ?? null;
-    if (!filter || !this.state.openState) return [];
-    return resolveTutorialSpotlightTiles(this.state, this.prepOverlay, filter);
   }
 
   public getUnits(): ReadonlyArray<BattleUnitState> {

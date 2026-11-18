@@ -3,16 +3,18 @@
  */
 
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
+import { DEMO_INITIAL_CONVOY, DEMO_STARTING_LEVEL } from '../data/campaignRegistry';
+import { DEMO_OVERWORLD_GRAPH, type OverworldGraphDefinition } from '../data/overworldMapData';
 import {
   DEFAULT_QUIZ_BACKDROP_CSS, DRAGON_LORD_OPTIONS, MYSTICAL_QUIZ_WAVE_PALETTE,
   PERSONALITY_QUIZ_QUESTIONS, evaluatePersonalityQuiz, getDragonLordTraitInfo,
   type DragonLordSpeciesId, type QuizOptionKey,
 } from '../data/quizData';
 import type { SaveStateManager } from '../state/SaveStateManager';
+import type { CampaignMode, ConvoyEntry, SaveData } from '../types/schemas';
 import { PmdPortraitView } from './PmdSpriteCanvas';
-import { RecruitNicknameOverlay, type PromptRecruitsOptions } from './RecruitNicknameOverlay';
 import { bindBackGestureSurface, bindPointerTap } from './pointerControls';
-import { prefersReducedMotionEnabled } from './typewriterController';
+import { TypewriterController, prefersReducedMotionEnabled } from './typewriterController';
 import { AuraWaveCanvas } from './quiz/AuraWaveCanvas';
 import { renderNgPlusRosterSelectorView } from './quiz/NgPlusRosterSelectorView';
 import { renderQuizLordRevealView, type QuizRevealBeat } from './quiz/QuizRevealSequenceView';
@@ -20,23 +22,85 @@ import {
   appendQuizQuestionOptionsWindow, renderQuizQuestionWindow, renderQuizWelcomePopup, showFirstVisitAudioNotice,
   type QuizQuestionDescriptor,
 } from './quiz/QuizWelcomeAndQuestionsView';
-import {
-  QuizTypewriterController, applyQuizBackdropForStep, buildQuizSceneSnapshot,
-  computeQuizBackTransition, finalizeQuizCampaignCreation,
-  type OpenQuizSceneOptions, type QuizSceneSnapshot, type QuizSceneStep,
-} from './quiz/quizTypewriterController';
 
-export { RecruitNicknameOverlay };
-export type { OpenQuizSceneOptions, PromptRecruitsOptions, QuizRevealBeat, QuizSceneSnapshot, QuizSceneStep };
+export type QuizSceneStep = 'welcome' | 'questions' | 'lord_reveal' | 'ng_plus';
+
+export interface OpenQuizSceneOptions {
+  campaignMode?: CampaignMode;
+  startingLevel?: number;
+  scaleStatsToLevel?: boolean;
+  initialConvoy?: ReadonlyArray<ConvoyEntry>;
+  overworldGraph?: OverworldGraphDefinition;
+  typewriterMsPerChar?: number;
+  startInNgPlusSelector?: boolean;
+  onComplete?: (save: SaveData) => void;
+}
+
+export type { QuizRevealBeat };
 
 const TOTAL_QUIZ_QUESTION_COUNT = PERSONALITY_QUIZ_QUESTIONS.length;
+const DEFAULT_TYPEWRITER_MS_PER_CHAR = 20;
+
+function computeQuizBackTransition(params: {
+  step: QuizSceneStep;
+  questionIndex: number;
+  totalQuestionCount: number;
+  answers: QuizOptionKey[];
+}): {
+  action: 'rerender' | 'cancel_scene';
+  nextStep: QuizSceneStep;
+  nextRevealBeat: QuizRevealBeat;
+  nextQuestionIndex: number;
+  nextAnswers: QuizOptionKey[];
+} {
+  const { step, questionIndex, totalQuestionCount, answers } = params;
+  if (step === 'ng_plus') {
+    return { action: 'rerender', nextStep: 'welcome', nextRevealBeat: 0, nextQuestionIndex: questionIndex, nextAnswers: answers };
+  }
+  if (step === 'lord_reveal') {
+    return { action: 'rerender', nextStep: 'questions', nextRevealBeat: 0, nextQuestionIndex: totalQuestionCount - 1, nextAnswers: answers };
+  }
+  if (step === 'questions') {
+    if (questionIndex > 0) {
+      return {
+        action: 'rerender',
+        nextStep: 'questions',
+        nextRevealBeat: 0,
+        nextQuestionIndex: questionIndex - 1,
+        nextAnswers: answers.slice(0, questionIndex - 1),
+      };
+    }
+    return { action: 'rerender', nextStep: 'welcome', nextRevealBeat: 0, nextQuestionIndex: 0, nextAnswers: answers };
+  }
+  return { action: 'cancel_scene', nextStep: step, nextRevealBeat: 0, nextQuestionIndex: questionIndex, nextAnswers: answers };
+}
+
+function applyQuizBackdropForStep(
+  rootEl: HTMLElement,
+  waveEngine: AuraWaveCanvas,
+  step: QuizSceneStep,
+  revealBeat: QuizRevealBeat,
+  selectedLordSpeciesId: DragonLordSpeciesId
+): void {
+  if ((step === 'lord_reveal' && revealBeat >= 3) || step === 'ng_plus') {
+    const lordMeta = getDragonLordTraitInfo(selectedLordSpeciesId);
+    rootEl.style.background = lordMeta.revealBackdropCss;
+    rootEl.dataset.auraFlowerColor = lordMeta.flabebeFlowerColor;
+    waveEngine.setTargetPalette(lordMeta.auraWavePalette, false, false);
+  } else {
+    rootEl.style.background = DEFAULT_QUIZ_BACKDROP_CSS;
+    delete rootEl.dataset.auraFlowerColor;
+    waveEngine.setTargetPalette(MYSTICAL_QUIZ_WAVE_PALETTE, false, true);
+  }
+}
 
 export class QuizScene {
   public readonly rootEl: HTMLElement;
   private readonly waveEngine: AuraWaveCanvas;
   private readonly stageEl: HTMLElement;
   private readonly fadeOverlayEl: HTMLElement;
-  private readonly typewriter = new QuizTypewriterController();
+  private readonly typewriter = new TypewriterController();
+  private activePromptEl: HTMLElement | null = null;
   private audioNoticeEl: HTMLElement | null = null;
 
   private readonly saveManager: SaveStateManager;
@@ -46,7 +110,6 @@ export class QuizScene {
   private readonly abortController = new AbortController();
 
   private openState = false;
-  private fastMode = false;
   private finalizing = false;
   private finalizeTimer: number | null = null;
   private step: QuizSceneStep = 'welcome';
@@ -55,7 +118,6 @@ export class QuizScene {
   private questionOptionsRevealed = false;
   private answers: QuizOptionKey[] = [];
   private selectedLordSpeciesId: DragonLordSpeciesId = 'axew';
-  private activeQuestionTextEl: HTMLElement | null = null;
   private activeRevealTextEl: HTMLElement | null = null;
 
   private activeOptions: OpenQuizSceneOptions = {};
@@ -65,7 +127,6 @@ export class QuizScene {
   constructor(
     mountParent: HTMLElement,
     saveManager: SaveStateManager,
-    _nicknameOverlay: RecruitNicknameOverlay,
     options: { audioManager?: AudioManager; onCancel: () => void; onStateChange?: () => void }
   ) {
     this.saveManager = saveManager;
@@ -108,15 +169,11 @@ export class QuizScene {
     );
   }
 
-  public setFastMode(enabled: boolean): void { this.fastMode = Boolean(enabled); }
   public isOpen(): boolean { return this.openState && !this.rootEl.hidden; }
-  public advanceWaveAnimationForTest(deltaMs: number): void {
-    if (this.openState) this.waveEngine.renderFrame(Math.max(0, deltaMs));
-  }
 
   public open(options?: OpenQuizSceneOptions): void {
     this.resetFinalizeFade();
-    this.typewriter.clear();
+    this.typewriter.stop();
     this.activeOptions = options ?? {};
     this.openState = true;
     this.step = options?.startInNgPlusSelector ? 'ng_plus' : 'welcome';
@@ -132,6 +189,7 @@ export class QuizScene {
     this.audioManager.playBgm('personality_quiz', { fadeMs: 260 });
     this.render();
     if (this.step === 'welcome') this.audioNoticeEl = showFirstVisitAudioNotice(this.rootEl);
+    this.waveEngine.syncHostDimensions();
     this.waveEngine.renderFrame(0);
     this.waveEngine.startLoop();
     this.onStateChange?.();
@@ -140,7 +198,7 @@ export class QuizScene {
   public close(): void {
     this.resetFinalizeFade();
     if (!this.openState) return;
-    this.typewriter.clear();
+    this.typewriter.stop();
     this.waveEngine.stopLoop();
     this.openState = false;
     this.rootEl.hidden = true;
@@ -154,7 +212,7 @@ export class QuizScene {
   public handleBack(): void {
     if (!this.isOpen() || this.finalizing) return;
     this.audioManager.playSfx('cancel');
-    this.typewriter.clear();
+    this.typewriter.stop();
     const t = computeQuizBackTransition({
       step: this.step,
       questionIndex: this.questionIndex,
@@ -174,22 +232,27 @@ export class QuizScene {
     this.render();
   }
 
-  public getSnapshot(): QuizSceneSnapshot {
-    return buildQuizSceneSnapshot({
-      isOpen: this.isOpen(), step: this.step, revealBeat: this.revealBeat, isTyping: this.typewriter.isTyping,
-      questionOptionsRevealed: this.questionOptionsRevealed,
-      displayedQuestionText: this.activeQuestionTextEl?.textContent ?? '',
-      displayedRevealText: this.activeRevealTextEl?.textContent ?? '',
-      waveEngine: this.waveEngine, questionIndex: this.questionIndex,
-      totalQuestionCount: TOTAL_QUIZ_QUESTION_COUNT, answers: this.answers,
-      selectedLordSpeciesId: this.selectedLordSpeciesId,
-    });
-  }
-
   private startTypewriter(targetEl: HTMLElement, promptEl: HTMLElement | null, prefix: string, roll: string): void {
+    this.activePromptEl = promptEl;
+    const msPerChar =
+      typeof this.activeOptions.typewriterMsPerChar === 'number'
+        ? Math.max(0, this.activeOptions.typewriterMsPerChar)
+        : DEFAULT_TYPEWRITER_MS_PER_CHAR;
+    const instant = msPerChar <= 0 || prefersReducedMotionEnabled();
+    if (promptEl && !instant && roll.length > 0) promptEl.hidden = true;
+    const expectedStep = this.step;
     this.typewriter.start({
-      targetEl, promptEl, prefixText: prefix, rollText: roll, msPerCharOverride: this.activeOptions.typewriterMsPerChar,
-      fastMode: this.fastMode, expectedStep: this.step, isStillOnExpectedStep: (expected) => this.openState && this.step === expected,
+      targetEl,
+      prefixText: prefix,
+      text: roll,
+      msPerTick: msPerChar,
+      charsPerTick: 1,
+      instant,
+      onComplete: () => {
+        if (this.openState && this.step === expectedStep && this.activePromptEl) {
+          this.activePromptEl.hidden = false;
+        }
+      },
     });
   }
 
@@ -200,7 +263,7 @@ export class QuizScene {
 
   private handleQuestionScreenTap(): void {
     if (!this.isOpen() || this.step !== 'questions') return;
-    if (this.typewriter.isTyping) {
+    if (this.typewriter.isAnimating()) {
       this.audioManager.playSfx('select');
       this.typewriter.completeImmediately();
       return;
@@ -228,7 +291,7 @@ export class QuizScene {
 
   private handleRevealAdvanceTap(): void {
     if (!this.isOpen() || this.step !== 'lord_reveal') return;
-    if (this.typewriter.isTyping) {
+    if (this.typewriter.isAnimating()) {
       this.audioManager.playSfx('select');
       this.typewriter.completeImmediately();
       return;
@@ -240,7 +303,7 @@ export class QuizScene {
       const boxEl = this.stageEl.querySelector<HTMLElement>('[data-testid="quiz-reveal-box"]');
       if (boxEl) boxEl.dataset.revealBeat = '1';
       if (this.activeRevealTextEl) {
-        this.startTypewriter(this.activeRevealTextEl, this.typewriter.activePromptEl, 'You appear to be...', ` the ${lordMeta.personalityTitle} type!`);
+        this.startTypewriter(this.activeRevealTextEl, this.activePromptEl, 'You appear to be...', ` the ${lordMeta.personalityTitle} type!`);
       } else this.render();
       return;
     }
@@ -254,8 +317,8 @@ export class QuizScene {
   }
 
   private render(): void {
-    this.typewriter.resetTargets();
-    this.activeQuestionTextEl = null;
+    this.typewriter.stop();
+    this.activePromptEl = null;
     this.activeRevealTextEl = null;
     this.stageEl.innerHTML = '';
     applyQuizBackdropForStep(this.rootEl, this.waveEngine, this.step, this.revealBeat, this.selectedLordSpeciesId);
@@ -277,12 +340,11 @@ export class QuizScene {
         onConfirmNgPlus: (lordId) => { this.selectedLordSpeciesId = lordId; this.finalize(lordId, true); },
       });
     } else if (this.step === 'questions') {
-      const { promptEl } = renderQuizQuestionWindow(this.stageEl, this.getCurrentQuestionDescriptor(), {
+      renderQuizQuestionWindow(this.stageEl, this.getCurrentQuestionDescriptor(), {
         optionsRevealed: this.questionOptionsRevealed,
         onStartTypewriter: (target, prompt, text) => this.startTypewriter(target, prompt, '', text),
         onOptionTapped: () => this.advanceAfterOptionPicked(),
       });
-      this.activeQuestionTextEl = promptEl;
     } else {
       if (!this.lordPortraitView) this.lordPortraitView = new PmdPortraitView({ testId: 'quiz-lord-portrait-canvas' });
       const { revealTextEl } = renderQuizLordRevealView(this.stageEl, {
@@ -291,7 +353,7 @@ export class QuizScene {
         portraitView: this.lordPortraitView,
         onStartTypewriter: (target, prompt, prefix, roll) => this.startTypewriter(target, prompt, prefix, roll),
         onAcceptAdventure: () => {
-          this.typewriter.clear();
+          this.typewriter.stop();
           this.finalize(this.selectedLordSpeciesId);
         },
       });
@@ -315,17 +377,25 @@ export class QuizScene {
     this.finalizing = true;
     this.audioManager.playSfx('heal');
     this.audioManager.playBgm(null, { fadeMs: 480 });
-    const commit = () =>
-      finalizeQuizCampaignCreation({
-        saveManager: this.saveManager,
-        audioManager: this.audioManager,
-        activeOptions: this.activeOptions,
+    const commit = () => {
+      const graph = this.activeOptions.overworldGraph ?? DEMO_OVERWORLD_GRAPH;
+      let created = this.saveManager.createNewCampaignSave({
         lordSpeciesId: lordId,
-        preserveNgPlus,
-        skipConfirmSfx: true,
-        onCloseQuizScene: () => this.close(),
+        partnerSpeciesId: 'quaxly',
+        healerSpeciesId: 'flabebe',
+        tutorialsEnabled: true,
+        newGamePlusUnlocked: preserveNgPlus || this.saveManager.isNewGamePlusUnlocked(),
+        startingLevel: this.activeOptions.startingLevel ?? DEMO_STARTING_LEVEL,
+        scaleStatsToLevel: this.activeOptions.scaleStatsToLevel ?? true,
+        campaignMode: this.activeOptions.campaignMode ?? 'demo',
+        initialConvoy: this.activeOptions.initialConvoy ?? DEMO_INITIAL_CONVOY,
       });
-    if (this.fastMode || prefersReducedMotionEnabled()) {
+      created = this.saveManager.ensureOverworldInitialized(graph);
+      const onComplete = this.activeOptions.onComplete;
+      this.close();
+      onComplete?.(this.saveManager.getSave() ?? created);
+    };
+    if (prefersReducedMotionEnabled()) {
       commit();
       return;
     }
@@ -341,6 +411,7 @@ export class QuizScene {
 
   public destroy(): void {
     this.close();
+    this.waveEngine.destroy();
     this.abortController.abort();
     this.rootEl.remove();
   }

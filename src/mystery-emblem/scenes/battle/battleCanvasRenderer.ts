@@ -8,8 +8,8 @@ import {
   drawTilesetChunk,
   normalizeTilesetId,
 } from '../../assets/tilesetLoader';
-import type { TutorialBattleTileFilter } from '../../data/tutorialRegistry';
 import { coordKey } from '../../engine/terrainAndPathfinding';
+import type { DungeonMapDefinition } from '../../types/schemas';
 import { syncFloatingCalloutDom } from './battleFloatingCallouts';
 import { computeForecastStageBounds } from './battleForecastLog';
 import {
@@ -20,8 +20,11 @@ import {
   lerpRgba,
   splitDangerZoneLayers,
 } from './battleRangeZonePainter';
-import { resolveTutorialSpotlightTiles } from './battleTutorialIntegration';
-import { RANGE_PULSE_PERIOD_MS, type BattleControllerContext } from './battleTypesAndState';
+import {
+  RANGE_PULSE_PERIOD_MS,
+  type BattleControllerContext,
+  type BattleRuntimeState,
+} from './battleTypesAndState';
 import {
   getActiveInspectedAllyRange,
   getSeizeObjectiveCoords,
@@ -29,14 +32,107 @@ import {
 } from './battleUnitQueries';
 import { renderUnitsAndStrikeVfx } from './battleUnitSpriteRenderer';
 
+const staticTileCanvasCache = new WeakMap<
+  DungeonMapDefinition,
+  { tileCacheVersion: number; tilesetCount: number; canvas: HTMLCanvasElement }
+>();
+
+const seizeCoordsCache = new WeakMap<
+  DungeonMapDefinition,
+  { tileCacheVersion: number; coords: Set<string> }
+>();
+
+function getOrBuildStaticTileCanvas(state: BattleRuntimeState): HTMLCanvasElement {
+  const { map, tilesetSheets, tileCacheVersion } = state;
+  const cached = staticTileCanvasCache.get(map);
+  if (
+    cached &&
+    cached.tileCacheVersion === tileCacheVersion &&
+    cached.tilesetCount === tilesetSheets.size
+  ) {
+    return cached.canvas;
+  }
+
+  const canvas = cached?.canvas ?? document.createElement('canvas');
+  canvas.width = map.width * PMD_TILE_NATIVE_PX;
+  canvas.height = map.height * PMD_TILE_NATIVE_PX;
+  const tctx = canvas.getContext('2d')!;
+  tctx.imageSmoothingEnabled = false;
+  tctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let y = 0; y < map.height; y++) {
+    const row = map.tiles[y];
+    if (!row) continue;
+    const drawY = y * PMD_TILE_NATIVE_PX;
+    for (let x = 0; x < map.width; x++) {
+      const cell = row[x];
+      if (!cell) continue;
+      const drawX = x * PMD_TILE_NATIVE_PX;
+      const sheet = tilesetSheets.get(normalizeTilesetId(cell.tilesetId));
+      if (sheet) {
+        drawTilesetChunk(tctx, sheet, cell.chunkIndex, drawX, drawY, PMD_TILE_NATIVE_PX);
+      } else {
+        tctx.fillStyle = '#1c2c44';
+        tctx.fillRect(drawX, drawY, PMD_TILE_NATIVE_PX, PMD_TILE_NATIVE_PX);
+      }
+      drawSpecialTerrainOverlay(
+        tctx,
+        cell.terrainType,
+        cell.tilesetId,
+        drawX,
+        drawY,
+        PMD_TILE_NATIVE_PX
+      );
+    }
+  }
+
+  staticTileCanvasCache.set(map, {
+    tileCacheVersion,
+    tilesetCount: tilesetSheets.size,
+    canvas,
+  });
+  return canvas;
+}
+
+function getCachedSeizeCoords(state: BattleRuntimeState): ReadonlySet<string> {
+  const cached = seizeCoordsCache.get(state.map);
+  if (cached && cached.tileCacheVersion === state.tileCacheVersion) {
+    return cached.coords;
+  }
+  const coords = getSeizeObjectiveCoords(state);
+  seizeCoordsCache.set(state.map, { tileCacheVersion: state.tileCacheVersion, coords });
+  return coords;
+}
+
 export function renderBattleFrame(ctxObj: BattleControllerContext, now: number): void {
-  const { state, dom, prepOverlay, tutorialOverlay } = ctxObj;
+  const { state, dom, prepOverlay } = ctxObj;
   const { ctx } = dom;
   const { cameraX, cameraY, bufferWidth, bufferHeight } = state.cam;
 
   ctx.imageSmoothingEnabled = false;
   ctx.fillStyle = '#080e1c';
   ctx.fillRect(0, 0, bufferWidth, bufferHeight);
+
+  const tileCanvas = getOrBuildStaticTileCanvas(state);
+  const mapPxW = tileCanvas.width;
+  const mapPxH = tileCanvas.height;
+  const srcX = Math.max(0, cameraX);
+  const srcY = Math.max(0, cameraY);
+  const srcW = Math.min(mapPxW, cameraX + bufferWidth) - srcX;
+  const srcH = Math.min(mapPxH, cameraY + bufferHeight) - srcY;
+  if (srcW > 0 && srcH > 0) {
+    ctx.drawImage(
+      tileCanvas,
+      srcX,
+      srcY,
+      srcW,
+      srcH,
+      srcX - cameraX,
+      srcY - cameraY,
+      srcW,
+      srcH
+    );
+  }
 
   const startCol = Math.max(0, Math.floor(cameraX / PMD_TILE_NATIVE_PX) - 1);
   const endCol = Math.min(
@@ -48,33 +144,6 @@ export function renderBattleFrame(ctxObj: BattleControllerContext, now: number):
     state.map.height - 1,
     Math.ceil((cameraY + bufferHeight) / PMD_TILE_NATIVE_PX) + 1
   );
-
-  for (let y = startRow; y <= endRow; y++) {
-    const row = state.map.tiles[y];
-    if (!row) continue;
-    const drawY = y * PMD_TILE_NATIVE_PX - cameraY;
-    for (let x = startCol; x <= endCol; x++) {
-      const cell = row[x];
-      if (!cell) continue;
-      const drawX = x * PMD_TILE_NATIVE_PX - cameraX;
-      const sheet = state.tilesetSheets.get(normalizeTilesetId(cell.tilesetId));
-      if (sheet) {
-        drawTilesetChunk(ctx, sheet, cell.chunkIndex, drawX, drawY, PMD_TILE_NATIVE_PX);
-      } else {
-        ctx.fillStyle = '#1c2c44';
-        ctx.fillRect(drawX, drawY, PMD_TILE_NATIVE_PX, PMD_TILE_NATIVE_PX);
-      }
-      drawSpecialTerrainOverlay(
-        ctx,
-        cell.terrainType,
-        cell.tilesetId,
-        drawX,
-        drawY,
-        PMD_TILE_NATIVE_PX
-      );
-    }
-  }
-
   const visibleBounds = { startCol, endCol, startRow, endRow };
 
   if (state.currentDanger.combinedDangerTiles.size > 0) {
@@ -203,7 +272,7 @@ export function renderBattleFrame(ctxObj: BattleControllerContext, now: number):
     }
   }
 
-  const seizeTiles = getSeizeObjectiveCoords(state);
+  const seizeTiles = getCachedSeizeCoords(state);
   if (seizeTiles.size > 0) {
     const seizePulse =
       0.5 - 0.5 * Math.cos(((now % RANGE_PULSE_PERIOD_MS) / RANGE_PULSE_PERIOD_MS) * Math.PI * 2);
@@ -276,29 +345,6 @@ export function renderBattleFrame(ctxObj: BattleControllerContext, now: number):
       now,
       isSelected ? 'selected' : 'hover'
     );
-  }
-
-  const activeFilter: TutorialBattleTileFilter | null =
-    tutorialOverlay?.getActiveTileFilter() ?? null;
-  if (activeFilter) {
-    const spotTiles = resolveTutorialSpotlightTiles(state, prepOverlay, activeFilter);
-    if (spotTiles.length > 0) {
-      const spotPulse = 0.5 - 0.5 * Math.cos(((now % 900) / 900) * Math.PI * 2);
-      ctx.save();
-      for (const pt of spotTiles) {
-        if (pt.x < startCol || pt.x > endCol || pt.y < startRow || pt.y > endRow) continue;
-        const sx = pt.x * PMD_TILE_NATIVE_PX - cameraX;
-        const sy = pt.y * PMD_TILE_NATIVE_PX - cameraY;
-        ctx.fillStyle = lerpRgba([248, 248, 88, 0.14], [255, 255, 160, 0.36], spotPulse);
-        ctx.fillRect(sx + 1, sy + 1, PMD_TILE_NATIVE_PX - 2, PMD_TILE_NATIVE_PX - 2);
-        ctx.strokeStyle = '#050a14';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(sx + 0.5, sy + 0.5, PMD_TILE_NATIVE_PX - 1, PMD_TILE_NATIVE_PX - 1);
-        ctx.strokeStyle = spotPulse > 0.5 ? '#ffffff' : '#f8f858';
-        ctx.strokeRect(sx + 1.5, sy + 1.5, PMD_TILE_NATIVE_PX - 3, PMD_TILE_NATIVE_PX - 3);
-      }
-      ctx.restore();
-    }
   }
 
   renderUnitsAndStrikeVfx(ctx, state, dom, now);

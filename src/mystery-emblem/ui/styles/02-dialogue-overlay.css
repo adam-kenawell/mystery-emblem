@@ -105,10 +105,6 @@
   color: var(--pmd-text-yellow);
 }
 
-.pmd-dialogue-nickname[hidden] {
-  display: none;
-}
-
 .pmd-dialogue-box {
   grid-area: box;
   width: 100%;
@@ -286,15 +282,4 @@ body:has(#pmd-overworld-scene:not([hidden])) .pmd-dialogue-overlay .pmd-dialogue
 .pmd-dialogue-box.is-narrator .pmd-dialogue-text {
   text-align: left;
   font-style: italic;
-}
-
-.pmd-text-shake {
-  display: inline-block;
-  animation: pmd-text-shake 0.14s steps(2) infinite;
-}
-
-@keyframes pmd-text-shake {
-  0% { transform: translate(0, 0); }
-  50% { transform: translate(1px, -1px); }
-  100% { transform: translate(-1px, 1px); }
 }

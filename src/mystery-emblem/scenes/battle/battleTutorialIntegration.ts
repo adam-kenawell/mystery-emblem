@@ -1,8 +1,7 @@
 /**
- * Quaquaval Interactive Tutorial Action Availability & Topic Triggers in `BattleScene`
+ * Quaquaval Interactive Tutorial Topic Triggers in `BattleScene`
  */
 
-import { PROLOGUE_LEVEL_ID } from '../../data/chapters/prologue/tutorialStaging';
 import {
   PROLOGUE_HEAL_DRILL_TOPIC_ID,
   PROLOGUE_ITEM_CURE_DRILL_TOPIC_ID,
@@ -14,227 +13,11 @@ import {
   isQuaquavalAbsentFromLevel,
 } from '../../data/tutorialRegistry';
 import { getMapDeploymentCap } from '../../engine/battleSetup';
-import { getEligibleEvolutionBranches } from '../../engine/progressionEngine';
 import { ensureTilePairVisible } from './battleBannersAndTransitions';
 import { spawnFloatingText } from './battleFloatingCallouts';
 import { updateBattleInfoStrip } from './battleHudCards';
-import {
-  getAttackableEnemiesForSelectedState,
-  getExpectedTutorialAction,
-  getHealOrConsumableTutorialUnits,
-  getTutorialHealerUnit,
-  getTutorialPartnerUnit,
-  resolveTutorialSpotlightTiles,
-} from './battleTutorialSpotlights';
 import type { BattleControllerContext } from './battleTypesAndState';
-import {
-  canUseUnitEquippedConsumable,
-  getLivingPlayers,
-  getLordUnit,
-  getSelectedUnit,
-} from './battleUnitQueries';
-
-export {
-  getAttackableEnemiesForSelectedState,
-  getExpectedTutorialAction,
-  getHealOrConsumableTutorialUnits,
-  getTutorialHealerUnit,
-  getTutorialPartnerUnit,
-  resolveTutorialSpotlightTiles,
-};
-
-export function registerBattleTutorialAvailabilityProvider(ctx: BattleControllerContext): void {
-  const { state, dom, prepOverlay, tutorialOverlay } = ctx;
-  if (!tutorialOverlay) return;
-  tutorialOverlay.setActionAvailabilityProvider({
-    isActionAlreadyDone: (action) => {
-      if (!state.openState) return false;
-      switch (action) {
-        case 'battle_open_field_menu':
-          return (
-            state.phase === 'player_phase' &&
-            state.systemMenuOpen &&
-            state.systemMenuSubView === 'root'
-          );
-        case 'battle_toggle_danger_area':
-          return state.phase === 'player_phase' && state.globalDangerEnabled;
-        case 'battle_select_lord':
-          return (
-            state.phase === 'player_phase' &&
-            state.interactionState === 'unit_selected' &&
-            getSelectedUnit(state)?.id === getLordUnit(state)?.id
-          );
-        case 'battle_select_partner': {
-          const partner = getTutorialPartnerUnit(state);
-          return (
-            state.phase === 'player_phase' &&
-            state.interactionState === 'unit_selected' &&
-            Boolean(partner && getSelectedUnit(state)?.id === partner.id)
-          );
-        }
-        case 'battle_move_to_blue_tile':
-          return state.phase === 'player_phase' && state.interactionState === 'action_menu';
-        case 'battle_open_attack_forecast':
-          return (
-            state.phase === 'player_phase' &&
-            state.interactionState === 'combat_forecast' &&
-            state.forecastMode === 'attack' &&
-            !dom.forecastModalBackdropEl.hidden
-          );
-        case 'battle_select_healer': {
-          const healer = getTutorialHealerUnit(state);
-          return (
-            state.phase === 'player_phase' &&
-            state.interactionState === 'unit_selected' &&
-            Boolean(healer && getSelectedUnit(state)?.id === healer.id)
-          );
-        }
-        case 'battle_open_heal_forecast':
-          return (
-            state.phase === 'player_phase' &&
-            state.interactionState === 'combat_forecast' &&
-            state.forecastMode === 'heal' &&
-            !dom.forecastModalBackdropEl.hidden
-          );
-        case 'prep_open_manage_units':
-          return (
-            state.phase === 'dungeon_prep' &&
-            prepOverlay.isOpen() &&
-            prepOverlay.getSubMode() === 'manage_units'
-          );
-        case 'prep_open_view_map':
-          return (
-            state.phase === 'dungeon_prep' &&
-            prepOverlay.isOpen() &&
-            prepOverlay.getSubMode() === 'view_map'
-          );
-        default:
-          return false;
-      }
-    },
-    canPerformActionNow: (action) => {
-      if (!state.openState) return false;
-      switch (action) {
-        case 'battle_open_field_menu':
-          return (
-            state.phase === 'player_phase' &&
-            state.interactionState === 'idle' &&
-            !state.systemMenuOpen
-          );
-        case 'battle_toggle_danger_area':
-          return (
-            state.phase === 'player_phase' &&
-            ((state.systemMenuOpen && state.systemMenuSubView === 'root') ||
-              (!state.systemMenuOpen && state.interactionState === 'idle'))
-          );
-        case 'battle_select_lord': {
-          const lord = getLordUnit(state);
-          return (
-            state.phase === 'player_phase' &&
-            !state.systemMenuOpen &&
-            Boolean(lord && !lord.defeated && lord.currentHp > 0 && !lord.waited)
-          );
-        }
-        case 'battle_select_partner': {
-          const partner = getTutorialPartnerUnit(state);
-          return (
-            state.phase === 'player_phase' &&
-            !state.systemMenuOpen &&
-            Boolean(partner && !partner.defeated && partner.currentHp > 0 && !partner.waited)
-          );
-        }
-        case 'battle_move_to_blue_tile':
-          return (
-            state.phase === 'player_phase' &&
-            state.interactionState === 'unit_selected' &&
-            Boolean(state.currentRange && state.currentRange.reachableTiles.size > 0)
-          );
-        case 'battle_confirm_wait':
-          return (
-            state.phase === 'player_phase' &&
-            state.interactionState === 'action_menu' &&
-            !dom.actionMenuEl.hidden
-          );
-        case 'battle_confirm_item': {
-          const sel = getSelectedUnit(state);
-          return (
-            state.phase === 'player_phase' &&
-            state.interactionState === 'action_menu' &&
-            !dom.actionMenuEl.hidden &&
-            !dom.cmdItemBtnEl.hidden &&
-            Boolean(sel && canUseUnitEquippedConsumable(sel))
-          );
-        }
-        case 'battle_open_attack_forecast':
-          return (
-            state.phase === 'player_phase' &&
-            (state.interactionState === 'unit_selected' ||
-              state.interactionState === 'action_menu') &&
-            getAttackableEnemiesForSelectedState(state).length > 0
-          );
-        case 'battle_confirm_attack':
-          return (
-            state.phase === 'player_phase' &&
-            state.interactionState === 'combat_forecast' &&
-            state.forecastMode === 'attack' &&
-            !dom.forecastModalBackdropEl.hidden
-          );
-        case 'battle_inspect_heal_or_item':
-          return (
-            state.phase === 'player_phase' &&
-            state.interactionState === 'idle' &&
-            !state.systemMenuOpen &&
-            getHealOrConsumableTutorialUnits(state).length > 0
-          );
-        case 'battle_select_healer': {
-          const healer = getTutorialHealerUnit(state);
-          return (
-            state.phase === 'player_phase' &&
-            state.interactionState === 'idle' &&
-            !state.systemMenuOpen &&
-            Boolean(healer && !healer.waited)
-          );
-        }
-        case 'battle_open_heal_forecast': {
-          const healer = getTutorialHealerUnit(state);
-          return (
-            state.phase === 'player_phase' &&
-            state.interactionState === 'unit_selected' &&
-            Boolean(healer && getSelectedUnit(state)?.id === healer.id)
-          );
-        }
-        case 'battle_confirm_heal':
-          return (
-            state.phase === 'player_phase' &&
-            state.interactionState === 'combat_forecast' &&
-            state.forecastMode === 'heal' &&
-            !dom.forecastModalBackdropEl.hidden
-          );
-        case 'prep_open_manage_units':
-        case 'prep_open_view_map':
-          return (
-            state.phase === 'dungeon_prep' &&
-            prepOverlay.isOpen() &&
-            prepOverlay.getSubMode() === 'hub'
-          );
-        case 'prep_close_manage_units':
-          return (
-            state.phase === 'dungeon_prep' &&
-            prepOverlay.isOpen() &&
-            prepOverlay.getSubMode() === 'manage_units'
-          );
-        case 'prep_swap_or_finish_view_map':
-          return (
-            state.phase === 'dungeon_prep' &&
-            prepOverlay.isOpen() &&
-            prepOverlay.getSubMode() === 'view_map'
-          );
-        default:
-          return false;
-      }
-    },
-  });
-}
+import { getLivingPlayers } from './battleUnitQueries';
 
 export function triggerBattleTutorial(
   ctx: BattleControllerContext,
@@ -245,26 +28,16 @@ export function triggerBattleTutorial(
   if (!tutorialOverlay || !state.openState || state.cutsceneInProgress) {
     return Promise.resolve(false);
   }
-  const isPrologue = state.activeLevelId === PROLOGUE_LEVEL_ID;
-  if (DUPLICATE_PROLOGUE_LESSON_TOPIC_IDS.has(topicId)) {
-    return Promise.resolve(false);
-  }
+  const isPrologue = state.activeLevelId === 'prologue';
   if (isQuaquavalAbsentFromLevel(state.activeLevelId)) {
     return Promise.resolve(false);
   }
   return tutorialOverlay.presentTopicIfNeeded(topicId, {
-    sceneFastMode: state.fastMode,
     presenter: isPrologue ? 'mentor' : 'advisor',
     forceIfAlreadySeen: opts?.forceIfAlreadySeen,
     tokens: opts?.tokens,
   });
 }
-
-/** Already taught live by the Prologue drills, so never auto-trigger them again. */
-const DUPLICATE_PROLOGUE_LESSON_TOPIC_IDS: ReadonlySet<string> = new Set([
-  'ch1_first_combat_forecast',
-  'ch1_healing_and_items',
-]);
 
 /** Fires once when the player first opens a combat forecast so Quaquaval explains range & [E] counters. */
 export function triggerReactiveForecastTutorial(ctx: BattleControllerContext): void {
@@ -299,57 +72,56 @@ export async function triggerReactivePostCombatTutorials(
     return false;
   }
   const players = getLivingPlayers(state);
-  const isPrologue = state.activeLevelId === PROLOGUE_LEVEL_ID;
-  const paralyzedPrologueUnit = isPrologue
-    ? players.find((u) => u.status === 'PAR' && u.consumableItemId !== 'paralyze_heal')
-    : undefined;
-  const afflictedUnit =
-    paralyzedPrologueUnit ??
-    players.find((u) => u.status === 'PAR') ??
-    players.find((u) => u.status !== null);
+  const isPrologue = state.activeLevelId === 'prologue';
 
-  if (
-    afflictedUnit &&
-    (Boolean(paralyzedPrologueUnit) || !saveManager.hasSeenTutorial(PROLOGUE_ITEM_CURE_DRILL_TOPIC_ID))
-  ) {
-    if (paralyzedPrologueUnit) {
-      if (paralyzedPrologueUnit.heldItemId) {
-        state.eventBonusItems.push({ itemId: paralyzedPrologueUnit.heldItemId, quantity: 1 });
-        paralyzedPrologueUnit.heldItemId = null;
+  if (isPrologue) {
+    const paralyzedUnit = players.find((u) => u.status === 'PAR');
+    if (paralyzedUnit) {
+      const grantedCure = paralyzedUnit.consumableItemId !== 'paralyze_heal';
+      if (grantedCure) {
+        if (paralyzedUnit.heldItemId) {
+          state.eventBonusItems.push({ itemId: paralyzedUnit.heldItemId, quantity: 1 });
+          paralyzedUnit.heldItemId = null;
+        }
+        if (paralyzedUnit.consumableItemId) {
+          state.eventBonusItems.push({ itemId: paralyzedUnit.consumableItemId, quantity: 1 });
+        }
+        paralyzedUnit.consumableItemId = 'paralyze_heal';
+        ensureTilePairVisible(
+          state,
+          paralyzedUnit.x,
+          paralyzedUnit.y,
+          paralyzedUnit.x,
+          paralyzedUnit.y
+        );
+        state.inspectedTile = { x: paralyzedUnit.x, y: paralyzedUnit.y };
+        audioManager.playSfx('heal');
+        spawnFloatingText(
+          state,
+          dom,
+          paralyzedUnit.x,
+          Math.max(0, paralyzedUnit.y - 1),
+          'PARALYZE HEAL!',
+          '#68f8a8',
+          950
+        );
+        updateBattleInfoStrip(ctx);
+        ctx.renderNow();
       }
-      if (
-        paralyzedPrologueUnit.consumableItemId &&
-        paralyzedPrologueUnit.consumableItemId !== 'paralyze_heal'
-      ) {
-        state.eventBonusItems.push({ itemId: paralyzedPrologueUnit.consumableItemId, quantity: 1 });
+      if (grantedCure || !saveManager.hasSeenTutorial(PROLOGUE_ITEM_CURE_DRILL_TOPIC_ID)) {
+        return triggerBattleTutorial(ctx, PROLOGUE_ITEM_CURE_DRILL_TOPIC_ID, {
+          forceIfAlreadySeen: grantedCure,
+          tokens: { afflicted: paralyzedUnit.nickname },
+        });
       }
-      paralyzedPrologueUnit.consumableItemId = 'paralyze_heal';
-      ensureTilePairVisible(
-        state,
-        paralyzedPrologueUnit.x,
-        paralyzedPrologueUnit.y,
-        paralyzedPrologueUnit.x,
-        paralyzedPrologueUnit.y
-      );
-      state.inspectedTile = { x: paralyzedPrologueUnit.x, y: paralyzedPrologueUnit.y };
-      audioManager.playSfx('heal');
-      spawnFloatingText(
-        state,
-        dom,
-        paralyzedPrologueUnit.x,
-        Math.max(0, paralyzedPrologueUnit.y - 1),
-        'PARALYZE HEAL!',
-        '#68f8a8',
-        950
-      );
-      updateBattleInfoStrip(ctx);
-      ctx.renderNow();
     }
-    return triggerBattleTutorial(ctx, PROLOGUE_ITEM_CURE_DRILL_TOPIC_ID, {
-      forceIfAlreadySeen: Boolean(paralyzedPrologueUnit),
-      tokens: { afflicted: afflictedUnit.nickname },
-    });
+  } else if (
+    players.some((u) => u.status !== null) &&
+    !saveManager.hasSeenTutorial('status_conditions_and_cures')
+  ) {
+    return triggerBattleTutorial(ctx, 'status_conditions_and_cures');
   }
+
   if (
     players.some((u) => u.currentHp < u.maxHp) &&
     !saveManager.hasSeenTutorial(PROLOGUE_HEAL_DRILL_TOPIC_ID)
@@ -371,7 +143,7 @@ export async function triggerReactiveTerrainTutorialAt(
     !state.openState ||
     runGen !== state.battleRunGen ||
     state.phase !== 'player_phase' ||
-    state.activeLevelId === PROLOGUE_LEVEL_ID ||
+    state.activeLevelId === 'prologue' ||
     isQuaquavalAbsentFromLevel(state.activeLevelId)
   ) {
     return false;
@@ -393,7 +165,7 @@ export async function triggerTurn2FallbackTerrainTutorial(
     !state.openState ||
     runGen !== state.battleRunGen ||
     state.phase !== 'player_phase' ||
-    state.activeLevelId === PROLOGUE_LEVEL_ID ||
+    state.activeLevelId === 'prologue' ||
     isQuaquavalAbsentFromLevel(state.activeLevelId)
   ) {
     return false;
@@ -413,23 +185,11 @@ export function triggerPrepHubTutorials(ctx: BattleControllerContext): void {
   if (!save) return;
 
   const cap = getMapDeploymentCap(state.map);
-  const hasConvoyStone = save.convoy.some((c) => c.itemId === 'evolution_stone' && c.quantity > 0);
-  const hasConvoyGem = save.convoy.some((c) => c.itemId === 'evolution_gem' && c.quantity > 0);
-  const anyUnitCanPromoteNow = save.roster.some((u) => {
-    const stoneBranches = getEligibleEvolutionBranches(u.speciesId, u.level, 'evolution_stone');
-    const gemBranches = getEligibleEvolutionBranches(u.speciesId, u.level, 'evolution_gem');
-    return (
-      stoneBranches.some((b) => u.consumableItemId === b.requiredItemId || hasConvoyStone) ||
-      gemBranches.some((b) => u.consumableItemId === b.requiredItemId || hasConvoyGem)
-    );
-  });
-
   const topics = evaluatePrepTutorialTopics({
     levelId: state.activeLevelId,
     map: state.map,
     save,
     deploymentCap: cap,
-    anyUnitCanPromoteNow,
   });
   for (const topicId of topics) {
     void triggerBattleTutorial(ctx, topicId);

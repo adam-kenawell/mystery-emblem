@@ -21,7 +21,9 @@ import {
   type OverworldDomElements,
   type OverworldMenuTab,
 } from './overworldDomTemplates';
-import { getOverworldArrivalTutorialTopicIds } from './overworldSnapshot';
+import {
+  getOverworldArrivalTutorialTopicIds,
+} from './OverworldTravelAndSprites';
 
 export class OverworldModalCoordinator {
   public kecleonShopOpen = false;
@@ -48,8 +50,11 @@ export class OverworldModalCoordinator {
       dialogueOverlay?: DialogueOverlay;
       tutorialOverlay?: TutorialOverlay;
       getGraph: () => OverworldGraphDefinition;
+      getReconciledState: (save: import('../../types/schemas').SaveData) => {
+        currentNodeId: string;
+        nodes: Record<string, import('../../types/schemas').OverworldNodeState>;
+      };
       isOpen: () => boolean;
-      isFastMode: () => boolean;
       onLayerStateChanged: () => void;
       onPreloadActiveSprites: () => void;
       onShowToast: (msg: string) => void;
@@ -96,9 +101,9 @@ export class OverworldModalCoordinator {
   }
 
   public openKecleonShop(): void {
-    const save = this.deps.saveManager.getSave();
+    const save = this.deps.saveManager.getReadOnlySave();
     if (!save) return;
-    const reconciled = ensureOverworldGraphState(save, this.deps.getGraph());
+    const reconciled = this.deps.getReconciledState(save);
     if (!reconciled.nodes[reconciled.currentNodeId]?.activeKecleonShop) {
       this.deps.audioManager.playSfx('cancel');
       this.deps.onShowToast('No shop here.');
@@ -125,7 +130,7 @@ export class OverworldModalCoordinator {
   }
 
   public renderKecleonShopContents(): void {
-    const save = this.deps.saveManager.getSave();
+    const save = this.deps.saveManager.getReadOnlySave();
     if (!save) return;
     this.selectedShopItemId = renderOverworldKecleonShop({
       dom: this.deps.dom,
@@ -141,7 +146,7 @@ export class OverworldModalCoordinator {
   }
 
   public openSystemMenu(tab: OverworldMenuTab = 'units'): void {
-    const save = this.deps.saveManager.getSave();
+    const save = this.deps.saveManager.getReadOnlySave();
     this.activeMenuTab = tab === 'supports' && !areSupportsUnlockedInCampaign(save) ? 'units' : tab;
     this.pendingSystemConfirm = null;
     this.menuFeedbackMessage = '';
@@ -150,7 +155,6 @@ export class OverworldModalCoordinator {
     this.deps.audioManager.playSfx('select');
     this.renderSystemMenuBody();
     this.deps.onLayerStateChanged();
-    this.deps.tutorialOverlay?.notifyActionCompleted('overworld_open_menu');
   }
 
   public closeSystemMenu(): void {
@@ -164,7 +168,7 @@ export class OverworldModalCoordinator {
   }
 
   public renderSystemMenuBody(): void {
-    const save = this.deps.saveManager.getSave();
+    const save = this.deps.saveManager.getReadOnlySave();
     syncOverworldSupportsTabButton(this.deps.dom, save);
     if (this.activeMenuTab === 'supports' && !areSupportsUnlockedInCampaign(save)) {
       this.activeMenuTab = 'units';
@@ -238,11 +242,11 @@ export class OverworldModalCoordinator {
 
   public triggerTutorial(topicId: string): Promise<boolean> {
     if (!this.deps.tutorialOverlay || !this.deps.isOpen()) return Promise.resolve(false);
-    return this.deps.tutorialOverlay.presentTopicIfNeeded(topicId, { sceneFastMode: this.deps.isFastMode() });
+    return this.deps.tutorialOverlay.presentTopicIfNeeded(topicId);
   }
 
   public triggerOverworldArrivalTutorials(): void {
-    const save = this.deps.saveManager.getSave();
+    const save = this.deps.saveManager.getReadOnlySave();
     if (!this.deps.tutorialOverlay || !this.deps.isOpen() || !save) return;
     for (const topicId of getOverworldArrivalTutorialTopicIds(save)) void this.triggerTutorial(topicId);
   }

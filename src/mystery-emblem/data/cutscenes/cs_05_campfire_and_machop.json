@@ -10,6 +10,7 @@
     { "id": "lord", "who": { "kind": "lord" } },
     { "id": "partner", "who": { "kind": "partner" } },
     { "id": "healer", "who": { "kind": "healer" } },
+    { "id": "combee", "who": { "kind": "recruit", "speciesId": "combee" } },
     { "id": "mentor", "who": { "kind": "mentor" } },
     { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } },
     { "id": "machop", "who": { "kind": "recruit", "speciesId": "machop" } }
@@ -18,6 +19,7 @@
     { "id": "lord", "x": 6, "y": 5, "facing": "Right" },
     { "id": "partner", "x": 8, "y": 5, "facing": "Left" },
     { "id": "healer", "x": 6, "y": 6, "facing": "UpRight" },
+    { "id": "combee", "x": 7, "y": 6, "facing": "Up" },
     { "id": "chespin", "x": 8, "y": 6, "facing": "UpLeft" },
     { "id": "mentor", "x": 7, "y": 4, "facing": "Down" },
     { "id": "machop", "x": 12, "y": 5, "facing": "Left", "hidden": true }
@@ -74,6 +76,7 @@
         { "type": "place", "who": "lord", "x": 6, "y": 4, "facing": "Right" },
         { "type": "place", "who": "partner", "x": 6, "y": 6, "facing": "Right" },
         { "type": "place", "who": "healer", "x": 5, "y": 5, "facing": "Right" },
+        { "type": "place", "who": "combee", "x": 5, "y": 4, "facing": "Right" },
         { "type": "place", "who": "chespin", "x": 5, "y": 6, "facing": "Right" },
         { "type": "fade", "to": "clear", "duration": 0.45 },
         { "type": "walk", "who": "machop", "path": [[9, 5]], "speed": 3.5, "facing": "Left" },

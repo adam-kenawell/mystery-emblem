@@ -302,7 +302,7 @@
           "speaker": "partner",
           "emotion": "Determined",
           "side": "right",
-          "text": "Then let us make it official right here. Sworn partners through every battle, every blizzard, and every absurd detour."
+          "text": "Then let us make it official right here. Sworn partners through every battle and every absurd detour."
         }
       },
       {
@@ -628,7 +628,7 @@
           "speaker": "lord",
           "emotion": "Determined",
           "side": "left",
-          "text": "Then let us bind that promise to this charm. Wherever the road takes us, through every storm and quiet season after, we stay anchored side by side."
+          "text": "Then let us bind that promise to this charm. Wherever the road takes us, through every storm and quiet season after, we stay anchored together."
         }
       },
       {
@@ -791,7 +791,7 @@
           "speaker": "lord",
           "emotion": "Determined",
           "side": "left",
-          "text": "Those years taught us how to look after neighbors, share rations, and hold our nerve under pressure. Nothing about that life was wasted, Dad."
+          "text": "Those years taught us how to look after neighbors and hold our nerve under pressure. Nothing about that life was wasted, Dad."
         }
       },
       {
@@ -1004,7 +1004,7 @@
           "speaker": "combee",
           "emotion": "Normal",
           "side": "right",
-          "text": "Squad leaders burn the most stamina keeping everyone moving! Besides, the bottom one already licked the spoon clean... wait, no I didn't!"
+          "text": "Squad leaders burn the most stamina keeping everyone moving! Besides, one of us already licked the spoon clean... wait, no we didn't!"
         }
       },
       {
@@ -1013,7 +1013,7 @@
           "speaker": "lord",
           "emotion": "Normal",
           "side": "left",
-          "text": "Wait a second. Did you three skip lunch while out foraging nectar for the rest of the camp?"
+          "text": "Wait a second. Did you skip lunch while out foraging nectar for the rest of the camp?"
         }
       },
       {
@@ -1031,7 +1031,7 @@
           "speaker": "lord",
           "emotion": "Happy",
           "side": "left",
-          "text": "You helped us clear outlaws off our own watering hole. Sit down right now and pass two spare spoons over here."
+          "text": "You helped us clear outlaws off our own watering hole. Sit down right now and grab extra spoons for everyone."
         }
       },
       {
@@ -1040,7 +1040,7 @@
           "speaker": "combee",
           "emotion": "Joyous",
           "side": "right",
-          "text": "Yay! Three spoons for three bees, wait, four with yours! Sweetest break we have had all week!"
+          "text": "Yay! Spoons for all of us, wait, one more for yours! Sweetest break we have had all week!"
         }
       }
     ]
@@ -1063,7 +1063,7 @@
           "speaker": "combee",
           "emotion": "Worried",
           "side": "right",
-          "text": "Whew! Did we swoop across the eastern ridge fast enough, {name:lord}? Our bottom half nearly clipped a pine branch on the turn!"
+          "text": "Whew! Did we swoop across the eastern ridge fast enough, {name:lord}? Our rear guard nearly clipped a pine branch on the turn!"
         }
       },
       {
@@ -1072,7 +1072,7 @@
           "speaker": "lord",
           "emotion": "Inspired",
           "side": "left",
-          "text": "You cut off that entire flanking squad before they could touch our rear line. Without you three in the air, we would have been boxed in."
+          "text": "You cut off that entire flanking squad before they could touch our rear line. Without your swarm in the air, we would have been boxed in."
         }
       },
       {
@@ -1081,7 +1081,7 @@
           "speaker": "combee",
           "emotion": "Surprised",
           "side": "right",
-          "text": "Really? Even the bottom bee stayed wide awake through the whole dive!"
+          "text": "Really? Even our sleepiest scout stayed wide awake through the whole dive!"
         }
       },
       {
@@ -1090,7 +1090,7 @@
           "speaker": "combee",
           "emotion": "Happy",
           "side": "right",
-          "text": "I did! I spotted the second raider hiding behind the boulder and yelled first!"
+          "text": "We did! We spotted the second raider hiding behind the boulder and yelled first!"
         }
       },
       {
@@ -1099,7 +1099,7 @@
           "speaker": "lord",
           "emotion": "Happy",
           "side": "left",
-          "text": "Ha! Looks like all three of you are running in perfect sync now, {name:combee}."
+          "text": "Ha! Looks like your whole formation is running in perfect sync now, {name:combee}."
         }
       },
       {
@@ -1108,7 +1108,7 @@
           "speaker": "combee",
           "emotion": "Normal",
           "side": "right",
-          "text": "When we flew down to that watering hole, we only hoped for a few pails to bring the Queen."
+          "text": "When we flew down to that watering hole, we only hoped for a few pails for the hive."
         }
       },
       {
@@ -1117,7 +1117,7 @@
           "speaker": "combee",
           "emotion": "Inspired",
           "side": "right",
-          "text": "Instead we found a crew worth flying through storms for. Wherever you point us, {name:lord}, all three of us are right behind you!"
+          "text": "Instead we found a crew worth flying through storms for. Wherever you point us, {name:lord}, our whole swarm is right behind you!"
         }
       },
       {
@@ -1425,7 +1425,7 @@
           "speaker": "lord",
           "emotion": "Inspired",
           "side": "left",
-          "text": "Then rise and stand eye to eye with me, {name:chespin}. I don't want a retainer kneeling behind me; I want an equal partner beside me."
+          "text": "Then rise and stand eye to eye with me, {name:chespin}. Keep your shield at my shoulder as an equal partner, never kneeling behind me."
         }
       },
       {

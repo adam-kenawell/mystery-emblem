@@ -71,28 +71,6 @@
   gap: 8px;
 }
 
-.pmd-forecast-eff-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  font-size: 12px;
-  font-weight: bold;
-  background: var(--pmd-fill-well-deep);
-  border: 2px solid var(--pmd-border-outer);
-  color: var(--pmd-text-white);
-  text-shadow: 1px 1px 0 #000000;
-}
-
-.pmd-forecast-eff-badge.is-super {
-  border-color: var(--pmd-text-green);
-  color: var(--pmd-text-green);
-}
-
-.pmd-forecast-eff-badge.is-resisted {
-  border-color: var(--pmd-text-orange);
-  color: #ffd088;
-}
-
 .pmd-forecast-unit-head {
   display: flex;
   align-items: center;
@@ -154,15 +132,6 @@
   text-overflow: ellipsis;
 }
 
-.pmd-forecast-move-line {
-  font-size: 12px;
-  color: var(--pmd-text-green);
-  text-shadow: 1px 1px 0 #000000;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 /* Crisp PMD Pixel HP Bar (White 2px outer frame, `#50F850` emerald fill - Reference Image 1) */
 .pmd-forecast-hp-bar-track {
   position: relative;
@@ -186,64 +155,12 @@
   background: #50f850;
 }
 
-.pmd-forecast-hp-bar-fill.is-enemy {
-  background: #f85868;
-}
-
-.pmd-forecast-hp-bar-fill.is-heal {
-  background: #58f888;
-}
-
-.pmd-forecast-stat {
-  background: var(--pmd-fill-well-deep);
-  border: 2px solid var(--pmd-divider-subtle);
-  padding: 3px 4px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.pmd-forecast-stat span {
-  font-size: 10px;
-  color: var(--pmd-text-cyan);
-  text-shadow: 1px 1px 0 #000000;
-}
-
-.pmd-forecast-stat strong {
-  font-size: 12px;
-  color: var(--pmd-text-white);
-  text-shadow: 1px 1px 0 #000000;
-  white-space: nowrap;
-}
-
-.pmd-forecast-actions {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.pmd-forecast-actions .pmd-btn {
-  min-height: 46px;
-  min-width: 124px;
-}
-
 /* Mobile Portrait (`390x844`) Forecast & Outcome Layout */
 @media (max-width: 600px) {
 
   .pmd-battle-forecast-dialog {
     padding: 6px 8px;
     gap: 6px;
-  }
-
-  .pmd-forecast-actions {
-    justify-content: stretch;
-  }
-
-  .pmd-forecast-actions .pmd-btn {
-    flex: 1;
-    min-width: 0;
   }
 
 }

@@ -161,7 +161,6 @@ export function bindTitleAndCornerControls(params: {
       Boolean(ctx.cutsceneScene?.isOpen()) ||
       Boolean(ctx.creditsScene?.isOpen()) ||
       Boolean(ctx.quizScene?.isOpen()) ||
-      Boolean(ctx.recruitNicknameOverlay?.isOpen()) ||
       Boolean(ctx.dialogueOverlay?.isOpen()) ||
       Boolean(ctx.battleScene?.isOpen()) ||
       Boolean(ctx.mapEditorScene?.isOpen()) ||

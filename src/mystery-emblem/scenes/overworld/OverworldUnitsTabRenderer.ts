@@ -16,6 +16,7 @@ import {
   renderOverworldVitaminsSubbox,
 } from '../../ui/inspector/OverworldUnitSubboxes';
 import {
+  createEvolutionBranchButton,
   escapeUiHtml,
   getOwnedEvolutionBranches,
   populateUnitSevenStatBoxes,
@@ -199,28 +200,20 @@ export function renderOverworldUnitsTab(params: OverworldUnitsTabParams): {
         reqRow.appendChild(lvlSpan);
         metaDiv.append(titleStrong, reqRow);
 
-        const evoBtn = document.createElement('button');
-        evoBtn.type = 'button';
-        evoBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
-        evoBtn.dataset.testid = `overworld-promote-${branch.targetSpeciesId}`;
-        evoBtn.disabled = !meetsLevel;
-        evoBtn.textContent = 'Evolve';
-        bindPointerTap(evoBtn, () => {
-          try {
-            saveManager.useEvolutionItemOnUnit(
-              selected.instanceId,
-              branch.requiredItemId,
-              branch.targetSpeciesId
-            );
-            audioManager.playSfx('victory_fanfare');
+        const evoBtn = createEvolutionBranchButton({
+          unit: selected,
+          branch,
+          saveManager,
+          audioManager,
+          testId: `overworld-promote-${branch.targetSpeciesId}`,
+          label: 'Evolve',
+          disabled: !meetsLevel,
+          sfx: 'victory_fanfare',
+          onPromoted: (_promoted, evolvedName) => {
             onEvolvedPreloadSprites();
-            onFeedbackAndRefresh(
-              `${selected.nickname} evolved into ${targetSp?.name ?? branch.targetSpeciesId}!`
-            );
-          } catch (err) {
-            audioManager.playSfx('cancel');
-            onFeedbackAndRefresh(err instanceof Error ? err.message : 'Cannot evolve yet.');
-          }
+            onFeedbackAndRefresh(`${selected.nickname} evolved into ${evolvedName}!`);
+          },
+          onError: onFeedbackAndRefresh,
         });
         row.append(metaDiv, evoBtn);
         promoBox.appendChild(row);

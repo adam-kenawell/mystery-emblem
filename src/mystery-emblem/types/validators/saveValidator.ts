@@ -11,7 +11,6 @@ import {
   CURRENT_SAVE_SCHEMA_VERSION,
   FLABEBE_FLOWER_COLORS,
   ORICORIO_STYLES,
-  QUIZ_SEED_SLOT_KEYS,
   SUPPORT_RANKS,
   type ItemDefinition,
   type MoveDefinition,
@@ -133,18 +132,6 @@ export function validateSaveData(
           errors.push(
             `Unit "${unit.instanceId}" has invalid consumableItemId "${unit.consumableItemId}".`
           );
-        }
-      }
-    }
-  }
-
-  if (save.campaign?.quizSeeds !== undefined) {
-    if (!save.campaign.quizSeeds || typeof save.campaign.quizSeeds !== 'object') {
-      errors.push('SaveData.campaign.quizSeeds must be an object when present.');
-    } else {
-      for (const slotKey of QUIZ_SEED_SLOT_KEYS) {
-        if (!Array.isArray(save.campaign.quizSeeds[slotKey])) {
-          errors.push(`SaveData.campaign.quizSeeds.${slotKey} must be an array.`);
         }
       }
     }

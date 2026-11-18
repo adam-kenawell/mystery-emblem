@@ -11,7 +11,6 @@ import {
 import { coordKey, findShortestPathAStar } from '../../engine/terrainAndPathfinding';
 import { syncHoverPlayerRange } from './battleDangerAndViewportState';
 import { updateBattleInfoStrip } from './battleHudCards';
-import { getExpectedTutorialAction } from './battleTutorialSpotlights';
 import type { BattleControllerContext } from './battleTypesAndState';
 import { getLivingUnits, getSelectedUnit } from './battleUnitQueries';
 
@@ -19,7 +18,7 @@ export function updateHoveredTile(
   ctx: BattleControllerContext,
   tile: { x: number; y: number } | null
 ): void {
-  const { state, tutorialOverlay } = ctx;
+  const { state } = ctx;
   if (tile?.x === state.hoveredTile?.x && tile?.y === state.hoveredTile?.y) {
     return;
   }
@@ -42,9 +41,8 @@ export function updateHoveredTile(
     const occupant = living.find(
       (u) => u.x === tile.x && u.y === tile.y && u.id !== unit?.id
     );
-    const expectedTutorialAction = getExpectedTutorialAction(tutorialOverlay);
     const talkPlan =
-      unit && occupant && state.events.length > 0 && !expectedTutorialAction
+      unit && occupant && state.events.length > 0
         ? findBestTalkPlanForTarget(
             state.map,
             unit,

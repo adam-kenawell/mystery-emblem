@@ -78,7 +78,7 @@ export async function playCombatExchangeAsync(
         toWorldY: target.y * PMD_TILE_NATIVE_PX + 12,
         color: strike.isCrit ? '#f8d048' : '#ffffff',
         startedAtMs: performance.now(),
-        durationMs: state.fastMode ? 45 : 220,
+        durationMs: 220,
       };
       await waitBattleMs(state, 190);
     } else {
@@ -90,7 +90,7 @@ export async function playCombatExchangeAsync(
         toWorldY: target.y * PMD_TILE_NATIVE_PX + 12,
         color: strike.isCrit ? '#f8d048' : '#68e0ff',
         startedAtMs: performance.now(),
-        durationMs: state.fastMode ? 55 : 260,
+        durationMs: 260,
       };
       await waitBattleMs(state, 240);
     }
@@ -115,7 +115,7 @@ export async function playCombatExchangeAsync(
     target.currentHp = strike.targetHpAfter;
     target.action = 'Hurt';
     target.frameIndex = 0;
-    target.hitFlashUntilMs = performance.now() + (state.fastMode ? 60 : 230);
+    target.hitFlashUntilMs = performance.now() + 230;
 
     state.activeStrikeVfx = {
       kind: 'impact_burst',
@@ -125,7 +125,7 @@ export async function playCombatExchangeAsync(
       toWorldY: target.y * PMD_TILE_NATIVE_PX + 12,
       color: strike.isCrit ? '#f8d048' : '#ff6878',
       startedAtMs: performance.now(),
-      durationMs: state.fastMode ? 50 : 210,
+      durationMs: 210,
     };
 
     if (strike.typeMultiplier === 0) {

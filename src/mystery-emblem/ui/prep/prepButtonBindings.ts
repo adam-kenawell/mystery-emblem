@@ -3,7 +3,6 @@
  */
 
 import type { AudioManager } from '../../audio/AudioManager';
-import type { TutorialOverlay } from '../TutorialOverlay';
 import type { ItemFilterTab } from '../inspector/ItemActionInspector';
 import { bindPointerTap } from '../pointerControls';
 import type { PrepSubMode } from '../DungeonPrepOverlay';
@@ -13,7 +12,6 @@ export function bindPrepStaticButtons(params: {
   dom: PrepDomElements;
   audioManager: AudioManager;
   signal: AbortSignal;
-  getTutorialOverlay?: () => TutorialOverlay | undefined;
   getSelectedUnitInstanceId: () => string | null;
   onRosterOrLoadoutMutated: () => void;
   onRefreshAll: () => void;
@@ -26,20 +24,13 @@ export function bindPrepStaticButtons(params: {
   onSyncMapHudState: () => void;
   onSelectItemFilter: (filter: ItemFilterTab) => void;
 }): void {
-  const { dom, audioManager, signal, getTutorialOverlay } = params;
+  const { dom, audioManager, signal } = params;
 
   bindPointerTap(
     dom.hubBackdropEl.querySelector<HTMLElement>('[data-testid="prep-btn-manage-units"]'),
     () => {
-      const tutorial = getTutorialOverlay?.();
-      const expected = tutorial?.getExpectedAction() ?? null;
-      if (expected && expected !== 'prep_open_manage_units') {
-        tutorial?.nudgeActiveStep();
-        return;
-      }
       audioManager.playSfx('select');
       params.onSetSubMode('manage_units', 'units');
-      tutorial?.notifyActionCompleted('prep_open_manage_units');
     },
     { signal }
   );
@@ -47,11 +38,6 @@ export function bindPrepStaticButtons(params: {
   bindPointerTap(
     dom.hubBackdropEl.querySelector<HTMLElement>('[data-testid="prep-btn-manage-items"]'),
     () => {
-      const tutorial = getTutorialOverlay?.();
-      if (tutorial?.getExpectedAction()) {
-        tutorial.nudgeActiveStep();
-        return;
-      }
       audioManager.playSfx('select');
       params.onSetSubMode('manage_items', 'items');
     },
@@ -61,11 +47,6 @@ export function bindPrepStaticButtons(params: {
   bindPointerTap(
     dom.supportsBtnEl,
     () => {
-      const tutorial = getTutorialOverlay?.();
-      if (tutorial?.getExpectedAction()) {
-        tutorial.nudgeActiveStep();
-        return;
-      }
       audioManager.playSfx('select');
       params.onSetSubMode('supports');
     },
@@ -75,16 +56,9 @@ export function bindPrepStaticButtons(params: {
   bindPointerTap(
     dom.hubBackdropEl.querySelector<HTMLElement>('[data-testid="prep-btn-view-map"]'),
     () => {
-      const tutorial = getTutorialOverlay?.();
-      const expected = tutorial?.getExpectedAction() ?? null;
-      if (expected && expected !== 'prep_open_view_map') {
-        tutorial?.nudgeActiveStep();
-        return;
-      }
       audioManager.playSfx('select');
       params.onEnterViewMap();
       params.onSetSubMode('view_map');
-      tutorial?.notifyActionCompleted('prep_open_view_map');
     },
     { signal }
   );
@@ -92,11 +66,6 @@ export function bindPrepStaticButtons(params: {
   bindPointerTap(
     dom.hubBackdropEl.querySelector<HTMLElement>('[data-testid="prep-btn-save-progress"]'),
     () => {
-      const tutorial = getTutorialOverlay?.();
-      if (tutorial?.getExpectedAction()) {
-        tutorial.nudgeActiveStep();
-        return;
-      }
       audioManager.playSfx('select');
       params.onSaveProgress?.();
     },
@@ -106,11 +75,6 @@ export function bindPrepStaticButtons(params: {
   bindPointerTap(
     dom.hubBackdropEl.querySelector<HTMLElement>('[data-testid="prep-btn-enter-dungeon"]'),
     () => {
-      const tutorial = getTutorialOverlay?.();
-      if (tutorial?.getExpectedAction()) {
-        tutorial.nudgeActiveStep();
-        return;
-      }
       audioManager.playSfx('select');
       params.onConfirmEnterDungeon();
     },
@@ -120,15 +84,8 @@ export function bindPrepStaticButtons(params: {
   bindPointerTap(
     dom.unitsBackdropEl.querySelector<HTMLElement>('[data-testid="prep-units-close-btn"]'),
     () => {
-      const tutorial = getTutorialOverlay?.();
-      const expected = tutorial?.getExpectedAction() ?? null;
-      if (expected && expected !== 'prep_close_manage_units') {
-        tutorial?.nudgeActiveStep();
-        return;
-      }
       audioManager.playSfx('cancel');
       params.onSetSubMode('hub');
-      tutorial?.notifyActionCompleted('prep_close_manage_units');
     },
     { signal }
   );
@@ -136,11 +93,6 @@ export function bindPrepStaticButtons(params: {
   bindPointerTap(
     dom.unitsBackdropEl.querySelector<HTMLElement>('[data-testid="prep-unit-open-items-btn"]'),
     () => {
-      const tutorial = getTutorialOverlay?.();
-      if (tutorial?.getExpectedAction()) {
-        tutorial.nudgeActiveStep();
-        return;
-      }
       audioManager.playSfx('select');
       params.onSetSubMode('manage_items', 'items');
     },
@@ -183,11 +135,9 @@ export function bindPrepStaticButtons(params: {
   bindPointerTap(
     dom.mapReturnBtnEl,
     () => {
-      const tutorial = getTutorialOverlay?.();
       audioManager.playSfx('select');
       params.onExitViewMap();
       params.onSetSubMode('hub');
-      tutorial?.notifyActionCompleted('prep_swap_or_finish_view_map');
     },
     { signal }
   );

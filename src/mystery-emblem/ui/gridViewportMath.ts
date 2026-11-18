@@ -8,6 +8,16 @@
  */
 
 import { PMD_TILE_NATIVE_PX } from '../assets/tilesetLoader';
+
+/** Effective CSS zoom of `el` (product of its own and every ancestor's `zoom`). */
+export function getElementZoom(el: HTMLElement): number {
+  let zoom = 1;
+  for (let node: HTMLElement | null = el; node; node = node.parentElement) {
+    const z = parseFloat(getComputedStyle(node).zoom);
+    if (Number.isFinite(z) && z > 0) zoom *= z;
+  }
+  return zoom;
+}
 import {
   MAP_DEFAULT_SCALE,
   MAP_OVERSCROLL_NATIVE_PX,

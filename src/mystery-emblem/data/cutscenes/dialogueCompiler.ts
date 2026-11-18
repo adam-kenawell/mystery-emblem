@@ -48,13 +48,6 @@ export function castIdentityToSpeakerRef(
     case 'mentor':
     case 'advisor':
       return { kind: who.kind };
-    case 'quiz_slot':
-      return {
-        kind: 'quiz_slot',
-        slot: who.slot,
-        ...(who.index !== undefined ? { index: who.index } : {}),
-        ...(who.fallbackSpeciesId ? { fallbackSpeciesId: who.fallbackSpeciesId } : {}),
-      };
     case 'recruit':
       return { kind: 'recruit', speciesId: who.speciesId };
     case 'party_extra': {
@@ -82,10 +75,6 @@ export function isCastIdentityInParty(who: CastIdentity, save: SaveData | null):
       return true;
     case 'mentor':
       return Boolean(findMentorRosterUnit(save));
-    case 'quiz_slot': {
-      const seeded = save?.campaign.quizSeeds?.[who.slot]?.[who.index ?? 0] ?? who.fallbackSpeciesId;
-      return Boolean(seeded && findRosterUnitOfSpeciesLine(save, seeded));
-    }
     case 'recruit':
       return Boolean(findRosterUnitOfSpeciesLine(save, who.speciesId));
     case 'party_extra':

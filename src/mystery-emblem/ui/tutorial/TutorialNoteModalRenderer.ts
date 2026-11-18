@@ -109,7 +109,7 @@ export function renderFieldNoteModalDom(params: RenderFieldNoteModalParams): voi
   headerEl.append(heroLeft, closeBtn);
   noteWindowEl.appendChild(headerEl);
 
-  const chips = topic.chips ?? topic.beats[0]?.chips;
+  const chips = topic.chips;
   if (chips && chips.length > 0) {
     const chipsRow = document.createElement('div');
     chipsRow.className = 'pmd-tutorial-note-chips';

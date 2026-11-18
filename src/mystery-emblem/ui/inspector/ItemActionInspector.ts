@@ -7,11 +7,16 @@ import type { AudioManager } from '../../audio/AudioManager';
 import { ITEMS_LIST, getItemById, getMoveById, getSpeciesById } from '../../data/index';
 import { getUnitEquippedItemId, type SaveStateManager } from '../../state/SaveStateManager';
 import type { ItemDefinition, OwnedPokemonInstance, SaveData } from '../../types/schemas';
-import { createItemIconCell, createMiniItemIcon } from '../PmdItemIconGrid';
+import { createItemIconCell } from '../PmdItemIconGrid';
 import { createMiniSpeciesPortrait } from '../PmdUnitPortraitGrid';
 import { bindPointerTap } from '../pointerControls';
 import { renderColoredTypeHtml } from '../typeColors';
-import { escapeUiHtml, formatItemCategoryLabel } from './UnitDetailCard';
+import {
+  createEvolutionBranchButton,
+  createItemInspectorBanner,
+  escapeUiHtml,
+  formatItemCategoryLabel,
+} from './UnitDetailCard';
 
 export type ItemFilterTab = 'all' | 'held' | 'healing' | 'x_item' | 'special';
 
@@ -134,46 +139,27 @@ export function renderPrepAcquiredItemsInspector(params: {
   }
 
   const { item, bagQty, holders } = selectedEntry;
-  const inspectorEl = document.createElement('div');
-  inspectorEl.className = 'pmd-item-inspector-banner';
-  inspectorEl.dataset.testid = 'prep-item-inspector';
-
-  const mainEl = document.createElement('div');
-  mainEl.className = 'pmd-item-inspector-main';
-  mainEl.appendChild(createMiniItemIcon(item.id, { sizePx: 28, decorative: true }));
-
   const tmMove =
     item.category === 'tm' && item.effect.teachesMoveId
       ? getMoveById(item.effect.teachesMoveId)
       : undefined;
-  const infoDiv = document.createElement('div');
-  infoDiv.className = 'pmd-item-inspector-copy';
-  infoDiv.innerHTML = `
-    <div class="pmd-item-inspector-head">
+  const inspectorEl = createItemInspectorBanner({
+    itemId: item.id,
+    iconSizePx: 28,
+    testId: 'prep-item-inspector',
+    headHtml: `
       <strong class="pmd-item-inspector-name">${escapeUiHtml(item.name)}</strong>
       <span class="pmd-prep-cat-tag">${escapeUiHtml(formatItemCategoryLabel(item.category))}</span>
       ${tmMove ? `<span class="pmd-prep-cat-tag">${renderColoredTypeHtml(tmMove.type)}</span>` : ''}
       <span class="pmd-prep-stock-tag">×${bagQty}</span>
-      <span class="pmd-item-holders-inline" data-item-holders></span>
-    </div>
-    <span class="pmd-item-inspector-desc">${escapeUiHtml(item.description)}</span>
-  `;
-  const holdersContainer = infoDiv.querySelector<HTMLElement>('[data-item-holders]');
-  if (holdersContainer) {
-    if (holders.length === 0) holdersContainer.hidden = true;
-    else {
-      for (const h of holders) {
-        holdersContainer.appendChild(
-          createMiniSpeciesPortrait(resolveUnitVisualAssetId(h.speciesId, h.cosmeticForm), {
-            title: h.nickname,
-            sizePx: 22,
-            testId: `prep-item-holder-${item.id}-${h.instanceId}`,
-          })
-        );
-      }
-    }
-  }
-  mainEl.appendChild(infoDiv);
+    `,
+    descHtml: escapeUiHtml(item.description),
+    holders: holders.map((h) => ({
+      assetId: resolveUnitVisualAssetId(h.speciesId, h.cosmeticForm),
+      title: h.nickname,
+      testId: `prep-item-holder-${item.id}-${h.instanceId}`,
+    })),
+  });
 
   const actionBtn = document.createElement('button');
   actionBtn.type = 'button';
@@ -264,36 +250,25 @@ export function renderPrepAcquiredItemsInspector(params: {
       actionsWrap.appendChild(actionBtn);
     }
     for (const branch of eligibleBranches) {
-      const targetSp = getSpeciesById(branch.targetSpeciesId);
-      const usePromoBtn = document.createElement('button');
-      usePromoBtn.type = 'button';
-      usePromoBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
-      usePromoBtn.dataset.testid = `prep-item-use-promo-${branch.targetSpeciesId}`;
-      usePromoBtn.textContent = `Evolve → ${targetSp?.name ?? branch.targetSpeciesId}`;
-      bindPointerTap(usePromoBtn, () => {
-        try {
-          const promoted = saveManager.useEvolutionItemOnUnit(
-            selectedUnit.instanceId,
-            branch.requiredItemId,
-            branch.targetSpeciesId
-          );
-          audioManager.playSfx('heal');
-          onMutated(
-            `★ ${promoted.nickname} evolved into ${getSpeciesById(promoted.speciesId)?.name ?? promoted.speciesId}!`,
-            true
-          );
-        } catch (err) {
-          audioManager.playSfx('cancel');
-          onError(err instanceof Error ? err.message : 'Promotion failed.');
-        }
-      });
-      actionsWrap.appendChild(usePromoBtn);
+      actionsWrap.appendChild(
+        createEvolutionBranchButton({
+          unit: selectedUnit,
+          branch,
+          saveManager,
+          audioManager,
+          testId: `prep-item-use-promo-${branch.targetSpeciesId}`,
+          sfx: 'heal',
+          onPromoted: (promoted, evolvedName) =>
+            onMutated(`★ ${promoted.nickname} evolved into ${evolvedName}!`, true),
+          onError,
+        })
+      );
     }
   } else {
     actionsWrap.appendChild(actionBtn);
   }
 
-  inspectorEl.append(mainEl, actionsWrap);
+  inspectorEl.appendChild(actionsWrap);
   itemsListEl.append(gridEl, inspectorEl);
   return resolvedItemId;
 }

@@ -6,6 +6,7 @@ import { getAudioManager, type AudioManager } from '../audio/AudioManager';
 import { DEMO_OVERWORLD_GRAPH, getOverworldNodeById, type OverworldGraphDefinition, type OverworldNodeDefinition } from '../data/overworldMapData';
 import { ensureOverworldGraphState, resolveCurrentStoryChapterNodeId } from '../engine/overworldEngine';
 import type { SaveStateManager } from '../state/SaveStateManager';
+import type { OverworldNodeState, SaveData } from '../types/schemas';
 import { PmdPortraitView } from '../ui/PmdSpriteCanvas';
 import type { TutorialOverlay } from '../ui/TutorialOverlay';
 import { OVERWORLD_SCALE_BOUNDS, clampMapScale } from '../ui/mapZoomController';
@@ -13,19 +14,20 @@ import { bindPointerTap } from '../ui/pointerControls';
 import { OverworldCameraAndPointersController } from './overworld/OverworldCameraAndPointers';
 import { renderOverworldFrame, type NodeLabelDomEntry } from './overworld/OverworldCanvasRenderer';
 import { OverworldModalCoordinator } from './overworld/OverworldModalCoordinator';
-import { OverworldTravelAndSpritesController, formatOverworldChapterAnnouncement } from './overworld/OverworldTravelAndSprites';
+import {
+  OverworldTravelAndSpritesController,
+  formatOverworldChapterAnnouncement,
+  getActiveLordUnit,
+  type OverworldSceneOptions,
+} from './overworld/OverworldTravelAndSprites';
 import {
   createOverworldDomElements, loadOverworldMapImage, syncOverworldHudAndDock,
   syncOverworldSupportsTabButton,
   type OverworldDomElements, type OverworldMenuTab,
 } from './overworld/overworldDomTemplates';
-import {
-  buildOverworldSceneSnapshot, getActiveLordUnit,
-  type OverworldSceneOptions, type OverworldSceneSnapshot,
-} from './overworld/overworldSnapshot';
 
 export { loadOverworldMapImage };
-export type { OverworldMenuTab, OverworldSceneOptions, OverworldSceneSnapshot };
+export type { OverworldMenuTab, OverworldSceneOptions };
 
 export class OverworldScene {
   private readonly opts: OverworldSceneOptions;
@@ -42,10 +44,16 @@ export class OverworldScene {
 
   private openState = false;
   private previousBgmId: string | null = null;
-  private fastMode = false;
   private toastTimer: number | null = null;
   private mapSource: CanvasImageSource | null = null;
   private unsubscribeSave: (() => void) | null = null;
+  private cachedNodeMapGraph: OverworldGraphDefinition | null = null;
+  private cachedNodeMap = new Map<string, OverworldNodeDefinition>();
+  private cachedReconciled: {
+    save: SaveData | null;
+    graph: OverworldGraphDefinition;
+    state: { currentNodeId: string; nodes: Record<string, OverworldNodeState> };
+  } | null = null;
 
   constructor(options: OverworldSceneOptions) {
     this.opts = options;
@@ -64,6 +72,7 @@ export class OverworldScene {
         ctx: this.dom.ctx,
         saveManager: this.saveManager,
         getGraph: () => this.graph,
+        getReconciledState: (save) => this.getCachedReconciledState(save),
         isOpen: () => this.openState,
         canInteractWithCanvas: () =>
           this.openState &&
@@ -76,11 +85,10 @@ export class OverworldScene {
         onRenderFrame: () => this.renderFrame(),
         onMenuOrBack: () => this.handleMenuOrBack(),
         onNodeTapped: (node: OverworldNodeDefinition) => {
-          if (this.tutorialOverlay?.getExpectedAction()) this.tutorialOverlay.nudgeActiveStep();
-          else void this.travelCtrl.handleNodeTapped(node);
+          void this.travelCtrl.handleNodeTapped(node);
         },
         getActiveClearSequence: () => this.travelCtrl.activeClearSequence,
-      } as any,
+      },
       this.abortController.signal
     );
 
@@ -93,8 +101,8 @@ export class OverworldScene {
         dialogueOverlay: options.dialogueOverlay,
         tutorialOverlay: this.tutorialOverlay,
         getGraph: () => this.graph,
+        getReconciledState: (save) => this.getCachedReconciledState(save),
         isOpen: () => this.openState,
-        isFastMode: () => this.fastMode,
         onLayerStateChanged: () => this.opts.onLayerStateChanged(),
         onPreloadActiveSprites: () => this.travelCtrl.preloadActiveSprites(),
         onShowToast: (msg) => this.showToast(msg),
@@ -118,8 +126,9 @@ export class OverworldScene {
       audioManager: this.audioManager,
       cam: this.cam,
       getGraph: () => this.graph,
+      getReconciledState: (save) => this.getCachedReconciledState(save),
+      getMapSourceLoaded: () => Boolean(this.mapSource),
       isOpen: () => this.openState,
-      isFastMode: () => this.fastMode,
       onRenderFrame: () => this.renderFrame(),
       onSyncHudAndDock: () => this.syncHudAndDock(),
       onShowToast: (text) => this.showToast(text),
@@ -130,8 +139,7 @@ export class OverworldScene {
 
     const signal = this.abortController.signal;
     const guard = (fn: () => void) => {
-      if (this.tutorialOverlay?.getExpectedAction()) this.tutorialOverlay.nudgeActiveStep();
-      else if (!this.travelCtrl.activeTravel) fn();
+      if (!this.travelCtrl.activeTravel) fn();
     };
     bindPointerTap(this.dom.btnEnterChapterEl, () => guard(() => this.travelCtrl.launchCurrentChapterBattle()), { signal });
     bindPointerTap(this.dom.btnFightSkirmishEl, () => guard(() => this.travelCtrl.launchCurrentSkirmishBattle()), { signal });
@@ -142,11 +150,33 @@ export class OverworldScene {
   public hasActiveSubLayer(): boolean {
     return this.openState && (this.modals.kecleonShopOpen || this.modals.systemMenuOpen || this.modals.hasSupportsSubLayer());
   }
-  public setFastMode(enabled: boolean): void { this.fastMode = Boolean(enabled); }
   public close(): void { this.closeInternal(true); }
   public openKecleonShop(): void { this.modals.openKecleonShop(); }
   public openSystemMenu(tab: OverworldMenuTab = 'units'): void { this.modals.openSystemMenu(tab); }
   public travelToNode(nodeId: string): Promise<boolean> { return this.travelCtrl.travelToNode(nodeId); }
+
+  private getCachedNodeMap(): Map<string, OverworldNodeDefinition> {
+    if (this.cachedNodeMapGraph !== this.graph) {
+      this.cachedNodeMapGraph = this.graph;
+      this.cachedNodeMap = new Map(this.graph.nodes.map((n) => [n.id, n]));
+    }
+    return this.cachedNodeMap;
+  }
+
+  private getCachedReconciledState(
+    save: SaveData | null
+  ): { currentNodeId: string; nodes: Record<string, OverworldNodeState> } {
+    if (!save) {
+      return { currentNodeId: this.graph.startNodeId, nodes: {} };
+    }
+    if (this.cachedReconciled && this.cachedReconciled.save === save && this.cachedReconciled.graph === this.graph) {
+      return this.cachedReconciled.state;
+    }
+    const rec = ensureOverworldGraphState(save, this.graph);
+    const state = { currentNodeId: rec.currentNodeId, nodes: rec.nodes };
+    this.cachedReconciled = { save, graph: this.graph, state };
+    return state;
+  }
 
   public async open(options?: {
     graph?: OverworldGraphDefinition;
@@ -157,8 +187,9 @@ export class OverworldScene {
     if (options?.graph) this.graph = options.graph;
     if (!this.openState) this.previousBgmId = this.audioManager.getCurrentTrackId();
     this.openState = true;
+    this.cachedReconciled = null;
 
-    if (!this.saveManager.getSave()) {
+    if (!this.saveManager.getReadOnlySave()) {
       this.saveManager.createNewCampaignSave({ lordSpeciesId: 'axew', partnerSpeciesId: 'quaxly', healerSpeciesId: 'flabebe' });
     }
     this.saveManager.ensureOverworldInitialized(this.graph);
@@ -170,14 +201,12 @@ export class OverworldScene {
 
     this.dom.rootEl.hidden = false;
     this.opts.viewportEl.classList.add('is-battle-active');
-    this.tutorialOverlay?.setActionAvailabilityProvider({
-      isActionAlreadyDone: (a) => a === 'overworld_open_menu' && this.openState && this.modals.systemMenuOpen,
-      canPerformActionNow: (a) => a === 'overworld_open_menu' && this.openState && !this.modals.kecleonShopOpen,
-    });
 
     this.unsubscribeSave?.();
     this.unsubscribeSave = this.saveManager.subscribe(() => {
       if (!this.openState) return;
+      this.cachedReconciled = null;
+      this.travelCtrl.invalidateRenderCache();
       this.travelCtrl.preloadActiveSprites();
       this.syncHudAndDock();
       if (this.modals.kecleonShopOpen) this.modals.renderKecleonShopContents();
@@ -196,11 +225,15 @@ export class OverworldScene {
     } else this.cam.clampCamera();
 
     this.syncHudAndDock();
-    const curSave = options?.announceCurrentChapter ? this.saveManager.getSave() : null;
+    const curSave = options?.announceCurrentChapter ? this.saveManager.getReadOnlySave() : null;
     if (curSave) {
-      this.showToast(formatOverworldChapterAnnouncement(curSave, this.graph), this.fastMode ? 500 : 2800);
+      this.showToast(
+        formatOverworldChapterAnnouncement(curSave, this.graph, this.getCachedReconciledState(curSave)),
+        2800
+      );
     }
     this.audioManager.playBgm('exploration_theme', { fadeMs: 280 });
+    this.travelCtrl.invalidateRenderCache();
     this.travelCtrl.startLoop();
     this.opts.onLayerStateChanged();
     this.renderFrame();
@@ -208,8 +241,8 @@ export class OverworldScene {
     if (options?.celebrateClearedNodeId) {
       const celebrateClearedNodeId = options.celebrateClearedNodeId;
       const clearedDef = getOverworldNodeById(celebrateClearedNodeId, this.graph);
-      const save = this.saveManager.getSave();
-      const rec = save ? ensureOverworldGraphState(save, this.graph) : null;
+      const save = this.saveManager.getReadOnlySave();
+      const rec = save ? this.getCachedReconciledState(save) : null;
       if (clearedDef && rec) {
         const newlyUnlockedNodeIds = (clearedDef.unlocksNodeIdsOnClear ?? []).filter(
           (nid) => Boolean(rec.nodes[nid]?.unlocked)
@@ -282,29 +315,13 @@ export class OverworldScene {
     else this.modals.openSystemMenu('units');
   }
 
-  public getNodeClientCenter(nodeId: string): { clientX: number; clientY: number } | null {
-    const def = getOverworldNodeById(nodeId, this.graph);
-    if (!def) return null;
-    const rect = this.dom.canvas.getBoundingClientRect();
-    return {
-      clientX: rect.left + (def.x - this.cam.cameraX) * this.cam.displayScale,
-      clientY: rect.top + (def.y - this.cam.cameraY) * this.cam.displayScale,
-    };
-  }
-
-  public centerCameraOnNode(nodeId: string): void {
-    const def = getOverworldNodeById(nodeId, this.graph);
-    if (!def) return;
-    this.cam.centerCameraOnMapPoint(def.x, def.y);
-    this.renderFrame();
-  }
-
   public setZoomScale(nextScale: number, anchorClientX?: number, anchorClientY?: number): void {
     const rect = this.dom.canvas.getBoundingClientRect();
     const cx = anchorClientX ?? rect.left + rect.width / 2;
     const cy = anchorClientY ?? rect.top + rect.height / 2;
     const anchor = this.cam.clientPointToWorld(cx, cy);
     this.cam.applyZoomWithWorldAnchor(clampMapScale(nextScale, OVERWORLD_SCALE_BOUNDS), cx, cy, anchor.worldX, anchor.worldY);
+    this.travelCtrl.invalidateRenderCache();
     this.renderFrame();
   }
 
@@ -313,52 +330,34 @@ export class OverworldScene {
     this.travelCtrl.snapLordToCurrentNode();
     this.cam.centerCameraInitiallyOnPoint(this.travelCtrl.lordWorldX, this.travelCtrl.lordWorldY);
     this.syncHudAndDock();
+    this.travelCtrl.invalidateRenderCache();
     this.renderFrame();
-  }
-
-  public getSnapshot(): OverworldSceneSnapshot {
-    return buildOverworldSceneSnapshot({
-      isOpen: this.openState, fastMode: this.fastMode, save: this.saveManager.getSave(),
-      graph: this.graph, cam: this.cam, travelCtrl: this.travelCtrl,
-      kecleonShopOpen: this.modals.kecleonShopOpen, systemMenuOpen: this.modals.systemMenuOpen,
-      activeMenuTab: this.modals.activeMenuTab,
-    });
-  }
-
-  public getRenderDebugState(): {
-    activeClearSequence: unknown;
-    lastRouteNodePath: string[];
-    lordWorldX: number;
-    lordWorldY: number;
-    unlockedNodeIds: string[];
-    clearedNodeIds: string[];
-  } {
-    const save = this.saveManager.getSave();
-    const rec = save ? ensureOverworldGraphState(save, this.graph) : null;
-    const unlockedNodeIds = rec ? Object.keys(rec.nodes).filter((k) => rec.nodes[k]?.unlocked) : [];
-    const clearedNodeIds = rec ? Object.keys(rec.nodes).filter((k) => rec.nodes[k]?.cleared) : [];
-    return {
-      activeClearSequence: this.travelCtrl.activeClearSequence,
-      lastRouteNodePath: this.travelCtrl.lastRouteNodePath,
-      lordWorldX: this.travelCtrl.lordWorldX,
-      lordWorldY: this.travelCtrl.lordWorldY,
-      unlockedNodeIds,
-      clearedNodeIds,
-    };
   }
 
   public renderFrame(): void {
     if (!this.openState) return;
-    const save = this.saveManager.getSave();
+    const save = this.saveManager.getReadOnlySave();
     renderOverworldFrame({
-      ctx: this.dom.ctx, nodeLabelsLayerEl: this.dom.nodeLabelsLayerEl, nodeLabelMap: this.nodeLabelMap,
-      graph: this.graph, mapSource: this.mapSource, spriteBundles: this.travelCtrl.spriteBundles, save,
+      ctx: this.dom.ctx,
+      nodeLabelsLayerEl: this.dom.nodeLabelsLayerEl,
+      nodeLabelMap: this.nodeLabelMap,
+      graph: this.graph,
+      nodeMap: this.getCachedNodeMap(),
+      reconciled: this.getCachedReconciledState(save),
+      mapSource: this.mapSource,
+      spriteBundles: this.travelCtrl.spriteBundles,
       lordSpeciesId: getActiveLordUnit(save)?.speciesId ?? 'dratini',
-      lordWorldX: this.travelCtrl.lordWorldX, lordWorldY: this.travelCtrl.lordWorldY,
-      lordDirection: this.travelCtrl.lordDirection, lordAction: this.travelCtrl.lordAction,
-      animClockMs: this.travelCtrl.animClockMs, displayScale: this.cam.displayScale,
-      canvasDpr: this.cam.canvasDpr, viewWidthPx: this.cam.viewWidthPx, viewHeightPx: this.cam.viewHeightPx,
-      cameraX: this.cam.cameraX, cameraY: this.cam.cameraY,
+      lordWorldX: this.travelCtrl.lordWorldX,
+      lordWorldY: this.travelCtrl.lordWorldY,
+      lordDirection: this.travelCtrl.lordDirection,
+      lordAction: this.travelCtrl.lordAction,
+      animClockMs: this.travelCtrl.animClockMs,
+      displayScale: this.cam.displayScale,
+      canvasDpr: this.cam.canvasDpr,
+      viewWidthPx: this.cam.viewWidthPx,
+      viewHeightPx: this.cam.viewHeightPx,
+      cameraX: this.cam.cameraX,
+      cameraY: this.cam.cameraY,
       isTraveling: Boolean(this.travelCtrl.activeTravel || this.travelCtrl.activeClearSequence),
       hoveredNodeId: this.cam.hoveredNodeId,
       highlightedEdgeIds: this.travelCtrl.activeTravel?.route.edgeIds ?? this.cam.hoverRoutePreview?.edgeIds ?? [],
@@ -373,11 +372,11 @@ export class OverworldScene {
     this.toastTimer = window.setTimeout(() => {
       this.dom.toastEl.hidden = true;
       this.toastTimer = null;
-    }, customDurationMs ?? (this.fastMode ? 350 : 1800));
+    }, customDurationMs ?? 1800);
   }
 
   private syncHudAndDock(): void {
-    const save = this.saveManager.getSave();
+    const save = this.saveManager.getReadOnlySave();
     if (save) {
       syncOverworldHudAndDock(this.dom, save, this.graph);
       syncOverworldSupportsTabButton(this.dom, save);

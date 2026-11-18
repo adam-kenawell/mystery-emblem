@@ -48,19 +48,6 @@
   padding-right: 2px;
 }
 
-.pmd-tutorial-nav-btn {
-  min-width: 88px;
-  min-height: 44px;
-  padding: 5px 12px;
-  font-size: 13px;
-}
-
-.pmd-tutorial-nav-btn.is-compact {
-  min-width: 78px;
-  min-height: 44px;
-  padding: 4px 11px;
-}
-
 /* Quaquaval's Field Notes Compendium */
 .pmd-tutorial-empty-note {
   margin: 8px 0;

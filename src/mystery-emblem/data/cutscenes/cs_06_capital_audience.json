@@ -14,14 +14,10 @@
     { "id": "mentor", "who": { "kind": "mentor" } },
     { "id": "lord", "who": { "kind": "lord" } },
     { "id": "partner", "who": { "kind": "partner" } },
-    { "id": "healer", "who": { "kind": "healer" } },
-    { "id": "honedge", "who": { "kind": "recruit", "speciesId": "honedge" } },
-    { "id": "sandile", "who": { "kind": "recruit", "speciesId": "sandile" } }
+    { "id": "healer", "who": { "kind": "healer" } }
   ],
   "placements": [
     { "id": "serperior", "x": 7, "y": 3, "facing": "Down" },
-    { "id": "honedge", "x": 6, "y": 4, "facing": "Down" },
-    { "id": "sandile", "x": 9, "y": 4, "facing": "Down" },
     { "id": "mentor", "x": 7, "y": 6, "facing": "Up" },
     { "id": "lord", "x": 8, "y": 6, "facing": "Up" },
     { "id": "partner", "x": 6, "y": 7, "facing": "Up" },
@@ -62,7 +58,7 @@
         "speaker": "serperior",
         "emotion": "Determined",
         "side": "right",
-        "text": "Long before our six realms took shape, the royal chronicles record an era when the Ancient Dragon Kingdom kept peace across the land, until the Rift tore the sky apart. Listen well to how it fell."
+        "text": "Only charred fragments remain in our royal archives from the age before the six realms formed. They speak of a Dragon Kingdom shattered when the Rift first opened, yet the chronicles break off in smoke before recording how the dragons sealed the tear or what became of Hoopa."
       },
       "actions": [
         { "type": "fade", "to": "black", "duration": 0.6, "delay": 0.2 }

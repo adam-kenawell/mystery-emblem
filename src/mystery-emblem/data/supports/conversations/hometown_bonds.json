@@ -94,7 +94,7 @@
           "speaker": "partner",
           "emotion": "Surprised",
           "side": "right",
-          "text": "{name:healer}? Everyone else turned in an hour ago. Why are you still grinding herbs by lantern light?"
+          "text": "Still awake, {name:healer}? The lantern oil is nearly down to the rim, and you are still grinding herbs."
         }
       },
       {
@@ -248,7 +248,7 @@
           "speaker": "partner",
           "emotion": "Normal",
           "side": "right",
-          "text": "Funny how quiet camp feels once the embers sink low. It almost sounds like the crickets back along our garden fence."
+          "text": "Listen to the crickets once the embers sink low, {name:healer}. Sounds almost like our old garden fence back home."
         }
       },
       {
@@ -311,7 +311,7 @@
           "speaker": "partner",
           "emotion": "Determined",
           "side": "right",
-          "text": "You have my word on it. Side by side all the way out, and side by side all the way home."
+          "text": "You have my word on it. Step for step on the way out, and step for step all the way home."
         }
       }
     ]
@@ -379,7 +379,7 @@
           "speaker": "mentor",
           "emotion": "Happy",
           "side": "left",
-          "text": "Every veteran looks effortless after twenty years of bruised toes. Fix that stance, take a breath, and show me one steady step."
+          "text": "Every veteran looks effortless after twenty years of bruised toes. Fix that stance and show me one steady step."
         }
       }
     ]
@@ -470,7 +470,7 @@
           "speaker": "mentor",
           "emotion": "Happy",
           "side": "left",
-          "text": "I watched you hold the eastern flank today, {name:partner}. Clean guard, tight turn, and zero wasted energy."
+          "text": "I watched you hold the eastern flank today, {name:partner}. Tight turn, zero wasted energy."
         }
       },
       {
@@ -674,7 +674,7 @@
           "speaker": "pawmi",
           "emotion": "Joyous",
           "side": "left",
-          "text": "Hey, {name:partner}! Still feeling pins and needles in your wing from that Nuzzle back on the hometown pitch?"
+          "text": "Hey, {name:partner}! Ready for round two after that wild scrimmage back on the hometown pitch?"
         }
       },
       {
@@ -683,7 +683,7 @@
           "speaker": "partner",
           "emotion": "Angry",
           "side": "right",
-          "text": "Hey! The grass was slick with evening dew, and I was mid-turn! You caught me flat-footed!"
+          "text": "Hey! The grass was slick with evening dew, and I was mid-turn! You caught me flat-footed with that cheap sidestep!"
         }
       },
       {
@@ -692,7 +692,7 @@
           "speaker": "pawmi",
           "emotion": "Happy",
           "side": "left",
-          "text": "Haha, an excuse for every weather report! Admit it, you never saw my cheek pouches light up until I tagged your shoulder."
+          "text": "Haha, an excuse for every weather report! Admit it, you never saw my cheek pouches light up until I dashed straight past your guard."
         }
       },
       {

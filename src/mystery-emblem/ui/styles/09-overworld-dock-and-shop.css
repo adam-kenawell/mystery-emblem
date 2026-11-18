@@ -72,12 +72,6 @@
   text-shadow: 1px 1px 0 #000000;
 }
 
-.pmd-overworld-badge.is-story {
-  background: #481828;
-  border-color: var(--pmd-text-yellow);
-  color: var(--pmd-text-yellow);
-}
-
 .pmd-overworld-badge.is-cleared {
   background: #143828;
   border-color: var(--pmd-text-green);

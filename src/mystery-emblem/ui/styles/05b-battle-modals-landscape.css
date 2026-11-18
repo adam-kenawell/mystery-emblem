@@ -28,17 +28,4 @@
     width: 40px !important;
     height: 40px !important;
   }
-
-  .pmd-forecast-stat {
-    padding: 2px 3px;
-  }
-
-  .pmd-forecast-stat strong {
-    font-size: 12px;
-  }
-
-  .pmd-forecast-actions .pmd-btn {
-    min-height: 44px;
-    padding: 3px 10px;
-  }
 }

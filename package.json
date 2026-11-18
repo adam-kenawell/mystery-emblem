@@ -10,7 +10,7 @@
     "build": "astro build",
     "preview": "astro preview",
     "typecheck": "tsc --noEmit",
-    "test": "npx playwright test",
+    "test": "node tests/run-core-tdd.mjs",
     "astro": "astro"
   },
   "dependencies": {
@@ -19,8 +19,6 @@
     "firebase": "^13.2.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1",
-    "playwright": "^1.59.1",
     "typescript": "^7.0.2"
   }
 }

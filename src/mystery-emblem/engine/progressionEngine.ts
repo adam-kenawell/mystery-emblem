@@ -1,5 +1,5 @@
 /**
- * Barrel for Tactical EXP, Level-Up Growth Roll & Mid-Battle Promotion Engine
+ * Barrel for Tactical EXP & Level-Up Growth Roll Engine
  */
 
 export {
@@ -15,9 +15,3 @@ export {
   type CombatExpContext,
   type LevelUpResult,
 } from './progression/expAndLevelUp';
-
-export {
-  getEligibleEvolutionBranches,
-  promoteBattleUnitMidBattle,
-  type BattlePromotionOutcome,
-} from './progression/battlePromotion';

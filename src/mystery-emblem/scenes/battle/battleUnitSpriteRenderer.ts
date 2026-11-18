@@ -2,7 +2,10 @@
  * Y-Sorted PMD Unit Sprites, Waited/Hit-Flash Tints, Micro HP Bars & Strike VFX Renderer
  */
 
-import { computePmdTileSpritePlacement } from '../../assets/pmdAssetLoader';
+import {
+  computePmdTileSpritePlacement,
+  drawSpriteAnimFrame,
+} from '../../assets/pmdAssetLoader';
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
 import { getAvailableTalkTargetIds } from '../../engine/battleEvents';
 import { STATUS_BADGE_COLORS } from '../../engine/combatEngine';
@@ -34,9 +37,6 @@ export function renderUnitsAndStrikeVfx(
   );
 
   for (const unit of sortedUnits) {
-    if ((unit.spawnFadeAlpha ?? 1) <= 0.01) {
-      continue;
-    }
     const tileScreenX = unit.renderWorldX - cameraX;
     const tileScreenY = unit.renderWorldY - cameraY;
     const bundle = state.spriteBundles.get(getUnitVisualKey(unit));
@@ -50,7 +50,6 @@ export function renderUnitsAndStrikeVfx(
     );
 
     ctx.save();
-    ctx.globalAlpha *= unit.spawnFadeAlpha ?? 1;
     if (unit.koDissolveProgress > 0) {
       ctx.globalAlpha = Math.max(0.05, 1 - unit.koDissolveProgress);
     }
@@ -65,8 +64,6 @@ export function renderUnitsAndStrikeVfx(
     );
 
     if (bundle && anim) {
-      const frameIdx = unit.frameIndex % Math.max(1, anim.frameCount);
-      const rowIdx = anim.rowCount >= 8 ? unit.direction : unit.direction % anim.rowCount;
       const { drawX, drawY } = placement;
       const isHitFlashing = now < unit.hitFlashUntilMs;
 
@@ -81,16 +78,13 @@ export function renderUnitsAndStrikeVfx(
         dom.tintScratchCtx.clearRect(0, 0, anim.frameWidth, anim.frameHeight);
         dom.tintScratchCtx.imageSmoothingEnabled = false;
         dom.tintScratchCtx.globalCompositeOperation = 'source-over';
-        dom.tintScratchCtx.drawImage(
-          anim.source,
-          frameIdx * anim.frameWidth,
-          rowIdx * anim.frameHeight,
-          anim.frameWidth,
-          anim.frameHeight,
+        drawSpriteAnimFrame(
+          dom.tintScratchCtx,
+          anim,
+          unit.frameIndex,
+          unit.direction,
           0,
-          0,
-          anim.frameWidth,
-          anim.frameHeight
+          0
         );
         dom.tintScratchCtx.globalCompositeOperation = 'source-atop';
         dom.tintScratchCtx.fillStyle = isHitFlashing
@@ -111,17 +105,7 @@ export function renderUnitsAndStrikeVfx(
           anim.frameHeight
         );
       } else {
-        ctx.drawImage(
-          anim.source,
-          frameIdx * anim.frameWidth,
-          rowIdx * anim.frameHeight,
-          anim.frameWidth,
-          anim.frameHeight,
-          drawX,
-          drawY,
-          anim.frameWidth,
-          anim.frameHeight
-        );
+        drawSpriteAnimFrame(ctx, anim, unit.frameIndex, unit.direction, drawX, drawY);
       }
     }
 

@@ -8,12 +8,10 @@ import {
   type CastMember,
   type Facing,
 } from '../data/cutscenes/cutsceneDocTypes';
-import type { QuizSeedSlotKey } from '../types/schemas';
-import type { EditorContext } from './editorContext';
 import { button, checkbox, field, h, numberInput, row, section, selectInput, textInput } from './editorDom';
-import { describeIdentity, QUIZ_SLOT_LABELS } from './editorLabels';
+import { describeIdentity } from './editorLabels';
 import { pokemonPicker, speciesOptions } from './editorPickers';
-import { slugifyId, uniqueId, type SessionData } from './editorSession';
+import { slugifyId, uniqueId, type EditorContext, type SessionData } from './editorSession';
 
 type IdentityKind = CastIdentity['kind'];
 
@@ -24,7 +22,6 @@ const KIND_OPTIONS: Array<{ value: IdentityKind; label: string }> = [
   { value: 'healer_parent', label: 'Florges (Healer Parent)' },
   { value: 'mentor', label: 'Quaquaval (Mentor)' },
   { value: 'advisor', label: 'Quaquaval (Field Notes)' },
-  { value: 'quiz_slot', label: 'Quiz-chosen recruit' },
   { value: 'recruit', label: 'Story recruit (fixed species)' },
   { value: 'party_extra', label: 'Extra party member #N' },
   { value: 'npc', label: 'Any Pokemon (NPC with a name)' },
@@ -32,8 +29,6 @@ const KIND_OPTIONS: Array<{ value: IdentityKind; label: string }> = [
 
 function defaultIdentity(kind: IdentityKind): CastIdentity {
   switch (kind) {
-    case 'quiz_slot':
-      return { kind, slot: 'slot1Flying', fallbackSpeciesId: 'starly' };
     case 'recruit':
       return { kind, speciesId: 'chespin' };
     case 'party_extra':
@@ -77,10 +72,7 @@ function identityEditor(ctx: EditorContext, member: CastMember, index: number): 
   const setWho = (next: CastIdentity) => ctx.update((d) => { d.doc.cast[index]!.who = next; });
   const wrap = h('div', { class: 'cse-stack' });
   wrap.append(field('Who is this?', selectInput(ui, KIND_OPTIONS, who.kind, (k) => setWho(defaultIdentity(k)))));
-  if (who.kind === 'quiz_slot') {
-    wrap.append(field('Quiz slot', selectInput(ui, Object.entries(QUIZ_SLOT_LABELS).map(([value, label]) => ({ value: value as QuizSeedSlotKey, label })), who.slot, (slot) => setWho({ ...who, slot }))));
-    wrap.append(field('Preview / fallback species', selectInput(ui, speciesOptions((f) => f === 'playable'), who.fallbackSpeciesId ?? '', (sp) => setWho({ ...who, fallbackSpeciesId: sp }))));
-  } else if (who.kind === 'recruit') {
+  if (who.kind === 'recruit') {
     wrap.append(field('Species', selectInput(ui, speciesOptions((f) => f === 'playable'), who.speciesId, (sp) => setWho({ ...who, speciesId: sp })), 'Shows their nickname once recruited.'));
   } else if (who.kind === 'party_extra') {
     wrap.append(field('Party slot (beyond the core five)', numberInput(ui, who.slotIndex + 1, (n) => setWho({ ...who, slotIndex: Math.max(0, Math.round(n) - 1) }), { min: 1, max: 12 }), 'Hidden when the party is smaller.'));

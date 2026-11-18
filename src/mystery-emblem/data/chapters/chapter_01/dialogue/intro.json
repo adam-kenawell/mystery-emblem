@@ -29,7 +29,7 @@
         "speaker": "partner",
         "emotion": "Determined",
         "side": "left",
-        "text": "Keep dreaming! Notice the spring pools, {lord}? As a Water Pokemon, I can cross shallow water tiles that block everyone else!"
+        "text": "Keep dreaming! Watch those spring pools, {lord}! I can splash straight across the shallow water while those thugs get stuck on the banks!"
       }
     },
     {
@@ -38,7 +38,7 @@
         "speaker": "healer",
         "emotion": "Determined",
         "side": "left",
-        "text": "And we have tall forest cover right beside us for extra Dodge! Let's drive these thugs away together!"
+        "text": "And those thick trees beside us make great cover against their swings! Let's drive these thugs away together!"
       }
     },
     {

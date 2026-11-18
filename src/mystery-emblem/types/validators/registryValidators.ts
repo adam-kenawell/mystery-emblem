@@ -18,11 +18,9 @@ import {
 import {
   getSupportRanksUpTo,
   makeCanonicalSupportPairKey,
+  type SupportConversationDoc,
+  type SupportPairDefinition,
 } from '../../data/supports/supportMatrix';
-import type {
-  SupportConversationDoc,
-  SupportPairDefinition,
-} from '../../data/supports/supportTypes';
 import {
   ITEM_CATEGORIES,
   MOVE_CATEGORIES,

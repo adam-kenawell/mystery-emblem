@@ -20,7 +20,6 @@ import { getSpeciesById } from '../data/index';
 import type {
   FlabebeFlowerColor,
   OwnedPokemonInstance,
-  QuizSeedSlotKey,
   SaveData,
   UnitCosmeticForm,
 } from '../types/schemas';
@@ -32,7 +31,6 @@ export type DialogueSpeakerRef =
   | { kind: 'healer_parent'; nickname?: string }
   | { kind: 'mentor'; fallbackSpeciesId?: string }
   | { kind: 'advisor'; nickname?: string }
-  | { kind: 'quiz_slot'; slot: QuizSeedSlotKey; index?: number; fallbackSpeciesId?: string }
   /** A fixed story recruit: the roster unit of that species line once recruited, else the species */
   | { kind: 'recruit'; speciesId: string }
   | { kind: 'unit'; instanceId: string; fallbackSpeciesId?: string }
@@ -242,13 +240,6 @@ export function resolveSpeakerIdentity(
       unit = save?.roster.find((u) => u.instanceId === speaker.instanceId);
       fallbackSpeciesId = speaker.fallbackSpeciesId ?? 'axew';
       break;
-    case 'quiz_slot': {
-      const seedIds = save?.campaign.quizSeeds?.[speaker.slot] ?? [];
-      const seededSpId = seedIds[speaker.index ?? 0] ?? speaker.fallbackSpeciesId ?? 'starly';
-      fallbackSpeciesId = seededSpId;
-      unit = findRosterUnitOfSpeciesLine(save, seededSpId);
-      break;
-    }
     case 'recruit':
       fallbackSpeciesId = speaker.speciesId;
       unit = findRosterUnitOfSpeciesLine(save, speaker.speciesId);
@@ -276,8 +267,6 @@ export function resolveSpeakerIdentity(
     portraitAssetId: pmdAssetId,
   };
 }
-
-export const resolveDialogueSpeaker = resolveSpeakerIdentity;
 
 export function interpolateCampaignText(
   rawText: string,

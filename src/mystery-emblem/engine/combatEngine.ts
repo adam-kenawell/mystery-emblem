@@ -37,7 +37,6 @@ export {
 export {
   STATUS_BADGE_COLORS,
   STATUS_ACTION_CALLOUTS,
-  STATUS_SHORT_EFFECT_TEXT,
   isEnemyStatusMove,
   getDefaultStatusDuration,
   isUnitImmuneToStatus,

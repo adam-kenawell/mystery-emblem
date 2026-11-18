@@ -51,10 +51,6 @@ export function registerUploadedMedia(folder: MediaFolder, fileName: string): vo
   libraries[folder].set(fileName, `/assets/${folder}/${encodeURIComponent(fileName)}`);
 }
 
-export function unregisterMedia(folder: MediaFolder, fileName: string): void {
-  libraries[folder].delete(fileName);
-}
-
 const imageCache = new Map<string, Promise<HTMLImageElement | null>>();
 
 export function loadMediaImage(url: string): Promise<HTMLImageElement | null> {

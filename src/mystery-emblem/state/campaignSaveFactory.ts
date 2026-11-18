@@ -4,7 +4,6 @@
 
 import { getFlabebeFlowerColorForLord } from '../assets/pmdAssetLoader';
 import {
-  createDefaultQuizSeeds,
   FIXED_HEALER_SPECIES_ID,
   FIXED_PARTNER_SPECIES_ID,
   INITIAL_CAMPAIGN_CONVOY,
@@ -21,9 +20,7 @@ import {
   type CampaignMode,
   type ConvoyEntry,
   type OwnedPokemonInstance,
-  type QuizRecruitSeeds,
   type SaveData,
-  type TutorialFamiliarityPreferences,
 } from '../types/schemas';
 import { createPokemonInstance, generateSaveId } from './saveHelpersAndFactory';
 
@@ -34,9 +31,7 @@ export interface NewCampaignConfig {
   partnerNickname?: string;
   healerSpeciesId?: string;
   healerNickname?: string;
-  quizSeeds?: QuizRecruitSeeds;
   tutorialsEnabled?: boolean;
-  tutorialPreferences?: TutorialFamiliarityPreferences;
   newGamePlusUnlocked?: boolean;
   startingLevel?: number;
   scaleStatsToLevel?: boolean;
@@ -110,14 +105,12 @@ export function buildNewCampaignSaveData(
       lordInstanceId: lord.instanceId,
       partnerInstanceId: partner.instanceId,
       healerInstanceId: healer.instanceId,
-      ...(cfg.quizSeeds ? { quizSeeds: createDefaultQuizSeeds(cfg.quizSeeds) } : {}),
       kecleonShopsUnlocked: false,
       completedChapterIds: [],
       ...(cfg.campaignMode ? { campaignMode: cfg.campaignMode } : {}),
       ...(cfg.tutorialsEnabled !== undefined
         ? { tutorialsEnabled: Boolean(cfg.tutorialsEnabled) }
         : {}),
-      ...(cfg.tutorialPreferences ? { tutorialPreferences: { ...cfg.tutorialPreferences } } : {}),
       seenTutorialIds: [],
       unlockedTutorialIds: [],
       recruitedChapterIds: [],

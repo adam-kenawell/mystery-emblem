@@ -10,25 +10,17 @@
 import { directionFromDelta, loadSpeciesSpriteBundle } from '../../assets/pmdAssetLoader';
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
 import { DEFAULT_TERRAIN_PALETTE } from '../../data/chapterMapRegistry';
-import { getItemById, getMoveById } from '../../data/index';
 import { resolveDefaultObjectiveLabel } from '../../engine/battleEvents';
 import {
   buildSpawnedBattleUnit,
   findNearestFreeSpawnTile,
 } from '../../engine/battleSpawnHelpers';
-import {
-  STATUS_ACTION_CALLOUTS,
-  STATUS_BADGE_COLORS,
-  applyInflictedStatusToUnit,
-  computeCombatForecast,
-  type BattleUnitState,
-} from '../../engine/combatEngine';
+import type { BattleUnitState } from '../../engine/combatEngine';
 import { interpolateCampaignText } from '../../engine/speakerResolver';
 import {
   coordKey,
   findShortestPathAStar,
   isInMapBounds,
-  type AStarPathStep,
 } from '../../engine/terrainAndPathfinding';
 import type { DungeonEventAction } from '../../types/schemas';
 import type { DialogueScript } from '../../ui/DialogueOverlay';
@@ -38,17 +30,17 @@ import {
   waitBattleMs,
 } from './battleBannersAndTransitions';
 import { recomputeDangerArea } from './battleDangerAndViewportState';
-import { spawnFloatingText } from './battleFloatingCallouts';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { triggerVictoryModal } from './battleOutcomeModals';
-import { preloadMapTilesets } from './battlePrepAndAssets';
+import { preloadMapTilesets } from './battlePrepController';
 import { presentTalkChoiceModalAsync } from './battleTalkChoiceModal';
 import type { BattleControllerContext, BattleRuntimeState } from './battleTypesAndState';
-import { getTutorialHealerUnit, getTutorialPartnerUnit } from './battleTutorialSpotlights';
 import { playWalkPathAsync } from './battleWalkAndHealAnimator';
 import {
   getLivingUnits,
   getLordUnit,
+  getTutorialHealerUnit,
+  getTutorialPartnerUnit,
   getUnitVisualKey,
   recomputeSelectedUnitRange,
 } from './battleUnitQueries';
@@ -146,22 +138,6 @@ export async function executeEventActionsAsync(
         built.y = free.y;
         built.renderWorldX = free.x * PMD_TILE_NATIVE_PX;
         built.renderWorldY = free.y * PMD_TILE_NATIVE_PX;
-        if (action.fadeInFromOffMap) {
-          let offMapTile = { x: built.x, y: built.y };
-          if (action.fadeInFromOffMap === 'right') {
-            offMapTile = { x: state.map.width, y: built.y };
-          } else if (action.fadeInFromOffMap === 'left') {
-            offMapTile = { x: -1, y: built.y };
-          } else if (action.fadeInFromOffMap === 'top') {
-            offMapTile = { x: built.x, y: -1 };
-          } else if (action.fadeInFromOffMap === 'bottom') {
-            offMapTile = { x: built.x, y: state.map.height };
-          }
-          built.spawnFadeAlpha = 0;
-          built.offMapWalkFrom = offMapTile;
-          built.renderWorldX = offMapTile.x * PMD_TILE_NATIVE_PX;
-          built.renderWorldY = offMapTile.y * PMD_TILE_NATIVE_PX;
-        }
         if (uSpawn.mustSurvive && !state.defeatIfUnitIdsFall.includes(built.id)) {
           state.defeatIfUnitIdsFall.push(built.id);
         }
@@ -259,6 +235,7 @@ export async function executeEventActionsAsync(
           chunkIndex: t.chunkIndex ?? fallback.chunkIndex,
         };
       }
+      state.tileCacheVersion += 1;
       await preloadMapTilesets(state);
       if (state.selectedUnitId) recomputeSelectedUnitRange(state);
       recomputeDangerArea(ctx);
@@ -304,27 +281,9 @@ export async function executeEventActionsAsync(
           action.y,
           getLivingUnits(state)
         );
-        let walkPath: AStarPathStep[] | null = path;
-        const offMap = mover.offMapWalkFrom;
-        mover.offMapWalkFrom = null;
-        if (offMap) {
-          const entrySteps: AStarPathStep[] = [{ x: offMap.x, y: offMap.y, cumulativeCost: 0 }];
-          let curX = offMap.x;
-          let curY = offMap.y;
-          let cost = 0;
-          while (curX !== mover.x || curY !== mover.y) {
-            if (curX < mover.x) curX++;
-            else if (curX > mover.x) curX--;
-            if (curY < mover.y) curY++;
-            else if (curY > mover.y) curY--;
-            cost++;
-            entrySteps.push({ x: curX, y: curY, cumulativeCost: cost });
-          }
-          walkPath = [...entrySteps, ...(path && path.length > 1 ? path.slice(1) : [])];
-        }
-        if (walkPath && walkPath.length > 1) {
+        if (path && path.length > 1) {
           ensureTilePairVisible(state, mover.x, mover.y, action.x, action.y);
-          await playWalkPathAsync(state, mover, walkPath, true);
+          await playWalkPathAsync(state, mover, path, true);
           if (!state.openState || runGen !== state.battleRunGen) return { aborted: true };
           if (state.selectedUnitId) recomputeSelectedUnitRange(state);
           recomputeDangerArea(ctx);
@@ -337,151 +296,10 @@ export async function executeEventActionsAsync(
           ctx.renderNow();
         }
       }
-    } else if (action.type === 'refresh_units') {
-      for (const ref of action.targetUnitIds) {
-        const u = resolveEventTargetUnit(state, ref);
-        if (u) {
-          if (action.clearWait !== false) u.waited = false;
-          if (action.healToFull) u.currentHp = u.maxHp;
-          if (action.clearStatus) {
-            u.status = null;
-            u.statusTurns = 0;
-          }
-        }
-      }
-      if (state.selectedUnitId) recomputeSelectedUnitRange(state);
-      recomputeDangerArea(ctx);
-      updateBattleInfoStrip(ctx);
-      ctx.renderNow();
-    } else if (action.type === 'rest_player_units') {
-      const keepHealerId = action.exceptHealer ? getTutorialHealerUnit(state)?.id : undefined;
-      const keepPartnerId = action.exceptPartner ? getTutorialPartnerUnit(state)?.id : undefined;
-      for (const u of getLivingUnits(state)) {
-        if (
-          u.faction !== 'player' ||
-          (action.exceptLord && u.isLord) ||
-          u.id === keepHealerId ||
-          u.id === keepPartnerId
-        ) {
-          continue;
-        }
-        u.waited = true;
-        u.action = 'Idle';
-      }
-      ctx.renderNow();
-    } else if (action.type === 'give_unit_item') {
-      const recipient = resolveEventTargetUnit(state, action.targetUnitId);
-      const itemDef = getItemById(action.itemId);
-      if (recipient && itemDef) {
-        if (itemDef.category === 'held_berry' || itemDef.category === 'held_gear') {
-          if (recipient.heldItemId) {
-            state.eventBonusItems.push({ itemId: recipient.heldItemId, quantity: 1 });
-          }
-          recipient.heldItemId = itemDef.id;
-        } else {
-          if (recipient.consumableItemId) {
-            state.eventBonusItems.push({ itemId: recipient.consumableItemId, quantity: 1 });
-          }
-          recipient.consumableItemId = itemDef.id;
-        }
-        ensureTilePairVisible(state, recipient.x, recipient.y, recipient.x, recipient.y);
-        audioManager.playSfx('heal');
-        updateBattleInfoStrip(ctx);
-        ctx.renderNow();
-        await waitBattleMs(state, 220);
-      }
-    } else if (action.type === 'scripted_attack') {
-      const actor = resolveEventTargetUnit(state, action.attackerUnitId);
-      const target = resolveEventTargetUnit(state, action.targetUnitId);
-      const mv = getMoveById(action.moveId);
-      if (actor && target && mv) {
-        if (action.destX !== undefined && action.destY !== undefined) {
-          const path = findShortestPathAStar(
-            state.map,
-            { ...actor, stationary: false, aiMode: 'aggressive', mov: 99 },
-            action.destX,
-            action.destY,
-            getLivingUnits(state)
-          );
-          if (path && path.length > 1) {
-            ensureTilePairVisible(state, actor.x, actor.y, action.destX, action.destY);
-            await playWalkPathAsync(state, actor, path, true);
-            if (!state.openState || runGen !== state.battleRunGen) return { aborted: true };
-          }
-        }
-        ensureTilePairVisible(state, actor.x, actor.y, target.x, target.y);
-        actor.direction = directionFromDelta(target.x - actor.x, target.y - actor.y);
-        target.direction = directionFromDelta(actor.x - target.x, actor.y - target.y);
-
-        const forecast = computeCombatForecast(state.map, actor, target, mv.id);
-        const rawDamage = forecast ? Math.max(1, forecast.attackerSide.damage) : Math.max(1, mv.mt);
-        const dealt = Math.min(Math.max(0, target.currentHp - 1), rawDamage);
-        const isPhysical = mv.category === 'Physical';
-        const dxNorm = Math.sign(target.x - actor.x);
-        const dyNorm = Math.sign(target.y - actor.y);
-
-        actor.action = isPhysical ? 'Attack' : 'Special';
-        actor.frameIndex = 0;
-        if (isPhysical) {
-          actor.renderWorldX = actor.x * PMD_TILE_NATIVE_PX + dxNorm * 6;
-          actor.renderWorldY = actor.y * PMD_TILE_NATIVE_PX + dyNorm * 6;
-        }
-        state.activeStrikeVfx = {
-          kind: isPhysical ? 'melee' : 'ranged',
-          fromWorldX: actor.x * PMD_TILE_NATIVE_PX + 12,
-          fromWorldY: actor.y * PMD_TILE_NATIVE_PX + 12,
-          toWorldX: target.x * PMD_TILE_NATIVE_PX + 12,
-          toWorldY: target.y * PMD_TILE_NATIVE_PX + 12,
-          color: '#f8d048',
-          startedAtMs: performance.now(),
-          durationMs: state.fastMode ? 45 : 220,
-        };
-        await waitBattleMs(state, 200);
-        if (!state.openState || runGen !== state.battleRunGen) return { aborted: true };
-
-        actor.renderWorldX = actor.x * PMD_TILE_NATIVE_PX;
-        actor.renderWorldY = actor.y * PMD_TILE_NATIVE_PX;
-        target.currentHp = Math.max(1, target.currentHp - dealt);
-        target.action = 'Hurt';
-        target.hitFlashUntilMs = performance.now() + (state.fastMode ? 60 : 230);
-        audioManager.playSfx('attack_hit');
-        spawnFloatingText(state, dom, target.x, target.y, `-${dealt}`, '#ff7888', 950);
-        updateBattleInfoStrip(ctx);
-        ctx.renderNow();
-        await waitBattleMs(state, 280);
-        if (!state.openState || runGen !== state.battleRunGen) return { aborted: true };
-
-        actor.action = 'Idle';
-        target.action = 'Idle';
-        state.activeStrikeVfx = null;
-
-        if (mv.secondaryEffect?.status) {
-          const st = mv.secondaryEffect.status;
-          applyInflictedStatusToUnit(target, st);
-          spawnFloatingText(
-            state,
-            dom,
-            target.x,
-            Math.max(0, target.y - 1),
-            STATUS_ACTION_CALLOUTS[st],
-            STATUS_BADGE_COLORS[st],
-            950
-          );
-        }
-        recomputeDangerArea(ctx);
-        updateBattleInfoStrip(ctx);
-        ctx.renderNow();
-        await waitBattleMs(state, 220);
-      }
     } else if (action.type === 'win_battle') {
       triggerVictoryModal(ctx);
       return { aborted: true };
     }
   }
   return { aborted: false };
-}
-
-if (typeof window !== 'undefined') {
-  (window as unknown as Record<string, unknown>).__MYSTERY_EMBLEM_EXECUTE_EVENT_ACTIONS__ =
-    executeEventActionsAsync;
 }

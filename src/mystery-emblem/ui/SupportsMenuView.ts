@@ -9,16 +9,16 @@
 import { resolveUnitVisualAssetId } from '../assets/pmdAssetLoader';
 import type { AudioManager } from '../audio/AudioManager';
 import { getSpeciesById } from '../data/index';
-import { getSupportConversationDoc } from '../data/supports/supportConversationRegistry';
 import {
   formatLineSupportGiftTag,
   formatSupportStatBonusShort,
   getLineSupportStatBonus,
+  getSupportConversationDoc,
   getSupportPartnersForActor,
   getSupportRankIndex,
   getSupportRanksUpTo,
+  type SupportActorId,
 } from '../data/supports/supportMatrix';
-import type { SupportActorId } from '../data/supports/supportTypes';
 import {
   buildRosterActorLookup,
   compileSupportConversationScript,

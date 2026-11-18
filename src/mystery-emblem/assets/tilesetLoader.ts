@@ -28,10 +28,6 @@ export interface LoadedTilesetSheet {
 
 const loadedSheetCache = new Map<string, Promise<LoadedTilesetSheet>>();
 
-export function clearTilesetCache(): void {
-  loadedSheetCache.clear();
-}
-
 function loadImageElement(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();

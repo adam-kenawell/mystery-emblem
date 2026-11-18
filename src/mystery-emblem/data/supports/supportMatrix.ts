@@ -3,14 +3,62 @@
  */
 
 import { SUPPORT_RANKS, type SaveData, type SupportRank, type UnlockedSupportRank } from '../../types/saveSchemas';
-import type {
-  ResolvedSupportStatBonus,
-  SupportActorId,
-  SupportLineBonusProfile,
-  SupportMaxRank,
-  SupportPairDefinition,
-  SupportStatBonus,
-} from './supportTypes';
+import type { Beat, CastMember } from '../cutscenes/cutsceneDocTypes';
+import heroCoreRaw from './conversations/hero_core.json';
+import heroExpeditionRaw from './conversations/hero_expedition.json';
+import hometownBondsRaw from './conversations/hometown_bonds.json';
+import townTrioBondsRaw from './conversations/town_trio_bonds.json';
+import vanguardBondsRaw from './conversations/vanguard_bonds.json';
+
+/** Canonical actor identifier: `'lord'` for any Dragon Lord, otherwise species `lineId`. */
+export type SupportActorId = 'lord' | (string & {});
+
+export interface SupportStatBonus {
+  atk?: number;
+  def?: number;
+  spa?: number;
+  spd?: number;
+  spe?: number;
+}
+
+export type ResolvedSupportStatBonus = Required<SupportStatBonus>;
+
+export type SupportLineBonusProfile = Readonly<Record<SupportRank, SupportStatBonus>>;
+
+export type SupportMaxRank = 'B' | 'A' | 'S';
+
+export interface SupportPairDefinition {
+  pairKey: string;
+  actorA: SupportActorId;
+  actorB: SupportActorId;
+  maxRank: SupportMaxRank;
+}
+
+export interface SupportConversationDoc {
+  pairKey: string;
+  actorA: SupportActorId;
+  actorB: SupportActorId;
+  rank: SupportRank;
+  title?: string;
+  music?: string;
+  cast: CastMember[];
+  beats: Beat[];
+}
+
+export interface ActiveSupportPartnerEntry {
+  unitId: string;
+  nickname: string;
+  speciesId: string;
+  rank: SupportRank;
+  bonus: ResolvedSupportStatBonus;
+}
+
+export interface AdjacentSupportSummary {
+  totalBonus: ResolvedSupportStatBonus;
+  activePartners: ActiveSupportPartnerEntry[];
+}
+
+export type { SupportRank, UnlockedSupportRank };
 
 export const SUPPORT_UNLOCK_REQUIRED_CHAPTER_ID = 'chapter_02';
 
@@ -310,4 +358,28 @@ export function getSupportPartnersForActor(
     }
   }
   return out;
+}
+
+export const SUPPORT_CONVERSATION_LIST: ReadonlyArray<SupportConversationDoc> = [
+  ...(heroCoreRaw as unknown as SupportConversationDoc[]),
+  ...(heroExpeditionRaw as unknown as SupportConversationDoc[]),
+  ...(hometownBondsRaw as unknown as SupportConversationDoc[]),
+  ...(vanguardBondsRaw as unknown as SupportConversationDoc[]),
+  ...(townTrioBondsRaw as unknown as SupportConversationDoc[]),
+];
+
+const CONVERSATION_BY_KEY = new Map<string, SupportConversationDoc>();
+
+for (const doc of SUPPORT_CONVERSATION_LIST) {
+  CONVERSATION_BY_KEY.set(`${doc.pairKey}::${doc.rank}`, doc);
+}
+
+export function getSupportConversationDoc(
+  actorIdA: string,
+  actorIdB: string,
+  rank: SupportRank
+): SupportConversationDoc | undefined {
+  if (!actorIdA || !actorIdB || actorIdA === actorIdB) return undefined;
+  const pairKey = makeCanonicalSupportPairKey(actorIdA, actorIdB);
+  return CONVERSATION_BY_KEY.get(`${pairKey}::${rank}`);
 }

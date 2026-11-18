@@ -136,40 +136,6 @@ export interface LightingState {
   durationMs: number;
 }
 
-export interface CutsceneActorSnapshot {
-  actorId: string;
-  roleKind: string;
-  nickname: string;
-  speciesId?: string;
-  pmdAssetId: string;
-  visualAssetKey: string;
-  visible: boolean;
-  x: number;
-  y: number;
-  direction: PmdDirection;
-  action: PmdSpriteAction;
-  pose: string | null;
-  activeEmote: EmoteKind | null;
-}
-
-export interface CutsceneSceneSnapshot {
-  isOpen: boolean;
-  cutsceneId: string | null;
-  locationId: string | null;
-  stageWidth: number;
-  stageHeight: number;
-  title: string | null;
-  locationLabel: string | null;
-  lightingMood: LightingMood | null;
-  weather: WeatherKind;
-  currentBeatIndex: number;
-  currentLineIndex: number;
-  cameraTile: { x: number; y: number };
-  displayScale: number;
-  actors: CutsceneActorSnapshot[];
-  propCount: number;
-}
-
 export interface CutsceneSceneOptions {
   viewportEl: HTMLElement;
   saveManager: SaveStateManager;

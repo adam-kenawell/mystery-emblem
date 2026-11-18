@@ -68,11 +68,6 @@
   z-index: 2;
 }
 
-.pmd-portrait-pip.is-lord {
-  border-color: var(--pmd-text-yellow);
-  color: var(--pmd-text-yellow);
-}
-
 .pmd-portrait-pip.is-deployed {
   border-color: var(--pmd-text-green);
   color: var(--pmd-text-green);

@@ -14,15 +14,16 @@ import playableParaloguesRaw from './species/playable_paralogues.json';
 import playableQuizEarlyRaw from './species/playable_quiz_early.json';
 import playableQuizLateRaw from './species/playable_quiz_late.json';
 import playableStoryRaw from './species/playable_story.json';
-import { SUPPORT_CONVERSATION_LIST } from './supports/supportConversationRegistry';
-import { SUPPORT_PAIR_DEFINITIONS } from './supports/supportMatrix';
+import {
+  SUPPORT_CONVERSATION_LIST,
+  SUPPORT_PAIR_DEFINITIONS,
+} from './supports/supportMatrix';
 import {
   type ItemDefinition,
   type LearnsetEntry,
   type MoveDefinition,
   type PersonalSkillDefinition,
   type PokemonSpeciesDefinition,
-  type RecruitCategory,
 } from '../types/schemas';
 import { validateAllRegistries, type RegistryValidationSummary } from '../types/validators';
 
@@ -131,10 +132,6 @@ export function getSpeciesById(id: string): PokemonSpeciesDefinition | undefined
   return SPECIES_MAP.get(id);
 }
 
-export function getSpeciesByLineId(lineId: string): PokemonSpeciesDefinition[] {
-  return [...(LINE_SPECIES_MAP.get(lineId) ?? [])];
-}
-
 export function getMoveById(id: string): MoveDefinition | undefined {
   return MOVE_MAP.get(id);
 }
@@ -145,8 +142,4 @@ export function getItemById(id: string): ItemDefinition | undefined {
 
 export function getPersonalSkillById(id: string): PersonalSkillDefinition | undefined {
   return PERSONAL_SKILL_MAP.get(id);
-}
-
-export function getStage1SpeciesByCategory(category: RecruitCategory): PokemonSpeciesDefinition[] {
-  return POKEMON_SPECIES_LIST.filter((sp) => sp.stage === 1 && sp.recruitCategory === category);
 }

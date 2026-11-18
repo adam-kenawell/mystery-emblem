@@ -12,8 +12,10 @@ import {
 import {
   PMD_DIRECTION_INFO,
   PMD_SPRITE_ACTIONS,
+  normalizePmdDirection,
   type LoadedActionAnimation,
   type LoadedSpriteBundle,
+  type PmdDirection,
   type PmdSpriteAction,
 } from './pmdAssetTypes';
 import { loadSpeciesPortrait } from './portraitAndItemLoader';
@@ -48,9 +50,15 @@ const DEFAULT_FRAME_DURATION_MS: Record<PmdSpriteAction, number> = {
 };
 
 const spriteBundleCache = new Map<string, Promise<LoadedSpriteBundle>>();
+const animDataCache = new Map<string, ReturnType<typeof fetchDetailedAnimData>>();
+const namedAnimCache = new Map<string, Promise<LoadedActionAnimation | null>>();
 
-export function clearSpriteBundleCache(): void {
-  spriteBundleCache.clear();
+function loadAnimDataCached(pmdAssetId: string): ReturnType<typeof fetchDetailedAnimData> {
+  const cached = animDataCache.get(pmdAssetId);
+  if (cached) return cached;
+  const promise = fetchDetailedAnimData(pmdAssetId);
+  animDataCache.set(pmdAssetId, promise);
+  return promise;
 }
 
 function synthesizeSpriteSheetFromPortrait(
@@ -159,7 +167,7 @@ async function loadSpriteBundleUncached(
   pmdAssetId: string,
   speciesId?: string
 ): Promise<LoadedSpriteBundle> {
-  const detailed = await fetchDetailedAnimData(pmdAssetId);
+  const detailed = await loadAnimDataCached(pmdAssetId);
   const anims = detailed?.anims ?? {};
 
   const chosenXmlByAction: Partial<Record<PmdSpriteAction, DetailedAnimEntry>> = {};
@@ -285,23 +293,13 @@ async function loadSpriteBundleUncached(
 
 export function loadSpeciesSpriteBundle(speciesIdOrAssetId: string): Promise<LoadedSpriteBundle> {
   const { pmdAssetId, species } = resolveSpeciesAssetTarget(speciesIdOrAssetId);
-  const cacheKey = `${pmdAssetId}::${species?.id ?? ''}`;
-  const cached = spriteBundleCache.get(cacheKey);
-  if (cached) return cached;
+  const cached = spriteBundleCache.get(pmdAssetId);
+  if (cached) {
+    return species?.id ? cached.then((b) => (b.speciesId === species.id ? b : { ...b, speciesId: species.id })) : cached;
+  }
 
   const promise = loadSpriteBundleUncached(pmdAssetId, species?.id);
-  spriteBundleCache.set(cacheKey, promise);
-  return promise;
-}
-
-const animDataCache = new Map<string, ReturnType<typeof fetchDetailedAnimData>>();
-const namedAnimCache = new Map<string, Promise<LoadedActionAnimation | null>>();
-
-function loadAnimDataCached(pmdAssetId: string): ReturnType<typeof fetchDetailedAnimData> {
-  const cached = animDataCache.get(pmdAssetId);
-  if (cached) return cached;
-  const promise = fetchDetailedAnimData(pmdAssetId);
-  animDataCache.set(pmdAssetId, promise);
+  spriteBundleCache.set(pmdAssetId, promise);
   return promise;
 }
 
@@ -352,4 +350,48 @@ export function getAnimationTotalMs(anim: LoadedActionAnimation): number {
   let total = 0;
   for (let i = 0; i < Math.max(1, anim.frameCount); i++) total += Math.max(16, anim.durationsMs[i] ?? 120);
   return Math.max(80, total);
+}
+
+export function resolveAnimFrameIndex(
+  anim: LoadedActionAnimation,
+  elapsedMs: number,
+  holdLastFrame = false
+): number {
+  const safeFrameCount = Math.max(1, anim.frameCount);
+  const totalMs = getAnimationTotalMs(anim);
+  let rem = holdLastFrame ? Math.min(elapsedMs, totalMs - 1) : elapsedMs % totalMs;
+  if (rem < 0) rem = 0;
+  for (let i = 0; i < safeFrameCount; i++) {
+    const dur = Math.max(16, anim.durationsMs[i] ?? 120);
+    if (rem < dur) return i;
+    rem -= dur;
+  }
+  return safeFrameCount - 1;
+}
+
+export function drawSpriteAnimFrame(
+  ctx: CanvasRenderingContext2D,
+  anim: LoadedActionAnimation,
+  frameIdx: number,
+  direction: PmdDirection,
+  drawX: number,
+  drawY: number,
+  drawW = anim.frameWidth,
+  drawH = anim.frameHeight
+): void {
+  const safeCount = Math.max(1, anim.frameCount);
+  const safeFrameIdx = ((frameIdx % safeCount) + safeCount) % safeCount;
+  const safeDir = normalizePmdDirection(direction, 0);
+  const rowIdx = anim.rowCount > 1 ? safeDir % anim.rowCount : 0;
+  ctx.drawImage(
+    anim.source,
+    safeFrameIdx * anim.frameWidth,
+    rowIdx * anim.frameHeight,
+    anim.frameWidth,
+    anim.frameHeight,
+    drawX,
+    drawY,
+    drawW,
+    drawH
+  );
 }

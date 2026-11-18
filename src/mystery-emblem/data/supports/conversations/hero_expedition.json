@@ -94,7 +94,7 @@
           "speaker": "lord",
           "emotion": "Worried",
           "side": "left",
-          "text": "Still out here, {name:machop}? Everyone else turned in an hour ago, and your knuckles look scraped raw."
+          "text": "Still punching granite in the moonlight, {name:machop}? Your knuckles already look scraped raw."
         }
       },
       {
@@ -216,7 +216,7 @@
           "speaker": "machop",
           "emotion": "Joyous",
           "side": "right",
-          "text": "I wrote that I found a leader worth climbing beside! Whenever this Rift mess is finished, {name:lord}, you have a permanent rope partner on the high peaks."
+          "text": "I wrote that I found a leader worth climbing beside! Whenever this long road is settled, {name:lord}, you have a permanent rope partner on the high peaks."
         }
       },
       {
@@ -393,7 +393,7 @@
           "speaker": "starly",
           "emotion": "Happy",
           "side": "right",
-          "text": "Heads up below, {name:lord}! Clear road for two miles, zero bandits, and three shortcut bends marked on the ridge!"
+          "text": "Heads up below, {name:lord}! Clear road for two miles, and I marked three shortcut bends along the ridge!"
         }
       },
       {
@@ -506,7 +506,7 @@
           "speaker": "starly",
           "emotion": "Angry",
           "side": "right",
-          "text": "You left town on a royal summons without saying a word! Somebody had to catch up fast before your squad walked straight under an ambush!"
+          "text": "You marched out of town before dawn without saying a word! Somebody had to catch up fast before your squad walked straight under an ambush!"
         }
       },
       {
@@ -583,7 +583,7 @@
           "speaker": "starly",
           "emotion": "Surprised",
           "side": "right",
-          "text": "Heh... Not bad for somebody who still cannot fly a single yard."
+          "text": "Heh... Not bad for somebody keeping pace with my tailwind."
         }
       },
       {
@@ -660,7 +660,7 @@
           "speaker": "starly",
           "emotion": "Determined",
           "side": "right",
-          "text": "Listen to me, {name:lord}. I do not care if this road drags us through frozen peaks, desert wastes, or straight into the Rift itself."
+          "text": "Listen to me, {name:lord}. I do not care if this road drags us across frozen peaks or straight into the Rift itself."
         }
       },
       {
@@ -669,7 +669,7 @@
           "speaker": "starly",
           "emotion": "Joyous",
           "side": "right",
-          "text": "Every battle from here until the world is quiet again, my shadow flies right above your shoulder. No rival, no storm, and no distance breaks this flock."
+          "text": "Every battle from here until the world is quiet again, my shadow flies right above your shoulder. Neither gale nor distance breaks this flock."
         }
       },
       {
@@ -737,7 +737,7 @@
           "speaker": "lord",
           "emotion": "Happy",
           "side": "left",
-          "text": "Hold steady a second, {name:caterpie}. Hop onto my arm and let us reach that high cedar bough over the ridge."
+          "text": "Hold steady a second, {name:caterpie}. Climb up beside me and let us reach that high cedar bough over the ridge."
         }
       },
       {
@@ -805,7 +805,7 @@
           "speaker": "caterpie",
           "emotion": "Sad",
           "side": "right",
-          "text": "I cannot haul boulders like Quaquaval or punch through stone walls like the big fighters, so I figured anchoring the packs was the least I could handle."
+          "text": "I cannot haul boulders like Master Quaquaval or punch through stone walls like the big fighters, so I figured anchoring the packs was the least I could handle."
         }
       },
       {
@@ -882,7 +882,7 @@
           "speaker": "pawmi",
           "emotion": "Determined",
           "side": "right",
-          "text": "That is because I have been waiting since the hometown pitch bout! You three broke my Nuzzle lock with Paralyze Heal and swept the field. That score is staying zero to one until I tag you back!"
+          "text": "That is because I have been waiting since the hometown pitch bout! You three broke our whole flank open and took the win. That score is staying zero to one until I tag you back!"
         }
       },
       {
@@ -941,7 +941,7 @@
           "speaker": "lord",
           "emotion": "Worried",
           "side": "left",
-          "text": "Hey, {name:pawmi}. You have been scrubbing soot off your gloves all alone by the stream since the skirmish ended."
+          "text": "Hey, {name:pawmi}. You have been scrubbing soot off your paws all alone by the stream since the skirmish ended."
         }
       },
       {
@@ -1113,7 +1113,7 @@
           "speaker": "pawmi",
           "emotion": "Normal",
           "side": "right",
-          "text": "Back home, I chased you across the pitch every day just to prove I was faster. Then we crossed the mountains, stared down that torn sky, and everything clicked."
+          "text": "Back home, I chased you across the pitch every day just to prove I was faster. Then we crossed the mountains together, and everything clicked."
         }
       },
       {
@@ -1140,7 +1140,7 @@
           "speaker": "lord",
           "emotion": "Determined",
           "side": "left",
-          "text": "No matter how far the Rift pulls us from home, we see this through together and run the victory lap back to our old pitch side by side."
+          "text": "No matter how far the Rift pulls us from home, we see this through together and race back onto our old pitch neck and neck."
         }
       },
       {

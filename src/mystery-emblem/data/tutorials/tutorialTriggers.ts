@@ -166,7 +166,6 @@ export function evaluatePrepTutorialTopics(opts: {
   map: DungeonMapDefinition;
   save: SaveData;
   deploymentCap: number;
-  anyUnitCanPromoteNow: boolean;
 }): string[] {
   return evaluateHookRules({
     hook: 'battle_prep',
@@ -174,7 +173,6 @@ export function evaluatePrepTutorialTopics(opts: {
     map: opts.map,
     save: opts.save,
     deploymentCap: opts.deploymentCap,
-    anyUnitCanPromoteNow: opts.anyUnitCanPromoteNow,
   });
 }
 

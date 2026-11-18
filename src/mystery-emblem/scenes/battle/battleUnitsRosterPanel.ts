@@ -36,8 +36,8 @@ import {
 import { bindPointerTap } from '../../ui/pointerControls';
 import { renderColoredTypeHtml, renderColoredTypesHtml } from '../../ui/typeColors';
 import type { BattleControllerContext } from './battleTypesAndState';
+import { createUnitPortraitCell } from '../../ui/PmdUnitPortraitGrid';
 import { getLordUnit, getSelectedUnit, getUnitVisualKey } from './battleUnitQueries';
-import { createRosterUnitPortraitBtn } from './battleUnitsRosterCell';
 
 export function renderBattleUnitsRosterPanel(
   ctx: BattleControllerContext,
@@ -89,18 +89,27 @@ export function renderBattleUnitsRosterPanel(
     gridEl.className = 'pmd-unit-portrait-grid pmd-dungeon-units-grid';
     gridEl.dataset.testid = 'dungeon-units-grid';
     for (const u of playerUnits) {
+      const isFainted = u.defeated || u.currentHp <= 0;
+      const itemId = u.heldItemId ?? u.consumableItemId;
       gridEl.appendChild(
-        createRosterUnitPortraitBtn(
-          u,
-          u.id === activeUnitId,
-          () => {
+        createUnitPortraitCell({
+          speciesIdOrAssetId: getUnitVisualKey(u),
+          ariaLabel: `${u.nickname}${isFainted ? ' (Fainted)' : ''}`,
+          testId: `dungeon-units-cell-${u.id}`,
+          portraitTestId: `dungeon-units-portrait-${u.id}`,
+          isSelected: u.id === activeUnitId,
+          isFainted,
+          isDeployed: !isFainted && !u.waited,
+          isBenched: !isFainted && u.waited,
+          equippedItemId: itemId && getItemById(itemId) ? itemId : null,
+          signal: abortSignal,
+          onSelect: () => {
             if (activeUnitId === u.id) return;
             audioManager.playSfx('select');
             activeUnitId = u.id;
             renderPanel();
           },
-          abortSignal
-        )
+        })
       );
     }
     cardEl.appendChild(headEl);

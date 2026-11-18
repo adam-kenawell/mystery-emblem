@@ -94,7 +94,7 @@
           "speaker": "combee",
           "emotion": "Worried",
           "side": "left",
-          "text": "Sorry, {name:healer}! We hovered too close to a wild ember trap, and the bottom of us tried to sneeze it out... which only blew ash everywhere."
+          "text": "Sorry, {name:healer}! We hovered too close to a wild ember trap, and one of us tried to sneeze it out... which only blew ash everywhere."
         }
       },
       {
@@ -121,7 +121,7 @@
           "speaker": "healer",
           "emotion": "Happy",
           "side": "right",
-          "text": "Mix it with crushed mint leaf and it calms bruises twice as fast. My mom taught me that trick back home whenever my brother scraped his knees."
+          "text": "Mix it with crushed mint leaf and it calms bruises twice as fast. My mom taught me that trick back home whenever our friends scraped their knees."
         }
       },
       {
@@ -162,7 +162,7 @@
           "speaker": "healer",
           "emotion": "Worried",
           "side": "right",
-          "text": "{name:combee}, why did you dive in front of that stone volley earlier? Your lower wing is trembling."
+          "text": "{name:combee}, why did you dive in front of that stone volley earlier? Your wing is trembling."
         }
       },
       {
@@ -180,7 +180,7 @@
           "speaker": "healer",
           "emotion": "Sad",
           "side": "right",
-          "text": "You took the blow for a single petal? If one of you gets hurt badly, all three of you feel it."
+          "text": "You took the blow for a single petal? If one of you gets hurt badly, the whole swarm feels it."
         }
       },
       {
@@ -266,7 +266,7 @@
           "speaker": "healer",
           "emotion": "Happy",
           "side": "right",
-          "text": "When this Rift trouble is finally sealed and the roads open back up, every camp we left behind is going to bloom."
+          "text": "Once the roads are safe again and travelers can walk in peace, every camp we left behind is going to bloom."
         }
       },
       {
@@ -275,7 +275,7 @@
           "speaker": "combee",
           "emotion": "Inspired",
           "side": "left",
-          "text": "Hey, {name:healer}. Once the war ends, will you fly out past the village with us? Half the ridges out there still need fresh meadows."
+          "text": "Hey, {name:healer}. Once our march ends, will you fly out past the village with us? Half the ridges out there still need fresh meadows."
         }
       },
       {
@@ -293,7 +293,7 @@
           "speaker": "combee",
           "emotion": "Joyous",
           "side": "left",
-          "text": "All three of us heard that promise, and not even the bottom one lagged! Wing and petal partners for life!"
+          "text": "Every wing in our hive heard that promise, and nobody lagged a beat! Wing and petal partners for life!"
         }
       }
     ]
@@ -352,7 +352,7 @@
           "speaker": "chespin",
           "emotion": "Normal",
           "side": "left",
-          "text": "Ten degrees... sink the back heel... Wait. That feels lighter! Almost like dancing in iron!"
+          "text": "Ten degrees... sink the back heel... Wait. That feels lighter! Almost like dancing in heavy shell!"
         }
       },
       {
@@ -787,7 +787,7 @@
           "speaker": "chespin",
           "emotion": "Inspired",
           "side": "left",
-          "text": "Then let us make it formal, comrade. Through whatever kingdoms and rifts lie ahead of this expedition, I will always hold the gate beside you."
+          "text": "Then let us make it formal, comrade. Through whatever trails and borders lie ahead of this expedition, I will always hold the gate beside you."
         }
       },
       {
@@ -1018,7 +1018,7 @@
           "speaker": "chespin",
           "emotion": "Surprised",
           "side": "left",
-          "text": "Truly? Wait, even your own blossom... whenever you drift close to me in camp, I hold my breath so my shoulder spikes never snag a petal."
+          "text": "Truly? Wait, even your own blossom... whenever you drift close to me in camp, I hold my breath so my chestnut shell never snags a petal."
         }
       },
       {
@@ -1204,7 +1204,7 @@
           "speaker": "combee",
           "emotion": "Surprised",
           "side": "left",
-          "text": "Wait, so your naps aren't an accident? You schedule them like our Queen schedules hive shifts?! ...Like hive shifts!"
+          "text": "Wait, so your naps aren't an accident? You schedule them just like hive sentry shifts?! ...Just like hive shifts!"
         }
       },
       {
@@ -1231,7 +1231,7 @@
           "speaker": "slakoth",
           "emotion": "Joyous",
           "side": "right",
-          "text": "Sweet honey and soft humming... You three might be the best nap crew on this whole march..."
+          "text": "Sweet honey and soft humming... You lot might be the best nap crew on this whole march..."
         }
       }
     ]

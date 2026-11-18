@@ -37,7 +37,6 @@ export const STATUS_CONDITIONS = ['PAR', 'PSN', 'BRN', 'FRZ', 'SLP'] as const;
 export type StatusCondition = (typeof STATUS_CONDITIONS)[number];
 
 export type StatKeySix = 'hp' | 'atk' | 'def' | 'spa' | 'spd' | 'spe';
-export type StatKeySeven = StatKeySix | 'mov';
 
 export interface StatBlockSix {
   hp: number;

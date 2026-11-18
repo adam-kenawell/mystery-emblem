@@ -30,7 +30,7 @@ import { CHAPTER_LEVEL_CATALOG } from '../data/chapterMapRegistry';
 import { DRAGON_LORD_SPECIES_IDS } from '../data/campaignConfig';
 import { getSpeciesById } from '../data/index';
 import { LIGHTING_MOOD_LABELS, WEATHER_LABELS } from '../scenes/cutscene/cutsceneAtmosphere';
-import type { EditorContext } from './editorContext';
+import type { EditorContext } from './editorSession';
 import {
   button,
   checkbox,

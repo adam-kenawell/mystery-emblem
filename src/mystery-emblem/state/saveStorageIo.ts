@@ -10,8 +10,7 @@ import {
 import { ITEM_MAP, MOVE_MAP, SPECIES_MAP } from '../data/index';
 import type { SaveData } from '../types/schemas';
 import { validateSaveData } from '../types/validators';
-import { serializeCustomMapsEnvelope } from './cloudReconciler';
-import type { CloudSyncAdapter } from './firebaseSync';
+import { serializeCustomMapsEnvelope, type CloudSyncAdapter } from './firebaseSync';
 import {
   LEGACY_SAVE_STORAGE_KEY,
   META_STORAGE_KEY,
@@ -45,15 +44,14 @@ export function writeLocalSaveToStorage(
   save: SaveData,
   slot = 1
 ): SaveData {
-  const cloned = JSON.parse(JSON.stringify(save)) as SaveData;
-  if (isBrowserPrimaryStorage && cloned.customMaps) {
-    mergeCustomMapsRecord(cloned.customMaps);
+  if (isBrowserPrimaryStorage && save.customMaps) {
+    mergeCustomMapsRecord(save.customMaps);
   }
-  storage.setItem(getSaveSlotStorageKey(slot), JSON.stringify(cloned));
-  if (cloned.newGamePlusUnlocked) {
+  storage.setItem(getSaveSlotStorageKey(slot), JSON.stringify(save));
+  if (save.newGamePlusUnlocked) {
     storage.setItem(META_STORAGE_KEY, JSON.stringify({ newGamePlusUnlocked: true }));
   }
-  return cloned;
+  return structuredClone(save);
 }
 
 export function stampAndValidateSaveForCommit(params: {

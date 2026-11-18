@@ -8,47 +8,40 @@ import { getMoveById } from '../../data/index';
 import {
   computeCombatForecast,
   computeHealForecast,
+  computeStatusMoveForecast,
   isEnemyStatusMove,
 } from '../../engine/combatEngine';
-import { refreshCombatForecastModalDom } from './battleAttackForecastView';
-import { waitBattleMs } from './battleBannersAndTransitions';
 import { playCombatExchangeAsync } from './battleCombatAnimator';
+import { finalizePlayerUnitAction } from './battleCommandExecution';
 import {
-  clearBattleSelection,
-  recomputeDangerArea,
   syncHudControls,
   syncPrepChromeVisibility,
 } from './battleDangerAndViewportState';
 import {
-  runTileReachedEvents,
-  runUnitDefeatedEvents,
-  runUnitHealedEvents,
-} from './battleEventRunner';
-import { setForecastMovePickerOpen } from './battleForecastMoveList';
-import { refreshHealForecastModalDom } from './battleHealForecastView';
+  refreshCombatForecastModalDom,
+  refreshHealForecastModalDom,
+  setForecastMovePickerOpen,
+} from './battleForecastView';
 import { updateBattleInfoStrip } from './battleHudCards';
-import { checkAndTriggerMatchEnd } from './battleOutcomeModals';
-import { runEnemyPhase } from './battlePhaseAndAiRunner';
 import {
   cancelUncommittedMove,
   openFloatingCommandMenu,
 } from './battleSelectionAndMenu';
-import { confirmForecastStatusHex } from './battleStatusHexController';
 import { getBattleSupportContext } from './battleSupportHelpers';
-import {
-  triggerReactiveForecastTutorial,
-  triggerReactivePostCombatTutorials,
-} from './battleTutorialIntegration';
+import { triggerReactiveForecastTutorial } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
-import { areAllLivingPlayersWaited, getSelectedUnit } from './battleUnitQueries';
-import { playHealActionAsync } from './battleWalkAndHealAnimator';
+import { getSelectedUnit } from './battleUnitQueries';
+import {
+  playHealActionAsync,
+  playStatusHexActionAsync,
+} from './battleWalkAndHealAnimator';
 
 export function openCombatForecastModal(
   ctx: BattleControllerContext,
   targetEnemyId: string,
   moveId: string
 ): void {
-  const { state, dom, prepOverlay, tutorialOverlay } = ctx;
+  const { state, dom, prepOverlay } = ctx;
   const attacker = getSelectedUnit(state);
   const defender = state.units.find(
     (u) => u.id === targetEnemyId && !u.defeated && u.currentHp > 0
@@ -73,7 +66,6 @@ export function openCombatForecastModal(
   syncHudControls(state, dom);
   updateBattleInfoStrip(ctx);
   ctx.onLayerStateChanged();
-  tutorialOverlay?.notifyActionCompleted('battle_open_attack_forecast');
   ctx.renderNow();
   triggerReactiveForecastTutorial(ctx);
 }
@@ -83,7 +75,7 @@ export function openHealForecastModal(
   targetAllyId: string,
   moveId: string
 ): void {
-  const { state, dom, prepOverlay, tutorialOverlay } = ctx;
+  const { state, dom, prepOverlay } = ctx;
   const healer = getSelectedUnit(state);
   const targetAlly = state.units.find(
     (u) => u.id === targetAllyId && !u.defeated && u.currentHp > 0
@@ -108,7 +100,6 @@ export function openHealForecastModal(
   updateBattleInfoStrip(ctx);
   ctx.onLayerStateChanged();
   ctx.renderNow();
-  tutorialOverlay?.notifyActionCompleted('battle_open_heal_forecast');
 }
 
 export function cancelCombatForecast(ctx: BattleControllerContext): void {
@@ -138,14 +129,14 @@ export async function confirmForecastAction(ctx: BattleControllerContext): Promi
     return;
   }
   if (ctx.state.forecastMoveId && isEnemyStatusMove(getMoveById(ctx.state.forecastMoveId))) {
-    await confirmForecastStatusHex(ctx, runEnemyPhase);
+    await confirmForecastStatusHex(ctx);
     return;
   }
   await confirmForecastAttack(ctx);
 }
 
 async function confirmForecastAttack(ctx: BattleControllerContext): Promise<void> {
-  const { state, dom, prepOverlay, audioManager, tutorialOverlay } = ctx;
+  const { state, dom, prepOverlay, audioManager } = ctx;
   const attacker = getSelectedUnit(state);
   const defender = state.units.find(
     (u) => u.id === state.forecastTargetId && !u.defeated && u.currentHp > 0
@@ -165,7 +156,6 @@ async function confirmForecastAttack(ctx: BattleControllerContext): Promise<void
   const runGen = state.battleRunGen;
   equipMoveInItsSlot(attacker, forecast.attackerSide.move.id);
 
-  tutorialOverlay?.notifyActionCompleted('battle_confirm_attack');
   audioManager.playSfx('select');
   dom.forecastModalBackdropEl.hidden = true;
   dom.actionMenuEl.hidden = true;
@@ -180,44 +170,11 @@ async function confirmForecastAttack(ctx: BattleControllerContext): Promise<void
   await playCombatExchangeAsync(ctx, attacker, defender, forecast, runGen);
   if (!state.openState || runGen !== state.battleRunGen) return;
 
-  await runUnitDefeatedEvents(ctx, [attacker, defender], runGen);
-  if (!state.openState || runGen !== state.battleRunGen) return;
-
-  recomputeDangerArea(ctx);
-  if (checkAndTriggerMatchEnd(ctx)) {
-    return;
-  }
-
-  if (!attacker.defeated && attacker.currentHp > 0) {
-    attacker.waited = true;
-    attacker.action = 'Idle';
-    attacker.renderWorldX = attacker.x * PMD_TILE_NATIVE_PX;
-    attacker.renderWorldY = attacker.y * PMD_TILE_NATIVE_PX;
-  }
-
-  clearBattleSelection(state, dom, prepOverlay);
-  if (!attacker.defeated && attacker.currentHp > 0) {
-    await runTileReachedEvents(ctx, attacker, runGen);
-    if (!state.openState || runGen !== state.battleRunGen) return;
-    if (checkAndTriggerMatchEnd(ctx)) return;
-  }
-  syncHudControls(state, dom);
-  updateBattleInfoStrip(ctx);
-  ctx.onLayerStateChanged();
-  ctx.renderNow();
-
-  await triggerReactivePostCombatTutorials(ctx, runGen);
-  if (!state.openState || runGen !== state.battleRunGen || state.phase !== 'player_phase') {
-    return;
-  }
-
-  if (areAllLivingPlayersWaited(state)) {
-    await waitBattleMs(state, 240);
-    if (!state.openState || runGen !== state.battleRunGen || state.phase !== 'player_phase') {
-      return;
-    }
-    await runEnemyPhase(ctx);
-  }
+  await finalizePlayerUnitAction(ctx, attacker, runGen, {
+    defeatedCheckUnits: [attacker, defender],
+    checkPostCombatTutorials: true,
+    autoEndDelayMs: 240,
+  });
 }
 
 async function confirmForecastHeal(ctx: BattleControllerContext): Promise<void> {
@@ -239,7 +196,6 @@ async function confirmForecastHeal(ctx: BattleControllerContext): Promise<void> 
   if (!healForecast) return;
 
   const runGen = state.battleRunGen;
-  ctx.tutorialOverlay?.notifyActionCompleted('battle_confirm_heal');
   audioManager.playSfx('select');
   dom.forecastModalBackdropEl.hidden = true;
   dom.actionMenuEl.hidden = true;
@@ -254,28 +210,46 @@ async function confirmForecastHeal(ctx: BattleControllerContext): Promise<void> 
   await playHealActionAsync(ctx, healer, target, healForecast, runGen);
   if (!state.openState || runGen !== state.battleRunGen) return;
 
-  healer.waited = true;
-  healer.action = 'Idle';
-  healer.renderWorldX = healer.x * PMD_TILE_NATIVE_PX;
-  healer.renderWorldY = healer.y * PMD_TILE_NATIVE_PX;
+  await finalizePlayerUnitAction(ctx, healer, runGen, {
+    checkUnitHealedEvents: true,
+    autoEndDelayMs: 240,
+  });
+}
 
-  recomputeDangerArea(ctx);
-  clearBattleSelection(state, dom, prepOverlay);
-  await runTileReachedEvents(ctx, healer, runGen);
-  if (!state.openState || runGen !== state.battleRunGen) return;
-  if (checkAndTriggerMatchEnd(ctx)) return;
-  await runUnitHealedEvents(ctx, runGen);
-  if (!state.openState || runGen !== state.battleRunGen) return;
+async function confirmForecastStatusHex(ctx: BattleControllerContext): Promise<void> {
+  const { state, dom, prepOverlay, audioManager } = ctx;
+  const caster = getSelectedUnit(state);
+  const target = state.units.find(
+    (u) => u.id === state.forecastTargetId && !u.defeated && u.currentHp > 0
+  );
+  if (!caster || !target || !state.forecastMoveId) return;
+
+  const forecast = computeStatusMoveForecast(
+    state.map,
+    caster,
+    target,
+    state.forecastMoveId,
+    undefined,
+    getBattleSupportContext(state)
+  );
+  if (!forecast || forecast.blockedReason) return;
+
+  const runGen = state.battleRunGen;
+  audioManager.playSfx('select');
+  dom.forecastModalBackdropEl.hidden = true;
+  dom.actionMenuEl.hidden = true;
+  state.currentRange = null;
+  state.previewPath = null;
+  state.interactionState = 'combat_animating';
+  syncPrepChromeVisibility(state, dom, prepOverlay);
   syncHudControls(state, dom);
   updateBattleInfoStrip(ctx);
   ctx.onLayerStateChanged();
-  ctx.renderNow();
 
-  if (areAllLivingPlayersWaited(state)) {
-    await waitBattleMs(state, 240);
-    if (!state.openState || runGen !== state.battleRunGen || state.phase !== 'player_phase') {
-      return;
-    }
-    await runEnemyPhase(ctx);
-  }
+  await playStatusHexActionAsync(ctx, caster, target, forecast, runGen);
+  if (!state.openState || runGen !== state.battleRunGen) return;
+
+  await finalizePlayerUnitAction(ctx, caster, runGen, {
+    autoEndDelayMs: 240,
+  });
 }

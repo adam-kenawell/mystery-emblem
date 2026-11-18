@@ -7,7 +7,38 @@ import type {
   DialogueDoc,
   LocationDoc,
 } from '../data/cutscenes/cutsceneDocTypes';
-import type { DungeonEventDefinition } from '../types/schemas';
+import type { DungeonEventDefinition, SaveData } from '../types/schemas';
+import type { UiContext } from './editorDom';
+
+export interface EditorSelection {
+  /** -1 = opening setup (starting positions, props, camera) */
+  beatIndex: number;
+  actionIndex: number | null;
+  castId: string | null;
+}
+
+export interface UpdateOptions {
+  /** Merge rapid edits (typing) into one undo step */
+  coalesce?: string;
+  /** Keep the inspector DOM (so a focused text box isn't rebuilt mid-typing) */
+  keepInspector?: boolean;
+}
+
+export interface EditorContext {
+  ui: UiContext;
+  session: EditorSession;
+  sel: EditorSelection;
+  canSave: boolean;
+  previewSave: SaveData;
+  update: (mutator: (data: SessionData) => void | boolean, opts?: UpdateOptions) => void;
+  select: (next: Partial<EditorSelection>) => void;
+  nameOf: (castId: string) => string;
+  visualKeyOf: (castId: string) => string | null;
+  toast: (msg: string) => void;
+  openLocationPainter: (locationId: string, layerIndex: number) => void;
+  previewFrom: (beatIndex: number) => void;
+  rerender: () => void;
+}
 
 export interface StoryLink {
   chapterId: string;
@@ -193,19 +224,6 @@ export function clearDraft(key: string): void {
   } catch {
     // ignore
   }
-}
-
-export function listDraftKeys(): string[] {
-  const keys: string[] = [];
-  try {
-    for (let i = 0; i < window.localStorage.length; i++) {
-      const k = window.localStorage.key(i);
-      if (k?.startsWith(DRAFT_PREFIX)) keys.push(k.slice(DRAFT_PREFIX.length));
-    }
-  } catch {
-    // ignore
-  }
-  return keys;
 }
 
 export function slugifyId(text: string, fallback = 'scene'): string {

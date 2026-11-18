@@ -26,19 +26,6 @@ import {
   isInMapBounds,
 } from './terrainAndPathfinding';
 
-export function resolveSeededSpawnSpeciesId(
-  spawn: Pick<DungeonUnitSpawn, 'speciesId' | 'seedKey'>,
-  save?: SaveData | null
-): string {
-  if (spawn.seedKey && save?.campaign?.quizSeeds?.[spawn.seedKey]?.length) {
-    const seeded = save.campaign.quizSeeds[spawn.seedKey][0];
-    if (seeded && getSpeciesById(seeded)) {
-      return seeded;
-    }
-  }
-  return spawn.speciesId;
-}
-
 export function buildUnitMoveSlots(
   moveIds: ReadonlyArray<string>,
   bonusPpByMoveId?: Record<string, number>
@@ -84,34 +71,31 @@ export function buildSpawnedBattleUnit(
   now: number = typeof performance !== 'undefined' ? performance.now() : 0,
   opts?: { addToPermanentRoster?: boolean; save?: SaveData | null }
 ): BattleUnitState | null {
-  const resolvedSpeciesId = resolveSeededSpawnSpeciesId(spawn, opts?.save);
-  const sp = getSpeciesById(resolvedSpeciesId) ?? getSpeciesById(spawn.speciesId);
+  const sp = getSpeciesById(spawn.speciesId);
   if (!sp) return null;
   const resolvedNickname = sp.name;
   const allLearnedMoveIds = sp.learnset
     .filter((l) => l.level <= Math.max(spawn.level, sp.defaultJoinLevel))
     .map((l) => l.moveId);
   const rawMoveIds =
-    !spawn.seedKey && spawn.moveIds && spawn.moveIds.length > 0
+    spawn.moveIds && spawn.moveIds.length > 0
       ? spawn.moveIds
       : allLearnedMoveIds.slice(-4);
   const moveSlots = buildUnitMoveSlots(rawMoveIds);
-  const equippedSlots: EquippedMoveSlots =
-    !spawn.seedKey && spawn.equippedMoveIds
-      ? { equippedPhysicalMoveId: null, equippedSpecialMoveId: null }
-      : buildEquippedSlotsFromSeed(
-          moveSlots.map((s) => s.id),
-          spawn.seedKey ? undefined : spawn.equippedMoveId
-        );
-  if (!spawn.seedKey && spawn.equippedMoveIds) {
+  const equippedSlots: EquippedMoveSlots = spawn.equippedMoveIds
+    ? { equippedPhysicalMoveId: null, equippedSpecialMoveId: null }
+    : buildEquippedSlotsFromSeed(
+        moveSlots.map((s) => s.id),
+        spawn.equippedMoveId
+      );
+  if (spawn.equippedMoveIds) {
     for (const id of spawn.equippedMoveIds) {
       if (moveSlots.some((s) => s.id === id)) equipMoveInItsSlot(equippedSlots, id);
     }
   }
-  const stats: StatBlockSeven =
-    !spawn.seedKey && spawn.stats
-      ? { ...spawn.stats }
-      : computeManualScaledStatsForJoinLevel(sp, spawn.level);
+  const stats: StatBlockSeven = spawn.stats
+    ? { ...spawn.stats }
+    : computeManualScaledStatsForJoinLevel(sp, spawn.level);
   const defaultPrefix = faction === 'npc' ? 'npc' : faction === 'player' ? 'ally' : 'enemy';
 
   return {

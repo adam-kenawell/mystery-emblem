@@ -7,10 +7,8 @@ import { reloadChapterMapsFromStorage } from '../data/chapterMapRegistry';
 import { CreditsScene } from '../scenes/CreditsScene';
 import { CutsceneScene } from '../scenes/CutsceneScene';
 import { SaveStateManager } from '../state/SaveStateManager';
-import type { CloudSyncAdapter } from '../state/firebaseSync';
 import { DialogueOverlay } from '../ui/DialogueOverlay';
 import { destroyAllPmdSpriteActors } from '../ui/PmdSpriteCanvas';
-import { RecruitNicknameOverlay } from '../ui/RecruitNicknameOverlay';
 import { TutorialOverlay } from '../ui/TutorialOverlay';
 import type { AppRuntimeContext } from './appContext';
 import { mountGameplayScenesAndDevTools } from './appSceneFactory';
@@ -19,7 +17,6 @@ import {
   createAppBackStack,
   registerAppBackStackLayers,
 } from './authAndTitleController';
-import { installMysteryEmblemDebugBridge } from './e2eDebugBridge';
 import { createSceneRouter } from './sceneRouterController';
 
 let activeCtx: AppRuntimeContext | null = null;
@@ -34,7 +31,6 @@ function teardownActiveApp(): void {
     activeCtx.mapEditorScene?.destroy();
     activeCtx.overworldScene?.destroy();
     activeCtx.quizScene?.destroy();
-    activeCtx.recruitNicknameOverlay?.destroy();
     activeCtx.tutorialOverlay?.destroy();
     activeCtx.devToolsHarness?.destroy();
     activeCtx.dialogueOverlay?.destroy();
@@ -52,9 +48,7 @@ export async function initMysteryEmblemApp(): Promise<void> {
 
   reloadChapterMapsFromStorage();
 
-  const injectedAdapter = (window as unknown as Record<string, unknown>)
-    .__MYSTERY_EMBLEM_TEST_CLOUD_ADAPTER__ as CloudSyncAdapter | undefined;
-  const manager = new SaveStateManager(undefined, injectedAdapter);
+  const manager = new SaveStateManager();
   const audioManager = getAudioManager();
 
   const dom = {
@@ -102,13 +96,6 @@ export async function initMysteryEmblemApp(): Promise<void> {
       })
     : null;
 
-  const recruitNicknameOverlay = dom.viewportEl
-    ? new RecruitNicknameOverlay(dom.viewportEl, manager, {
-        audioManager,
-        onStateChange: () => backStack.syncButtonLabel(),
-      })
-    : null;
-
   const tutorialOverlay = dom.viewportEl
     ? new TutorialOverlay({
         parent: dom.viewportEl,
@@ -127,7 +114,6 @@ export async function initMysteryEmblemApp(): Promise<void> {
     dialogueOverlay,
     cutsceneScene,
     creditsScene,
-    recruitNicknameOverlay,
     tutorialOverlay,
     quizScene: null,
     battleScene: null,
@@ -143,7 +129,6 @@ export async function initMysteryEmblemApp(): Promise<void> {
 
   const router = createSceneRouter(ctx);
   mountGameplayScenesAndDevTools(ctx, router);
-  installMysteryEmblemDebugBridge(ctx, router);
   registerAppBackStackLayers(ctx, router.closeDevToolsOverlay);
 
   const { renderAll } = bindTitleAndCornerControls({

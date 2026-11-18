@@ -290,13 +290,11 @@ const store = new ChapterMapOverrideStore();
 
 export const hasChapterMapOverride = (id: string): boolean => store.hasOverride(id);
 export const hasAnyCustomMapSyncState = (): boolean => store.hasAnySyncState();
-export const getChapterMapOverrideEntry = (id: string): CustomMapOverrideEntry | null => store.getOverrideEntry(id);
 export const getEffectiveChapterMap = (id: string): DungeonMapDefinition => store.getEffectiveMap(id);
 export const getAllCustomMapOverrides = (): Record<string, CustomMapOverrideEntry> => store.getAllOverridesRecord();
 export const getCustomMapsSyncEnvelope = (): CustomMapsSyncEnvelope => store.getSyncEnvelope();
 export const saveChapterMapOverride = (id: string, map: DungeonMapDefinition, ts?: number): DungeonMapDefinition => store.saveOverride(id, map, ts);
 export const resetChapterMapOverride = (id: string): DungeonMapDefinition => store.resetOverride(id);
-export const resetAllChapterMapOverrides = (clearResetsToo = false): void => store.resetAllOverrides(clearResetsToo);
 export const mergeCustomMapsRecord = (incoming: Record<string, CustomMapOverrideEntry> | undefined): boolean =>
   Boolean(incoming && typeof incoming === 'object') && store.reconcileEnvelope(incoming).localChanged;
 export const reconcileCustomMapsEnvelope = (
@@ -304,20 +302,6 @@ export const reconcileCustomMapsEnvelope = (
 ): { localChanged: boolean; cloudOutdated: boolean } => store.reconcileEnvelope(incoming);
 export const reloadChapterMapsFromStorage = (): void => store.reloadFromLocalStorage();
 export const exportChapterMapJson = (id: string): string => JSON.stringify(getEffectiveChapterMap(id), null, 2);
-export function importChapterMapJson(rawJson: string, targetLevelId?: string): DungeonMapDefinition {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(rawJson);
-  } catch (err) {
-    throw new Error(`Could not parse Map JSON: ${err instanceof Error ? err.message : 'Malformed JSON'}`);
-  }
-  const resolvedId =
-    targetLevelId ??
-    (parsed && typeof parsed === 'object' && typeof (parsed as { id?: unknown }).id === 'string'
-      ? ((parsed as { id: string }).id.trim() || 'prologue')
-      : 'prologue');
-  return saveChapterMapOverride(resolvedId, parsed as DungeonMapDefinition);
-}
 export const subscribeChapterMapChanges = (listener: MapStoreListener): (() => void) => store.subscribe(listener);
 export const getLegacyCutsceneStageOverrides = (): Record<string, CustomMapOverrideEntry> => store.getLegacyStageEntries();
 export const discardLegacyCutsceneStageOverride = (id: string): void => store.discardLegacyStageEntry(id);

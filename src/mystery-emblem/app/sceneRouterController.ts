@@ -16,7 +16,6 @@ import {
   getStoryCutsceneById,
 } from '../data/storyCutscenes';
 import { parseBattleSuspendJson } from '../scenes/battle/battleSuspend';
-import type { SaveStateManager } from '../state/SaveStateManager';
 import type { AppRuntimeContext } from './appContext';
 import { isAppAdminSignedIn, isAppDevToolsOpen } from './authAndTitleController';
 import {
@@ -37,14 +36,13 @@ export interface SceneRouter {
     celebrateClearedNodeId?: string;
   }) => Promise<void>;
   continueCampaignFromTitle: () => Promise<void>;
-  openDemoQuizFlow: (opts?: { skipNicknamePrompts?: boolean }) => void;
+  openDemoQuizFlow: () => void;
   playPreChapterStoryCutsceneIfNeeded: (nodeId: string) => Promise<void>;
   runPostChapterStoryFlowAndOpenOverworld: (clearedNodeId: string) => Promise<void>;
   replayStoryCutsceneFromOverworld: (cutsceneId: string) => Promise<void>;
   replayCreditsFromOverworld: () => Promise<void>;
   launchDemoChapterBattle: (demoChapter: CampaignChapterConfig) => Promise<void>;
   openMapEditor: (levelId?: string) => Promise<void>;
-  promptRenameUnit: (instanceId: string, overrideManager?: SaveStateManager) => Promise<void>;
   setPendingCelebrationNodeId: (nodeId: string | null) => void;
 }
 
@@ -296,7 +294,7 @@ export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
     return launchCampaignChapterBattle(ctx, demoChapter);
   }
 
-  function openDemoQuizFlow(opts?: { skipNicknamePrompts?: boolean }): void {
+  function openDemoQuizFlow(): void {
     if (!ctx.quizScene) return;
     ctx.tutorialOverlay?.closeAll(null);
     if (ctx.overworldScene?.isOpen()) {
@@ -315,7 +313,6 @@ export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
       scaleStatsToLevel: true,
       initialConvoy: DEMO_INITIAL_CONVOY,
       overworldGraph: DEMO_OVERWORLD_GRAPH,
-      skipNicknamePrompts: opts?.skipNicknamePrompts,
       onComplete: () => {
         void (async () => {
           await playPreChapterStoryCutsceneIfNeeded('prologue');
@@ -346,16 +343,6 @@ export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
     backStack.syncButtonLabel();
   }
 
-  async function promptRenameUnit(
-    instanceId: string,
-    overrideManager?: SaveStateManager
-  ): Promise<void> {
-    if (!ctx.recruitNicknameOverlay) return;
-    await ctx.recruitNicknameOverlay.promptRenameUnit(instanceId, overrideManager);
-    ctx.battleScene?.refreshFromExternalSaveCheat();
-    ctx.devToolsHarness?.onSaveChanged();
-  }
-
   const router: SceneRouter = {
     showTitleScreen,
     closeDevToolsOverlay,
@@ -371,16 +358,11 @@ export function createSceneRouter(ctx: AppRuntimeContext): SceneRouter {
     replayCreditsFromOverworld,
     launchDemoChapterBattle,
     openMapEditor,
-    promptRenameUnit,
     setPendingCelebrationNodeId: (nodeId) => {
       ctx.pendingOverworldCelebrationNodeId = nodeId;
     },
   };
 
   (ctx as any).sceneRouter = router;
-  if (typeof window !== 'undefined') {
-    (window as unknown as Record<string, unknown>).__MYSTERY_EMBLEM_ROUTER__ = router;
-  }
-
   return router;
 }

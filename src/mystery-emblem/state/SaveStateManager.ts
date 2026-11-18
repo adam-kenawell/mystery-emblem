@@ -3,45 +3,46 @@
  */
 
 import { mergeCustomMapsRecord } from '../data/chapterMapRegistry';
-import { DEFAULT_QUIZ_SEEDS, formatCampaignChapterLabel } from '../data/campaignConfig';
+import { formatCampaignChapterLabel } from '../data/campaignConfig';
 import type { EquipCategory } from '../data/equippedMoves';
 import { DEMO_OVERWORLD_GRAPH, type OverworldGraphDefinition } from '../data/overworldMapData';
 import type { PostBattleSpawnResult } from '../engine/overworldEngine';
 import type {
   ItemDefinition, KecleonShopType, OwnedPokemonInstance, SaveData,
-  SupportPairProgress, SupportRank, TutorialDetailLevel, TutorialFamiliarityPreferences,
+  SupportPairProgress, SupportRank,
 } from '../types/schemas';
 import {
-  mutateAddSupportPoints, mutateCommitBattleResults,
-  mutateReadyNextSupportRanksForCheat, mutateUnlockSupportRank,
-  type BattleUnitSaveSyncEntry, type CommitBattleResultsPayload,
-} from './battleCommitMutators';
-import {
-  mutateMarkTutorialSeen, mutateTutorialDetailLevel, pushUniqueIdToFlagList,
-  readAreTutorialsEnabled, readTutorialPreferences, readUnlockedTutorialIds,
-} from './campaignAndTutorialMutators';
+  mutateCommitBattleResults,
+  mutateMarkTutorialSeen,
+  mutateReadyNextSupportRanksForCheat,
+  mutateUnlockSupportRank,
+  pushUniqueIdToFlagList,
+  readAreTutorialsEnabled,
+  readUnlockedTutorialIds,
+  type BattleUnitSaveSyncEntry,
+  type CommitBattleResultsPayload,
+} from './campaignAndBattleMutators';
 import { buildNewCampaignSaveData, type NewCampaignConfig } from './campaignSaveFactory';
-import { performCloudSaveReconciliation, serializeCustomMapsEnvelope } from './cloudReconciler';
+import { performCloudSaveReconciliation, serializeCustomMapsEnvelope } from './firebaseSync';
 import {
   mutateAddConvoyItem, mutateEquipItemToUnit, mutateTeachTmMove,
   mutateUseEvolutionItemOnUnit, mutateUseVitaminOnUnit,
-} from './convoyAndItemMutators';
+} from './rosterAndItemMutators';
 import { FirestoreSyncAdapter, type CloudSyncAdapter } from './firebaseSync';
 import {
   mutateBuyKecleonShopItem, mutateClearOverworldSkirmish, mutateCompleteOverworldChapter,
   mutateEnsureOverworldInitialized, mutateResetOverworldToPrologue, mutateSetOverworldCurrentNode,
   mutateSetOverworldNodeStateCheat, mutateSpawnOverworldKecleonShop,
   mutateSpawnOverworldSkirmish, mutateUnlockAllOverworldNodes,
-} from './overworldAndShopMutators';
+} from './campaignAndBattleMutators';
 import {
   mutateClearEquippedMove, mutateEvolveUnitToSpecies, mutateRecruitPokemon,
-  mutateRenamePokemon, mutateSetActiveMoves, mutateSetEquippedMove,
-  mutateSetUnitLevelForTest, mutateUnlockUnitMove,
-} from './rosterAndMoveMutators';
+  mutateSetActiveMoves, mutateSetEquippedMove, mutateSetUnitLevel,
+} from './rosterAndItemMutators';
 import {
-  ACTIVE_SLOT_STORAGE_KEY, computeSupportLevel, createPokemonInstance, getDefaultStorage, getSaveSlotStorageKey,
+  ACTIVE_SLOT_STORAGE_KEY, createPokemonInstance, getDefaultStorage, getSaveSlotStorageKey,
   getUnitEquippedItemId, LEGACY_SAVE_STORAGE_KEY, makeSupportPairKey, META_STORAGE_KEY, normalizeSaveSlot,
-  sanitizeNickname, SAVE_SLOT_COUNT, SAVE_SLOT_INDICES, SAVE_STORAGE_KEY, SUPPORT_LEVEL_THRESHOLDS, SUPPORT_RANK_THRESHOLDS,
+  sanitizeNickname, SAVE_SLOT_COUNT, SAVE_SLOT_INDICES, SAVE_STORAGE_KEY, SUPPORT_RANK_THRESHOLDS,
   type CloudSyncResolution, type CreatePokemonOptions, type StorageLike, type SyncStatusSnapshot,
 } from './saveHelpersAndFactory';
 import {
@@ -50,8 +51,8 @@ import {
 } from './saveStorageIo';
 
 export {
-  DEFAULT_QUIZ_SEEDS, formatCampaignChapterLabel, SAVE_STORAGE_KEY, META_STORAGE_KEY,
-  SUPPORT_LEVEL_THRESHOLDS, SUPPORT_RANK_THRESHOLDS, makeSupportPairKey, computeSupportLevel, sanitizeNickname,
+  formatCampaignChapterLabel, SAVE_STORAGE_KEY, META_STORAGE_KEY,
+  SUPPORT_RANK_THRESHOLDS, makeSupportPairKey, sanitizeNickname,
   getUnitEquippedItemId, createPokemonInstance, SAVE_SLOT_COUNT, ACTIVE_SLOT_STORAGE_KEY, getSaveSlotStorageKey,
 };
 export type {
@@ -85,7 +86,7 @@ function summarizeSlot(slot: number, isActive: boolean, save: SaveData | null): 
   };
 }
 
-const cloneUnit = (u: OwnedPokemonInstance): OwnedPokemonInstance => JSON.parse(JSON.stringify(u)) as OwnedPokemonInstance;
+const cloneUnit = (u: OwnedPokemonInstance): OwnedPokemonInstance => structuredClone(u);
 
 export class SaveStateManager {
   private readonly storage: StorageLike;
@@ -114,15 +115,46 @@ export class SaveStateManager {
   }
 
   public dispose(): void { this.unsubscribeAuth?.(); this.unsubscribeAuth = null; this.changeListeners.clear(); }
-  public getSave(): SaveData | null { return this.currentSave ? (JSON.parse(JSON.stringify(this.currentSave)) as SaveData) : null; }
+  public getReadOnlySave(): Readonly<SaveData> | null {
+    return this.currentSave;
+  }
+
+  private activeSummaryCache: {
+    slot: number;
+    save: SaveData | null;
+    summary: SaveSlotSummary;
+  } | null = null;
+  private readonly inactiveSummaryCache = new Map<
+    number,
+    { raw: string | null; summary: SaveSlotSummary }
+  >();
+
+  public getSave(): SaveData | null {
+    return this.currentSave ? structuredClone(this.currentSave) : null;
+  }
   public getSyncStatus(): SyncStatusSnapshot { return { ...this.syncStatus }; }
 
   public getActiveSlot(): number { return this.activeSlot; }
   public getSaveSlotSummaries(): SaveSlotSummary[] {
-    return SAVE_SLOT_INDICES.map((slot) => summarizeSlot(
-      slot, slot === this.activeSlot,
-      slot === this.activeSlot ? this.currentSave : readValidLocalSaveFromStorage(this.storage, slot),
-    ));
+    return SAVE_SLOT_INDICES.map((slot) => {
+      if (slot === this.activeSlot) {
+        if (this.activeSummaryCache?.slot === slot && this.activeSummaryCache.save === this.currentSave) {
+          return { ...this.activeSummaryCache.summary };
+        }
+        const summary = summarizeSlot(slot, true, this.currentSave);
+        this.activeSummaryCache = { slot, save: this.currentSave, summary };
+        return { ...summary };
+      }
+      const raw = this.storage.getItem(getSaveSlotStorageKey(slot));
+      const cached = this.inactiveSummaryCache.get(slot);
+      if (cached && cached.raw === raw) {
+        return { ...cached.summary, isActive: false };
+      }
+      const save = readValidLocalSaveFromStorage(this.storage, slot);
+      const summary = summarizeSlot(slot, false, save);
+      this.inactiveSummaryCache.set(slot, { raw, summary });
+      return { ...summary };
+    });
   }
   public hasAnySave(): boolean { return this.getSaveSlotSummaries().some((s) => !s.isEmpty); }
   /** Switch the active slot and load whatever it holds (null when empty, e.g. before a New Game). */
@@ -136,7 +168,7 @@ export class SaveStateManager {
   /** Manual "Save Progress": copies the in-memory campaign (plus optional mid-battle snapshot) into `slot` and makes it active. */
   public saveProgressToSlot(slot: number, opts?: { battleSuspendJson?: string | null }): SaveData {
     const save = this.requireActiveSave();
-    const next: SaveData = JSON.parse(JSON.stringify(save)) as SaveData;
+    const next: SaveData = structuredClone(save);
     if (opts && 'battleSuspendJson' in opts) {
       if (opts.battleSuspendJson) next.battleSuspendJson = opts.battleSuspendJson;
       else delete next.battleSuspendJson;
@@ -176,32 +208,19 @@ export class SaveStateManager {
     try { const r = this.storage.getItem(META_STORAGE_KEY); return r ? Boolean((JSON.parse(r) as { newGamePlusUnlocked?: boolean }).newGamePlusUnlocked) : false; }
     catch { return false; }
   }
-  public unlockNewGamePlus(): void { this.setNewGamePlusUnlocked(true); }
-  public setNewGamePlusUnlocked(unlocked: boolean): void {
-    this.storage.setItem(META_STORAGE_KEY, JSON.stringify({ newGamePlusUnlocked: unlocked }));
-    if (this.currentSave) { this.currentSave.newGamePlusUnlocked = unlocked; this.commitSave(this.currentSave); } else this.emitChange();
-  }
   public createNewCampaignSave(cfg: NewCampaignConfig): SaveData { this.commitSave(buildNewCampaignSaveData(cfg, this.isNewGamePlusUnlocked())); return this.getSave()!; }
-  public setCurrentChapter(chapterId: string): SaveData {
-    const trimmed = chapterId.trim();
-    if (!trimmed) throw new Error('chapterId must be a non-empty string.');
-    return this.mutateAndCommit((s) => { s.campaign.currentChapterId = trimmed; });
-  }
 
-  public renamePokemon(id: string, name: string): OwnedPokemonInstance { return this.mutateUnit((s) => mutateRenamePokemon(s, id, name)); }
+  public setUnitLevel(id: string, level: number, rescaleStats = false): OwnedPokemonInstance { return this.mutateUnit((s) => mutateSetUnitLevel(s, id, level, rescaleStats)); }
   public setEquippedMove(id: string, moveId: string): OwnedPokemonInstance { return this.mutateUnit((s) => mutateSetEquippedMove(s, id, moveId)); }
   public clearEquippedMove(id: string, category: EquipCategory): OwnedPokemonInstance { return this.mutateUnit((s) => mutateClearEquippedMove(s, id, category)); }
   public setActiveMoves(id: string, moveIds: string[]): OwnedPokemonInstance { return this.mutateUnit((s) => mutateSetActiveMoves(s, id, moveIds)); }
   public addConvoyItem(itemId: string, quantity = 1): void { this.mutateAndCommit((s) => mutateAddConvoyItem(s, itemId, quantity)); }
   public recruitPokemon(opts: CreatePokemonOptions): OwnedPokemonInstance { return this.mutateUnit((s) => mutateRecruitPokemon(s, opts)); }
-  public unlockUnitMove(id: string, moveId: string, autoEquip = false): OwnedPokemonInstance { return this.mutateUnit((s) => mutateUnlockUnitMove(s, id, moveId, autoEquip)); }
   public useVitaminOnUnit(id: string, vitaminItemId: string, targetMoveId?: string): OwnedPokemonInstance { return this.mutateUnit((s) => mutateUseVitaminOnUnit(s, id, vitaminItemId, targetMoveId)); }
   public teachTmMove(id: string, tmItemId: string): OwnedPokemonInstance { return this.mutateUnit((s) => mutateTeachTmMove(s, id, tmItemId)); }
-  public setUnitLevelForTest(id: string, level: number, rescaleStats = false): OwnedPokemonInstance { return this.mutateUnit((s) => mutateSetUnitLevelForTest(s, id, level, rescaleStats)); }
   public useEvolutionItemOnUnit(id: string, itemId: 'evolution_stone' | 'evolution_gem', targetSpeciesId?: string): OwnedPokemonInstance { return this.mutateUnit((s) => mutateUseEvolutionItemOnUnit(s, id, itemId, targetSpeciesId)); }
   public evolveUnitToSpecies(id: string, targetSpeciesId: string): OwnedPokemonInstance { const s = this.requireActiveSave(); const { unit, mutated } = mutateEvolveUnitToSpecies(s, id, targetSpeciesId); if (mutated) this.commitSave(s); return cloneUnit(unit); }
   public equipItemToUnit(id: string, itemId: string | null, sourceUnitId?: string): OwnedPokemonInstance { const s = this.requireActiveSave(); const { unit, mutated } = mutateEquipItemToUnit(s, id, itemId, sourceUnitId); if (mutated) this.commitSave(s); return cloneUnit(unit); }
-  public addSupportPoints(idA: string, idB: string, delta = 1): SupportPairProgress { const s = this.requireActiveSave(); const p = mutateAddSupportPoints(s, idA, idB, delta); this.commitSave(s); return p; }
   public unlockSupportRank(actorIdA: string, actorIdB: string, rank: SupportRank): SupportPairProgress { const s = this.requireActiveSave(); const p = mutateUnlockSupportRank(s, actorIdA, actorIdB, rank); this.commitSave(s); return p; }
   public cheatReadyNextSupportRanks(filterActorId?: string): number { const s = this.requireActiveSave(); const count = mutateReadyNextSupportRanksForCheat(s, filterActorId); this.commitSave(s); return count; }
   public addGold(amount: number): SaveData { return this.mutateAndCommit((s) => { s.gold = Math.max(0, Math.floor(s.gold + amount)); }); }
@@ -228,19 +247,14 @@ export class SaveStateManager {
 
   public areTutorialsEnabled(): boolean { return readAreTutorialsEnabled(this.currentSave); }
   public setTutorialsEnabled(enabled: boolean): SaveData { return this.mutateAndCommit((s) => { s.campaign.tutorialsEnabled = Boolean(enabled); }); }
-  public getTutorialPreferences(): TutorialFamiliarityPreferences { return readTutorialPreferences(this.currentSave); }
-  public setTutorialDetailLevel(sub: 'pokemon' | 'fire_emblem', detail: TutorialDetailLevel): SaveData { return this.mutateAndCommit((s) => mutateTutorialDetailLevel(s, sub, detail)); }
   public hasSeenTutorial(id: string): boolean { return Boolean(this.currentSave?.campaign.seenTutorialIds?.includes(id)); }
-  public hasUnlockedTutorial(id: string): boolean { return Boolean(this.currentSave?.campaign.unlockedTutorialIds?.includes(id) || this.currentSave?.campaign.seenTutorialIds?.includes(id)); }
   public getUnlockedTutorialIds(): string[] { return readUnlockedTutorialIds(this.currentSave); }
-  public getSeenTutorialIds(): string[] { return [...(this.currentSave?.campaign.seenTutorialIds ?? [])]; }
   public unlockTutorial(id: string): SaveData { return this.pushCampaignFlag('unlockedTutorialIds', id); }
   public markTutorialSeen(id: string): SaveData {
     const save = this.requireActiveSave();
     if (mutateMarkTutorialSeen(save, id)) this.commitSave(save);
     return this.getSave()!;
   }
-  public resetTutorialsProgress(): SaveData { return this.mutateAndCommit((s) => { s.campaign.seenTutorialIds = []; s.campaign.unlockedTutorialIds = []; }); }
 
   public ensureOverworldInitialized(graph: OverworldGraphDefinition = DEMO_OVERWORLD_GRAPH): SaveData {
     const save = this.requireActiveSave();
@@ -275,12 +289,7 @@ export class SaveStateManager {
     return { save: this.getSave()!, item, remainingStock };
   }
 
-  public clearLocalSave(): void {
-    this.storage.removeItem(getSaveSlotStorageKey(this.activeSlot));
-    if (this.activeSlot === 1) this.storage.removeItem(LEGACY_SAVE_STORAGE_KEY);
-    this.currentSave = null;
-    this.emitChange();
-  }
+
 
   public deleteSaveFromLinkedAccount(): Promise<{ deletedLocal: boolean; deletedCloud: boolean }> {
     return this.deleteSaveSlot(this.activeSlot);
@@ -377,6 +386,7 @@ export class SaveStateManager {
     }
   }
   private emitChange(): void {
+    this.activeSummaryCache = null;
     const s = this.getSave(), st = this.getSyncStatus();
     for (const fn of this.changeListeners) fn(s, st);
   }

@@ -45,14 +45,6 @@ export function getPostChapterCutsceneIds(nodeId: string): string[] {
   );
 }
 
-export function getPreChapterCutsceneId(nodeId: string): string | undefined {
-  return getPreChapterCutsceneIds(nodeId)[0];
-}
-
-export function getPostChapterCutsceneId(nodeId: string): string | undefined {
-  return getPostChapterCutsceneIds(nodeId)[0];
-}
-
 export interface StoryCutsceneLink {
   chapterId: string;
   when: 'before' | 'after';

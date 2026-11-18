@@ -5,15 +5,20 @@
 import { equipMoveInItsSlot } from '../../data/equippedMoves';
 import { loadSpeciesSpriteBundle } from '../../assets/pmdAssetLoader';
 import { buildSingleEnemyBattleUnit } from '../../engine/battleSetup';
-import { computeCombatForecast, computeStatusMoveForecast } from '../../engine/combatEngine';
-import { chooseEnemyAction } from '../../engine/enemyAi';
+import {
+  applyPhaseStartStatusTick,
+  computeCombatForecast,
+  computeStatusMoveForecast,
+  type BattleUnitState,
+} from '../../engine/combatEngine';
+import { chooseEnemyAction, chooseNpcAllyAction } from '../../engine/enemyAi';
 import {
   computeUnitMovementAndAttackRange,
   coordKey,
   getMapTerrainAt,
+  type MovementRangeResult,
 } from '../../engine/terrainAndPathfinding';
 import type { ManualEnemyBattleSpawn } from '../../types/schemas';
-import { runAllyNpcPhase } from './battleAllyPhaseRunner';
 import {
   dismissBeginBattleCard,
   ensureTilePairVisible,
@@ -30,10 +35,6 @@ import { runTurnStartEvents, runUnitDefeatedEvents } from './battleEventRunner';
 import { spawnFloatingText } from './battleFloatingCallouts';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { checkAndTriggerMatchEnd, triggerVictoryModal } from './battleOutcomeModals';
-import {
-  playStatusHexActionAsync,
-  runFactionPhaseStartStatusTicks,
-} from './battleStatusHexController';
 import { getBattleSupportContext } from './battleSupportHelpers';
 import {
   triggerReactivePostCombatTutorials,
@@ -41,15 +42,19 @@ import {
 } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
+  faceUnitTowardBoss,
   getLivingAlliedUnits,
   getLivingEnemies,
+  getLivingNpcs,
   getLivingPlayers,
   getLivingUnits,
   getLordUnit,
   getUnitVisualKey,
-  faceUnitTowardBoss,
 } from './battleUnitQueries';
-import { playWalkPathAsync } from './battleWalkAndHealAnimator';
+import {
+  playStatusHexActionAsync,
+  playWalkPathAsync,
+} from './battleWalkAndHealAnimator';
 
 export async function requestManualEndPhase(ctx: BattleControllerContext): Promise<void> {
   const { state, dom, prepOverlay, audioManager } = ctx;
@@ -65,16 +70,129 @@ export async function requestManualEndPhase(ctx: BattleControllerContext): Promi
   await runEnemyPhase(ctx);
 }
 
-function activateThreatenedSquads(state: BattleControllerContext['state']): void {
+function runFactionPhaseStartStatusTicks(
+  ctx: BattleControllerContext,
+  units: ReadonlyArray<BattleUnitState>
+): void {
+  const { state, dom } = ctx;
+  for (const unit of units) {
+    const wishHeal = unit.pendingWishHeal ?? 0;
+    if (wishHeal > 0 && !unit.defeated && unit.currentHp > 0) {
+      const healed = Math.min(unit.maxHp - unit.currentHp, wishHeal);
+      unit.currentHp += healed;
+      unit.pendingWishHeal = 0;
+      spawnFloatingText(state, dom, unit.x, unit.y, `WISH +${healed} HP`, '#68f8a8', 880);
+    }
+    if (unit.activeShields?.length) {
+      unit.activeShields = unit.activeShields
+        .map((s) => ({ ...s, turnsLeft: s.turnsLeft - 1 }))
+        .filter((s) => s.turnsLeft > 0);
+    }
+    const tick = applyPhaseStartStatusTick(unit);
+    if (tick.calloutText) {
+      spawnFloatingText(state, dom, unit.x, unit.y, tick.calloutText, tick.calloutColor, 880);
+    }
+  }
+}
+
+async function runAllyNpcPhase(
+  ctx: BattleControllerContext,
+  runGen: number
+): Promise<boolean> {
+  const { state, dom, audioManager } = ctx;
+  const npcsOrder = [...getLivingNpcs(state)];
+  if (npcsOrder.length === 0) {
+    return false;
+  }
+
+  state.phase = 'ally_phase';
+  state.interactionState = 'enemy_acting';
+  syncHudControls(state, dom);
+  updateBattleInfoStrip(ctx);
+  ctx.onLayerStateChanged();
+
+  audioManager.playSfx('phase_change');
+  await playPhaseTransitionAsync(state, dom, 'ally', runGen);
+  if (!state.openState || runGen !== state.battleRunGen) return true;
+
+  for (const npc of npcsOrder) {
+    if (!state.openState || runGen !== state.battleRunGen) return true;
+    if (npc.defeated || npc.currentHp <= 0) continue;
+
+    state.inspectedTile = { x: npc.x, y: npc.y };
+    ensureTilePairVisible(state, npc.x, npc.y, npc.x, npc.y);
+    updateBattleInfoStrip(ctx);
+
+    const decision = chooseNpcAllyAction(
+      state.map,
+      npc,
+      getLivingUnits(state),
+      getBattleSupportContext(state)
+    );
+
+    if (decision.path.length > 1) {
+      await playWalkPathAsync(state, npc, decision.path, true);
+      if (!state.openState || runGen !== state.battleRunGen) return true;
+      state.inspectedTile = { x: npc.x, y: npc.y };
+      updateBattleInfoStrip(ctx);
+    }
+
+    if (decision.kind === 'attack' && decision.attack) {
+      const target = state.units.find(
+        (u) => u.id === decision.attack!.targetUnitId && !u.defeated && u.currentHp > 0
+      );
+      if (target) {
+        equipMoveInItsSlot(npc, decision.attack.moveId);
+        const liveForecast = computeCombatForecast(
+          state.map,
+          npc,
+          target,
+          decision.attack.moveId,
+          undefined,
+          getBattleSupportContext(state)
+        );
+        if (liveForecast) {
+          await waitBattleMs(state, 150);
+          if (!state.openState || runGen !== state.battleRunGen) return true;
+          await playCombatExchangeAsync(ctx, npc, target, liveForecast, runGen);
+          if (!state.openState || runGen !== state.battleRunGen) return true;
+
+          await runUnitDefeatedEvents(ctx, [npc, target], runGen);
+          if (!state.openState || runGen !== state.battleRunGen) return true;
+
+          recomputeDangerArea(ctx);
+          if (checkAndTriggerMatchEnd(ctx)) {
+            return true;
+          }
+        }
+      }
+    }
+
+    if (!npc.defeated && npc.currentHp > 0) {
+      npc.waited = true;
+      npc.action = 'Idle';
+    }
+    await waitBattleMs(state, 130);
+  }
+
+  return false;
+}
+
+function activateThreatenedSquads(
+  state: BattleControllerContext['state']
+): Map<string, MovementRangeResult> {
   const living = getLivingUnits(state);
   const hostiles = living.filter((u) => u.faction === 'player' || u.faction === 'npc');
+  const enemyRangeCache = new Map<string, MovementRangeResult>();
   for (const enemy of getLivingEnemies(state)) {
+    const range = computeUnitMovementAndAttackRange(state.map, enemy, living);
+    enemyRangeCache.set(enemy.id, range);
     if (!enemy.squadId || state.activatedSquadIds.has(enemy.squadId)) continue;
-    const { allAttackableTiles } = computeUnitMovementAndAttackRange(state.map, enemy, living);
-    if (hostiles.some((h) => allAttackableTiles.has(coordKey(h.x, h.y)))) {
+    if (hostiles.some((h) => range.allAttackableTiles.has(coordKey(h.x, h.y)))) {
       state.activatedSquadIds.add(enemy.squadId);
     }
   }
+  return enemyRangeCache;
 }
 
 export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void> {
@@ -109,7 +227,7 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
   if (!state.openState || runGen !== state.battleRunGen) return;
 
   const protectedSet = new Set(state.defeatIfUnitIdsFall);
-  activateThreatenedSquads(state);
+  const enemyRangeCache = activateThreatenedSquads(state);
   const enemiesOrder = [...getLivingEnemies(state)];
   for (const enemy of enemiesOrder) {
     if (!state.openState || runGen !== state.battleRunGen) return;
@@ -126,10 +244,12 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
       getLivingUnits(state),
       protectedSet,
       state.activatedSquadIds,
-      supportCtx
+      supportCtx,
+      enemyRangeCache.get(enemy.id)
     );
 
     if (decision.path.length > 1) {
+      enemyRangeCache.clear();
       await playWalkPathAsync(state, enemy, decision.path, true);
       if (!state.openState || runGen !== state.battleRunGen) return;
       state.inspectedTile = { x: enemy.x, y: enemy.y };
@@ -180,6 +300,9 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
 
           await runUnitDefeatedEvents(ctx, [enemy, target], runGen);
           if (!state.openState || runGen !== state.battleRunGen) return;
+          if (enemy.defeated || enemy.currentHp <= 0 || target.defeated || target.currentHp <= 0) {
+            enemyRangeCache.clear();
+          }
 
           recomputeDangerArea(ctx);
           if (checkAndTriggerMatchEnd(ctx)) {

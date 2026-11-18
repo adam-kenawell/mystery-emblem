@@ -21,6 +21,7 @@ export interface CreateUnitPortraitCellOptions {
   portraitTestId?: string;
   isSelected?: boolean;
   isLord?: boolean;
+  isFainted?: boolean;
   isDeployed?: boolean;
   isBenched?: boolean;
   hasItem?: boolean;
@@ -36,7 +37,8 @@ export function createUnitPortraitCell(
   btn.type = 'button';
   const classes = ['pmd-btn', 'pmd-unit-portrait-cell'];
   if (options.isSelected) classes.push('is-selected', 'is-active');
-  if (options.isBenched) classes.push('is-benched');
+  if (options.isFainted) classes.push('is-fainted');
+  else if (options.isBenched) classes.push('is-benched');
   btn.className = classes.join(' ');
   btn.setAttribute('aria-label', options.ariaLabel);
   if (options.testId) {
@@ -53,13 +55,23 @@ export function createUnitPortraitCell(
   frameWrap.appendChild(portraitView.canvas);
   btn.appendChild(frameWrap);
 
-  const initialEmotion: PmdPortraitEmotion = options.isSelected ? 'Happy' : 'Normal';
+  const initialEmotion: PmdPortraitEmotion = options.isFainted
+    ? 'Pain'
+    : options.isSelected
+      ? 'Happy'
+      : 'Normal';
   void portraitView.setPortrait({
     speciesIdOrAssetId: options.speciesIdOrAssetId,
     emotion: initialEmotion,
   });
 
-  if (options.isDeployed) {
+  if (options.isFainted) {
+    const koPip = document.createElement('span');
+    koPip.className = 'pmd-portrait-pip is-fainted';
+    koPip.setAttribute('aria-hidden', 'true');
+    koPip.textContent = 'KO';
+    btn.appendChild(koPip);
+  } else if (options.isDeployed) {
     const pip = document.createElement('span');
     pip.className = 'pmd-portrait-pip is-deployed';
     pip.setAttribute('aria-hidden', 'true');
@@ -91,33 +103,35 @@ export function createUnitPortraitCell(
 
   const listenerOpts = options.signal ? { signal: options.signal } : undefined;
 
-  btn.addEventListener(
-    'pointerenter',
-    (e: PointerEvent) => {
-      if (e.pointerType !== 'mouse') return;
-      btn.classList.add('is-hovered');
-      void portraitView.setPortrait({
-        speciesIdOrAssetId: options.speciesIdOrAssetId,
-        emotion: 'Happy',
-      });
-    },
-    listenerOpts
-  );
-
-  btn.addEventListener(
-    'pointerleave',
-    (e: PointerEvent) => {
-      if (e.pointerType !== 'mouse') return;
-      btn.classList.remove('is-hovered');
-      if (!options.isSelected) {
+  if (!options.isFainted) {
+    btn.addEventListener(
+      'pointerenter',
+      (e: PointerEvent) => {
+        if (e.pointerType !== 'mouse') return;
+        btn.classList.add('is-hovered');
         void portraitView.setPortrait({
           speciesIdOrAssetId: options.speciesIdOrAssetId,
-          emotion: 'Normal',
+          emotion: 'Happy',
         });
-      }
-    },
-    listenerOpts
-  );
+      },
+      listenerOpts
+    );
+
+    btn.addEventListener(
+      'pointerleave',
+      (e: PointerEvent) => {
+        if (e.pointerType !== 'mouse') return;
+        btn.classList.remove('is-hovered');
+        if (!options.isSelected) {
+          void portraitView.setPortrait({
+            speciesIdOrAssetId: options.speciesIdOrAssetId,
+            emotion: 'Normal',
+          });
+        }
+      },
+      listenerOpts
+    );
+  }
 
   bindPointerTap(
     btn,

@@ -20,7 +20,7 @@ import {
   syncPrepChromeVisibility,
 } from './battleDangerAndViewportState';
 import { updateBattleInfoStrip } from './battleHudCards';
-import { preloadAllUnitSprites, preloadMapTilesets } from './battlePrepAndAssets';
+import { preloadAllUnitSprites, preloadMapTilesets } from './battlePrepController';
 import type { BattleSuspendSource } from './battlePublicTypes';
 import type {
   BattleControllerContext,

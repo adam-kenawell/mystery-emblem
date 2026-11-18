@@ -7,7 +7,7 @@ import {
   type EquipCategory,
 } from '../../data/equippedMoves';
 import { getItemById } from '../../data/index';
-import type { SupportStatBonus } from '../../data/supports/supportTypes';
+import type { SupportStatBonus } from '../../data/supports/supportMatrix';
 import type { DungeonMapDefinition, TerrainBonuses } from '../../types/schemas';
 import { computeAdjacentSupportSummary } from '../supportEngine';
 import { getMapTerrainAt, getTerrainBonuses } from '../terrainAndPathfinding';

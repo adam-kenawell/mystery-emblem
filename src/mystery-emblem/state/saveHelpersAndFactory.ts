@@ -3,7 +3,6 @@
  */
 
 import {
-  createDefaultQuizSeeds,
   MAX_UNIT_LEVEL,
   MIN_UNIT_LEVEL,
 } from '../data/campaignConfig';
@@ -19,12 +18,10 @@ import {
 } from '../data/supports/supportMatrix';
 import { computeManualScaledStatsForJoinLevel } from '../engine/progressionEngine';
 import {
-  QUIZ_SEED_SLOT_KEYS,
   SUPPORT_RANKS,
   type OwnedPokemonInstance,
   type SaveData,
   type StatBlockSeven,
-  type SupportLevel,
   type SupportPairProgress,
   type SupportRank,
   type UnitCosmeticForm,
@@ -50,10 +47,6 @@ export function normalizeSaveSlot(slot: unknown): number {
 }
 
 export { SUPPORT_RANK_THRESHOLDS };
-
-export const SUPPORT_LEVEL_THRESHOLDS: readonly [number, number, number, number, number] = [
-  5, 12, 22, 35, 50,
-];
 
 export type CloudSyncResolution =
   | 'unauthenticated'
@@ -104,14 +97,7 @@ export function makeSupportPairKey(instanceIdA: string, instanceIdB: string): st
   return makeCanonicalSupportPairKey(instanceIdA, instanceIdB);
 }
 
-export function computeSupportLevel(points: number): SupportLevel {
-  if (points >= SUPPORT_LEVEL_THRESHOLDS[4]) return 5;
-  if (points >= SUPPORT_LEVEL_THRESHOLDS[3]) return 4;
-  if (points >= SUPPORT_LEVEL_THRESHOLDS[2]) return 3;
-  if (points >= SUPPORT_LEVEL_THRESHOLDS[1]) return 2;
-  if (points >= SUPPORT_LEVEL_THRESHOLDS[0]) return 1;
-  return 0;
-}
+
 
 /** Species-only naming: every unit is always called by its species name. */
 export function sanitizeNickname(_rawNickname: string | undefined, fallbackSpeciesName: string): string {
@@ -136,15 +122,12 @@ export function returnItemToConvoyList(
 
 export function normalizeLegacySingleItemSlots(candidate: unknown): unknown {
   if (!candidate || typeof candidate !== 'object') return candidate;
-  const obj = candidate as Partial<SaveData> & {
-    campaign?: Partial<SaveData['campaign']> & { quizSeeds?: Record<string, unknown> };
-  };
+  const obj = candidate as Partial<SaveData>;
   if (!Array.isArray(obj.roster) || !Array.isArray(obj.convoy)) return candidate;
 
-  const rawSeeds = obj.campaign?.quizSeeds;
-  const needsSeedHydration =
-    Boolean(rawSeeds && typeof rawSeeds === 'object') &&
-    QUIZ_SEED_SLOT_KEYS.some((k) => !Array.isArray(rawSeeds?.[k]));
+  const hasLegacyQuizSeeds = Boolean(
+    obj.campaign && typeof obj.campaign === 'object' && 'quizSeeds' in obj.campaign
+  );
   const needsItemNormalize = obj.roster.some(
     (unit) => Boolean(unit && unit.heldItemId !== null && unit.consumableItemId !== null)
   );
@@ -164,11 +147,14 @@ export function normalizeLegacySingleItemSlots(candidate: unknown): unknown {
       if (!k.includes('::') || k.startsWith('unit_') || k.includes('::unit_')) return true;
       return false;
     });
-  if (!needsItemNormalize && !needsSeedHydration && !needsDualEquipMigration && !needsSupportsMigration) {
+  if (!needsItemNormalize && !hasLegacyQuizSeeds && !needsDualEquipMigration && !needsSupportsMigration) {
     return candidate;
   }
 
-  const cloned = JSON.parse(JSON.stringify(obj)) as SaveData;
+  const cloned = structuredClone(obj) as SaveData;
+  if (hasLegacyQuizSeeds && cloned.campaign) {
+    delete (cloned.campaign as unknown as Record<string, unknown>).quizSeeds;
+  }
   if (needsSupportsMigration) {
     const unitIdToActor = new Map<string, string>();
     for (const u of cloned.roster) {
@@ -238,27 +224,6 @@ export function normalizeLegacySingleItemSlots(candidate: unknown): unknown {
         unit.consumableItemId = null;
       }
     }
-  }
-  if (needsSeedHydration && cloned.campaign) {
-    const legacy = (rawSeeds ?? {}) as Record<string, string[] | undefined>;
-    cloned.campaign.quizSeeds = createDefaultQuizSeeds({
-      slot1Flying: Array.isArray(legacy.slot1Flying)
-        ? legacy.slot1Flying
-        : legacy.q2BugFlying?.filter((id) => SPECIES_MAP.has(id) && id !== 'sewaddle'),
-      slot2Psychic: Array.isArray(legacy.slot2Psychic)
-        ? legacy.slot2Psychic
-        : legacy.q3GhostPsychic?.filter((id) => SPECIES_MAP.has(id) && id !== 'duskull'),
-      slot3Electric: Array.isArray(legacy.slot3Electric)
-        ? legacy.slot3Electric
-        : legacy.q4Electric?.filter((id) => SPECIES_MAP.has(id)),
-      slot4Rock: Array.isArray(legacy.slot4Rock) ? legacy.slot4Rock : undefined,
-      slot5Fire: Array.isArray(legacy.slot5Fire) ? legacy.slot5Fire : undefined,
-      slot6Grass: Array.isArray(legacy.slot6Grass) ? legacy.slot6Grass : undefined,
-      slot7Fairy: Array.isArray(legacy.slot7Fairy) ? legacy.slot7Fairy : undefined,
-      slot8Ice: Array.isArray(legacy.slot8Ice)
-        ? legacy.slot8Ice
-        : legacy.q9IceArmored?.filter((id) => SPECIES_MAP.has(id)),
-    });
   }
   return cloned;
 }

@@ -23,6 +23,7 @@ const LINE_ALLEGIANCE: Readonly<Record<string, UnitAllegiance>> = {
   mentor_quaquaval_line: 'Verdant Kingdom',
   quaxly_line: 'Verdant Kingdom',
   flabebe_line: 'Verdant Kingdom',
+  combee_line: 'Verdant Kingdom',
   chespin_line: 'Verdant Kingdom',
   machop_line: 'Verdant Kingdom',
   starly_line: 'Verdant Kingdom',

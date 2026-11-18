@@ -5,7 +5,6 @@
 import { PmdPortraitView } from '../PmdSpriteCanvas';
 import { createPmdWindow } from '../PmdWindow';
 import { bindBackGestureSurface, bindPointerTap } from '../pointerControls';
-import { TutorialSpotlightController } from './TutorialSpotlightController';
 
 export interface TutorialShellElements {
   backdropEl: HTMLElement;
@@ -16,13 +15,11 @@ export interface TutorialShellElements {
   coachPortraitView: PmdPortraitView;
   notePortraitView: PmdPortraitView;
   compendiumPortraitView: PmdPortraitView;
-  spotlight: TutorialSpotlightController;
 }
 
 export function buildTutorialShellView(opts: {
   parent: HTMLElement;
   signal: AbortSignal;
-  isInteractiveStep: () => boolean;
   onBackdropTap: () => void;
   onCardBodyTap: () => void;
   onBackGesture: () => void;
@@ -64,8 +61,6 @@ export function buildTutorialShellView(opts: {
   tooltipPillEl.setAttribute('aria-live', 'polite');
   tooltipPillEl.hidden = true;
 
-  const spotlight = new TutorialSpotlightController({ backdropEl, cardWindowEl });
-
   const coachPortraitView = new PmdPortraitView({
     testId: 'tutorial-advisor-portrait',
   });
@@ -78,7 +73,7 @@ export function buildTutorialShellView(opts: {
     testId: 'tutorial-compendium-advisor-portrait',
   });
 
-  backdropEl.append(spotlight.domSpotlightEl, cardWindowEl, noteWindowEl, compendiumWindowEl);
+  backdropEl.append(cardWindowEl, noteWindowEl, compendiumWindowEl);
   opts.parent.append(backdropEl, tooltipPillEl);
 
   const { signal } = opts;
@@ -89,7 +84,7 @@ export function buildTutorialShellView(opts: {
   bindPointerTap(
     backdropEl,
     (ev: PointerEvent) => {
-      if (ev.target !== backdropEl || opts.isInteractiveStep()) return;
+      if (ev.target !== backdropEl) return;
       opts.onBackdropTap();
     },
     { signal }
@@ -103,17 +98,10 @@ export function buildTutorialShellView(opts: {
     },
     { signal }
   );
-  bindBackGestureSurface(
-    backdropEl,
-    () => {
-      if (!opts.isInteractiveStep()) opts.onBackGesture();
-    },
-    { signal }
-  );
+  bindBackGestureSurface(backdropEl, () => opts.onBackGesture(), { signal });
   backdropEl.addEventListener(
     'contextmenu',
     (ev: MouseEvent) => {
-      if (opts.isInteractiveStep()) return;
       ev.preventDefault();
       ev.stopPropagation();
     },
@@ -122,7 +110,6 @@ export function buildTutorialShellView(opts: {
   backdropEl.addEventListener(
     'pointerdown',
     (ev: PointerEvent) => {
-      if (opts.isInteractiveStep() && ev.target === backdropEl) return;
       ev.stopPropagation();
     },
     { signal }
@@ -137,6 +124,5 @@ export function buildTutorialShellView(opts: {
     coachPortraitView,
     notePortraitView,
     compendiumPortraitView,
-    spotlight,
   };
 }

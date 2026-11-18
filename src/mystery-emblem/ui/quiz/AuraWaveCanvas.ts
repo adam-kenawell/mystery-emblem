@@ -58,7 +58,9 @@ export class AuraWaveCanvas {
   private waveRafId: number | null = null;
   private waveLastTickMs: number | null = null;
   private waveTimeSec = 0;
-  private waveFrameCount = 0;
+  private cachedCssW = 0;
+  private cachedCssH = 0;
+  private resizeObserver: ResizeObserver | null = null;
   private waveImageData: ImageData | null = null;
   private wavePixelU32: Uint32Array | null = null;
   private readonly paletteLutU32 = new Uint32Array(PALETTE_STEPS + 1);
@@ -85,36 +87,27 @@ export class AuraWaveCanvas {
     this.canvasEl.dataset.testid = 'quiz-aura-wave-canvas';
     this.canvasEl.setAttribute('aria-hidden', 'true');
     this.ctx = this.canvasEl.getContext('2d', { alpha: false });
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => this.syncHostDimensions());
+      this.resizeObserver.observe(measureHostEl);
+    }
+  }
+
+  public syncHostDimensions(): void {
+    this.cachedCssW = this.measureHostEl.clientWidth || 0;
+    this.cachedCssH = this.measureHostEl.clientHeight || 0;
+  }
+
+  public destroy(): void {
+    this.stopLoop();
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = null;
   }
 
   public reset(): void {
     this.waveTimeSec = 0;
-    this.waveFrameCount = 0;
+    this.syncHostDimensions();
     this.setTargetPalette(MYSTICAL_QUIZ_WAVE_PALETTE, true, true);
-  }
-
-  public getTelemetry(): {
-    waveFrameCount: number;
-    waveTimeSec: number;
-    colorTransitionProgress: number;
-    currentBackdropOuterRgb: [number, number, number];
-    targetBackdropOuterRgb: [number, number, number];
-  } {
-    return {
-      waveFrameCount: this.waveFrameCount,
-      waveTimeSec: this.waveTimeSec,
-      colorTransitionProgress: this.colorTransitionProgress,
-      currentBackdropOuterRgb: [
-        Math.round(this.currentPalette.outerRgb[0]),
-        Math.round(this.currentPalette.outerRgb[1]),
-        Math.round(this.currentPalette.outerRgb[2]),
-      ],
-      targetBackdropOuterRgb: [
-        Math.round(this.targetPalette.outerRgb[0]),
-        Math.round(this.targetPalette.outerRgb[1]),
-        Math.round(this.targetPalette.outerRgb[2]),
-      ],
-    };
   }
 
   public setTargetPalette(
@@ -168,12 +161,11 @@ export class AuraWaveCanvas {
 
   public renderFrame(deltaMs: number): void {
     this.waveTimeSec += deltaMs * 0.001;
-    this.waveFrameCount += 1;
     this.updateInterpolatedPalette(deltaMs);
     if (!this.ctx) return;
 
-    const cssW = this.measureHostEl.clientWidth || window.innerWidth || 640;
-    const cssH = this.measureHostEl.clientHeight || window.innerHeight || 360;
+    const cssW = this.cachedCssW || this.measureHostEl.clientWidth || window.innerWidth || 640;
+    const cssH = this.cachedCssH || this.measureHostEl.clientHeight || window.innerHeight || 360;
     const bufW = Math.max(96, Math.min(360, Math.round(cssW / 4)));
     const bufH = Math.max(96, Math.min(270, Math.round(cssH / 4)));
 

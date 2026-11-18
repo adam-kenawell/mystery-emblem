@@ -8,15 +8,16 @@ import {
   manhattanDistance,
   type BattleUnitState,
 } from '../combatEngine';
+import type { ReachableTileInfo } from '../pathfinding/attackEnvelope';
 import {
+  CostMinHeap,
   areBattleFactionsAllied,
   coordKey,
   getMapTerrainAt,
   getTerrainBonuses,
   getTerrainMoveCost,
   isInMapBounds,
-  type ReachableTileInfo,
-} from '../terrainAndPathfinding';
+} from '../pathfinding/terrainRules';
 
 const ORTHO_DIRS: ReadonlyArray<readonly [number, number]> = [
   [0, -1],
@@ -24,6 +25,8 @@ const ORTHO_DIRS: ReadonlyArray<readonly [number, number]> = [
   [0, 1],
   [-1, 0],
 ];
+
+const INF_DIST = 0x3fffffff;
 
 export function pickBestPursuitTile(
   map: DungeonMapDefinition,
@@ -43,38 +46,45 @@ export function pickBestPursuitTile(
     preferredDistances.add(1);
   }
 
-  const hostileOccupied = new Set<string>();
-  const otherAllyOccupied = new Set<string>();
+  const w = map.width;
+  const h = map.height;
+  const total = w * h;
+  const hostileOccupied = new Uint8Array(total);
+  const otherAllyOccupied = new Uint8Array(total);
+
   for (const u of allLivingUnits) {
     if (u.id === actor.id || u.defeated || u.currentHp <= 0) continue;
-    const k = coordKey(u.x, u.y);
+    if (u.x < 0 || u.y < 0 || u.x >= w || u.y >= h) continue;
+    const uIdx = u.y * w + u.x;
     if (!areBattleFactionsAllied(u.faction, actor.faction)) {
-      hostileOccupied.add(k);
+      hostileOccupied[uIdx] = 1;
     } else {
-      otherAllyOccupied.add(k);
+      otherAllyOccupied[uIdx] = 1;
     }
   }
 
-  const distField = new Map<string, number>();
-  const queue: Array<{ x: number; y: number; cost: number }> = [];
+  const distField = new Int32Array(total);
+  distField.fill(INF_DIST);
+  const heap = new CostMinHeap();
 
   const seedGoalsAtDistances = (distances: Iterable<number>, allowOccupiedByAlly: boolean) => {
     for (const pu of hostileUnits) {
       for (const r of distances) {
         for (let dy = -r; dy <= r; dy++) {
+          const gy = pu.y + dy;
+          if (gy < 0 || gy >= h) continue;
           const rem = r - Math.abs(dy);
           for (const dx of rem === 0 ? [0] : [-rem, rem]) {
             const gx = pu.x + dx;
-            const gy = pu.y + dy;
-            if (!isInMapBounds(map, gx, gy)) continue;
-            const gKey = coordKey(gx, gy);
-            if (hostileOccupied.has(gKey)) continue;
-            if (!allowOccupiedByAlly && otherAllyOccupied.has(gKey)) continue;
+            if (gx < 0 || gx >= w) continue;
+            const gIdx = gy * w + gx;
+            if (hostileOccupied[gIdx]) continue;
+            if (!allowOccupiedByAlly && otherAllyOccupied[gIdx]) continue;
             const terrain = getMapTerrainAt(map, gx, gy);
             if (!terrain || getTerrainMoveCost(terrain, actor) === null) continue;
-            if (!distField.has(gKey)) {
-              distField.set(gKey, 0);
-              queue.push({ x: gx, y: gy, cost: 0 });
+            if (distField[gIdx] === INF_DIST) {
+              distField[gIdx] = 0;
+              heap.push(gIdx, 0);
             }
           }
         }
@@ -83,32 +93,28 @@ export function pickBestPursuitTile(
   };
 
   seedGoalsAtDistances(preferredDistances, false);
-  if (queue.length === 0) {
+  if (heap.length === 0) {
     seedGoalsAtDistances([1, 2], true);
   }
 
-  while (queue.length > 0) {
-    let bestIdx = 0;
-    for (let i = 1; i < queue.length; i++) {
-      if (queue[i]!.cost < queue[bestIdx]!.cost) {
-        bestIdx = i;
-      }
-    }
-    const cur = queue.splice(bestIdx, 1)[0]!;
-    const curKey = coordKey(cur.x, cur.y);
-    const known = distField.get(curKey);
-    if (known !== undefined && cur.cost > known) continue;
+  while (heap.length > 0) {
+    const curIdx = heap.pop();
+    const curCost = heap.lastCost;
+    if (curCost > distField[curIdx]!) continue;
 
-    const curTerrain = getMapTerrainAt(map, cur.x, cur.y);
+    const cx = curIdx % w;
+    const cy = (curIdx - cx) / w;
+    const curTerrain = getMapTerrainAt(map, cx, cy);
     const enterCurCost = curTerrain ? getTerrainMoveCost(curTerrain, actor) : null;
     if (enterCurCost === null) continue;
 
-    for (const [dx, dy] of ORTHO_DIRS) {
-      const nx = cur.x + dx;
-      const ny = cur.y + dy;
-      if (!isInMapBounds(map, nx, ny)) continue;
-      const nKey = coordKey(nx, ny);
-      if (hostileOccupied.has(nKey)) continue;
+    for (let d = 0; d < ORTHO_DIRS.length; d++) {
+      const [dx, dy] = ORTHO_DIRS[d]!;
+      const nx = cx + dx;
+      const ny = cy + dy;
+      if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+      const nIdx = ny * w + nx;
+      if (hostileOccupied[nIdx]) continue;
 
       const nTerrain = getMapTerrainAt(map, nx, ny);
       if (!nTerrain) continue;
@@ -116,17 +122,17 @@ export function pickBestPursuitTile(
         continue;
       }
 
-      const nextCost = cur.cost + enterCurCost;
-      const prev = distField.get(nKey);
-      if (prev === undefined || nextCost < prev) {
-        distField.set(nKey, nextCost);
-        queue.push({ x: nx, y: ny, cost: nextCost });
+      const nextCost = curCost + enterCurCost;
+      if (nextCost < distField[nIdx]!) {
+        distField[nIdx] = nextCost;
+        heap.push(nIdx, nextCost);
       }
     }
   }
 
-  const originKey = coordKey(actor.x, actor.y);
-  const originGoalDist = distField.get(originKey) ?? Number.POSITIVE_INFINITY;
+  const originGoalDist = isInMapBounds(map, actor.x, actor.y)
+    ? distField[actor.y * w + actor.x]!
+    : INF_DIST;
 
   const nearestHostileManhattan = (tx: number, ty: number): number => {
     let best = Number.POSITIVE_INFINITY;
@@ -143,14 +149,16 @@ export function pickBestPursuitTile(
   let bestTerrainScore = Number.NEGATIVE_INFINITY;
 
   for (const stop of reachableTiles.values()) {
-    const k = coordKey(stop.x, stop.y);
-    const gDist = distField.get(k);
+    const gDist =
+      stop.x >= 0 && stop.y >= 0 && stop.x < w && stop.y < h
+        ? distField[stop.y * w + stop.x]!
+        : INF_DIST;
     const manh = nearestHostileManhattan(stop.x, stop.y);
     const terrain = getMapTerrainAt(map, stop.x, stop.y) ?? 'floor';
     const bonuses = getTerrainBonuses(terrain, actor);
     const tScore = bonuses.defBonus * 5 + bonuses.avoidBonus * 0.25;
 
-    const effectiveGoalDist = gDist ?? 10000 + manh;
+    const effectiveGoalDist = gDist < INF_DIST ? gDist : 10000 + manh;
 
     if (
       effectiveGoalDist < bestGoalDist ||
@@ -164,12 +172,8 @@ export function pickBestPursuitTile(
     }
   }
 
-  if (
-    bestStop &&
-    Number.isFinite(originGoalDist) &&
-    bestGoalDist > originGoalDist
-  ) {
-    return reachableTiles.get(originKey) ?? bestStop;
+  if (bestStop && originGoalDist < INF_DIST && bestGoalDist > originGoalDist) {
+    return reachableTiles.get(coordKey(actor.x, actor.y)) ?? bestStop;
   }
 
   return bestStop;

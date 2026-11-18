@@ -15,30 +15,6 @@ export type OricorioStyle = (typeof ORICORIO_STYLES)[number];
 
 export type UnitCosmeticForm = FlabebeFlowerColor | OricorioStyle;
 
-export const QUIZ_SEED_SLOT_KEYS = [
-  'slot1Flying',
-  'slot2Psychic',
-  'slot3Electric',
-  'slot4Rock',
-  'slot5Fire',
-  'slot6Grass',
-  'slot7Fairy',
-  'slot8Ice',
-] as const;
-
-export type QuizSeedSlotKey = (typeof QUIZ_SEED_SLOT_KEYS)[number];
-
-export interface QuizRecruitSeeds {
-  slot1Flying: string[];
-  slot2Psychic: string[];
-  slot3Electric: string[];
-  slot4Rock: string[];
-  slot5Fire: string[];
-  slot6Grass: string[];
-  slot7Fairy: string[];
-  slot8Ice: string[];
-}
-
 export interface OwnedPokemonInstance {
   instanceId: string;
   speciesId: string;
@@ -78,13 +54,10 @@ export interface ConvoyEntry {
 export const SUPPORT_RANKS = ['C', 'B', 'A', 'S'] as const;
 export type SupportRank = (typeof SUPPORT_RANKS)[number];
 export type UnlockedSupportRank = SupportRank | null;
-export type SupportLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
 export interface SupportPairProgress {
   points: number;
   unlockedRank: UnlockedSupportRank;
-  /** Legacy numeric field retained only for pre-rank save normalization */
-  level?: SupportLevel;
 }
 
 export interface SkirmishSpawnState {
@@ -108,36 +81,17 @@ export interface OverworldNodeState {
 
 export type CampaignMode = 'demo' | 'main';
 
-export const SERIES_FAMILIARITY_LEVELS = [
-  'very_familiar',
-  'somewhat_familiar',
-  'beginner',
-] as const;
-export type SeriesFamiliarityLevel = (typeof SERIES_FAMILIARITY_LEVELS)[number];
-
-export const TUTORIAL_DETAIL_LEVELS = ['none', 'brief', 'detailed'] as const;
-export type TutorialDetailLevel = (typeof TUTORIAL_DETAIL_LEVELS)[number];
-
-export interface TutorialFamiliarityPreferences {
-  pokemonFamiliarity: SeriesFamiliarityLevel;
-  fireEmblemFamiliarity: SeriesFamiliarityLevel;
-  pokemonTutorialDetail: TutorialDetailLevel;
-  fireEmblemTutorialDetail: TutorialDetailLevel;
-}
-
 export interface CampaignState {
   currentChapterId: string;
   lordInstanceId: string | null;
   partnerInstanceId: string | null;
   healerInstanceId?: string | null;
-  quizSeeds?: QuizRecruitSeeds;
   kecleonShopsUnlocked: boolean;
   completedChapterIds: string[];
   campaignMode?: CampaignMode;
   /** Unlocked in Act 2 after the audience with King Serperior; gates wild Rift-tremor encounters. */
   skirmishesUnlocked?: boolean;
   tutorialsEnabled?: boolean;
-  tutorialPreferences?: TutorialFamiliarityPreferences;
   seenTutorialIds?: string[];
   unlockedTutorialIds?: string[];
   recruitedChapterIds?: string[];

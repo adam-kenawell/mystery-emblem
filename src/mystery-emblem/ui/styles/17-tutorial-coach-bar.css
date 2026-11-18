@@ -3,43 +3,6 @@
    Scales cleanly with zero clipping across 1920x1080, 390x844, and 844x390
    ========================================================================== */
 
-@keyframes pmd-tutorial-spotlight-pulse {
-  0%,
-  100% {
-    transform: scale(1);
-    box-shadow:
-      0 0 0 2px #050a14,
-      0 0 12px rgba(248, 248, 88, 0.8),
-      inset 0 0 6px rgba(248, 248, 88, 0.3);
-  }
-  50% {
-    transform: scale(1.025);
-    box-shadow:
-      0 0 0 2px #050a14,
-      0 0 20px rgba(248, 248, 88, 1),
-      inset 0 0 10px rgba(248, 248, 88, 0.5);
-  }
-}
-
-@keyframes pmd-advisor-nudge-shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  20% {
-    transform: translateX(-6px);
-  }
-  40% {
-    transform: translateX(6px);
-  }
-  60% {
-    transform: translateX(-4px);
-  }
-  80% {
-    transform: translateX(4px);
-  }
-}
-
 .pmd-tutorial-backdrop {
   position: fixed;
   inset: 0;
@@ -66,11 +29,6 @@ body:has(#pmd-overworld-scene:not([hidden])) .pmd-tutorial-backdrop[data-coach-d
   padding-bottom: calc(var(--pmd-overworld-dock-offset, 88px));
 }
 
-.pmd-tutorial-backdrop.is-interactive-passthrough {
-  background: transparent;
-  pointer-events: none;
-}
-
 .pmd-tutorial-backdrop.is-compendium-mode {
   background: rgba(4, 10, 20, 0.58);
   justify-content: center;
@@ -79,24 +37,6 @@ body:has(#pmd-overworld-scene:not([hidden])) .pmd-tutorial-backdrop[data-coach-d
 }
 
 .pmd-tutorial-backdrop[hidden] {
-  display: none !important;
-}
-
-.pmd-tutorial-dom-spotlight {
-  position: fixed;
-  z-index: 99;
-  pointer-events: none;
-  border-radius: 6px;
-  border: 3px solid #f8f858;
-  box-shadow:
-    0 0 0 2px #050a14,
-    0 0 14px rgba(248, 248, 88, 0.85),
-    inset 0 0 8px rgba(248, 248, 88, 0.35);
-  animation: pmd-tutorial-spotlight-pulse 1.15s ease-in-out infinite;
-  box-sizing: border-box;
-}
-
-.pmd-tutorial-dom-spotlight[hidden] {
   display: none !important;
 }
 
@@ -130,10 +70,6 @@ body:has(#pmd-overworld-scene:not([hidden])) .pmd-tutorial-backdrop[data-coach-d
 
 .pmd-tutorial-dialogue-stage[data-coach-dock='top'] .pmd-dialogue-actor-row {
   align-items: center;
-}
-
-.pmd-advisor-coach-bar.is-nudged {
-  animation: pmd-advisor-nudge-shake 0.38s ease;
 }
 
 .pmd-tutorial-card[hidden],
@@ -183,23 +119,6 @@ body:has(#pmd-overworld-scene:not([hidden])) .pmd-tutorial-backdrop[data-coach-d
   height: 5.25em;
   overflow-y: auto;
   scrollbar-width: none;
-}
-
-.pmd-tutorial-action-badge {
-  min-height: 46px;
-  padding: 4px 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--pmd-text-yellow);
-  border: 2px solid #f8f858;
-  border-radius: 4px;
-  background: rgba(248, 248, 88, 0.12);
-  flex-shrink: 0;
-  box-sizing: border-box;
 }
 
 @media (max-width: 640px) {

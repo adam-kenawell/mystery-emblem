@@ -24,24 +24,17 @@ import {
   openHealForecastModal,
 } from './battleHealForecastAndConfirm';
 import { updateBattleInfoStrip } from './battleHudCards';
-import { handlePrepViewMapTileTap } from './battlePrepSlotActions';
+import { handlePrepViewMapTileTap } from './battlePrepController';
 import {
   cancelUncommittedMove,
   selectPlayerUnit,
 } from './battleSelectionAndMenu';
-import {
-  getExpectedTutorialAction,
-  getHealOrConsumableTutorialUnits,
-  getTutorialHealerUnit,
-  getTutorialPartnerUnit,
-} from './battleTutorialSpotlights';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
   getActiveInspectedAllyRange,
   getLivingAlliedUnits,
   getLivingEnemies,
   getLivingUnits,
-  getLordUnit,
   getSelectedUnit,
 } from './battleUnitQueries';
 import { handleSelectedUnitTileTap } from './battleUnitSelectedTap';
@@ -53,7 +46,7 @@ export function handleBattleTileTap(
   clientX?: number,
   clientY?: number
 ): void {
-  const { state, dom, prepOverlay, audioManager, tutorialOverlay } = ctx;
+  const { state, dom, prepOverlay, audioManager } = ctx;
   if (
     !state.openState ||
     state.cutsceneInProgress ||
@@ -80,17 +73,7 @@ export function handleBattleTileTap(
     return;
   }
 
-  const expectedTutorialAction = getExpectedTutorialAction(tutorialOverlay);
-
   if (state.interactionState === 'action_menu') {
-    if (
-      expectedTutorialAction === 'battle_confirm_wait' ||
-      expectedTutorialAction === 'battle_confirm_item'
-    ) {
-      tutorialOverlay?.nudgeActiveStep();
-      return;
-    }
-
     const selected = getSelectedUnit(state);
     const tappedUnit = getLivingUnits(state).find((u) => u.x === tx && u.y === ty);
     if (selected && tappedUnit && tappedUnit.id !== selected.id) {
@@ -122,11 +105,6 @@ export function handleBattleTileTap(
         openCombatForecastModal(ctx, tappedEnemy.id, validMoves[0]!.id);
         return;
       }
-    }
-
-    if (expectedTutorialAction === 'battle_open_attack_forecast') {
-      tutorialOverlay?.nudgeActiveStep();
-      return;
     }
 
     const tappedAlly = getLivingAlliedUnits(state).find((p) => p.x === tx && p.y === ty);
@@ -161,56 +139,6 @@ export function handleBattleTileTap(
   state.touchInspectedUnitId = state.hoveredTile === null && occupant ? occupant.id : null;
 
   if (state.interactionState === 'idle') {
-    if (expectedTutorialAction === 'battle_open_field_menu') {
-      if (occupant) {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
-      openSystemMenu(ctx, 'root', clientX, clientY);
-      ctx.renderNow();
-      return;
-    }
-
-    if (expectedTutorialAction === 'battle_select_lord') {
-      const lord = getLordUnit(state);
-      if (!occupant || occupant.id !== lord?.id || occupant.waited) {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
-      selectPlayerUnit(ctx, occupant);
-      return;
-    }
-
-    if (expectedTutorialAction === 'battle_select_partner') {
-      const partner = getTutorialPartnerUnit(state);
-      if (!occupant || occupant.id !== partner?.id || occupant.waited) {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
-      selectPlayerUnit(ctx, occupant);
-      return;
-    }
-
-    if (expectedTutorialAction === 'battle_select_healer') {
-      const healer = getTutorialHealerUnit(state);
-      if (!occupant || occupant.id !== healer?.id || occupant.waited) {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
-      selectPlayerUnit(ctx, occupant);
-      return;
-    }
-
-    if (expectedTutorialAction === 'battle_inspect_heal_or_item') {
-      const validIds = new Set(getHealOrConsumableTutorialUnits(state).map((u) => u.id));
-      if (!occupant || !validIds.has(occupant.id) || occupant.waited) {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
-      selectPlayerUnit(ctx, occupant);
-      return;
-    }
-
     if (occupant && occupant.faction === 'player') {
       if (occupant.waited) {
         toggleInspectedAllyRange(ctx, occupant.id);
@@ -253,6 +181,6 @@ export function handleBattleTileTap(
   }
 
   if (state.interactionState === 'unit_selected') {
-    handleSelectedUnitTileTap(ctx, tx, ty, occupant, livingUnits, expectedTutorialAction);
+    handleSelectedUnitTileTap(ctx, tx, ty, occupant, livingUnits);
   }
 }

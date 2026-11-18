@@ -7,10 +7,14 @@ import { isMoveEquipped, type EquipCategory } from '../../data/equippedMoves';
 import { getItemById, getMoveById, getSpeciesById } from '../../data/index';
 import type { SaveStateManager } from '../../state/SaveStateManager';
 import type { OwnedPokemonInstance, SaveData } from '../../types/schemas';
-import { createItemIconCell, createMiniItemIcon } from '../PmdItemIconGrid';
+import { createItemIconCell } from '../PmdItemIconGrid';
 import { bindPointerTap } from '../pointerControls';
 import { renderColoredTypeHtml } from '../typeColors';
-import { escapeUiHtml, formatMoveCategoryBadge } from './UnitDetailCard';
+import {
+  createItemInspectorBanner,
+  escapeUiHtml,
+  formatMoveCategoryBadge,
+} from './UnitDetailCard';
 
 export interface PrepMoveLoadoutRenderParams {
   unit: OwnedPokemonInstance;
@@ -269,24 +273,18 @@ export function renderTmStripInspector(params: {
     );
   }
 
-  const tmBanner = document.createElement('div');
-  tmBanner.className = 'pmd-item-inspector-banner';
-  if (!onlyCompatibleUnknown) tmBanner.style.marginTop = '6px';
-  const tmMain = document.createElement('div');
-  tmMain.className = 'pmd-item-inspector-main';
-  tmMain.appendChild(createMiniItemIcon(selTmItem.id, { sizePx: 24, decorative: true }));
-  const tmCopy = document.createElement('div');
-  tmCopy.className = 'pmd-item-inspector-copy';
   const descHtml = selAlreadyKnown
     ? 'Already known'
     : selCompatible
       ? `Teaches ${escapeUiHtml(selMove?.name ?? selMoveId)}${selMove ? ` (${renderColoredTypeHtml(selMove.type)}${onlyCompatibleUnknown ? ` · ${escapeUiHtml(formatMoveCategoryBadge(selMove))}` : ''})` : ''}`
       : 'Incompatible';
-  tmCopy.innerHTML = `
-    <div class="pmd-item-inspector-head"><strong class="pmd-item-inspector-name">${escapeUiHtml(selTmItem.name)} ×${selTmSlot.quantity}</strong></div>
-    <span class="pmd-item-inspector-desc">${descHtml}</span>
-  `;
-  tmMain.appendChild(tmCopy);
+  const tmBanner = createItemInspectorBanner({
+    itemId: selTmItem.id,
+    iconSizePx: 24,
+    marginTopPx: !onlyCompatibleUnknown ? 6 : undefined,
+    headHtml: `<strong class="pmd-item-inspector-name">${escapeUiHtml(selTmItem.name)} ×${selTmSlot.quantity}</strong>`,
+    descHtml,
+  });
 
   const teachBtn = document.createElement('button');
   teachBtn.type = 'button';
@@ -305,7 +303,7 @@ export function renderTmStripInspector(params: {
     }
   });
 
-  tmBanner.append(tmMain, teachBtn);
+  tmBanner.appendChild(teachBtn);
   containerEl.append(tmStrip, tmBanner);
   return { renderedCount: candidateTms.length, resolvedSelectedTmId: nextSelId };
 }

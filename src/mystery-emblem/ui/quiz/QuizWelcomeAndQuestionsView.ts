@@ -4,14 +4,8 @@
 
 import type { QuizOptionKey } from '../../data/quizData';
 import { bindPointerTap } from '../pointerControls';
-
-export function escapeQuizHtml(raw: string): string {
-  return raw
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+import { escapeHtml as escapeQuizHtml } from '../typeColors';
+export { escapeQuizHtml };
 
 export interface QuizQuestionDescriptor {
   prompt: string;

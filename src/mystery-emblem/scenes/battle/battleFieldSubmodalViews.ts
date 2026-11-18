@@ -2,6 +2,7 @@
  * Dungeon Field Menu Submodal Views (`Objective`, `Settings` w/ Audio & Quaquaval's Field Notes, Exit Confirm)
  */
 
+import { renderSharedAudioSettingsControls } from '../../ui/inspector/UnitDetailCard';
 import { bindPointerTap } from '../../ui/pointerControls';
 import { closeBattleScene } from './battleLifecycleController';
 import { getBattleSaveBlockReason, openBattleSaveProgressOverlay } from './battleSuspend';
@@ -76,90 +77,36 @@ export function renderFieldSubmodalContents(
   if (subView === 'settings') {
     cardEl.dataset.testid = 'dungeon-settings-modal';
     cardEl.setAttribute('aria-label', 'Audio Settings');
-    const settings = audioManager.getSettings();
-    const bgmPct = Math.round(settings.bgmVolume * 100);
-    const sfxPct = Math.round(settings.sfxVolume * 100);
-
-    cardEl.innerHTML = `
-      <h3 class="pmd-panel-title">SETTINGS</h3>
-      <div class="pmd-dungeon-settings-list">
-        <button type="button" class="pmd-btn${settings.muted ? '' : ' is-active'}" data-testid="battle-settings-mute-btn">
-          ${settings.muted ? 'Audio: Muted' : 'Audio: ON'}
-        </button>
-        <div class="pmd-dungeon-slider-row">
-          <label for="battle-settings-bgm">Music</label>
-          <input id="battle-settings-bgm" type="range" min="0" max="100" value="${bgmPct}" data-testid="battle-settings-bgm-slider" />
-          <span class="pmd-dungeon-slider-val" data-testid="battle-settings-bgm-val">${bgmPct}%</span>
-        </div>
-        <div class="pmd-dungeon-slider-row">
-          <label for="battle-settings-sfx">SFX</label>
-          <input id="battle-settings-sfx" type="range" min="0" max="100" value="${sfxPct}" data-testid="battle-settings-sfx-slider" />
-          <span class="pmd-dungeon-slider-val" data-testid="battle-settings-sfx-val">${sfxPct}%</span>
-        </div>
-      </div>
-      <div class="pmd-battle-outcome-actions">
-        <button type="button" class="pmd-btn pmd-btn-primary" data-testid="battle-settings-done-btn">Done</button>
-      </div>
-    `;
-
-    const muteBtn = cardEl.querySelector<HTMLButtonElement>(
-      '[data-testid="battle-settings-mute-btn"]'
-    );
-    const bgmSlider = cardEl.querySelector<HTMLInputElement>(
-      '[data-testid="battle-settings-bgm-slider"]'
-    );
-    const bgmValEl = cardEl.querySelector<HTMLElement>(
-      '[data-testid="battle-settings-bgm-val"]'
-    );
-    const sfxSlider = cardEl.querySelector<HTMLInputElement>(
-      '[data-testid="battle-settings-sfx-slider"]'
-    );
-    const sfxValEl = cardEl.querySelector<HTMLElement>(
-      '[data-testid="battle-settings-sfx-val"]'
-    );
-
-    bindPointerTap(muteBtn, () => {
-      const nowMuted = audioManager.toggleMute();
-      if (!nowMuted) {
-        audioManager.playSfx('select');
-      }
-      if (muteBtn) {
-        muteBtn.textContent = nowMuted ? 'Audio: Muted' : 'Audio: ON';
-        muteBtn.classList.toggle('is-active', !nowMuted);
-      }
+    cardEl.innerHTML = `<h3 class="pmd-panel-title">SETTINGS</h3>`;
+    const settingsListEl = renderSharedAudioSettingsControls({
+      audioManager,
+      layout: 'battle',
+      muteTestId: 'battle-settings-mute-btn',
+      bgmSliderTestId: 'battle-settings-bgm-slider',
+      bgmValTestId: 'battle-settings-bgm-val',
+      sfxSliderTestId: 'battle-settings-sfx-slider',
+      sfxValTestId: 'battle-settings-sfx-val',
     });
-
-    bgmSlider?.addEventListener('input', () => {
-      const pct = Math.max(0, Math.min(100, Math.round(Number(bgmSlider.value))));
-      audioManager.setBgmVolume(pct / 100);
-      if (bgmValEl) bgmValEl.textContent = `${pct}%`;
-    });
-
-    sfxSlider?.addEventListener('input', () => {
-      const pct = Math.max(0, Math.min(100, Math.round(Number(sfxSlider.value))));
-      audioManager.setSfxVolume(pct / 100);
-      if (sfxValEl) sfxValEl.textContent = `${pct}%`;
-    });
-    sfxSlider?.addEventListener('change', () => {
-      audioManager.playSfx('select');
-    });
+    cardEl.appendChild(settingsListEl);
 
     if (tutorialOverlay) {
-      const settingsListEl = cardEl.querySelector<HTMLElement>('.pmd-dungeon-settings-list');
-      if (settingsListEl) {
-        const dividerEl = document.createElement('div');
-        dividerEl.style.borderTop = '1px solid rgba(168, 192, 224, 0.35)';
-        dividerEl.style.paddingTop = '6px';
-        dividerEl.appendChild(
-          tutorialOverlay.renderTutorialSettingsControl({
-            onOpenCompendium: () => {
-              hooks.closeSystemMenu();
-            },
-          })
-        );
-        settingsListEl.appendChild(dividerEl);
-      }
+      const dividerEl = document.createElement('div');
+      dividerEl.style.borderTop = '1px solid rgba(168, 192, 224, 0.35)';
+      dividerEl.style.paddingTop = '6px';
+      dividerEl.appendChild(
+        tutorialOverlay.renderTutorialSettingsControl({
+          onOpenCompendium: () => {
+            hooks.closeSystemMenu();
+          },
+        })
+      );
+      settingsListEl.appendChild(dividerEl);
     }
+
+    const actionsEl = document.createElement('div');
+    actionsEl.className = 'pmd-battle-outcome-actions';
+    actionsEl.innerHTML = `<button type="button" class="pmd-btn pmd-btn-primary" data-testid="battle-settings-done-btn">Done</button>`;
+    cardEl.appendChild(actionsEl);
 
     bindPointerTap(
       cardEl.querySelector<HTMLElement>('[data-testid="battle-settings-done-btn"]'),

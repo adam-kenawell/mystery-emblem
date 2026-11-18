@@ -11,7 +11,6 @@ import type {
   DungeonUnitSpawn,
   KecleonShopType,
   ManualEnemyBattleSpawn,
-  QuizSeedSlotKey,
   ReinforcementWaveDefinition,
   SaveData,
 } from '../../types/schemas';
@@ -19,7 +18,6 @@ import type {
 export type { ReinforcementWaveDefinition };
 
 export interface ChapterRecruitmentSpec {
-  seedKey?: QuizSeedSlotKey;
   fixedSpeciesIds?: ReadonlyArray<string>;
   joinLevel: number;
   scaleStatsToLevel: boolean;

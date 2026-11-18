@@ -16,7 +16,7 @@ import {
 } from '../data/cutscenes/dialogueCompiler';
 import { resolveMediaUrl } from '../data/cutscenes/mediaLibrary';
 import type { SaveStateManager } from '../state/SaveStateManager';
-import type { DungeonMapTileCell, SaveData } from '../types/schemas';
+import type { SaveData } from '../types/schemas';
 import type { DialogueFinishReason, DialogueLine, DialogueOverlay } from '../ui/DialogueOverlay';
 import { prefersReducedMotionEnabled } from '../ui/typewriterController';
 import {
@@ -27,7 +27,7 @@ import { CutsceneStageRuntime } from './cutscene/cutsceneChoreographer';
 import { buildCutsceneDomShell, type CutsceneDomShell } from './cutscene/cutsceneDomShell';
 import { createAmbientMotes } from './cutscene/cutscenePropsAndMoods';
 import { renderCutsceneStageFrame } from './cutscene/cutsceneRenderer';
-import type { AmbientMote, CutsceneSceneOptions, CutsceneSceneSnapshot } from './cutscene/cutsceneTypes';
+import type { AmbientMote, CutsceneSceneOptions } from './cutscene/cutsceneTypes';
 
 export * from './cutscene/cutsceneTypes';
 
@@ -54,7 +54,6 @@ export class CutsceneScene {
   private readonly abortController = new AbortController();
 
   private openState = false;
-  private fastMode = false;
   private activeDoc: CutsceneDoc | null = null;
   private runtime: CutsceneStageRuntime | null = null;
   private viewHeightCss = 540;
@@ -93,7 +92,6 @@ export class CutsceneScene {
   }
 
   public isOpen(): boolean { return this.openState; }
-  public setFastMode(enabled: boolean): void { this.fastMode = Boolean(enabled); }
   public handleBack(): void { this.skipActiveCutscene(); }
 
   public skipActiveCutscene(): void {
@@ -117,7 +115,7 @@ export class CutsceneScene {
     this.finishSilentWait();
     if (this.dialogueOverlay.isOpen()) this.dialogueOverlay.close('cancelled');
 
-    const save = opts.saveOverride ?? this.saveManager.getSave();
+    const save = opts.saveOverride ?? this.saveManager.getReadOnlySave();
     this.usingSaveOverride = Boolean(opts.saveOverride);
     const runtime = new CutsceneStageRuntime(doc, save, this.caches);
     runtime.onSound = (url) => this.audioManager.playSfxUrl(url);
@@ -242,7 +240,7 @@ export class CutsceneScene {
           { id: `${doc.id}_beats_${i}`, lines, restorePreviousBgmOnClose: false },
           {
             inCutsceneStage: true,
-            typewriterMsPerChar: this.fastMode || reducedMotion ? 0 : 22,
+            typewriterMsPerChar: reducedMotion ? 0 : 22,
             ...(this.usingSaveOverride ? { saveOverride: save } : {}),
             onLineStart: (lineIdx) => {
               if (!this.isCurrent(token)) return;
@@ -254,7 +252,7 @@ export class CutsceneScene {
               if (!entry) return;
               this.currentBeatIndex = entry.index;
               this.currentLineIndex += 1;
-              if (entry.runActions) runtime.runBeatActions(entry.beat, this.fastMode);
+              if (entry.runActions) runtime.runBeatActions(entry.beat, false);
               this.renderFrame();
             },
             onAdvanceInterrupt: () => {
@@ -279,7 +277,7 @@ export class CutsceneScene {
   }
 
   private async runSilentBeat(beat: Beat, runtime: CutsceneStageRuntime, reducedMotion: boolean): Promise<void> {
-    const instant = this.fastMode || reducedMotion;
+    const instant = reducedMotion;
     const actionsMs = runtime.runBeatActions(beat, instant);
     const waitMs = instant
       ? 0
@@ -322,62 +320,6 @@ export class CutsceneScene {
     this.shell.disconnectResize();
     this.abortController.abort();
     this.rootEl.remove();
-  }
-
-  public advanceClockForTest(ms: number): void {
-    let rem = Math.max(0, ms);
-    while (rem > 0 && this.runtime) {
-      const dt = Math.min(16, rem);
-      this.runtime.step(dt);
-      rem -= dt;
-    }
-    this.renderFrame();
-  }
-
-  public getTileAt(tx: number, ty: number): DungeonMapTileCell | null {
-    const layer = this.runtime?.location.layers.find((l) => l.kind === 'tiles' && l.grid);
-    const cell = layer?.grid?.[ty]?.[tx];
-    return cell ? { ...cell } : null;
-  }
-
-  public getSnapshot(): CutsceneSceneSnapshot {
-    const rt = this.runtime;
-    return {
-      isOpen: this.openState,
-      cutsceneId: this.activeDoc?.id ?? null,
-      locationId: rt?.location.doc.id ?? null,
-      stageWidth: rt?.location.width ?? 0,
-      stageHeight: rt?.location.height ?? 0,
-      title: this.activeDoc?.title ?? null,
-      locationLabel: rt?.banner ?? null,
-      lightingMood: rt?.lighting.mood ?? null,
-      weather: rt?.weather ?? 'none',
-      currentBeatIndex: this.currentBeatIndex,
-      currentLineIndex: this.currentLineIndex,
-      cameraTile: {
-        x: Math.round((rt?.cameraTileX ?? 0) * 100) / 100,
-        y: Math.round((rt?.cameraTileY ?? 0) * 100) / 100,
-      },
-      displayScale: this.displayScale,
-      actors: (rt?.actors ?? [])
-        .filter((a) => a.available && !a.offStage)
-        .map((a) => ({
-          actorId: a.actorId,
-          roleKind: a.roleKind,
-          nickname: a.nickname,
-          speciesId: a.speciesId,
-          pmdAssetId: a.pmdAssetId,
-          visualAssetKey: a.visualAssetKey,
-          visible: a.visible,
-          x: Math.round(a.x * 100) / 100,
-          y: Math.round(a.y * 100) / 100,
-          direction: a.direction,
-          action: a.action,
-          pose: a.poseName,
-          activeEmote: a.emote?.kind ?? null,
-        })),
-      propCount: rt?.props.length ?? 0,
-    };
   }
 
   private refreshSize(): void {

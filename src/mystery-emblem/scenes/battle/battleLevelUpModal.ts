@@ -173,13 +173,6 @@ export function presentLevelUpModalAsync(
 
   return new Promise<void>((resolve) => {
     state.levelUpResolver = resolve;
-    if (state.fastMode && !state.pauseOnLevelUpInFastMode) {
-      window.setTimeout(() => {
-        if (state.levelUpResolver === resolve) {
-          dismissLevelUpModal(ctx);
-        }
-      }, 45);
-    }
   });
 }
 
@@ -247,13 +240,6 @@ export function presentMoveLearnedModalAsync(
 
   return new Promise<void>((resolve) => {
     state.moveLearnedResolver = resolve;
-    if (state.fastMode && !state.pauseOnLevelUpInFastMode) {
-      window.setTimeout(() => {
-        if (state.moveLearnedResolver === resolve) {
-          dismissMoveLearnedModal(ctx);
-        }
-      }, 45);
-    }
   });
 }
 

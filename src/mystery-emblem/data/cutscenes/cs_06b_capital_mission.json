@@ -20,8 +20,8 @@
   ],
   "placements": [
     { "id": "serperior", "x": 7, "y": 4, "facing": "Down" },
-    { "id": "honedge", "x": 6, "y": 4, "facing": "Down" },
-    { "id": "sandile", "x": 9, "y": 4, "facing": "Down" },
+    { "id": "honedge", "x": 2, "y": 5, "facing": "Right", "hidden": true },
+    { "id": "sandile", "x": 13, "y": 5, "facing": "Left", "hidden": true },
     { "id": "mentor", "x": 7, "y": 6, "facing": "Up" },
     { "id": "lord", "x": 8, "y": 6, "facing": "Up" },
     { "id": "partner", "x": 6, "y": 7, "facing": "Up" },
@@ -35,6 +35,36 @@
         { "type": "fade", "to": "clear", "duration": 0.7 }
       ],
       "advance": { "kind": "seconds", "seconds": 0.75 }
+    },
+    {
+      "id": "lord_recognizes_tusk",
+      "say": {
+        "speaker": "lord",
+        "emotion": "Surprised",
+        "side": "left",
+        "text": "Wait... those twisted beasts in the ancient chronicles! The massive tusked monster that stampeded the foothills outside your gates looked just like them!"
+      },
+      "actions": [
+        { "type": "emote", "who": "lord", "emote": "exclamation", "duration": 0.9 }
+      ]
+    },
+    {
+      "id": "quaquaval_rift_match",
+      "say": {
+        "speaker": "mentor",
+        "emotion": "Worried",
+        "side": "left",
+        "text": "Your Majesty, if creatures from that ancient Rift are stepping into our world again, these border skirmishes are only the beginning."
+      }
+    },
+    {
+      "id": "serperior_elder_hint",
+      "say": {
+        "speaker": "serperior",
+        "emotion": "Determined",
+        "side": "right",
+        "text": "Precisely why I summoned you. Our ancient chronicles end in myth and ash, yet scholars point to an ancient elder slumbering in the Ice Kingdom who lived through that war."
+      }
     },
     {
       "id": "serperior_politics_1",
@@ -69,7 +99,7 @@
         "speaker": "serperior",
         "emotion": "Determined",
         "side": "right",
-        "text": "Our shared archives speak of an ancient Pokemon slumbering deep within the Ice Kingdom who remembers the Dawn Era and that ancient war. Quaquaval, {lord}, I entrust your expedition with waking him and learning how to seal the Rift."
+        "text": "Quaquaval, {lord}, I entrust your expedition with waking that elder and learning how to seal the Rift. With our allies beside us, you will not march north alone. Step forward, envoys!"
       },
       "actions": [
         { "type": "emote", "who": "lord", "emote": "exclamation", "duration": 0.9 },
@@ -86,8 +116,9 @@
         "text": "By envoy pact, my blade is yours! I am Honedge, warrior of the Steel Kingdom, sworn to guard your northern march!"
       },
       "actions": [
-        { "type": "walk", "who": "honedge", "path": [[6, 5]], "speed": 2.6, "facing": "DownRight" },
-        { "type": "pose", "who": "honedge", "anim": "Attack", "duration": 0.45 }
+        { "type": "show", "who": "honedge", "visible": true, "fade": true },
+        { "type": "walk", "who": "honedge", "path": [[6, 5]], "speed": 3.0, "facing": "DownRight" },
+        { "type": "pose", "who": "honedge", "anim": "Attack", "duration": 0.45, "start": "after" }
       ]
     },
     {
@@ -99,8 +130,9 @@
         "text": "And I am Sandile from the Sand Kingdom! Stick with me and not a single ambush will sneak past our tracks!"
       },
       "actions": [
-        { "type": "walk", "who": "sandile", "path": [[9, 5]], "speed": 2.8, "facing": "DownLeft" },
-        { "type": "hop", "who": "sandile", "count": 2 }
+        { "type": "show", "who": "sandile", "visible": true, "fade": true },
+        { "type": "walk", "who": "sandile", "path": [[9, 5]], "speed": 3.0, "facing": "DownLeft" },
+        { "type": "hop", "who": "sandile", "count": 2, "start": "after" }
       ]
     },
     {

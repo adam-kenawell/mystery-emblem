@@ -10,7 +10,6 @@ import type { DungeonMapDefinition, PrepDeploymentSlot } from '../types/schemas'
 import type { DialogueOverlay } from './DialogueOverlay';
 import { PmdPortraitView } from './PmdSpriteCanvas';
 import { SupportsMenuController } from './SupportsMenuView';
-import type { TutorialOverlay } from './TutorialOverlay';
 import type { ItemFilterTab } from './inspector/ItemActionInspector';
 import { renderPrepManageItems } from './prep/PrepItemsRenderer';
 import { renderPrepManageUnits } from './prep/PrepUnitsRenderer';
@@ -29,7 +28,6 @@ export interface DungeonPrepOverlayOptions {
   parentEl: HTMLElement;
   audioManager: AudioManager;
   getDialogueOverlay?: () => DialogueOverlay | undefined;
-  getTutorialOverlay?: () => TutorialOverlay | undefined;
   getSaveManager: () => SaveStateManager;
   getLevelId?: () => string;
   getMap: () => DungeonMapDefinition;
@@ -87,7 +85,6 @@ export class DungeonPrepOverlay {
       dom: this.dom,
       audioManager: this.opts.audioManager,
       signal: this.abortController.signal,
-      getTutorialOverlay: this.opts.getTutorialOverlay,
       getSelectedUnitInstanceId: () => this.selectedUnitInstanceId,
       onRosterOrLoadoutMutated: () => this.opts.onRosterOrLoadoutMutated(),
       onRefreshAll: () => this.refreshAll(),
@@ -150,15 +147,8 @@ export class DungeonPrepOverlay {
       return true;
     }
     if (this.subMode === 'manage_units') {
-      const tutorial = this.opts.getTutorialOverlay?.();
-      const expected = tutorial?.getExpectedAction() ?? null;
-      if (expected && expected !== 'prep_close_manage_units') {
-        tutorial?.nudgeActiveStep();
-        return true;
-      }
       this.opts.audioManager.playSfx('cancel');
       this.setSubMode('hub');
-      tutorial?.notifyActionCompleted('prep_close_manage_units');
       return true;
     }
     if (this.subMode === 'manage_items') {
@@ -175,11 +165,9 @@ export class DungeonPrepOverlay {
       return true;
     }
     if (this.subMode === 'view_map') {
-      const tutorial = this.opts.getTutorialOverlay?.();
       this.opts.audioManager.playSfx('cancel');
       this.opts.onExitViewMap();
       this.setSubMode('hub');
-      tutorial?.notifyActionCompleted('prep_swap_or_finish_view_map');
       return true;
     }
     return false;

@@ -6,7 +6,10 @@ import type { AudioManager } from '../../audio/AudioManager';
 import type { SaveStateManager } from '../../state/SaveStateManager';
 import type { SaveData } from '../../types/schemas';
 import type { TutorialOverlay } from '../../ui/TutorialOverlay';
-import { escapeUiHtml } from '../../ui/inspector/UnitDetailCard';
+import {
+  escapeUiHtml,
+  renderSharedAudioSettingsControls,
+} from '../../ui/inspector/UnitDetailCard';
 import { bindPointerTap } from '../../ui/pointerControls';
 import { openSaveSlotOverlay } from '../../ui/SaveSlotOverlay';
 import { buildStoryReplaySubbox } from './overworldStoryReplayBox';
@@ -69,42 +72,12 @@ export function renderOverworldSystemTab(params: OverworldSystemTabParams): void
   } = params;
 
   const sync = saveManager.getSyncStatus();
-  const audioSettings = audioManager.getSettings();
-
-  const audioBox = document.createElement('div');
-  audioBox.className = 'pmd-overworld-subbox';
-  audioBox.innerHTML = `
-    <p class="pmd-overworld-subbox-title">Audio</p>
-    <div class="pmd-overworld-action-row">
-      <button type="button" class="pmd-btn pmd-chip-btn${audioSettings.muted ? '' : ' is-active'}" data-testid="overworld-audio-mute-btn">
-        ${audioSettings.muted ? 'Audio: Muted' : 'Audio: ON'}
-      </button>
-      <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;">
-        <span>BGM</span>
-        <input type="range" min="0" max="100" value="${Math.round(audioSettings.bgmVolume * 100)}" data-testid="overworld-bgm-slider" />
-      </label>
-      <label style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;">
-        <span>SFX</span>
-        <input type="range" min="0" max="100" value="${Math.round(audioSettings.sfxVolume * 100)}" data-testid="overworld-sfx-slider" />
-      </label>
-    </div>
-  `;
-
-  bindPointerTap(
-    audioBox.querySelector<HTMLElement>('[data-testid="overworld-audio-mute-btn"]'),
-    () => {
-      const nowMuted = audioManager.toggleMute();
-      if (!nowMuted) audioManager.playSfx('select');
-      onRefreshSystemMenu();
-    }
-  );
-  const bgmSlider = audioBox.querySelector<HTMLInputElement>('[data-testid="overworld-bgm-slider"]');
-  bgmSlider?.addEventListener('input', () => {
-    audioManager.setBgmVolume(Number(bgmSlider.value) / 100);
-  });
-  const sfxSlider = audioBox.querySelector<HTMLInputElement>('[data-testid="overworld-sfx-slider"]');
-  sfxSlider?.addEventListener('input', () => {
-    audioManager.setSfxVolume(Number(sfxSlider.value) / 100);
+  const audioBox = renderSharedAudioSettingsControls({
+    audioManager,
+    layout: 'overworld',
+    muteTestId: 'overworld-audio-mute-btn',
+    bgmSliderTestId: 'overworld-bgm-slider',
+    sfxSliderTestId: 'overworld-sfx-slider',
   });
 
   const saveBox = document.createElement('div');

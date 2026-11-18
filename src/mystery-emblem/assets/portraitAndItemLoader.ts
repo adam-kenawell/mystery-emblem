@@ -15,11 +15,6 @@ import { resolveItemIconTarget, resolveSpeciesAssetTarget } from './subformResol
 const portraitCache = new Map<string, Promise<LoadedPortraitAsset>>();
 const itemIconCache = new Map<string, Promise<LoadedItemIconAsset>>();
 
-export function clearPortraitAndItemCache(): void {
-  portraitCache.clear();
-  itemIconCache.clear();
-}
-
 async function loadPortraitUncached(
   pmdAssetId: string,
   emotion: PmdPortraitEmotion,

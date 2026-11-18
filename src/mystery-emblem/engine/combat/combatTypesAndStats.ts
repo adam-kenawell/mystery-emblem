@@ -7,7 +7,7 @@ import { getItemById, getMoveById, getSpeciesById } from '../../data/index';
 import type {
   AdjacentSupportSummary,
   SupportStatBonus,
-} from '../../data/supports/supportTypes';
+} from '../../data/supports/supportMatrix';
 import {
   getEquippedMoveIds,
   isMoveEquipped,
@@ -107,8 +107,6 @@ export interface BattleUnitState extends PathfindingUnitContext, EquippedMoveSlo
   renderWorldY: number;
   hitFlashUntilMs: number;
   koDissolveProgress: number;
-  spawnFadeAlpha?: number;
-  offMapWalkFrom?: { x: number; y: number } | null;
 }
 
 export interface CombatSideForecast {

@@ -4,6 +4,7 @@
 
 import type { DungeonMapDefinition } from '../../types/schemas';
 import {
+  CostMinHeap,
   ORTHOGONAL_DIRS,
   areBattleFactionsAllied,
   coordKey,
@@ -34,6 +35,8 @@ export interface MovementRangeResult {
   supportBorderTiles: Set<string>;
 }
 
+const INF_COST = 0x3fffffff;
+
 /**
  * Runs Dijkstra's algorithm to compute all legal stopping tiles (`Blue`), plus projects
  * `Red` offensive range and `Green` ally-support range across the 4-move loadout (`PP > 0`).
@@ -44,66 +47,75 @@ export function computeUnitMovementAndAttackRange(
   allUnits: ReadonlyArray<PathfindingUnitContext>
 ): MovementRangeResult {
   const effectiveMov = getEffectiveMovementPoints(unit);
+  const w = map.width;
+  const h = map.height;
+  const total = w * h;
 
-  const allyOccupied = new Set<string>();
-  const enemyOccupied = new Set<string>();
+  const allyOccupied = new Uint8Array(total);
+  const enemyOccupied = new Uint8Array(total);
   for (const other of allUnits) {
     if (other.id === unit.id) continue;
-    const key = coordKey(other.x, other.y);
+    if (other.x < 0 || other.y < 0 || other.x >= w || other.y >= h) continue;
+    const oIdx = other.y * w + other.x;
     if (areBattleFactionsAllied(other.faction, unit.faction)) {
-      allyOccupied.add(key);
+      allyOccupied[oIdx] = 1;
     } else {
-      enemyOccupied.add(key);
+      enemyOccupied[oIdx] = 1;
     }
   }
 
+  const bestCosts = new Int32Array(total);
+  bestCosts.fill(INF_COST);
+  const traversedMask = new Uint8Array(total);
+
   const traversedCosts = new Map<string, number>();
   const reachableTiles = new Map<string, ReachableTileInfo>();
-
-  const queue: Array<{ x: number; y: number; cost: number }> = [
-    { x: unit.x, y: unit.y, cost: 0 },
-  ];
   const originKey = coordKey(unit.x, unit.y);
   traversedCosts.set(originKey, 0);
   reachableTiles.set(originKey, { x: unit.x, y: unit.y, cost: 0 });
 
-  while (queue.length > 0) {
-    let bestIdx = 0;
-    for (let i = 1; i < queue.length; i++) {
-      if (queue[i]!.cost < queue[bestIdx]!.cost) {
-        bestIdx = i;
-      }
-    }
-    const current = queue.splice(bestIdx, 1)[0]!;
-    const curKey = coordKey(current.x, current.y);
-    const knownBest = traversedCosts.get(curKey);
-    if (knownBest !== undefined && current.cost > knownBest) {
-      continue;
-    }
+  if (isInMapBounds(map, unit.x, unit.y)) {
+    const originIdx = unit.y * w + unit.x;
+    bestCosts[originIdx] = 0;
+    traversedMask[originIdx] = 1;
 
-    for (const [dx, dy] of ORTHOGONAL_DIRS) {
-      const nx = current.x + dx;
-      const ny = current.y + dy;
-      if (!isInMapBounds(map, nx, ny)) continue;
+    const heap = new CostMinHeap();
+    heap.push(originIdx, 0);
 
-      const nKey = coordKey(nx, ny);
-      if (enemyOccupied.has(nKey)) continue;
+    while (heap.length > 0) {
+      const curIdx = heap.pop();
+      const curCost = heap.lastCost;
+      if (curCost > bestCosts[curIdx]!) continue;
 
-      const terrain = getMapTerrainAt(map, nx, ny);
-      if (!terrain) continue;
+      const cx = curIdx % w;
+      const cy = (curIdx - cx) / w;
 
-      const stepCost = getTerrainMoveCost(terrain, unit);
-      if (stepCost === null) continue;
+      for (let d = 0; d < ORTHOGONAL_DIRS.length; d++) {
+        const [dx, dy] = ORTHOGONAL_DIRS[d]!;
+        const nx = cx + dx;
+        const ny = cy + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
 
-      const nextCost = current.cost + stepCost;
-      if (nextCost > effectiveMov) continue;
+        const nIdx = ny * w + nx;
+        if (enemyOccupied[nIdx]) continue;
 
-      const prevCost = traversedCosts.get(nKey);
-      if (prevCost === undefined || nextCost < prevCost) {
+        const terrain = getMapTerrainAt(map, nx, ny);
+        if (!terrain) continue;
+
+        const stepCost = getTerrainMoveCost(terrain, unit);
+        if (stepCost === null) continue;
+
+        const nextCost = curCost + stepCost;
+        if (nextCost > effectiveMov || nextCost >= bestCosts[nIdx]!) continue;
+
+        const isFirstVisit = bestCosts[nIdx] === INF_COST;
+        bestCosts[nIdx] = nextCost;
+        traversedMask[nIdx] = 1;
+        heap.push(nIdx, nextCost);
+
+        const nKey = coordKey(nx, ny);
         traversedCosts.set(nKey, nextCost);
-        queue.push({ x: nx, y: ny, cost: nextCost });
-
-        if (!allyOccupied.has(nKey)) {
+        if (!allyOccupied[nIdx] && (isFirstVisit || reachableTiles.has(nKey))) {
           reachableTiles.set(nKey, { x: nx, y: ny, cost: nextCost });
         }
       }
@@ -130,38 +142,48 @@ export function computeUnitMovementAndAttackRange(
   const supportBorderTiles = new Set<string>();
 
   if (enemyRanges.length > 0 || supportRanges.length > 0) {
+    const attackMask = new Uint8Array(total);
+    const supportMask = new Uint8Array(total);
+
     for (const stopTile of reachableTiles.values()) {
-      for (const [minR, maxR] of enemyRanges) {
+      for (let rIdx = 0; rIdx < enemyRanges.length; rIdx++) {
+        const [minR, maxR] = enemyRanges[rIdx]!;
         for (let dy = -maxR; dy <= maxR; dy++) {
+          const ty = stopTile.y + dy;
+          if (ty < 0 || ty >= h) continue;
           const rem = maxR - Math.abs(dy);
           for (let dx = -rem; dx <= rem; dx++) {
             const dist = Math.abs(dx) + Math.abs(dy);
             if (dist < minR || dist > maxR) continue;
             const tx = stopTile.x + dx;
-            const ty = stopTile.y + dy;
-            if (!isInMapBounds(map, tx, ty)) continue;
+            if (tx < 0 || tx >= w) continue;
+            const tIdx = ty * w + tx;
+            if (attackMask[tIdx]) continue;
+            attackMask[tIdx] = 1;
             const tKey = coordKey(tx, ty);
             allAttackableTiles.add(tKey);
-            if (!traversedCosts.has(tKey)) {
+            if (!traversedMask[tIdx]) {
               attackBorderTiles.add(tKey);
             }
           }
         }
       }
 
-      for (const [minR, maxR] of supportRanges) {
+      for (let rIdx = 0; rIdx < supportRanges.length; rIdx++) {
+        const [minR, maxR] = supportRanges[rIdx]!;
         for (let dy = -maxR; dy <= maxR; dy++) {
+          const ty = stopTile.y + dy;
+          if (ty < 0 || ty >= h) continue;
           const rem = maxR - Math.abs(dy);
           for (let dx = -rem; dx <= rem; dx++) {
             const dist = Math.abs(dx) + Math.abs(dy);
             if (dist < minR || dist > maxR) continue;
             const tx = stopTile.x + dx;
-            const ty = stopTile.y + dy;
-            if (!isInMapBounds(map, tx, ty)) continue;
-            const tKey = coordKey(tx, ty);
-            if (!traversedCosts.has(tKey)) {
-              supportBorderTiles.add(tKey);
-            }
+            if (tx < 0 || tx >= w) continue;
+            const tIdx = ty * w + tx;
+            if (traversedMask[tIdx] || supportMask[tIdx]) continue;
+            supportMask[tIdx] = 1;
+            supportBorderTiles.add(coordKey(tx, ty));
           }
         }
       }
@@ -194,6 +216,7 @@ export function computeEnemyDangerArea(
   options: {
     globalEnabled: boolean;
     trackedEnemyIds?: ReadonlySet<string>;
+    precomputedEnemyRanges?: Map<string, MovementRangeResult>;
   }
 ): DangerAreaResult {
   const globalDangerTiles = new Set<string>();
@@ -210,7 +233,11 @@ export function computeEnemyDangerArea(
     const isIndividuallyTracked = Boolean(tracked?.has(unit.id));
     if (!options.globalEnabled && !isIndividuallyTracked) continue;
 
-    const range = computeUnitMovementAndAttackRange(map, unit, allUnits);
+    let range = options.precomputedEnemyRanges?.get(unit.id);
+    if (!range) {
+      range = computeUnitMovementAndAttackRange(map, unit, allUnits);
+      options.precomputedEnemyRanges?.set(unit.id, range);
+    }
     for (const key of range.allAttackableTiles) {
       if (options.globalEnabled) {
         globalDangerTiles.add(key);

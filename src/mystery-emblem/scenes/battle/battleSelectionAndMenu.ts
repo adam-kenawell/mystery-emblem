@@ -7,7 +7,7 @@ import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
 import type { BattleUnitState } from '../../engine/combatEngine';
 import type { AStarPathStep } from '../../engine/terrainAndPathfinding';
 import { createMiniItemIcon } from '../../ui/PmdItemIconGrid';
-import { getElementZoom } from '../../ui/uiScale';
+import { getElementZoom } from '../../ui/gridViewportMath';
 import { getDanceableTargetsFromCurrentTile } from './battleDanceController';
 import {
   clearInspectedAllyRange,
@@ -16,23 +16,17 @@ import {
 } from './battleDangerAndViewportState';
 import { getTalkableTargetsFromCurrentTile } from './battleEventRunner';
 import { updateBattleInfoStrip } from './battleHudCards';
-import {
-  getHealOrConsumableTutorialUnits,
-  getTutorialHealerUnit,
-  getTutorialPartnerUnit,
-} from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
   canUseUnitEquippedConsumable,
   getAttackableEnemiesFromCurrentTile,
   getHealableTargetsFromCurrentTile,
-  getLordUnit,
   getSelectedUnit,
   recomputeSelectedUnitRange,
 } from './battleUnitQueries';
 
 export function selectPlayerUnit(ctx: BattleControllerContext, unit: BattleUnitState): void {
-  const { state, dom, audioManager, tutorialOverlay } = ctx;
+  const { state, dom, audioManager } = ctx;
   clearInspectedAllyRange(state);
   state.selectedUnitId = unit.id;
   state.touchInspectedUnitId = state.hoveredTile === null ? unit.id : null;
@@ -45,19 +39,6 @@ export function selectPlayerUnit(ctx: BattleControllerContext, unit: BattleUnitS
   syncHudControls(state, dom);
   updateBattleInfoStrip(ctx);
   ctx.onLayerStateChanged();
-
-  if (unit.id === getLordUnit(state)?.id) {
-    tutorialOverlay?.notifyActionCompleted('battle_select_lord');
-  }
-  if (unit.id === getTutorialPartnerUnit(state)?.id) {
-    tutorialOverlay?.notifyActionCompleted('battle_select_partner');
-  }
-  if (getHealOrConsumableTutorialUnits(state).some((u) => u.id === unit.id)) {
-    tutorialOverlay?.notifyActionCompleted('battle_inspect_heal_or_item');
-  }
-  if (unit.id === getTutorialHealerUnit(state)?.id) {
-    tutorialOverlay?.notifyActionCompleted('battle_select_healer');
-  }
   ctx.renderNow();
 }
 
@@ -133,7 +114,7 @@ export function openFloatingCommandMenu(
   ctx: BattleControllerContext,
   unit: BattleUnitState
 ): void {
-  const { state, dom, tutorialOverlay } = ctx;
+  const { state, dom } = ctx;
   state.activeWalk = null;
   unit.action = 'Idle';
   unit.renderWorldX = unit.x * PMD_TILE_NATIVE_PX;
@@ -186,7 +167,6 @@ export function openFloatingCommandMenu(
   syncHudControls(state, dom);
   updateBattleInfoStrip(ctx);
   ctx.onLayerStateChanged();
-  tutorialOverlay?.notifyActionCompleted('battle_move_to_blue_tile');
   ctx.renderNow();
 }
 

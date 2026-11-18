@@ -7,9 +7,11 @@ import type { AudioManager } from '../../audio/AudioManager';
 import { getItemById, getMoveById, getSpeciesById } from '../../data/index';
 import { getUnitEquippedItemId, type SaveStateManager } from '../../state/SaveStateManager';
 import type { ItemDefinition, SaveData } from '../../types/schemas';
-import { createItemIconCell, createMiniItemIcon } from '../../ui/PmdItemIconGrid';
+import { createItemIconCell } from '../../ui/PmdItemIconGrid';
 import { createMiniSpeciesPortrait, createUnitPortraitCell } from '../../ui/PmdUnitPortraitGrid';
 import {
+  createEvolutionBranchButton,
+  createItemInspectorBanner,
   escapeUiHtml,
   renderUnitEquippedSlotBanner,
 } from '../../ui/inspector/UnitDetailCard';
@@ -140,29 +142,21 @@ export function renderOverworldConvoyTab(params: OverworldItemsTabParams): {
       );
     }
 
-    const bagBanner = document.createElement('div');
-    bagBanner.className = 'pmd-item-inspector-banner';
-    bagBanner.dataset.testid = 'overworld-convoy-inspector';
-    bagBanner.style.marginTop = '6px';
-
-    const bagMain = document.createElement('div');
-    bagMain.className = 'pmd-item-inspector-main';
-    bagMain.appendChild(createMiniItemIcon(selItem.id, { sizePx: 26, decorative: true }));
     const selTmMove =
       selItem.category === 'tm' && selItem.effect.teachesMoveId
         ? getMoveById(selItem.effect.teachesMoveId)
         : undefined;
-    const bagCopy = document.createElement('div');
-    bagCopy.className = 'pmd-item-inspector-copy';
-    bagCopy.innerHTML = `
-      <div class="pmd-item-inspector-head">
+    const bagBanner = createItemInspectorBanner({
+      itemId: selItem.id,
+      iconSizePx: 26,
+      marginTopPx: 6,
+      testId: 'overworld-convoy-inspector',
+      headHtml: `
         <strong class="pmd-item-inspector-name">${escapeUiHtml(selItem.name)} ×${selBag.quantity}</strong>
         ${selTmMove ? `<span class="pmd-prep-cat-tag">${renderColoredTypeHtml(selTmMove.type)}</span>` : ''}
-      </div>
-      <span class="pmd-item-inspector-desc">${escapeUiHtml(selItem.description)}</span>
-    `;
-    bagMain.appendChild(bagCopy);
-    bagBanner.appendChild(bagMain);
+      `,
+      descHtml: escapeUiHtml(selItem.description),
+    });
 
     const actionsWrap = document.createElement('div');
     actionsWrap.className = 'pmd-inline-btns';
@@ -200,30 +194,21 @@ export function renderOverworldConvoyTab(params: OverworldItemsTabParams): {
         (b) => b.requiredItemId === selItem.id && targetUnit.level >= b.minLevel
       );
       for (const branch of eligibleBranches) {
-        const evolvedSp = getSpeciesById(branch.targetSpeciesId);
-        const promoBtn = document.createElement('button');
-        promoBtn.type = 'button';
-        promoBtn.className = 'pmd-btn pmd-btn-primary pmd-chip-btn';
-        promoBtn.dataset.testid = `overworld-convoy-use-promo-${branch.targetSpeciesId}`;
-        promoBtn.textContent = `Evolve → ${evolvedSp?.name ?? branch.targetSpeciesId}`;
-        bindPointerTap(promoBtn, () => {
-          try {
-            saveManager.useEvolutionItemOnUnit(
-              targetUnit.instanceId,
-              branch.requiredItemId,
-              branch.targetSpeciesId
-            );
-            audioManager.playSfx('victory_fanfare');
-            onEvolvedPreloadSprites();
-            onFeedbackAndRefresh(
-              `${targetUnit.nickname} evolved into ${evolvedSp?.name ?? branch.targetSpeciesId}!`
-            );
-          } catch (err) {
-            audioManager.playSfx('cancel');
-            onFeedbackAndRefresh(err instanceof Error ? err.message : 'Cannot evolve yet.');
-          }
-        });
-        actionsWrap.appendChild(promoBtn);
+        actionsWrap.appendChild(
+          createEvolutionBranchButton({
+            unit: targetUnit,
+            branch,
+            saveManager,
+            audioManager,
+            testId: `overworld-convoy-use-promo-${branch.targetSpeciesId}`,
+            sfx: 'victory_fanfare',
+            onPromoted: (_promoted, evolvedName) => {
+              onEvolvedPreloadSprites();
+              onFeedbackAndRefresh(`${targetUnit.nickname} evolved into ${evolvedName}!`);
+            },
+            onError: onFeedbackAndRefresh,
+          })
+        );
       }
     }
 

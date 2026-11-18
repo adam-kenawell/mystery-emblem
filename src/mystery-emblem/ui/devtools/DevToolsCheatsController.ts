@@ -84,7 +84,7 @@ export class DevToolsCheatsController {
       const unit = saveManager.getSave()?.roster.find((u) => u.instanceId === this.selectedUnitInstanceId);
       if (!unit) return;
       const nextLv = Math.max(1, Math.min(40, computeLv(unit.level)));
-      saveManager.setUnitLevelForTest(unit.instanceId, nextLv, true);
+      saveManager.setUnitLevel(unit.instanceId, nextLv, true);
       audioManager.playSfx('select');
       this.setCheatStatus(`${unit.nickname} → Lv.${nextLv}`);
       this.refresh();

@@ -9,6 +9,7 @@
 import './cutsceneEditor.css';
 import type { AudioManager } from '../audio/AudioManager';
 import { getEffectiveChapterMap } from '../data/chapterMapRegistry';
+import { RAW_CHAPTER_JSON_LIST } from '../data/chapters/defaultCatalog';
 import { applyEditedChapterJson, getRawChapterJson } from '../data/chapters/index';
 import type { CompactChapterJson } from '../data/chapters/chapterTypes';
 import type {
@@ -50,9 +51,10 @@ import {
   fromEditableTileGrid,
   toEditableTileGrid,
 } from '../data/cutscenes/locationCodec';
-import { buildPreviewSave } from '../data/cutscenes/previewSave';
 import { findStoryCutsceneLink } from '../data/storyCutscenes';
 import { interpolateCampaignText, resolveSpeakerIdentity } from '../engine/speakerResolver';
+import { buildNewCampaignSaveData } from '../state/campaignSaveFactory';
+import { createPokemonInstance } from '../state/saveHelpersAndFactory';
 import type { ChapterMapEditorScene } from '../scenes/ChapterMapEditorScene';
 import type { CutsceneScene } from '../scenes/CutsceneScene';
 import {
@@ -60,12 +62,11 @@ import {
   preloadCutsceneAssets,
 } from '../scenes/cutscene/cutsceneActorResolver';
 import { CutsceneStageRuntime } from '../scenes/cutscene/cutsceneChoreographer';
-import type { DungeonEventDefinition, DungeonMapDefinition } from '../types/schemas';
+import type { DungeonEventDefinition, DungeonMapDefinition, SaveData } from '../types/schemas';
 import type { DialogueOverlay } from '../ui/DialogueOverlay';
 import { checkProjectSaveAvailable, deleteProjectFile, writeChapterJsonFile, writeProjectJson } from '../ui/devtools/projectFileClient';
 import { parseRichDialogueText } from '../ui/typewriterController';
 import { loadSpeciesPortrait } from '../assets/pmdAssetLoader';
-import type { EditorContext, EditorSelection, UpdateOptions } from './editorContext';
 import { button, checkbox, h, segmented, type UiContext } from './editorDom';
 import { stopAllPreviewAudio } from './editorPickers';
 import {
@@ -75,8 +76,11 @@ import {
   sessionKey,
   slugifyId,
   uniqueId,
+  type EditorContext,
+  type EditorSelection,
   type SessionData,
   type StorySessionData,
+  type UpdateOptions,
 } from './editorSession';
 import { EditorStageView, facingToDirection, type StageOverlay } from './editorStageView';
 import { validateSession } from './editorValidation';
@@ -103,6 +107,40 @@ export type CutsceneEditorTarget =
 type SideTab = 'beat' | 'cast' | 'location' | 'scene';
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
+
+const PREVIEW_RECRUIT_SPECIES_IDS = [
+  'mentor_quaquaval',
+  'combee',
+  'chespin',
+  'machop',
+  'slakoth',
+  'starly',
+  'caterpie',
+  'pawmi',
+  'honedge',
+  'sandile',
+];
+
+let cachedPreviewSave: SaveData | null = null;
+function buildPreviewSave(): SaveData {
+  if (cachedPreviewSave) return cachedPreviewSave;
+  const save = buildNewCampaignSaveData(
+    { lordSpeciesId: 'axew', currentChapterId: 'chapter_02', startingLevel: 5 },
+    false
+  );
+  for (const speciesId of PREVIEW_RECRUIT_SPECIES_IDS) {
+    try {
+      save.roster.push(
+        createPokemonInstance({ speciesId, level: speciesId === 'mentor_quaquaval' ? 12 : 5 })
+      );
+    } catch {
+      // ignore missing species
+    }
+  }
+  save.campaign.completedChapterIds = RAW_CHAPTER_JSON_LIST.map((c) => c.id);
+  cachedPreviewSave = save;
+  return save;
+}
 
 function findDialogueEvent(chapterId: string, dialogueId: string): DungeonEventDefinition | null {
   const raw = getRawChapterJson(chapterId);

@@ -11,6 +11,7 @@
     { "id": "lord", "who": { "kind": "lord" } },
     { "id": "partner", "who": { "kind": "partner" } },
     { "id": "healer", "who": { "kind": "healer" } },
+    { "id": "combee", "who": { "kind": "recruit", "speciesId": "combee" } },
     {
       "id": "chespin",
       "who": { "kind": "recruit", "speciesId": "chespin" },
@@ -21,7 +22,8 @@
     { "id": "mentor", "x": 5, "y": 5, "facing": "Right" },
     { "id": "lord", "x": 4, "y": 4, "facing": "Right" },
     { "id": "partner", "x": 4, "y": 6, "facing": "Right" },
-    { "id": "healer", "x": 3, "y": 5, "facing": "Right" }
+    { "id": "healer", "x": 3, "y": 5, "facing": "Right" },
+    { "id": "combee", "x": 3, "y": 4, "facing": "Right" }
   ],
   "beats": [
     {
@@ -30,7 +32,8 @@
         { "type": "walk", "who": "mentor", "path": [[8, 5]], "speed": 2.4, "facing": "Right" },
         { "type": "walk", "who": "lord", "path": [[7, 4]], "speed": 2.4, "facing": "Right" },
         { "type": "walk", "who": "partner", "path": [[7, 6]], "speed": 2.4, "facing": "Right" },
-        { "type": "walk", "who": "healer", "path": [[6, 5]], "speed": 2.4, "facing": "Right" }
+        { "type": "walk", "who": "healer", "path": [[6, 5]], "speed": 2.4, "facing": "Right" },
+        { "type": "walk", "who": "combee", "path": [[6, 4]], "speed": 2.4, "facing": "Right" }
       ],
       "advance": { "kind": "seconds", "seconds": 0.9 }
     },
@@ -105,6 +108,7 @@
       "actions": [
         { "type": "face", "who": "lord", "facing": "Right" },
         { "type": "face", "who": "mentor", "facing": "Right" },
+        { "type": "face", "who": "combee", "facing": "Right" },
         { "type": "emote", "who": "lord", "emote": "exclamation", "duration": 0.9 }
       ]
     },

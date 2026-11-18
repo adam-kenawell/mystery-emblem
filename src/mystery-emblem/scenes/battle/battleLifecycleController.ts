@@ -22,15 +22,12 @@ import {
   confirmEnterDungeonFromPrep,
   hideAllBattleModals,
   setupFreshBattleState,
-} from './battlePrepAndAssets';
+} from './battlePrepController';
 import type {
   BattleExitDestination,
   BattleOpenOptions,
 } from './battlePublicTypes';
-import {
-  registerBattleTutorialAvailabilityProvider,
-  triggerPrepHubTutorials,
-} from './battleTutorialIntegration';
+import { triggerPrepHubTutorials } from './battleTutorialIntegration';
 import type { BattleControllerContext, BattleRuntimeState } from './battleTypesAndState';
 import { getActiveInspectedAllyRange, getLordUnit } from './battleUnitQueries';
 import { applyBattleSuspendSnapshot, parseBattleSuspendJson } from './battleSuspend';
@@ -91,7 +88,6 @@ export async function openBattleScene(
   state.eventScripts = options?.eventScripts ?? {};
   state.commitToSaveOnVictory = Boolean(options?.commitToSaveOnVictory);
   state.clearRewardItems = options?.clearRewardItems ?? [];
-  state.pauseOnLevelUpInFastMode = Boolean(options?.pauseOnLevelUpInFastMode);
   state.skipPrepPhase = Boolean(options?.skipPrepPhase);
   state.currentOnDungeonEnteredBeforePrep = options?.onDungeonEnteredBeforePrep;
   state.currentOnVictory = options?.onVictory;
@@ -138,7 +134,6 @@ export async function openBattleScene(
   state.pinchTracker.reset();
   dom.rootEl.hidden = false;
   viewportEl.classList.add('is-battle-active');
-  registerBattleTutorialAvailabilityProvider(ctx);
 
   await setupFreshBattleState(ctx, {
     showPrepOverlay: !resumeSnap && !state.cutsceneInProgress && !state.skipPrepPhase,

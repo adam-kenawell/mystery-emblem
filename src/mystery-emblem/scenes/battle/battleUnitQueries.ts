@@ -8,7 +8,7 @@ import {
   type PmdDirection,
 } from '../../assets/pmdAssetLoader';
 import { hasChapterMapOverride } from '../../data/chapterMapRegistry';
-import { getItemById } from '../../data/index';
+import { getItemById, getSpeciesById } from '../../data/index';
 import {
   getHealingMovesForTargetAtDistance,
   getEnemyTargetingMovesAtDistance,
@@ -243,6 +243,22 @@ export function getLordUnit(state: BattleRuntimeState): BattleUnitState | undefi
   );
 }
 
+/** Healer unit for `{healer}` dialogue/event refs: first living non-lord player with a heal move. */
+export function getTutorialHealerUnit(state: BattleRuntimeState): BattleUnitState | undefined {
+  return getLivingPlayers(state).find(
+    (u) => !u.isLord && u.activeMoves.some((s) => s.move.supportSubkind === 'heal')
+  );
+}
+
+/** Partner unit for `{partner}` dialogue/event refs (Quaxly line or non-healer companion). */
+export function getTutorialPartnerUnit(state: BattleRuntimeState): BattleUnitState | undefined {
+  const players = getLivingPlayers(state);
+  const byLine = players.find((u) => getSpeciesById(u.speciesId)?.lineId === 'quaxly_line');
+  if (byLine) return byLine;
+  const healerId = getTutorialHealerUnit(state)?.id;
+  return players.find((u) => !u.isLord && u.id !== healerId) ?? players[1];
+}
+
 export function getSelectedUnit(state: BattleRuntimeState): BattleUnitState | null {
   if (!state.selectedUnitId) return null;
   return (
@@ -327,13 +343,7 @@ export function canUseUnitEquippedConsumable(unit: BattleUnitState): boolean {
   return false;
 }
 
-export function escapeHudHtml(raw: string): string {
-  return raw
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+export { escapeHtml as escapeHudHtml } from '../../ui/typeColors';
 
 export function buildBattleSceneSnapshot(
   state: BattleRuntimeState,
@@ -378,7 +388,6 @@ export function buildBattleSceneSnapshot(
     triggeredEventIds: [...state.triggeredEventIds],
     globalDangerEnabled: state.globalDangerEnabled,
     trackedEnemyIds: [...state.trackedEnemyIds],
-    fastMode: state.fastMode,
     camera: {
       x: state.cam.cameraX,
       y: state.cam.cameraY,

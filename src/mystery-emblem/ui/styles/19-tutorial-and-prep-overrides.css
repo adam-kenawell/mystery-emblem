@@ -9,10 +9,6 @@
     max-height: calc(100dvh - 0.9rem);
   }
 
-  .pmd-advisor-coach-row {
-    gap: 8px;
-  }
-
   .pmd-advisor-portrait-slot {
     width: auto;
     height: auto;
@@ -44,18 +40,10 @@
     gap: 4px;
   }
 
-  .pmd-advisor-coach-row {
-    gap: 8px;
-  }
-
   .pmd-advisor-portrait-slot {
     width: auto;
     height: auto;
     flex: 0 0 auto;
-  }
-
-  .pmd-advisor-coach-main {
-    gap: 3px;
   }
 
   .pmd-advisor-speech-text {

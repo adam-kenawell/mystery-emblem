@@ -38,8 +38,7 @@
 }
 
 .pmd-dungeon-tile-box[hidden],
-.pmd-unit-hover-popup[hidden],
-.pmd-unit-popup-item-pips[hidden] { display: none !important; }
+.pmd-unit-hover-popup[hidden] { display: none !important; }
 
 .pmd-tile-box-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .pmd-tile-box-name { font-size: 13px; color: var(--pmd-text-yellow); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

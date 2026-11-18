@@ -3,6 +3,7 @@
  */
 
 import {
+  drawSpriteAnimFrame,
   loadSpeciesSpriteBundle,
   normalizePmdDirection,
   type LoadedActionAnimation,
@@ -267,21 +268,8 @@ export class PmdSpriteActor implements ScheduledSpriteActor {
     if (!anim) return;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.ctx.imageSmoothingEnabled = false;
-    const frameIdx = this.frameIndex % Math.max(1, anim.frameCount);
-    const safeDir = normalizePmdDirection(this.direction, 0);
-    const rowIdx = anim.rowCount >= 8 ? safeDir : safeDir % Math.max(1, anim.rowCount);
     const offsetX = Math.floor((this.canvas.width - anim.frameWidth) / 2);
     const offsetY = Math.floor((this.canvas.height - anim.frameHeight) / 2);
-    this.ctx.drawImage(
-      anim.source,
-      frameIdx * anim.frameWidth,
-      rowIdx * anim.frameHeight,
-      anim.frameWidth,
-      anim.frameHeight,
-      offsetX,
-      offsetY,
-      anim.frameWidth,
-      anim.frameHeight
-    );
+    drawSpriteAnimFrame(this.ctx, anim, this.frameIndex, this.direction, offsetX, offsetY);
   }
 }

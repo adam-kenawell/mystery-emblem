@@ -149,7 +149,7 @@
     "actorA": "caterpie_line",
     "actorB": "starly_line",
     "rank": "A",
-    "title": "Until Your Wings Come",
+    "title": "Sharing the Sky",
     "music": "thoughts_for_friends",
     "cast": [
       { "id": "caterpie", "who": { "kind": "recruit", "speciesId": "caterpie" } },
@@ -171,7 +171,7 @@
           "speaker": "caterpie",
           "emotion": "Sad",
           "side": "left",
-          "text": "A little. Every road past the capital gets steeper and harsher. Sometimes I wonder how long you'll have to keep slowing down for a crawler."
+          "text": "A little. Every road past the capital gets steeper and harsher. Back before my wings came in, I used to worry how long you'd have to keep slowing down for me."
         }
       },
       {
@@ -189,7 +189,7 @@
           "speaker": "caterpie",
           "emotion": "Worried",
           "side": "left",
-          "text": "I know, I just... wish I could rise up beside you when trouble hits from the ridge."
+          "text": "I know, I just still remember scrambling to keep pace whenever trouble hit from the ridge."
         }
       },
       {
@@ -207,7 +207,7 @@
           "speaker": "starly",
           "emotion": "Happy",
           "side": "right",
-          "text": "So I'm staying right above your shoulder on every dirt road until the day you spread wings of your own."
+          "text": "So whether we are scrambling along branches or riding high wind, I'm staying right beside your shoulder all the way."
         }
       },
       {
@@ -216,7 +216,7 @@
           "speaker": "caterpie",
           "emotion": "Teary-Eyed",
           "side": "left",
-          "text": "Thank you, {name:starly}. When that day comes, I'm challenging you to a race all the way back to town."
+          "text": "Thank you, {name:starly}. One of these days, I'm still challenging you to a race all the way back to town."
         }
       }
     ]
@@ -257,7 +257,7 @@
           "speaker": "caterpie",
           "emotion": "Determined",
           "side": "left",
-          "text": "A promise. Wherever these Rifts drag the expedition, if fog splits the squad, I'll know which shadow in the clouds is yours."
+          "text": "A promise. Wherever this expedition takes us, if fog splits the squad, I'll know which shadow in the clouds is yours."
         }
       },
       {
@@ -275,7 +275,7 @@
           "speaker": "caterpie",
           "emotion": "Happy",
           "side": "left",
-          "text": "Even after I earn wings, I'll still need someone loud enough to keep me from overthinking every turn."
+          "text": "No matter how far we climb or fly, I'll still need someone loud enough to keep me from overthinking every turn."
         }
       },
       {
@@ -293,7 +293,7 @@
           "speaker": "caterpie",
           "emotion": "Inspired",
           "side": "left",
-          "text": "Side by side, {name:starly}. All the way home."
+          "text": "Wing to wing, {name:starly}. All the way home."
         }
       }
     ]
@@ -515,7 +515,7 @@
           "speaker": "pawmi",
           "emotion": "Joyous",
           "side": "right",
-          "text": "Best part? My cheeks don't even ache afterward! Guess pacing works on the trail too, not just in drills."
+          "text": "Best part? My cheeks don't even ache afterward! Guess pacing really does help on the trail too."
         }
       }
     ]
@@ -633,7 +633,7 @@
           "speaker": "pawmi",
           "emotion": "Angry",
           "side": "left",
-          "text": "Excuse me?! Your smoke plume turned out to be a charcoal kiln! My nose found the actual berry-crate trail through the cave!"
+          "text": "Excuse me?! Your smoke plume turned out to be a charcoal kiln! My nose tracked their boot prints and ration wrappers straight through the cave!"
         }
       },
       {
@@ -778,7 +778,7 @@
           "speaker": "pawmi",
           "emotion": "Determined",
           "side": "left",
-          "text": "They called us loud, reckless, and way too quick to pick fights with bigger Pokemon."
+          "text": "They called us loud and way too quick to pick fights with bigger Pokemon."
         }
       },
       {
@@ -905,7 +905,7 @@
           "speaker": "combee",
           "emotion": "Worried",
           "side": "left",
-          "text": "Bzz... this canyon draft hits flat like a wall! Our lower half keeps drifting sideways before we can clear the pass!"
+          "text": "Bzz... this canyon draft hits flat like a wall! Our rear flank keeps drifting sideways before we can clear the pass!"
         }
       },
       {
@@ -932,7 +932,7 @@
           "speaker": "starly",
           "emotion": "Happy",
           "side": "right",
-          "text": "Solo flyers cut the seam clean! Now match your left and right beats so the bottom stays level through the turn."
+          "text": "Solo flyers cut the seam clean! Now match your wingbeats so your whole formation stays level through the turn."
         }
       },
       {
@@ -991,7 +991,7 @@
           "speaker": "combee",
           "emotion": "Happy",
           "side": "left",
-          "text": "Bottom spotted the shadow, right heard the brush snap, and top shouted! Three pairs of eyes beat one reckless streak any day."
+          "text": "Our rear guard spotted the shadow, our flank heard the brush snap, and the lead shouted! Many eyes beat one reckless streak any day."
         }
       },
       {
@@ -1027,7 +1027,7 @@
           "speaker": "combee",
           "emotion": "Joyous",
           "side": "left",
-          "text": "And we hold the middle draft and watch your tail from every angle! Best four-part air wing in the kingdom!"
+          "text": "And we hold the middle draft and watch your tail from every angle! Best air wing in the kingdom!"
         }
       }
     ]
@@ -1172,7 +1172,7 @@
           "speaker": "machop",
           "emotion": "Joyous",
           "side": "left",
-          "text": "Heavy fist up front, lightning counter right underneath! Wait till those Rift brutes run into our one-two combo!"
+          "text": "Heavy fist up front, lightning counter right underneath! Wait till those frontier brutes run into our one-two combo!"
         }
       }
     ]

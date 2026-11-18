@@ -57,14 +57,10 @@ function buildChapterEventScripts(
 
 export function resolveChapterRecruitmentSpeciesIds(
   spec: ChapterRecruitmentSpec,
-  save: SaveData | null
+  _save: SaveData | null
 ): string[] {
   const result: string[] = [];
-  const seeded = spec.seedKey ? save?.campaign.quizSeeds?.[spec.seedKey] : undefined;
-  const baseList =
-    Array.isArray(seeded) && seeded.length > 0 ? seeded : spec.fallbackSpeciesIds;
-
-  for (const id of baseList) {
+  for (const id of spec.fallbackSpeciesIds) {
     if (getSpeciesById(id) && !result.includes(id)) result.push(id);
   }
   if (spec.fixedSpeciesIds) {
@@ -170,8 +166,6 @@ export const DEMO_CAMPAIGN_CHAPTERS = CAMPAIGN_CHAPTERS;
 
 export const CHAPTER_BY_NODE_ID: Readonly<Record<string, CampaignChapterConfig>> =
   Object.fromEntries(CAMPAIGN_CHAPTERS.map((ch) => [ch.nodeId, ch]));
-
-export const DEMO_CHAPTER_BY_NODE_ID = CHAPTER_BY_NODE_ID;
 
 export function getChapterByNodeId(nodeId: string): CampaignChapterConfig | undefined {
   return CHAPTER_BY_NODE_ID[nodeId];

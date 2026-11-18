@@ -25,7 +25,7 @@
         "speaker": "mentor",
         "emotion": "Determined",
         "side": "left",
-        "text": "Hold steady, young Chespin! Before we charge in, {lord}, take a moment in Battle Prep."
+        "text": "Hold steady, young Chespin! Before we charge up that ridge, {lord}, check our formation and gear."
       }
     },
     {
@@ -34,7 +34,7 @@
         "speaker": "mentor",
         "emotion": "Normal",
         "side": "left",
-        "text": "Now that I am fighting alongside you, use Battle Prep before each clash to choose who deploys, View Map to swap starting spots, and organize everyone's moves and items!"
+        "text": "Now that I am marching with you, take a moment before each clash to pick who enters the fray and adjust where we stand on the trail."
       }
     },
     {

@@ -9,10 +9,9 @@ import { runTurnStartEvents } from './battleEventRunner';
 import { triggerTurn1BattleTutorials } from './battleTutorialIntegration';
 import type { BattleControllerContext, BattleRuntimeState } from './battleTypesAndState';
 
-export function waitBattleMs(state: BattleRuntimeState, normalMs: number): Promise<void> {
-  const scaled = state.fastMode ? Math.max(20, Math.round(normalMs * 0.12)) : normalMs;
+export function waitBattleMs(_state: BattleRuntimeState, normalMs: number): Promise<void> {
   return new Promise((resolve) => {
-    window.setTimeout(resolve, scaled);
+    window.setTimeout(resolve, normalMs);
   });
 }
 
@@ -49,7 +48,6 @@ export function dismissBeginBattleCard(state: BattleRuntimeState, dom: BattleDom
     state.beginBattleTimer = null;
   }
   dom.beginBattleBackdropEl.hidden = true;
-  dom.beginBattleBackdropEl.classList.remove('is-fast-mode');
   if (state.beginBattleResolver) {
     const resolve = state.beginBattleResolver;
     state.beginBattleResolver = null;
@@ -58,10 +56,7 @@ export function dismissBeginBattleCard(state: BattleRuntimeState, dom: BattleDom
 }
 
 export function isPhaseTransitionPlaying(state: BattleRuntimeState): boolean {
-  return (
-    !state.fastMode &&
-    (state.phaseTransitionResolver !== null || state.phaseTransitionTimer !== null)
-  );
+  return state.phaseTransitionResolver !== null || state.phaseTransitionTimer !== null;
 }
 
 export function cancelPhaseTransitionAnimation(
@@ -100,18 +95,16 @@ export function presentBeginBattleCardAsync(
   }
 
   dom.beginBattleObjectiveEl.textContent = state.objectiveLabel;
-  dom.beginBattleBackdropEl.classList.toggle('is-fast-mode', state.fastMode);
   dom.beginBattleBackdropEl.hidden = false;
   audioManager.playSfx('select');
 
-  const holdMs = state.fastMode ? 55 : 1300;
   return new Promise<void>((resolve) => {
     state.beginBattleResolver = resolve;
     state.beginBattleTimer = window.setTimeout(() => {
       if (state.beginBattleResolver === resolve) {
         dismissBeginBattleCard(state, dom);
       }
-    }, holdMs);
+    }, 1300);
   });
 }
 
@@ -126,7 +119,7 @@ export function playPhaseTransitionAsync(
     return Promise.resolve();
   }
 
-  const durationMs = state.fastMode ? 110 : 1150;
+  const durationMs = 1150;
   dom.phaseTransitionTitleEl.textContent =
     faction === 'enemy' ? 'ENEMY PHASE' : faction === 'ally' ? 'ALLY PHASE' : 'PLAYER PHASE';
   dom.phaseTransitionEl.style.setProperty('--pmd-phase-dur', `${durationMs}ms`);
@@ -182,11 +175,8 @@ export function showPhaseBanner(
   }
   dom.phaseBannerEl.textContent = text;
   dom.phaseBannerEl.hidden = false;
-  state.phaseBannerTimer = window.setTimeout(
-    () => {
-      dom.phaseBannerEl.hidden = true;
-      state.phaseBannerTimer = null;
-    },
-    state.fastMode ? 240 : 1100
-  );
+  state.phaseBannerTimer = window.setTimeout(() => {
+    dom.phaseBannerEl.hidden = true;
+    state.phaseBannerTimer = null;
+  }, 1100);
 }

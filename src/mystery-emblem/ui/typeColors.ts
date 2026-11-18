@@ -28,7 +28,7 @@ export const ELEMENTAL_TYPE_COLORS: Readonly<Record<PokemonType, string>> = {
   Fairy: '#ffa8e8',
 };
 
-function escapeTypeHtml(raw: string): string {
+export function escapeHtml(raw: string): string {
   return raw
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -42,8 +42,8 @@ export function getElementalTypeColor(type: PokemonType | string): string {
 
 export function renderColoredTypeHtml(type: PokemonType | string, extraClass = ''): string {
   const color = getElementalTypeColor(type);
-  const safeType = escapeTypeHtml(String(type));
-  const cls = extraClass ? `pmd-type-text ${escapeTypeHtml(extraClass)}` : 'pmd-type-text';
+  const safeType = escapeHtml(String(type));
+  const cls = extraClass ? `pmd-type-text ${escapeHtml(extraClass)}` : 'pmd-type-text';
   return `<span class="${cls}" data-el-type="${safeType}" style="color:${color};">${safeType}</span>`;
 }
 
@@ -52,7 +52,7 @@ export function renderColoredTypesHtml(
   separator = '/'
 ): string {
   if (!types || types.length === 0) return '';
-  const sepHtml = `<span class="pmd-type-sep">${escapeTypeHtml(separator)}</span>`;
+  const sepHtml = `<span class="pmd-type-sep">${escapeHtml(separator)}</span>`;
   return types.map((t) => renderColoredTypeHtml(t)).join(sepHtml);
 }
 
@@ -66,20 +66,4 @@ export function createColoredTypeSpan(
   span.style.color = getElementalTypeColor(type);
   span.textContent = String(type);
   return span;
-}
-
-export function appendColoredTypes(
-  container: HTMLElement,
-  types: ReadonlyArray<PokemonType | string>,
-  separator = '/'
-): void {
-  types.forEach((t, idx) => {
-    if (idx > 0) {
-      const sep = document.createElement('span');
-      sep.className = 'pmd-type-sep';
-      sep.textContent = separator;
-      container.appendChild(sep);
-    }
-    container.appendChild(createColoredTypeSpan(t));
-  });
 }

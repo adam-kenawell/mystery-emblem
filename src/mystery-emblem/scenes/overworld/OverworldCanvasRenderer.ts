@@ -10,13 +10,11 @@ import type {
 import {
   KECLEON_PMD_ASSET_ID,
   type OverworldGraphDefinition,
+  type OverworldNodeDefinition,
   type OverworldPoint,
 } from '../../data/overworldMapData';
-import {
-  ensureOverworldGraphState,
-  getEdgePointsOrdered,
-} from '../../engine/overworldEngine';
-import type { SaveData } from '../../types/schemas';
+import { getEdgePointsOrdered } from '../../engine/overworldEngine';
+import type { OverworldNodeState } from '../../types/schemas';
 import type { OverworldClearSequence } from './OverworldTravelAndSprites';
 import {
   drawAnimatedSpriteAtMapPoint,
@@ -66,9 +64,10 @@ export interface OverworldRenderFrameContext {
   nodeLabelsLayerEl: HTMLElement;
   nodeLabelMap: Map<string, NodeLabelDomEntry>;
   graph: OverworldGraphDefinition;
+  nodeMap: ReadonlyMap<string, OverworldNodeDefinition>;
+  reconciled: { currentNodeId: string; nodes: Record<string, OverworldNodeState> };
   mapSource: CanvasImageSource | null;
   spriteBundles: Map<string, LoadedSpriteBundle>;
-  save: SaveData | null;
   lordSpeciesId: string;
   lordWorldX: number;
   lordWorldY: number;
@@ -91,9 +90,10 @@ export function renderOverworldFrame(rc: OverworldRenderFrameContext): void {
   const {
     ctx,
     graph,
+    nodeMap,
+    reconciled,
     mapSource,
     spriteBundles,
-    save,
     lordSpeciesId,
     lordWorldX,
     lordWorldY,
@@ -132,11 +132,7 @@ export function renderOverworldFrame(rc: OverworldRenderFrameContext): void {
     ctx.drawImage(mapSource, mapDrawX, mapDrawY, mapDrawW, mapDrawH);
   }
 
-  const reconciled = save
-    ? ensureOverworldGraphState(save, graph)
-    : { currentNodeId: graph.startNodeId, nodes: {}, mutated: false };
   const clearSeq = rc.clearSequence;
-  const nodeMap = new Map(graph.nodes.map((n) => [n.id, n]));
   const pulse01 = 0.5 + 0.5 * Math.sin(animClockMs / 240);
   const activeRouteEdgeSet = new Set<string>(highlightedEdgeIds);
 

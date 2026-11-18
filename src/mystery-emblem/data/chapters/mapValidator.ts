@@ -62,7 +62,6 @@ function normalizeSpawnFields(
 ): Omit<DungeonUnitSpawn, 'x' | 'y' | 'speciesId'> {
   return {
     ...(sp.id ? { id: String(sp.id) } : {}),
-    ...(sp.seedKey ? { seedKey: sp.seedKey } : {}),
     level: Math.max(MIN_UNIT_LEVEL, Math.min(MAX_UNIT_LEVEL, Math.floor(Number(sp.level ?? 1)))),
     nickname: fallbackName,
     ...(sp.stats ? { stats: { ...sp.stats } } : {}),
@@ -204,7 +203,6 @@ export function validateDungeonMapDefinition(
       const allowedPlayable =
         Boolean(sp?.sparring) ||
         Boolean(sp?.friendlyBout) ||
-        Boolean(sp?.seedKey) ||
         (Boolean(sp?.id) && convertibleEnemyIds.has(String(sp.id)));
       if (!def || def.faction === 'ally_npc' || (def.faction === 'playable' && !allowedPlayable)) {
         errors.push(`Rule 5: Enemy spawn species "${speciesId}" must be an enemy/convertible species.`);

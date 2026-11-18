@@ -7,10 +7,10 @@ import { isMoveEquipped, type EquipCategory } from '../../data/equippedMoves';
 import { getItemById, getMoveById } from '../../data/index';
 import type { SaveStateManager } from '../../state/SaveStateManager';
 import type { OwnedPokemonInstance, SaveData } from '../../types/schemas';
-import { createItemIconCell, createMiniItemIcon } from '../PmdItemIconGrid';
+import { createItemIconCell } from '../PmdItemIconGrid';
 import { bindPointerTap } from '../pointerControls';
 import { renderColoredTypeHtml } from '../typeColors';
-import { escapeUiHtml } from './UnitDetailCard';
+import { createItemInspectorBanner, escapeUiHtml } from './UnitDetailCard';
 
 export function renderOverworldVitaminsSubbox(params: {
   save: SaveData;
@@ -60,19 +60,13 @@ export function renderOverworldVitaminsSubbox(params: {
     );
   }
 
-  const vitBanner = document.createElement('div');
-  vitBanner.className = 'pmd-item-inspector-banner';
-  vitBanner.style.marginTop = '6px';
-  const vitMain = document.createElement('div');
-  vitMain.className = 'pmd-item-inspector-main';
-  vitMain.appendChild(createMiniItemIcon(selVitItem.id, { sizePx: 24, decorative: true }));
-  const vitCopy = document.createElement('div');
-  vitCopy.className = 'pmd-item-inspector-copy';
-  vitCopy.innerHTML = `
-    <div class="pmd-item-inspector-head"><strong class="pmd-item-inspector-name">${escapeUiHtml(selVitItem.name)} ×${selVitSlot.quantity}</strong></div>
-    <span class="pmd-item-inspector-desc">${escapeUiHtml(selVitItem.description)}</span>
-  `;
-  vitMain.appendChild(vitCopy);
+  const vitBanner = createItemInspectorBanner({
+    itemId: selVitItem.id,
+    iconSizePx: 24,
+    marginTopPx: 6,
+    headHtml: `<strong class="pmd-item-inspector-name">${escapeUiHtml(selVitItem.name)} ×${selVitSlot.quantity}</strong>`,
+    descHtml: escapeUiHtml(selVitItem.description),
+  });
 
   const useBtn = document.createElement('button');
   useBtn.type = 'button';
@@ -90,7 +84,7 @@ export function renderOverworldVitaminsSubbox(params: {
     }
   });
 
-  vitBanner.append(vitMain, useBtn);
+  vitBanner.appendChild(useBtn);
   vitaminBox.append(vitStrip, vitBanner);
   return { element: vitaminBox, resolvedVitaminId: resolvedId };
 }

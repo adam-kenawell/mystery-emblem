@@ -11,7 +11,9 @@ export interface TypewriterStartOptions {
   msPerTick: number;
   charsPerTick?: number;
   instant?: boolean;
+  prefixText?: string;
   onTick?: () => void;
+  onComplete?: () => void;
 }
 
 export type RichTextStyle = 'shake' | 'slow';
@@ -89,7 +91,9 @@ export class TypewriterController {
   private charsPerTick = 2;
   private timerId: number | null = null;
   private activeTargetEl: HTMLElement | null = null;
+  private prefixText = '';
   private onTick?: () => void;
+  private onComplete?: () => void;
 
   public isAnimating(): boolean {
     return this.timerId !== null && this.revealed < this.units.length;
@@ -103,24 +107,29 @@ export class TypewriterController {
   }
 
   public completeImmediately(): void {
+    const wasAnimating = this.isAnimating();
     this.stop();
     this.revealed = this.units.length;
     this.render();
+    if (wasAnimating) this.onComplete?.();
   }
 
   public start(options: TypewriterStartOptions): void {
     this.stop();
     this.activeTargetEl = options.targetEl;
+    this.prefixText = options.prefixText ?? '';
     this.units = toUnits(options.text);
     this.msPerTick = options.msPerTick;
     this.charsPerTick = Math.max(1, options.charsPerTick ?? 2);
     this.onTick = options.onTick;
+    this.onComplete = options.onComplete;
     this.waitMs = 0;
     this.slowDebt = 0;
 
     if (options.instant || options.msPerTick <= 0 || this.units.length === 0) {
       this.revealed = this.units.length;
       this.render();
+      this.onComplete?.();
       return;
     }
 
@@ -165,7 +174,10 @@ export class TypewriterController {
     }
     this.render();
     if (revealedAny) this.onTick?.();
-    if (this.revealed >= this.units.length) this.stop();
+    if (this.revealed >= this.units.length) {
+      this.stop();
+      this.onComplete?.();
+    }
   }
 
   private render(): void {
@@ -173,10 +185,10 @@ export class TypewriterController {
     if (!el) return;
     const shown = this.units.slice(0, this.revealed);
     if (!shown.some((u) => 'ch' in u && u.style)) {
-      el.textContent = shown.map((u) => ('ch' in u ? u.ch : '')).join('');
+      el.textContent = this.prefixText + shown.map((u) => ('ch' in u ? u.ch : '')).join('');
       return;
     }
-    let html = '';
+    let html = this.prefixText ? escapeHtml(this.prefixText) : '';
     let openStyle: RichTextStyle | undefined;
     for (const u of shown) {
       if (!('ch' in u)) continue;

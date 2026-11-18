@@ -67,9 +67,6 @@ export function upsertLocationDoc(doc: LocationDoc): void {
   locations.set(doc.id, clone(doc));
   emit();
 }
-export function removeLocationDoc(id: string): void {
-  if (locations.delete(id)) emit();
-}
 
 export function getDialogueDoc(chapterId: string, dialogueId: string): DialogueDoc | undefined {
   return dialogues.get(dialogueKey(chapterId, dialogueId));

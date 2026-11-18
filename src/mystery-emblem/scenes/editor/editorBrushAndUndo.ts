@@ -14,8 +14,8 @@ import {
 import {
   toggleEditorEnemySpawnAt,
   toggleEditorPlayerSpawnAt,
+  toggleEditorStairsWaveAt,
 } from './editorSpawnsAndResize';
-import { toggleEditorStairsWaveAt } from './editorStairsWaveTool';
 import { EDITOR_MAX_UNDO_STEPS, type EditorRuntimeState } from './editorTypesAndState';
 
 export interface EditorMutationHooks {

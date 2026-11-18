@@ -10,6 +10,7 @@
     { "id": "lord", "who": { "kind": "lord" } },
     { "id": "partner", "who": { "kind": "partner" } },
     { "id": "healer", "who": { "kind": "healer" } },
+    { "id": "combee", "who": { "kind": "recruit", "speciesId": "combee" } },
     { "id": "mentor", "who": { "kind": "mentor" } },
     { "id": "healer_parent", "who": { "kind": "healer_parent" } },
     {
@@ -23,6 +24,7 @@
     { "id": "lord", "x": 7, "y": 6, "facing": "Up" },
     { "id": "partner", "x": 6, "y": 6, "facing": "UpRight" },
     { "id": "healer", "x": 9, "y": 6, "facing": "UpLeft" },
+    { "id": "combee", "x": 10, "y": 6, "facing": "UpLeft" },
     { "id": "messenger", "x": 7, "y": 10, "facing": "Up", "hidden": true }
   ],
   "beats": [
@@ -49,7 +51,9 @@
         { "type": "walk", "who": "messenger", "path": [[7, 7]], "speed": 4.2, "facing": "Up" },
         { "type": "face", "who": "lord", "facing": "Down" },
         { "type": "face", "who": "partner", "facing": "DownRight" },
-        { "type": "face", "who": "healer", "facing": "DownLeft" }
+        { "type": "face", "who": "healer", "facing": "DownLeft" },
+        { "type": "face", "who": "combee", "facing": "DownLeft" },
+        { "type": "emote", "who": "combee", "emote": "exclamation", "duration": 0.9 }
       ]
     },
     {
@@ -80,10 +84,22 @@
         "speaker": "mentor",
         "emotion": "Determined",
         "side": "left",
-        "text": "There is no time to explain tonight. Pack your satchels and rations immediately. All four of us leave at first light."
+        "text": "There is no time to explain tonight. Pack your satchels and rations immediately. We leave at first light."
       },
       "actions": [
         { "type": "show", "who": "messenger", "visible": false, "fade": true }
+      ]
+    },
+    {
+      "id": "combee_tags_along",
+      "say": {
+        "speaker": "combee",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "Wait, a royal summons?! Let us fly ahead as your scouts too, Master Quaquaval! Three pairs of eyes catch plenty of trouble on mountain trails!"
+      },
+      "actions": [
+        { "type": "hop", "who": "combee", "count": 1 }
       ]
     },
     {

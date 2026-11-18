@@ -7,6 +7,7 @@
   "cast": [
     { "id": "partner", "who": { "kind": "partner" } },
     { "id": "healer", "who": { "kind": "healer" } },
+    { "id": "combee", "who": { "kind": "recruit", "speciesId": "combee" } },
     { "id": "lord", "who": { "kind": "lord" } }
   ],
   "beats": [
@@ -26,6 +27,15 @@
         "emotion": "Worried",
         "side": "right",
         "text": "Still, why were rough thugs lurking so close to our village? Let's haul the water home and tell Quaquaval and Mom right away."
+      }
+    },
+    {
+      "id": "line_3",
+      "say": {
+        "speaker": "combee",
+        "emotion": "Determined",
+        "side": "left",
+        "text": "Wait up, we are coming to warn Quaquaval too! Our hive courier buzzed by and said they can spare us for a day, and someone ought to keep watch while thugs are prowling the trail!"
       }
     }
   ]

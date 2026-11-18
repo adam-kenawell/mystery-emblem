@@ -15,16 +15,15 @@ import { launchOverworldNodeBattle, launchSkirmishBattle } from './chapterBattle
 import type { SceneRouter } from './sceneRouterController';
 
 export function mountGameplayScenesAndDevTools(ctx: AppRuntimeContext, router: SceneRouter): void {
-  const { dom, manager, audioManager, tutorialOverlay, recruitNicknameOverlay, backStack, signal } = ctx;
+  const { dom, manager, audioManager, tutorialOverlay, backStack, signal } = ctx;
 
-  ctx.quizScene =
-    dom.viewportEl && recruitNicknameOverlay
-      ? new QuizScene(dom.viewportEl, manager, recruitNicknameOverlay, {
-          audioManager,
-          onCancel: () => router.showTitleScreen(),
-          onStateChange: () => backStack.syncButtonLabel(),
-        })
-      : null;
+  ctx.quizScene = dom.viewportEl
+    ? new QuizScene(dom.viewportEl, manager, {
+        audioManager,
+        onCancel: () => router.showTitleScreen(),
+        onStateChange: () => backStack.syncButtonLabel(),
+      })
+    : null;
 
   if (dom.viewportEl) {
     ctx.battleScene = new BattleScene({

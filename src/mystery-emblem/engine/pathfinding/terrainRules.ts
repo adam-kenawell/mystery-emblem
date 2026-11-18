@@ -125,6 +125,64 @@ export const ORTHOGONAL_DIRS: ReadonlyArray<readonly [number, number]> = [
   [-1, 0],
 ];
 
+/** Compact parallel-array binary min-heap keyed by numeric priority (zero per-node object allocations). */
+export class CostMinHeap {
+  private readonly items: number[] = [];
+  private readonly costs: number[] = [];
+  public lastCost = 0;
+
+  public get length(): number {
+    return this.items.length;
+  }
+
+  public push(item: number, cost: number): void {
+    const items = this.items;
+    const costs = this.costs;
+    let i = items.length;
+    items.push(item);
+    costs.push(cost);
+    while (i > 0) {
+      const parent = (i - 1) >> 1;
+      if (costs[parent]! <= cost) break;
+      items[i] = items[parent]!;
+      costs[i] = costs[parent]!;
+      i = parent;
+    }
+    items[i] = item;
+    costs[i] = cost;
+  }
+
+  public pop(): number {
+    const items = this.items;
+    const costs = this.costs;
+    const topItem = items[0]!;
+    this.lastCost = costs[0]!;
+    const lastIdx = items.length - 1;
+    if (lastIdx > 0) {
+      const tailItem = items[lastIdx]!;
+      const tailCost = costs[lastIdx]!;
+      let i = 0;
+      const half = lastIdx >> 1;
+      while (i < half) {
+        let left = (i << 1) + 1;
+        const right = left + 1;
+        if (right < lastIdx && costs[right]! < costs[left]!) {
+          left = right;
+        }
+        if (tailCost <= costs[left]!) break;
+        items[i] = items[left]!;
+        costs[i] = costs[left]!;
+        i = left;
+      }
+      items[i] = tailItem;
+      costs[i] = tailCost;
+    }
+    items.pop();
+    costs.pop();
+    return topItem;
+  }
+}
+
 export function coordKey(x: number, y: number): string {
   return `${x},${y}`;
 }

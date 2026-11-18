@@ -5,7 +5,6 @@
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
 import type { BattleUnitState } from '../../engine/combatEngine';
 import {
-  coordKey,
   parseCoordKey,
   type DangerAreaResult,
   type MovementRangeResult,
@@ -93,27 +92,68 @@ export function drawConnectedRangeZone(
   }
 ): void {
   if (zoneTiles.size === 0) return;
-  const S = PMD_TILE_NATIVE_PX;
   const { startCol, endCol, startRow, endRow } = bounds;
+  if (endCol < startCol || endRow < startRow) return;
 
-  ctx.fillStyle = style.fillRgba;
+  const S = PMD_TILE_NATIVE_PX;
+  const ox = startCol - 1;
+  const oy = startRow - 1;
+  const maxX = endCol + 1;
+  const maxY = endRow + 1;
+  const maskW = maxX - ox + 1;
+  const maskH = maxY - oy + 1;
+  const grid = new Uint8Array(maskW * maskH);
+
+  for (const key of boundaryMask) {
+    const { x, y } = parseCoordKey(key);
+    if (x >= ox && x <= maxX && y >= oy && y <= maxY) {
+      grid[(y - oy) * maskW + (x - ox)] = 1;
+    }
+  }
+
+  const visX: number[] = [];
+  const visY: number[] = [];
+  const visNb: number[] = [];
+
   for (const key of zoneTiles) {
     const { x, y } = parseCoordKey(key);
     if (x < startCol || x > endCol || y < startRow || y > endRow) continue;
-    ctx.fillRect(x * S - cameraX, y * S - cameraY, S, S);
+    const gx = x - ox;
+    const gy = y - oy;
+    const rowCur = gy * maskW;
+    const rowN = rowCur - maskW;
+    const rowS = rowCur + maskW;
+    let nb = 0;
+    if (grid[rowN + gx]) nb |= 1; // N
+    if (grid[rowS + gx]) nb |= 2; // S
+    if (grid[rowCur + gx - 1]) nb |= 4; // W
+    if (grid[rowCur + gx + 1]) nb |= 8; // E
+    if (grid[rowN + gx - 1]) nb |= 16; // NW
+    if (grid[rowN + gx + 1]) nb |= 32; // NE
+    if (grid[rowS + gx - 1]) nb |= 64; // SW
+    if (grid[rowS + gx + 1]) nb |= 128; // SE
+    visX.push(x);
+    visY.push(y);
+    visNb.push(nb);
+  }
+
+  const count = visX.length;
+  if (count === 0) return;
+
+  ctx.fillStyle = style.fillRgba;
+  for (let i = 0; i < count; i++) {
+    ctx.fillRect(visX[i]! * S - cameraX, visY[i]! * S - cameraY, S, S);
   }
 
   ctx.fillStyle = style.innerGlowRgba;
-  for (const key of zoneTiles) {
-    const { x, y } = parseCoordKey(key);
-    if (x < startCol || x > endCol || y < startRow || y > endRow) continue;
-    const drawX = x * S - cameraX;
-    const drawY = y * S - cameraY;
-
-    const hasN = boundaryMask.has(coordKey(x, y - 1));
-    const hasS = boundaryMask.has(coordKey(x, y + 1));
-    const hasW = boundaryMask.has(coordKey(x - 1, y));
-    const hasE = boundaryMask.has(coordKey(x + 1, y));
+  for (let i = 0; i < count; i++) {
+    const drawX = visX[i]! * S - cameraX;
+    const drawY = visY[i]! * S - cameraY;
+    const nb = visNb[i]!;
+    const hasN = (nb & 1) !== 0;
+    const hasS = (nb & 2) !== 0;
+    const hasW = (nb & 4) !== 0;
+    const hasE = (nb & 8) !== 0;
 
     const x0 = !hasW ? 1 : 0;
     const x1 = !hasE ? S - 1 : S;
@@ -125,35 +165,33 @@ export function drawConnectedRangeZone(
     if (!hasW && y1 > y0) ctx.fillRect(drawX + 1, drawY + y0, 1, y1 - y0);
     if (!hasE && y1 > y0) ctx.fillRect(drawX + S - 2, drawY + y0, 1, y1 - y0);
 
-    if (hasN && hasW && !boundaryMask.has(coordKey(x - 1, y - 1))) {
+    if (hasN && hasW && (nb & 16) === 0) {
       ctx.fillRect(drawX + 1, drawY, 1, 2);
       ctx.fillRect(drawX, drawY + 1, 1, 1);
     }
-    if (hasN && hasE && !boundaryMask.has(coordKey(x + 1, y - 1))) {
+    if (hasN && hasE && (nb & 32) === 0) {
       ctx.fillRect(drawX + S - 2, drawY, 1, 2);
       ctx.fillRect(drawX + S - 1, drawY + 1, 1, 1);
     }
-    if (hasS && hasW && !boundaryMask.has(coordKey(x - 1, y + 1))) {
+    if (hasS && hasW && (nb & 64) === 0) {
       ctx.fillRect(drawX + 1, drawY + S - 2, 1, 2);
       ctx.fillRect(drawX, drawY + S - 2, 1, 1);
     }
-    if (hasS && hasE && !boundaryMask.has(coordKey(x + 1, y + 1))) {
+    if (hasS && hasE && (nb & 128) === 0) {
       ctx.fillRect(drawX + S - 2, drawY + S - 2, 1, 2);
       ctx.fillRect(drawX + S - 1, drawY + S - 2, 1, 1);
     }
   }
 
   ctx.fillStyle = style.outerBorderRgba;
-  for (const key of zoneTiles) {
-    const { x, y } = parseCoordKey(key);
-    if (x < startCol || x > endCol || y < startRow || y > endRow) continue;
-    const drawX = x * S - cameraX;
-    const drawY = y * S - cameraY;
-
-    const hasN = boundaryMask.has(coordKey(x, y - 1));
-    const hasS = boundaryMask.has(coordKey(x, y + 1));
-    const hasW = boundaryMask.has(coordKey(x - 1, y));
-    const hasE = boundaryMask.has(coordKey(x + 1, y));
+  for (let i = 0; i < count; i++) {
+    const drawX = visX[i]! * S - cameraX;
+    const drawY = visY[i]! * S - cameraY;
+    const nb = visNb[i]!;
+    const hasN = (nb & 1) !== 0;
+    const hasS = (nb & 2) !== 0;
+    const hasW = (nb & 4) !== 0;
+    const hasE = (nb & 8) !== 0;
 
     if (!hasN) ctx.fillRect(drawX, drawY, S, 1);
     if (!hasS) ctx.fillRect(drawX, drawY + S - 1, S, 1);
@@ -163,18 +201,10 @@ export function drawConnectedRangeZone(
     if (!hasW && oy1 > oy0) ctx.fillRect(drawX, drawY + oy0, 1, oy1 - oy0);
     if (!hasE && oy1 > oy0) ctx.fillRect(drawX + S - 1, drawY + oy0, 1, oy1 - oy0);
 
-    if (hasN && hasW && !boundaryMask.has(coordKey(x - 1, y - 1))) {
-      ctx.fillRect(drawX, drawY, 1, 1);
-    }
-    if (hasN && hasE && !boundaryMask.has(coordKey(x + 1, y - 1))) {
-      ctx.fillRect(drawX + S - 1, drawY, 1, 1);
-    }
-    if (hasS && hasW && !boundaryMask.has(coordKey(x - 1, y + 1))) {
-      ctx.fillRect(drawX, drawY + S - 1, 1, 1);
-    }
-    if (hasS && hasE && !boundaryMask.has(coordKey(x + 1, y + 1))) {
-      ctx.fillRect(drawX + S - 1, drawY + S - 1, 1, 1);
-    }
+    if (hasN && hasW && (nb & 16) === 0) ctx.fillRect(drawX, drawY, 1, 1);
+    if (hasN && hasE && (nb & 32) === 0) ctx.fillRect(drawX + S - 1, drawY, 1, 1);
+    if (hasS && hasW && (nb & 64) === 0) ctx.fillRect(drawX, drawY + S - 1, 1, 1);
+    if (hasS && hasE && (nb & 128) === 0) ctx.fillRect(drawX + S - 1, drawY + S - 1, 1, 1);
   }
 }
 
@@ -211,13 +241,26 @@ export function drawUnitGroundShadow(
   ctx.fillRect(cx + halfW - 2, cy - 1, 2, 3);
 }
 
-function buildUnionBoundaryMask(
-  baseSet: ReadonlySet<string>,
-  borderSet: ReadonlySet<string>
-): Set<string> {
-  const union = new Set<string>(baseSet);
-  for (const key of borderSet) union.add(key);
-  return union;
+const rangeZoneSetsCache = new WeakMap<
+  MovementRangeResult,
+  {
+    blueMoveSet: Set<string>;
+    attackUnion: Set<string>;
+    supportUnion: Set<string>;
+  }
+>();
+
+function getRangeZoneSets(range: MovementRangeResult) {
+  let cached = rangeZoneSetsCache.get(range);
+  if (cached) return cached;
+  const blueMoveSet = new Set<string>(range.traversedCosts.keys());
+  const attackUnion = new Set<string>(blueMoveSet);
+  for (const key of range.attackBorderTiles) attackUnion.add(key);
+  const supportUnion = new Set<string>(blueMoveSet);
+  for (const key of range.supportBorderTiles) supportUnion.add(key);
+  cached = { blueMoveSet, attackUnion, supportUnion };
+  rangeZoneSetsCache.set(range, cached);
+  return cached;
 }
 
 export function drawUnitRangeEnvelope(
@@ -235,7 +278,7 @@ export function drawUnitRangeEnvelope(
   },
   alphaScale = 1
 ): void {
-  const blueMoveSet = new Set<string>(range.traversedCosts.keys());
+  const { blueMoveSet, attackUnion, supportUnion } = getRangeZoneSets(range);
   const movePulse = getSelectionRangePulse({ selectionPulseStartMs: pulseStartMs }, now);
   const hasAttack = range.attackBorderTiles.size > 0;
   const hasSupport = range.supportBorderTiles.size > 0;
@@ -255,7 +298,7 @@ export function drawUnitRangeEnvelope(
       cameraX,
       cameraY,
       range.supportBorderTiles,
-      buildUnionBoundaryMask(blueMoveSet, range.supportBorderTiles),
+      supportUnion,
       {
         fillRgba: lerpRgba(
           scaleRgbaTuple([28, 184, 96, 0.15], alphaScale),
@@ -281,7 +324,7 @@ export function drawUnitRangeEnvelope(
       cameraX,
       cameraY,
       range.attackBorderTiles,
-      buildUnionBoundaryMask(blueMoveSet, range.attackBorderTiles),
+      attackUnion,
       {
         fillRgba: lerpRgba(
           scaleRgbaTuple([212, 36, 56, 0.16], alphaScale),

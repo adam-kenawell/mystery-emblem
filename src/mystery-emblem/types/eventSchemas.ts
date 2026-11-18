@@ -1,12 +1,9 @@
 /**
  * Declarative Dungeon Event, Reinforcement Wave & Faction Schemas (`eventSchemas.ts`)
  *
- * Powers 100% data-driven campaign mechanics across all 25 Chapters + 7 Paralogues:
- * - Stairs Reinforcement Waves & Unit Blocking
- * - Green Allied NPCs (`'npc'`) & Protection / Survival Objectives
- * - Mid-Battle `Talk` Recruitments & Branching Twin Choices (`BattleTalkChoiceModal`)
- * - Boss-to-Recruit Post-Battle Joins (`'convertible'` lines)
- * - Scripted Mid-Battle Allied Arrivals, Barrier Tile Mutations & Multi-Phase Bosses
+ * Executes `DungeonEventAction[]` (`show_banner`, `play_dialogue`, `spawn_units`,
+ * `convert_unit`, `despawn_units`, `recruit_choice`, `set_tiles`, `set_objective`,
+ * `grant_items`, `unlock_kecleon_shop`, `recruit_post_battle`, `move_unit`, `win_battle`).
  */
 
 import type { PmdPortraitEmotion } from '../assets/pmdAssetLoader';
@@ -112,14 +109,6 @@ export type DungeonEventAction =
       bannerText?: string;
       addToPermanentRoster?: boolean;
       silent?: boolean;
-      fadeInFromOffMap?: 'left' | 'right' | 'top' | 'bottom';
-    }
-  | {
-      type: 'refresh_units';
-      targetUnitIds: string[];
-      healToFull?: boolean;
-      clearWait?: boolean;
-      clearStatus?: boolean;
     }
   | {
       type: 'convert_unit';
@@ -185,30 +174,6 @@ export type DungeonEventAction =
       y: number;
       /** Direction the unit faces once it arrives */
       face?: 'left' | 'right' | 'up' | 'down';
-    }
-  | {
-      /** Marks player units as already acted this phase (e.g. tutorial turns that lock the team) */
-      type: 'rest_player_units';
-      exceptLord?: boolean;
-      exceptPartner?: boolean;
-      /** Keeps the first non-lord unit that knows a heal move active */
-      exceptHealer?: boolean;
-    }
-  | {
-      /** Equips an item directly onto a unit's consumable/held slot (or Convoy if occupied) */
-      type: 'give_unit_item';
-      targetUnitId: string;
-      itemId: string;
-      calloutText?: string;
-    }
-  | {
-      /** Walks an actor to `(destX, destY)` if given and performs a deterministic scripted strike */
-      type: 'scripted_attack';
-      attackerUnitId: string;
-      targetUnitId: string;
-      moveId: string;
-      destX?: number;
-      destY?: number;
     }
   | {
       /** Immediately triggers Player Victory (e.g. Chapter 3 Cave Exit `tile_reached`) */

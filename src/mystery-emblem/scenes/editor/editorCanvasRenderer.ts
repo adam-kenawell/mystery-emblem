@@ -2,7 +2,11 @@
  * Pixel-Art Canvas Frame & Mini Preview Renderer for `ChapterMapEditorScene`
  */
 
-import { computePmdTileSpritePlacement } from '../../assets/pmdAssetLoader';
+import {
+  computePmdTileSpritePlacement,
+  drawSpriteAnimFrame,
+  normalizePmdDirection,
+} from '../../assets/pmdAssetLoader';
 import {
   EMPTY_TILESET_ID,
   PMD_TILE_NATIVE_PX,
@@ -36,8 +40,6 @@ function drawEditorUnitPreviewSprite(
   const bundle = state.spriteBundles.get(speciesId);
   const anim = bundle ? (bundle.actions.Idle ?? bundle.actions.Walk) : undefined;
   if (!anim) return;
-  const row = anim.rowCount >= 8 ? direction % 8 : direction % Math.max(1, anim.rowCount);
-  const sy = row * anim.frameHeight;
   const screenTileX = tileX * PMD_TILE_NATIVE_PX - state.cam.cameraX;
   const screenTileY = tileY * PMD_TILE_NATIVE_PX - state.cam.cameraY;
   const pos = computePmdTileSpritePlacement(
@@ -49,17 +51,7 @@ function drawEditorUnitPreviewSprite(
   );
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.drawImage(
-    anim.source,
-    0,
-    sy,
-    anim.frameWidth,
-    anim.frameHeight,
-    pos.drawX,
-    pos.drawY,
-    anim.frameWidth,
-    anim.frameHeight
-  );
+  drawSpriteAnimFrame(ctx, anim, 0, normalizePmdDirection(direction, 0), pos.drawX, pos.drawY);
   ctx.restore();
 }
 

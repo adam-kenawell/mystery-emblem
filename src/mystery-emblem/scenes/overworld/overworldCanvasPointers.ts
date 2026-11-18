@@ -6,10 +6,7 @@
  */
 
 import type { OverworldNodeDefinition } from '../../data/overworldMapData';
-import {
-  ensureOverworldGraphState,
-  findOverworldRoute,
-} from '../../engine/overworldEngine';
+import { findOverworldRoute } from '../../engine/overworldEngine';
 import {
   MultiTouchPinchTracker,
   OVERWORLD_SCALE_BOUNDS,
@@ -62,10 +59,10 @@ function hitTestNodeAtLocalCss(
   const hitRadiusCss = Math.max(26, 9 * ctrl.displayScale);
   let best: OverworldNodeDefinition | null = null;
   let bestDist = hitRadiusCss;
-  const save = hooks.saveManager.getSave();
+  const save = hooks.saveManager.getReadOnlySave();
   const graph = hooks.getGraph();
-  const rec = save ? ensureOverworldGraphState(save, graph) : null;
-  const clearSeq = (hooks as any).getActiveClearSequence?.();
+  const rec = save ? hooks.getReconciledState(save) : null;
+  const clearSeq = hooks.getActiveClearSequence?.();
   for (const def of graph.nodes) {
     if (rec) {
       const st = rec.nodes[def.id];
@@ -210,10 +207,10 @@ export function bindOverworldCanvasPointers(
         const nextHoverId = hovered?.id ?? null;
         if (nextHoverId !== ctrl.hoveredNodeId) {
           ctrl.hoveredNodeId = nextHoverId;
-          const save = hooks.saveManager.getSave();
+          const save = hooks.saveManager.getReadOnlySave();
           const graph = hooks.getGraph();
           if (save && nextHoverId) {
-            const reconciled = ensureOverworldGraphState(save, graph);
+            const reconciled = hooks.getReconciledState(save);
             ctrl.hoverRoutePreview =
               nextHoverId !== reconciled.currentNodeId && reconciled.nodes[nextHoverId]?.unlocked
                 ? findOverworldRoute(graph, reconciled.nodes, reconciled.currentNodeId, nextHoverId)

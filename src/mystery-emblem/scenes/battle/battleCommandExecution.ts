@@ -5,13 +5,18 @@
 import { directionFromDelta } from '../../assets/pmdAssetLoader';
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
 import { getItemById } from '../../data/index';
+import type { BattleUnitState } from '../../engine/combatEngine';
 import { waitBattleMs } from './battleBannersAndTransitions';
 import {
   clearBattleSelection,
   recomputeDangerArea,
   syncHudControls,
 } from './battleDangerAndViewportState';
-import { runTileReachedEvents, runUnitHealedEvents } from './battleEventRunner';
+import {
+  runTileReachedEvents,
+  runUnitDefeatedEvents,
+  runUnitHealedEvents,
+} from './battleEventRunner';
 import { spawnFloatingText } from './battleFloatingCallouts';
 import {
   openCombatForecastModal,
@@ -20,6 +25,7 @@ import {
 import { updateBattleInfoStrip } from './battleHudCards';
 import { checkAndTriggerMatchEnd } from './battleOutcomeModals';
 import { runEnemyPhase } from './battlePhaseAndAiRunner';
+import { triggerReactivePostCombatTutorials } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
   areAllLivingPlayersWaited,
@@ -29,8 +35,71 @@ import {
   getSelectedUnit,
 } from './battleUnitQueries';
 
+export interface FinalizePlayerActionOptions {
+  defeatedCheckUnits?: ReadonlyArray<BattleUnitState>;
+  checkUnitHealedEvents?: boolean;
+  checkPostCombatTutorials?: boolean;
+  autoEndDelayMs?: number;
+}
+
+export async function finalizePlayerUnitAction(
+  ctx: BattleControllerContext,
+  actor: BattleUnitState,
+  runGen: number,
+  opts: FinalizePlayerActionOptions = {}
+): Promise<void> {
+  const { state, dom, prepOverlay } = ctx;
+  if (opts.defeatedCheckUnits && opts.defeatedCheckUnits.length > 0) {
+    await runUnitDefeatedEvents(ctx, opts.defeatedCheckUnits, runGen);
+    if (!state.openState || runGen !== state.battleRunGen) return;
+  }
+
+  recomputeDangerArea(ctx);
+  if (checkAndTriggerMatchEnd(ctx)) return;
+
+  if (!actor.defeated && actor.currentHp > 0) {
+    actor.waited = true;
+    actor.action = 'Idle';
+    actor.renderWorldX = actor.x * PMD_TILE_NATIVE_PX;
+    actor.renderWorldY = actor.y * PMD_TILE_NATIVE_PX;
+  }
+
+  clearBattleSelection(state, dom, prepOverlay);
+  if (!actor.defeated && actor.currentHp > 0) {
+    await runTileReachedEvents(ctx, actor, runGen);
+    if (!state.openState || runGen !== state.battleRunGen) return;
+    if (checkAndTriggerMatchEnd(ctx)) return;
+  }
+
+  recomputeDangerArea(ctx);
+  syncHudControls(state, dom);
+  updateBattleInfoStrip(ctx);
+  ctx.onLayerStateChanged();
+  ctx.renderNow();
+
+  if (opts.checkUnitHealedEvents) {
+    await runUnitHealedEvents(ctx, runGen);
+    if (!state.openState || runGen !== state.battleRunGen) return;
+  }
+
+  if (opts.checkPostCombatTutorials) {
+    await triggerReactivePostCombatTutorials(ctx, runGen);
+    if (!state.openState || runGen !== state.battleRunGen || state.phase !== 'player_phase') {
+      return;
+    }
+  }
+
+  if (state.phase === 'player_phase' && areAllLivingPlayersWaited(state)) {
+    await waitBattleMs(state, opts.autoEndDelayMs ?? 200);
+    if (!state.openState || runGen !== state.battleRunGen || state.phase !== 'player_phase') {
+      return;
+    }
+    await runEnemyPhase(ctx);
+  }
+}
+
 export async function useEquippedBattleConsumable(ctx: BattleControllerContext): Promise<void> {
-  const { state, dom, prepOverlay, audioManager } = ctx;
+  const { state, dom, audioManager } = ctx;
   const unit = getSelectedUnit(state);
   if (!unit || !unit.consumableItemId || !canUseUnitEquippedConsumable(unit)) return;
   const item = getItemById(unit.consumableItemId);
@@ -81,37 +150,12 @@ export async function useEquippedBattleConsumable(ctx: BattleControllerContext):
   }
 
   unit.consumableItemId = null;
-  unit.waited = true;
-  unit.action = 'Idle';
-  unit.renderWorldX = unit.x * PMD_TILE_NATIVE_PX;
-  unit.renderWorldY = unit.y * PMD_TILE_NATIVE_PX;
-
   audioManager.playSfx('heal');
   spawnFloatingText(state, dom, unit.x, unit.y, calloutText, '#68f8a8', 820);
-  clearBattleSelection(state, dom, prepOverlay);
-  ctx.tutorialOverlay?.notifyActionCompleted('battle_confirm_item');
-  await runTileReachedEvents(ctx, unit, runGen);
-  if (!state.openState || runGen !== state.battleRunGen) return;
-  if (checkAndTriggerMatchEnd(ctx)) return;
-  recomputeDangerArea(ctx);
-  syncHudControls(state, dom);
-  updateBattleInfoStrip(ctx);
-  ctx.onLayerStateChanged();
-  ctx.renderNow();
 
-  if (!state.openState || runGen !== state.battleRunGen) return;
-  if (item.category === 'consumable') {
-    await runUnitHealedEvents(ctx, runGen);
-    if (!state.openState || runGen !== state.battleRunGen) return;
-  }
-
-  if (areAllLivingPlayersWaited(state)) {
-    await waitBattleMs(state, 200);
-    if (!state.openState || runGen !== state.battleRunGen || state.phase !== 'player_phase') {
-      return;
-    }
-    await runEnemyPhase(ctx);
-  }
+  await finalizePlayerUnitAction(ctx, unit, runGen, {
+    checkUnitHealedEvents: item.category === 'consumable',
+  });
 }
 
 export function openForecastFromCommandMenu(ctx: BattleControllerContext): void {
@@ -147,32 +191,11 @@ export function openHealForecastFromCommandMenu(ctx: BattleControllerContext): v
 }
 
 export async function confirmUnitWait(ctx: BattleControllerContext): Promise<void> {
-  const { state, dom, prepOverlay, audioManager, tutorialOverlay } = ctx;
+  const { state, audioManager } = ctx;
   const unit = getSelectedUnit(state);
   if (!unit) return;
   const runGen = state.battleRunGen;
 
-  unit.waited = true;
-  unit.action = 'Idle';
-  unit.renderWorldX = unit.x * PMD_TILE_NATIVE_PX;
-  unit.renderWorldY = unit.y * PMD_TILE_NATIVE_PX;
   audioManager.playSfx('select');
-  clearBattleSelection(state, dom, prepOverlay);
-  await runTileReachedEvents(ctx, unit, runGen);
-  if (!state.openState || runGen !== state.battleRunGen) return;
-  if (checkAndTriggerMatchEnd(ctx)) return;
-  recomputeDangerArea(ctx);
-  syncHudControls(state, dom);
-  updateBattleInfoStrip(ctx);
-  ctx.onLayerStateChanged();
-  tutorialOverlay?.notifyActionCompleted('battle_confirm_wait');
-  ctx.renderNow();
-
-  if (areAllLivingPlayersWaited(state)) {
-    await waitBattleMs(state, 200);
-    if (!state.openState || runGen !== state.battleRunGen || state.phase !== 'player_phase') {
-      return;
-    }
-    await runEnemyPhase(ctx);
-  }
+  await finalizePlayerUnitAction(ctx, unit, runGen);
 }

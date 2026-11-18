@@ -15,10 +15,9 @@ import { getRawChapterJson } from '../data/chapters/index';
 import { ITEMS_LIST } from '../data/index';
 import { LIGHTING_MOOD_LABELS, WEATHER_LABELS } from '../scenes/cutscene/cutsceneAtmosphere';
 import type { DungeonEventAction, DungeonEventDefinition, DungeonEventTrigger } from '../types/schemas';
-import type { EditorContext } from './editorContext';
 import { button, checkbox, field, h, numberInput, row, section, selectInput, textInput } from './editorDom';
 import { songPicker } from './editorPickers';
-import type { DialogueSessionData, StorySessionData } from './editorSession';
+import type { DialogueSessionData, EditorContext, StorySessionData } from './editorSession';
 
 export interface ScenePanelHooks {
   onDelete: () => void;

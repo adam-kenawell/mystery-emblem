@@ -2,8 +2,7 @@
  * Cursor-Anchored Translucent 6-Option Dungeon Field Menu Controller (`dungeon-field-menu`)
  */
 
-import { tileCenterToClientPoint } from '../../ui/gridViewportMath';
-import { getElementZoom } from '../../ui/uiScale';
+import { getElementZoom, tileCenterToClientPoint } from '../../ui/gridViewportMath';
 import { syncHudControls } from './battleDangerAndViewportState';
 import { renderFieldSubmodalContents } from './battleFieldSubmodalViews';
 import { updateBattleInfoStrip } from './battleHudCards';
@@ -16,7 +15,7 @@ export function openSystemMenu(
   tapClientX?: number,
   tapClientY?: number
 ): void {
-  const { state, dom, audioManager, tutorialOverlay } = ctx;
+  const { state, dom, audioManager } = ctx;
   state.systemMenuOpen = true;
   if (
     typeof tapClientX === 'number' &&
@@ -42,9 +41,6 @@ export function openSystemMenu(
   updateBattleInfoStrip(ctx);
   audioManager.playSfx('select');
   ctx.onLayerStateChanged();
-  if (subView === 'root') {
-    tutorialOverlay?.notifyActionCompleted('battle_open_field_menu');
-  }
 }
 
 export function closeSystemMenu(ctx: BattleControllerContext): void {

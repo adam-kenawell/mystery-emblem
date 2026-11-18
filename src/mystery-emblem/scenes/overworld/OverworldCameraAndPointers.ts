@@ -8,6 +8,7 @@ import type {
 } from '../../data/overworldMapData';
 import type { OverworldRouteResult } from '../../engine/overworldEngine';
 import type { SaveStateManager } from '../../state/SaveStateManager';
+import type { OverworldNodeState, SaveData } from '../../types/schemas';
 import {
   MAP_OVERSCROLL_NATIVE_PX,
   OVERWORLD_SCALE_BOUNDS,
@@ -30,6 +31,11 @@ export interface OverworldCameraControllerHooks {
   ctx: CanvasRenderingContext2D;
   saveManager: SaveStateManager;
   getGraph: () => OverworldGraphDefinition;
+  getReconciledState: (save: SaveData) => {
+    currentNodeId: string;
+    nodes: Record<string, OverworldNodeState>;
+  };
+  getActiveClearSequence?: () => import('./OverworldTravelAndSprites').OverworldClearSequence | null;
   isOpen: () => boolean;
   canInteractWithCanvas: () => boolean;
   isModalOpen: () => boolean;

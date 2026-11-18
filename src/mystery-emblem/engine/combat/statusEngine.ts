@@ -39,14 +39,6 @@ export const STATUS_ACTION_CALLOUTS: Readonly<Record<StatusCondition, string>> =
   FRZ: 'FROZEN!',
 };
 
-export const STATUS_SHORT_EFFECT_TEXT: Readonly<Record<StatusCondition, string>> = {
-  BRN: 'BRN (-50% Phys Atk, 10% chip)',
-  PSN: 'PSN (10% HP chip/turn)',
-  PAR: 'PAR (-25% Spe, 33% skip)',
-  SLP: 'SLP (2T immobile, no counter)',
-  FRZ: 'FRZ (2T -50% SpA)',
-};
-
 export function isEnemyStatusMove(
   move: MoveDefinition | undefined | null
 ): move is MoveDefinition {

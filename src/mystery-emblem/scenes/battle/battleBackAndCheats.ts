@@ -1,12 +1,7 @@
 /**
- * Unified Back / Right-Click / Long-Press Handler, DevTools Cheats & Playwright Test Mutators
+ * Unified Back / Right-Click / Long-Press Handler & DevTools Cheats
  */
 
-import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
-import {
-  computeUnitMovementAndAttackRange,
-  isInMapBounds,
-} from '../../engine/terrainAndPathfinding';
 import {
   dismissBeginBattleCard,
   isPhaseTransitionPlaying,
@@ -30,16 +25,13 @@ import { cancelCombatForecast } from './battleHealForecastAndConfirm';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { dismissLevelUpModal, dismissMoveLearnedModal } from './battleLevelUpModal';
 import { triggerVictoryModal } from './battleOutcomeModals';
-import { confirmEnterDungeonFromPrep } from './battlePrepAndAssets';
+import { confirmEnterDungeonFromPrep } from './battlePrepController';
 import { cancelUncommittedMove } from './battleSelectionAndMenu';
 import { dismissTalkChoiceModal } from './battleTalkChoiceModal';
-import { getExpectedTutorialAction } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
   getActiveInspectedAllyRange,
   getLivingEnemies,
-  getLivingUnits,
-  recomputeSelectedUnitRange,
 } from './battleUnitQueries';
 
 export function handleBattleMenuOrBack(
@@ -47,10 +39,10 @@ export function handleBattleMenuOrBack(
   clientX?: number,
   clientY?: number
 ): void {
-  const { state, dom, prepOverlay, audioManager, tutorialOverlay } = ctx;
+  const { state, dom, prepOverlay, audioManager } = ctx;
   if (!state.openState || state.cutsceneInProgress || isPhaseTransitionPlaying(state)) return;
 
-  if (!dom.beginBattleBackdropEl.hidden && !state.fastMode) {
+  if (!dom.beginBattleBackdropEl.hidden) {
     audioManager.playSfx('select');
     dismissBeginBattleCard(state, dom);
     return;
@@ -70,35 +62,6 @@ export function handleBattleMenuOrBack(
     audioManager.playSfx('cancel');
     dismissTalkChoiceModal(state, dom, null);
     ctx.onLayerStateChanged();
-    ctx.renderNow();
-    return;
-  }
-
-  const expectedTutorialAction = getExpectedTutorialAction(tutorialOverlay);
-  if (expectedTutorialAction) {
-    const allowPrepBack =
-      state.phase === 'dungeon_prep' &&
-      (expectedTutorialAction === 'prep_close_manage_units' ||
-        expectedTutorialAction === 'prep_swap_or_finish_view_map');
-    const allowDangerToggle =
-      expectedTutorialAction === 'battle_toggle_danger_area' &&
-      state.phase === 'player_phase' &&
-      (state.interactionState === 'idle' || state.systemMenuOpen);
-    if (!allowPrepBack && !allowDangerToggle) {
-      tutorialOverlay?.nudgeActiveStep();
-      return;
-    }
-  }
-
-  if (
-    expectedTutorialAction === 'battle_toggle_danger_area' &&
-    state.phase === 'player_phase'
-  ) {
-    toggleGlobalDangerArea(ctx);
-    if (state.systemMenuOpen) {
-      closeSystemMenu(ctx);
-    }
-    tutorialOverlay?.notifyActionCompleted('battle_toggle_danger_area');
     ctx.renderNow();
     return;
   }
@@ -183,55 +146,6 @@ export function handleBattleMenuOrBack(
   }
 
   toggleGlobalDangerArea(ctx);
-}
-
-export function forceUnitHpForTest(
-  ctx: BattleControllerContext,
-  unitId: string,
-  nextHp: number
-): void {
-  const u = ctx.state.units.find((item) => item.id === unitId);
-  if (!u) return;
-  u.currentHp = Math.max(0, Math.min(u.maxHp, Math.round(nextHp)));
-  if (u.currentHp <= 0) {
-    u.defeated = true;
-  } else {
-    u.defeated = false;
-    u.koDissolveProgress = 0;
-  }
-  recomputeDangerArea(ctx);
-  updateBattleInfoStrip(ctx);
-  ctx.renderNow();
-}
-
-export function forceUnitPositionForTest(
-  ctx: BattleControllerContext,
-  unitId: string,
-  x: number,
-  y: number
-): void {
-  const { state } = ctx;
-  const u = state.units.find((item) => item.id === unitId);
-  if (!u || !isInMapBounds(state.map, x, y)) return;
-  u.x = x;
-  u.y = y;
-  u.renderWorldX = x * PMD_TILE_NATIVE_PX;
-  u.renderWorldY = y * PMD_TILE_NATIVE_PX;
-  recomputeDangerArea(ctx);
-  if (state.selectedUnitId === unitId) {
-    recomputeSelectedUnitRange(state);
-  }
-  if (state.inspectedAllyRangeUnitId) {
-    const living = getLivingUnits(state);
-    const inspected = living.find((item) => item.id === state.inspectedAllyRangeUnitId);
-    if (inspected && (inspected.faction === 'npc' || (inspected.faction === 'player' && inspected.waited))) {
-      state.inspectedAllyRange = computeUnitMovementAndAttackRange(state.map, inspected, living);
-    } else {
-      clearInspectedAllyRange(state);
-    }
-  }
-  updateBattleInfoStrip(ctx);
-  ctx.renderNow();
 }
 
 export function cheatFullHealSquad(ctx: BattleControllerContext): void {

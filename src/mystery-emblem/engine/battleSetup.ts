@@ -7,7 +7,10 @@
  */
 
 import { PMD_TILE_NATIVE_PX } from '../assets/tilesetLoader';
+import { MENTOR_JAGEN_SPECIES_ID, STARTING_CAMPAIGN_LEVEL } from '../data/campaignConfig';
 import { getSpeciesById } from '../data/index';
+import { InMemoryCloudSyncAdapter } from '../state/firebaseSync';
+import { SaveStateManager, type StorageLike } from '../state/SaveStateManager';
 import type {
   DungeonMapDefinition,
   ManualEnemyBattleSpawn,
@@ -21,19 +24,50 @@ import {
   buildUnitMoveSlots,
   findNearestFreeSpawnTile,
   resolveEquippedSlotsForOwnedUnit,
-  resolveSeededSpawnSpeciesId,
 } from './battleSpawnHelpers';
 import type { BattleUnitState } from './combatEngine';
-import { createFallbackBattlePrepManager } from './fallbackPrepManager';
 import { computeManualScaledStatsForJoinLevel } from './progressionEngine';
 
 export {
   buildSpawnedBattleUnit,
-  createFallbackBattlePrepManager,
   findNearestFreeSpawnTile,
   type ManualEnemyBattleSpawn,
   type PrepDeploymentSlot,
 };
+
+/** Isolated in-memory SaveStateManager used only when launching Map Editor Test Battle without a save. */
+export function createFallbackBattlePrepManager(minSquadSize = 5): SaveStateManager {
+  const mem = new Map<string, string>();
+  const memStorage: StorageLike = {
+    getItem: (k) => mem.get(k) ?? null,
+    setItem: (k, v) => { mem.set(k, v); },
+    removeItem: (k) => { mem.delete(k); },
+  };
+  const mgr = new SaveStateManager(memStorage, new InMemoryCloudSyncAdapter(new Map()));
+  mgr.createNewCampaignSave({
+    lordSpeciesId: 'axew',
+    partnerSpeciesId: 'quaxly',
+    healerSpeciesId: 'flabebe',
+    startingLevel: STARTING_CAMPAIGN_LEVEL,
+    scaleStatsToLevel: false,
+    campaignMode: 'demo',
+  });
+
+  const extraPool = [MENTOR_JAGEN_SPECIES_ID, 'chespin', 'machop', 'slakoth', 'starly', 'caterpie', 'pawmi'];
+  let idx = 0;
+  while ((mgr.getReadOnlySave()?.roster.length ?? 0) < Math.min(8, minSquadSize) && idx < extraPool.length) {
+    const spId = extraPool[idx]!;
+    mgr.recruitPokemon({
+      speciesId: spId,
+      level: spId === MENTOR_JAGEN_SPECIES_ID ? 12 : 3,
+      scaleStatsToLevel: spId !== MENTOR_JAGEN_SPECIES_ID,
+    });
+    idx += 1;
+  }
+
+  mgr.addConvoyItem('super_potion', 1);
+  return mgr;
+}
 
 export const EXTRA_PLAYER_DEPLOYMENT_COORDS: ReadonlyArray<{ x: number; y: number }> = [
   { x: 3, y: 5 },
@@ -108,35 +142,27 @@ export function createInitialPrepDeploymentSlots(
 export function resolveEnemySpawnsForMap(
   map: DungeonMapDefinition,
   explicitOverrides?: ReadonlyArray<ManualEnemyBattleSpawn>,
-  save?: SaveData | null
+  _save?: SaveData | null
 ): ReadonlyArray<ManualEnemyBattleSpawn> {
   const rawList = explicitOverrides ?? map.enemySpawns ?? [];
   if (rawList.length === 0) return [];
 
   return rawList.map((spawn, idx) => {
-    const resolvedSpId = resolveSeededSpawnSpeciesId(spawn, save);
-    const sp =
-      getSpeciesById(resolvedSpId) ??
-      getSpeciesById(spawn.speciesId) ??
-      getSpeciesById('zigzagoon_galar')!;
-    const origName = getSpeciesById(spawn.speciesId)?.name;
-    const nickname =
-      !spawn.nickname || (spawn.seedKey && spawn.nickname === origName) ? sp.name : spawn.nickname;
-    const stats =
-      !spawn.seedKey && spawn.stats
-        ? { ...spawn.stats }
-        : computeManualScaledStatsForJoinLevel(sp, spawn.level);
+    const sp = getSpeciesById(spawn.speciesId) ?? getSpeciesById('zigzagoon_galar')!;
+    const nickname = !spawn.nickname ? sp.name : spawn.nickname;
+    const stats = spawn.stats
+      ? { ...spawn.stats }
+      : computeManualScaledStatsForJoinLevel(sp, spawn.level);
     return {
       id: spawn.id ?? `enemy_${idx}`,
       x: spawn.x,
       y: spawn.y,
       speciesId: sp.id,
-      ...(spawn.seedKey ? { seedKey: spawn.seedKey } : {}),
       nickname,
       level: spawn.level,
       stats,
-      ...(!spawn.seedKey && spawn.moveIds ? { moveIds: [...spawn.moveIds] } : {}),
-      ...(!spawn.seedKey && spawn.equippedMoveId ? { equippedMoveId: spawn.equippedMoveId } : {}),
+      ...(spawn.moveIds ? { moveIds: [...spawn.moveIds] } : {}),
+      ...(spawn.equippedMoveId ? { equippedMoveId: spawn.equippedMoveId } : {}),
       heldItemId: spawn.heldItemId ?? null,
       isBoss: spawn.isBoss,
       stationary: spawn.stationary,
@@ -146,9 +172,7 @@ export function resolveEnemySpawnsForMap(
       ...(spawn.squadId ? { squadId: spawn.squadId } : {}),
       ...(spawn.sparring ? { sparring: true } : {}),
       ...(spawn.friendlyBout ? { friendlyBout: true } : {}),
-      ...(!spawn.seedKey && spawn.equippedMoveIds
-        ? { equippedMoveIds: [...spawn.equippedMoveIds] }
-        : {}),
+      ...(spawn.equippedMoveIds ? { equippedMoveIds: [...spawn.equippedMoveIds] } : {}),
     };
   });
 }

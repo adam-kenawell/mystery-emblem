@@ -4,6 +4,8 @@
 
 import {
   computePmdTileSpritePlacement,
+  drawSpriteAnimFrame,
+  resolveAnimFrameIndex,
   type LoadedSpriteBundle,
   type PmdDirection,
   type PmdSpriteAction,
@@ -20,6 +22,15 @@ export interface NodeLabelDomEntry {
   pillEl: HTMLElement;
   codeEl: HTMLElement;
   nameEl: HTMLElement;
+  lastHidden?: boolean;
+  lastCode?: string;
+  lastName?: string;
+  lastCurrent?: boolean;
+  lastStoryChapter?: boolean;
+  lastHovered?: boolean;
+  lastCleared?: boolean;
+  lastSkirmish?: boolean;
+  lastTransform?: string;
 }
 
 export function drawAnimatedSpriteAtMapPoint(
@@ -40,25 +51,7 @@ export function drawAnimatedSpriteAtMapPoint(
   const spriteScale = scale * OVERWORLD_SPRITE_SCALE_FACTOR;
   const screenX = Math.round((mapX - cameraX) * scale);
   const screenY = Math.round((mapY - cameraY) * scale);
-
-  const totalAnimMs = Math.max(
-    80,
-    anim.durationsMs.reduce((acc, d) => acc + Math.max(16, d), 0)
-  );
-  let rem = animClockMs % totalAnimMs;
-  let frameIdx = 0;
-  for (let i = 0; i < anim.frameCount; i++) {
-    const dur = Math.max(16, anim.durationsMs[i] ?? 120);
-    if (rem < dur) {
-      frameIdx = i;
-      break;
-    }
-    rem -= dur;
-  }
-
-  const rowIdx = anim.rowCount > 1 ? direction % anim.rowCount : 0;
-  const sx = frameIdx * anim.frameWidth;
-  const sy = rowIdx * anim.frameHeight;
+  const frameIdx = resolveAnimFrameIndex(anim, animClockMs);
 
   const placement = computePmdTileSpritePlacement(
     -12,
@@ -86,17 +79,7 @@ export function drawAnimatedSpriteAtMapPoint(
     Math.PI * 2
   );
   ctx.fill();
-  ctx.drawImage(
-    anim.source,
-    sx,
-    sy,
-    anim.frameWidth,
-    anim.frameHeight,
-    drawX,
-    drawY,
-    drawW,
-    drawH
-  );
+  drawSpriteAnimFrame(ctx, anim, frameIdx, direction, drawX, drawY, drawW, drawH);
   ctx.restore();
 }
 
@@ -151,7 +134,10 @@ export function syncOverworldNodeLabelsOverlay(params: {
     const st = reconciled.nodes[def.id];
     const isNewDuringClear = Boolean(clearSequence?.newlyUnlockedNodeIds.includes(def.id));
     if (isNewDuringClear && clearSequence?.phase !== 'pop_nodes') {
-      entry.anchorEl.hidden = true;
+      if (entry.lastHidden !== true) {
+        entry.anchorEl.hidden = true;
+        entry.lastHidden = true;
+      }
       continue;
     }
     // Declutter: only the Lord's settled node and the current story chapter show a title card
@@ -159,26 +145,63 @@ export function syncOverworldNodeLabelsOverlay(params: {
     const isCurrent = reconciled.currentNodeId === def.id && !isTraveling;
     const isStoryChapter = storyChapterNodeId === def.id;
     if (!st?.unlocked || (!isCurrent && !isStoryChapter)) {
-      entry.anchorEl.hidden = true;
+      if (entry.lastHidden !== true) {
+        entry.anchorEl.hidden = true;
+        entry.lastHidden = true;
+      }
       continue;
     }
 
-    entry.anchorEl.hidden = false;
-    entry.codeEl.textContent = def.code;
-    entry.nameEl.textContent = def.name;
-    entry.pillEl.classList.toggle('is-current', isCurrent);
-    entry.pillEl.classList.toggle('is-story-chapter', isStoryChapter);
-    entry.pillEl.classList.toggle('is-hovered', hoveredNodeId === def.id);
-    entry.pillEl.classList.toggle('is-cleared', Boolean(st?.cleared));
-    entry.pillEl.classList.toggle('has-skirmish', Boolean(st?.activeSkirmish));
+    if (entry.lastHidden !== false) {
+      entry.anchorEl.hidden = false;
+      entry.lastHidden = false;
+    }
+    if (entry.lastCode !== def.code) {
+      entry.codeEl.textContent = def.code;
+      entry.lastCode = def.code;
+    }
+    if (entry.lastName !== def.name) {
+      entry.nameEl.textContent = def.name;
+      entry.lastName = def.name;
+    }
+    if (entry.lastCurrent !== isCurrent) {
+      entry.pillEl.classList.toggle('is-current', isCurrent);
+      entry.lastCurrent = isCurrent;
+    }
+    if (entry.lastStoryChapter !== isStoryChapter) {
+      entry.pillEl.classList.toggle('is-story-chapter', isStoryChapter);
+      entry.lastStoryChapter = isStoryChapter;
+    }
+    const isHovered = hoveredNodeId === def.id;
+    if (entry.lastHovered !== isHovered) {
+      entry.pillEl.classList.toggle('is-hovered', isHovered);
+      entry.lastHovered = isHovered;
+    }
+    const isCleared = Boolean(st?.cleared);
+    if (entry.lastCleared !== isCleared) {
+      entry.pillEl.classList.toggle('is-cleared', isCleared);
+      entry.lastCleared = isCleared;
+    }
+    const hasSkirmish = Boolean(st?.activeSkirmish);
+    if (entry.lastSkirmish !== hasSkirmish) {
+      entry.pillEl.classList.toggle('has-skirmish', hasSkirmish);
+      entry.lastSkirmish = hasSkirmish;
+    }
 
     const cx = Math.round((def.x - cameraX) * scale);
     const cy = Math.round((def.y - cameraY) * scale);
     const labelY = cy + Math.round(7.2 * scale);
-    entry.anchorEl.style.transform = `translate3d(${cx}px, ${labelY}px, 0)`;
+    const nextTransform = `translate3d(${cx}px, ${labelY}px, 0)`;
+    if (entry.lastTransform !== nextTransform) {
+      entry.anchorEl.style.transform = nextTransform;
+      entry.lastTransform = nextTransform;
+    }
   }
 
   for (const [nodeId, entry] of nodeLabelMap.entries()) {
-    if (!activeIds.has(nodeId)) entry.anchorEl.hidden = true;
+    if (!activeIds.has(nodeId) && entry.lastHidden !== true) {
+      entry.anchorEl.hidden = true;
+      entry.lastHidden = true;
+    }
   }
 }

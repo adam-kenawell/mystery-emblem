@@ -4,14 +4,13 @@
 
 import type { DungeonMapDefinition } from '../../types/schemas';
 import {
+  CostMinHeap,
   ORTHOGONAL_DIRS,
   areBattleFactionsAllied,
-  coordKey,
   getEffectiveMovementPoints,
   getMapTerrainAt,
   getTerrainMoveCost,
   isInMapBounds,
-  parseCoordKey,
   type PathfindingUnitContext,
 } from './terrainRules';
 
@@ -20,6 +19,8 @@ export interface AStarPathStep {
   y: number;
   cumulativeCost: number;
 }
+
+const INF_G = 0x3fffffff;
 
 /**
  * Finds the minimum-cost legal orthogonal path from `(unit.x, unit.y)` to `(targetX, targetY)`
@@ -33,96 +34,90 @@ export function findShortestPathAStar(
   targetY: number,
   allUnits: ReadonlyArray<PathfindingUnitContext>
 ): AStarPathStep[] | null {
-  if (!isInMapBounds(map, targetX, targetY)) return null;
+  if (!isInMapBounds(map, targetX, targetY) || !isInMapBounds(map, unit.x, unit.y)) return null;
   if (targetX === unit.x && targetY === unit.y) {
     return [{ x: unit.x, y: unit.y, cumulativeCost: 0 }];
   }
 
+  const w = map.width;
+  const h = map.height;
+  const total = w * h;
   const effectiveMov = getEffectiveMovementPoints(unit);
-  const allyOccupied = new Set<string>();
-  const enemyOccupied = new Set<string>();
+
+  const allyOccupied = new Uint8Array(total);
+  const enemyOccupied = new Uint8Array(total);
   for (const other of allUnits) {
     if (other.id === unit.id) continue;
-    const key = coordKey(other.x, other.y);
+    if (other.x < 0 || other.y < 0 || other.x >= w || other.y >= h) continue;
+    const oIdx = other.y * w + other.x;
     if (areBattleFactionsAllied(other.faction, unit.faction)) {
-      allyOccupied.add(key);
+      allyOccupied[oIdx] = 1;
     } else {
-      enemyOccupied.add(key);
+      enemyOccupied[oIdx] = 1;
     }
   }
 
-  const targetKey = coordKey(targetX, targetY);
-  if (allyOccupied.has(targetKey) || enemyOccupied.has(targetKey)) {
+  const targetIdx = targetY * w + targetX;
+  if (allyOccupied[targetIdx] || enemyOccupied[targetIdx]) {
     return null;
   }
 
-  interface OpenNode {
-    x: number;
-    y: number;
-    g: number;
-    f: number;
-    lastDir: number;
-    turns: number;
-  }
+  const startIdx = unit.y * w + unit.x;
+  const gScore = new Int32Array(total);
+  gScore.fill(INF_G);
+  const cameFrom = new Int32Array(total);
+  cameFrom.fill(-1);
+  const lastDirArr = new Int8Array(total);
+  lastDirArr.fill(-1);
+  const turnsArr = new Int32Array(total);
+  const closed = new Uint8Array(total);
 
-  const startKey = coordKey(unit.x, unit.y);
-  const gScore = new Map<string, number>([[startKey, 0]]);
-  const cameFrom = new Map<string, string>();
-  const heuristic = (x: number, y: number) => Math.abs(x - targetX) + Math.abs(y - targetY);
+  gScore[startIdx] = 0;
 
-  const open: OpenNode[] = [
-    {
-      x: unit.x,
-      y: unit.y,
-      g: 0,
-      f: heuristic(unit.x, unit.y),
-      lastDir: -1,
-      turns: 0,
-    },
-  ];
+  // Pack (f, -g, turns) into an exact integer key so the binary min-heap matches original A* tie-breaking.
+  const packPriority = (f: number, g: number, turns: number): number =>
+    f * 16_777_216 + Math.max(0, 4095 - Math.min(4095, g)) * 4096 + Math.min(4095, turns);
 
-  while (open.length > 0) {
-    let bestIdx = 0;
-    for (let i = 1; i < open.length; i++) {
-      const a = open[i]!;
-      const b = open[bestIdx]!;
-      if (a.f < b.f || (a.f === b.f && (a.g > b.g || (a.g === b.g && a.turns < b.turns)))) {
-        bestIdx = i;
-      }
-    }
+  const heap = new CostMinHeap();
+  const startH = Math.abs(unit.x - targetX) + Math.abs(unit.y - targetY);
+  heap.push(startIdx, packPriority(startH, 0, 0));
 
-    const current = open.splice(bestIdx, 1)[0]!;
-    const curKey = coordKey(current.x, current.y);
+  while (heap.length > 0) {
+    const curIdx = heap.pop();
+    if (closed[curIdx]) continue;
+    closed[curIdx] = 1;
 
-    if (current.x === targetX && current.y === targetY) {
+    if (curIdx === targetIdx) {
       const steps: AStarPathStep[] = [];
-      let traceKey: string | undefined = curKey;
-      while (traceKey !== undefined) {
-        const pt = parseCoordKey(traceKey);
+      let trace = curIdx;
+      while (trace !== -1) {
+        const tx = trace % w;
+        const ty = (trace - tx) / w;
         steps.push({
-          x: pt.x,
-          y: pt.y,
-          cumulativeCost: gScore.get(traceKey) ?? 0,
+          x: tx,
+          y: ty,
+          cumulativeCost: gScore[trace]!,
         });
-        traceKey = cameFrom.get(traceKey);
+        trace = cameFrom[trace]!;
       }
       steps.reverse();
       return steps;
     }
 
-    const bestKnownG = gScore.get(curKey);
-    if (bestKnownG !== undefined && current.g > bestKnownG) {
-      continue;
-    }
+    const cx = curIdx % w;
+    const cy = (curIdx - cx) / w;
+    const curG = gScore[curIdx]!;
+    const curDir = lastDirArr[curIdx]!;
+    const curTurns = turnsArr[curIdx]!;
 
     for (let dirIdx = 0; dirIdx < ORTHOGONAL_DIRS.length; dirIdx++) {
       const [dx, dy] = ORTHOGONAL_DIRS[dirIdx]!;
-      const nx = current.x + dx;
-      const ny = current.y + dy;
-      if (!isInMapBounds(map, nx, ny)) continue;
+      const nx = cx + dx;
+      const ny = cy + dy;
+      if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
 
-      const nKey = coordKey(nx, ny);
-      if (enemyOccupied.has(nKey)) continue;
+      const nIdx = ny * w + nx;
+      if (closed[nIdx] || enemyOccupied[nIdx]) continue;
 
       const terrain = getMapTerrainAt(map, nx, ny);
       if (!terrain) continue;
@@ -130,25 +125,17 @@ export function findShortestPathAStar(
       const stepCost = getTerrainMoveCost(terrain, unit);
       if (stepCost === null) continue;
 
-      const tentativeG = current.g + stepCost;
+      const tentativeG = curG + stepCost;
       if (tentativeG > effectiveMov) continue;
 
-      const prevG = gScore.get(nKey);
-      if (prevG === undefined || tentativeG < prevG) {
-        gScore.set(nKey, tentativeG);
-        cameFrom.set(nKey, curKey);
-        const nextTurns =
-          current.lastDir === -1 || current.lastDir === dirIdx
-            ? current.turns
-            : current.turns + 1;
-        open.push({
-          x: nx,
-          y: ny,
-          g: tentativeG,
-          f: tentativeG + heuristic(nx, ny),
-          lastDir: dirIdx,
-          turns: nextTurns,
-        });
+      if (tentativeG < gScore[nIdx]!) {
+        const nextTurns = curDir === -1 || curDir === dirIdx ? curTurns : curTurns + 1;
+        gScore[nIdx] = tentativeG;
+        cameFrom[nIdx] = curIdx;
+        lastDirArr[nIdx] = dirIdx;
+        turnsArr[nIdx] = nextTurns;
+        const f = tentativeG + Math.abs(nx - targetX) + Math.abs(ny - targetY);
+        heap.push(nIdx, packPriority(f, tentativeG, nextTurns));
       }
     }
   }

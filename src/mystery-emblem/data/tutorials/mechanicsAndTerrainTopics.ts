@@ -31,30 +31,6 @@ export const MECHANICS_AND_TERRAIN_TOPICS: ReadonlyArray<TutorialTopicDefinition
     ],
   },
   {
-    id: 'ch2_boss_and_traversal',
-    title: 'Outlaw Leaders & Water / Flying Footwork',
-    category: 'combat_tactics',
-    summary: 'Crossing water tiles and reading stationary enemy leaders.',
-    chips: [
-      { kind: 'type', pokemonType: 'Flying' },
-      { kind: 'type', pokemonType: 'Water' },
-      { kind: 'badge', label: '1 Mov Across Water', tone: 'cyan' },
-    ],
-    bullets: [
-      'Most grounded units cannot enter deep water, but Flying and Water types cross water tiles for 1 Movement.',
-      'Stationary enemy leaders hold their position until someone enters their attack range.',
-      'Toggle the Danger Area and clear outer scouts before baiting the boss.',
-    ],
-    beats: [
-      {
-        id: 'ch2_beat1_water_flying',
-        emotion: 'Normal',
-        dialogue:
-          'Swimmers and flyers cross water easily, while stationary bosses hold ground until you step into range.',
-      },
-    ],
-  },
-  {
     id: 'ch3_stairs_reinforcements',
     title: 'Cave Stairs & Escape Objectives',
     category: 'combat_tactics',

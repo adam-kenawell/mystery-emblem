@@ -17,7 +17,7 @@ import {
   closeSystemMenu,
   setSystemMenuSubView,
 } from './battleFieldMenuController';
-import { isForecastMovePickerOpen, setForecastMovePickerOpen } from './battleForecastMoveList';
+import { isForecastMovePickerOpen, setForecastMovePickerOpen } from './battleForecastView';
 import {
   cancelCombatForecast,
   confirmForecastAction,
@@ -29,11 +29,10 @@ import {
 } from './battleLifecycleController';
 import { requestManualEndPhase } from './battlePhaseAndAiRunner';
 import { cancelUncommittedMove } from './battleSelectionAndMenu';
-import { getExpectedTutorialAction } from './battleTutorialIntegration';
 import type { BattleControllerContext } from './battleTypesAndState';
 
 export function bindBattleUiButtons(ctx: BattleControllerContext): void {
-  const { state, dom, audioManager, tutorialOverlay, abortSignal: signal } = ctx;
+  const { state, dom, audioManager, abortSignal: signal } = ctx;
 
   bindPointerTap(
     dom.beginBattleBackdropEl,
@@ -49,10 +48,6 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
   bindPointerTap(
     dom.cmdTalkBtnEl,
     () => {
-      if (getExpectedTutorialAction(tutorialOverlay)) {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
       state.forecastReturnMode = 'action_menu';
       void executeTalkFromCommandMenu(ctx);
     },
@@ -61,11 +56,6 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
   bindPointerTap(
     dom.cmdAttackBtnEl,
     () => {
-      const expected = getExpectedTutorialAction(tutorialOverlay);
-      if (expected && expected !== 'battle_open_attack_forecast') {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
       openForecastFromCommandMenu(ctx);
     },
     { signal }
@@ -73,11 +63,6 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
   bindPointerTap(
     dom.cmdHealBtnEl,
     () => {
-      const expected = getExpectedTutorialAction(tutorialOverlay);
-      if (expected && expected !== 'battle_open_heal_forecast') {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
       openHealForecastFromCommandMenu(ctx);
     },
     { signal }
@@ -85,10 +70,6 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
   bindPointerTap(
     dom.cmdDanceBtnEl,
     () => {
-      if (getExpectedTutorialAction(tutorialOverlay)) {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
       void executeDanceFromCommandMenu(ctx);
     },
     { signal }
@@ -96,11 +77,6 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
   bindPointerTap(
     dom.cmdItemBtnEl,
     () => {
-      const expected = getExpectedTutorialAction(tutorialOverlay);
-      if (expected && expected !== 'battle_confirm_item') {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
       void useEquippedBattleConsumable(ctx);
     },
     { signal }
@@ -108,11 +84,6 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
   bindPointerTap(
     dom.cmdWaitBtnEl,
     () => {
-      const expected = getExpectedTutorialAction(tutorialOverlay);
-      if (expected && expected !== 'battle_confirm_wait') {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
       void confirmUnitWait(ctx);
     },
     { signal }
@@ -120,10 +91,6 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
   bindPointerTap(
     dom.cmdCancelBtnEl,
     () => {
-      if (getExpectedTutorialAction(tutorialOverlay)) {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
       cancelUncommittedMove(ctx);
     },
     { signal }
@@ -140,11 +107,6 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
     if (isForecastMovePickerOpen(forecastEl)) {
       audioManager.playSfx('cancel');
       setForecastMovePickerOpen(forecastEl, false);
-      return;
-    }
-    const expected = getExpectedTutorialAction(tutorialOverlay);
-    if (expected === 'battle_confirm_attack' || expected === 'battle_confirm_heal') {
-      tutorialOverlay?.nudgeActiveStep();
       return;
     }
     cancelCombatForecast(ctx);
@@ -181,10 +143,6 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       e.preventDefault();
       e.stopPropagation();
-      if (getExpectedTutorialAction(tutorialOverlay) === 'battle_toggle_danger_area') {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
       audioManager.playSfx('cancel');
       if (state.systemMenuSubView !== 'root') {
         setSystemMenuSubView(ctx, 'root');
@@ -207,10 +165,6 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
   bindPointerTap(
     dom.fieldEndPhaseBtnEl,
     () => {
-      if (getExpectedTutorialAction(tutorialOverlay)) {
-        tutorialOverlay?.nudgeActiveStep();
-        return;
-      }
       closeSystemMenu(ctx);
       void requestManualEndPhase(ctx);
     },
@@ -220,10 +174,6 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
     bindPointerTap(
       btn,
       () => {
-        if (getExpectedTutorialAction(tutorialOverlay)) {
-          tutorialOverlay?.nudgeActiveStep();
-          return;
-        }
         audioManager.playSfx('select');
         setSystemMenuSubView(ctx, view);
       },

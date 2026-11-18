@@ -17,10 +17,9 @@ import {
 } from '../data/cutscenes/locationCodec';
 import { decodeTileRows } from '../data/chapters/chapterCodec';
 import { discardLegacyCutsceneStageOverride, getLegacyCutsceneStageOverrides } from '../data/mapOverrideStore';
-import type { EditorContext } from './editorContext';
 import { button, checkbox, field, h, numberInput, row, section, selectInput, textInput } from './editorDom';
 import { mediaPicker } from './editorPickers';
-import { slugifyId, uniqueId, type StorySessionData } from './editorSession';
+import { slugifyId, uniqueId, type EditorContext, type StorySessionData } from './editorSession';
 
 /** Retired Map Editor stage ids → the locations they became. */
 export const LEGACY_STAGE_TO_LOCATION: Readonly<Record<string, string>> = {

@@ -25,49 +25,6 @@ export const TUTORIAL_CATEGORY_ORDER: ReadonlyArray<TutorialCompendiumCategory> 
   'world_progression',
 ];
 
-export type TutorialActionTriggerId =
-  | 'battle_open_field_menu'
-  | 'battle_toggle_danger_area'
-  | 'battle_select_lord'
-  | 'battle_select_partner'
-  | 'battle_move_to_blue_tile'
-  | 'battle_confirm_wait'
-  | 'battle_open_attack_forecast'
-  | 'battle_confirm_attack'
-  | 'battle_inspect_heal_or_item'
-  | 'battle_select_healer'
-  | 'battle_open_heal_forecast'
-  | 'battle_confirm_heal'
-  | 'battle_confirm_item'
-  | 'overworld_open_menu'
-  | 'prep_open_manage_units'
-  | 'prep_close_manage_units'
-  | 'prep_open_view_map'
-  | 'prep_swap_or_finish_view_map';
-
-export type TutorialBattleTileFilter =
-  | 'empty_floor'
-  | 'lord_unit'
-  | 'partner_unit'
-  | 'healer_unit'
-  | 'reachable_move'
-  | 'attackable_enemy'
-  | 'wounded_or_healer'
-  | 'prep_swap_slots';
-
-export type TutorialSpotlightTarget =
-  | { kind: 'none' }
-  | {
-      kind: 'dom';
-      selector: string;
-      preferredDock?: 'top' | 'bottom';
-    }
-  | {
-      kind: 'battle_tiles';
-      tileFilter: TutorialBattleTileFilter;
-      fallbackDomSelector?: string;
-    };
-
 export interface TutorialVisualChip {
   kind: 'badge' | 'type' | 'item' | 'species';
   label?: string;
@@ -82,16 +39,6 @@ export interface AdvisorTutorialBeat {
   emotion: PmdPortraitEmotion;
   /** Supports `{lord}`, `{partner}`, `{healer}`, `{mentor}`, `{advisor}` custom nickname interpolation */
   dialogue: string;
-  /** Concise prompt for hands-on steps */
-  actionHint?: string;
-  /** When set during live play, Quaquaval's coach bar stays non-blocking and awaits this action */
-  awaitAction?: TutorialActionTriggerId;
-  spotlight?: TutorialSpotlightTarget;
-  chips?: ReadonlyArray<TutorialVisualChip>;
-  /** Optional alternate line when presented in live mentor drill mode */
-  mentorDialogue?: string;
-  /** Optional alternate portrait emotion in live mentor drill mode */
-  mentorEmotion?: PmdPortraitEmotion;
 }
 
 /** Who voices the coach card: Quaquaval advisor (default) or live sparring mentor. */
@@ -115,7 +62,6 @@ export interface TutorialTriggerContext {
   map: DungeonMapDefinition;
   save: SaveData | null;
   deploymentCap?: number;
-  anyUnitCanPromoteNow?: boolean;
 }
 
 export interface TutorialTriggerRule {

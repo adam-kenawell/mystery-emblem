@@ -21,6 +21,7 @@ import {
   coordKey,
   findShortestPathAStar,
   type AStarPathStep,
+  type MovementRangeResult,
 } from '../terrainAndPathfinding';
 import { pickBestPursuitTile } from './aiPursuitField';
 
@@ -54,7 +55,8 @@ function chooseAiUnitAction(
   allLivingUnits: ReadonlyArray<BattleUnitState>,
   priorityTargetIds?: ReadonlySet<string>,
   activatedSquadIds?: ReadonlySet<string>,
-  supportCtx?: BattleSupportContext
+  supportCtx?: BattleSupportContext,
+  precomputedRange?: MovementRangeResult
 ): EnemyTurnDecision {
   const stayPath: AStarPathStep[] = [{ x: actor.x, y: actor.y, cumulativeCost: 0 }];
 
@@ -85,7 +87,7 @@ function chooseAiUnitAction(
     };
   }
 
-  const range = computeUnitMovementAndAttackRange(map, actor, allLivingUnits);
+  const range = precomputedRange ?? computeUnitMovementAndAttackRange(map, actor, allLivingUnits);
 
   interface ScoredCandidate {
     kind: 'attack' | 'status';
@@ -308,7 +310,8 @@ export function chooseEnemyAction(
   allLivingUnits: ReadonlyArray<BattleUnitState>,
   protectedUnitIds?: ReadonlySet<string>,
   activatedSquadIds?: ReadonlySet<string>,
-  supportCtx?: BattleSupportContext
+  supportCtx?: BattleSupportContext,
+  precomputedRange?: MovementRangeResult
 ): EnemyTurnDecision {
   return chooseAiUnitAction(
     map,
@@ -316,7 +319,8 @@ export function chooseEnemyAction(
     allLivingUnits,
     protectedUnitIds,
     activatedSquadIds,
-    supportCtx
+    supportCtx,
+    precomputedRange
   );
 }
 
@@ -324,7 +328,8 @@ export function chooseNpcAllyAction(
   map: DungeonMapDefinition,
   npcUnit: BattleUnitState,
   allLivingUnits: ReadonlyArray<BattleUnitState>,
-  supportCtx?: BattleSupportContext
+  supportCtx?: BattleSupportContext,
+  precomputedRange?: MovementRangeResult
 ): EnemyTurnDecision {
-  return chooseAiUnitAction(map, npcUnit, allLivingUnits, undefined, undefined, supportCtx);
+  return chooseAiUnitAction(map, npcUnit, allLivingUnits, undefined, undefined, supportCtx, precomputedRange);
 }

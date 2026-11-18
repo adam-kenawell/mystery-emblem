@@ -61,14 +61,20 @@ function animDataUrl(pokemonIdOrPath: number | string): string {
   return `${SPRITE_BASE}/${path}/AnimData.xml`;
 }
 
+const imageCache = new Map<string, Promise<HTMLImageElement | null>>();
+
 export function loadImage(url: string): Promise<HTMLImageElement | null> {
-  return new Promise((resolve) => {
+  const cached = imageCache.get(url);
+  if (cached) return cached;
+  const promise = new Promise<HTMLImageElement | null>((resolve) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => resolve(img);
     img.onerror = () => resolve(null);
     img.src = url;
   });
+  imageCache.set(url, promise);
+  return promise;
 }
 
 function parseOptionalInt(text: string | null | undefined): number | undefined {

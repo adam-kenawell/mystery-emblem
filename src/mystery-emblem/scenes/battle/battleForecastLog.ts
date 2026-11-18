@@ -12,9 +12,8 @@ import type {
   StatusMoveForecast,
 } from '../../engine/combatEngine';
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
-import { tileCenterToClientPoint } from '../../ui/gridViewportMath';
+import { getElementZoom, tileCenterToClientPoint } from '../../ui/gridViewportMath';
 import { createMiniSpeciesPortrait } from '../../ui/PmdUnitPortraitGrid';
-import { getElementZoom } from '../../ui/uiScale';
 import { getUnitVisualKey } from './battleUnitQueries';
 
 export type ForecastLineTone = 'super' | 'neutral' | 'resisted' | 'immune' | 'heal' | 'blocked';

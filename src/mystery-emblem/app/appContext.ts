@@ -12,7 +12,6 @@ import type { SaveStateManager } from '../state/SaveStateManager';
 import type { DevToolsHarness } from '../ui/DevToolsHarness';
 import type { DialogueOverlay } from '../ui/DialogueOverlay';
 import type { QuizScene } from '../ui/QuizScene';
-import type { RecruitNicknameOverlay } from '../ui/RecruitNicknameOverlay';
 import type { TutorialOverlay } from '../ui/TutorialOverlay';
 import type { BackStackController } from '../ui/pointerControls';
 
@@ -40,7 +39,6 @@ export interface AppRuntimeContext {
   dialogueOverlay: DialogueOverlay | null;
   cutsceneScene: CutsceneScene | null;
   creditsScene: CreditsScene | null;
-  recruitNicknameOverlay: RecruitNicknameOverlay | null;
   tutorialOverlay: TutorialOverlay | null;
   quizScene: QuizScene | null;
   battleScene: BattleScene | null;

@@ -49,12 +49,10 @@ import type {
 export const BATTLE_DRAG_THRESHOLD_PX = 8;
 export const BATTLE_LONG_PRESS_MS = 520;
 export const WALK_MS_PER_TILE_NORMAL = 85;
-export const WALK_MS_PER_TILE_FAST = 16;
 export const RANGE_PULSE_PERIOD_MS = 1500;
 
-/** Battle RNG: a test-injected `customRng` wins, otherwise the persisted seeded stream. */
-export function getBattleRng(state: Pick<BattleRuntimeState, 'customRng' | 'rngState'>): () => number {
-  return state.customRng ?? (() => nextSeededRandom(state));
+export function getBattleRng(state: Pick<BattleRuntimeState, 'rngState'>): () => number {
+  return () => nextSeededRandom(state);
 }
 
 export interface FloatingBattleText {
@@ -130,7 +128,6 @@ export interface BattleRuntimeState {
   pendingPostBattleRecruits: PendingPostBattleRecruit[];
   commitToSaveOnVictory: boolean;
   clearRewardItems: ReadonlyArray<ConvoyEntry>;
-  pauseOnLevelUpInFastMode: boolean;
   skipPrepPhase: boolean;
   levelUpHistory: LevelUpResult[];
   levelUpResolver: (() => void) | null;
@@ -141,6 +138,7 @@ export interface BattleRuntimeState {
   currentOnVictory: (() => void) | undefined;
   victoryCallbackFired: boolean;
   map: DungeonMapDefinition;
+  tileCacheVersion: number;
   enemySpawnDefs: ReadonlyArray<ManualEnemyBattleSpawn>;
   guestPrepManager: SaveStateManager | null;
   deploymentSlots: PrepDeploymentSlot[];
@@ -179,14 +177,13 @@ export interface BattleRuntimeState {
   trackedEnemyIds: Set<string>;
   lastComputedHoverEnemyId: string | null;
   suppressedHoverEnemyId: string | null;
+  dangerRangeCache: Map<string, MovementRangeResult>;
   currentDanger: DangerAreaResult;
   cam: DungeonGridCameraState;
   pinchTracker: MultiTouchPinchTracker;
   systemMenuOpen: boolean;
   systemMenuSubView: BattleFieldMenuSubView;
   lastFieldMenuAnchorClient: { x: number; y: number } | null;
-  fastMode: boolean;
-  customRng: (() => number) | null;
   /** mulberry32 state; persisted in mid-battle saves so reloads replay identical rolls */
   rngState: number;
   suspendSource: BattleSuspendSource | null;
@@ -238,7 +235,6 @@ export function createInitialBattleRuntimeState(): BattleRuntimeState {
     pendingPostBattleRecruits: [],
     commitToSaveOnVictory: false,
     clearRewardItems: [],
-    pauseOnLevelUpInFastMode: false,
     skipPrepPhase: false,
     levelUpHistory: [],
     levelUpResolver: null,
@@ -249,6 +245,7 @@ export function createInitialBattleRuntimeState(): BattleRuntimeState {
     currentOnVictory: undefined,
     victoryCallbackFired: false,
     map,
+    tileCacheVersion: 0,
     enemySpawnDefs: resolveEnemySpawnsForMap(map),
     guestPrepManager: null,
     deploymentSlots: [],
@@ -287,6 +284,7 @@ export function createInitialBattleRuntimeState(): BattleRuntimeState {
     trackedEnemyIds: new Set(),
     lastComputedHoverEnemyId: null,
     suppressedHoverEnemyId: null,
+    dangerRangeCache: new Map(),
     currentDanger: {
       globalDangerTiles: new Set(),
       individualDangerTiles: new Set(),
@@ -297,8 +295,6 @@ export function createInitialBattleRuntimeState(): BattleRuntimeState {
     systemMenuOpen: false,
     systemMenuSubView: 'root',
     lastFieldMenuAnchorClient: null,
-    fastMode: false,
-    customRng: null,
     rngState: createRandomRngSeed(),
     suspendSource: null,
     tilesetSheets: new Map(),

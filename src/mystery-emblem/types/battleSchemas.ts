@@ -7,7 +7,6 @@ import type {
   ReinforcementWaveDefinition,
 } from './eventSchemas';
 import type { StatBlockSeven } from './registrySchemas';
-import type { QuizSeedSlotKey } from './saveSchemas';
 
 export const TERRAIN_TYPES = [
   'floor',
@@ -58,8 +57,6 @@ export interface DungeonUnitSpawn {
   x: number;
   y: number;
   speciesId: string;
-  /** Optional Quiz recruitment slot key overriding `speciesId` from `save.campaign.quizSeeds` */
-  seedKey?: QuizSeedSlotKey;
   level: number;
   nickname?: string;
   stats?: StatBlockSeven;
@@ -128,8 +125,6 @@ export interface ManualEnemyBattleSpawn {
   x: number;
   y: number;
   speciesId: string;
-  /** Optional Quiz recruitment slot key overriding `speciesId` from `save.campaign.quizSeeds` */
-  seedKey?: QuizSeedSlotKey;
   nickname: string;
   level: number;
   /** Manually tuned stat block (if omitted, scaled cleanly from manual registry `baseStats` + `growthRates`) */

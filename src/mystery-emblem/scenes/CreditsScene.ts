@@ -22,16 +22,6 @@ export interface CreditsSceneOptions {
   onStateChange?: () => void;
 }
 
-export interface CreditsSceneSnapshot {
-  isOpen: boolean;
-  scrollY: number;
-  maxScrollY: number;
-  reachedEnd: boolean;
-  fastScrolling: boolean;
-  castCardCount: number;
-  bgmTrackId: string | null;
-}
-
 const BASE_SCROLL_PX_PER_SEC = 46;
 const FAST_SCROLL_MULTIPLIER = 3.8;
 
@@ -51,13 +41,13 @@ export class CreditsScene {
 
   private activeSpriteActors: PmdSpriteActor[] = [];
   private openState = false;
-  private fastMode = false;
   private scrollY = 0;
   private maxScrollY = 0;
   private reachedEnd = false;
   private animClockMs = 0;
   private lastRafMs = 0;
   private rafId: number | null = null;
+  private layoutResizeObserver: ResizeObserver | null = null;
   private finishResolver: ((reason: CreditsFinishReason) => void) | null = null;
   private readonly abortController = new AbortController();
 
@@ -125,40 +115,8 @@ export class CreditsScene {
     return this.openState;
   }
 
-  public setFastMode(enabled: boolean): void {
-    this.fastMode = Boolean(enabled);
-  }
-
   public handleBack(): void {
     if (this.openState) this.finish('skipped');
-  }
-
-  public getSnapshot(): CreditsSceneSnapshot {
-    return {
-      isOpen: this.openState,
-      scrollY: Math.round(this.scrollY),
-      maxScrollY: Math.round(this.maxScrollY),
-      reachedEnd: this.reachedEnd,
-      fastScrolling: this.holdCtrl.fastHolding,
-      castCardCount: this.activeSpriteActors.length,
-      bgmTrackId: this.audioManager.getCurrentTrackId(),
-    };
-  }
-
-  public advanceScrollForTest(deltaMs: number): void {
-    if (!this.openState) return;
-    this.stepSimulation(Math.max(0, deltaMs));
-    this.backdropRenderer.render(this.animClockMs);
-  }
-
-  public scrollToEndForTest(): void {
-    if (!this.openState) return;
-    this.syncLayoutMetrics();
-    this.scrollY = this.maxScrollY;
-    this.reachedEnd = true;
-    this.holdHintEl.hidden = true;
-    this.applyScrollTransform();
-    this.backdropRenderer.render(this.animClockMs);
   }
 
   public play(): Promise<CreditsFinishReason> {
@@ -174,7 +132,7 @@ export class CreditsScene {
     this.destroyCastActors();
     this.activeSpriteActors = buildCreditsScrollDom({
       scrollTrackEl: this.scrollTrackEl,
-      save: this.saveManager.getSave(),
+      save: this.saveManager.getReadOnlySave(),
       onFinishTap: () => {
         this.audioManager.playSfx('select');
         this.finish('completed');
@@ -187,6 +145,13 @@ export class CreditsScene {
     this.onStateChange?.();
 
     this.syncLayoutMetrics();
+    if (!this.layoutResizeObserver && typeof ResizeObserver !== 'undefined') {
+      this.layoutResizeObserver = new ResizeObserver(() => {
+        if (this.openState) this.syncLayoutMetrics();
+      });
+      this.layoutResizeObserver.observe(this.scrollViewportEl);
+      this.layoutResizeObserver.observe(this.scrollTrackEl);
+    }
     this.applyScrollTransform();
     this.backdropRenderer.render(this.animClockMs);
     this.audioSeq.captureAndStart(() => this.openState);
@@ -228,9 +193,8 @@ export class CreditsScene {
 
   private stepSimulation(dtMs: number): void {
     this.animClockMs += dtMs;
-    this.syncLayoutMetrics();
     if (!this.reachedEnd && this.maxScrollY > 0) {
-      const mult = this.holdCtrl.fastHolding ? FAST_SCROLL_MULTIPLIER : this.fastMode ? 2.2 : 1;
+      const mult = this.holdCtrl.fastHolding ? FAST_SCROLL_MULTIPLIER : 1;
       this.scrollY = Math.min(this.maxScrollY, this.scrollY + (BASE_SCROLL_PX_PER_SEC * mult * dtMs) / 1000);
       if (this.scrollY >= this.maxScrollY - 0.5) {
         this.scrollY = this.maxScrollY;
@@ -267,6 +231,8 @@ export class CreditsScene {
 
   public destroy(): void {
     this.finish('cancelled');
+    this.layoutResizeObserver?.disconnect();
+    this.layoutResizeObserver = null;
     this.abortController.abort();
     this.rootEl.remove();
   }
