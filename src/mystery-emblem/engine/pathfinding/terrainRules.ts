@@ -110,6 +110,12 @@ export const TERRAIN_METADATA: Readonly<Record<TerrainType, TerrainMetadata>> = 
     shortLabel: 'Barrier',
     summary: 'Impassable to Grounded & Flying · Levitate crosses at 1 Mov',
   },
+  fence: {
+    id: 'fence',
+    label: 'Wooden Fence',
+    shortLabel: 'Fence',
+    summary: 'Impassable to Grounded · Flying & Levitate cross at 1 Mov',
+  },
   wall: {
     id: 'wall',
     label: 'Dungeon Wall',
@@ -244,7 +250,7 @@ export function getTerrainMoveCost(
     return terrain === 'void' || terrain === 'barrier' ? null : 1;
   }
 
-  if (terrain === 'void' || terrain === 'barrier') return null;
+  if (terrain === 'void' || terrain === 'barrier' || terrain === 'fence') return null;
 
   const ignoresPenalties = hasHeavyDutyBootsEffect(unit.heldItemId);
   if (terrain === 'trees') {

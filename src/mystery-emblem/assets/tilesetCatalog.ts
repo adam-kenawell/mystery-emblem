@@ -54,6 +54,7 @@ const CURATED_TILESET_NAMES: Readonly<Record<string, string>> = {
   '141': 'Temporal Spire',
   '142': 'Lush Prairie',
   '143': 'Snowy Peak',
+  '144': 'Custom Field Fences & Props',
 };
 
 function parseTilesetManifestEntry(globPath: string, url: string): TilesetManifestEntry {

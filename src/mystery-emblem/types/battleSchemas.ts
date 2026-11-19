@@ -19,6 +19,7 @@ export const TERRAIN_TYPES = [
   'wonder_tile',
   'wall',
   'barrier',
+  'fence',
 ] as const;
 
 export type TerrainType = (typeof TERRAIN_TYPES)[number];

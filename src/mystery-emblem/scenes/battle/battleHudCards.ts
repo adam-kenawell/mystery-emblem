@@ -56,6 +56,7 @@ export function updateBattleInfoStrip(ctx: BattleControllerContext): void {
     if (terrain === 'water') movChip = 'Water/Fly';
     else if (terrain === 'lava') movChip = 'Fire/Fly';
     else if (terrain === 'void' || terrain === 'barrier') movChip = 'Lev Only';
+    else if (terrain === 'fence') movChip = 'Fly/Lev';
     else movChip = 'Mov -';
   } else {
     movChip = 'Mov -';

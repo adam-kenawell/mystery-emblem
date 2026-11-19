@@ -30,6 +30,7 @@ export const DEFAULT_TERRAIN_PALETTE: Readonly<
   wonder_tile: { tilesetId: '142', chunkIndex: 59 },
   wall: { tilesetId: '001', chunkIndex: 1 },
   barrier: { tilesetId: '080', chunkIndex: 15 },
+  fence: { tilesetId: '144', chunkIndex: 97 },
 };
 
 const TERRAIN_TO_CODE: Readonly<Record<TerrainType, string>> = {
@@ -43,6 +44,7 @@ const TERRAIN_TO_CODE: Readonly<Record<TerrainType, string>> = {
   wonder_tile: 'WT',
   wall: 'X',
   barrier: 'B',
+  fence: 'FN',
 };
 
 const CODE_TO_TERRAIN: Readonly<Record<string, TerrainType>> = Object.fromEntries(

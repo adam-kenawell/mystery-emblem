@@ -52,6 +52,9 @@ export const BIOME_BRUSH_PRESETS: ReadonlyArray<BiomeBrushPreset> = [
   { id: 'lava', label: 'Lava', terrainType: 'lava', tilesetId: '110', chunkIndex: 106 },
   { id: 'void', label: 'Void', terrainType: 'void', tilesetId: '061', chunkIndex: 100 },
   { id: 'barrier', label: 'Barrier', terrainType: 'barrier', tilesetId: '080', chunkIndex: 15 },
+  { id: 'bluff_fence', label: 'Bluff Fence', terrainType: 'fence', tilesetId: '144', chunkIndex: 1 },
+  { id: 'woods_fence', label: 'Woods Fence', terrainType: 'fence', tilesetId: '144', chunkIndex: 49 },
+  { id: 'prairie_fence', label: 'Prairie Fence', terrainType: 'fence', tilesetId: '144', chunkIndex: 97 },
   { id: 'stairs', label: 'Stairs', terrainType: 'stairs', tilesetId: '110', chunkIndex: 59 },
   { id: 'wonder', label: 'Wonder Tile', terrainType: 'wonder_tile', tilesetId: '142', chunkIndex: 59 },
 ];
