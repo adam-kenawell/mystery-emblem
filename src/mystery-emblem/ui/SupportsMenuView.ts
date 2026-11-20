@@ -32,6 +32,7 @@ import { buildPmdCloseXButtonHtml } from './PmdWindow';
 import type { OwnedPokemonInstance, SaveData, SupportRank } from '../types/schemas';
 import type { DialogueOverlay } from './DialogueOverlay';
 import { PmdPortraitView } from './PmdSpriteCanvas';
+import { SupportMiniStage } from './SupportMiniStage';
 import { escapeUiHtml } from './inspector/UnitDetailCard';
 import { bindBackGestureSurface, bindPointerTap } from './pointerControls';
 
@@ -63,6 +64,7 @@ export class SupportsMenuController {
   private partnerDialogEl: HTMLElement | null = null;
   private playbackBackdropEl: HTMLElement | null = null;
   private rankUpBackdropEl: HTMLElement | null = null;
+  private miniStage: SupportMiniStage | null = null;
 
   private listRenderAbort: AbortController | null = null;
   private popupRenderAbort: AbortController | null = null;
@@ -91,6 +93,8 @@ export class SupportsMenuController {
     this.selectedActorId = null;
     this.rankUpInfo = null;
     this.isPlayingScript = false;
+    this.miniStage?.destroy();
+    this.miniStage = null;
     this.popupRenderAbort?.abort();
     this.popupRenderAbort = null;
     this.rankUpRenderAbort?.abort();
@@ -501,6 +505,18 @@ export class SupportsMenuController {
     const script = compileSupportConversationScript(doc, save);
     const playbackBackdrop = this.ensurePlaybackBackdropDom();
 
+    this.miniStage?.destroy();
+    const miniStage = new SupportMiniStage({
+      subjectUnit,
+      partnerUnit,
+      script,
+      save,
+    });
+    this.miniStage = miniStage;
+    playbackBackdrop.innerHTML = '';
+    playbackBackdrop.appendChild(miniStage.rootEl);
+    miniStage.start();
+
     this.opts.audioManager.playSfx('select');
     this.isPlayingScript = true;
     playbackBackdrop.hidden = false;
@@ -508,8 +524,16 @@ export class SupportsMenuController {
 
     let reason: 'completed' | 'skipped' | 'cancelled' = 'completed';
     try {
-      reason = await this.opts.dialogueOverlay.playScript(script);
+      reason = await this.opts.dialogueOverlay.playScript(script, {
+        onLineStart: (_i, line) => {
+          if (!line.narrator) miniStage.hopSide(line.side);
+        },
+      });
     } finally {
+      miniStage.destroy();
+      if (this.miniStage === miniStage) {
+        this.miniStage = null;
+      }
       this.isPlayingScript = false;
       playbackBackdrop.hidden = true;
       this.opts.onLayerStateChanged?.();

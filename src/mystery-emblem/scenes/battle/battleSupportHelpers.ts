@@ -89,6 +89,7 @@ export function awardBattleCombatSupportPoints(
     const res = recordBattleSupportInteraction(state.battleSupportPoints, playerUnit, ally, 1);
     if (res.gained) {
       anyGainedForPlayer = true;
+      state.supportHeartEarnedThisBattle = true;
       spawnSupportHeartCallout(state, dom, ally.x, ally.y);
     }
   }
@@ -121,6 +122,7 @@ export function awardBattleAllyPairSupportPoint(
 
   const res = recordBattleSupportInteraction(state.battleSupportPoints, actor, target, 1);
   if (res.gained) {
+    state.supportHeartEarnedThisBattle = true;
     spawnSupportHeartCallout(state, dom, actor.x, actor.y);
     spawnSupportHeartCallout(state, dom, target.x, target.y);
   }

@@ -19,19 +19,28 @@ import { updateBattleInfoStrip } from './battleHudCards';
 import type { BattleControllerContext } from './battleTypesAndState';
 import { getLivingPlayers } from './battleUnitQueries';
 
+export function isQuaquavalSilentInBattle(ctx: BattleControllerContext): boolean {
+  const { state, saveManager } = ctx;
+  const save = saveManager.getSave();
+  return (
+    isQuaquavalAbsentFromLevel(state.activeLevelId) ||
+    state.map.id === 'chapter_01' ||
+    (state.activeLevelId !== 'prologue' &&
+      save !== null &&
+      !save.roster.some((u) => u.speciesId === 'mentor_quaquaval'))
+  );
+}
+
 export function triggerBattleTutorial(
   ctx: BattleControllerContext,
   topicId: string,
   opts?: { forceIfAlreadySeen?: boolean; tokens?: Readonly<Record<string, string>> }
 ): Promise<boolean> {
   const { state, tutorialOverlay } = ctx;
-  if (!tutorialOverlay || !state.openState || state.cutsceneInProgress) {
+  if (!tutorialOverlay || !state.openState || state.cutsceneInProgress || isQuaquavalSilentInBattle(ctx)) {
     return Promise.resolve(false);
   }
   const isPrologue = state.activeLevelId === 'prologue';
-  if (isQuaquavalAbsentFromLevel(state.activeLevelId)) {
-    return Promise.resolve(false);
-  }
   return tutorialOverlay.presentTopicIfNeeded(topicId, {
     presenter: isPrologue ? 'mentor' : 'advisor',
     forceIfAlreadySeen: opts?.forceIfAlreadySeen,
@@ -42,11 +51,7 @@ export function triggerBattleTutorial(
 /** Fires once when the player first opens a combat forecast so Quaquaval explains range & [E] counters. */
 export function triggerReactiveForecastTutorial(ctx: BattleControllerContext): void {
   const { state, saveManager } = ctx;
-  if (
-    !state.openState ||
-    state.cutsceneInProgress ||
-    isQuaquavalAbsentFromLevel(state.activeLevelId)
-  ) {
+  if (!state.openState || state.cutsceneInProgress || isQuaquavalSilentInBattle(ctx)) {
     return;
   }
   if (!saveManager.hasSeenTutorial(PROLOGUE_RANGED_DRILL_TOPIC_ID)) {
@@ -67,7 +72,7 @@ export async function triggerReactivePostCombatTutorials(
     !state.openState ||
     runGen !== state.battleRunGen ||
     state.phase !== 'player_phase' ||
-    isQuaquavalAbsentFromLevel(state.activeLevelId)
+    isQuaquavalSilentInBattle(ctx)
   ) {
     return false;
   }
@@ -134,7 +139,7 @@ export async function triggerReactiveTerrainTutorialAt(
     runGen !== state.battleRunGen ||
     state.phase !== 'player_phase' ||
     state.activeLevelId === 'prologue' ||
-    isQuaquavalAbsentFromLevel(state.activeLevelId)
+    isQuaquavalSilentInBattle(ctx)
   ) {
     return false;
   }
@@ -156,7 +161,7 @@ export async function triggerTurn2FallbackTerrainTutorial(
     runGen !== state.battleRunGen ||
     state.phase !== 'player_phase' ||
     state.activeLevelId === 'prologue' ||
-    isQuaquavalAbsentFromLevel(state.activeLevelId)
+    isQuaquavalSilentInBattle(ctx)
   ) {
     return false;
   }
@@ -170,7 +175,9 @@ export async function triggerTurn2FallbackTerrainTutorial(
 
 export function triggerPrepHubTutorials(ctx: BattleControllerContext): void {
   const { state, saveManager, tutorialOverlay } = ctx;
-  if (!tutorialOverlay || !state.openState || state.phase !== 'dungeon_prep') return;
+  if (!tutorialOverlay || !state.openState || state.phase !== 'dungeon_prep' || isQuaquavalSilentInBattle(ctx)) {
+    return;
+  }
   const save = saveManager.getSave();
   if (!save) return;
 
@@ -191,7 +198,9 @@ export async function triggerTurn1BattleTutorials(
   runGen: number
 ): Promise<void> {
   const { state, saveManager, tutorialOverlay } = ctx;
-  if (!tutorialOverlay || !state.openState || runGen !== state.battleRunGen) return;
+  if (!tutorialOverlay || !state.openState || runGen !== state.battleRunGen || isQuaquavalSilentInBattle(ctx)) {
+    return;
+  }
 
   const topics = evaluateTurn1TutorialTopics({
     levelId: state.activeLevelId,

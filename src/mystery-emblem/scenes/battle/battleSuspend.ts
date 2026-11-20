@@ -46,6 +46,7 @@ export interface BattleSuspendSnapshot {
   defeatIfUnitIdsFall: string[];
   units: BattleUnitState[];
   battleSupportPoints?: Record<string, SupportPairProgress>;
+  supportHeartEarnedThisBattle?: boolean;
   deploymentSlots: PrepDeploymentSlot[];
   triggeredEventIds: string[];
   spawnedReinforcementIds: string[];
@@ -105,6 +106,7 @@ export function buildBattleSuspendJson(state: BattleRuntimeState): string | null
     defeatIfUnitIdsFall: [...state.defeatIfUnitIdsFall],
     units: state.units,
     battleSupportPoints: state.battleSupportPoints,
+    supportHeartEarnedThisBattle: state.supportHeartEarnedThisBattle,
     deploymentSlots: state.deploymentSlots,
     triggeredEventIds: [...state.triggeredEventIds],
     spawnedReinforcementIds: [...state.spawnedReinforcementIds],
@@ -201,6 +203,7 @@ export async function applyBattleSuspendSnapshot(
   state.battleSupportPoints = snap.battleSupportPoints
     ? (JSON.parse(JSON.stringify(snap.battleSupportPoints)) as Record<string, SupportPairProgress>)
     : {};
+  state.supportHeartEarnedThisBattle = Boolean(snap.supportHeartEarnedThisBattle);
   state.deploymentSlots = snap.deploymentSlots;
   state.triggeredEventIds = new Set(snap.triggeredEventIds);
   state.spawnedReinforcementIds = new Set(snap.spawnedReinforcementIds);

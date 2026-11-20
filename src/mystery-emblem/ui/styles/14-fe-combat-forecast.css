@@ -71,6 +71,7 @@
 .pmd-fe-log-card {
   display: flex;
   flex-direction: column;
+  align-items: center;
   background: var(--pmd-fill-well);
   border: 2px solid var(--pmd-text-white);
 }
@@ -80,11 +81,26 @@
 }
 
 .pmd-fe-log-num.pmd-fe-log-dmg {
-  padding: 3px 0 2px;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 3px;
+  width: 100%;
+  padding: 3px 4px 2px;
+  box-sizing: border-box;
   font-size: 16px;
   line-height: 1;
   text-align: center;
   border-top: 2px solid var(--pmd-text-white);
+}
+
+.pmd-fe-log-ko-inline {
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  color: var(--pmd-text-danger);
+  text-shadow: 1px 1px 0 #000000;
 }
 
 .pmd-forecast-hp-bar-track.pmd-fe-log-bar {
@@ -130,20 +146,6 @@
 
 .pmd-fe-log-num.is-ko {
   color: var(--pmd-text-danger);
-}
-
-.pmd-fe-log-ko {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3px 8px;
-  font-size: 14px;
-  font-weight: bold;
-  letter-spacing: 0.06em;
-  color: var(--pmd-text-danger);
-  background: var(--pmd-fill-well-deep);
-  border: 2px solid var(--pmd-text-danger);
-  text-shadow: 1px 1px 0 #000000;
 }
 
 .pmd-fe-side-hp-line {
@@ -211,9 +213,34 @@
 .pmd-fe-side-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  justify-content: flex-end;
+  gap: 3px;
   flex: 1 1 auto;
   min-width: 0;
+}
+
+.pmd-fe-sides:has([data-defender-move]:not([hidden])) .pmd-fe-side-info {
+  min-height: 60px;
+}
+
+.pmd-fe-side-move {
+  font-size: 12px;
+  font-weight: bold;
+  line-height: 1.15;
+  color: var(--pmd-text-green);
+  text-shadow: 1px 1px 0 #000000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pmd-fe-side.is-right .pmd-fe-side-move {
+  text-align: right;
+}
+
+.pmd-fe-side-move.is-muted {
+  color: #9098a0;
+  font-weight: normal;
 }
 
 /* Divider + "Battle Sequence" heading above the strike log */
@@ -237,6 +264,7 @@
   display: flex;
   gap: 10px;
   font-size: 12px;
+  line-height: 1.15;
   color: var(--pmd-text-cyan);
   text-shadow: 1px 1px 0 #000000;
   white-space: nowrap;
@@ -424,8 +452,20 @@
     font-size: 13px;
   }
 
+  .pmd-fe-log-num.pmd-fe-log-dmg {
+    font-size: 14px;
+  }
+
   .pmd-fe-sides {
     gap: 10px;
+  }
+
+  .pmd-fe-sides:has([data-defender-move]:not([hidden])) .pmd-fe-side-info {
+    min-height: 58px;
+  }
+
+  .pmd-fe-side-move {
+    font-size: 11px;
   }
 
   .pmd-fe-side-stats {
@@ -508,8 +548,21 @@
     gap: 4px;
   }
 
+  .pmd-fe-sides:has([data-defender-move]:not([hidden])) .pmd-fe-side-info {
+    min-height: 58px;
+  }
+
+  .pmd-fe-side-move,
+  .pmd-fe-side-stats {
+    font-size: 11px;
+  }
+
   .pmd-fe-log {
     gap: 2px;
+  }
+
+  .pmd-fe-log-num.pmd-fe-log-dmg {
+    font-size: 14px;
   }
 
   .pmd-fe-log-step canvas {

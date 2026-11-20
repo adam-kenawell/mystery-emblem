@@ -93,6 +93,8 @@ export class DialogueOverlay {
   private activeOnLineStart?: (lineIndex: number, line: DialogueLine) => void | Promise<void>;
   private activeOnAdvanceInterrupt?: () => void;
   private onStateChange?: () => void;
+  private lineRenderToken = 0;
+  private hasRenderedCurrentLine = false;
 
   constructor(
     mountParent: HTMLElement,
@@ -119,14 +121,14 @@ export class DialogueOverlay {
     this.rootEl = this.dom.rootEl;
 
     this.unsubscribeSave = this.saveManager.subscribe(() => {
-      if (this.isOpen()) {
+      if (this.isOpen() && this.hasRenderedCurrentLine) {
         void this.renderCurrentLine({ preserveTypewriterProgress: true });
       }
     });
   }
 
   public isOpen(): boolean {
-    return !this.rootEl.hidden && this.activeScript !== null;
+    return this.activeScript !== null;
   }
 
   public async playScript(
@@ -141,6 +143,9 @@ export class DialogueOverlay {
       this.finishResolver = null;
       prevResolve('cancelled');
     }
+
+    this.lineRenderToken += 1;
+    this.hasRenderedCurrentLine = false;
 
     this.typewriterMsPerChar =
       options?.typewriterMsPerChar ?? (prefersReducedMotionEnabled() ? 0 : 22);
@@ -161,7 +166,6 @@ export class DialogueOverlay {
     this.dom.rightActorRowEl.hidden = true;
     const overworldEl = document.querySelector<HTMLElement>('#pmd-overworld-scene:not([hidden])');
     this.rootEl.classList.toggle('is-overworld-top', Boolean(overworldEl));
-    this.rootEl.hidden = false;
     this.onStateChange?.();
 
     if (script.bgm !== undefined && script.lines[0]?.bgm === undefined) {
@@ -169,11 +173,19 @@ export class DialogueOverlay {
       this.audioManager.playBgm(script.bgm, { fadeMs: 320 });
     }
 
-    await this.renderCurrentLine({ preserveTypewriterProgress: false });
-
-    return new Promise<DialogueFinishReason>((resolve) => {
-      this.finishResolver = resolve;
+    let settledReason: DialogueFinishReason | null = null;
+    const finishPromise = new Promise<DialogueFinishReason>((resolve) => {
+      this.finishResolver = (reason) => {
+        settledReason = reason;
+        resolve(reason);
+      };
     });
+
+    await this.renderCurrentLine({ preserveTypewriterProgress: false });
+    if (settledReason !== null) return settledReason;
+    if (this.activeScript !== script) return 'cancelled';
+
+    return finishPromise;
   }
 
   public close(reason: DialogueFinishReason = 'cancelled'): void {
@@ -184,6 +196,8 @@ export class DialogueOverlay {
       closingScript.restorePreviousBgmOnClose !== false;
     const restoreId = this.savedPreCutsceneBgmId;
 
+    this.lineRenderToken += 1;
+    this.hasRenderedCurrentLine = false;
     this.typewriter.stop();
     this.activeScript = null;
     this.saveOverride = undefined;
@@ -225,7 +239,7 @@ export class DialogueOverlay {
   }
 
   public handleAdvanceTap(): void {
-    if (!this.activeScript) return;
+    if (!this.activeScript || !this.hasRenderedCurrentLine) return;
     if (this.typewriter.isAnimating()) {
       this.typewriter.completeImmediately();
       return;
@@ -251,6 +265,7 @@ export class DialogueOverlay {
     }
 
     this.currentLineIndex = nextIdx;
+    this.hasRenderedCurrentLine = false;
     void this.renderCurrentLine({ preserveTypewriterProgress: false });
   }
 
@@ -262,31 +277,54 @@ export class DialogueOverlay {
   }
 
   private async renderCurrentLine(opts: { preserveTypewriterProgress: boolean }): Promise<void> {
-    const line = this.activeScript?.lines[this.currentLineIndex];
-    if (!line) return;
+    const token = ++this.lineRenderToken;
+    const script = this.activeScript;
+    const line = script?.lines[this.currentLineIndex];
+    if (!script || !line) return;
 
-    if (!opts.preserveTypewriterProgress) {
-      if (line.bgm !== undefined) {
-        this.cutsceneChangedBgm = true;
-        this.audioManager.playBgm(line.bgm, { fadeMs: 320 });
-      }
-      if (line.sfx) this.audioManager.playSfx(line.sfx);
-      if (line.sfxUrl) this.audioManager.playSfxUrl(line.sfxUrl);
-      void this.activeOnLineStart?.(this.currentLineIndex, line);
+    const initialSave = this.saveOverride !== undefined ? this.saveOverride : this.saveManager.getSave();
+    const isNarrator = Boolean(line.narrator);
+    const oppositeSide: DialogueSide = line.side === 'left' ? 'right' : 'left';
+    const nextSides: Record<DialogueSide, SideSlotState | null> = {
+      left: this.activeSides.left,
+      right: this.activeSides.right,
+    };
+    if (!isNarrator) {
+      nextSides[line.side] = { speaker: line.speaker, emotion: line.emotion };
+      if (line.clearOppositePortrait) nextSides[oppositeSide] = null;
+    }
+
+    const portraitTasks: Promise<unknown>[] = [];
+    const sidesToShow: Record<DialogueSide, boolean> = { left: false, right: false };
+    for (const side of ['left', 'right'] as const) {
+      const view = side === 'left' ? this.dom.leftPortrait : this.dom.rightPortrait;
+      const state = nextSides[side];
+      if (!state || isNarrator || line.side !== side) continue;
+      sidesToShow[side] = true;
+      const id = this.resolveSpeaker(state.speaker, initialSave);
+      portraitTasks.push(
+        view.setPortrait({
+          speciesIdOrAssetId: id.visualAssetId ?? id.speciesId ?? id.pmdAssetId,
+          emotion: state.emotion,
+          mirrorHorizontal: side === 'right',
+        })
+      );
+    }
+
+    await Promise.all(portraitTasks);
+    if (token !== this.lineRenderToken || !this.activeScript || this.activeScript !== script) {
+      return;
     }
 
     const save = this.saveOverride !== undefined ? this.saveOverride : this.saveManager.getSave();
-    const isNarrator = Boolean(line.narrator);
-    this.dom.boxEl.classList.toggle('is-narrator', isNarrator);
-    const oppositeSide: DialogueSide = line.side === 'left' ? 'right' : 'left';
-    if (!isNarrator) {
-      this.activeSides[line.side] = { speaker: line.speaker, emotion: line.emotion };
-      if (line.clearOppositePortrait) this.activeSides[oppositeSide] = null;
-    }
-
     const activeIdentity = isNarrator
       ? { nickname: '', speciesName: '' }
       : this.resolveSpeaker(line.speaker, save);
+
+    this.activeSides = nextSides;
+    this.hasRenderedCurrentLine = true;
+    this.rootEl.hidden = false;
+    this.dom.boxEl.classList.toggle('is-narrator', isNarrator);
 
     if (isNarrator) {
       this.dom.nicknameEl.textContent = '';
@@ -298,6 +336,26 @@ export class DialogueOverlay {
       this.dom.nicknameEl.hidden = false;
       this.dom.leftActorRowEl.hidden = line.side !== 'left';
       this.dom.rightActorRowEl.hidden = line.side !== 'right';
+    }
+
+    for (const side of ['left', 'right'] as const) {
+      const slotEl = side === 'left' ? this.dom.leftSlotEl : this.dom.rightSlotEl;
+      if (sidesToShow[side]) {
+        slotEl.hidden = false;
+        slotEl.classList.add('is-speaking');
+      } else {
+        slotEl.hidden = true;
+      }
+    }
+
+    if (!opts.preserveTypewriterProgress) {
+      if (line.bgm !== undefined) {
+        this.cutsceneChangedBgm = true;
+        this.audioManager.playBgm(line.bgm, { fadeMs: 320 });
+      }
+      if (line.sfx) this.audioManager.playSfx(line.sfx);
+      if (line.sfxUrl) this.audioManager.playSfxUrl(line.sfxUrl);
+      void this.activeOnLineStart?.(this.currentLineIndex, line);
     }
 
     const formattedText = interpolateCampaignText(line.text, save, activeIdentity.nickname);
@@ -315,27 +373,5 @@ export class DialogueOverlay {
     }
 
     this.syncAdvanceButtonLabel();
-
-    const portraitTasks: Promise<unknown>[] = [];
-    for (const side of ['left', 'right'] as const) {
-      const slotEl = side === 'left' ? this.dom.leftSlotEl : this.dom.rightSlotEl;
-      const view = side === 'left' ? this.dom.leftPortrait : this.dom.rightPortrait;
-      const state = this.activeSides[side];
-      if (!state || isNarrator || line.side !== side) {
-        slotEl.hidden = true;
-        continue;
-      }
-      const id = this.resolveSpeaker(state.speaker, save);
-      slotEl.hidden = false;
-      slotEl.classList.add('is-speaking');
-      portraitTasks.push(
-        view.setPortrait({
-          speciesIdOrAssetId: id.visualAssetId ?? id.speciesId ?? id.pmdAssetId,
-          emotion: state.emotion,
-          mirrorHorizontal: side === 'right',
-        })
-      );
-    }
-    await Promise.all(portraitTasks);
   }
 }

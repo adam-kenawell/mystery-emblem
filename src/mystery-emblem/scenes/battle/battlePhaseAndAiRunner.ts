@@ -37,7 +37,11 @@ import {
   recomputeDangerArea,
   syncHudControls,
 } from './battleDangerAndViewportState';
-import { runTurnStartEvents, runUnitDefeatedEvents } from './battleEventRunner';
+import {
+  runPlayerPhaseEndEvents,
+  runTurnStartEvents,
+  runUnitDefeatedEvents,
+} from './battleEventRunner';
 import { spawnFloatingText } from './battleFloatingCallouts';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { checkAndTriggerMatchEnd, triggerVictoryModal } from './battleOutcomeModals';
@@ -126,6 +130,23 @@ async function runAllyNpcPhase(
     return false;
   }
 
+  const initialLiving = getLivingUnits(state);
+  const initialSupportCtx = getBattleSupportContext(state);
+  const anyNpcActs = npcsOrder.some((npc) => {
+    const decision = chooseNpcAllyAction(
+      state.map,
+      npc,
+      initialLiving,
+      initialSupportCtx,
+      undefined,
+      state.turnNumber
+    );
+    return decision.kind !== 'wait' || decision.path.length > 1;
+  });
+  if (!anyNpcActs) {
+    return false;
+  }
+
   state.phase = 'ally_phase';
   state.interactionState = 'enemy_acting';
   syncHudControls(state, dom);
@@ -140,10 +161,6 @@ async function runAllyNpcPhase(
     if (!state.openState || runGen !== state.battleRunGen) return true;
     if (npc.defeated || npc.currentHp <= 0) continue;
 
-    state.inspectedTile = { x: npc.x, y: npc.y };
-    ensureTilePairVisible(state, npc.x, npc.y, npc.x, npc.y);
-    updateBattleInfoStrip(ctx);
-
     const decision = chooseNpcAllyAction(
       state.map,
       npc,
@@ -152,6 +169,13 @@ async function runAllyNpcPhase(
       undefined,
       state.turnNumber
     );
+    if (decision.kind === 'wait' && decision.path.length <= 1) {
+      continue;
+    }
+
+    state.inspectedTile = { x: npc.x, y: npc.y };
+    ensureTilePairVisible(state, npc.x, npc.y, npc.x, npc.y);
+    updateBattleInfoStrip(ctx);
 
     if (decision.path.length > 1) {
       await playWalkPathAsync(state, npc, decision.path, true);
@@ -226,6 +250,10 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
   dismissBeginBattleCard(state, dom);
   clearBattleSelection(state, dom, prepOverlay);
 
+  await runPlayerPhaseEndEvents(ctx, runGen);
+  if (!state.openState || runGen !== state.battleRunGen) return;
+  if (checkAndTriggerMatchEnd(ctx)) return;
+
   if (await runAllyNpcPhase(ctx, runGen)) {
     return;
   }
@@ -256,10 +284,6 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
     if (!state.openState || runGen !== state.battleRunGen) return;
     if (enemy.defeated || enemy.currentHp <= 0) continue;
 
-    state.inspectedTile = { x: enemy.x, y: enemy.y };
-    ensureTilePairVisible(state, enemy.x, enemy.y, enemy.x, enemy.y);
-    updateBattleInfoStrip(ctx);
-
     const supportCtx = getBattleSupportContext(state);
     const decision = chooseEnemyAction(
       state.map,
@@ -270,6 +294,13 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
       supportCtx,
       enemyRangeCache.get(enemy.id)
     );
+    if (decision.kind === 'wait' && decision.path.length <= 1) {
+      continue;
+    }
+
+    state.inspectedTile = { x: enemy.x, y: enemy.y };
+    ensureTilePairVisible(state, enemy.x, enemy.y, enemy.x, enemy.y);
+    updateBattleInfoStrip(ctx);
 
     if (decision.path.length > 1) {
       enemyRangeCache.clear();

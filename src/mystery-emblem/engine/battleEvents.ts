@@ -12,6 +12,8 @@ export {
   getMatchingUnitDefeatedEvents,
   getMatchingTileReachedEvents,
   getMatchingUnitHealedEvents,
+  getMatchingUnitDamagedEvents,
+  getMatchingPlayerPhaseEndEvents,
   getMatchingVictoryEvents,
   type DirectTalkPlan,
 } from './events/eventEvaluator';

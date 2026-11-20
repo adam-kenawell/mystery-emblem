@@ -17,7 +17,6 @@ import {
   type OverworldGraphDefinition,
   type OverworldNodeDefinition,
 } from '../../data/overworldMapData';
-import { areSupportsUnlockedInCampaign } from '../../data/supports/supportMatrix';
 import {
   findOverworldRoute,
   samplePolylineAtDistance,
@@ -77,8 +76,11 @@ export function getOverworldArrivalTutorialTopicIds(save: SaveData): string[] {
   ) {
     out.push('overworld_and_skirmishes');
   }
-  if (areSupportsUnlockedInCampaign(save)) {
-    out.push('overworld_supports_unlocked');
+  if (
+    save.convoy.some((c) => c.itemId === 'evolution_stone' && c.quantity > 0) ||
+    save.campaign.completedChapterIds.includes('chapter_02')
+  ) {
+    out.push('overworld_evolution_stone');
   }
   return out;
 }

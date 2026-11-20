@@ -62,6 +62,16 @@ export type DungeonEventTrigger =
   | {
       /** Fires after a player unit's HP is restored by a heal move or healing item */
       type: 'unit_healed';
+    }
+  | {
+      /** Fires after a unit takes hit damage in combat and survives */
+      type: 'unit_damaged';
+      targetUnitId: string;
+    }
+  | {
+      /** Fires at the end of Player Phase before Ally or Enemy Phase begins */
+      type: 'player_phase_end';
+      requireSupportGainThisBattle?: boolean;
     };
 
 export type DungeonEventCondition =

@@ -13,7 +13,7 @@ export const STARTING_CAMPAIGN_LEVEL = 1;
 export const STARTING_CAMPAIGN_GOLD = 1500;
 
 /** Promotion thresholds (Rule 5 & Lore Bible) */
-export const STONE_PROMOTION_MIN_LEVEL = 10;
+export const STONE_PROMOTION_MIN_LEVEL = 5;
 export const BRANCHED_PROMOTION_MIN_LEVEL = 15;
 export const GEM_PROMOTION_MIN_LEVEL = 20;
 

@@ -34,7 +34,8 @@ export function buildSideForecast(
   moveSlot: BattleMoveSlot,
   targetTerrainBonuses: TerrainBonuses,
   actorSupportBonus?: SupportStatBonus,
-  targetSupportBonus?: SupportStatBonus
+  targetSupportBonus?: SupportStatBonus,
+  opponentMoveSpeedBonus = 0
 ): CombatSideForecast {
   const move = moveSlot.move;
   const isPhysical = move.category === 'Physical';
@@ -102,18 +103,21 @@ export function buildSideForecast(
     critDamage = Math.max(0, critDamage - shieldReduction);
   }
 
+  const actorSpe = actorEff.spe + (move.speedBonus ?? 0);
+  const targetSpe = targetEff.spe + opponentMoveSpeedBonus;
+
   const rawHit =
     move.hit +
     actorEff.hitBonus +
-    (actorEff.spe - targetEff.spe) * 2 -
+    (actorSpe - targetSpe) * 2 -
     targetTerrainBonuses.avoidBonus;
   // Sparring partners always land a clean, non-critical hit (see `DungeonUnitSpawn.sparring`).
   const hitRate = actor.sparring ? 100 : clampInt(rawHit, 15, 100);
 
-  const rawCrit = move.crit + Math.floor(actorEff.spe / 2) + actorEff.critBonus;
+  const rawCrit = move.crit + Math.floor(actorSpe / 2) + actorEff.critBonus;
   const critRate = typeMultiplier === 0 || actor.sparring ? 0 : clampInt(rawCrit, 0, 100);
 
-  const canDouble = actorEff.spe - targetEff.spe >= 5 && moveSlot.ppRemaining >= 2;
+  const canDouble = actorSpe - targetSpe >= 5 && moveSlot.ppRemaining >= 2;
   const strikes: 1 | 2 = canDouble ? 2 : 1;
 
   return {
@@ -170,18 +174,9 @@ export function computeCombatForecast(
     ? computeAdjacentSupportSummary(defender, supportCtx.units, supportCtx.supports).totalBonus
     : undefined;
 
-  const attackerSide = buildSideForecast(
-    attacker,
-    defender,
-    attackerSlot,
-    defenderTerrainBonuses,
-    attackerSupportBonus,
-    defenderSupportBonus
-  );
-
+  let defSlot: BattleMoveSlot | undefined;
   let defenderCanCounter = false;
   let defenderCounterReason: string | null = null;
-  let defenderSide: CombatSideForecast | null = null;
 
   if (defender.status === 'SLP') {
     defenderCounterReason = 'Asleep';
@@ -189,7 +184,7 @@ export function computeCombatForecast(
     // Physical is always Range 1 and Special always Range 2, so distance picks the counter slot.
     const counterCategory: EquipCategory = distance <= 1 ? 'Physical' : 'Special';
     const counterMoveId = getEquippedMoveIdForCategory(defender, counterCategory);
-    const defSlot = counterMoveId
+    defSlot = counterMoveId
       ? defender.activeMoves.find((s) => s.id === counterMoveId)
       : undefined;
     if (!counterMoveId || !defSlot || !isOffensiveMove(defSlot.move)) {
@@ -200,16 +195,31 @@ export function computeCombatForecast(
       defenderCounterReason = `Out of Range ([E] R${defSlot.range[0]})`;
     } else {
       defenderCanCounter = true;
-      defenderSide = buildSideForecast(
-        defender,
-        attacker,
-        defSlot,
-        attackerTerrainBonuses,
-        defenderSupportBonus,
-        attackerSupportBonus
-      );
     }
   }
+
+  const attackerSide = buildSideForecast(
+    attacker,
+    defender,
+    attackerSlot,
+    defenderTerrainBonuses,
+    attackerSupportBonus,
+    defenderSupportBonus,
+    defenderCanCounter ? (defSlot?.move.speedBonus ?? 0) : 0
+  );
+
+  const defenderSide: CombatSideForecast | null =
+    defenderCanCounter && defSlot
+      ? buildSideForecast(
+          defender,
+          attacker,
+          defSlot,
+          attackerTerrainBonuses,
+          defenderSupportBonus,
+          attackerSupportBonus,
+          attackerSlot.move.speedBonus ?? 0
+        )
+      : null;
 
   const hpFloor = attacker.sparring || defender.sparring ? 1 : 0;
   const applyHit = (hp: number, dmg: number) => Math.max(Math.min(hpFloor, hp), hp - dmg);

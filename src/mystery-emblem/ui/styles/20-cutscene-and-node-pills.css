@@ -54,11 +54,20 @@
 
 .pmd-cutscene-intro-skip-btn {
   position: fixed;
-  top: 0.8rem;
-  right: 0.85rem;
+  top: max(0.8rem, env(safe-area-inset-top));
+  right: max(0.85rem, env(safe-area-inset-right));
   z-index: 89;
+  width: 72px;
+  height: 44px;
   min-width: 72px;
   min-height: 44px;
+  padding: 6px 12px;
+  font-size: 14px;
+  line-height: 1.25;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 /* High-DPI Screen-Space Overworld Node Nameplate Pills (`Ch. 1 Western Beach`) */

@@ -20,18 +20,18 @@
   "rows": [
     "X:142:1 X:142:15 X:142:1 X:142:1 X:142:1 X:142:1 X:142:10 X:142:1 X:142:1 X:142:15 X:142:1 X:142:1 X:142:10 X:142:1 X:142:1 X:142:1 X:142:1 X:142:1 X:142:15 X:142:1 X:142:1 X:142:10 X:142:1 X:142:1",
     "X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30 X:142:30",
+    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 FN:144:112 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
+    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 FN:144:108 FN:144:97 FN:144:109 T:142:1 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 FN:144:108 FN:144:100 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
+    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 FN:144:110 F:142:27 F:142:27 F:142:27 T:142:1 F:142:27 F:142:27 FN:144:98 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
+    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 T:142:1 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 FN:144:98 F:142:27 T:142:1 F:142:27 F:142:27 F:142:27 F:142:27 FN:144:111 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
+    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 T:142:1 F:142:27 F:142:27 FN:144:111 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 T:142:1 F:142:27 F:142:27 F:142:27",
     "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
-    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
-    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
-    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
-    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
-    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
-    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
-    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
-    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
-    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
-    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
-    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
+    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 T:142:1 F:142:27 F:142:27 FN:144:110 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 T:142:1 F:142:27 F:142:27 F:142:27",
+    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 T:142:1 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 FN:144:98 F:142:27 T:142:1 F:142:27 F:142:27 F:142:27 F:142:27 FN:144:110 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
+    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 FN:144:111 F:142:27 F:142:27 F:142:27 T:142:1 F:142:27 F:142:27 FN:144:98 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
+    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 FN:144:108 FN:144:97 FN:144:109 T:142:1 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 FN:144:108 FN:144:102 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
+    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 FN:144:110 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
+    "F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 FN:144:111 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27 F:142:27",
     "X:142:5 X:142:5 X:142:5 X:142:5 X:142:5 X:142:5 X:142:5 X:142:5 X:142:5 X:142:5 X:142:5 X:142:12 X:142:5 X:142:5 X:142:5 X:142:5 X:142:5 X:142:5 X:142:12 X:142:5 X:142:5 X:142:5 X:142:5 X:142:5"
   ],
   "playerSlots": [
@@ -43,21 +43,32 @@
   "recruitment": {"fixedSpeciesIds":["mentor_quaquaval"],"joinLevel":12,"scaleStatsToLevel":false,"fallbackSpeciesIds":[]},
   "guaranteesKecleonShopOnClear": {"nodeId":"chapter_02","shopType":"healing_shop"},
   "npcSpawns": [
-    {"id":"ch2_chespin","x":9,"y":7,"speciesId":"chespin","level":3,"stationary":true,"mustSurvive":true,"nickname":"Chespin","heldItemId":null}
+    {"id":"ch2_chespin","x":11,"y":7,"speciesId":"chespin","level":3,"stationary":true,"mustSurvive":true,"nickname":"Chespin","heldItemId":null}
   ],
   "enemySpawns": [
-    {"id":"ch2_enemy_0","x":14,"y":4,"speciesId":"zigzagoon_galar","level":3,"heldItemId":null,"squadId":"ch2_north_trail","aiMode":"wait_until_in_range","nickname":"Galarian Zigzagoon"},
-    {"id":"ch2_enemy_1","x":15,"y":3,"speciesId":"rookidee","level":3,"heldItemId":null,"squadId":"ch2_north_trail","aiMode":"wait_until_in_range","nickname":"Rookidee"},
-    {"id":"ch2_enemy_2","x":14,"y":11,"speciesId":"zigzagoon_galar","level":3,"heldItemId":null,"squadId":"ch2_south_trail","aiMode":"wait_until_in_range","nickname":"Galarian Zigzagoon"},
-    {"id":"ch2_enemy_3","x":15,"y":12,"speciesId":"venipede","level":3,"heldItemId":null,"squadId":"ch2_south_trail","droppableItemId":"potion","aiMode":"wait_until_in_range","nickname":"Venipede"},
+    {"id":"ch2_enemy_0","x":16,"y":3,"speciesId":"zigzagoon_galar","level":3,"heldItemId":null,"squadId":"ch2_north_trail","aiMode":"wait_until_in_range","nickname":"Galarian Zigzagoon"},
+    {"id":"ch2_enemy_1","x":17,"y":2,"speciesId":"rookidee","level":3,"heldItemId":null,"squadId":"ch2_north_trail","aiMode":"wait_until_in_range","nickname":"Rookidee"},
+    {"id":"ch2_enemy_2","x":16,"y":11,"speciesId":"zigzagoon_galar","level":3,"heldItemId":null,"squadId":"ch2_south_trail","aiMode":"wait_until_in_range","nickname":"Galarian Zigzagoon"},
+    {"id":"ch2_enemy_3","x":17,"y":12,"speciesId":"venipede","level":3,"heldItemId":null,"squadId":"ch2_south_trail","droppableItemId":"potion","aiMode":"wait_until_in_range","nickname":"Venipede"},
     {"id":"ch2_enemy_4","x":19,"y":4,"speciesId":"venipede","level":3,"heldItemId":null,"squadId":"ch2_ridge_rear","aiMode":"wait_until_in_range","nickname":"Venipede"},
     {"id":"ch2_enemy_5","x":19,"y":11,"speciesId":"impidimp","level":3,"heldItemId":null,"squadId":"ch2_ridge_rear","aiMode":"wait_until_in_range","nickname":"Impidimp"},
-    {"id":"ch2_outrider_0","x":17,"y":6,"speciesId":"rookidee","level":3,"heldItemId":null,"aiMode":"aggressive","nickname":"Rookidee"},
-    {"id":"ch2_outrider_1","x":17,"y":9,"speciesId":"zigzagoon_galar","level":3,"heldItemId":null,"aiMode":"aggressive","nickname":"Galarian Zigzagoon"},
-    {"id":"ch2_boss_impidimp","x":21,"y":7,"speciesId":"impidimp","level":4,"heldItemId":"oran_berry","isBoss":true,"droppableItemId":"super_potion","aiMode":"wait_until_in_range","nickname":"Impidimp"}
+    {"id":"ch2_outrider_0","x":17,"y":5,"speciesId":"rookidee","level":3,"heldItemId":null,"aiMode":"aggressive","nickname":"Rookidee"},
+    {"id":"ch2_outrider_1","x":16,"y":7,"speciesId":"zigzagoon_galar","level":3,"heldItemId":null,"aiMode":"aggressive","nickname":"Galarian Zigzagoon"},
+    {"id":"ch2_boss_impidimp","x":21,"y":7,"speciesId":"impidimp","level":4,"heldItemId":"oran_berry","isBoss":true,"droppableItemId":"evolution_stone","aiMode":"wait_until_in_range","nickname":"Impidimp"}
   ],
   "reinforcements": [],
   "events": [
+    {
+      "id":"ev_ch2_chespin_hit",
+      "once":true,
+      "trigger":{"type":"unit_damaged","targetUnitId":"ch2_chespin"},
+      "actions":[
+        {
+          "type":"play_dialogue",
+          "scriptId":"chespin_hit"
+        }
+      ]
+    },
     {
       "id":"ev_ch2_recruit_chespin",
       "once":true,

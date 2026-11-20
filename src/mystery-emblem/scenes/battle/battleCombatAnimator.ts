@@ -28,6 +28,7 @@ import {
 } from './battleActionLog';
 import { ensureTilePairVisible, showPhaseBanner, waitBattleMs } from './battleBannersAndTransitions';
 import { syncHudControls } from './battleDangerAndViewportState';
+import { runUnitDamagedEvents } from './battleEventRunner';
 import { spawnFloatingText } from './battleFloatingCallouts';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { grantExpAndHandleLevelUps } from './battleLevelUpModal';
@@ -308,5 +309,20 @@ export async function playCombatExchangeAsync(
     outcome.strikes.length > 0
   ) {
     awardBattleCombatSupportPoints(ctx, playerUnit, enemyUnit);
+  }
+
+  if (!state.openState || runGen !== state.battleRunGen) return;
+
+  const damagedTargetIds = new Set<string>();
+  for (const strike of outcome.strikes) {
+    if (strike.didHit && strike.damageDealt > 0) {
+      damagedTargetIds.add(strike.targetId);
+    }
+  }
+  const damagedUnitIds = [attacker, defender]
+    .filter((u) => damagedTargetIds.has(u.id) && !u.defeated && u.currentHp > 0)
+    .map((u) => u.id);
+  if (damagedUnitIds.length > 0) {
+    await runUnitDamagedEvents(ctx, damagedUnitIds, runGen);
   }
 }

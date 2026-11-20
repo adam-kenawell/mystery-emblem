@@ -273,6 +273,39 @@ export function getMatchingUnitHealedEvents(
   );
 }
 
+export function getMatchingUnitDamagedEvents(
+  events: ReadonlyArray<DungeonEventDefinition>,
+  triggeredEventIds: ReadonlySet<string>,
+  damagedUnitId: string,
+  units: ReadonlyArray<BattleUnitState>
+): DungeonEventDefinition[] {
+  const target = units.find((u) => u.id === damagedUnitId);
+  if (!target || target.defeated || target.currentHp <= 0) {
+    return [];
+  }
+  return events.filter(
+    (ev) =>
+      ev.trigger.type === 'unit_damaged' &&
+      ev.trigger.targetUnitId === damagedUnitId &&
+      isEventEligibleToFire(ev, triggeredEventIds, units)
+  );
+}
+
+export function getMatchingPlayerPhaseEndEvents(
+  events: ReadonlyArray<DungeonEventDefinition>,
+  triggeredEventIds: ReadonlySet<string>,
+  supportEarnedThisBattle: boolean,
+  units: ReadonlyArray<BattleUnitState>
+): DungeonEventDefinition[] {
+  return events.filter((ev) => {
+    if (ev.trigger.type !== 'player_phase_end') return false;
+    if (ev.trigger.requireSupportGainThisBattle && !supportEarnedThisBattle) {
+      return false;
+    }
+    return isEventEligibleToFire(ev, triggeredEventIds, units);
+  });
+}
+
 export function getMatchingVictoryEvents(
   events: ReadonlyArray<DungeonEventDefinition>,
   triggeredEventIds: ReadonlySet<string>,

@@ -1,0 +1,20 @@
+{
+  "id": "flabebe_support_tip",
+  "chapter": "chapter_01",
+  "role": "event",
+  "title": "Fighting Side by Side",
+  "cast": [
+    { "id": "healer", "who": { "kind": "healer" } }
+  ],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "healer",
+        "emotion": "Happy",
+        "side": "left",
+        "text": "Did you notice that, {lord}? Fighting right beside a friend feels so encouraging! If we keep sticking close together, I bet our teamwork will give us a real edge in battle too."
+      }
+    }
+  ]
+}

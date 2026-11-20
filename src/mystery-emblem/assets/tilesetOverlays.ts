@@ -19,37 +19,70 @@ function getStairsOverlayCanvas(): HTMLCanvasElement {
   const ctx = c.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
 
-  ctx.fillStyle = '#0c1424';
+  // Crisp dark outer outline and beveled slate-stone perimeter frame
+  ctx.fillStyle = '#101018';
+  ctx.fillRect(1, 1, 22, 22);
+  ctx.fillStyle = '#505868';
   ctx.fillRect(2, 2, 20, 20);
-  ctx.fillStyle = '#24344c';
-  ctx.fillRect(3, 3, 18, 18);
-  ctx.fillStyle = '#080e1a';
+  ctx.fillStyle = '#747c8e';
+  ctx.fillRect(2, 2, 19, 1);
+  ctx.fillRect(2, 2, 1, 19);
+  ctx.fillStyle = '#2c3240';
+  ctx.fillRect(3, 21, 19, 1);
+  ctx.fillRect(21, 3, 1, 19);
+  // Subtle masonry joints on the stone curb
+  ctx.fillRect(11, 2, 1, 2);
+  ctx.fillRect(12, 20, 1, 2);
+  ctx.fillRect(2, 11, 2, 1);
+  ctx.fillRect(20, 12, 2, 1);
+
+  // Deep recessed pit
+  ctx.fillStyle = '#080a10';
   ctx.fillRect(4, 4, 16, 16);
 
-  const steps: Array<{ x: number; y: number; w: number; h: number }> = [
-    { x: 4, y: 16, w: 16, h: 4 },
-    { x: 6, y: 12, w: 14, h: 4 },
-    { x: 9, y: 8, w: 11, h: 4 },
-    { x: 12, y: 4, w: 8, h: 4 },
+  // 4 chiseled horizontal stone steps descending into shadow
+  const steps: Array<{
+    x: number;
+    y: number;
+    w: number;
+    highlight: string;
+    body: string;
+    riser: string;
+    crackX?: number;
+  }> = [
+    { x: 5, y: 4, w: 14, highlight: '#dce2ec', body: '#9ca4b4', riser: '#565e70', crackX: 9 },
+    { x: 5, y: 8, w: 14, highlight: '#dce2ec', body: '#9ca4b4', riser: '#565e70', crackX: 14 },
+    { x: 6, y: 12, w: 12, highlight: '#dce2ec', body: '#9ca4b4', riser: '#565e70', crackX: 10 },
   ];
   for (const st of steps) {
-    ctx.fillStyle = '#dceaff';
+    ctx.fillStyle = st.highlight;
     ctx.fillRect(st.x, st.y, st.w, 1);
-    ctx.fillStyle = '#a8c2e0';
-    ctx.fillRect(st.x, st.y + 1, st.w, 1);
-    ctx.fillStyle = '#5c7698';
-    ctx.fillRect(st.x, st.y + 2, st.w, 1);
-    ctx.fillStyle = '#2e4260';
+    ctx.fillStyle = st.body;
+    ctx.fillRect(st.x, st.y + 1, st.w, 2);
+    if (st.crackX !== undefined) {
+      ctx.fillStyle = st.riser;
+      ctx.fillRect(st.crackX, st.y + 1, 1, 1);
+    }
+    ctx.fillStyle = st.riser;
     ctx.fillRect(st.x, st.y + 3, st.w, 1);
-    ctx.fillStyle = '#f0f8ff';
-    ctx.fillRect(st.x, st.y, 1, 2);
   }
 
-  ctx.fillStyle = '#88d8ff';
-  ctx.fillRect(3, 3, 1, 1);
-  ctx.fillRect(20, 3, 1, 1);
-  ctx.fillRect(3, 20, 1, 1);
-  ctx.fillRect(20, 20, 1, 1);
+  // Tapered bottom step descending into the dark lower landing
+  ctx.fillStyle = '#262c38';
+  ctx.fillRect(5, 13, 1, 3);
+  ctx.fillRect(18, 13, 1, 3);
+  ctx.fillStyle = '#9ca4b4';
+  ctx.fillRect(7, 16, 10, 1);
+  ctx.fillStyle = '#565e70';
+  ctx.fillRect(6, 16, 1, 1);
+  ctx.fillRect(17, 16, 1, 1);
+  ctx.fillRect(7, 17, 10, 1);
+  ctx.fillStyle = '#262c38';
+  ctx.fillRect(7, 18, 10, 1);
+  ctx.fillRect(8, 19, 8, 1);
+  ctx.fillStyle = '#080a10';
+  ctx.fillRect(4, 19, 4, 1);
+  ctx.fillRect(16, 19, 4, 1);
 
   stairsSpriteCanvas = c;
   return c;

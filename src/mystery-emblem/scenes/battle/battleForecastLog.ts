@@ -155,17 +155,19 @@ export function renderForecastLog(backdrop: HTMLElement, lines: ReadonlyArray<Fo
     fill.style.width = pct(line.hp.after);
     track.append(ghost, fill);
 
+    const dmgPlate = el('span', `pmd-fe-log-dmg ${toneCls}`);
+    dmgPlate.append(document.createTextNode(dmgText));
+    if (line.ko) {
+      const koEl = el('span', 'pmd-fe-log-ko-inline', 'KO');
+      koEl.dataset.testid = `forecast-log-ko-${i}`;
+      dmgPlate.appendChild(koEl);
+    }
+
     // Portrait + damage plate share one frame so the number reads as part of the card.
     const card = el('span', 'pmd-fe-log-card');
-    card.append(portrait, el('span', `pmd-fe-log-dmg ${toneCls}`, dmgText));
+    card.append(portrait, dmgPlate);
     step.append(card, track);
     logEl.appendChild(step);
-    if (line.ko) {
-      logEl.appendChild(el('span', 'pmd-fe-log-sep', '\u25B8'));
-      const koEl = el('span', 'pmd-fe-log-ko', 'KO');
-      koEl.dataset.testid = `forecast-log-ko-${i}`;
-      logEl.appendChild(koEl);
-    }
   });
 }
 
@@ -297,6 +299,31 @@ export function setForecastSideVisible(
 ): void {
   const card = backdrop.querySelector<HTMLElement>(`[data-testid="forecast-${which}-card"]`);
   if (card) card.hidden = !visible;
+}
+
+/**
+ * Sets or hides the defender's counter move label (`--pmd-text-green`) or muted `No Counter` text.
+ */
+export function setForecastDefenderMove(
+  backdrop: HTMLElement,
+  info: { moveName: string } | { noCounterLabel: string } | null
+): void {
+  const moveEl = backdrop.querySelector<HTMLElement>('[data-defender-move]');
+  if (!moveEl) return;
+  if (!info) {
+    moveEl.hidden = true;
+    moveEl.textContent = '';
+    moveEl.classList.remove('is-muted');
+    return;
+  }
+  moveEl.hidden = false;
+  if ('moveName' in info) {
+    moveEl.textContent = info.moveName;
+    moveEl.classList.remove('is-muted');
+    return;
+  }
+  moveEl.textContent = info.noCounterLabel;
+  moveEl.classList.add('is-muted');
 }
 
 /**

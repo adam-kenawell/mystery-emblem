@@ -31,10 +31,21 @@
 }
 
 .pmd-tutorial-skip-btn {
-  min-width: 60px;
+  position: fixed;
+  top: max(0.8rem, env(safe-area-inset-top));
+  right: max(0.85rem, env(safe-area-inset-right));
+  z-index: 102;
+  width: 72px;
+  height: 44px;
+  min-width: 72px;
   min-height: 44px;
-  padding: 4px 10px;
-  font-size: 12px;
+  padding: 6px 12px;
+  font-size: 14px;
+  line-height: 1.25;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
   flex-shrink: 0;
 }
 

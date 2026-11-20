@@ -28,6 +28,7 @@ import {
   positionForecastFrame,
   renderForecastLog,
   setForecastConfirm,
+  setForecastDefenderMove,
   setForecastHpBars,
   setForecastSidePortrait,
   setForecastSideStats,
@@ -70,6 +71,7 @@ export function createBattleForecastDom(): BattleForecastDomRefs {
           <div class="pmd-fe-side is-right" data-testid="forecast-defender-card">
             <span class="pmd-fe-side-portrait" data-defender-portrait></span>
             <div class="pmd-fe-side-info">
+              <div class="pmd-fe-side-move" data-testid="forecast-defender-move" data-defender-move hidden></div>
               <div class="pmd-fe-side-stats" data-defender-stats>
                 <span data-defender-hit-wrap>HIT <strong data-testid="forecast-defender-hit">-</strong></span>
                 <span data-defender-crit-wrap>CRT <strong data-testid="forecast-defender-crit">-</strong></span>
@@ -247,8 +249,9 @@ export function renderStatusHexForecastModalDom(
   setForecastConfirm(backdrop, 'Hex!', Boolean(forecast.blockedReason));
   renderForecastMoveList(ctx, caster, validMoves, chosenSlot.id, onRefresh);
   renderForecastLog(backdrop, buildHexForecastLines(defender, forecast));
+  setForecastDefenderMove(backdrop, { noCounterLabel: 'No Counter' });
   setForecastSideStats(backdrop, 'attacker', null);
-  setForecastSideStats(backdrop, 'defender', { note: 'No Counter' });
+  setForecastSideStats(backdrop, 'defender', null);
   setForecastSideVisible(backdrop, 'defender', true);
   setForecastSidePortrait(backdrop, 'attacker', caster);
   setForecastSidePortrait(backdrop, 'defender', defender);
@@ -341,10 +344,16 @@ export function refreshCombatForecastModalDom(ctx: BattleControllerContext): voi
     crit: `${atkSide.critRate}%`,
   });
   const defSide = forecast.defenderCanCounter ? forecast.defenderSide : null;
+  setForecastDefenderMove(
+    backdrop,
+    defSide
+      ? { moveName: defSide.move.name }
+      : { noCounterLabel: forecast.defenderCounterReason === 'Asleep' ? 'Asleep' : 'No Counter' }
+  );
   setForecastSideStats(
     backdrop,
     'defender',
-    defSide ? { hit: `${defSide.hitRate}%`, crit: `${defSide.critRate}%` } : { note: 'No Counter' }
+    defSide ? { hit: `${defSide.hitRate}%`, crit: `${defSide.critRate}%` } : null
   );
 
   setForecastSideVisible(backdrop, 'defender', true);
@@ -389,6 +398,7 @@ export function refreshHealForecastModalDom(ctx: BattleControllerContext): void 
     refreshHealForecastModalDom(ctx)
   );
   renderForecastLog(backdrop, buildHealForecastLines(target, healForecast));
+  setForecastDefenderMove(backdrop, null);
   setForecastSideStats(backdrop, 'attacker', null);
   setForecastSideStats(backdrop, 'defender', null);
 

@@ -125,6 +125,8 @@ export interface MoveDefinition {
   secondaryEffect?: MoveSecondaryEffect;
   /** Defender counter with priority strikes before a non-priority attacker. */
   priority?: boolean;
+  /** In-combat Speed bonus granted while using this move (Aqua Jet). */
+  speedBonus?: number;
   /** On hit, the user eats the target's held berry and gains its effect (Bug Bite). */
   consumesTargetBerry?: boolean;
 }

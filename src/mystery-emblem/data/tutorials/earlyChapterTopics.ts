@@ -115,6 +115,29 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
     ],
   },
   {
+    id: 'overworld_evolution_stone',
+    title: 'Evolution Stones & Promotion',
+    category: 'world_progression',
+    summary: 'Using an Evolution Stone on Stage-1 teammates at Level 5+ from the World Map menu.',
+    chips: [
+      { kind: 'item', itemId: 'evolution_stone', label: 'Evolution Stone' },
+      { kind: 'badge', label: 'Stage 1 · Lv. 5+', tone: 'gold' },
+    ],
+    bullets: [
+      'Any Stage-1 teammate who has reached Level 5 or higher can promote into Stage 2 with an Evolution Stone.',
+      'Open Menu -> Units (or Items) on the World Map, pick an eligible teammate, and promote them directly.',
+      'Promotion permanently raises core stats and opens stronger moves from that species learnset.',
+    ],
+    beats: [
+      {
+        id: 'ow_evo_stone_quip',
+        emotion: 'Happy',
+        dialogue:
+          'You can use an Evolution Stone on any Stage-1 teammate at Level 5 or higher through Menu -> Units or Items on the World Map!',
+      },
+    ],
+  },
+  {
     id: 'rift_tremors_wild_pokemon',
     title: 'Rift Tremors on the Roads',
     category: 'world_progression',

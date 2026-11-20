@@ -52,5 +52,18 @@
     {"id":"ch1_den_1","x":19,"y":9,"speciesId":"rolycoly","level":2,"heldItemId":null,"squadId":"ch1_boss_den","aiMode":"wait_until_in_range","nickname":"Rolycoly"},
     {"id":"ch1_boss_croagunk","x":20,"y":6,"speciesId":"croagunk","level":3,"heldItemId":null,"isBoss":true,"droppableItemId":"oran_berry","aiMode":"wait_until_in_range","nickname":"Croagunk"}
   ],
-  "reinforcements": []
+  "reinforcements": [],
+  "events": [
+    {
+      "id": "ev_ch1_flabebe_support_tip",
+      "once": true,
+      "trigger": { "type": "player_phase_end", "requireSupportGainThisBattle": true },
+      "actions": [
+        {
+          "type": "play_dialogue",
+          "scriptId": "flabebe_support_tip"
+        }
+      ]
+    }
+  ]
 }

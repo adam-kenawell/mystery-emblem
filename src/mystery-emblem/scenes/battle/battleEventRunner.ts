@@ -6,8 +6,10 @@ import { directionFromDelta } from '../../assets/pmdAssetLoader';
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
 import {
   getAvailableTalkEventsForPair,
+  getMatchingPlayerPhaseEndEvents,
   getMatchingTileReachedEvents,
   getMatchingTurnStartEvents,
+  getMatchingUnitDamagedEvents,
   getMatchingUnitDefeatedEvents,
   getMatchingUnitHealedEvents,
   getMatchingVictoryEvents,
@@ -117,6 +119,36 @@ export async function runUnitHealedEvents(
   const matched = getMatchingUnitHealedEvents(
     ctx.state.events,
     ctx.state.triggeredEventIds,
+    ctx.state.units
+  );
+  await runMatchedEvents(ctx, matched, runGen);
+}
+
+export async function runUnitDamagedEvents(
+  ctx: BattleControllerContext,
+  damagedUnitIds: ReadonlyArray<string>,
+  runGen: number
+): Promise<void> {
+  for (const unitId of damagedUnitIds) {
+    if (!ctx.state.openState || runGen !== ctx.state.battleRunGen) return;
+    const matched = getMatchingUnitDamagedEvents(
+      ctx.state.events,
+      ctx.state.triggeredEventIds,
+      unitId,
+      ctx.state.units
+    );
+    await runMatchedEvents(ctx, matched, runGen);
+  }
+}
+
+export async function runPlayerPhaseEndEvents(
+  ctx: BattleControllerContext,
+  runGen: number
+): Promise<void> {
+  const matched = getMatchingPlayerPhaseEndEvents(
+    ctx.state.events,
+    ctx.state.triggeredEventIds,
+    ctx.state.supportHeartEarnedThisBattle,
     ctx.state.units
   );
   await runMatchedEvents(ctx, matched, runGen);

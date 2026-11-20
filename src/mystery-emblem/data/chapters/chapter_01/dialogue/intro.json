@@ -10,7 +10,7 @@
     { "id": "combee", "who": { "kind": "recruit", "speciesId": "combee" } },
     {
       "id": "boss",
-      "who": { "kind": "npc", "pokemon": "0453", "name": "Boss Croagunk", "speciesName": "Croagunk" }
+      "who": { "kind": "npc", "pokemon": "0453", "name": "Croagunk", "speciesName": "Croagunk" }
     }
   ],
   "beats": [

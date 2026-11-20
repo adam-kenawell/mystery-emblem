@@ -7,6 +7,7 @@ import { buildPmdCloseXButtonHtml, createPmdCloseXButton } from '../../ui/PmdWin
 import { bindPointerTap } from '../../ui/pointerControls';
 import { closeBattleScene } from './battleLifecycleController';
 import { buildBattleSuspendJson, getBattleSaveBlockReason } from './battleSuspend';
+import { isQuaquavalSilentInBattle } from './battleTutorialIntegration';
 import type { BattleFieldMenuSubView } from './battlePublicTypes';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
@@ -92,7 +93,7 @@ export function renderFieldSubmodalContents(
     });
     cardEl.appendChild(settingsListEl);
 
-    if (tutorialOverlay) {
+    if (tutorialOverlay && !isQuaquavalSilentInBattle(ctx)) {
       const dividerEl = document.createElement('div');
       dividerEl.style.borderTop = '1px solid rgba(168, 192, 224, 0.35)';
       dividerEl.style.paddingTop = '6px';

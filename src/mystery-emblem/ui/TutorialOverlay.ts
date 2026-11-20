@@ -39,6 +39,9 @@ export class TutorialOverlay {
   private readonly session = new TutorialSessionState();
   private readonly typewriter = new TypewriterController();
   private presentationQueue: Promise<unknown> = Promise.resolve();
+  private queueGeneration = 0;
+  private cardRenderToken = 0;
+  private isRenderingCardBeat = false;
   private activePresenter: TutorialPresenter = 'advisor';
   private activeTokens: Readonly<Record<string, string>> | undefined;
   private tooltipTopicId: string | null = null;
@@ -83,12 +86,14 @@ export class TutorialOverlay {
       tokens?: Readonly<Record<string, string>>;
     }
   ): Promise<boolean> {
+    const gen = this.queueGeneration;
     const next = this.presentationQueue.then(() =>
       this.runTopicPresentation(
         topicId,
         opts?.presenter ?? 'advisor',
         Boolean(opts?.forceIfAlreadySeen),
-        opts?.tokens
+        opts?.tokens,
+        gen
       )
     );
     this.presentationQueue = next.catch(() => false);
@@ -99,8 +104,10 @@ export class TutorialOverlay {
     topicId: string,
     presenter: TutorialPresenter,
     forceIfAlreadySeen = false,
-    tokens?: Readonly<Record<string, string>>
+    tokens?: Readonly<Record<string, string>>,
+    gen = this.queueGeneration
   ): Promise<boolean> {
+    if (gen !== this.queueGeneration) return false;
     const topic = this.session.evaluateTopicEligibility(
       this.saveManager,
       topicId,
@@ -109,12 +116,48 @@ export class TutorialOverlay {
     if (!topic) return false;
 
     this.hideTooltipPill();
+    this.activePresenter = presenter;
+    this.activeTokens = tokens;
+
+    const firstBeat = topic.beats[0];
+    if (!firstBeat) return false;
+
+    const token = ++this.cardRenderToken;
+    this.isRenderingCardBeat = true;
+    let rendered = false;
+    try {
+      rendered = await renderCoachCardWithTypewriter(
+        {
+          cardWindowEl: this.shell.cardWindowEl,
+          coachPortraitView: this.shell.coachPortraitView,
+          topic,
+          beat: firstBeat,
+          beatIndex: 0,
+          totalBeats: topic.beats.length,
+          save: this.saveManager.getReadOnlySave(),
+          presenter: this.activePresenter,
+          tokens: this.activeTokens,
+          signal: this.abortController.signal,
+          onNext: () => this.handleCoachAdvanceTap(),
+        },
+        this.typewriter,
+        () => this.audioManager.playSfx('typewriter_blip'),
+        () => gen !== this.queueGeneration || token !== this.cardRenderToken
+      );
+    } finally {
+      if (token === this.cardRenderToken) {
+        this.isRenderingCardBeat = false;
+      }
+    }
+
+    if (!rendered || gen !== this.queueGeneration || token !== this.cardRenderToken) {
+      return false;
+    }
+
     return new Promise<boolean>((resolve) => {
-      this.activePresenter = presenter;
-      this.activeTokens = tokens;
       this.session.startTopic(topic, false, resolve);
+      this.syncCoachDock();
       this.session.applyModalDomVisibility(this.shell, 'card');
-      this.renderActiveCard();
       this.audioManager.playSfx('select');
       this.onLayerStateChanged?.();
     });
@@ -165,6 +208,8 @@ export class TutorialOverlay {
   }
 
   private resetCardState(markLiveSeen: boolean): ((shown: boolean) => void) | null {
+    this.cardRenderToken += 1;
+    this.isRenderingCardBeat = false;
     if (
       markLiveSeen &&
       this.session.activeTopic &&
@@ -240,6 +285,7 @@ export class TutorialOverlay {
   }
 
   public closeAll(sfx: 'cancel' | 'select' | null = null): void {
+    this.queueGeneration += 1;
     this.hideTooltipPill();
     const resolver = this.resetCardState(true);
     this.session.applyModalDomVisibility(this.shell, 'closed');
@@ -249,7 +295,7 @@ export class TutorialOverlay {
   }
 
   private handleCoachAdvanceTap(): void {
-    if (this.session.mode !== 'card') return;
+    if (this.session.mode !== 'card' || this.isRenderingCardBeat) return;
     if (this.typewriter.isAnimating()) {
       this.typewriter.completeImmediately();
       this.audioManager.playSfx('select');
@@ -272,7 +318,7 @@ export class TutorialOverlay {
       this.typewriter.stop();
       this.session.activeBeatIndex = nextIdx;
       this.audioManager.playSfx('select');
-      this.renderActiveCard();
+      void this.renderActiveCard();
       this.onLayerStateChanged?.();
       return;
     }
@@ -306,28 +352,42 @@ export class TutorialOverlay {
     this.shell.cardWindowEl.dataset.coachDock = preferredDock;
   }
 
-  private renderActiveCard(): void {
+  private async renderActiveCard(): Promise<void> {
     const topic = this.session.activeTopic;
     const beat = this.session.activeBeats[this.session.activeBeatIndex];
     if (!topic || !beat) return;
-    renderCoachCardWithTypewriter(
-      {
-        cardWindowEl: this.shell.cardWindowEl,
-        coachPortraitView: this.shell.coachPortraitView,
-        topic,
-        beat,
-        beatIndex: this.session.activeBeatIndex,
-        totalBeats: this.session.activeBeats.length,
-        save: this.saveManager.getReadOnlySave(),
-        presenter: this.activePresenter,
-        tokens: this.activeTokens,
-        signal: this.abortController.signal,
-        onNext: () => this.handleCoachAdvanceTap(),
-      },
-      this.typewriter,
-      () => this.audioManager.playSfx('typewriter_blip')
-    );
-    this.syncCoachDock();
+    const token = ++this.cardRenderToken;
+    this.isRenderingCardBeat = true;
+    try {
+      const ok = await renderCoachCardWithTypewriter(
+        {
+          cardWindowEl: this.shell.cardWindowEl,
+          coachPortraitView: this.shell.coachPortraitView,
+          topic,
+          beat,
+          beatIndex: this.session.activeBeatIndex,
+          totalBeats: this.session.activeBeats.length,
+          save: this.saveManager.getReadOnlySave(),
+          presenter: this.activePresenter,
+          tokens: this.activeTokens,
+          signal: this.abortController.signal,
+          onNext: () => this.handleCoachAdvanceTap(),
+        },
+        this.typewriter,
+        () => this.audioManager.playSfx('typewriter_blip'),
+        () =>
+          token !== this.cardRenderToken ||
+          this.session.mode !== 'card' ||
+          this.session.activeTopic !== topic
+      );
+      if (ok) {
+        this.syncCoachDock();
+      }
+    } finally {
+      if (token === this.cardRenderToken) {
+        this.isRenderingCardBeat = false;
+      }
+    }
   }
 
   private renderCompendium(): void {

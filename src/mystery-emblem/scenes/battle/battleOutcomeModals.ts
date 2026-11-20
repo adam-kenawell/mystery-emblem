@@ -5,7 +5,6 @@
 import { UNIT_FAINT_BGM_CUE } from '../../data/faintMessages';
 import { getSpeciesById } from '../../data/index';
 import { DEMO_OVERWORLD_GRAPH } from '../../data/overworldMapData';
-import { createMiniItemIcon } from '../../ui/PmdItemIconGrid';
 import { clearOpeningAndPhaseAnimations } from './battleBannersAndTransitions';
 import {
   clearBattleSelection,
@@ -199,32 +198,8 @@ export function triggerVictoryModal(ctx: BattleControllerContext): void {
   const summaryEl = dom.victoryModalBackdropEl.querySelector<HTMLElement>('[data-victory-summary]');
   if (subEl) subEl.textContent = `${state.map.name} · Turn ${state.turnNumber}`;
   if (summaryEl) {
-    const qtyByItemId = new Map<string, number>();
-    for (const dropId of state.collectedDrops) {
-      qtyByItemId.set(dropId, (qtyByItemId.get(dropId) ?? 0) + 1);
-    }
-    for (const rew of [...state.clearRewardItems, ...state.eventBonusItems]) {
-      if (rew.quantity > 0) {
-        qtyByItemId.set(rew.itemId, (qtyByItemId.get(rew.itemId) ?? 0) + rew.quantity);
-      }
-    }
     summaryEl.innerHTML = '';
-    if (qtyByItemId.size > 0) {
-      const row = document.createElement('span');
-      row.className = 'pmd-inline-item-row';
-      const lbl = document.createElement('span');
-      lbl.textContent = 'Acquired:';
-      row.appendChild(lbl);
-      for (const [itemId, qty] of qtyByItemId.entries()) {
-        row.appendChild(
-          createMiniItemIcon(itemId, { sizePx: 22, quantityBadge: qty > 1 ? qty : undefined })
-        );
-      }
-      summaryEl.appendChild(row);
-      summaryEl.hidden = false;
-    } else {
-      summaryEl.hidden = true;
-    }
+    summaryEl.hidden = true;
   }
 
   const runGen = state.battleRunGen;

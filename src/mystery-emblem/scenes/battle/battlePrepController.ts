@@ -212,6 +212,7 @@ export async function setupFreshBattleState(
   );
   const activeSave = getActivePrepSaveManager(state, saveManager).getSave()!;
   state.battleSupportPoints = cloneSaveSupportsForBattle(activeSave);
+  state.supportHeartEarnedThisBattle = false;
   state.deploymentSlots = createInitialPrepDeploymentSlots(
     state.map,
     activeSave.roster,

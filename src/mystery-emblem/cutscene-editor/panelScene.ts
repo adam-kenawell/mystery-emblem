@@ -105,9 +105,11 @@ const TRIGGER_OPTIONS: Array<{ value: DungeonEventTrigger['type']; label: string
   { value: 'turn_start', label: 'Start of a turn' },
   { value: 'talk', label: 'A Talk with a unit' },
   { value: 'unit_defeated', label: 'A unit is defeated' },
+  { value: 'unit_damaged', label: 'A unit takes damage' },
   { value: 'tile_reached', label: 'A unit reaches an area' },
   { value: 'battle_victory', label: 'Battle won' },
   { value: 'unit_healed', label: 'A unit is healed' },
+  { value: 'player_phase_end', label: 'End of player phase' },
 ];
 
 function defaultTrigger(type: DungeonEventTrigger['type'], firstUnit: string): DungeonEventTrigger {
@@ -118,11 +120,15 @@ function defaultTrigger(type: DungeonEventTrigger['type'], firstUnit: string): D
       return { type, targetUnitId: firstUnit, initiator: 'lord' };
     case 'unit_defeated':
       return { type, targetUnitId: firstUnit };
+    case 'unit_damaged':
+      return { type, targetUnitId: firstUnit };
     case 'tile_reached':
       return { type, x1: 1, y1: 1, x2: 2, y2: 2, by: 'any_player' };
     case 'battle_victory':
       return { type };
     case 'unit_healed':
+      return { type };
+    case 'player_phase_end':
       return { type };
   }
 }
@@ -197,8 +203,10 @@ function triggerSection(ctx: EditorContext, dlg: DialogueSessionData, hooks: Dia
   } else if (t.type === 'talk') {
     sec.append(field('Talk to', unitSelect(t.targetUnitId, (v) => setEvent((e) => { (e.trigger as typeof t).targetUnitId = v; }))));
     sec.append(field('Who can talk', selectInput(ui, [{ value: 'lord', label: 'Only the hero' }, { value: 'any_player', label: 'Anyone on your team' }], t.initiator ?? 'any_player', (v) => setEvent((e) => { (e.trigger as typeof t).initiator = v; }))));
-  } else if (t.type === 'unit_defeated') {
+  } else if (t.type === 'unit_defeated' || t.type === 'unit_damaged') {
     sec.append(field('Unit', unitSelect(t.targetUnitId, (v) => setEvent((e) => { (e.trigger as typeof t).targetUnitId = v; }))));
+  } else if (t.type === 'player_phase_end') {
+    sec.append(checkbox(ui, 'Require support gained this battle', Boolean(t.requireSupportGainThisBattle), (v) => setEvent((e) => { (e.trigger as typeof t).requireSupportGainThisBattle = v || undefined; })));
   } else if (t.type === 'tile_reached') {
     sec.append(row(
       field('From X', numberInput(ui, t.x1 ?? 1, (n) => setEvent((e) => { (e.trigger as typeof t).x1 = Math.round(n); }))),

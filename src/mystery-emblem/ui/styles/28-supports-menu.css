@@ -240,6 +240,12 @@
   position: fixed;
   inset: 0;
   z-index: 89;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 1rem 250px;
+  box-sizing: border-box;
   background: radial-gradient(circle at 50% 42%, rgba(20, 38, 62, 0.86), rgba(4, 8, 16, 0.94));
 }
 
@@ -247,8 +253,25 @@
   display: none !important;
 }
 
+.pmd-support-mini-stage {
+  padding: 0;
+  flex-shrink: 0;
+  line-height: 0;
+  pointer-events: none;
+}
+
+.pmd-support-mini-stage-canvas {
+  display: block;
+  width: 336px;
+  height: 240px;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  image-rendering: pixelated;
+}
+
 /* Keep support playback dialogue bottom-docked cleanly over the camp backdrop even on Overworld */
 body:has(.pmd-supports-playback-backdrop:not([hidden])) .pmd-dialogue-overlay {
+  background: transparent;
   justify-content: flex-end !important;
   padding: 3.8rem 1rem 1rem !important;
 }
@@ -260,14 +283,48 @@ body:has(.pmd-supports-playback-backdrop:not([hidden])) .pmd-dialogue-overlay .p
   align-items: end !important;
 }
 
+@media (max-width: 640px) {
+  .pmd-supports-playback-backdrop {
+    padding: 3.8rem 0.75rem 204px;
+  }
+
+  .pmd-support-mini-stage {
+    border-width: 8px 12px;
+  }
+
+  .pmd-support-mini-stage-canvas {
+    width: min(336px, calc(100vw - 44px));
+    height: auto;
+    aspect-ratio: 168 / 120;
+  }
+
+  body:has(.pmd-supports-playback-backdrop:not([hidden])) .pmd-dialogue-overlay {
+    padding: 3.6rem 0.5rem 0.6rem !important;
+  }
+}
+
 @media (max-height: 500px) {
+  .pmd-supports-playback-backdrop {
+    padding: 0.55rem 0.75rem 108px;
+  }
+
+  .pmd-support-mini-stage {
+    border-width: 8px 12px;
+  }
+
+  .pmd-support-mini-stage-canvas {
+    width: min(252px, calc((100dvh - 134px) * 1.4));
+    height: auto;
+    aspect-ratio: 168 / 120;
+  }
+
   body:has(.pmd-supports-playback-backdrop:not([hidden])) .pmd-dialogue-overlay {
     padding: 3.35rem 0.65rem 0.45rem !important;
   }
 
   body:has(.pmd-supports-playback-backdrop:not([hidden])) .pmd-dialogue-overlay .pmd-dialogue-stage {
     grid-template-areas: 'left box right' !important;
-    align-items: stretch !important;
+    align-items: end !important;
   }
 }
 

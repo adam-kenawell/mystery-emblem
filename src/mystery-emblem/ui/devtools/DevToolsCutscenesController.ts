@@ -66,6 +66,8 @@ function describeTrigger(chapterId: string, dialogueId: string): string {
       return `Talk with ${t.targetUnitId}`;
     case 'unit_defeated':
       return `${t.targetUnitId} defeated`;
+    case 'unit_damaged':
+      return `${t.targetUnitId} takes damage`;
     case 'tile_reached':
       return t.tiles?.length
         ? `${t.tiles.length} target tile(s) reached`
@@ -74,6 +76,10 @@ function describeTrigger(chapterId: string, dialogueId: string): string {
       return 'battle won';
     case 'unit_healed':
       return 'a unit is healed';
+    case 'player_phase_end':
+      return t.requireSupportGainThisBattle
+        ? 'end of player phase (support gained)'
+        : 'end of player phase';
   }
 }
 

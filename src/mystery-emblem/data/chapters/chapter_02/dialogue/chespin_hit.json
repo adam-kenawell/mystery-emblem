@@ -1,0 +1,30 @@
+{
+  "id": "chespin_hit",
+  "chapter": "chapter_02",
+  "role": "event",
+  "title": "Holding the Gate",
+  "cast": [
+    { "id": "partner", "who": { "kind": "partner" } },
+    { "id": "chespin", "who": { "kind": "recruit", "speciesId": "chespin" } }
+  ],
+  "beats": [
+    {
+      "id": "line_1",
+      "say": {
+        "speaker": "partner",
+        "emotion": "Worried",
+        "side": "left",
+        "text": "Are you sure you don't want to retreat? We can fall back and regroup right here!"
+      }
+    },
+    {
+      "id": "line_2",
+      "say": {
+        "speaker": "chespin",
+        "emotion": "Determined",
+        "side": "right",
+        "text": "Save your worry. That blow barely scratched my shell. These raiders will never get through my defenses!"
+      }
+    }
+  ]
+}

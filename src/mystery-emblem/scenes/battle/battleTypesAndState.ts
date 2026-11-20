@@ -146,6 +146,7 @@ export interface BattleRuntimeState {
   prepSwapSlotIndex: number | null;
   units: BattleUnitState[];
   battleSupportPoints: Record<string, SupportPairProgress>;
+  supportHeartEarnedThisBattle: boolean;
   turnNumber: number;
   phase: BattlePhase;
   interactionState: BattleInteractionState;
@@ -256,6 +257,7 @@ export function createInitialBattleRuntimeState(): BattleRuntimeState {
     prepSwapSlotIndex: null,
     units: [],
     battleSupportPoints: {},
+    supportHeartEarnedThisBattle: false,
     turnNumber: 1,
     phase: 'dungeon_prep',
     interactionState: 'idle',

@@ -10,7 +10,11 @@ import type {
   TutorialPresenter,
   TutorialTopicDefinition,
 } from '../../data/tutorialRegistry';
-import { interpolateCampaignText, resolveSpeakerIdentity } from '../../engine/speakerResolver';
+import {
+  interpolateCampaignText,
+  resolveSpeakerIdentity,
+  type ResolvedSpeakerIdentity,
+} from '../../engine/speakerResolver';
 import type { SaveData } from '../../types/schemas';
 import type { PmdPortraitView } from '../PmdSpriteCanvas';
 import { createPmdWindow } from '../PmdWindow';
@@ -48,17 +52,20 @@ function buildNavActionsRow(params: RenderCoachCardParams): HTMLElement {
   return actionArea;
 }
 
-export function renderCoachCardDom(params: RenderCoachCardParams): {
+export function renderCoachCardDom(
+  params: RenderCoachCardParams,
+  resolvedAdvisor?: ResolvedSpeakerIdentity
+): {
   speechEl: HTMLElement;
   formattedDialogue: string;
 } {
   const { cardWindowEl, coachPortraitView, topic, beat, save } = params;
   const isMentor = params.presenter === 'mentor';
   const emotion = beat.emotion;
+  const advisor =
+    resolvedAdvisor ?? resolveSpeakerIdentity({ kind: isMentor ? 'mentor' : 'advisor' }, save);
 
   cardWindowEl.innerHTML = '';
-  const advisor = resolveSpeakerIdentity({ kind: isMentor ? 'mentor' : 'advisor' }, save);
-
   cardWindowEl.dataset.topicId = topic.id;
   cardWindowEl.dataset.beatId = beat.id;
   cardWindowEl.dataset.presenter = isMentor ? 'mentor' : 'advisor';
@@ -74,10 +81,12 @@ export function renderCoachCardDom(params: RenderCoachCardParams): {
     'pmd-dialogue-portrait-slot pmd-dialogue-portrait-slot--left pmd-advisor-portrait-slot is-speaking';
   portraitSlot.dataset.testid = 'tutorial-advisor-portrait-slot';
   portraitSlot.appendChild(coachPortraitView.canvas);
-  void coachPortraitView.setPortrait({
-    speciesIdOrAssetId: advisor.visualAssetId ?? advisor.pmdAssetId,
-    emotion,
-  });
+  if (!resolvedAdvisor) {
+    void coachPortraitView.setPortrait({
+      speciesIdOrAssetId: advisor.visualAssetId ?? advisor.pmdAssetId,
+      emotion,
+    });
+  }
 
   const speakerName = document.createElement('span');
   speakerName.className = 'pmd-dialogue-nickname pmd-advisor-speaker-name';
@@ -110,12 +119,21 @@ export function renderCoachCardDom(params: RenderCoachCardParams): {
   return { speechEl, formattedDialogue };
 }
 
-export function renderCoachCardWithTypewriter(
+export async function renderCoachCardWithTypewriter(
   params: RenderCoachCardParams,
   typewriter: TypewriterController,
-  onTickSfx: () => void
-): void {
-  const { speechEl, formattedDialogue } = renderCoachCardDom(params);
+  onTickSfx: () => void,
+  isStale?: () => boolean
+): Promise<boolean> {
+  const isMentor = params.presenter === 'mentor';
+  const advisor = resolveSpeakerIdentity({ kind: isMentor ? 'mentor' : 'advisor' }, params.save);
+  await params.coachPortraitView.setPortrait({
+    speciesIdOrAssetId: advisor.visualAssetId ?? advisor.pmdAssetId,
+    emotion: params.beat.emotion,
+  });
+  if (isStale?.()) return false;
+
+  const { speechEl, formattedDialogue } = renderCoachCardDom(params, advisor);
   typewriter.start({
     targetEl: speechEl,
     text: formattedDialogue,
@@ -124,4 +142,5 @@ export function renderCoachCardWithTypewriter(
     instant: prefersReducedMotionEnabled(),
     onTick: onTickSfx,
   });
+  return true;
 }

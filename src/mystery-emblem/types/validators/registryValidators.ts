@@ -164,6 +164,9 @@ export function validateMoves(moves: readonly MoveDefinition[]): {
     byId.set(mv.id, mv);
     if (!VALID_TYPE_SET.has(mv.type)) errors.push(`Move "${mv.id}" invalid type "${mv.type}".`);
     if (!VALID_MOVE_CATEGORY_SET.has(mv.category)) errors.push(`Move "${mv.id}" invalid category "${mv.category}".`);
+    if (!Number.isInteger(mv.pp) || mv.pp < 5 || mv.pp % 5 !== 0) {
+      errors.push(`Move "${mv.id}" PP must be a positive multiple of 5 (got ${mv.pp}).`);
+    }
 
     const [minR, maxR] = mv.range;
     if (mv.category === 'Physical') {
