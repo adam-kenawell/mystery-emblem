@@ -28,7 +28,7 @@ Read this index first in every session before scanning directories. Read only th
 - `cutscenes/{cs_prelude_dragon_kingdom,cs_00..cs_06_*.json,locations/*.json}` + `cutscenes/{cutsceneDocTypes,cutsceneRegistry,dialogueCompiler,locationCodec,mediaLibrary}.ts` - 9 Act 1 story cutscenes & shared locations.
 - `quizLordProfiles.ts`, `quizQuestions.ts` (`quizData.ts` barrel) - 5 Dragon Lord aura profiles & 8-question Dragon-only personality quiz.
 - `overworld/{overworldGraphData,kecleonShopCatalog,skirmishEncounterData}.ts` (`overworldMapData.ts` barrel) - 6-node Act 1 Verdant Kingdom graph, 4 Kecleon Shop catalogs, Feral Skirmish tiers.
-- `storyCutscenes.ts`, `creditsData.ts`, `accessControl.ts`, `allegiance.ts` - Multi-cutscene lookup, Act 1 credits + `DEMO_FEEDBACK_FORM_URL` CTA, admin gate, unit-card realm allegiance (`Verdant`, `Sand`, `Steel`, `Forest`, `Rift`, `Feral`).
+- `storyCutscenes.ts`, `faintMessages.{ts,json}`, `creditsData.ts`, `accessControl.ts`, `allegiance.ts` - Multi-cutscene lookup, playable unit faint dialogue registry (`sympathy` BGM + narrated `"{nickname} fainted..."`), Act 1 credits + `DEMO_FEEDBACK_FORM_URL` CTA, admin gate, unit-card realm allegiance (`Verdant`, `Sand`, `Steel`, `Forest`, `Rift`, `Feral`).
 - `tutorials/{tutorialTypes,prologueDrillTopics,earlyChapterTopics,mechanicsAndTerrainTopics,tutorialTriggers}.ts` (`tutorialRegistry.ts` barrel) - **Quaquaval's Field Notes** non-blocking 1-liner coaching topics & `TUTORIAL_TRIGGER_RULES`.
 - `supports/supportMatrix.ts` + `supports/conversations/*.json` - Awakening-style Unit Supports matrix, 84 `C/B/A/S` support scripts, and species-line combat bonus profiles.
 

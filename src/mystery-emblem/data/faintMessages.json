@@ -1,0 +1,202 @@
+{
+  "axew_line": [
+    { "emotion": "Pain", "text": "Gah... That hit harder than I thought. My legs won't hold..." },
+    { "emotion": "Sad", "text": "Sorry, everyone... Push on without me for a minute..." }
+  ],
+  "bagon_line": [
+    { "emotion": "Pain", "text": "Nngh... No! I can still take one more hit... just let me stand..." },
+    { "emotion": "Sad", "text": "Tch... Fine. I'm down for now, but I'm getting right back up." }
+  ],
+  "gible_line": [
+    { "emotion": "Pain", "text": "Ack! Okay, okay, that one actually stung... Vision's going fuzzy..." },
+    { "emotion": "Worried", "text": "Heh... Guess I bit off too much this time. Watch yourselves out there..." }
+  ],
+  "dratini_line": [
+    { "emotion": "Pain", "text": "Ngh... I misread that opening... My strength is slipping fast." },
+    { "emotion": "Sad", "text": "Stay steady, everyone... Keep your formation tight..." }
+  ],
+  "goomy_line": [
+    { "emotion": "Pain", "text": "Oof... Everything's spinning. I tried to hold the line..." },
+    { "emotion": "Teary-Eyed", "text": "Please be careful, everyone... Don't let them hurt you..." }
+  ],
+  "quaxly_line": [
+    { "emotion": "Pain", "text": "Whoa... My footing just gave out! My crest is a mess..." },
+    { "emotion": "Sad", "text": "Sorry, {lord}... Tell Dad I tried to hold my stance..." },
+    { "emotion": "Worried", "text": "I'm falling back to catch my breath... Don't lose without me!" }
+  ],
+  "flabebe_line": [
+    { "emotion": "Pain", "text": "Ah...! My petals... I dropped my salve pouch..." },
+    { "emotion": "Sad", "text": "I'm sorry, {lord}. I was supposed to keep everyone patched up..." },
+    { "emotion": "Worried", "text": "I need to rest for a moment... Please stay out of danger." }
+  ],
+  "mentor_quaquaval_line": [
+    { "emotion": "Pain", "text": "Ghk...! Hmph, sloppy footwork on my part. Getting rusty in my old age..." },
+    { "emotion": "Worried", "text": "Listen to me, {lord}. Keep your guard up and watch out for {partner}." },
+    { "emotion": "Sad", "text": "I have to step off the line for now... Show them what we practiced." }
+  ],
+  "combee_line": [
+    { "emotion": "Pain", "text": "Bzzzt...! Ow, ow, ow! Left wing's bent and the bottom one's seeing stars!" },
+    { "emotion": "Worried", "text": "Wait, wait, we're losing altitude! Sorry, {lord}, we can't stay airborne..." },
+    { "emotion": "Sad", "text": "Tell the Queen we tried our best... Zzz..." }
+  ],
+  "vespiquen": [
+    { "emotion": "Pain", "text": "Ghh...! Insolent strike... My guard has been breached." },
+    { "emotion": "Sad", "text": "I must withdraw and tend my hive, {lord}. Hold the field in my stead." }
+  ],
+  "chespin_line": [
+    { "emotion": "Pain", "text": "Ngh...! Even my shell has its limit... My knees will not hold." },
+    { "emotion": "Sad", "text": "Forgive me, Commander {lord}. A shield should never crack before the line behind it." },
+    { "emotion": "Worried", "text": "I must yield the field for now... Please guard your flank." }
+  ],
+  "machop_line": [
+    { "emotion": "Pain", "text": "Gah...! Lost my grip right at the worst second..." },
+    { "emotion": "Sad", "text": "Man, Boss Machamp would chew me out for dropping my guard like that." },
+    { "emotion": "Worried", "text": "Gotta sit this one out, {lord}. Finish the climb for me!" }
+  ],
+  "slakoth_line": [
+    { "emotion": "Pain", "text": "Oof... Ow. Okay, that actually woke me up..." },
+    { "emotion": "Dizzy", "text": "World's tilting sideways... Think I'll lie down right here for a bit..." },
+    { "emotion": "Sad", "text": "Save me an Oran Berry when this is over, {lord}... *Yaaawn*..." }
+  ],
+  "starly_line": [
+    { "emotion": "Pain", "text": "Agh! Clipped my wing... Can't catch an updraft!" },
+    { "emotion": "Worried", "text": "Tch, grounded! Sorry, {lord}, I can't watch the sky from down here." },
+    { "emotion": "Sad", "text": "Pulling back before I black out... Win this for our hometown squad." }
+  ],
+  "caterpie_line": [
+    { "emotion": "Pain", "text": "Ugh...! That knocked the wind right out of me..." },
+    { "emotion": "Sad", "text": "I thought I had the angle covered... Guess I misjudged that hit." },
+    { "emotion": "Worried", "text": "I'm pulling back to recover, {lord}. Watch the brush on your flank." }
+  ],
+  "pawmi_line": [
+    { "emotion": "Pain", "text": "Zzzt...! Ow! My cheeks just shorted out..." },
+    { "emotion": "Worried", "text": "No way... My legs feel like lead. I can't keep the pace up..." },
+    { "emotion": "Sad", "text": "Sorry, {lord}. Tag me out for now... I owe you a rematch later!" }
+  ],
+  "honedge_line": [
+    { "emotion": "Pain", "text": "Khh...! A grievous blow... My hilt grows heavy." },
+    { "emotion": "Sad", "text": "Forgive this lapse in arms, {lord}. My steel fails you today." },
+    { "emotion": "Worried", "text": "I must withdraw to mend my edge... Guard your honor until I return." }
+  ],
+  "sandile_line": [
+    { "emotion": "Pain", "text": "Grrk...! Sand in my eyes... Walked right into that one!" },
+    { "emotion": "Sad", "text": "Tch, embarrassing for a desert tracker. My legs are cooked." },
+    { "emotion": "Worried", "text": "I'm ducking into cover, {lord}. Don't let them flank you while I'm out." }
+  ],
+  "dreepy_line": [
+    { "emotion": "Pain", "text": "Tch...! Sloppy... The wind slipped right through my claws." },
+    { "emotion": "Sad", "text": "I have to fall back to the canopy, {lord}. Do not waste the ground we took." }
+  ],
+  "deino_line": [
+    { "emotion": "Pain", "text": "Grrgh...! Impossible... Taken down before the Rift is even shut?!" },
+    { "emotion": "Sad", "text": "Move, {lord}... Don't look back at me. End this war." }
+  ],
+  "eevee_line": [
+    { "emotion": "Pain", "text": "Yip...! Ow, that hit way too hard..." },
+    { "emotion": "Sad", "text": "I'm sorry, {lord}... I tried to keep up, I really did. I need to rest..." }
+  ],
+  "oricorio_line": [
+    { "emotion": "Pain", "text": "Oh...! My rhythm broke right mid-step..." },
+    { "emotion": "Sad", "text": "Looks like my encore has to wait, {lord}. Keep dancing past them for me!" }
+  ],
+  "tinkatink_line": [
+    { "emotion": "Pain", "text": "Clang...! Hey, watch the hammer! Ow, my arms went numb..." },
+    { "emotion": "Sad", "text": "Ugh, fine, I'm retreating! Next battle I'm bringing a bigger chunk of scrap!" }
+  ],
+  "duskull_line": [
+    { "emotion": "Pain", "text": "Hsssh... The chill fades... Even shadows wear thin." },
+    { "emotion": "Sad", "text": "I must drift back into the dark, {lord}. Do not follow me there." }
+  ],
+  "gastly_line": [
+    { "emotion": "Pain", "text": "Gack...! Hey, that wasn't funny! My mist is scattering everywhere!" },
+    { "emotion": "Sad", "text": "Okay, okay, I'm ghosting out for real this time... Don't get wiped without me!" }
+  ],
+  "seedot_line": [
+    { "emotion": "Pain", "text": "Ngh...! Cracked my cap... Not my finest landing." },
+    { "emotion": "Sad", "text": "I'll roll back into the brush to recover, {lord}. Hold the treeline!" }
+  ],
+  "pikipek_line": [
+    { "emotion": "Pain", "text": "Squawk...! Took a direct hit to the wing..." },
+    { "emotion": "Sad", "text": "Gotta perch and catch my breath, {lord}. Watch the high ground!" }
+  ],
+  "abra_line": [
+    { "emotion": "Pain", "text": "Mm... My focus snapped. That's my cue to blink out..." },
+    { "emotion": "Sad", "text": "Teleporting to the back line, {lord}. Keep your head clear." }
+  ],
+  "ralts_line": [
+    { "emotion": "Pain", "text": "Ah...! The shock is too loud... I can't hold my focus..." },
+    { "emotion": "Sad", "text": "I'm sorry, {lord}. Please stay safe while I recover..." }
+  ],
+  "solosis_line": [
+    { "emotion": "Pain", "text": "Bloop... Oh dear, my barrier popped clean through..." },
+    { "emotion": "Sad", "text": "Drifting to the rear before I lose consciousness... Good luck, {lord}." }
+  ],
+  "geodude_line": [
+    { "emotion": "Pain", "text": "Grah...! That actually chipped my gravel! Didn't see it coming..." },
+    { "emotion": "Sad", "text": "Gotta roll out of the line of fire, {lord}. Smash 'em back for me!" }
+  ],
+  "roggenrola_line": [
+    { "emotion": "Pain", "text": "Krrk...! Core rattled... Too loud, too heavy..." },
+    { "emotion": "Sad", "text": "Retreating to steady my footing... Hold the path, {lord}." }
+  ],
+  "elekid_line": [
+    { "emotion": "Pain", "text": "Bzzap...! Ow! Blew my own fuse on that one..." },
+    { "emotion": "Sad", "text": "Tch, running on empty! Cover for me while I recharge, {lord}!" }
+  ],
+  "torchic_line": [
+    { "emotion": "Pain", "text": "Chirp...! Ouch! My embers just sputtered right out..." },
+    { "emotion": "Sad", "text": "I'm sorry, {lord}... I'll warm back up on the sidelines, okay?" }
+  ],
+  "chimchar_line": [
+    { "emotion": "Pain", "text": "Yowch...! Landed wrong... Even my tail flame's shrinking!" },
+    { "emotion": "Sad", "text": "Heh, pushed my luck too far. Catch you after I patch up, {lord}!" }
+  ],
+  "bellsprout_line": [
+    { "emotion": "Pain", "text": "Ghk...! Bent clean sideways... Roots aren't holding!" },
+    { "emotion": "Sad", "text": "Shrinking back into the shade, {lord}. Don't let them trample the line." }
+  ],
+  "oddish_line": [
+    { "emotion": "Pain", "text": "Eep...! Ow, my leaves... Everything's going dim..." },
+    { "emotion": "Sad", "text": "I'm tucking back into the dirt for a minute... Be careful, {lord}." }
+  ],
+  "cleffa_line": [
+    { "emotion": "Pain", "text": "Oh...! Seeing real stars now, and not the pretty kind..." },
+    { "emotion": "Sad", "text": "I need to sit down before I topple over... Stay strong, {lord}!" }
+  ],
+  "igglybuff_line": [
+    { "emotion": "Pain", "text": "Boing... oof! Lost all my bounce on that hit..." },
+    { "emotion": "Sad", "text": "My voice gave out... Cheer loud enough for both of us, {lord}!" }
+  ],
+  "vanillite_line": [
+    { "emotion": "Pain", "text": "Brrr...! Hey, I'm melting out here! Too dizzy..." },
+    { "emotion": "Sad", "text": "Pulling back to chill out before I puddle, {lord}..." }
+  ],
+  "swinub_line": [
+    { "emotion": "Pain", "text": "Snort...! Oof, right on the snout... Can't smell straight..." },
+    { "emotion": "Sad", "text": "Burrowing back to camp for a quick breather, {lord}." }
+  ],
+  "sewaddle_line": [
+    { "emotion": "Pain", "text": "Ack...! They tore right through my collar stitch!" },
+    { "emotion": "Sad", "text": "I need to slip back and mend myself up, {lord}. Watch your seams!" }
+  ],
+  "poliwag_line": [
+    { "emotion": "Pain", "text": "Blub...! Whoa, my swirl's spinning the wrong way..." },
+    { "emotion": "Sad", "text": "Can't keep my feet under me, {lord}. Pulling back to dry off!" }
+  ],
+  "magnemite_line": [
+    { "emotion": "Pain", "text": "Bzz-krrt... Structural fault detected. Magnetics failing." },
+    { "emotion": "Sad", "text": "Disengaging for emergency recharge. Proceed with caution, {lord}." }
+  ],
+  "nidoran_m_line": [
+    { "emotion": "Pain", "text": "Grr...! Stupid hit... My ears are ringing!" },
+    { "emotion": "Sad", "text": "Fine, I'm backing off before I pass out! Make 'em pay, {lord}!" }
+  ],
+  "nidoran_f_line": [
+    { "emotion": "Pain", "text": "Ngh...! Took the brunt of that one... Can't hold them back anymore." },
+    { "emotion": "Sad", "text": "I'm stepping out of the front line, {lord}. Keep everyone else safe." }
+  ],
+  "hoppip_line": [
+    { "emotion": "Pain", "text": "Whoa...! Caught in a nasty downdraft... I'm tumbling!" },
+    { "emotion": "Sad", "text": "Drifting back to softer grass, {lord}... Don't blow away without me!" }
+  ]
+}

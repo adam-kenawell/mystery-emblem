@@ -4,6 +4,10 @@
 
 import { directionFromDelta } from '../../assets/pmdAssetLoader';
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
+import {
+  buildUnitFaintDialogueScript,
+  isPlayableFaintUnit,
+} from '../../data/faintMessages';
 import { getItemById } from '../../data/index';
 import {
   STATUS_ACTION_CALLOUTS,
@@ -15,11 +19,82 @@ import {
 } from '../../engine/combatEngine';
 import { computeCombatExpGain } from '../../engine/progressionEngine';
 import { ensureTilePairVisible, showPhaseBanner, waitBattleMs } from './battleBannersAndTransitions';
+import { syncHudControls } from './battleDangerAndViewportState';
 import { spawnFloatingText } from './battleFloatingCallouts';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { grantExpAndHandleLevelUps } from './battleLevelUpModal';
 import { awardBattleCombatSupportPoints } from './battleSupportHelpers';
 import { getBattleRng, type BattleControllerContext } from './battleTypesAndState';
+
+async function dissolveDefeatedUnitAsync(
+  ctx: BattleControllerContext,
+  target: BattleUnitState,
+  runGen: number
+): Promise<void> {
+  const { state, audioManager } = ctx;
+  if (target.defeated) return;
+  audioManager.playSfx('unit_ko');
+  const koSteps = 6;
+  for (let s = 1; s <= koSteps; s++) {
+    if (!state.openState || runGen !== state.battleRunGen) return;
+    target.koDissolveProgress = s / koSteps;
+    await waitBattleMs(state, 55);
+  }
+  target.defeated = true;
+  state.trackedEnemyIds.delete(target.id);
+}
+
+async function playPlayableUnitFaintSequenceAsync(
+  ctx: BattleControllerContext,
+  target: BattleUnitState,
+  runGen: number
+): Promise<void> {
+  const { state, dom, dialogueOverlay } = ctx;
+  if (!dialogueOverlay) {
+    await dissolveDefeatedUnitAsync(ctx, target, runGen);
+    return;
+  }
+
+  ensureTilePairVisible(state, target.x, target.y, target.x, target.y);
+  const causesDefeat = Boolean(
+    target.isLord || target.mustSurvive || state.defeatIfUnitIdsFall.includes(target.id)
+  );
+  const script = buildUnitFaintDialogueScript(target, {
+    restorePreviousBgmOnClose: !causesDefeat,
+    turnNumber: state.turnNumber,
+  });
+
+  const narratorLineIdx = script.lines.length - 1;
+  let dissolvePromise: Promise<void> | null = null;
+
+  state.cutsceneInProgress = true;
+  syncHudControls(state, dom);
+  ctx.onLayerStateChanged();
+  ctx.renderNow();
+  try {
+    await dialogueOverlay.playScript(script, {
+      onLineStart: (lineIndex) => {
+        if (lineIndex === narratorLineIdx && !dissolvePromise) {
+          dissolvePromise = dissolveDefeatedUnitAsync(ctx, target, runGen);
+        }
+      },
+    });
+  } finally {
+    if (state.openState && runGen === state.battleRunGen) {
+      state.cutsceneInProgress = false;
+      syncHudControls(state, dom);
+      ctx.onLayerStateChanged();
+      ctx.renderNow();
+    }
+  }
+
+  if (!state.openState || runGen !== state.battleRunGen) return;
+  if (dissolvePromise) {
+    await dissolvePromise;
+  } else if (!target.defeated) {
+    await dissolveDefeatedUnitAsync(ctx, target, runGen);
+  }
+}
 
 export async function playCombatExchangeAsync(
   ctx: BattleControllerContext,
@@ -168,7 +243,6 @@ export async function playCombatExchangeAsync(
     state.activeStrikeVfx = null;
 
     if (strike.targetDefeated) {
-      audioManager.playSfx('unit_ko');
       if (target.faction === 'enemy' && target.droppableItemId) {
         const dropId = target.droppableItemId;
         target.droppableItemId = null;
@@ -178,14 +252,12 @@ export async function playCombatExchangeAsync(
         audioManager.playSfx('heal');
         showPhaseBanner(state, dom, `Obtained ${dropName}!`);
       }
-      const koSteps = 6;
-      for (let s = 1; s <= koSteps; s++) {
-        if (!state.openState || runGen !== state.battleRunGen) return;
-        target.koDissolveProgress = s / koSteps;
-        await waitBattleMs(state, 55);
+      if (isPlayableFaintUnit(target)) {
+        await playPlayableUnitFaintSequenceAsync(ctx, target, runGen);
+      } else {
+        await dissolveDefeatedUnitAsync(ctx, target, runGen);
       }
-      target.defeated = true;
-      state.trackedEnemyIds.delete(target.id);
+      if (!state.openState || runGen !== state.battleRunGen) return;
       break;
     } else {
       target.action = 'Idle';

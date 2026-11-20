@@ -2,6 +2,7 @@
  * Match End Checks, Victory Spoils Commit (`commitBattleResults`), Event Joins & Defeat Modal
  */
 
+import { UNIT_FAINT_BGM_CUE } from '../../data/faintMessages';
 import { getSpeciesById } from '../../data/index';
 import { DEMO_OVERWORLD_GRAPH } from '../../data/overworldMapData';
 import { createMiniItemIcon } from '../../ui/PmdItemIconGrid';
@@ -290,7 +291,7 @@ export function triggerDefeatModal(ctx: BattleControllerContext): void {
 
   dom.defeatModalBackdropEl.hidden = false;
   audioManager.playSfx('game_over');
-  audioManager.playBgm('oh_no', { fadeMs: 180, loop: false, restart: true });
+  audioManager.playBgm(UNIT_FAINT_BGM_CUE, { fadeMs: 180 });
   syncHudControls(state, dom);
   ctx.onLayerStateChanged();
   ctx.renderNow();
