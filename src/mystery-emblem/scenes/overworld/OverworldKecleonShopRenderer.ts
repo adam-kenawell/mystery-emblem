@@ -52,14 +52,14 @@ export function renderOverworldKecleonShop(params: OverworldKecleonRenderParams)
   dom.kecleonShelfEl.innerHTML = '';
 
   if (!shop) {
-    dom.kecleonTitleEl.textContent = 'KECLEON SHOP - SOLD OUT';
+    dom.kecleonTitleEl.textContent = 'Kecleon Shop - Sold Out';
     dom.kecleonSpeechNameEl.textContent = 'Kecleon';
     dom.kecleonSpeechTextEl.textContent = 'Sold out! Safe travels!';
     return selectedShopItemId;
   }
 
   const meta = KECLEON_SHOP_METADATA[shop.shopType];
-  dom.kecleonTitleEl.textContent = meta.title.toUpperCase();
+  dom.kecleonTitleEl.textContent = meta.title;
   dom.kecleonSpeechNameEl.textContent = 'Kecleon';
   dom.kecleonSpeechTextEl.textContent = meta.greeting;
 
@@ -72,7 +72,7 @@ export function renderOverworldKecleonShop(params: OverworldKecleonRenderParams)
   }
 
   if (shopItems.length === 0) {
-    dom.kecleonTitleEl.textContent = 'KECLEON SHOP - SOLD OUT';
+    dom.kecleonTitleEl.textContent = 'Kecleon Shop - Sold Out';
     dom.kecleonSpeechNameEl.textContent = 'Kecleon';
     dom.kecleonSpeechTextEl.textContent = 'Sold out! Safe travels!';
     return selectedShopItemId;

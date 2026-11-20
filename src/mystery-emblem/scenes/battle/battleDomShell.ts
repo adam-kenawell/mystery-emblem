@@ -20,6 +20,10 @@ export interface BattleDomRefs {
   phaseTransitionTitleEl: HTMLElement;
   bottomLeftHudStackEl: HTMLElement;
   infoStripEl: HTMLElement;
+  battleLogDockEl: HTMLElement;
+  battleLogBoxEl: HTMLElement;
+  battleLogEntriesEl: HTMLElement;
+  battleLogToggleBtnEl: HTMLButtonElement;
   unitPopupEl: HTMLElement;
   unitPopupPortraitView: PmdPortraitView;
   actionMenuEl: HTMLElement;
@@ -41,7 +45,7 @@ export interface BattleDomRefs {
   fieldEndPhaseBtnEl: HTMLButtonElement;
   fieldInfoBtnEl: HTMLButtonElement;
   fieldSettingsBtnEl: HTMLButtonElement;
-  fieldSaveExitBtnEl: HTMLButtonElement;
+  fieldBookmarkBtnEl: HTMLButtonElement;
   fieldSubmodalCardEl: HTMLElement;
   victoryModalBackdropEl: HTMLElement;
   defeatModalBackdropEl: HTMLElement;
@@ -57,7 +61,7 @@ function createBattleModalsDom() {
       <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row" data-testid="battle-field-end-phase">End Phase</button>
       <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-field-info">Battle Info</button>
       <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-field-settings">Settings</button>
-      <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-field-save-exit">Save &amp; Exit</button>
+      <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-field-bookmark">Bookmark</button>
     </div>
     <div class="pmd-window pmd-dungeon-submodal" data-field-submodal role="dialog" aria-modal="true" hidden></div>
   `;
@@ -69,7 +73,7 @@ function createBattleModalsDom() {
   victoryModalBackdropEl.innerHTML = `
     <div class="pmd-window pmd-window--gold pmd-battle-outcome-dialog" role="dialog" aria-modal="true" aria-labelledby="battle-victory-title">
       <span class="pmd-battle-kicker is-victory">STAGE CLEAR</span>
-      <h2 id="battle-victory-title" class="pmd-panel-title">VICTORY!</h2>
+      <h2 id="battle-victory-title" class="pmd-panel-title">Victory!</h2>
       <p class="pmd-panel-sub" data-victory-sub>All enemy forces have been routed!</p>
       <p class="pmd-subcard-text" data-victory-summary></p>
       <div class="pmd-battle-outcome-actions">
@@ -86,7 +90,7 @@ function createBattleModalsDom() {
   defeatModalBackdropEl.innerHTML = `
     <div class="pmd-window pmd-battle-outcome-dialog is-defeat-window" role="dialog" aria-modal="true" aria-labelledby="battle-defeat-title">
       <span class="pmd-battle-kicker is-defeat">DEFEATED</span>
-      <h2 id="battle-defeat-title" class="pmd-panel-title is-danger-title">DEFEAT</h2>
+      <h2 id="battle-defeat-title" class="pmd-panel-title is-danger-title">Defeat</h2>
       <p class="pmd-panel-sub" data-defeat-sub>Your Dragon Lord fell in battle.</p>
       <p class="pmd-subcard-text" data-defeat-summary>Regroup and challenge the chapter again from Turn 1.</p>
       <div class="pmd-battle-outcome-actions">
@@ -190,8 +194,8 @@ function createBattleModalsDom() {
     fieldSettingsBtnEl: systemMenuBackdropEl.querySelector<HTMLButtonElement>(
       '[data-testid="battle-field-settings"]'
     )!,
-    fieldSaveExitBtnEl: systemMenuBackdropEl.querySelector<HTMLButtonElement>(
-      '[data-testid="battle-field-save-exit"]'
+    fieldBookmarkBtnEl: systemMenuBackdropEl.querySelector<HTMLButtonElement>(
+      '[data-testid="battle-field-bookmark"]'
     )!,
     fieldSubmodalCardEl: systemMenuBackdropEl.querySelector<HTMLElement>('[data-field-submodal]')!,
     victoryModalBackdropEl,
@@ -334,7 +338,35 @@ export function createBattleDomShell(): BattleDomRefs {
   `;
   const popupSlot = unitPopupEl.querySelector('[data-popup-portrait-slot]');
   popupSlot?.insertBefore(unitPopupPortraitView.canvas, popupSlot.firstChild);
-  bottomLeftHudStackEl.append(unitPopupEl, infoStripEl);
+  const bottomRowEl = document.createElement('div');
+  bottomRowEl.className = 'pmd-dungeon-bottom-row';
+
+  const battleLogDockEl = document.createElement('div');
+  battleLogDockEl.className = 'pmd-battle-log-dock';
+  battleLogDockEl.dataset.testid = 'dungeon-battle-log-dock';
+  battleLogDockEl.hidden = true;
+  battleLogDockEl.innerHTML = `
+    <div class="pmd-battle-log-viewport">
+      <div class="pmd-window pmd-battle-log-box" data-testid="dungeon-battle-log" role="log" aria-live="polite" aria-label="Battle Log">
+        <div class="pmd-battle-log-entries" data-testid="dungeon-battle-log-entries"></div>
+      </div>
+    </div>
+    <button type="button" class="pmd-window pmd-window--compact pmd-battle-log-toggle" data-testid="dungeon-battle-log-toggle" aria-expanded="true" aria-label="Hide Battle Log">
+      <svg class="pmd-battle-log-arrow" viewBox="0 0 6 7" width="12" height="14" aria-hidden="true" shape-rendering="crispEdges"><path fill="#000000" d="M6,0H4V1H3V2H2V3H1V4H2V5H3V6H4V7H6Z"/><path fill="currentColor" d="M5,1H4V2H3V3H2V4H3V5H4V6H5Z"/></svg>
+    </button>
+  `;
+  const battleLogBoxEl = battleLogDockEl.querySelector<HTMLElement>(
+    '[data-testid="dungeon-battle-log"]'
+  )!;
+  const battleLogEntriesEl = battleLogDockEl.querySelector<HTMLElement>(
+    '[data-testid="dungeon-battle-log-entries"]'
+  )!;
+  const battleLogToggleBtnEl = battleLogDockEl.querySelector<HTMLButtonElement>(
+    '[data-testid="dungeon-battle-log-toggle"]'
+  )!;
+
+  bottomRowEl.append(infoStripEl, battleLogDockEl);
+  bottomLeftHudStackEl.append(unitPopupEl, bottomRowEl);
 
   const actionMenuEl = document.createElement('div');
   actionMenuEl.className = 'pmd-window pmd-window--translucent pmd-battle-action-menu pmd-menu-list';
@@ -390,6 +422,10 @@ export function createBattleDomShell(): BattleDomRefs {
     phaseTransitionTitleEl,
     bottomLeftHudStackEl,
     infoStripEl,
+    battleLogDockEl,
+    battleLogBoxEl,
+    battleLogEntriesEl,
+    battleLogToggleBtnEl,
     unitPopupEl,
     unitPopupPortraitView,
     actionMenuEl,

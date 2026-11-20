@@ -21,26 +21,6 @@
   gap: 8px;
 }
 
-.pmd-forecast-back-btn {
-  position: absolute;
-  top: 0.6rem;
-  right: 0.6rem;
-  z-index: 2;
-  min-width: 44px;
-  min-height: 44px;
-  padding: 4px 12px;
-  font: inherit;
-  font-size: 13px;
-  font-weight: bold;
-  color: var(--pmd-text-white);
-  text-shadow: 1px 1px 0 #000000;
-  cursor: pointer;
-}
-
-.pmd-forecast-back-btn:hover {
-  color: var(--pmd-text-yellow);
-}
-
 .pmd-fe-title {
   font-size: 14px;
   font-weight: bold;
@@ -48,6 +28,7 @@
   text-shadow: 1px 1px 0 #000000;
   text-align: center;
   letter-spacing: 0.06em;
+  padding: 0 32px;
 }
 
 .pmd-fe-body {
@@ -328,6 +309,7 @@
   z-index: 3;
   max-height: 60vh;
   overflow-y: auto;
+  overflow-x: hidden;
   background: #0c1826;
   box-shadow: 0 4px 0 rgba(0, 0, 0, 0.55);
 }
@@ -371,8 +353,14 @@
 }
 
 .pmd-btn.pmd-menu-row.pmd-fe-move-row.is-active .pmd-fe-move-row-name,
-.pmd-btn.pmd-menu-row.pmd-fe-move-row:hover:not(:disabled) .pmd-fe-move-row-name {
+.pmd-btn.pmd-menu-row.pmd-fe-move-row:active:not(:disabled) .pmd-fe-move-row-name {
   color: var(--pmd-text-yellow);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pmd-btn.pmd-menu-row.pmd-fe-move-row:hover:not(:disabled) .pmd-fe-move-row-name {
+    color: var(--pmd-text-yellow);
+  }
 }
 
 .pmd-fe-move-row-meta {
@@ -394,8 +382,32 @@
 
   .pmd-dungeon-tile-box {
     width: 208px;
+    min-height: 92px;
     max-width: 100%;
     padding: 4px 6px;
+  }
+
+  .pmd-dungeon-bottom-row:has(.pmd-battle-log-dock:not(.is-collapsed):not([hidden])) .pmd-dungeon-tile-box {
+    width: 144px;
+  }
+
+  .pmd-battle-log-viewport {
+    width: calc(100vw - 160px);
+    max-width: calc(100vw - 160px);
+  }
+
+  .pmd-battle-log-box {
+    border-width: 6px 10px;
+    padding: 2px 18px 2px 5px;
+  }
+
+  .pmd-battle-log-line {
+    font-size: 10.5px;
+  }
+
+  .pmd-battle-log-dock.is-collapsed .pmd-battle-log-toggle {
+    width: 44px;
+    min-width: 44px;
   }
 
   .pmd-unit-hover-popup {
@@ -457,10 +469,25 @@
 
   .pmd-dungeon-tile-box {
     width: 212px;
+    min-height: 92px;
     max-width: 100%;
     border-width: 6px 10px;
     padding: 3px 6px;
     gap: 2px;
+  }
+
+  .pmd-battle-log-viewport {
+    width: min(352px, calc(100vw - 245px));
+    max-width: calc(100vw - 245px);
+  }
+
+  .pmd-battle-log-box {
+    border-width: 6px 10px;
+    padding: 2px 18px 2px 5px;
+  }
+
+  .pmd-battle-log-line {
+    font-size: 10.5px;
   }
 
   .pmd-unit-hover-popup {

@@ -11,7 +11,7 @@ import {
 import { resolveSpeakerIdentity } from '../../engine/speakerResolver';
 import type { SaveStateManager } from '../../state/SaveStateManager';
 import type { PmdPortraitView } from '../PmdSpriteCanvas';
-import { createPmdButton } from '../PmdWindow';
+import { createPmdButton, createPmdCloseXButton } from '../PmdWindow';
 
 export interface RenderTutorialSettingsControlOptions {
   signal?: AbortSignal;
@@ -75,10 +75,9 @@ export function renderTutorialCompendiumDom(params: {
   headerEl.appendChild(heroLeft);
 
   headerEl.appendChild(
-    createPmdButton({
-      label: 'Close',
-      className: 'pmd-tutorial-skip-btn',
+    createPmdCloseXButton({
       testId: 'tutorial-compendium-close-btn',
+      ariaLabel: 'Close Field Notes',
       onTap: () => params.onClose(),
       tapOptions: { signal },
     })

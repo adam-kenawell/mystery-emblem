@@ -13,6 +13,7 @@ import { areSupportsUnlockedInCampaign } from '../../data/supports/supportMatrix
 import { ensureOverworldGraphState } from '../../engine/overworldEngine';
 import { hasAnyAvailableSupportConversation } from '../../engine/supportEngine';
 import type { SaveData } from '../../types/schemas';
+import { buildPmdCloseXButtonHtml } from '../../ui/PmdWindow';
 import type { PmdPortraitView } from '../../ui/PmdSpriteCanvas';
 
 export type OverworldMenuTab = 'units' | 'convoy' | 'supports' | 'system';
@@ -129,11 +130,11 @@ export function createOverworldDomElements(
   kecleonBackdropEl.innerHTML = `
     <div class="pmd-window pmd-window--gold pmd-overworld-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="kecleon-shop-title">
       <div class="pmd-devtools-row-between">
-        <h3 id="kecleon-shop-title" class="pmd-panel-title" style="margin:0;">KECLEON SHOP</h3>
-        <div class="pmd-inline-btns">
+        <h3 id="kecleon-shop-title" class="pmd-panel-title" style="margin:0;">Kecleon Shop</h3>
+        <div class="pmd-inline-btns" style="align-items:center;">
           <span class="pmd-window pmd-window--compact pmd-battle-pill" data-testid="kecleon-shop-gold">0G</span>
           <button type="button" class="pmd-btn pmd-chip-btn" data-testid="kecleon-open-units-btn">Units</button>
-          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="kecleon-shop-close-btn">Leave</button>
+          ${buildPmdCloseXButtonHtml({ testId: 'kecleon-shop-close-btn', ariaLabel: 'Leave Kecleon Shop' })}
         </div>
       </div>
       <div class="pmd-kecleon-hero">
@@ -158,10 +159,10 @@ export function createOverworldDomElements(
   systemMenuBackdropEl.innerHTML = `
     <div class="pmd-window pmd-overworld-modal-dialog" role="dialog" aria-modal="true" aria-label="Overworld Menu">
       <div class="pmd-devtools-row-between">
-        <h3 class="pmd-panel-title" style="margin:0;">MENU</h3>
-        <div class="pmd-inline-btns">
+        <h3 class="pmd-panel-title" style="margin:0;">Menu</h3>
+        <div class="pmd-inline-btns" style="align-items:center;">
           <button type="button" class="pmd-btn pmd-btn-primary pmd-chip-btn" data-testid="overworld-menu-save-btn">Save Progress</button>
-          <button type="button" class="pmd-btn pmd-chip-btn" data-testid="overworld-menu-close-btn">Close</button>
+          ${buildPmdCloseXButtonHtml({ testId: 'overworld-menu-close-btn', ariaLabel: 'Close Menu' })}
         </div>
       </div>
       <nav class="pmd-inline-btns" aria-label="Overworld Menu Sections">

@@ -62,13 +62,19 @@
 }
 
 .pmd-talk-choice-modal {
+  position: relative;
   width: min(440px, 100%);
   max-height: calc(100% - 1.5rem);
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
   padding: 0.75rem 0.9rem;
+}
+
+.pmd-talk-choice-modal > .pmd-panel-title {
+  padding-right: 32px;
 }
 
 .pmd-talk-choice-options {

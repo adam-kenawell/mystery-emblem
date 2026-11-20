@@ -2,14 +2,16 @@
  * Mystery Emblem - Admin Dev Tools Modal HTML Template
  */
 
+import { buildPmdCloseXButtonHtml } from '../PmdWindow';
+
 export function buildDevToolsModalHtml(): string {
   return `
     <header class="pmd-devtools-row-between">
       <div>
-        <h2 class="pmd-panel-title">DEV TOOLS</h2>
+        <h2 class="pmd-panel-title">Dev Tools</h2>
         <p class="pmd-panel-sub">Cheats, Map Editor &amp; Cutscene Editor</p>
       </div>
-      <button type="button" class="pmd-btn pmd-chip-btn" data-testid="devtools-close-btn">Close</button>
+      ${buildPmdCloseXButtonHtml({ testId: 'devtools-close-btn', ariaLabel: 'Close Dev Tools' })}
     </header>
 
     <nav class="pmd-tabs" aria-label="Dev Tools Tabs">

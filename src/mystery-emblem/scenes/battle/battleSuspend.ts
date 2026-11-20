@@ -62,17 +62,17 @@ export interface BattleSuspendSnapshot {
   trackedEnemyIds: string[];
 }
 
-/** Returns why saving is blocked right now, or null when it is safe to snapshot. */
+/** Returns why bookmarking/saving is blocked right now, or null when it is safe to snapshot. */
 export function getBattleSaveBlockReason(
   state: BattleRuntimeState,
   extra?: { dialogueOpen?: boolean; tutorialActive?: boolean }
 ): string | null {
   if (!state.openState) return 'No battle in progress.';
-  if (!state.suspendSource) return 'This battle cannot be saved.';
+  if (!state.suspendSource) return 'This battle cannot be bookmarked.';
   if (state.cutsceneInProgress || extra?.dialogueOpen) return 'Wait for the scene to finish.';
   if (extra?.tutorialActive) return 'Finish the tutorial step first.';
   if (state.phase === 'dungeon_prep') return null;
-  if (state.phase !== 'player_phase') return 'You can only save during your turn.';
+  if (state.phase !== 'player_phase') return 'You can only bookmark during your turn.';
   if (state.interactionState !== 'idle') return 'Finish the current action first.';
   if (isPhaseTransitionPlaying(state) || state.beginBattleResolver !== null) {
     return 'Wait for the phase change to finish.';
@@ -142,7 +142,7 @@ export function parseBattleSuspendJson(raw: string | null | undefined): BattleSu
   }
 }
 
-/** Opens the shared slot picker for the battle field menu / prep hub "Save Progress" buttons. */
+/** Opens the shared slot picker for the Battle Prep hub "Save Progress" button. */
 export function openBattleSaveProgressOverlay(ctx: BattleControllerContext): void {
   const { state, saveManager, audioManager, dialogueOverlay, tutorialOverlay } = ctx;
   const blockedReason = !saveManager.getSave()
@@ -157,20 +157,22 @@ export function openBattleSaveProgressOverlay(ctx: BattleControllerContext): voi
     mode: 'save',
     blockedReason,
     onSaveToSlot: (slot) => {
-      saveManager.saveProgressToSlot(slot, { battleSuspendJson: buildBattleSuspendJson(state) });
+      saveManager.saveProgressToSlot(slot, { battleSuspendJson: null });
     },
     onClose: () => ctx.onLayerStateChanged(),
   });
   ctx.onLayerStateChanged();
 }
 
-/** Overlays a parsed snapshot onto a freshly opened battle and hands control back to the player. */
+/** Overlays a parsed one-time bookmark onto a freshly opened battle, consumes it, and hands control back. */
 export async function applyBattleSuspendSnapshot(
   ctx: BattleControllerContext,
   snap: BattleSuspendSnapshot
 ): Promise<void> {
-  const { state, dom, prepOverlay, audioManager } = ctx;
+  const { state, dom, prepOverlay, audioManager, saveManager } = ctx;
   const runGen = state.battleRunGen;
+  // Consume the bookmark immediately on resume so it cannot be reloaded/save-scummed.
+  saveManager.clearBattleSuspend();
   prepOverlay.hide();
 
   state.map = snap.map;

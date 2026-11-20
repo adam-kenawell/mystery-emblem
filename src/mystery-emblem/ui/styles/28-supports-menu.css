@@ -25,6 +25,7 @@
   border: 2px solid var(--pmd-divider-subtle);
   padding: 2px 6px;
   overflow-y: auto;
+  overflow-x: hidden;
   touch-action: pan-y;
 }
 
@@ -135,6 +136,7 @@
   width: min(620px, 100%);
   max-height: calc(100dvh - 1.5rem);
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 8px 10px;
   display: flex;
   flex-direction: column;

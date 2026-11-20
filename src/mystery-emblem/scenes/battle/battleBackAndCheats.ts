@@ -20,7 +20,7 @@ import {
   openSystemMenu,
   setSystemMenuSubView,
 } from './battleFieldMenuController';
-import { spawnFloatingText } from './battleFloatingCallouts';
+import { logSquadFullHeal } from './battleActionLog';
 import { cancelCombatForecast } from './battleHealForecastAndConfirm';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { dismissLevelUpModal, dismissMoveLearnedModal } from './battleLevelUpModal';
@@ -160,9 +160,9 @@ export function cheatFullHealSquad(ctx: BattleControllerContext): void {
     for (const slot of u.activeMoves) {
       slot.ppRemaining = slot.maxPp;
     }
-    spawnFloatingText(state, dom, u.x, u.y, 'FULL HEAL!', '#68f8a8', 900);
   }
   audioManager.playSfx('heal');
+  logSquadFullHeal(state, dom);
   showPhaseBanner(state, dom, 'SQUAD FULLY RESTORED!');
   recomputeDangerArea(ctx);
   syncHudControls(state, dom);

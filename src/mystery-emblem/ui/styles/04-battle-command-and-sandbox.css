@@ -108,6 +108,7 @@
   max-width: 360px;
   max-height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 8px 10px;
   display: flex;
   flex-direction: column;
@@ -122,14 +123,20 @@
 }
 
 .pmd-battle-export-dialog {
+  position: relative;
   width: 100%;
   max-width: 560px;
   max-height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 8px 10px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.pmd-battle-export-dialog > .pmd-panel-title {
+  padding-right: 32px;
 }
 
 /* Narrow Mobile Portrait (e.g., 390x844) - place HUD bar below corner buttons so nothing collides */

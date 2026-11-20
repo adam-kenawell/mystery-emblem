@@ -200,11 +200,8 @@ export class BackStackController {
     }
     const isSubLayerOpen = this.hasActiveLayer();
     if (isSubLayerOpen) {
-      this.cornerBtn.hidden = false;
-      this.cornerBtn.textContent = 'Back';
-      this.cornerBtn.dataset.cornerMode = 'back';
-      this.cornerBtn.setAttribute('aria-label', 'Back or Close');
-      this.cornerBtn.removeAttribute('title');
+      this.cornerBtn.hidden = true;
+      this.cornerBtn.dataset.cornerMode = 'hidden';
       return;
     }
 

@@ -25,6 +25,12 @@ import {
   playPhaseTransitionAsync,
   waitBattleMs,
 } from './battleBannersAndTransitions';
+import {
+  logPhaseStartStatusTick,
+  logPhaseStartWish,
+  logShieldExpired,
+  logWonderTileRecovery,
+} from './battleActionLog';
 import { playCombatExchangeAsync } from './battleCombatAnimator';
 import {
   clearBattleSelection,
@@ -81,16 +87,31 @@ function runFactionPhaseStartStatusTicks(
       const healed = Math.min(unit.maxHp - unit.currentHp, wishHeal);
       unit.currentHp += healed;
       unit.pendingWishHeal = 0;
-      spawnFloatingText(state, dom, unit.x, unit.y, `WISH +${healed} HP`, '#68f8a8', 880);
+      logPhaseStartWish(state, dom, unit, healed);
     }
     if (unit.activeShields?.length) {
-      unit.activeShields = unit.activeShields
-        .map((s) => ({ ...s, turnsLeft: s.turnsLeft - 1 }))
-        .filter((s) => s.turnsLeft > 0);
+      const nextShields = [];
+      for (const s of unit.activeShields) {
+        const remaining = s.turnsLeft - 1;
+        if (remaining > 0) {
+          nextShields.push({ ...s, turnsLeft: remaining });
+        } else {
+          logShieldExpired(state, dom, unit, s.moveId);
+        }
+      }
+      unit.activeShields = nextShields;
     }
+    const statusBefore = unit.status;
     const tick = applyPhaseStartStatusTick(unit);
-    if (tick.calloutText) {
-      spawnFloatingText(state, dom, unit.x, unit.y, tick.calloutText, tick.calloutColor, 880);
+    if (tick.chipDamage > 0) {
+      spawnFloatingText(state, dom, unit.x, unit.y, `-${tick.chipDamage}`, tick.calloutColor, 880);
+    }
+    if (tick.chipDamage > 0 || tick.clearedStatus) {
+      logPhaseStartStatusTick(state, dom, unit, {
+        chipDamage: tick.chipDamage,
+        status: statusBefore,
+        clearedStatus: tick.clearedStatus,
+      });
     }
   }
 }
@@ -349,16 +370,21 @@ export async function runEnemyPhase(ctx: BattleControllerContext): Promise<void>
   runFactionPhaseStartStatusTicks(ctx, getLivingAlliedUnits(state));
   for (const au of getLivingAlliedUnits(state)) {
     const terrain = getMapTerrainAt(state.map, au.x, au.y);
-    if (terrain === 'wonder_tile' && au.status !== null) {
+    if (terrain !== 'wonder_tile') continue;
+    let curedStatus = false;
+    if (au.status !== null) {
       au.status = null;
       au.statusTurns = 0;
-      spawnFloatingText(state, dom, au.x, Math.max(0, au.y - 1), 'CURED!', '#68f8a8');
+      curedStatus = true;
     }
-    if (terrain === 'wonder_tile' && au.currentHp < au.maxHp) {
+    let actualHeal = 0;
+    if (au.currentHp < au.maxHp) {
       const healAmt = Math.max(1, Math.floor(au.maxHp * 0.2));
-      const actualHeal = Math.min(au.maxHp - au.currentHp, healAmt);
+      actualHeal = Math.min(au.maxHp - au.currentHp, healAmt);
       au.currentHp += actualHeal;
-      spawnFloatingText(state, dom, au.x, au.y, `+${actualHeal} HP`, '#68f098');
+    }
+    if (actualHeal > 0 || curedStatus) {
+      logWonderTileRecovery(state, dom, au, actualHeal, curedStatus);
     }
   }
 

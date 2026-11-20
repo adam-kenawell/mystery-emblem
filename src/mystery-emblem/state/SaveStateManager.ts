@@ -2,7 +2,7 @@
  * Mystery Emblem - Persistent SaveStateManager (`localStorage` + Cloud Firestore Sync)
  */
 
-import { mergeCustomMapsRecord } from '../data/chapterMapRegistry';
+import { getChapterCatalogEntry, mergeCustomMapsRecord } from '../data/chapterMapRegistry';
 import { formatCampaignChapterLabel } from '../data/campaignConfig';
 import type { EquipCategory } from '../data/equippedMoves';
 import { DEMO_OVERWORLD_GRAPH, type OverworldGraphDefinition } from '../data/overworldMapData';
@@ -65,7 +65,9 @@ export interface SaveSlotSummary {
   isActive: boolean;
   isEmpty: boolean;
   lordName: string | null;
+  lordLevel: number | null;
   chapterLabel: string | null;
+  chapterTitle: string | null;
   lastUpdated: number | null;
   rosterCount: number;
   gold: number;
@@ -73,12 +75,25 @@ export interface SaveSlotSummary {
 }
 
 function summarizeSlot(slot: number, isActive: boolean, save: SaveData | null): SaveSlotSummary {
-  if (!save) return { slot, isActive, isEmpty: true, lordName: null, chapterLabel: null, lastUpdated: null, rosterCount: 0, gold: 0, hasBattleSuspend: false };
+  if (!save) {
+    return {
+      slot, isActive, isEmpty: true,
+      lordName: null, lordLevel: null,
+      chapterLabel: null, chapterTitle: null,
+      lastUpdated: null, rosterCount: 0, gold: 0, hasBattleSuspend: false,
+    };
+  }
   const lord = save.roster.find((u) => u.instanceId === save.campaign.lordInstanceId) ?? save.roster.find((u) => u.isLord) ?? save.roster[0];
+  const chapterTitle =
+    getChapterCatalogEntry(save.campaign.currentChapterId)?.biomeName ??
+    DEMO_OVERWORLD_GRAPH.nodes.find((n) => n.id === save.campaign.currentChapterId || n.levelId === save.campaign.currentChapterId)?.name ??
+    null;
   return {
     slot, isActive, isEmpty: false,
     lordName: lord?.nickname ?? null,
+    lordLevel: lord?.level ?? null,
     chapterLabel: formatCampaignChapterLabel(save.campaign.currentChapterId),
+    chapterTitle,
     lastUpdated: save.lastUpdated,
     rosterCount: save.roster.length,
     gold: save.gold,
@@ -174,8 +189,15 @@ export class SaveStateManager {
       else delete next.battleSuspendJson;
     }
     this.setActiveSlot(slot);
-    this.commitSave(next);
+    void this.commitSave(next);
     return this.getSave()!;
+  }
+  /** Writes a one-time mid-battle bookmark to the active slot and awaits cloud sync when signed in. */
+  public async saveBattleBookmark(battleSuspendJson: string): Promise<void> {
+    const save = this.requireActiveSave();
+    const next: SaveData = structuredClone(save);
+    next.battleSuspendJson = battleSuspendJson;
+    await this.commitSave(next);
   }
   public getBattleSuspendJson(): string | null { return this.currentSave?.battleSuspendJson ?? null; }
   public clearBattleSuspend(): void {
@@ -372,18 +394,17 @@ export class SaveStateManager {
     if (mutated) this.commitSave(save);
     return this.getSave()!;
   }
-  private commitSave(save: SaveData, keepExistingTimestamp = false): void {
+  private commitSave(save: SaveData, keepExistingTimestamp = false): Promise<void> {
     const validated = stampAndValidateSaveForCommit({ save, previousLastUpdated: this.currentSave?.lastUpdated ?? 0, isBrowserPrimaryStorage: this.isBrowserPrimaryStorage, keepExistingTimestamp });
     this.currentSave = writeLocalSaveToStorage(this.storage, this.isBrowserPrimaryStorage, validated, this.activeSlot);
     this.emitChange();
     const user = this.cloud.getCurrentUser();
-    if (user) {
-      const slot = this.activeSlot;
-      const envelopeJson = slot === 1 ? serializeCustomMapsEnvelope(this.isBrowserPrimaryStorage, this.currentSave) : null;
-      void this.cloud.pushCloudSave(user.uid, this.currentSave, envelopeJson, slot)
-        .then(() => { this.syncStatus = { ...this.syncStatus, lastResolution: 'pushed_newer_local', lastSyncedAt: Date.now(), errorMessage: null }; this.emitChange(); })
-        .catch((err: unknown) => { this.syncStatus = { ...this.syncStatus, lastResolution: 'cloud_error', errorMessage: err instanceof Error ? err.message : 'Failed to push save to Firestore.' }; this.emitChange(); });
-    }
+    if (!user) return Promise.resolve();
+    const slot = this.activeSlot;
+    const envelopeJson = slot === 1 ? serializeCustomMapsEnvelope(this.isBrowserPrimaryStorage, this.currentSave) : null;
+    return this.cloud.pushCloudSave(user.uid, this.currentSave, envelopeJson, slot)
+      .then(() => { this.syncStatus = { ...this.syncStatus, lastResolution: 'pushed_newer_local', lastSyncedAt: Date.now(), errorMessage: null }; this.emitChange(); })
+      .catch((err: unknown) => { this.syncStatus = { ...this.syncStatus, lastResolution: 'cloud_error', errorMessage: err instanceof Error ? err.message : 'Failed to push save to Firestore.' }; this.emitChange(); });
   }
   private emitChange(): void {
     this.activeSummaryCache = null;

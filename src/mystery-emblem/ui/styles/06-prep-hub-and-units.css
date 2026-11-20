@@ -69,8 +69,14 @@
 }
 
 .pmd-prep-option-btn.is-enter-cta .pmd-prep-opt-title,
-.pmd-prep-option-btn:hover .pmd-prep-opt-title {
+.pmd-prep-option-btn:active:not(:disabled) .pmd-prep-opt-title {
   color: var(--pmd-text-yellow);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pmd-prep-option-btn:hover:not(:disabled) .pmd-prep-opt-title {
+    color: var(--pmd-text-yellow);
+  }
 }
 
 /* Manage Units & Manage Items Full Modals (Constant Fixed Dimensions + Internal Scroll) */

@@ -13,7 +13,7 @@ import {
 import type { SaveStateManager } from '../state/SaveStateManager';
 import type { CampaignMode, ConvoyEntry, SaveData } from '../types/schemas';
 import { PmdPortraitView } from './PmdSpriteCanvas';
-import { bindBackGestureSurface, bindPointerTap } from './pointerControls';
+import { bindPointerTap } from './pointerControls';
 import { TypewriterController, prefersReducedMotionEnabled } from './typewriterController';
 import { AuraWaveCanvas } from './quiz/AuraWaveCanvas';
 import { renderNgPlusRosterSelectorView } from './quiz/NgPlusRosterSelectorView';
@@ -156,14 +156,6 @@ export class QuizScene {
         if (this.finalizing || performance.now() < this.suppressTapUntilMs) return;
         if (this.step === 'questions') this.handleQuestionScreenTap();
         else if (this.step === 'lord_reveal') this.handleRevealAdvanceTap();
-      },
-      { signal: this.abortController.signal }
-    );
-    bindBackGestureSurface(
-      this.rootEl,
-      () => {
-        this.suppressTapUntilMs = performance.now() + 360;
-        this.handleBack();
       },
       { signal: this.abortController.signal }
     );

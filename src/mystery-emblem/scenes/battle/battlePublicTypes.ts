@@ -52,9 +52,7 @@ export type BattleFieldMenuSubView =
   | 'root'
   | 'info'
   | 'settings'
-  | 'save_exit'
-  | 'confirm_overworld'
-  | 'confirm_title';
+  | 'bookmark';
 
 /** Identifies how to rebuild a battle's rules/callbacks when resuming a mid-battle save. */
 export type BattleSuspendSource =

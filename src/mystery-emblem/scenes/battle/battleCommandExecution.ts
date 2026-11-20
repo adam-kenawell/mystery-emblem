@@ -17,6 +17,7 @@ import {
   runUnitDefeatedEvents,
   runUnitHealedEvents,
 } from './battleEventRunner';
+import { logConsumableUsed } from './battleActionLog';
 import { spawnFloatingText } from './battleFloatingCallouts';
 import {
   openCombatForecastModal,
@@ -106,31 +107,25 @@ export async function useEquippedBattleConsumable(ctx: BattleControllerContext):
   if (!item) return;
 
   const runGen = state.battleRunGen;
-  let calloutText = item.name;
+  let healed = 0;
+  let curedStatus = false;
 
   if (item.category === 'x_item') {
     if (!unit.tempBattleBoosts) {
       unit.tempBattleBoosts = { atk: 0, def: 0, spa: 0, spd: 0, spe: 0, crit: 0 };
     }
     if (item.effect.battleStatBoost) {
-      const appliedLabels: string[] = [];
       for (const key of ['atk', 'def', 'spa', 'spd', 'spe'] as const) {
         const amt = item.effect.battleStatBoost[key];
         if (typeof amt === 'number' && amt !== 0) {
           unit.tempBattleBoosts[key] += amt;
-          appliedLabels.push(`${key.toUpperCase()} +${amt}`);
         }
-      }
-      if (appliedLabels.length > 0) {
-        calloutText = `${appliedLabels.join(' ')}!`;
       }
     }
     if (typeof item.effect.battleCritBoost === 'number' && item.effect.battleCritBoost !== 0) {
       unit.tempBattleBoosts.crit += item.effect.battleCritBoost;
-      calloutText = `CRIT +${item.effect.battleCritBoost}%!`;
     }
   } else if (item.category === 'consumable') {
-    let healed = 0;
     if (item.effect.healFull) {
       healed = unit.maxHp - unit.currentHp;
       unit.currentHp = unit.maxHp;
@@ -145,13 +140,21 @@ export async function useEquippedBattleConsumable(ctx: BattleControllerContext):
     ) {
       unit.status = null;
       unit.statusTurns = 0;
+      curedStatus = true;
     }
-    calloutText = healed > 0 ? `+${healed} HP` : 'CURED!';
   }
 
   unit.consumableItemId = null;
   audioManager.playSfx('heal');
-  spawnFloatingText(state, dom, unit.x, unit.y, calloutText, '#68f8a8', 820);
+  if (healed > 0) {
+    spawnFloatingText(state, dom, unit.x, unit.y, `+${healed} HP`, '#68f8a8', 820);
+  }
+  logConsumableUsed(state, dom, unit, item.name, {
+    healed,
+    curedStatus,
+    statBoosts: item.category === 'x_item' ? item.effect.battleStatBoost : undefined,
+    critBoost: item.category === 'x_item' ? item.effect.battleCritBoost : undefined,
+  });
 
   await finalizePlayerUnitAction(ctx, unit, runGen, {
     checkUnitHealedEvents: item.category === 'consumable',

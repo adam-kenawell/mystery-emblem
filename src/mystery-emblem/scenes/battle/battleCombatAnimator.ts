@@ -10,14 +10,22 @@ import {
 } from '../../data/faintMessages';
 import { getItemById } from '../../data/index';
 import {
-  STATUS_ACTION_CALLOUTS,
-  STATUS_BADGE_COLORS,
   applyInflictedStatusToUnit,
   resolveCombatExchange,
   type BattleUnitState,
   type CombatForecast,
 } from '../../engine/combatEngine';
 import { computeCombatExpGain } from '../../engine/progressionEngine';
+import {
+  logBerryStolen,
+  logCombatHit,
+  logCombatImmune,
+  logCombatMiss,
+  logItemDrop,
+  logParalyzedSkip,
+  logStatusInflicted,
+  logUnitFainted,
+} from './battleActionLog';
 import { ensureTilePairVisible, showPhaseBanner, waitBattleMs } from './battleBannersAndTransitions';
 import { syncHudControls } from './battleDangerAndViewportState';
 import { spawnFloatingText } from './battleFloatingCallouts';
@@ -129,7 +137,7 @@ export async function playCombatExchangeAsync(
 
     if (strike.paralyzedSkip) {
       audioManager.playSfx('cancel');
-      spawnFloatingText(state, dom, actor.x, actor.y, 'PARALYZED!', '#f8d048');
+      logParalyzedSkip(state, dom, actor);
       await waitBattleMs(state, 340);
       continue;
     }
@@ -180,6 +188,7 @@ export async function playCombatExchangeAsync(
       target.renderWorldX = target.x * PMD_TILE_NATIVE_PX + (dyNorm !== 0 ? 4 : 0);
       target.renderWorldY = target.y * PMD_TILE_NATIVE_PX + (dxNorm !== 0 ? -3 : 0);
       spawnFloatingText(state, dom, target.x, target.y, 'MISS', '#90d8f8');
+      logCombatMiss(state, dom, actor, target, strike.move.name);
       await waitBattleMs(state, 260);
       target.renderWorldX = target.x * PMD_TILE_NATIVE_PX;
       target.renderWorldY = target.y * PMD_TILE_NATIVE_PX;
@@ -205,13 +214,15 @@ export async function playCombatExchangeAsync(
 
     if (strike.typeMultiplier === 0) {
       audioManager.playSfx('attack_miss');
-      spawnFloatingText(state, dom, target.x, target.y, 'IMMUNE (0)', '#c8d4e8');
+      logCombatImmune(state, dom, actor, target, strike.move.name);
     } else if (strike.isCrit) {
       audioManager.playSfx('critical_hit');
       spawnFloatingText(state, dom, target.x, target.y, `CRIT! -${strike.damageDealt}`, '#f8d048');
+      logCombatHit(state, dom, actor, target, strike.move.name, strike.damageDealt, true);
     } else {
       audioManager.playSfx('attack_hit');
       spawnFloatingText(state, dom, target.x, target.y, `-${strike.damageDealt}`, '#ff7888');
+      logCombatHit(state, dom, actor, target, strike.move.name, strike.damageDealt, false);
     }
 
     if (strike.consumedBerryItemId) {
@@ -222,17 +233,9 @@ export async function playCombatExchangeAsync(
         actor.status = null;
         actor.statusTurns = 0;
       }
-      const berryName = (getItemById(strike.consumedBerryItemId)?.name ?? 'Berry').toUpperCase();
+      const berryName = getItemById(strike.consumedBerryItemId)?.name ?? 'Berry';
       audioManager.playSfx('heal');
-      spawnFloatingText(
-        state,
-        dom,
-        actor.x,
-        Math.max(0, actor.y - 1),
-        healed > 0 ? `ATE ${berryName}! +${healed}` : `ATE ${berryName}!`,
-        '#68f8a8',
-        900
-      );
+      logBerryStolen(state, dom, actor, target, berryName, healed, Boolean(strike.actorStatusCured));
     }
 
     updateBattleInfoStrip(ctx);
@@ -243,6 +246,7 @@ export async function playCombatExchangeAsync(
     state.activeStrikeVfx = null;
 
     if (strike.targetDefeated) {
+      logUnitFainted(state, dom, target);
       if (target.faction === 'enemy' && target.droppableItemId) {
         const dropId = target.droppableItemId;
         target.droppableItemId = null;
@@ -251,6 +255,7 @@ export async function playCombatExchangeAsync(
         const dropName = dropDef?.name ?? dropId;
         audioManager.playSfx('heal');
         showPhaseBanner(state, dom, `Obtained ${dropName}!`);
+        logItemDrop(state, dom, dropName);
       }
       if (isPlayableFaintUnit(target)) {
         await playPlayableUnitFaintSequenceAsync(ctx, target, runGen);
@@ -263,15 +268,7 @@ export async function playCombatExchangeAsync(
       target.action = 'Idle';
       if (strike.inflictedStatus) {
         const stRes = applyInflictedStatusToUnit(target, strike.inflictedStatus);
-        spawnFloatingText(
-          state,
-          dom,
-          target.x,
-          Math.max(0, target.y - 1),
-          stRes.lumBerryConsumed ? 'LUM BERRY!' : STATUS_ACTION_CALLOUTS[strike.inflictedStatus],
-          stRes.lumBerryConsumed ? '#68f8a8' : STATUS_BADGE_COLORS[strike.inflictedStatus],
-          880
-        );
+        logStatusInflicted(state, dom, target, strike.inflictedStatus, stRes.lumBerryConsumed);
       }
     }
   }

@@ -8,7 +8,6 @@ import { awardBattleUnitExp, type LevelUpResult } from '../../engine/progression
 import type { MoveDefinition } from '../../types/schemas';
 import { renderColoredTypeHtml } from '../../ui/typeColors';
 import { waitBattleMs } from './battleBannersAndTransitions';
-import { spawnFloatingText } from './battleFloatingCallouts';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { triggerBattleTutorial } from './battleTutorialIntegration';
 import { getBattleRng, type BattleControllerContext } from './battleTypesAndState';
@@ -292,7 +291,7 @@ export async function grantExpAndHandleLevelUps(
   expGain: number,
   runGen: number
 ): Promise<void> {
-  const { state, dom, audioManager } = ctx;
+  const { state, audioManager } = ctx;
   if (
     !state.openState ||
     runGen !== state.battleRunGen ||
@@ -308,7 +307,6 @@ export async function grantExpAndHandleLevelUps(
   const { expAdded, levelUps } = awardBattleUnitExp(unit, expGain, rng);
   if (expAdded <= 0) return;
 
-  spawnFloatingText(state, dom, unit.x, unit.y, `+${expAdded} EXP`, '#7ce8ff', 900);
   updateBattleInfoStrip(ctx);
   await waitBattleMs(state, 220);
   if (!state.openState || runGen !== state.battleRunGen) return;

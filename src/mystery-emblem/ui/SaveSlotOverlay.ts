@@ -7,6 +7,7 @@
 
 import type { AudioManager } from '../audio/AudioManager';
 import type { SaveSlotSummary, SaveStateManager } from '../state/SaveStateManager';
+import { createPmdCloseXButton } from './PmdWindow';
 import { bindPointerTap } from './pointerControls';
 
 export type SaveSlotOverlayMode = 'load' | 'save';
@@ -125,13 +126,33 @@ export function openSaveSlotOverlay(opts: OpenSaveSlotOverlayOptions): void {
       '',
       `save-slot-${summary.slot}-select`
     );
-    const label = summary.isEmpty
-      ? mode === 'load' ? 'Empty - Start a New Game' : 'Empty'
-      : `${summary.chapterLabel ?? 'Prologue'} - ${summary.lordName ?? '???'}`;
-    main.appendChild(el('span', `pmd-save-slot-heading${summary.isEmpty ? '' : ' has-data'}`, label));
-    if (!summary.isEmpty && summary.lastUpdated) {
-      main.appendChild(el('span', 'pmd-save-slot-time', formatSavedAt(summary.lastUpdated)));
+    const info = el('span', 'pmd-save-slot-info');
+    if (summary.isEmpty) {
+      const emptyLabel = mode === 'load' ? 'Empty - Start a New Game' : 'Empty';
+      info.appendChild(el('span', 'pmd-save-slot-heading', emptyLabel));
+    } else {
+      const chapterLabel = summary.chapterLabel ?? 'Prologue';
+      const chapterHeading = summary.chapterTitle ? `${chapterLabel} - ${summary.chapterTitle}` : chapterLabel;
+      const heroName = summary.lordName ?? '???';
+      const heroMeta = summary.lordLevel !== null ? `${heroName} Lv. ${summary.lordLevel}` : heroName;
+      const headingRow = el('span', 'pmd-save-slot-heading-row');
+      headingRow.appendChild(el('span', 'pmd-save-slot-heading has-data', chapterHeading));
+      if (summary.hasBattleSuspend) {
+        const badge = el('span', 'pmd-save-slot-bookmark', 'Bookmark');
+        badge.dataset.testid = `save-slot-${summary.slot}-bookmark`;
+        headingRow.appendChild(badge);
+      }
+      info.appendChild(headingRow);
+      const metaRow = el('span', 'pmd-save-slot-meta');
+      metaRow.appendChild(el('span', 'pmd-save-slot-hero', heroMeta));
+      if (summary.lastUpdated) {
+        const sep = el('span', 'pmd-save-slot-sep', '·');
+        sep.setAttribute('aria-hidden', 'true');
+        metaRow.append(sep, el('span', 'pmd-save-slot-time', formatSavedAt(summary.lastUpdated)));
+      }
+      info.appendChild(metaRow);
     }
+    main.appendChild(info);
     bindPointerTap(
       main,
       () => {
@@ -234,7 +255,19 @@ export function openSaveSlotOverlay(opts: OpenSaveSlotOverlayOptions): void {
     dialog.replaceChildren();
     dialog.setAttribute('aria-label', mode === 'load' ? 'Choose a Save File' : 'Save Progress');
     dialog.appendChild(
-      el('h3', 'pmd-panel-title', mode === 'load' ? 'CHOOSE A SAVE FILE' : 'SAVE PROGRESS')
+      createPmdCloseXButton({
+        testId: 'save-slot-close',
+        ariaLabel: 'Close',
+        corner: true,
+        onTap: () => {
+          audioManager?.playSfx('cancel');
+          close();
+        },
+        tapOptions: { signal },
+      })
+    );
+    dialog.appendChild(
+      el('h3', 'pmd-panel-title', mode === 'load' ? 'Choose a Save File' : 'Save Progress')
     );
 
     if (mode === 'save' && opts.blockedReason) {
@@ -249,20 +282,8 @@ export function openSaveSlotOverlay(opts: OpenSaveSlotOverlayOptions): void {
 
     const statusEl = el('p', `pmd-save-slot-status${status?.isError ? ' is-error' : ''}`, status?.text ?? '');
     statusEl.dataset.testid = 'save-slot-status';
+    if (!status?.text) statusEl.hidden = true;
     dialog.appendChild(statusEl);
-
-    const actions = el('div', 'pmd-battle-outcome-actions');
-    const closeBtn = button('', mode === 'load' ? 'Back' : 'Close', 'save-slot-close');
-    bindPointerTap(
-      closeBtn,
-      () => {
-        audioManager?.playSfx('cancel');
-        close();
-      },
-      { signal }
-    );
-    actions.appendChild(closeBtn);
-    dialog.appendChild(actions);
   }
 
   render();

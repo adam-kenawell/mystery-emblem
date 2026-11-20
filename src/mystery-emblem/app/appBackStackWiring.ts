@@ -46,6 +46,7 @@ export function createAppBackStack(
         const ctx = getCtx();
         return Boolean(
           ((ctx.battleScene?.isOpen() && ctx.battleScene.getSnapshot().phase !== 'dungeon_prep') ||
+            ctx.quizScene?.isOpen() ||
             ctx.cutsceneScene?.isOpen() ||
             ctx.creditsScene?.isOpen() ||
             Boolean(ctx.dialogueOverlay?.isOpen())) &&
@@ -147,11 +148,6 @@ export function registerAppBackStackLayers(
     id: 'overworld-scene-sublayer',
     isActive: () => Boolean(ctx.overworldScene?.isOpen() && ctx.overworldScene.hasActiveSubLayer()),
     onBack: () => ctx.overworldScene?.handleMenuOrBack(),
-  });
-  backStack.registerLayer({
-    id: 'quiz-scene',
-    isActive: () => Boolean(ctx.quizScene?.isOpen()),
-    onBack: () => ctx.quizScene?.handleBack(),
   });
   backStack.registerLayer({
     id: 'devtools-modal',

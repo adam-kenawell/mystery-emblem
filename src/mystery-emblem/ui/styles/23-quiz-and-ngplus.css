@@ -53,6 +53,7 @@
 .pmd-quiz-options-window {
   padding: 2px 4px;
   overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
   font-family: 'Fusion Pixel 12px Proportional KR', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
 }
@@ -118,6 +119,7 @@
   gap: 8px;
   max-height: calc(100dvh - 3.8rem);
   overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .pmd-ngplus-slot-row {

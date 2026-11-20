@@ -18,6 +18,7 @@ import {
   type BattleMoveSlot,
   type BattleUnitState,
 } from '../../engine/combatEngine';
+import { buildPmdCloseXButtonHtml } from '../../ui/PmdWindow';
 import { bindPointerTap } from '../../ui/pointerControls';
 import { renderColoredTypeHtml } from '../../ui/typeColors';
 import {
@@ -46,8 +47,8 @@ export function createBattleForecastDom(): BattleForecastDomRefs {
   forecastModalBackdropEl.dataset.testid = 'battle-forecast-modal';
   forecastModalBackdropEl.hidden = true;
   forecastModalBackdropEl.innerHTML = `
-    <button type="button" class="pmd-window pmd-window--compact pmd-forecast-back-btn" data-testid="forecast-back-btn" aria-label="Back">Back</button>
     <div class="pmd-window pmd-battle-forecast-dialog pmd-fe-forecast-frame" role="dialog" aria-modal="true" aria-label="Combat Forecast">
+      ${buildPmdCloseXButtonHtml({ testId: 'forecast-back-btn', ariaLabel: 'Close Battle Forecast', corner: true })}
       <div class="pmd-fe-title">Battle Forecast</div>
       <div class="pmd-fe-body" data-forecast-body>
         <div class="pmd-fe-sides">

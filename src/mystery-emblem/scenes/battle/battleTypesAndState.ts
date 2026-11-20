@@ -173,6 +173,8 @@ export interface BattleRuntimeState {
   floatingTexts: FloatingBattleText[];
   floatingTextEls: Map<number, HTMLElement>;
   nextFloatingTextId: number;
+  battleLogCollapsed: boolean;
+  battleLogEntryCount: number;
   activeStrikeVfx: ActiveStrikeVfx | null;
   globalDangerEnabled: boolean;
   trackedEnemyIds: Set<string>;
@@ -281,6 +283,8 @@ export function createInitialBattleRuntimeState(): BattleRuntimeState {
     floatingTexts: [],
     floatingTextEls: new Map(),
     nextFloatingTextId: 1,
+    battleLogCollapsed: false,
+    battleLogEntryCount: 0,
     activeStrikeVfx: null,
     globalDangerEnabled: false,
     trackedEnemyIds: new Set(),

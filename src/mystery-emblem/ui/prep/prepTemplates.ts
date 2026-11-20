@@ -4,6 +4,7 @@
 
 import type { DungeonMapDefinition, OwnedPokemonInstance, PrepDeploymentSlot } from '../../types/schemas';
 import type { PmdPortraitView } from '../PmdSpriteCanvas';
+import { buildPmdCloseXButtonHtml } from '../PmdWindow';
 
 export interface PrepDomElements {
   rootEl: HTMLElement;
@@ -83,7 +84,7 @@ export function createPrepDomElements(
   hubBackdropEl.innerHTML = `
     <div class="pmd-window pmd-window--gold pmd-prep-hub-dialog" role="dialog" aria-modal="true" aria-labelledby="prep-hub-title">
       <div class="pmd-prep-hub-header">
-        <h2 id="prep-hub-title" class="pmd-panel-title" data-prep-map-name>CHAPTER PREP</h2>
+        <h2 id="prep-hub-title" class="pmd-panel-title" data-prep-map-name>Chapter Prep</h2>
         <p class="pmd-panel-sub" data-prep-objectives></p>
       </div>
       <div class="pmd-prep-menu-grid pmd-menu-list" role="group" aria-label="Chapter Prep Options">
@@ -117,10 +118,10 @@ export function createPrepDomElements(
     <div class="pmd-window pmd-prep-modal-dialog pmd-prep-units-dialog" role="dialog" aria-modal="true" aria-label="Manage Units">
       <div class="pmd-prep-modal-topbar">
         <div>
-          <h3 class="pmd-panel-title">UNITS</h3>
+          <h3 class="pmd-panel-title">Units</h3>
           <p class="pmd-panel-sub" data-testid="prep-deploy-counter">Deployed: 3 / 3</p>
         </div>
-        <button type="button" class="pmd-btn pmd-chip-btn" data-testid="prep-units-close-btn">Done</button>
+        ${buildPmdCloseXButtonHtml({ testId: 'prep-units-close-btn', ariaLabel: 'Close Units' })}
       </div>
       <div class="pmd-prep-units-body pmd-units-sidebar-layout">
         <div class="pmd-prep-roster-pane pmd-units-sidebar">
@@ -182,9 +183,9 @@ export function createPrepDomElements(
     <div class="pmd-window pmd-prep-modal-dialog pmd-prep-items-dialog" role="dialog" aria-modal="true" aria-label="Manage Items">
       <div class="pmd-prep-modal-topbar">
         <div>
-          <h3 class="pmd-panel-title">ITEMS</h3>
+          <h3 class="pmd-panel-title">Items</h3>
         </div>
-        <button type="button" class="pmd-btn pmd-chip-btn" data-testid="prep-items-close-btn">Done</button>
+        ${buildPmdCloseXButtonHtml({ testId: 'prep-items-close-btn', ariaLabel: 'Close Items' })}
       </div>
       <div class="pmd-prep-units-body pmd-units-sidebar-layout">
         <div class="pmd-prep-roster-pane pmd-units-sidebar">
@@ -215,10 +216,10 @@ export function createPrepDomElements(
     <div class="pmd-window pmd-prep-modal-dialog pmd-prep-items-dialog" role="dialog" aria-modal="true" aria-label="Unit Supports">
       <div class="pmd-prep-modal-topbar">
         <div>
-          <h3 class="pmd-panel-title">SUPPORTS</h3>
+          <h3 class="pmd-panel-title">Supports</h3>
           <p class="pmd-panel-sub">Conversations &amp; Adjacent Bonuses</p>
         </div>
-        <button type="button" class="pmd-btn pmd-chip-btn" data-testid="prep-supports-close-btn">Done</button>
+        ${buildPmdCloseXButtonHtml({ testId: 'prep-supports-close-btn', ariaLabel: 'Close Supports' })}
       </div>
       <div data-testid="prep-supports-body"></div>
     </div>

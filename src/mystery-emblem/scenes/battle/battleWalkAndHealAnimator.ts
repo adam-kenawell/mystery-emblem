@@ -5,7 +5,6 @@
 import { directionFromDelta } from '../../assets/pmdAssetLoader';
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
 import {
-  STATUS_ACTION_CALLOUTS,
   STATUS_BADGE_COLORS,
   applyInflictedStatusToUnit,
   type BattleUnitState,
@@ -14,6 +13,7 @@ import {
 } from '../../engine/combatEngine';
 import { computeSupportHealExpGain } from '../../engine/progressionEngine';
 import type { AStarPathStep } from '../../engine/terrainAndPathfinding';
+import { logHealOrSupportAction, logStatusHexAttempt } from './battleActionLog';
 import { ensureTilePairVisible, waitBattleMs } from './battleBannersAndTransitions';
 import { spawnFloatingText } from './battleFloatingCallouts';
 import { updateBattleInfoStrip } from './battleHudCards';
@@ -128,14 +128,15 @@ export async function playHealActionAsync(
     durationMs: 300,
   };
 
-  const healMsg = shield
-    ? `${healForecast.move.name.toUpperCase()}!`
-    : isDelayedHeal
-    ? 'WISH!'
-    : healForecast.actualHeal > 0
-      ? `+${healForecast.actualHeal} HP${healForecast.curesStatus ? ' · CURED!' : ''}`
-      : 'CURED!';
-  spawnFloatingText(state, dom, target.x, target.y, healMsg, '#68f8a8');
+  if (!shield && !isDelayedHeal && healForecast.actualHeal > 0) {
+    spawnFloatingText(state, dom, target.x, target.y, `+${healForecast.actualHeal} HP`, '#68f8a8');
+  }
+  logHealOrSupportAction(state, dom, healer, target, healForecast.move.name, {
+    isShield: Boolean(shield),
+    isDelayedHeal,
+    actualHeal: healForecast.actualHeal,
+    curesStatus: healForecast.curesStatus,
+  });
   updateBattleInfoStrip(ctx);
 
   await waitBattleMs(state, 320);
@@ -199,13 +200,17 @@ export async function playStatusHexActionAsync(
 
   if (!didHit) {
     audioManager.playSfx('attack_miss');
-    spawnFloatingText(
+    if (!forecast.blockedReason) {
+      spawnFloatingText(state, dom, target.x, target.y, 'MISS', '#90d8f8');
+    }
+    logStatusHexAttempt(
       state,
       dom,
-      target.x,
-      target.y,
-      forecast.blockedReason?.toUpperCase() ?? 'MISS',
-      '#90d8f8'
+      caster,
+      target,
+      forecast.move.name,
+      forecast.inflictStatus,
+      forecast.blockedReason ? 'blocked' : 'missed'
     );
   } else {
     const res = applyInflictedStatusToUnit(target, forecast.inflictStatus);
@@ -222,17 +227,25 @@ export async function playStatusHexActionAsync(
     };
     if (res.lumBerryConsumed) {
       audioManager.playSfx('heal');
-      spawnFloatingText(state, dom, target.x, target.y, 'LUM BERRY!', '#68f8a8', 900);
-    } else {
-      audioManager.playSfx('attack_hit');
-      spawnFloatingText(
+      logStatusHexAttempt(
         state,
         dom,
-        target.x,
-        target.y,
-        STATUS_ACTION_CALLOUTS[forecast.inflictStatus],
-        fxColor,
-        920
+        caster,
+        target,
+        forecast.move.name,
+        forecast.inflictStatus,
+        'lum_berry'
+      );
+    } else {
+      audioManager.playSfx('attack_hit');
+      logStatusHexAttempt(
+        state,
+        dom,
+        caster,
+        target,
+        forecast.move.name,
+        forecast.inflictStatus,
+        'inflicted'
       );
     }
   }

@@ -4,6 +4,7 @@
 
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
 import { clampDungeonCameraPosition } from '../../ui/gridViewportMath';
+import { logBattlePhaseSeparator } from './battleActionLog';
 import type { BattleDomRefs } from './battleDomShell';
 import { runTurnStartEvents } from './battleEventRunner';
 import { triggerTurn1BattleTutorials } from './battleTutorialIntegration';
@@ -137,6 +138,8 @@ export function playPhaseTransitionAsync(
   if (!state.openState || runGen !== state.battleRunGen) {
     return Promise.resolve();
   }
+
+  logBattlePhaseSeparator(state, dom, faction);
 
   const durationMs = 1150;
   dom.phaseTransitionTitleEl.textContent =

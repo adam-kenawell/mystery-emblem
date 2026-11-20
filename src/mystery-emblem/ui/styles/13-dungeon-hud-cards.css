@@ -23,10 +23,20 @@
   max-width: calc(100% - 1.3rem);
 }
 
+.pmd-dungeon-bottom-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  max-width: 100%;
+}
+
 .pmd-dungeon-tile-box {
   position: relative;
+  z-index: 3;
+  flex-shrink: 0;
   pointer-events: none;
   width: 224px;
+  min-height: 100px;
   max-width: 100%;
   border-width: 8px 12px;
   border-image-source: var(--pmd-frame-solid);
@@ -34,7 +44,303 @@
   padding: 5px 7px;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 3px;
+  transition: width 240ms cubic-bezier(0.22, 0.85, 0.32, 1);
+}
+
+/* Collapsible PMD Battle Action Log (docks right of Dungeon Floor & slides behind it) */
+.pmd-battle-log-dock {
+  position: relative;
+  z-index: 2;
+  align-self: stretch;
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  max-width: 100%;
+  margin-left: -4px;
+  pointer-events: none;
+}
+
+.pmd-battle-log-dock[hidden] {
+  display: none !important;
+}
+
+.pmd-battle-log-viewport {
+  position: relative;
+  align-self: stretch;
+  overflow: hidden;
+  width: 394px;
+  max-width: calc(100vw - 310px);
+  transition: width 260ms cubic-bezier(0.22, 0.85, 0.32, 1);
+  pointer-events: none;
+}
+
+.pmd-battle-log-dock.is-collapsed .pmd-battle-log-viewport {
+  width: 0;
+}
+
+.pmd-battle-log-box {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 10px;
+  right: 0;
+  pointer-events: auto;
+  border-width: 8px 12px;
+  border-image-source: var(--pmd-frame-solid);
+  border-image-slice: 5 8 fill;
+  padding: 2px 18px 2px 6px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  touch-action: pan-y;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 192, 224, 0.55) transparent;
+  transform: translateX(0);
+  opacity: 1;
+  transition:
+    transform 260ms cubic-bezier(0.22, 0.85, 0.32, 1),
+    opacity 200ms ease;
+}
+
+.pmd-battle-log-dock.is-collapsed .pmd-battle-log-box {
+  transform: translateX(-100%);
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+.pmd-battle-log-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pmd-log-phase-group {
+  display: flex;
+  align-items: stretch;
+  gap: 5px;
+  min-height: 14px;
+}
+
+.pmd-log-phase-group.is-player {
+  --pmd-log-phase-color: #58b8ff;
+}
+
+.pmd-log-phase-group.is-ally {
+  --pmd-log-phase-color: var(--pmd-text-green);
+}
+
+.pmd-log-phase-group.is-enemy {
+  --pmd-log-phase-color: #ff5868;
+}
+
+.pmd-log-phase-rail {
+  flex: 0 0 10px;
+  width: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pmd-log-phase-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  margin-top: 3px;
+  border-radius: 50%;
+  border: 2px solid var(--pmd-log-phase-color);
+  background: transparent;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.72);
+  transition: background-color 180ms ease;
+}
+
+.pmd-log-phase-group.is-complete .pmd-log-phase-dot {
+  background: var(--pmd-log-phase-color);
+}
+
+.pmd-log-phase-line {
+  width: 2px;
+  flex: 1 1 auto;
+  margin-top: 2px;
+  margin-bottom: 1px;
+  background: var(--pmd-log-phase-color);
+  box-shadow: 1px 0 0 rgba(0, 0, 0, 0.55);
+  opacity: 0.85;
+}
+
+.pmd-log-phase-group.is-empty .pmd-log-phase-line {
+  display: none;
+}
+
+.pmd-log-phase-lines {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.pmd-battle-log-empty {
+  font-size: 11px;
+  line-height: 1.28;
+  color: rgba(168, 224, 248, 0.58);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.pmd-battle-log-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: 11px;
+  line-height: 1.28;
+  color: var(--pmd-text-white);
+  text-shadow: 1px 1px 0 #000000;
+  word-break: break-word;
+}
+
+.pmd-log-bullet {
+  flex-shrink: 0;
+  color: rgba(168, 224, 248, 0.72);
+}
+
+.pmd-log-unit.is-player {
+  color: var(--pmd-text-yellow);
+  font-weight: bold;
+}
+
+.pmd-log-unit.is-npc {
+  color: var(--pmd-text-cyan);
+  font-weight: bold;
+}
+
+.pmd-log-unit.is-enemy {
+  color: var(--pmd-text-white);
+  font-weight: bold;
+}
+
+.pmd-log-move {
+  color: var(--pmd-text-white);
+}
+
+.pmd-log-item,
+.pmd-log-heal {
+  color: var(--pmd-text-green);
+  font-weight: bold;
+}
+
+.pmd-log-dmg {
+  color: var(--pmd-text-danger);
+  font-weight: bold;
+}
+
+.pmd-log-dmg.is-crit,
+.pmd-log-crit {
+  color: var(--pmd-text-gold);
+  font-weight: bold;
+}
+
+.pmd-log-status {
+  font-weight: bold;
+}
+
+/* Open state: borderless yellow arrow tucked inside top-right of log box over the scrollbar */
+.pmd-battle-log-toggle {
+  position: relative;
+  z-index: 4;
+  pointer-events: auto;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-left: -34px;
+  margin-top: 6px;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  border-image: none;
+  background: transparent;
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pmd-text-yellow);
+  cursor: inherit;
+  touch-action: manipulation;
+  transition: margin-left 260ms cubic-bezier(0.22, 0.85, 0.32, 1);
+}
+
+/* Collapsed state: compact framed tab peeking out right beside the Dungeon Floor box */
+.pmd-battle-log-dock.is-collapsed .pmd-battle-log-toggle {
+  align-self: center;
+  margin-left: 8px;
+  margin-top: 0;
+  width: 32px;
+  min-width: 32px;
+  height: 44px;
+  min-height: 44px;
+  border-style: solid;
+  border-width: 6px 8px;
+  border-image-source: var(--pmd-frame-mini);
+  border-image-slice: 3 4 fill;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.52);
+}
+
+@media (pointer: coarse) {
+  .pmd-battle-log-toggle {
+    width: 32px;
+    min-width: 32px;
+    height: 32px;
+    min-height: 32px;
+    margin-left: -40px;
+    margin-top: 4px;
+  }
+
+  .pmd-battle-log-dock.is-collapsed .pmd-battle-log-toggle {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+  }
+}
+
+.pmd-battle-log-dock.is-collapsed .pmd-battle-log-toggle:active {
+  border-image-source: var(--pmd-frame-mini-active);
+}
+
+.pmd-battle-log-toggle:active .pmd-battle-log-arrow {
+  transform: scale(1.12);
+}
+
+.pmd-battle-log-dock.is-collapsed .pmd-battle-log-toggle:active .pmd-battle-log-arrow {
+  transform: rotate(180deg) scale(1.12);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pmd-battle-log-dock.is-collapsed .pmd-battle-log-toggle:hover {
+    border-image-source: var(--pmd-frame-mini-active);
+  }
+
+  .pmd-battle-log-toggle:hover .pmd-battle-log-arrow {
+    transform: scale(1.12);
+  }
+
+  .pmd-battle-log-dock.is-collapsed .pmd-battle-log-toggle:hover .pmd-battle-log-arrow {
+    transform: rotate(180deg) scale(1.12);
+  }
+}
+
+.pmd-battle-log-arrow {
+  display: block;
+  width: 12px;
+  height: 14px;
+  image-rendering: pixelated;
+  pointer-events: none;
+  transition: transform 240ms cubic-bezier(0.22, 0.85, 0.32, 1);
+}
+
+.pmd-battle-log-dock.is-collapsed .pmd-battle-log-arrow {
+  transform: rotate(180deg);
 }
 
 .pmd-dungeon-tile-box[hidden],

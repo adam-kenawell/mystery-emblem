@@ -69,3 +69,44 @@ export function createPmdButton(options: CreatePmdButtonOptions): HTMLButtonElem
   }
   return btn;
 }
+
+/** 10x10 native-texel crisp pixel-art red `X` with 1-texel `#000000` outline. */
+export const PMD_CLOSE_X_SVG =
+  '<svg viewBox="0 0 10 10" width="18" height="18" aria-hidden="true" shape-rendering="crispEdges">' +
+  '<path fill="#000000" d="M1,0H3V1H4V2H6V1H7V0H9V1H10V3H9V4H8V6H9V7H10V9H9V10H7V9H6V8H4V9H3V10H1V9H0V7H1V6H2V4H1V3H0V1H1Z"/>' +
+  '<path fill="currentColor" d="M1,1H3V2H4V3H6V2H7V1H9V2H8V3H7V4H6V6H7V7H8V8H9V9H7V8H6V7H4V8H3V9H1V8H2V7H3V6H4V4H3V3H2V2H1Z"/>' +
+  '</svg>';
+
+export interface PmdCloseXButtonOptions {
+  testId?: string;
+  ariaLabel?: string;
+  corner?: boolean;
+  className?: string;
+  onTap?: (ev: PointerEvent) => void;
+  tapOptions?: BindPointerTapOptions;
+}
+
+export function buildPmdCloseXButtonHtml(options: PmdCloseXButtonOptions = {}): string {
+  const classes = ['pmd-close-x-btn'];
+  if (options.corner) classes.push('is-corner');
+  if (options.className) classes.push(options.className);
+  const label = (options.ariaLabel ?? 'Close').replace(/"/g, '&quot;');
+  const testIdAttr = options.testId ? ` data-testid="${options.testId}"` : '';
+  return `<button type="button" class="${classes.join(' ')}"${testIdAttr} aria-label="${label}">${PMD_CLOSE_X_SVG}</button>`;
+}
+
+export function createPmdCloseXButton(options: PmdCloseXButtonOptions = {}): HTMLButtonElement {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  const classes = ['pmd-close-x-btn'];
+  if (options.corner) classes.push('is-corner');
+  if (options.className) classes.push(options.className);
+  btn.className = classes.join(' ');
+  if (options.testId) btn.dataset.testid = options.testId;
+  btn.setAttribute('aria-label', options.ariaLabel ?? 'Close');
+  btn.innerHTML = PMD_CLOSE_X_SVG;
+  if (options.onTap) {
+    bindPointerTap(btn, options.onTap, options.tapOptions);
+  }
+  return btn;
+}

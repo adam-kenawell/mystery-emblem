@@ -47,8 +47,8 @@
 
   --pmd-frame-mini-translucent: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' shape-rendering='crispEdges'%3E%3Cpath fill='%23A8C0E0' fill-rule='evenodd' d='M1,0H11V1H12V11H11V12H1V11H0V1H1ZM3,3H9V9H3Z'/%3E%3Cpath fill='%236080F8' fill-rule='evenodd' d='M2,1H10V2H11V10H10V11H2V10H1V2H2ZM3,3H9V9H3Z'/%3E%3Cpath fill='%234820F8' fill-rule='evenodd' d='M3,2H9V3H10V9H9V10H3V9H2V3H3ZM3,3H9V9H3Z'/%3E%3Crect fill='%230E1824' fill-opacity='0.68' x='3' y='3' width='6' height='6'/%3E%3C/svg%3E");
 
-  /* 6x7 Native Texel Cursor Triangle (`▶`) -> Rendered at 2x (`12x14px`) */
-  --pmd-cursor-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='14' viewBox='0 0 6 7' shape-rendering='crispEdges'%3E%3Cpath fill='%23000000' d='M0,0H2V1H3V2H4V3H5V4H4V5H3V6H2V7H0Z'/%3E%3Cpath fill='%23F8F8F8' d='M1,1H2V2H3V3H4V4H3V5H2V6H1Z'/%3E%3C/svg%3E");
+  /* 6x7 Native Texel Cursor Triangle (`▶`) -> Rendered at 2x (`12x14px`), yellow to match highlighted text */
+  --pmd-cursor-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='14' viewBox='0 0 6 7' shape-rendering='crispEdges'%3E%3Cpath fill='%23000000' d='M0,0H2V1H3V2H4V3H5V4H4V5H3V6H2V7H0Z'/%3E%3Cpath fill='%23F8F800' d='M1,1H2V2H3V3H4V4H3V5H2V6H1Z'/%3E%3C/svg%3E");
 
   /* Custom 2x Pixel-Art Glove Pointer (`32x32`, fingertip hotspot at `2 2`) */
   --pmd-cursor-glove: url('/cursor.png') 2 2, auto;
@@ -164,8 +164,8 @@ input[type='radio']:not(:disabled) {
   touch-action: manipulation;
 }
 
-.pmd-btn:hover:not(:disabled),
-.pmd-btn:active:not(:disabled) {
+.pmd-btn:not(.pmd-menu-row):hover:not(:disabled),
+.pmd-btn:not(.pmd-menu-row):active:not(:disabled) {
   border-image-source: var(--pmd-frame-mini-active);
   color: var(--pmd-text-yellow);
 }
@@ -182,8 +182,8 @@ input[type='radio']:not(:disabled) {
   color: #ffd8e0;
 }
 
-.pmd-btn-danger:hover:not(:disabled),
-.pmd-btn-danger:active:not(:disabled) {
+.pmd-btn-danger:not(.pmd-menu-row):hover:not(:disabled),
+.pmd-btn-danger:not(.pmd-menu-row):active:not(:disabled) {
   border-image-source: var(--pmd-frame-mini-danger);
   color: var(--pmd-text-yellow);
 }
@@ -223,7 +223,7 @@ input[type='radio']:not(:disabled) {
   top: 50%;
   width: 12px;
   height: 14px;
-  transform: translateY(-50%);
+  transform: translate(0, -50%);
   background-image: var(--pmd-cursor-arrow);
   background-repeat: no-repeat;
   background-size: 12px 14px;
@@ -232,30 +232,113 @@ input[type='radio']:not(:disabled) {
   pointer-events: none;
 }
 
-/* Show pixel `▶` cursor on primary/active/selected row by default, or on hovered row */
-.pmd-btn.pmd-menu-row.pmd-btn-primary::before,
-.pmd-btn.pmd-menu-row.is-active::before,
-.pmd-btn.pmd-menu-row.is-selected::before,
-.pmd-btn.pmd-menu-row:hover:not(:disabled)::before,
-.pmd-btn.pmd-menu-row:focus-visible:not(:disabled)::before,
-.pmd-btn.pmd-menu-row:active:not(:disabled)::before {
-  opacity: 1;
-}
-
-.pmd-btn.pmd-menu-row:hover:not(:disabled),
-.pmd-btn.pmd-menu-row:focus-visible:not(:disabled),
-.pmd-btn.pmd-menu-row:active:not(:disabled) {
-  background: rgba(96, 128, 248, 0.22);
-  color: var(--pmd-text-yellow);
-  border-image: none;
+@keyframes pmd-menu-caret-bounce {
+  0%,
+  100% {
+    transform: translate(0, -50%);
+  }
+  50% {
+    transform: translate(4px, -50%);
+  }
 }
 
 .pmd-btn.pmd-menu-row.pmd-btn-danger {
   color: var(--pmd-text-danger);
 }
 
-/* On desktop hover inside any menu list, move the `▶` cursor exclusively to the hovered item */
-.pmd-menu-list:has(.pmd-menu-row:hover:not(:disabled))
-  .pmd-menu-row:not(:hover)::before {
-  opacity: 0;
+/* Show bouncing yellow `▶` cursor and yellow text on active press (desktop click & mobile tap) */
+.pmd-btn.pmd-menu-row:active:not(:disabled)::before {
+  opacity: 1;
+  animation: pmd-menu-caret-bounce 0.7s steps(2, end) infinite;
+}
+
+.pmd-btn.pmd-menu-row:active:not(:disabled) {
+  background: transparent;
+  color: var(--pmd-text-yellow);
+  border-image: none;
+}
+
+/* On hover-capable fine pointers, show bouncing yellow `▶` cursor and yellow text only while hovered */
+@media (hover: hover) and (pointer: fine) {
+  .pmd-btn.pmd-menu-row:hover:not(:disabled)::before {
+    opacity: 1;
+    animation: pmd-menu-caret-bounce 0.7s steps(2, end) infinite;
+  }
+
+  .pmd-btn.pmd-menu-row:hover:not(:disabled) {
+    background: transparent;
+    color: var(--pmd-text-yellow);
+    border-image: none;
+  }
+}
+
+/* Compact borderless top-right pixel-art red `X` close button (`44x44px` tap hitbox) */
+.pmd-close-x-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -6px -4px -6px 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #ff4858;
+  cursor: inherit;
+  touch-action: manipulation;
+}
+
+.pmd-close-x-btn svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  image-rendering: pixelated;
+  pointer-events: none;
+  transition: color 0.1s ease, transform 0.1s ease;
+}
+
+.pmd-close-x-btn:active:not(:disabled) {
+  color: #ff8898;
+}
+
+.pmd-close-x-btn:active:not(:disabled) svg {
+  transform: scale(1.12);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pmd-close-x-btn:hover:not(:disabled) {
+    color: #ff8898;
+  }
+
+  .pmd-close-x-btn:hover:not(:disabled) svg {
+    transform: scale(1.12);
+  }
+}
+
+.pmd-close-x-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.pmd-close-x-btn.is-corner {
+  position: absolute;
+  top: 0;
+  right: 0;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 6px 6px 0 0;
+  margin: 0;
+  z-index: 3;
+}
+
+.pmd-prep-modal-topbar > .pmd-close-x-btn,
+.pmd-dungeon-units-head > .pmd-close-x-btn,
+.pmd-supports-popup-head > .pmd-close-x-btn,
+.pmd-tutorial-header > .pmd-close-x-btn {
+  align-self: flex-start;
 }

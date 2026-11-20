@@ -3,13 +3,11 @@
  */
 
 import { renderSharedAudioSettingsControls } from '../../ui/inspector/UnitDetailCard';
+import { buildPmdCloseXButtonHtml, createPmdCloseXButton } from '../../ui/PmdWindow';
 import { bindPointerTap } from '../../ui/pointerControls';
 import { closeBattleScene } from './battleLifecycleController';
-import { getBattleSaveBlockReason, openBattleSaveProgressOverlay } from './battleSuspend';
-import type {
-  BattleExitDestination,
-  BattleFieldMenuSubView,
-} from './battlePublicTypes';
+import { buildBattleSuspendJson, getBattleSaveBlockReason } from './battleSuspend';
+import type { BattleFieldMenuSubView } from './battlePublicTypes';
 import type { BattleControllerContext } from './battleTypesAndState';
 import {
   escapeHudHtml,
@@ -82,7 +80,7 @@ export function renderFieldSubmodalContents(
   if (subView === 'settings') {
     cardEl.dataset.testid = 'dungeon-settings-modal';
     cardEl.setAttribute('aria-label', 'Audio Settings');
-    cardEl.innerHTML = `<h3 class="pmd-panel-title">SETTINGS</h3>`;
+    cardEl.innerHTML = `<h3 class="pmd-panel-title">Settings</h3>`;
     const settingsListEl = renderSharedAudioSettingsControls({
       audioManager,
       layout: 'battle',
@@ -108,91 +106,94 @@ export function renderFieldSubmodalContents(
       settingsListEl.appendChild(dividerEl);
     }
 
-    const actionsEl = document.createElement('div');
-    actionsEl.className = 'pmd-battle-outcome-actions';
-    actionsEl.innerHTML = `<button type="button" class="pmd-btn pmd-btn-primary" data-testid="battle-settings-done-btn">Done</button>`;
-    cardEl.appendChild(actionsEl);
-
-    bindPointerTap(
-      cardEl.querySelector<HTMLElement>('[data-testid="battle-settings-done-btn"]'),
-      () => {
-        audioManager.playSfx('select');
-        hooks.closeSystemMenu();
-      }
+    cardEl.appendChild(
+      createPmdCloseXButton({
+        testId: 'battle-settings-done-btn',
+        ariaLabel: 'Close Settings',
+        corner: true,
+        onTap: () => {
+          audioManager.playSfx('cancel');
+          hooks.closeSystemMenu();
+        },
+      })
     );
     return;
   }
 
-  if (subView === 'save_exit') {
-    cardEl.dataset.testid = 'dungeon-save-exit-modal';
-    cardEl.setAttribute('aria-label', 'Save and Exit');
-    const saveBlock = getBattleSaveBlockReason(state);
+  if (!state.suspendSource) {
+    cardEl.dataset.testid = 'dungeon-exit-confirm-modal';
+    cardEl.setAttribute('aria-label', 'Exit Battle');
     cardEl.innerHTML = `
-      <h3 class="pmd-panel-title">SAVE &amp; EXIT</h3>
-      <div class="pmd-menu-list">
-        ${state.suspendSource ? `<button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-field-save"${saveBlock ? ` disabled title="${escapeHudHtml(saveBlock)}"` : ''}>Save Progress</button>` : ''}
-        <button type="button" class="pmd-btn pmd-menu-row" data-testid="battle-field-overworld">Return to Overworld</button>
-        <button type="button" class="pmd-btn pmd-btn-danger pmd-menu-row" data-testid="battle-field-title">Return to Title Screen</button>
-      </div>
+      ${buildPmdCloseXButtonHtml({ testId: 'battle-cancel-exit-btn', ariaLabel: 'Cancel', corner: true })}
+      <h3 class="pmd-panel-title">Exit Battle?</h3>
+      <p class="pmd-subcard-text">Leave this test battle and return to the menu.</p>
       <div class="pmd-battle-outcome-actions">
-        <button type="button" class="pmd-btn" data-testid="battle-save-exit-back-btn">Back</button>
+        <button type="button" class="pmd-btn pmd-btn-danger" data-testid="battle-confirm-exit-btn">Exit Battle</button>
       </div>
     `;
-    bindPointerTap(cardEl.querySelector<HTMLElement>('[data-testid="battle-field-save"]'), () => {
+    bindPointerTap(cardEl.querySelector<HTMLElement>('[data-testid="battle-confirm-exit-btn"]'), () => {
       audioManager.playSfx('select');
       hooks.closeSystemMenu();
-      openBattleSaveProgressOverlay(ctx);
+      closeBattleScene(ctx, 'default');
     });
-    bindPointerTap(
-      cardEl.querySelector<HTMLElement>('[data-testid="battle-field-overworld"]'),
-      () => {
-        audioManager.playSfx('select');
-        hooks.setSubView('confirm_overworld');
-      }
-    );
-    bindPointerTap(cardEl.querySelector<HTMLElement>('[data-testid="battle-field-title"]'), () => {
-      audioManager.playSfx('select');
-      hooks.setSubView('confirm_title');
+    bindPointerTap(cardEl.querySelector<HTMLElement>('[data-testid="battle-cancel-exit-btn"]'), () => {
+      audioManager.playSfx('cancel');
+      hooks.setSubView('root');
     });
-    bindPointerTap(
-      cardEl.querySelector<HTMLElement>('[data-testid="battle-save-exit-back-btn"]'),
-      () => {
-        audioManager.playSfx('cancel');
-        hooks.setSubView('save_exit');
-      }
-    );
     return;
   }
 
-  const isOverworld = subView === 'confirm_overworld';
-  const destination: BattleExitDestination = isOverworld ? 'overworld' : 'title';
-  const titleText = isOverworld ? 'RETURN TO OVERWORLD?' : 'RETURN TO TITLE SCREEN?';
-  const confirmLabel = isOverworld ? 'Return to Overworld' : 'Return to Title Screen';
+  const blockReason = !ctx.saveManager.getSave()
+    ? 'No campaign file is loaded.'
+    : getBattleSaveBlockReason(state, {
+        dialogueOpen: Boolean(ctx.dialogueOverlay?.isOpen()),
+        tutorialActive: Boolean(tutorialOverlay?.isBlockingSceneInput()),
+      });
 
-  cardEl.dataset.testid = 'dungeon-exit-confirm-modal';
-  cardEl.setAttribute('aria-label', titleText);
+  cardEl.dataset.testid = 'dungeon-bookmark-modal';
+  cardEl.setAttribute('aria-label', 'Bookmark Battle');
   cardEl.innerHTML = `
-    <h3 class="pmd-panel-title">${titleText}</h3>
-    <p class="pmd-subcard-text">Unsaved progress in this dungeon battle will be lost.</p>
+    ${buildPmdCloseXButtonHtml({ testId: 'battle-cancel-bookmark-btn', ariaLabel: 'Cancel', corner: true })}
+    <h3 class="pmd-panel-title">Bookmark Battle?</h3>
+    <p class="pmd-subcard-text" data-bookmark-message>${
+      blockReason
+        ? escapeHudHtml(blockReason)
+        : 'Save your current battle progress to this save file and return to the Title Screen. This bookmark will be deleted once you resume.'
+    }</p>
     <div class="pmd-battle-outcome-actions">
-      <button type="button" class="pmd-btn pmd-btn-danger" data-testid="battle-confirm-exit-btn">${confirmLabel}</button>
-      <button type="button" class="pmd-btn" data-testid="battle-cancel-exit-btn">Cancel</button>
+      <button type="button" class="pmd-btn pmd-btn-primary" data-testid="battle-confirm-bookmark-btn"${blockReason ? ' disabled' : ''}>Bookmark</button>
     </div>
   `;
 
-  bindPointerTap(
-    cardEl.querySelector<HTMLElement>('[data-testid="battle-confirm-exit-btn"]'),
-    () => {
-      audioManager.playSfx('select');
-      hooks.closeSystemMenu();
-      closeBattleScene(ctx, destination);
-    }
-  );
-  bindPointerTap(
-    cardEl.querySelector<HTMLElement>('[data-testid="battle-cancel-exit-btn"]'),
-    () => {
+  const confirmBtn = cardEl.querySelector<HTMLButtonElement>('[data-testid="battle-confirm-bookmark-btn"]');
+  const cancelBtn = cardEl.querySelector<HTMLButtonElement>('[data-testid="battle-cancel-bookmark-btn"]');
+  const msgEl = cardEl.querySelector<HTMLElement>('[data-bookmark-message]');
+  let bookmarking = false;
+
+  bindPointerTap(confirmBtn, () => {
+    if (bookmarking || !confirmBtn || confirmBtn.disabled) return;
+    const snapJson = buildBattleSuspendJson(state);
+    if (!snapJson) {
       audioManager.playSfx('cancel');
-      hooks.setSubView('save_exit');
+      if (msgEl) msgEl.textContent = 'Unable to create a bookmark right now.';
+      return;
     }
-  );
+    bookmarking = true;
+    audioManager.playSfx('select');
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = 'Bookmarking...';
+    if (cancelBtn) cancelBtn.disabled = true;
+    void Promise.race([
+      ctx.saveManager.saveBattleBookmark(snapJson),
+      new Promise<void>((resolve) => window.setTimeout(resolve, 4000)),
+    ]).finally(() => {
+      hooks.closeSystemMenu();
+      closeBattleScene(ctx, 'title');
+    });
+  });
+  bindPointerTap(cancelBtn, () => {
+    if (bookmarking) return;
+    audioManager.playSfx('cancel');
+    hooks.setSubView('root');
+  });
 }

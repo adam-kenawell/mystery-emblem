@@ -8,6 +8,7 @@
 import { interpolateCampaignText } from '../../engine/speakerResolver';
 import type { DungeonTalkChoiceOption } from '../../types/schemas';
 import { PmdPortraitView } from '../../ui/PmdSpriteCanvas';
+import { buildPmdCloseXButtonHtml } from '../../ui/PmdWindow';
 import { bindPointerTap } from '../../ui/pointerControls';
 import type { BattleDomRefs } from './battleDomShell';
 import type { BattleControllerContext, BattleRuntimeState } from './battleTypesAndState';
@@ -51,12 +52,10 @@ export function presentTalkChoiceModalAsync(
   modalEl.setAttribute('role', 'dialog');
   modalEl.setAttribute('aria-modal', 'true');
   modalEl.innerHTML = `
+    ${buildPmdCloseXButtonHtml({ testId: 'talk-choice-cancel-btn', ariaLabel: 'Cancel', corner: true })}
     <h3 class="pmd-panel-title" data-testid="talk-choice-title">${escapeHudHtml(resolvedTitle)}</h3>
     ${resolvedSub ? `<p class="pmd-panel-sub" data-testid="talk-choice-subtitle">${escapeHudHtml(resolvedSub)}</p>` : ''}
     <div class="pmd-talk-choice-options" data-testid="talk-choice-options"></div>
-    <div class="pmd-battle-outcome-actions">
-      <button type="button" class="pmd-btn" data-testid="talk-choice-cancel-btn">Cancel</button>
-    </div>
   `;
 
   const optionsWrap = modalEl.querySelector<HTMLElement>('[data-testid="talk-choice-options"]')!;

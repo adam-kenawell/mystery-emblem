@@ -14,7 +14,7 @@ import {
 } from '../../data/tutorialRegistry';
 import { getMapDeploymentCap } from '../../engine/battleSetup';
 import { ensureTilePairVisible } from './battleBannersAndTransitions';
-import { spawnFloatingText } from './battleFloatingCallouts';
+import { logParalyzeHealGift } from './battleActionLog';
 import { updateBattleInfoStrip } from './battleHudCards';
 import type { BattleControllerContext } from './battleTypesAndState';
 import { getLivingPlayers } from './battleUnitQueries';
@@ -96,15 +96,7 @@ export async function triggerReactivePostCombatTutorials(
         );
         state.inspectedTile = { x: paralyzedUnit.x, y: paralyzedUnit.y };
         audioManager.playSfx('heal');
-        spawnFloatingText(
-          state,
-          dom,
-          paralyzedUnit.x,
-          Math.max(0, paralyzedUnit.y - 1),
-          'PARALYZE HEAL!',
-          '#68f8a8',
-          950
-        );
+        logParalyzeHealGift(state, dom, paralyzedUnit);
         updateBattleInfoStrip(ctx);
         ctx.renderNow();
       }

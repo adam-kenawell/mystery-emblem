@@ -2,6 +2,8 @@
  * DOM Shell & Element Reference Builder for `ChapterMapEditorScene`
  */
 
+import { buildPmdCloseXButtonHtml } from '../../ui/PmdWindow';
+
 export interface EditorDomRefs {
   rootEl: HTMLElement;
   canvasStageEl: HTMLElement;
@@ -103,7 +105,7 @@ export function createEditorDomShell(viewportEl: HTMLElement): EditorDomRefs {
   drawerEl.dataset.testid = 'map-editor-drawer';
   drawerEl.innerHTML = `
     <div class="pmd-devtools-row-between">
-      <h3 class="pmd-subcard-title">LEVEL &amp; CHAPTER MAP EDITOR</h3>
+      <h3 class="pmd-subcard-title">Level &amp; Chapter Map Editor</h3>
       <button type="button" class="pmd-btn pmd-chip-btn" data-testid="editor-drawer-close-btn">Hide Panel</button>
     </div>
     <div class="pmd-battle-sandbox-section" data-editor-location-bar hidden>
@@ -204,7 +206,7 @@ export function createEditorDomShell(viewportEl: HTMLElement): EditorDomRefs {
   systemMenuBackdropEl.hidden = true;
   systemMenuBackdropEl.innerHTML = `
     <div class="pmd-window pmd-battle-system-dialog" role="dialog" aria-modal="true" aria-labelledby="editor-sys-title">
-      <h3 id="editor-sys-title" class="pmd-panel-title">MAP EDITOR MENU</h3>
+      <h3 id="editor-sys-title" class="pmd-panel-title">Map Editor Menu</h3>
       <p class="pmd-panel-sub">Save your custom dungeon tiles to the live game or jump straight into battle.</p>
       <div class="pmd-battle-system-actions pmd-menu-list">
         <button type="button" class="pmd-btn pmd-btn-primary pmd-menu-row" data-testid="editor-sys-save-btn">Save Map to Game</button>
@@ -224,14 +226,14 @@ export function createEditorDomShell(viewportEl: HTMLElement): EditorDomRefs {
   jsonModalBackdropEl.hidden = true;
   jsonModalBackdropEl.innerHTML = `
     <div class="pmd-window pmd-battle-export-dialog" role="dialog" aria-modal="true" aria-labelledby="editor-json-title">
-      <h3 id="editor-json-title" class="pmd-panel-title">IMPORT / EXPORT MAP JSON</h3>
+      ${buildPmdCloseXButtonHtml({ testId: 'editor-json-close-btn', ariaLabel: 'Close', corner: true })}
+      <h3 id="editor-json-title" class="pmd-panel-title">Import / Export Map JSON</h3>
       <p class="pmd-panel-sub">Copy this level's DungeonMapDefinition JSON or paste edited JSON to apply &amp; save.</p>
       <textarea class="pmd-textarea" rows="8" data-testid="editor-json-textarea"></textarea>
       <p class="pmd-subcard-text" data-testid="editor-json-status" hidden></p>
       <div class="pmd-inline-btns">
         <button type="button" class="pmd-btn pmd-btn-primary" data-testid="editor-json-apply-btn">Import &amp; Save JSON</button>
         <button type="button" class="pmd-btn" data-testid="editor-json-copy-btn">Copy JSON</button>
-        <button type="button" class="pmd-btn" data-testid="editor-json-close-btn">Close</button>
       </div>
     </div>
   `;

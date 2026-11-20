@@ -3,6 +3,7 @@
  */
 
 import { bindPointerTap } from '../../ui/pointerControls';
+import { setBattleLogCollapsed } from './battleActionLog';
 import { handleBattleMenuOrBack } from './battleBackAndCheats';
 import { dismissBeginBattleCard, isPhaseTransitionPlaying } from './battleBannersAndTransitions';
 import {
@@ -33,6 +34,21 @@ import type { BattleControllerContext } from './battleTypesAndState';
 
 export function bindBattleUiButtons(ctx: BattleControllerContext): void {
   const { state, dom, audioManager, abortSignal: signal } = ctx;
+
+  bindPointerTap(
+    dom.battleLogToggleBtnEl,
+    () => {
+      audioManager.playSfx('select');
+      setBattleLogCollapsed(state, dom, !state.battleLogCollapsed);
+    },
+    { signal, stopPropagation: true }
+  );
+
+  for (const el of [dom.battleLogBoxEl, dom.battleLogToggleBtnEl]) {
+    el.addEventListener('pointerdown', (e) => e.stopPropagation(), { signal });
+    el.addEventListener('wheel', (e) => e.stopPropagation(), { signal, passive: true });
+    el.addEventListener('touchmove', (e) => e.stopPropagation(), { signal, passive: true });
+  }
 
   bindPointerTap(
     dom.beginBattleBackdropEl,
@@ -170,7 +186,7 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
     },
     { signal }
   );
-  const bindFieldSubViewBtn = (btn: HTMLElement, view: 'info' | 'settings' | 'save_exit') => {
+  const bindFieldSubViewBtn = (btn: HTMLElement, view: 'info' | 'settings' | 'bookmark') => {
     bindPointerTap(
       btn,
       () => {
@@ -182,7 +198,7 @@ export function bindBattleUiButtons(ctx: BattleControllerContext): void {
   };
   bindFieldSubViewBtn(dom.fieldInfoBtnEl, 'info');
   bindFieldSubViewBtn(dom.fieldSettingsBtnEl, 'settings');
-  bindFieldSubViewBtn(dom.fieldSaveExitBtnEl, 'save_exit');
+  bindFieldSubViewBtn(dom.fieldBookmarkBtnEl, 'bookmark');
 
   bindPointerTap(
     dom.victoryModalBackdropEl.querySelector<HTMLElement>('[data-testid="victory-replay-btn"]'),

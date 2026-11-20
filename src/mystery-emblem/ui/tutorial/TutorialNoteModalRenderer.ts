@@ -12,7 +12,7 @@ import { interpolateCampaignText, resolveSpeakerIdentity } from '../../engine/sp
 import type { SaveData } from '../../types/schemas';
 import { createMiniItemIcon } from '../PmdItemIconGrid';
 import type { PmdPortraitView } from '../PmdSpriteCanvas';
-import { createPmdButton } from '../PmdWindow';
+import { createPmdCloseXButton } from '../PmdWindow';
 import { createColoredTypeSpan } from '../typeColors';
 
 export interface RenderFieldNoteModalParams {
@@ -98,9 +98,8 @@ export function renderFieldNoteModalDom(params: RenderFieldNoteModalParams): voi
   titleCol.append(metaRow, titleEl);
   heroLeft.append(portraitBox, titleCol);
 
-  const closeBtn = createPmdButton({
-    label: returnToCompendium ? 'Back' : 'Close',
-    className: 'pmd-tutorial-skip-btn',
+  const closeBtn = createPmdCloseXButton({
+    ariaLabel: returnToCompendium ? 'Back to Field Notes' : 'Close Field Note',
     testId: 'tutorial-note-close-btn',
     onTap: onClose,
     tapOptions: { signal },

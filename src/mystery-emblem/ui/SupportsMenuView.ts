@@ -28,6 +28,7 @@ import {
   unitHasAvailableSupportConversation,
 } from '../engine/supportEngine';
 import type { SaveStateManager } from '../state/SaveStateManager';
+import { buildPmdCloseXButtonHtml } from './PmdWindow';
 import type { OwnedPokemonInstance, SaveData, SupportRank } from '../types/schemas';
 import type { DialogueOverlay } from './DialogueOverlay';
 import { PmdPortraitView } from './PmdSpriteCanvas';
@@ -337,7 +338,7 @@ export class SupportsMenuController {
             <span class="pmd-supports-unit-meta">Adjacent Gift: ${escapeUiHtml(subjectGift || 'Balanced')}</span>
           </div>
         </div>
-        <button type="button" class="pmd-btn pmd-chip-btn" data-testid="supports-partner-close-btn">Back</button>
+        ${buildPmdCloseXButtonHtml({ testId: 'supports-partner-close-btn', ariaLabel: 'Close Supports' })}
       </div>
       <div class="pmd-supports-partner-list" data-testid="supports-partner-list"></div>
     `;

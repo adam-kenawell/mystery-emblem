@@ -9,6 +9,7 @@
 
 import { isMoveEquipped } from '../../data/equippedMoves';
 import { getItemById, getPersonalSkillById, getSpeciesById } from '../../data/index';
+import { buildPmdCloseXButtonHtml } from '../../ui/PmdWindow';
 import {
   formatLineSupportGiftTag,
   formatSupportStatBonusShort,
@@ -71,10 +72,10 @@ export function renderBattleUnitsRosterPanel(
     headEl.className = 'pmd-dungeon-units-head';
     headEl.innerHTML = `
       <div>
-        <h3 class="pmd-panel-title">${isBattleInfo ? 'BATTLE INFO' : 'UNITS'}</h3>
+        <h3 class="pmd-panel-title">${isBattleInfo ? 'Battle Info' : 'Units'}</h3>
         ${isBattleInfo ? '' : `<p class="pmd-panel-sub">${livingCount} / ${playerUnits.length} Active</p>`}
       </div>
-      <button type="button" class="pmd-btn pmd-btn-primary" data-testid="battle-units-close-btn">Close</button>
+      ${buildPmdCloseXButtonHtml({ testId: 'battle-units-close-btn', ariaLabel: isBattleInfo ? 'Close Battle Info' : 'Close Units' })}
     `;
     bindPointerTap(
       headEl.querySelector<HTMLElement>('[data-testid="battle-units-close-btn"]'),

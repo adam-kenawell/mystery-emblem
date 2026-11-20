@@ -7,6 +7,7 @@
   max-width: 440px;
   max-height: 100%;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 10px 12px;
   display: flex;
   flex-direction: column;

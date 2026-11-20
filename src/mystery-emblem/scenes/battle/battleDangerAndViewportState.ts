@@ -48,15 +48,18 @@ export function syncPrepChromeVisibility(
   if (state.phase === 'dungeon_prep') {
     const inViewMap = prepOverlay.isOpen() && prepOverlay.getSubMode() === 'view_map';
     dom.infoStripEl.hidden = !inViewMap;
+    dom.battleLogDockEl.hidden = true;
     if (!inViewMap) {
       dom.unitPopupEl.hidden = true;
     }
   } else if (state.phase === 'victory' || state.phase === 'defeat') {
     dom.infoStripEl.hidden = true;
+    dom.battleLogDockEl.hidden = true;
     dom.unitPopupEl.hidden = true;
   } else {
     const hideHudCards = state.interactionState === 'combat_forecast';
     dom.infoStripEl.hidden = hideHudCards;
+    dom.battleLogDockEl.hidden = hideHudCards;
     if (hideHudCards) {
       dom.unitPopupEl.hidden = true;
     }

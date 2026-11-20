@@ -42,6 +42,7 @@ import {
   syncBattleSupportsFromSave,
 } from './battleSupportHelpers';
 import { openBattleSaveProgressOverlay } from './battleSuspend';
+import { resetBattleLog } from './battleActionLog';
 import { dismissTalkChoiceModal } from './battleTalkChoiceModal';
 import {
   triggerBattleTutorial,
@@ -173,6 +174,7 @@ export async function setupFreshBattleState(
   state.activeWalk = null;
   state.activeStrikeVfx = null;
   clearFloatingTexts(state, dom);
+  resetBattleLog(state, dom);
   state.trackedEnemyIds.clear();
   state.dangerRangeCache.clear();
   state.tileCacheVersion += 1;

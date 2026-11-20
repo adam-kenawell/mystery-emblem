@@ -7,7 +7,28 @@ import { syncHudControls } from './battleDangerAndViewportState';
 import { renderFieldSubmodalContents } from './battleFieldSubmodalViews';
 import { updateBattleInfoStrip } from './battleHudCards';
 import type { BattleFieldMenuSubView } from './battlePublicTypes';
+import { getBattleSaveBlockReason } from './battleSuspend';
 import type { BattleControllerContext } from './battleTypesAndState';
+
+function syncFieldBookmarkButton(ctx: BattleControllerContext): void {
+  const { state, dom, saveManager, dialogueOverlay, tutorialOverlay } = ctx;
+  if (!state.suspendSource) {
+    dom.fieldBookmarkBtnEl.textContent = 'Exit Battle';
+    dom.fieldBookmarkBtnEl.disabled = false;
+    dom.fieldBookmarkBtnEl.removeAttribute('title');
+    return;
+  }
+  dom.fieldBookmarkBtnEl.textContent = 'Bookmark';
+  const blockReason = !saveManager.getSave()
+    ? 'No campaign file is loaded.'
+    : getBattleSaveBlockReason(state, {
+        dialogueOpen: Boolean(dialogueOverlay?.isOpen()),
+        tutorialActive: Boolean(tutorialOverlay?.isBlockingSceneInput()),
+      });
+  dom.fieldBookmarkBtnEl.disabled = Boolean(blockReason);
+  if (blockReason) dom.fieldBookmarkBtnEl.title = blockReason;
+  else dom.fieldBookmarkBtnEl.removeAttribute('title');
+}
 
 export function openSystemMenu(
   ctx: BattleControllerContext,
@@ -36,6 +57,7 @@ export function openSystemMenu(
     state.lastFieldMenuAnchorClient = null;
   }
   syncHudControls(state, dom);
+  syncFieldBookmarkButton(ctx);
   dom.systemMenuBackdropEl.hidden = false;
   setSystemMenuSubView(ctx, subView, { skipLayerNotify: true });
   updateBattleInfoStrip(ctx);
@@ -112,6 +134,7 @@ export function setSystemMenuSubView(
   const { state, dom } = ctx;
   state.systemMenuSubView = subView;
   syncHudControls(state, dom);
+  syncFieldBookmarkButton(ctx);
 
   if (subView === 'root') {
     dom.systemMenuBackdropEl.classList.remove('is-submodal');

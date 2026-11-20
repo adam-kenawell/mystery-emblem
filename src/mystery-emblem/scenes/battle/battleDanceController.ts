@@ -7,6 +7,7 @@
 
 import { directionFromDelta } from '../../assets/pmdAssetLoader';
 import { PMD_TILE_NATIVE_PX } from '../../assets/tilesetLoader';
+import { getMoveById } from '../../data/index';
 import {
   getDanceMovesForTargetAtDistance,
   manhattanDistance,
@@ -20,7 +21,7 @@ import {
   syncHudControls,
   syncPrepChromeVisibility,
 } from './battleDangerAndViewportState';
-import { spawnFloatingText } from './battleFloatingCallouts';
+import { logDanceAction } from './battleActionLog';
 import { updateBattleInfoStrip } from './battleHudCards';
 import { grantExpAndHandleLevelUps } from './battleLevelUpModal';
 import { awardBattleAllyPairSupportPoint } from './battleSupportHelpers';
@@ -85,7 +86,7 @@ export async function playDanceActionAsync(
 
   targetAlly.waited = false;
   targetAlly.action = 'Idle';
-  spawnFloatingText(state, dom, targetAlly.x, targetAlly.y, 'AGAIN!', '#ffd860', 950);
+  logDanceAction(state, dom, dancer, targetAlly, getMoveById(moveSlot.id)?.name ?? 'Dance');
   updateBattleInfoStrip(ctx);
 
   await waitBattleMs(state, 260);
