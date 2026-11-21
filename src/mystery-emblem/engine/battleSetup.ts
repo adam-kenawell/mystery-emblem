@@ -240,6 +240,8 @@ export function buildBattleUnitsFromPrepDeployment(
       speciesName: sp.name,
       nickname: owned.nickname || sp.name,
       ...(owned.cosmeticForm ? { cosmeticForm: owned.cosmeticForm } : {}),
+      ...(owned.boonStat ? { boonStat: owned.boonStat } : {}),
+      ...(owned.baneStat ? { baneStat: owned.baneStat } : {}),
       level: owned.level,
       exp: owned.exp,
       unlockedMoveIds: [...owned.unlockedMoveIds],

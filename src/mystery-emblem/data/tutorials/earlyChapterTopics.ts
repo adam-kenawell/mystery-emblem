@@ -19,7 +19,7 @@ export const EARLY_CHAPTER_TUTORIAL_TOPICS: ReadonlyArray<TutorialTopicDefinitio
     ],
     bullets: [
       'Tap a ready teammate to view its Blue movement range, Red attack border, and Green support range.',
-      'Right-click an empty square (or long-press on mobile) to toggle the purple Enemy Danger Area.',
+      'Right-click an empty square (or long-press on mobile) to toggle the striped red Enemy Danger Area.',
       'Once all allies act (or you select End Phase from the Field Menu), Enemy Phase begins. If {lord}, {partner}, or {healer} hits 0 HP, the battle is lost.',
     ],
     beats: [

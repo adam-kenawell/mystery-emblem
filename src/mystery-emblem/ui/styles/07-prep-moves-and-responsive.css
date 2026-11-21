@@ -70,6 +70,22 @@
   color: var(--pmd-text-yellow);
 }
 
+.pmd-prep-stat-box.is-boon {
+  border-color: rgba(104, 240, 144, 0.7);
+}
+
+.pmd-prep-stat-box.is-boon .pmd-prep-stat-lbl {
+  color: #78f898;
+}
+
+.pmd-prep-stat-box.is-bane {
+  border-color: rgba(248, 112, 112, 0.7);
+}
+
+.pmd-prep-stat-box.is-bane .pmd-prep-stat-lbl {
+  color: #ff8a8a;
+}
+
 /* Authentic PMD Move List Styling (Reference Image 3: Emerald `#58F858` + White 2px Dividers) */
 .pmd-prep-move-list {
   display: flex;

@@ -18,6 +18,7 @@ import type {
   MoveDefinition,
   PokemonType,
   StatBlockSeven,
+  StatKeySix,
   StatusCondition,
   SupportPairProgress,
   TerrainBonuses,
@@ -78,6 +79,8 @@ export interface BattleUnitState extends PathfindingUnitContext, EquippedMoveSlo
   speciesName: string;
   nickname: string;
   cosmeticForm?: UnitCosmeticForm;
+  boonStat?: StatKeySix;
+  baneStat?: StatKeySix;
   level: number;
   exp?: number;
   unlockedMoveIds?: string[];

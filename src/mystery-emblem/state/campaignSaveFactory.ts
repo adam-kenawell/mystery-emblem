@@ -13,6 +13,7 @@ import {
   STARTING_CAMPAIGN_GOLD,
   STARTING_CAMPAIGN_LEVEL,
 } from '../data/campaignConfig';
+import { isValidHeroBirthday } from '../data/heroCustomization';
 import { SPECIES_MAP } from '../data/index';
 import type { OverworldGraphDefinition } from '../data/overworldMapData';
 import {
@@ -21,12 +22,17 @@ import {
   type ConvoyEntry,
   type OwnedPokemonInstance,
   type SaveData,
+  type StatKeySix,
 } from '../types/schemas';
 import { createPokemonInstance, generateSaveId } from './saveHelpersAndFactory';
 
 export interface NewCampaignConfig {
   lordSpeciesId: string;
   lordNickname?: string;
+  lordBoonStat?: StatKeySix;
+  lordBaneStat?: StatKeySix;
+  heroBirthMonth?: number;
+  heroBirthDay?: number;
   partnerSpeciesId?: string;
   partnerNickname?: string;
   healerSpeciesId?: string;
@@ -58,6 +64,8 @@ export function buildNewCampaignSaveData(
   const lord = createPokemonInstance({
     speciesId: cfg.lordSpeciesId,
     nickname: cfg.lordNickname,
+    boonStat: cfg.lordBoonStat,
+    baneStat: cfg.lordBaneStat,
     level: startLv,
     scaleStatsToLevel: scaleStats,
     isLord: true,
@@ -116,6 +124,12 @@ export function buildNewCampaignSaveData(
       recruitedChapterIds: [],
       seenIntroChapterIds: [],
       seenOutroChapterIds: [],
+      ...(isValidHeroBirthday(cfg.heroBirthMonth, cfg.heroBirthDay)
+        ? {
+            heroBirthMonth: cfg.heroBirthMonth,
+            heroBirthDay: cfg.heroBirthDay,
+          }
+        : {}),
     },
     roster,
     convoy: cfg.initialConvoy

@@ -4,6 +4,7 @@
 
 import { resolveUnitVisualAssetId } from '../../assets/pmdAssetLoader';
 import type { AudioManager } from '../../audio/AudioManager';
+import { formatHeroBirthday } from '../../data/heroCustomization';
 import { getItemById, getPersonalSkillById, getSpeciesById } from '../../data/index';
 import { getUnitEquippedItemId, type SaveStateManager } from '../../state/SaveStateManager';
 import type { SaveData } from '../../types/schemas';
@@ -116,6 +117,9 @@ export function renderOverworldUnitsTab(params: OverworldUnitsTabParams): {
     const skill = sp ? getPersonalSkillById(sp.personalSkillId) : undefined;
     const equippedItemId = getUnitEquippedItemId(selected);
     const equippedItem = equippedItemId ? getItemById(equippedItemId) : undefined;
+    const birthdayText = selected.isLord
+      ? formatHeroBirthday(save.campaign.heroBirthMonth, save.campaign.heroBirthDay)
+      : null;
     const headerRow = document.createElement('div');
     headerRow.className = 'pmd-devtools-row-between';
     headerRow.innerHTML = `
@@ -123,7 +127,7 @@ export function renderOverworldUnitsTab(params: OverworldUnitsTabParams): {
         <div class="pmd-forecast-portrait-slot" data-ow-unit-portrait></div>
         <div class="pmd-forecast-unit-id">
           <strong class="pmd-forecast-unit-name" data-testid="overworld-unit-detail-name">${escapeUiHtml(selected.nickname)}</strong>
-          <span class="pmd-forecast-unit-meta">Lv. ${selected.level} · ${sp ? renderColoredTypesHtml(sp.types, '/') : ''} · ${escapeUiHtml(sp?.traversalClass ?? 'Grounded')}</span>
+          <span class="pmd-forecast-unit-meta">Lv. ${selected.level} · ${sp ? renderColoredTypesHtml(sp.types, '/') : ''} · ${escapeUiHtml(sp?.traversalClass ?? 'Grounded')}${birthdayText ? ` · <span data-testid="overworld-hero-birthday">Birthday: ${escapeUiHtml(birthdayText)}</span>` : ''}</span>
         </div>
       </div>
     `;

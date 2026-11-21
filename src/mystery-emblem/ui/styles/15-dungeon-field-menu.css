@@ -144,6 +144,12 @@
 .pmd-dungeon-units-growth-strip em { font-style: normal; font-size: 9px; color: var(--pmd-text-cyan); }
 .pmd-dungeon-units-growth-strip strong { color: var(--pmd-text-yellow); }
 .pmd-dungeon-units-growth-strip.is-boosted strong { color: var(--pmd-text-green); }
+.pmd-dungeon-units-growth-strip span.is-boon { border-color: rgba(104, 240, 144, 0.7); }
+.pmd-dungeon-units-growth-strip span.is-boon em,
+.pmd-dungeon-units-growth-strip span.is-boon strong { color: #78f898; }
+.pmd-dungeon-units-growth-strip span.is-bane { border-color: rgba(248, 112, 112, 0.7); }
+.pmd-dungeon-units-growth-strip span.is-bane em,
+.pmd-dungeon-units-growth-strip span.is-bane strong { color: #ff8a8a; }
 .pmd-dungeon-units-kv { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
 .pmd-dungeon-units-kv strong { color: var(--pmd-text-yellow); }
 .pmd-dungeon-units-support-partner { color: var(--pmd-text-green); font-size: 11px; }

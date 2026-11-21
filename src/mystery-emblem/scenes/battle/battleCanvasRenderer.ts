@@ -16,7 +16,7 @@ import { computeForecastStageBounds } from './battleForecastLog';
 import {
   drawConnectedRangeZone,
   drawUnitRangeEnvelope,
-  getDangerAreaPulse,
+  getDangerDiagonalStripePattern,
   getSelectionRangePulse,
   lerpRgba,
   splitDangerZoneLayers,
@@ -148,7 +148,6 @@ export function renderBattleFrame(ctxObj: BattleControllerContext, now: number):
   const visibleBounds = { startCol, endCol, startRow, endRow };
 
   if (state.currentDanger.combinedDangerTiles.size > 0) {
-    const dangerPulse = getDangerAreaPulse(state, now);
     const { globalOnlyTiles, individualTiles, combinedBoundaryMask } = splitDangerZoneLayers(
       state.currentDanger
     );
@@ -160,9 +159,15 @@ export function renderBattleFrame(ctxObj: BattleControllerContext, now: number):
         globalOnlyTiles,
         combinedBoundaryMask,
         {
-          fillRgba: lerpRgba([176, 36, 148, 0.1], [220, 88, 188, 0.16], dangerPulse),
-          outerBorderRgba: lerpRgba([216, 76, 180, 0.48], [244, 156, 218, 0.66], dangerPulse),
-          innerGlowRgba: lerpRgba([196, 56, 164, 0.14], [236, 120, 204, 0.24], dangerPulse),
+          fillRgba: 'rgba(224, 58, 74, 0.16)',
+          fillPattern: getDangerDiagonalStripePattern(
+            ctx,
+            'danger-global',
+            'rgba(220, 56, 72, 0.08)',
+            'rgba(216, 44, 62, 0.36)'
+          ),
+          outerBorderRgba: 'rgba(224, 52, 70, 0.85)',
+          innerGlowRgba: 'rgba(224, 52, 70, 0.14)',
         },
         visibleBounds
       );
@@ -175,9 +180,15 @@ export function renderBattleFrame(ctxObj: BattleControllerContext, now: number):
         individualTiles,
         individualTiles,
         {
-          fillRgba: lerpRgba([198, 40, 140, 0.14], [240, 100, 188, 0.22], dangerPulse),
-          outerBorderRgba: lerpRgba([236, 84, 174, 0.62], [252, 176, 224, 0.8], dangerPulse),
-          innerGlowRgba: lerpRgba([216, 60, 158, 0.2], [248, 136, 204, 0.32], dangerPulse),
+          fillRgba: 'rgba(248, 74, 90, 0.22)',
+          fillPattern: getDangerDiagonalStripePattern(
+            ctx,
+            'danger-individual',
+            'rgba(244, 68, 84, 0.12)',
+            'rgba(242, 60, 78, 0.46)'
+          ),
+          outerBorderRgba: 'rgba(255, 76, 94, 0.94)',
+          innerGlowRgba: 'rgba(255, 76, 94, 0.2)',
         },
         visibleBounds
       );

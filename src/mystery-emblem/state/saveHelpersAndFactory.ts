@@ -7,6 +7,11 @@ import {
   MIN_UNIT_LEVEL,
 } from '../data/campaignConfig';
 import { buildEquippedSlotsFromSeed } from '../data/equippedMoves';
+import {
+  HERO_NAME_MAX_LENGTH,
+  applyBoonBaneToBaseStats,
+  isValidHeroStatKey,
+} from '../data/heroCustomization';
 import { ITEM_MAP, SPECIES_MAP } from '../data/index';
 import {
   SUPPORT_RANK_THRESHOLDS,
@@ -22,6 +27,7 @@ import {
   type OwnedPokemonInstance,
   type SaveData,
   type StatBlockSeven,
+  type StatKeySix,
   type SupportPairProgress,
   type SupportRank,
   type UnitCosmeticForm,
@@ -99,9 +105,13 @@ export function makeSupportPairKey(instanceIdA: string, instanceIdB: string): st
 
 
 
-/** Species-only naming: every unit is always called by its species name. */
-export function sanitizeNickname(_rawNickname: string | undefined, fallbackSpeciesName: string): string {
-  return fallbackSpeciesName;
+/** Sanitizes an optional custom unit nickname, defaulting to `fallbackSpeciesName` when blank. */
+export function sanitizeNickname(rawNickname: string | undefined, fallbackSpeciesName: string): string {
+  if (typeof rawNickname !== 'string') return fallbackSpeciesName;
+  const cleaned = rawNickname.replace(/[\u0000-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim();
+  if (!cleaned) return fallbackSpeciesName;
+  if (cleaned === fallbackSpeciesName) return fallbackSpeciesName;
+  return cleaned.slice(0, HERO_NAME_MAX_LENGTH);
 }
 
 export function getUnitEquippedItemId(
@@ -232,6 +242,8 @@ export interface CreatePokemonOptions {
   speciesId: string;
   nickname?: string;
   cosmeticForm?: UnitCosmeticForm;
+  boonStat?: StatKeySix;
+  baneStat?: StatKeySix;
   level?: number;
   scaleStatsToLevel?: boolean;
   isLord?: boolean;
@@ -271,15 +283,23 @@ export function createPokemonInstance(opts: CreatePokemonOptions): OwnedPokemonI
     );
   }
 
+  const hasValidBoonBane =
+    isValidHeroStatKey(opts.boonStat) &&
+    isValidHeroStatKey(opts.baneStat) &&
+    opts.boonStat !== opts.baneStat;
+  const boonStat = hasValidBoonBane ? opts.boonStat : undefined;
+  const baneStat = hasValidBoonBane ? opts.baneStat : undefined;
+
   const initialStats: StatBlockSeven = opts.scaleStatsToLevel
-    ? computeManualScaledStatsForJoinLevel(sp, level)
-    : { ...sp.baseStats };
+    ? computeManualScaledStatsForJoinLevel(sp, level, boonStat, baneStat)
+    : applyBoonBaneToBaseStats(sp.baseStats, boonStat, baneStat);
 
   return {
     instanceId: generateSaveId('unit'),
     speciesId: sp.id,
-    nickname: sp.name,
+    nickname: sanitizeNickname(opts.nickname, sp.name),
     ...(opts.cosmeticForm ? { cosmeticForm: opts.cosmeticForm } : {}),
+    ...(boonStat && baneStat ? { boonStat, baneStat } : {}),
     isLord: Boolean(opts.isLord),
     level,
     exp: 0,

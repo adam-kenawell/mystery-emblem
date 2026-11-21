@@ -312,6 +312,7 @@ export function populateUnitSevenStatBoxes(
   mode: 'overworld' | 'prep'
 ): void {
   const st = unit.currentStats;
+  const hasBoonBane = Boolean(unit.boonStat && unit.baneStat && unit.boonStat !== unit.baneStat);
   const stats: Array<[string, number, string]> = [
     ['HP', st.hp, 'hp'], ['ATK', st.atk, 'atk'], ['DEF', st.def, 'def'],
     ['SPA', st.spa, 'spa'], ['SPD', st.spd, 'spd'], ['SPE', st.spe, 'spe'], ['MOV', st.mov, 'mov'],
@@ -320,16 +321,32 @@ export function populateUnitSevenStatBoxes(
   if (mode === 'overworld') {
     containerEl.innerHTML = '';
     for (const [label, val, key] of stats) {
+      const isBoon = hasBoonBane && unit.boonStat === key;
+      const isBane = hasBoonBane && unit.baneStat === key;
       const cell = document.createElement('div');
-      cell.className = 'pmd-overworld-stat-cell';
-      cell.innerHTML = `<span>${label}</span><strong data-testid="overworld-stat-${key}">${val}</strong>`;
+      cell.className = `pmd-overworld-stat-cell${isBoon ? ' is-boon' : isBane ? ' is-bane' : ''}`;
+      const arrow = isBoon ? ' ▲' : isBane ? ' ▼' : '';
+      if (isBoon) cell.title = 'Asset (+15% growth)';
+      else if (isBane) cell.title = 'Flaw (-10% growth)';
+      cell.innerHTML = `<span>${label}${arrow}</span><strong data-testid="overworld-stat-${key}">${val}</strong>`;
       containerEl.appendChild(cell);
     }
     return;
   }
 
   containerEl.innerHTML = stats
-    .map(([label, val]) => `<div class="pmd-prep-stat-box"><span class="pmd-prep-stat-lbl">${label}</span><strong class="pmd-prep-stat-val">${val}</strong></div>`)
+    .map(([label, val, key]) => {
+      const isBoon = hasBoonBane && unit.boonStat === key;
+      const isBane = hasBoonBane && unit.baneStat === key;
+      const cls = isBoon ? ' is-boon' : isBane ? ' is-bane' : '';
+      const arrow = isBoon ? ' ▲' : isBane ? ' ▼' : '';
+      const titleAttr = isBoon
+        ? ' title="Asset (+15% growth)"'
+        : isBane
+          ? ' title="Flaw (-10% growth)"'
+          : '';
+      return `<div class="pmd-prep-stat-box${cls}"${titleAttr}><span class="pmd-prep-stat-lbl">${label}${arrow}</span><strong class="pmd-prep-stat-val">${val}</strong></div>`;
+    })
     .join('');
 }
 

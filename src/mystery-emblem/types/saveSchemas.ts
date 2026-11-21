@@ -5,7 +5,7 @@
  */
 
 import type { CustomMapOverrideEntry } from './battleSchemas';
-import type { KecleonShopType, StatBlockSeven } from './registrySchemas';
+import type { KecleonShopType, StatBlockSeven, StatKeySix } from './registrySchemas';
 
 export const FLABEBE_FLOWER_COLORS = ['red', 'orange', 'yellow', 'blue', 'white'] as const;
 export type FlabebeFlowerColor = (typeof FLABEBE_FLOWER_COLORS)[number];
@@ -20,9 +20,13 @@ export interface OwnedPokemonInstance {
   speciesId: string;
   /** Optional purely cosmetic sprite/portrait form (Flabébé flower color or Oricorio dance style) */
   cosmeticForm?: UnitCosmeticForm;
-  /** Persistent custom nickname (defaults to species name; editable anytime) */
+  /** Persistent custom nickname (defaults to species name) */
   nickname: string;
   isLord: boolean;
+  /** Optional hero customization Asset stat (+starting stat and +15% growth rate) */
+  boonStat?: StatKeySix;
+  /** Optional hero customization Flaw stat (-starting stat and -10% growth rate) */
+  baneStat?: StatKeySix;
   level: number;
   exp: number;
   currentStats: StatBlockSeven;
@@ -100,6 +104,11 @@ export interface CampaignState {
   seenStoryCutsceneIds?: string[];
   creditsSeen?: boolean;
   demoCompleted?: boolean;
+  /** Optional hero customization birthday (1..12 month, 1..31 day) */
+  heroBirthMonth?: number;
+  heroBirthDay?: number;
+  /** Real-world calendar year when the Overworld birthday gift was last claimed */
+  lastBirthdayRewardYear?: number;
 }
 
 export const CURRENT_SAVE_SCHEMA_VERSION = 2 as const;

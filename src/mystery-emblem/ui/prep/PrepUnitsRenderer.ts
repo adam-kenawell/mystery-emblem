@@ -4,6 +4,7 @@
 
 import { resolveUnitVisualAssetId } from '../../assets/pmdAssetLoader';
 import type { AudioManager } from '../../audio/AudioManager';
+import { formatHeroBirthday } from '../../data/heroCustomization';
 import { getItemById, getPersonalSkillById, getSpeciesById } from '../../data/index';
 import { getUnitEquippedItemId, type SaveStateManager } from '../../state/SaveStateManager';
 import type { SaveData } from '../../types/schemas';
@@ -127,7 +128,10 @@ export function renderPrepManageUnits(ctx: PrepUnitsRenderContext): string | nul
 
   const metaEl = unitsBackdropEl.querySelector('[data-testid="prep-detail-meta"]');
   if (metaEl) {
-    metaEl.textContent = `Lv. ${selected.level} (EXP ${selected.exp}/100)`;
+    const birthdayText = selected.isLord
+      ? formatHeroBirthday(save.campaign.heroBirthMonth, save.campaign.heroBirthDay)
+      : null;
+    metaEl.textContent = `Lv. ${selected.level} (EXP ${selected.exp}/100)${birthdayText ? ` · Birthday: ${birthdayText}` : ''}`;
   }
 
   const badgesEl = unitsBackdropEl.querySelector<HTMLElement>('[data-testid="prep-unit-types"]');

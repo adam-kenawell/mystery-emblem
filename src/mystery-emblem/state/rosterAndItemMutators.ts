@@ -116,10 +116,15 @@ export function mutateEvolveUnitToSpecies(
       unit.currentStats.spe += branch.promotionBonuses.spe;
     }
   } else {
-    unit.currentStats = computeManualScaledStatsForJoinLevel(targetSp, unit.level);
+    unit.currentStats = computeManualScaledStatsForJoinLevel(
+      targetSp,
+      unit.level,
+      unit.boonStat,
+      unit.baneStat
+    );
   }
 
-  unit.nickname = targetSp.name;
+  if (unit.nickname === currentSp.name) unit.nickname = targetSp.name;
   applyEvolutionLearnsetAndMoveCap(unit, targetSp);
 
   return { unit, mutated: true };
@@ -216,7 +221,12 @@ export function mutateSetUnitLevel(
   const sp = SPECIES_MAP.get(unit.speciesId);
   if (sp) {
     if (rescaleStats) {
-      unit.currentStats = computeManualScaledStatsForJoinLevel(sp, clamped);
+      unit.currentStats = computeManualScaledStatsForJoinLevel(
+        sp,
+        clamped,
+        unit.boonStat,
+        unit.baneStat
+      );
     }
     for (const entry of sp.learnset) {
       if (entry.level <= clamped && !unit.unlockedMoveIds.includes(entry.moveId)) {

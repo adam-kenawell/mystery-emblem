@@ -3,6 +3,8 @@
  */
 
 import { getAudioManager, type AudioManager } from '../audio/AudioManager';
+import { HERO_BIRTHDAY_GIFT_ITEM_ID, isHeroBirthdayToday } from '../data/heroCustomization';
+import { getItemById } from '../data/index';
 import { DEMO_OVERWORLD_GRAPH, getOverworldNodeById, type OverworldGraphDefinition, type OverworldNodeDefinition } from '../data/overworldMapData';
 import { ensureOverworldGraphState, resolveCurrentStoryChapterNodeId } from '../engine/overworldEngine';
 import type { SaveStateManager } from '../state/SaveStateManager';
@@ -225,8 +227,30 @@ export class OverworldScene {
     } else this.cam.clampCamera();
 
     this.syncHudAndDock();
+    let showedBirthdaySurprise = false;
+    const latestSave = this.saveManager.getReadOnlySave();
+    if (latestSave) {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      if (
+        isHeroBirthdayToday(latestSave.campaign.heroBirthMonth, latestSave.campaign.heroBirthDay, now) &&
+        latestSave.campaign.lastBirthdayRewardYear !== currentYear
+      ) {
+        const giftItem = getItemById(HERO_BIRTHDAY_GIFT_ITEM_ID);
+        if (giftItem) {
+          this.saveManager.claimHeroBirthdayGift(currentYear, giftItem.id);
+          const lordName = getActiveLordUnit(latestSave)?.nickname ?? 'Hero';
+          this.audioManager.playSfx('heal');
+          this.showToast(
+            `Happy Birthday, ${lordName}! Your teammates prepared a ${giftItem.name} for you!`,
+            5000
+          );
+          showedBirthdaySurprise = true;
+        }
+      }
+    }
     const curSave = options?.announceCurrentChapter ? this.saveManager.getReadOnlySave() : null;
-    if (curSave) {
+    if (curSave && !showedBirthdaySurprise) {
       this.showToast(
         formatOverworldChapterAnnouncement(curSave, this.graph, this.getCachedReconciledState(curSave)),
         2800

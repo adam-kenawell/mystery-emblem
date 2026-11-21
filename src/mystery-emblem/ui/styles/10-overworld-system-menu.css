@@ -70,6 +70,22 @@
   color: var(--pmd-text-yellow);
 }
 
+.pmd-overworld-stat-cell.is-boon {
+  border-color: rgba(104, 240, 144, 0.7);
+}
+
+.pmd-overworld-stat-cell.is-boon span {
+  color: #78f898;
+}
+
+.pmd-overworld-stat-cell.is-bane {
+  border-color: rgba(248, 112, 112, 0.7);
+}
+
+.pmd-overworld-stat-cell.is-bane span {
+  color: #ff8a8a;
+}
+
 .pmd-overworld-subbox {
   background: var(--pmd-fill-well-deep);
   border: 2px solid var(--pmd-divider-subtle);

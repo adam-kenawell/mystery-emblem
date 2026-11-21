@@ -58,7 +58,7 @@ export function renderNgPlusRosterSelectorView(
     </p>
     <div style="display:flex; justify-content:flex-end; margin-top:4px;">
       <button type="button" class="pmd-btn pmd-btn-primary" data-testid="ngplus-confirm-btn" style="min-height:46px; padding:8px 18px;">
-        Begin New Game+ ▶
+        Customize Hero ▶
       </button>
     </div>
   `;

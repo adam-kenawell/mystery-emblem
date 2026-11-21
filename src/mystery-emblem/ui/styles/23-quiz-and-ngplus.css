@@ -136,3 +136,243 @@
   font-size: 11.5px;
   color: var(--pmd-text-cyan);
 }
+
+/* ==========================================================================
+   HERO CUSTOMIZATION SCREEN (FE Awakening Style Asset/Flaw + Name + Birthday)
+   ========================================================================== */
+
+.pmd-hero-customize-window {
+  padding: clamp(10px, 1.8vw, 14px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100dvh - 3.6rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  font-family: 'Fusion Pixel 12px Proportional KR', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+}
+
+.pmd-hero-cust-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pmd-hero-cust-portrait {
+  flex-shrink: 0;
+}
+
+.pmd-hero-cust-title-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.pmd-hero-cust-title {
+  margin: 0;
+  font-size: clamp(15px, 2.2vw, 18px);
+  color: #f8f800;
+  line-height: 1.25;
+}
+
+.pmd-hero-cust-subtitle {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--pmd-text-cyan);
+  line-height: 1.3;
+}
+
+.pmd-hero-cust-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pmd-hero-cust-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.pmd-hero-cust-label {
+  font-size: 12px;
+  color: var(--pmd-text-cyan);
+  text-shadow: 1px 1px 0 #000000;
+}
+
+.pmd-hero-cust-label.is-boon {
+  color: #78f898;
+}
+
+.pmd-hero-cust-label.is-bane {
+  color: #ff8a8a;
+}
+
+.pmd-hero-cust-input,
+.pmd-hero-cust-select {
+  min-height: 44px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #f8f8f8;
+  background: rgba(8, 20, 38, 0.92);
+  border: 2px solid rgba(168, 192, 224, 0.55);
+  border-radius: 4px;
+  outline: none;
+}
+
+.pmd-hero-cust-input:focus,
+.pmd-hero-cust-select:focus {
+  border-color: #f8f800;
+}
+
+.pmd-hero-cust-input::placeholder {
+  color: rgba(208, 224, 240, 0.55);
+}
+
+.pmd-hero-cust-pair {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.pmd-hero-cust-day-select {
+  flex: 0 0 88px;
+  width: 88px;
+}
+
+.pmd-hero-cust-preview-wrap {
+  background: rgba(8, 20, 38, 0.72);
+  border: 2px solid rgba(168, 192, 224, 0.35);
+  border-radius: 4px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pmd-hero-cust-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+  color: #d8e8f8;
+}
+
+.pmd-hero-cust-legend {
+  display: inline-flex;
+  gap: 8px;
+  font-weight: 700;
+}
+
+.pmd-hero-cust-legend .is-boon {
+  color: #78f898;
+}
+
+.pmd-hero-cust-legend .is-bane {
+  color: #ff8a8a;
+}
+
+.pmd-hero-cust-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.pmd-hero-cust-stat-cell {
+  background: rgba(14, 24, 36, 0.92);
+  border: 2px solid rgba(140, 168, 204, 0.35);
+  border-radius: 3px;
+  padding: 4px 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1px;
+}
+
+.pmd-hero-cust-stat-cell.is-boon {
+  border-color: #58e880;
+  background: rgba(20, 56, 36, 0.85);
+}
+
+.pmd-hero-cust-stat-cell.is-bane {
+  border-color: #f06868;
+  background: rgba(58, 22, 26, 0.85);
+}
+
+.pmd-hero-cust-stat-lbl {
+  font-size: 10px;
+  color: var(--pmd-text-cyan);
+}
+
+.pmd-hero-cust-stat-cell.is-boon .pmd-hero-cust-stat-lbl {
+  color: #78f898;
+}
+
+.pmd-hero-cust-stat-cell.is-bane .pmd-hero-cust-stat-lbl {
+  color: #ff8a8a;
+}
+
+.pmd-hero-cust-stat-val {
+  font-size: 14px;
+  color: #f8f800;
+  line-height: 1.2;
+}
+
+.pmd-hero-cust-stat-val small {
+  font-size: 10px;
+  margin-left: 2px;
+}
+
+.pmd-hero-cust-stat-cell.is-boon .pmd-hero-cust-stat-val {
+  color: #98ffb4;
+}
+
+.pmd-hero-cust-stat-cell.is-bane .pmd-hero-cust-stat-val {
+  color: #ff9c9c;
+}
+
+.pmd-hero-cust-stat-growth {
+  font-size: 10.5px;
+  color: #c8dcf0;
+}
+
+.pmd-hero-cust-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+@media (max-width: 440px) {
+  .pmd-hero-cust-stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-height: 460px) and (min-width: 600px) {
+  .pmd-hero-customize-window {
+    max-height: calc(100dvh - 14px);
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .pmd-hero-cust-form {
+    gap: 5px;
+  }
+
+  .pmd-hero-cust-input,
+  .pmd-hero-cust-select {
+    min-height: 44px;
+    padding: 4px 8px;
+    font-size: 13px;
+  }
+}

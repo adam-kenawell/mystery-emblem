@@ -237,6 +237,12 @@ export class SaveStateManager {
   public clearEquippedMove(id: string, category: EquipCategory): OwnedPokemonInstance { return this.mutateUnit((s) => mutateClearEquippedMove(s, id, category)); }
   public setActiveMoves(id: string, moveIds: string[]): OwnedPokemonInstance { return this.mutateUnit((s) => mutateSetActiveMoves(s, id, moveIds)); }
   public addConvoyItem(itemId: string, quantity = 1): void { this.mutateAndCommit((s) => mutateAddConvoyItem(s, itemId, quantity)); }
+  public claimHeroBirthdayGift(year: number, itemId: string): SaveData {
+    return this.mutateAndCommit((s) => {
+      s.campaign.lastBirthdayRewardYear = year;
+      mutateAddConvoyItem(s, itemId, 1);
+    });
+  }
   public recruitPokemon(opts: CreatePokemonOptions): OwnedPokemonInstance { return this.mutateUnit((s) => mutateRecruitPokemon(s, opts)); }
   public useVitaminOnUnit(id: string, vitaminItemId: string, targetMoveId?: string): OwnedPokemonInstance { return this.mutateUnit((s) => mutateUseVitaminOnUnit(s, id, vitaminItemId, targetMoveId)); }
   public teachTmMove(id: string, tmItemId: string): OwnedPokemonInstance { return this.mutateUnit((s) => mutateTeachTmMove(s, id, tmItemId)); }

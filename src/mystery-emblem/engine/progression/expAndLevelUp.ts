@@ -3,6 +3,11 @@
  */
 
 import { autoEquipNewMoveIfSlotEmpty } from '../../data/equippedMoves';
+import {
+  HERO_BANE_GROWTH_PENALTY,
+  HERO_BOON_GROWTH_BONUS,
+  applyBoonBaneToBaseStats,
+} from '../../data/heroCustomization';
 import { getMoveById, getSpeciesById } from '../../data/index';
 import type {
   PokemonSpeciesDefinition,
@@ -28,40 +33,57 @@ function clampInt(val: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, Math.round(val)));
 }
 
-export function getEffectiveGrowthRates(species: PokemonSpeciesDefinition): StatBlockSix {
+export function getEffectiveGrowthRates(
+  species: PokemonSpeciesDefinition,
+  boonStat?: StatKeySix,
+  baneStat?: StatKeySix
+): StatBlockSix {
   const hiddenBonus = species.personalSkillId === 'hidden_potential' ? 20 : 0;
+  const hasBoonBane = Boolean(boonStat && baneStat && boonStat !== baneStat);
+  const adjust = (key: StatKeySix): number => {
+    let rate = species.growthRates[key] + hiddenBonus;
+    if (hasBoonBane) {
+      if (key === boonStat) rate += HERO_BOON_GROWTH_BONUS;
+      else if (key === baneStat) rate -= HERO_BANE_GROWTH_PENALTY;
+    }
+    return clampInt(rate, 0, 100);
+  };
   return {
-    hp: Math.min(100, species.growthRates.hp + hiddenBonus),
-    atk: Math.min(100, species.growthRates.atk + hiddenBonus),
-    def: Math.min(100, species.growthRates.def + hiddenBonus),
-    spa: Math.min(100, species.growthRates.spa + hiddenBonus),
-    spd: Math.min(100, species.growthRates.spd + hiddenBonus),
-    spe: Math.min(100, species.growthRates.spe + hiddenBonus),
+    hp: adjust('hp'),
+    atk: adjust('atk'),
+    def: adjust('def'),
+    spa: adjust('spa'),
+    spd: adjust('spd'),
+    spe: adjust('spe'),
   };
 }
 
 /**
  * Scales a species' manually authored `baseStats` (defined at `species.defaultJoinLevel`)
- * up to `targetLevel` using ONLY the developer's manual `growthRates` in `pokemon_species.json`.
+ * up to `targetLevel` using ONLY the developer's manual `growthRates` in `pokemon_species.json`
+ * plus optional hero Asset/Flaw modifiers.
  */
 export function computeManualScaledStatsForJoinLevel(
   species: PokemonSpeciesDefinition,
-  targetLevel: number
+  targetLevel: number,
+  boonStat?: StatKeySix,
+  baneStat?: StatKeySix
 ): StatBlockSeven {
   const clampedLevel = clampInt(targetLevel, 1, MAX_UNIT_LEVEL);
+  const startingBase = applyBoonBaneToBaseStats(species.baseStats, boonStat, baneStat);
   const deltaLevels = Math.max(0, clampedLevel - species.defaultJoinLevel);
   if (deltaLevels === 0) {
-    return { ...species.baseStats };
+    return startingBase;
   }
-  const rates = getEffectiveGrowthRates(species);
+  const rates = getEffectiveGrowthRates(species, boonStat, baneStat);
   return {
-    hp: species.baseStats.hp + Math.round((deltaLevels * rates.hp) / 100),
-    atk: species.baseStats.atk + Math.round((deltaLevels * rates.atk) / 100),
-    def: species.baseStats.def + Math.round((deltaLevels * rates.def) / 100),
-    spa: species.baseStats.spa + Math.round((deltaLevels * rates.spa) / 100),
-    spd: species.baseStats.spd + Math.round((deltaLevels * rates.spd) / 100),
-    spe: species.baseStats.spe + Math.round((deltaLevels * rates.spe) / 100),
-    mov: species.baseStats.mov,
+    hp: startingBase.hp + Math.round((deltaLevels * rates.hp) / 100),
+    atk: startingBase.atk + Math.round((deltaLevels * rates.atk) / 100),
+    def: startingBase.def + Math.round((deltaLevels * rates.def) / 100),
+    spa: startingBase.spa + Math.round((deltaLevels * rates.spa) / 100),
+    spd: startingBase.spd + Math.round((deltaLevels * rates.spd) / 100),
+    spe: startingBase.spe + Math.round((deltaLevels * rates.spe) / 100),
+    mov: startingBase.mov,
   };
 }
 
@@ -114,7 +136,9 @@ export function rollSingleLevelUp(
   currentLevel: number,
   currentStats: StatBlockSeven,
   unlockedMoveIds: ReadonlyArray<string>,
-  rng: () => number = Math.random
+  rng: () => number = Math.random,
+  boonStat?: StatKeySix,
+  baneStat?: StatKeySix
 ): {
   newLevel: number;
   statGains: StatBlockSix;
@@ -122,7 +146,7 @@ export function rollSingleLevelUp(
   newlyLearnedMoveIds: string[];
 } {
   const newLevel = Math.min(MAX_UNIT_LEVEL, currentLevel + 1);
-  const rates = getEffectiveGrowthRates(species);
+  const rates = getEffectiveGrowthRates(species, boonStat, baneStat);
   const statGains: StatBlockSix = {
     hp: 0,
     atk: 0,
@@ -206,7 +230,9 @@ export function awardBattleUnitExp(
       prevLevel,
       statsBefore,
       [...unlockedSet],
-      rng
+      rng,
+      unit.boonStat,
+      unit.baneStat
     );
 
     unit.level = rolled.newLevel;

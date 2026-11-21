@@ -20,7 +20,7 @@ import {
   getUnitEffectiveCombatStats,
   isOffensiveMove,
 } from '../../engine/combatEngine';
-import { MAX_UNIT_LEVEL } from '../../engine/progressionEngine';
+import { MAX_UNIT_LEVEL, getEffectiveGrowthRates } from '../../engine/progressionEngine';
 import {
   computeAdjacentSupportSummary,
   resolveSupportActorIdForBattleUnit,
@@ -225,7 +225,11 @@ export function renderBattleUnitsRosterPanel(
     };
     populateUnitSevenStatBoxes(
       statsEl,
-      { currentStats: effectiveSeven } as OwnedPokemonInstance,
+      {
+        currentStats: effectiveSeven,
+        boonStat: unit.boonStat,
+        baneStat: unit.baneStat,
+      } as OwnedPokemonInstance,
       'prep'
     );
     const basePairs: Array<[keyof StatBlockSeven, number]> = [
@@ -252,19 +256,31 @@ export function renderBattleUnitsRosterPanel(
 
     const growthsEl = detailEl.querySelector<HTMLElement>('[data-testid="dungeon-units-detail-growths"]')!;
     if (sp) {
-      const bonus = hasHiddenPotential ? 20 : 0;
-      const gEntries: Array<[string, number]> = [
-        ['HP', Math.min(100, sp.growthRates.hp + bonus)],
-        ['ATK', Math.min(100, sp.growthRates.atk + bonus)],
-        ['DEF', Math.min(100, sp.growthRates.def + bonus)],
-        ['SPA', Math.min(100, sp.growthRates.spa + bonus)],
-        ['SPD', Math.min(100, sp.growthRates.spd + bonus)],
-        ['SPE', Math.min(100, sp.growthRates.spe + bonus)],
+      const effectiveGrowths = getEffectiveGrowthRates(sp, unit.boonStat, unit.baneStat);
+      const gEntries: Array<[string, keyof typeof effectiveGrowths, number]> = [
+        ['HP', 'hp', effectiveGrowths.hp],
+        ['ATK', 'atk', effectiveGrowths.atk],
+        ['DEF', 'def', effectiveGrowths.def],
+        ['SPA', 'spa', effectiveGrowths.spa],
+        ['SPD', 'spd', effectiveGrowths.spd],
+        ['SPE', 'spe', effectiveGrowths.spe],
       ];
       growthsEl.innerHTML = `
         <span class="pmd-dungeon-units-kicker">Growth Rates${hasHiddenPotential ? ' (+20% Hidden Potential)' : ''}</span>
         <div class="pmd-dungeon-units-growth-strip${hasHiddenPotential ? ' is-boosted' : ''}">
-          ${gEntries.map(([lbl, pct]) => `<span><em>${lbl}</em> <strong>${pct}%</strong></span>`).join('')}
+          ${gEntries
+            .map(([lbl, key, pct]) => {
+              const cls =
+                unit.boonStat && unit.baneStat && unit.boonStat !== unit.baneStat
+                  ? key === unit.boonStat
+                    ? ' class="is-boon"'
+                    : key === unit.baneStat
+                      ? ' class="is-bane"'
+                      : ''
+                  : '';
+              return `<span${cls}><em>${lbl}</em> <strong>${pct}%</strong></span>`;
+            })
+            .join('')}
         </div>
       `;
     }

@@ -37,11 +37,49 @@ export function getSelectionRangePulse(
   return 0.5 - 0.5 * Math.cos(phase);
 }
 
-export function getDangerAreaPulse(
-  state: Pick<BattleRuntimeState, 'selectionPulseStartMs'>,
-  now: number
-): number {
-  return 1 - getSelectionRangePulse(state, now);
+const diagonalStripePatternCache = new WeakMap<
+  CanvasRenderingContext2D,
+  Map<string, CanvasPattern | null>
+>();
+
+const DANGER_STRIPE_PERIOD_PX = 6;
+const DANGER_STRIPE_WIDTH_PX = 2;
+
+export function getDangerDiagonalStripePattern(
+  ctx: CanvasRenderingContext2D,
+  key: string,
+  baseRgba: string | null,
+  stripeRgba: string
+): CanvasPattern | null {
+  let byKey = diagonalStripePatternCache.get(ctx);
+  if (!byKey) {
+    byKey = new Map();
+    diagonalStripePatternCache.set(ctx, byKey);
+  }
+  const existing = byKey.get(key);
+  if (existing !== undefined) return existing;
+
+  const tile = document.createElement('canvas');
+  tile.width = DANGER_STRIPE_PERIOD_PX;
+  tile.height = DANGER_STRIPE_PERIOD_PX;
+  const pctx = tile.getContext('2d');
+  if (!pctx) {
+    byKey.set(key, null);
+    return null;
+  }
+  pctx.imageSmoothingEnabled = false;
+  for (let py = 0; py < DANGER_STRIPE_PERIOD_PX; py++) {
+    for (let px = 0; px < DANGER_STRIPE_PERIOD_PX; px++) {
+      const isStripe = (px + py) % DANGER_STRIPE_PERIOD_PX < DANGER_STRIPE_WIDTH_PX;
+      const color = isStripe ? stripeRgba : baseRgba;
+      if (!color) continue;
+      pctx.fillStyle = color;
+      pctx.fillRect(px, py, 1, 1);
+    }
+  }
+  const pattern = ctx.createPattern(tile, 'repeat');
+  byKey.set(key, pattern);
+  return pattern;
 }
 
 export function resolveAlternatingSupportAttackBeat(
@@ -81,6 +119,9 @@ export function drawConnectedRangeZone(
   boundaryMask: ReadonlySet<string>,
   style: {
     fillRgba: string;
+    fillPattern?: CanvasPattern | null;
+    stripeOverlayPattern?: CanvasPattern | null;
+    stripeOverlayAlpha?: number;
     outerBorderRgba: string;
     innerGlowRgba: string;
   },
@@ -140,9 +181,30 @@ export function drawConnectedRangeZone(
   const count = visX.length;
   if (count === 0) return;
 
-  ctx.fillStyle = style.fillRgba;
-  for (let i = 0; i < count; i++) {
-    ctx.fillRect(visX[i]! * S - cameraX, visY[i]! * S - cameraY, S, S);
+  if (style.fillPattern) {
+    ctx.save();
+    ctx.translate(-cameraX, -cameraY);
+    ctx.fillStyle = style.fillPattern;
+    for (let i = 0; i < count; i++) {
+      ctx.fillRect(visX[i]! * S, visY[i]! * S, S, S);
+    }
+    ctx.restore();
+  } else {
+    ctx.fillStyle = style.fillRgba;
+    for (let i = 0; i < count; i++) {
+      ctx.fillRect(visX[i]! * S - cameraX, visY[i]! * S - cameraY, S, S);
+    }
+  }
+
+  if (style.stripeOverlayPattern && (style.stripeOverlayAlpha ?? 1) > 0) {
+    ctx.save();
+    ctx.globalAlpha = style.stripeOverlayAlpha ?? 1;
+    ctx.translate(-cameraX, -cameraY);
+    ctx.fillStyle = style.stripeOverlayPattern;
+    for (let i = 0; i < count; i++) {
+      ctx.fillRect(visX[i]! * S, visY[i]! * S, S, S);
+    }
+    ctx.restore();
   }
 
   ctx.fillStyle = style.innerGlowRgba;
@@ -232,7 +294,7 @@ export function drawUnitGroundShadow(
           ? 'rgba(116, 168, 140, 0.52)'
           : 'rgba(88, 240, 152, 0.88)'
         : state.trackedEnemyIds.has(unit.id) || state.lastComputedHoverEnemyId === unit.id
-          ? 'rgba(255, 112, 196, 0.90)'
+          ? 'rgba(255, 168, 56, 0.95)'
           : 'rgba(248, 84, 92, 0.85)';
 
   ctx.fillRect(cx - halfW + 2, cy - 2, innerSpan, 1);
@@ -301,18 +363,25 @@ export function drawUnitRangeEnvelope(
       supportUnion,
       {
         fillRgba: lerpRgba(
-          scaleRgbaTuple([28, 184, 96, 0.15], alphaScale),
-          scaleRgbaTuple([132, 255, 188, 0.36], alphaScale),
+          scaleRgbaTuple([36, 196, 108, 0.24], alphaScale),
+          scaleRgbaTuple([76, 228, 144, 0.32], alphaScale),
           movePulse
         ),
+        stripeOverlayPattern: getDangerDiagonalStripePattern(
+          ctx,
+          'range-support-stripe',
+          null,
+          'rgb(20, 152, 76)'
+        ),
+        stripeOverlayAlpha: (0.26 + 0.08 * movePulse) * alphaScale,
         outerBorderRgba: lerpRgba(
-          scaleRgbaTuple([72, 228, 140, 0.88], alphaScale),
-          scaleRgbaTuple([212, 255, 232, 1.0], alphaScale),
+          scaleRgbaTuple([88, 236, 152, 0.94], alphaScale),
+          scaleRgbaTuple([144, 252, 192, 1.0], alphaScale),
           movePulse
         ),
         innerGlowRgba: lerpRgba(
-          scaleRgbaTuple([48, 212, 120, 0.28], alphaScale),
-          scaleRgbaTuple([168, 255, 208, 0.6], alphaScale),
+          scaleRgbaTuple([60, 220, 132, 0.42], alphaScale),
+          scaleRgbaTuple([104, 242, 164, 0.54], alphaScale),
           movePulse
         ),
       },
@@ -327,18 +396,25 @@ export function drawUnitRangeEnvelope(
       attackUnion,
       {
         fillRgba: lerpRgba(
-          scaleRgbaTuple([212, 36, 56, 0.16], alphaScale),
-          scaleRgbaTuple([255, 132, 144, 0.38], alphaScale),
+          scaleRgbaTuple([224, 48, 68, 0.24], alphaScale),
+          scaleRgbaTuple([248, 82, 98, 0.32], alphaScale),
           movePulse
         ),
+        stripeOverlayPattern: getDangerDiagonalStripePattern(
+          ctx,
+          'range-attack-stripe',
+          null,
+          'rgb(196, 26, 46)'
+        ),
+        stripeOverlayAlpha: (0.26 + 0.08 * movePulse) * alphaScale,
         outerBorderRgba: lerpRgba(
-          scaleRgbaTuple([244, 80, 96, 0.88], alphaScale),
-          scaleRgbaTuple([255, 208, 214, 1.0], alphaScale),
+          scaleRgbaTuple([248, 92, 108, 0.94], alphaScale),
+          scaleRgbaTuple([255, 144, 156, 1.0], alphaScale),
           movePulse
         ),
         innerGlowRgba: lerpRgba(
-          scaleRgbaTuple([232, 56, 76, 0.3], alphaScale),
-          scaleRgbaTuple([255, 168, 178, 0.62], alphaScale),
+          scaleRgbaTuple([236, 68, 86, 0.44], alphaScale),
+          scaleRgbaTuple([255, 112, 126, 0.56], alphaScale),
           movePulse
         ),
       },
@@ -354,18 +430,25 @@ export function drawUnitRangeEnvelope(
     blueMoveSet,
     {
       fillRgba: lerpRgba(
-        scaleRgbaTuple([24, 128, 236, 0.16], alphaScale),
-        scaleRgbaTuple([132, 232, 255, 0.38], alphaScale),
+        scaleRgbaTuple([36, 152, 248, 0.36], alphaScale),
+        scaleRgbaTuple([74, 188, 255, 0.44], alphaScale),
         movePulse
       ),
+      stripeOverlayPattern: getDangerDiagonalStripePattern(
+        ctx,
+        'range-move-stripe',
+        null,
+        'rgb(16, 108, 224)'
+      ),
+      stripeOverlayAlpha: (0.28 + 0.08 * movePulse) * alphaScale,
       outerBorderRgba: lerpRgba(
-        scaleRgbaTuple([64, 184, 252, 0.88], alphaScale),
-        scaleRgbaTuple([216, 252, 255, 1.0], alphaScale),
+        scaleRgbaTuple([84, 198, 255, 0.96], alphaScale),
+        scaleRgbaTuple([146, 228, 255, 1.0], alphaScale),
         movePulse
       ),
       innerGlowRgba: lerpRgba(
-        scaleRgbaTuple([44, 156, 248, 0.3], alphaScale),
-        scaleRgbaTuple([164, 242, 255, 0.62], alphaScale),
+        scaleRgbaTuple([56, 172, 252, 0.54], alphaScale),
+        scaleRgbaTuple([104, 206, 255, 0.66], alphaScale),
         movePulse
       ),
     },

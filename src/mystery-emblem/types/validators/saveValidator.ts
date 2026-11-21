@@ -7,6 +7,7 @@
  */
 
 import { MAX_UNIT_LEVEL, MIN_UNIT_LEVEL } from '../../data/campaignConfig';
+import { isValidHeroBirthday, isValidHeroStatKey } from '../../data/heroCustomization';
 import {
   CURRENT_SAVE_SCHEMA_VERSION,
   FLABEBE_FLOWER_COLORS,
@@ -66,10 +67,23 @@ export function validateSaveData(
         );
       }
 
-      if (sp) {
-        unit.nickname = sp.name;
-      } else if (!unit.nickname || unit.nickname.trim().length === 0) {
-        errors.push(`Roster unit "${unit.instanceId}" must have a non-empty nickname.`);
+      if (!unit.nickname || unit.nickname.trim().length === 0) {
+        if (sp) {
+          unit.nickname = sp.name;
+        } else {
+          errors.push(`Roster unit "${unit.instanceId}" must have a non-empty nickname.`);
+        }
+      } else {
+        unit.nickname = unit.nickname.trim();
+      }
+      if (unit.boonStat !== undefined && !isValidHeroStatKey(unit.boonStat)) {
+        errors.push(`Roster unit "${unit.instanceId}" has invalid boonStat "${String(unit.boonStat)}".`);
+      }
+      if (unit.baneStat !== undefined && !isValidHeroStatKey(unit.baneStat)) {
+        errors.push(`Roster unit "${unit.instanceId}" has invalid baneStat "${String(unit.baneStat)}".`);
+      }
+      if (unit.boonStat && unit.baneStat && unit.boonStat === unit.baneStat) {
+        errors.push(`Roster unit "${unit.instanceId}" cannot use the same stat "${unit.boonStat}" for both Asset and Flaw.`);
       }
       if (unit.cosmeticForm !== undefined && !VALID_COSMETIC_SET.has(unit.cosmeticForm)) {
         errors.push(
@@ -166,6 +180,20 @@ export function validateSaveData(
       ) {
         errors.push(`Support "${pairKey}" has invalid unlockedRank "${String(progress.unlockedRank)}".`);
       }
+    }
+  }
+
+  if (save.campaign && typeof save.campaign === 'object') {
+    const hasMonth = save.campaign.heroBirthMonth !== undefined;
+    const hasDay = save.campaign.heroBirthDay !== undefined;
+    if ((hasMonth || hasDay) && !isValidHeroBirthday(save.campaign.heroBirthMonth, save.campaign.heroBirthDay)) {
+      errors.push('SaveData.campaign has an invalid hero birthday.');
+    }
+    if (
+      save.campaign.lastBirthdayRewardYear !== undefined &&
+      (!Number.isInteger(save.campaign.lastBirthdayRewardYear) || save.campaign.lastBirthdayRewardYear < 1970)
+    ) {
+      errors.push('SaveData.campaign.lastBirthdayRewardYear must be a valid calendar year.');
     }
   }
 
