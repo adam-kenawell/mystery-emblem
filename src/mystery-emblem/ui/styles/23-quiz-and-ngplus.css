@@ -39,6 +39,109 @@
   }
 }
 
+.pmd-quiz-welcome-popup {
+  padding: clamp(14px, 2.5vw, 20px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 2.2vh, 18px);
+  max-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.pmd-quiz-welcome-header {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 2vh, 14px);
+  padding-bottom: clamp(10px, 2vh, 14px);
+  border-bottom: 1px solid rgba(168, 192, 224, 0.24);
+}
+
+.pmd-quiz-welcome-title {
+  margin: 0;
+  font-size: clamp(16px, 2.4vw, 20px);
+  line-height: 1.35;
+  color: var(--pmd-text-yellow);
+  text-align: center;
+}
+
+.pmd-quiz-welcome-disclaimer {
+  margin: 0;
+  padding-top: clamp(10px, 2vh, 14px);
+  border-top: 1px solid var(--pmd-divider-subtle);
+  font-size: clamp(11.5px, 1.6vw, 13px);
+  line-height: 1.45;
+  color: #b8cce0;
+}
+
+.pmd-quiz-welcome-body {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 2.2vh, 16px);
+  font-size: clamp(13px, 1.9vw, 15px);
+  line-height: 1.5;
+  color: var(--pmd-text-white);
+}
+
+.pmd-quiz-welcome-section {
+  margin: 0;
+}
+
+.pmd-quiz-welcome-section + .pmd-quiz-welcome-section {
+  padding-top: clamp(12px, 2.2vh, 16px);
+  border-top: 1px solid rgba(168, 192, 224, 0.24);
+}
+
+.pmd-quiz-hl-white {
+  color: var(--pmd-text-white);
+  font-weight: 700;
+}
+
+.pmd-quiz-hl-yellow {
+  color: var(--pmd-text-yellow);
+}
+
+.pmd-quiz-hl-green {
+  color: var(--pmd-text-green);
+}
+
+.pmd-quiz-hl-cyan {
+  color: var(--pmd-text-cyan);
+}
+
+.pmd-quiz-welcome-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+@media (max-height: 460px) and (min-width: 600px) {
+  .pmd-quiz-welcome-popup {
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .pmd-quiz-welcome-header {
+    gap: 8px;
+    padding-bottom: 8px;
+  }
+
+  .pmd-quiz-welcome-disclaimer {
+    padding-top: 8px;
+  }
+
+  .pmd-quiz-welcome-body {
+    gap: 10px;
+    font-size: 13px;
+  }
+
+  .pmd-quiz-welcome-section + .pmd-quiz-welcome-section {
+    padding-top: 10px;
+  }
+}
+
 .pmd-quiz-dialogue-window {
   padding: clamp(6px, 1.5vw, 10px) clamp(8px, 1.8vw, 12px);
   cursor: var(--pmd-cursor-glove, pointer);

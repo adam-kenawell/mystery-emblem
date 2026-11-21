@@ -22,34 +22,39 @@ export function renderQuizWelcomePopup(
   }
 ): void {
   const popup = document.createElement('div');
-  popup.className = 'pmd-window';
+  popup.className = 'pmd-window pmd-quiz-welcome-popup';
   popup.dataset.testid = 'quiz-welcome-popup';
   popup.setAttribute('role', 'dialog');
-  popup.setAttribute('aria-label', 'Welcome to Mystery Emblem');
-  popup.style.cssText =
-    'padding:clamp(10px, 2.2vw, 16px); display:flex; flex-direction:column; gap:10px;';
+  popup.setAttribute('aria-label', 'Welcome to Pokémon: Mystery Emblem!');
 
   const ngPlusBtnHtml = opts.ngPlusUnlocked
     ? `<button type="button" class="pmd-btn" data-testid="quiz-open-ngplus-btn" style="min-height:46px; padding:8px 14px;">New Game+ Picker</button>`
     : '';
 
   popup.innerHTML = `
-    <h2 data-testid="quiz-welcome-title" style="margin:0; font-size:clamp(15px, 2.3vw, 19px); line-height:1.35; color:#f8f800;">
-      Welcome to Mystery Emblem, a Pokémon × Fire Emblem fan game!
-    </h2>
-    <div data-testid="quiz-welcome-body" style="display:flex; flex-direction:column; gap:8px; font-size:clamp(13px, 1.9vw, 15px); line-height:1.45; color:#f8f8f8;">
-      <p style="margin:0;">This is a demo that takes about <strong>1 hour</strong> to finish.</p>
-      <p style="margin:0;"><strong>Sign in with Google</strong> to save your progress and keep playing on any device.</p>
-      <p style="margin:0;">
-        Follow the game's progress on my blog:
-        <a href="https://adam.kenawell.family/blog/mystery-emblem" target="_blank" rel="noopener noreferrer" data-testid="quiz-welcome-blog-link" style="color:#88d8ff;">adam.kenawell.family/blog/mystery-emblem</a>
+    <header class="pmd-quiz-welcome-header">
+      <h2 data-testid="quiz-welcome-title" class="pmd-quiz-welcome-title">
+        Welcome to Pokémon: Mystery Emblem!
+      </h2>
+      <p data-testid="quiz-welcome-disclaimer" class="pmd-quiz-welcome-disclaimer">
+        This is a <span class="pmd-quiz-hl-white">free fan game</span>. I will not make any money on this game, and I am not affiliated with Nintendo.
       </p>
-      <p style="margin:0;">At the end of the demo there's a short Google Form for feedback. All feedback helps, and I want this game to be the best it can be!</p>
-      <p style="margin:0;">
-        Answer a few questions to meet your hero.
+    </header>
+    <div data-testid="quiz-welcome-body" class="pmd-quiz-welcome-body">
+      <p class="pmd-quiz-welcome-section">
+        This is a demo that takes about <strong class="pmd-quiz-hl-yellow">1 hour</strong> to finish.
+      </p>
+      <p class="pmd-quiz-welcome-section">
+        <strong class="pmd-quiz-hl-green">Sign in with Google</strong> to save your progress and keep playing on any device.
+      </p>
+      <p class="pmd-quiz-welcome-section">
+        At the end of the demo, you'll gain access to an <strong class="pmd-quiz-hl-cyan">exclusive Discord community</strong> that only players who have completed the demo can join to share your feedback. All feedback helps, and I want this game to be the best it can be!
+      </p>
+      <p class="pmd-quiz-welcome-section">
+        With that out of the way, complete a <strong class="pmd-quiz-hl-cyan">personality quiz</strong> to meet your <strong class="pmd-quiz-hl-yellow">Hero</strong>!
       </p>
     </div>
-    <div style="display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; margin-top:2px;">
+    <div class="pmd-quiz-welcome-actions">
       ${ngPlusBtnHtml}
       <button type="button" class="pmd-btn pmd-btn-primary" data-testid="quiz-welcome-continue-btn" style="min-height:46px; padding:8px 18px;">
         Begin ▶
