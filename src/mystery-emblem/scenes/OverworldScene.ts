@@ -11,7 +11,12 @@ import type { SaveStateManager } from '../state/SaveStateManager';
 import type { OverworldNodeState, SaveData } from '../types/schemas';
 import { PmdPortraitView } from '../ui/PmdSpriteCanvas';
 import type { TutorialOverlay } from '../ui/TutorialOverlay';
-import { OVERWORLD_SCALE_BOUNDS, clampMapScale } from '../ui/mapZoomController';
+import {
+  OVERWORLD_SCALE_BOUNDS,
+  clampMapScale,
+  isDefaultMapScale,
+  resolveInitialOverworldScale,
+} from '../ui/mapZoomController';
 import { bindPointerTap } from '../ui/pointerControls';
 import { OverworldCameraAndPointersController } from './overworld/OverworldCameraAndPointers';
 import { renderOverworldFrame, type NodeLabelDomEntry } from './overworld/OverworldCanvasRenderer';
@@ -85,6 +90,7 @@ export class OverworldScene {
         isModalOpen: () => this.modals.kecleonShopOpen || this.modals.systemMenuOpen,
         isTraveling: () => Boolean(this.travelCtrl.activeTravel || this.travelCtrl.activeClearSequence),
         onRenderFrame: () => this.renderFrame(),
+        onZoomScaleChange: () => this.syncZoomResetButton(),
         onMenuOrBack: () => this.handleMenuOrBack(),
         onNodeTapped: (node: OverworldNodeDefinition) => {
           void this.travelCtrl.handleNodeTapped(node);
@@ -146,6 +152,21 @@ export class OverworldScene {
     bindPointerTap(this.dom.btnEnterChapterEl, () => guard(() => this.travelCtrl.launchCurrentChapterBattle()), { signal });
     bindPointerTap(this.dom.btnFightSkirmishEl, () => guard(() => this.travelCtrl.launchCurrentSkirmishBattle()), { signal });
     bindPointerTap(this.dom.btnOpenShopEl, () => guard(() => this.modals.openKecleonShop()), { signal });
+    bindPointerTap(
+      this.dom.zoomResetBtnEl,
+      () => {
+        const defaultScale = resolveInitialOverworldScale(this.cam.viewWidthPx, this.cam.viewHeightPx);
+        this.setZoomScale(defaultScale);
+        this.audioManager.playSfx('select');
+      },
+      { signal, stopPropagation: true }
+    );
+  }
+
+  private syncZoomResetButton(): void {
+    const defaultScale = resolveInitialOverworldScale(this.cam.viewWidthPx, this.cam.viewHeightPx);
+    this.dom.zoomResetBtnEl.hidden =
+      !this.openState || isDefaultMapScale(this.cam.displayScale, defaultScale);
   }
 
   public isOpen(): boolean { return this.openState; }

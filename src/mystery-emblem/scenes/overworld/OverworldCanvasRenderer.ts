@@ -118,10 +118,10 @@ export function renderOverworldFrame(rc: OverworldRenderFrameContext): void {
   ctx.fillRect(0, 0, viewWidthPx, viewHeightPx);
 
   if (mapSource) {
-    const mapDrawX = Math.round(-cameraX * scale);
-    const mapDrawY = Math.round(-cameraY * scale);
-    const mapDrawW = Math.round(graph.imageWidth * scale);
-    const mapDrawH = Math.round(graph.imageHeight * scale);
+    const mapDrawX = Math.round(-cameraX * scale * dpr) / dpr;
+    const mapDrawY = Math.round(-cameraY * scale * dpr) / dpr;
+    const mapDrawW = Math.round(graph.imageWidth * scale * dpr) / dpr;
+    const mapDrawH = Math.round(graph.imageHeight * scale * dpr) / dpr;
 
     ctx.fillStyle = 'rgba(2, 6, 14, 0.65)';
     ctx.fillRect(mapDrawX - 4, mapDrawY - 2, mapDrawW + 10, mapDrawH + 10);

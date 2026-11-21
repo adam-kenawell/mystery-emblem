@@ -13,7 +13,7 @@ import { areSupportsUnlockedInCampaign } from '../../data/supports/supportMatrix
 import { ensureOverworldGraphState } from '../../engine/overworldEngine';
 import { hasAnyAvailableSupportConversation } from '../../engine/supportEngine';
 import type { SaveData } from '../../types/schemas';
-import { buildPmdCloseXButtonHtml } from '../../ui/PmdWindow';
+import { buildPmdCloseXButtonHtml, createPmdZoomResetButton } from '../../ui/PmdWindow';
 import type { PmdPortraitView } from '../../ui/PmdSpriteCanvas';
 
 export type OverworldMenuTab = 'units' | 'convoy' | 'supports' | 'system';
@@ -52,6 +52,7 @@ export interface OverworldDomElements {
   nodeLabelsLayerEl: HTMLElement;
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
+  zoomResetBtnEl: HTMLButtonElement;
   toastEl: HTMLElement;
   dockEl: HTMLElement;
   dockTitleEl: HTMLElement;
@@ -176,8 +177,11 @@ export function createOverworldDomElements(
     </div>
   `;
 
+  const zoomResetBtnEl = createPmdZoomResetButton({ testId: 'overworld-zoom-reset-btn' });
+
   rootEl.append(
     canvasStageEl,
+    zoomResetBtnEl,
     toastEl,
     dockEl,
     kecleonBackdropEl,
@@ -191,6 +195,7 @@ export function createOverworldDomElements(
     nodeLabelsLayerEl,
     canvas,
     ctx,
+    zoomResetBtnEl,
     toastEl,
     dockEl,
     dockTitleEl: dockEl.querySelector('[data-testid="overworld-current-node-title"]')!,

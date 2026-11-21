@@ -8,10 +8,18 @@ import {
   clientPointToDungeonTile,
   clientPointToDungeonWorld,
 } from '../../ui/gridViewportMath';
-import { computeWheelZoomScale } from '../../ui/mapZoomController';
+import {
+  DUNGEON_SCALE_BOUNDS,
+  WheelZoomStepper,
+  resolveInitialDungeonScale,
+} from '../../ui/mapZoomController';
+import { bindPointerTap } from '../../ui/pointerControls';
 import { handleBattleMenuOrBack } from './battleBackAndCheats';
 import { isPhaseTransitionPlaying } from './battleBannersAndTransitions';
-import { canInteractWithBattleViewport } from './battleDangerAndViewportState';
+import {
+  canInteractWithBattleViewport,
+  syncBattleZoomResetButton,
+} from './battleDangerAndViewportState';
 import { positionFieldMenuCard } from './battleFieldMenuController';
 import { updateHoveredTile } from './battleHoverPreview';
 import { positionActiveUnitHoverPopup, updateBattleInfoStrip } from './battleHudCards';
@@ -48,6 +56,7 @@ export function applyBattleAnchoredZoom(
   );
   if (state.interactionState === 'action_menu') positionFloatingActionMenu(ctx);
   positionActiveUnitHoverPopup(ctx);
+  syncBattleZoomResetButton(state, dom, ctx.prepOverlay);
 }
 
 export function bindBattleCanvasStagePointers(
@@ -86,12 +95,34 @@ export function bindBattleCanvasStagePointers(
     { signal }
   );
 
+  const wheelZoomStepper = new WheelZoomStepper(DUNGEON_SCALE_BOUNDS);
+
+  bindPointerTap(
+    dom.zoomResetBtnEl,
+    () => {
+      if (!canInteract()) return;
+      const rect = dom.canvasStageEl.getBoundingClientRect();
+      const defaultScale = resolveInitialDungeonScale(
+        rect.width || window.innerWidth,
+        rect.height || window.innerHeight
+      );
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const anchor = toWorld(cx, cy);
+      wheelZoomStepper.reset();
+      applyBattleAnchoredZoom(ctx, defaultScale, cx, cy, anchor.worldX, anchor.worldY);
+      audioManager.playSfx('select');
+      ctx.renderNow();
+    },
+    { signal, stopPropagation: true }
+  );
+
   dom.canvasStageEl.addEventListener(
     'wheel',
     (e: WheelEvent) => {
       if (!canInteract()) return;
       e.preventDefault();
-      const nextScale = computeWheelZoomScale(state.cam.displayScale, e);
+      const nextScale = wheelZoomStepper.nextScaleFromWheel(state.cam.displayScale, e);
       if (nextScale === state.cam.displayScale) return;
       const anchor = toWorld(e.clientX, e.clientY);
       applyBattleAnchoredZoom(ctx, nextScale, e.clientX, e.clientY, anchor.worldX, anchor.worldY);

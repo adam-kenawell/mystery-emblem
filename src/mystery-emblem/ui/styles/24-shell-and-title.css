@@ -96,6 +96,39 @@
   color: #f8f800;
 }
 
+/* Top-left map zoom reset icon (shown only when zoomed away from default pixel scale) */
+.pmd-zoom-reset-btn {
+  position: absolute;
+  top: max(0.85rem, env(safe-area-inset-top));
+  left: max(0.85rem, env(safe-area-inset-left));
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  min-height: 46px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #d8e8f8;
+  cursor: inherit;
+  z-index: 75;
+}
+
+.pmd-zoom-reset-btn[hidden] {
+  display: none !important;
+}
+
+.pmd-zoom-reset-btn svg {
+  display: block;
+  pointer-events: none;
+}
+
+.pmd-zoom-reset-btn:hover,
+.pmd-zoom-reset-btn:active {
+  border-image-source: var(--pmd-frame-mini-active);
+  color: #f8f800;
+}
+
 .pmd-title-card {
   position: relative;
   z-index: 2;

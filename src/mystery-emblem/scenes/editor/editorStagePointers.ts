@@ -8,7 +8,7 @@ import {
   clientPointToDungeonTile,
   clientPointToDungeonWorld,
 } from '../../ui/gridViewportMath';
-import { computeWheelZoomScale } from '../../ui/mapZoomController';
+import { DUNGEON_SCALE_BOUNDS, WheelZoomStepper } from '../../ui/mapZoomController';
 import type { EditorDomRefs } from './editorDomShell';
 import {
   EDITOR_DRAG_THRESHOLD_PX,
@@ -20,6 +20,7 @@ export interface EditorStagePointerHooks {
   state: EditorRuntimeState;
   signal: AbortSignal;
   syncViewportDimensions: () => void;
+  syncZoomResetButton: () => void;
   applyStrokeAtTile: (tx: number, ty: number) => void;
   handleTileTap: (tx: number, ty: number) => void;
   renderFrame: () => void;
@@ -42,12 +43,14 @@ export function bindEditorCanvasStagePointers(
     resizeObserver.observe(dom.canvasStageEl);
   }
 
+  const wheelZoomStepper = new WheelZoomStepper(DUNGEON_SCALE_BOUNDS);
+
   dom.canvasStageEl.addEventListener(
     'wheel',
     (ev: WheelEvent) => {
       if (!canInteract()) return;
       ev.preventDefault();
-      const nextScale = computeWheelZoomScale(state.cam.displayScale, ev);
+      const nextScale = wheelZoomStepper.nextScaleFromWheel(state.cam.displayScale, ev);
       if (nextScale === state.cam.displayScale) return;
       const anchor = clientPointToDungeonWorld(
         dom.canvas,
@@ -68,6 +71,7 @@ export function bindEditorCanvasStagePointers(
         anchor.worldX,
         anchor.worldY
       );
+      hooks.syncZoomResetButton();
       hooks.renderFrame();
     },
     { passive: false, signal }
@@ -150,6 +154,7 @@ export function bindEditorCanvasStagePointers(
         }
       );
       if (handledPinch) {
+        hooks.syncZoomResetButton();
         hooks.renderFrame();
         return;
       }

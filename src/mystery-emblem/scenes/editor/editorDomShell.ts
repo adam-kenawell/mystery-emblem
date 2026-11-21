@@ -2,13 +2,14 @@
  * DOM Shell & Element Reference Builder for `ChapterMapEditorScene`
  */
 
-import { buildPmdCloseXButtonHtml } from '../../ui/PmdWindow';
+import { buildPmdCloseXButtonHtml, createPmdZoomResetButton } from '../../ui/PmdWindow';
 
 export interface EditorDomRefs {
   rootEl: HTMLElement;
   canvasStageEl: HTMLElement;
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
+  zoomResetBtnEl: HTMLButtonElement;
   topHudBarEl: HTMLElement;
   hudPaletteBtnEl: HTMLButtonElement;
   hudToolBtnEl: HTMLButtonElement;
@@ -238,8 +239,11 @@ export function createEditorDomShell(viewportEl: HTMLElement): EditorDomRefs {
     </div>
   `;
 
+  const zoomResetBtnEl = createPmdZoomResetButton({ testId: 'editor-zoom-reset-btn' });
+
   rootEl.append(
     canvasStageEl,
+    zoomResetBtnEl,
     topHudBarEl,
     toastBannerEl,
     infoStripEl,
@@ -257,6 +261,7 @@ export function createEditorDomShell(viewportEl: HTMLElement): EditorDomRefs {
     canvasStageEl,
     canvas,
     ctx,
+    zoomResetBtnEl,
     topHudBarEl,
     hudPaletteBtnEl,
     hudToolBtnEl,

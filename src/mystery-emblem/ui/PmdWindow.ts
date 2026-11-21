@@ -110,3 +110,41 @@ export function createPmdCloseXButton(options: PmdCloseXButtonOptions = {}): HTM
   }
   return btn;
 }
+
+/** 14x14 native-texel crisp pixel-art magnifying glass for resetting map zoom to default. */
+export const PMD_ZOOM_RESET_SVG =
+  '<svg viewBox="0 0 14 14" width="22" height="22" aria-hidden="true" shape-rendering="crispEdges">' +
+  '<path fill="#000000" d="M3,1H8V2H9V3H10V8H11V9H12V10H13V11H14V14H11V13H10V12H9V11H8V10H3V9H2V8H1V3H2V2H3Z"/>' +
+  '<path fill="currentColor" d="M3,2H8V3H9V8H10V9H11V10H12V11H13V13H11V12H10V11H9V10H8V9H3V8H2V3H3Z"/>' +
+  '<path fill="#58b8f0" d="M4,3H7V4H8V7H7V8H4V7H3V4H4Z"/>' +
+  '<path fill="#ffffff" d="M4,4H6V5H5V6H4Z"/>' +
+  '</svg>';
+
+export interface PmdZoomResetButtonOptions {
+  testId?: string;
+  ariaLabel?: string;
+  onTap?: (ev: PointerEvent) => void;
+  tapOptions?: BindPointerTapOptions;
+}
+
+export function createPmdZoomResetButton(
+  options: PmdZoomResetButtonOptions = {}
+): HTMLButtonElement {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'pmd-btn pmd-zoom-reset-btn';
+  btn.hidden = true;
+  btn.dataset.noLongpress = 'true';
+  if (options.testId) btn.dataset.testid = options.testId;
+  const label = options.ariaLabel ?? 'Reset zoom to default';
+  btn.setAttribute('aria-label', label);
+  btn.title = label;
+  btn.innerHTML = PMD_ZOOM_RESET_SVG;
+  if (options.onTap) {
+    bindPointerTap(btn, options.onTap, {
+      stopPropagation: true,
+      ...options.tapOptions,
+    });
+  }
+  return btn;
+}

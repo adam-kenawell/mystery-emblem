@@ -7,6 +7,7 @@
 import {
   clampMapScale,
   DUNGEON_SCALE_BOUNDS,
+  getPixelPerfectMapScales,
   type MapScaleBounds,
 } from './mapZoomController';
 
@@ -122,7 +123,8 @@ export class MultiTouchPinchTracker {
     const midClientY = (p1.clientY + p2.clientY) / 2;
     const curDist = Math.max(8, Math.hypot(p2.clientX - p1.clientX, p2.clientY - p1.clientY));
     const rawScale = this.pinchBaseScale * (curDist / Math.max(8, this.pinchBaseDist));
-    const nextScale = clampMapScale(rawScale, this.bounds);
+    const currentScale = clampMapScale(getCurrentScale(), this.bounds);
+    const nextScale = this.resolveLiveSnappedPinchScale(currentScale, rawScale);
 
     applyZoomAndAnchor({
       nextScale,
@@ -132,7 +134,11 @@ export class MultiTouchPinchTracker {
       anchorWorldY: this.pinchAnchorWorldY,
     });
 
-    if (rawScale < this.bounds.minScale || rawScale > this.bounds.maxScale) {
+    if (
+      nextScale !== currentScale ||
+      rawScale < this.bounds.minScale ||
+      rawScale > this.bounds.maxScale
+    ) {
       this.pinchBaseScale = nextScale;
       this.pinchBaseDist = curDist;
       const refreshedAnchor = clientToWorld(midClientX, midClientY);
@@ -141,6 +147,32 @@ export class MultiTouchPinchTracker {
     }
 
     return true;
+  }
+
+  private resolveLiveSnappedPinchScale(currentScale: number, rawScale: number): number {
+    const stops = getPixelPerfectMapScales(this.bounds);
+    let curIdx = 0;
+    let bestDist = Infinity;
+    for (let i = 0; i < stops.length; i++) {
+      const d = Math.abs(stops[i]! - currentScale);
+      if (d < bestDist) {
+        bestDist = d;
+        curIdx = i;
+      }
+    }
+
+    let nextIdx = curIdx;
+    while (nextIdx < stops.length - 1) {
+      const threshold = stops[nextIdx]! + (stops[nextIdx + 1]! - stops[nextIdx]!) * 0.6;
+      if (rawScale >= threshold) nextIdx++;
+      else break;
+    }
+    while (nextIdx > 0) {
+      const threshold = stops[nextIdx]! - (stops[nextIdx]! - stops[nextIdx - 1]!) * 0.6;
+      if (rawScale <= threshold) nextIdx--;
+      else break;
+    }
+    return stops[nextIdx]!;
   }
 
   public onPointerUp(ev: PointerEvent): PinchUpOutcome {

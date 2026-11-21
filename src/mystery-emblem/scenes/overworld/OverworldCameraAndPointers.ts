@@ -41,6 +41,7 @@ export interface OverworldCameraControllerHooks {
   isModalOpen: () => boolean;
   isTraveling: () => boolean;
   onRenderFrame: () => void;
+  onZoomScaleChange?: () => void;
   onMenuOrBack: () => void;
   onNodeTapped: (node: OverworldNodeDefinition) => void;
 }
@@ -74,6 +75,7 @@ export class OverworldCameraAndPointersController {
     if (resetScaleToDefault) {
       this.displayScale = resolveInitialOverworldScale();
     }
+    this.hooks.onZoomScaleChange?.();
   }
 
   public destroy(): void {
@@ -106,6 +108,7 @@ export class OverworldCameraAndPointersController {
     this.hooks.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.hooks.ctx.imageSmoothingEnabled = false;
     this.clampCamera();
+    this.hooks.onZoomScaleChange?.();
 
     if (!this.resizeObserver && typeof ResizeObserver !== 'undefined') {
       this.resizeObserver = new ResizeObserver(() => {
@@ -189,5 +192,6 @@ export class OverworldCameraAndPointersController {
     this.cameraX = anchorWorldX - (clientX - rect.left) / this.displayScale;
     this.cameraY = anchorWorldY - (clientY - rect.top) / this.displayScale;
     this.clampCamera();
+    this.hooks.onZoomScaleChange?.();
   }
 }

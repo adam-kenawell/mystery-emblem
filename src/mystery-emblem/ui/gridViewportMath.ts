@@ -75,8 +75,8 @@ export function syncDungeonCanvasBuffer(
     canvas.height = cam.bufferHeight;
     ctx.imageSmoothingEnabled = false;
   }
-  canvas.style.width = `${Math.round(cam.bufferWidth * cam.displayScale * 100) / 100}px`;
-  canvas.style.height = `${Math.round(cam.bufferHeight * cam.displayScale * 100) / 100}px`;
+  canvas.style.width = `${cam.bufferWidth * cam.displayScale}px`;
+  canvas.style.height = `${cam.bufferHeight * cam.displayScale}px`;
 
   return { stageW, stageH };
 }

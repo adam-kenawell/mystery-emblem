@@ -16,7 +16,11 @@ import {
   syncDungeonCanvasBuffer,
   tileCenterToClientPoint,
 } from '../ui/gridViewportMath';
-import { MAP_DEFAULT_SCALE, clampMapScale } from '../ui/mapZoomController';
+import {
+  clampMapScale,
+  isDefaultMapScale,
+  resolveInitialDungeonScale,
+} from '../ui/mapZoomController';
 import { bindPointerTap } from '../ui/pointerControls';
 import { highlightEditorChunkCell, refreshEditorChunkPalette } from './editor/editorAssetsAndPalette';
 import {
@@ -146,11 +150,27 @@ export class ChapterMapEditorScene {
       this.syncUiAndInfo();
     });
 
+    bindPointerTap(
+      this.dom.zoomResetBtnEl,
+      () => {
+        const rect = this.dom.canvasStageEl.getBoundingClientRect();
+        this.setZoomScale(
+          resolveInitialDungeonScale(
+            rect.width || window.innerWidth,
+            rect.height || window.innerHeight
+          )
+        );
+        this.audioManager.playSfx('select');
+      },
+      { signal, stopPropagation: true }
+    );
+
     this.resizeObserver = bindEditorCanvasStagePointers({
       dom: this.dom,
       state: this.state,
       signal: this.abortController.signal,
       syncViewportDimensions: () => this.syncViewportDimensions(),
+      syncZoomResetButton: () => this.syncZoomResetButton(),
       applyStrokeAtTile: (tx, ty) => applyEditorStrokeAtTile(this.getMutationHooks(), tx, ty),
       handleTileTap: (tx, ty) => handleEditorTileTap(this.getMutationHooks(), tx, ty),
       renderFrame: () => this.renderFrame(),
@@ -314,7 +334,7 @@ export class ChapterMapEditorScene {
       state.previousBgmId = audioManager.getCurrentTrackId();
     }
     state.openState = true;
-    state.cam.displayScale = MAP_DEFAULT_SCALE;
+    state.cam.displayScale = resolveInitialDungeonScale();
     state.pinchTracker.reset();
     state.drawerOpen = startDrawerOpen ?? true;
     state.systemMenuOpen = false;
@@ -369,6 +389,7 @@ export class ChapterMapEditorScene {
     const cy = anchorClientY ?? rect.top + rect.height / 2;
     const anchor = clientPointToDungeonWorld(this.dom.canvas, this.state.cam, cx, cy);
     applyDungeonZoomWithWorldAnchor(this.dom.canvasStageEl, this.dom.canvas, this.dom.ctx, this.state.cam, this.state.map.width, this.state.map.height, clampMapScale(nextScale), cx, cy, anchor.worldX, anchor.worldY);
+    this.syncZoomResetButton();
     this.renderFrame();
   }
 
@@ -397,6 +418,17 @@ export class ChapterMapEditorScene {
   private syncViewportDimensions(): void {
     syncDungeonCanvasBuffer(this.dom.canvasStageEl, this.dom.canvas, this.dom.ctx, this.state.cam);
     clampDungeonCameraPosition(this.state.cam, this.state.map.width, this.state.map.height, this.state.cam.cameraX, this.state.cam.cameraY);
+    this.syncZoomResetButton();
+  }
+
+  private syncZoomResetButton(): void {
+    const rect = this.dom.canvasStageEl.getBoundingClientRect();
+    const defaultScale = resolveInitialDungeonScale(
+      rect.width || window.innerWidth,
+      rect.height || window.innerHeight
+    );
+    this.dom.zoomResetBtnEl.hidden =
+      !this.state.openState || isDefaultMapScale(this.state.cam.displayScale, defaultScale);
   }
 
   private syncUiAndInfo(): void {

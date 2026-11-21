@@ -10,7 +10,7 @@ import { findOverworldRoute } from '../../engine/overworldEngine';
 import {
   MultiTouchPinchTracker,
   OVERWORLD_SCALE_BOUNDS,
-  computeWheelZoomScale,
+  WheelZoomStepper,
 } from '../../ui/mapZoomController';
 import type { OverworldCameraAndPointersController, OverworldCameraControllerHooks } from './OverworldCameraAndPointers';
 
@@ -100,12 +100,14 @@ export function bindOverworldCanvasPointers(
     { signal }
   );
 
+  const wheelZoomStepper = new WheelZoomStepper(OVERWORLD_SCALE_BOUNDS);
+
   canvas.addEventListener(
     'wheel',
     (e: WheelEvent) => {
       if (!hooks.canInteractWithCanvas()) return;
       e.preventDefault();
-      const nextScale = computeWheelZoomScale(ctrl.displayScale, e, OVERWORLD_SCALE_BOUNDS);
+      const nextScale = wheelZoomStepper.nextScaleFromWheel(ctrl.displayScale, e);
       if (nextScale === ctrl.displayScale) return;
       const anchor = ctrl.clientPointToWorld(e.clientX, e.clientY);
       ctrl.applyZoomWithWorldAnchor(nextScale, e.clientX, e.clientY, anchor.worldX, anchor.worldY);

@@ -24,6 +24,7 @@ import {
 } from './battle/battleBackAndCheats';
 import { clearOpeningAndPhaseAnimations } from './battle/battleBannersAndTransitions';
 import { renderBattleFrame } from './battle/battleCanvasRenderer';
+import { syncBattleZoomResetButton } from './battle/battleDangerAndViewportState';
 import { createBattleDomShell, type BattleDomRefs } from './battle/battleDomShell';
 import { advanceBattleAnimations, clearFloatingTexts } from './battle/battleFloatingCallouts';
 import {
@@ -235,6 +236,7 @@ export class BattleScene {
       this.state.cam.cameraX,
       this.state.cam.cameraY
     );
+    syncBattleZoomResetButton(this.state, this.dom, this.prepOverlay);
   }
 
   public renderFrame(now: number = performance.now()): void {

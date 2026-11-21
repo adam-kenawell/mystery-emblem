@@ -3,6 +3,7 @@
  */
 
 import { PmdPortraitView } from '../../ui/PmdSpriteCanvas';
+import { createPmdZoomResetButton } from '../../ui/PmdWindow';
 import { createBattleForecastDom } from './battleForecastView';
 
 export interface BattleDomRefs {
@@ -10,6 +11,7 @@ export interface BattleDomRefs {
   canvasStageEl: HTMLElement;
   canvas: HTMLCanvasElement;
   ctx: CanvasRenderingContext2D;
+  zoomResetBtnEl: HTMLButtonElement;
   tintScratchCanvas: HTMLCanvasElement;
   tintScratchCtx: CanvasRenderingContext2D;
   floatingCalloutLayerEl: HTMLElement;
@@ -387,12 +389,15 @@ export function createBattleDomShell(): BattleDomRefs {
   talkChoiceBackdropEl.dataset.testid = 'battle-talk-choice-backdrop';
   talkChoiceBackdropEl.hidden = true;
 
+  const zoomResetBtnEl = createPmdZoomResetButton({ testId: 'battle-zoom-reset-btn' });
+
   const forecastDom = createBattleForecastDom();
   const modalsDom = createBattleModalsDom();
 
   rootEl.append(
     canvasStageEl,
     floatingCalloutLayerEl,
+    zoomResetBtnEl,
     phaseBannerEl,
     bottomLeftHudStackEl,
     actionMenuEl,
@@ -412,6 +417,7 @@ export function createBattleDomShell(): BattleDomRefs {
     canvasStageEl,
     canvas,
     ctx,
+    zoomResetBtnEl,
     tintScratchCanvas,
     tintScratchCtx,
     floatingCalloutLayerEl,

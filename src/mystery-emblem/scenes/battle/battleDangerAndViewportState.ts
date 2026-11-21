@@ -7,6 +7,10 @@ import {
   computeUnitMovementAndAttackRange,
 } from '../../engine/terrainAndPathfinding';
 import type { DungeonPrepOverlay } from '../../ui/DungeonPrepOverlay';
+import {
+  isDefaultMapScale,
+  resolveInitialDungeonScale,
+} from '../../ui/mapZoomController';
 import type { TutorialOverlay } from '../../ui/TutorialOverlay';
 import type { BattleDomRefs } from './battleDomShell';
 import type { BattleControllerContext, BattleRuntimeState } from './battleTypesAndState';
@@ -40,6 +44,29 @@ export function canInteractWithBattleViewport(
   );
 }
 
+export function syncBattleZoomResetButton(
+  state: BattleRuntimeState,
+  dom: BattleDomRefs,
+  prepOverlay: DungeonPrepOverlay
+): void {
+  const rect = dom.canvasStageEl.getBoundingClientRect();
+  const defaultScale = resolveInitialDungeonScale(
+    rect.width || window.innerWidth,
+    rect.height || window.innerHeight
+  );
+  const canShowInPhase =
+    state.phase === 'dungeon_prep'
+      ? prepOverlay.isOpen() && prepOverlay.getSubMode() === 'view_map'
+      : state.phase !== 'victory' && state.phase !== 'defeat';
+  const show =
+    state.openState &&
+    canShowInPhase &&
+    !state.cutsceneInProgress &&
+    state.interactionState !== 'combat_forecast' &&
+    !isDefaultMapScale(state.cam.displayScale, defaultScale);
+  dom.zoomResetBtnEl.hidden = !show;
+}
+
 export function syncPrepChromeVisibility(
   state: BattleRuntimeState,
   dom: BattleDomRefs,
@@ -64,6 +91,7 @@ export function syncPrepChromeVisibility(
       dom.unitPopupEl.hidden = true;
     }
   }
+  syncBattleZoomResetButton(state, dom, prepOverlay);
 }
 
 export function syncHudControls(state: BattleRuntimeState, dom: BattleDomRefs): void {
